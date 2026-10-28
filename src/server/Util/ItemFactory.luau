@@ -22,7 +22,7 @@ function ItemFactory.Create(itemId: string): Part
 	part.Shape = (Enum.PartType :: any)[def.shape] or Enum.PartType.Block
 	part.Size = def.size
 	part.Color = def.color
-	part.Material = def.material or Enum.Material.SmoothPlastic
+	part.Material = def.material or Enum.Material.Plastic
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	part.Anchored = true

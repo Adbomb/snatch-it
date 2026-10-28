@@ -40,6 +40,21 @@
 				}
 			}
 		},
+		"MaterialService": {
+			"$properties": {
+				"PlasticName": "LegoStuds"
+			},
+			"LegoStuds": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://133407646216237",
+					"NormalMap": "rbxassetid://95611195247391",
+					"RoughnessMap": "rbxassetid://135539982711389",
+					"StudsPerTile": 4
+				}
+			}
+		},
 		"ReplicatedStorage": {
 			"Shared": {
 				"$path": "src/shared"

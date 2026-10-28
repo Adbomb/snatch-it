@@ -38,7 +38,10 @@ function Gate.Alley(width: number): { ModelBuilder.Brick }
 	table.insert(bricks, B(Vector3.new(width + towerSize * 2, 2, towerSize), Vector3.new(0, height - 3, 0), Palette.HouseWalls[3]))
 	table.insert(
 		bricks,
-		B(Vector3.new(width * 0.7, 6, 1), Vector3.new(0, height - 7, -towerSize / 2 - 0.5), Palette.HouseWalls[2], { name = "SignBoard" })
+		B(Vector3.new(width * 0.7, 6, 1), Vector3.new(0, height - 7, -towerSize / 2 - 0.5), Palette.HouseWalls[2], {
+			name = "SignBoard",
+			material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
+		})
 	)
 	return bricks
 end
@@ -54,7 +57,10 @@ function Gate.Zone(width: number, signColor: Color3): { ModelBuilder.Brick }
 	table.insert(bricks, B(Vector3.new(width + post * 2, 1.2, 1.2), Vector3.new(0, height - 0.6, 0), Palette.WoodDark))
 	table.insert(
 		bricks,
-		B(Vector3.new(width + post * 2 + 4, 5, 0.8), Vector3.new(0, height + 3, 0), signColor, { name = "SignBoard" })
+		B(Vector3.new(width + post * 2 + 4, 5, 0.8), Vector3.new(0, height + 3, 0), signColor, {
+			name = "SignBoard",
+			material = Enum.Material.SmoothPlastic,
+		})
 	)
 	-- Обводка вывески тёмной рамкой (как UIStroke в UI_KIT).
 	table.insert(

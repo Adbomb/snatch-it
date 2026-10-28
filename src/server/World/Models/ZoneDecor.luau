@@ -107,7 +107,7 @@ function ZoneDecor.Warehouse(): { ModelBuilder.Brick }
 	return bricks
 end
 
--- Банк: мраморный пол в шахматку, колонны, сейфы у задней стены, золотая окантовка.
+-- Банк: «мраморный» пол в шахматку (светлые плитки), колонны, сейфы у задней стены, золотая окантовка.
 function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {}
 	local tile = 6
@@ -119,7 +119,6 @@ function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 				local x = -size / 2 + (ix + 0.5) * tile
 				local z = -size / 2 + (iz + 0.5) * tile
 				table.insert(bricks, B(Vector3.new(tile, 0.1, tile), Vector3.new(x, 0.05, z), marbleB, {
-					material = Enum.Material.Marble,
 					collide = false,
 					shadow = false,
 				}))
@@ -127,7 +126,6 @@ function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 		end
 	end
 	table.insert(bricks, B(Vector3.new(size, 0.08, size), Vector3.new(0, 0.04, 0), marbleA, {
-		material = Enum.Material.Marble,
 		collide = false,
 		shadow = false,
 	}))

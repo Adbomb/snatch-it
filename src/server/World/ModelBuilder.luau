@@ -1,5 +1,5 @@
 -- Сборка моделей из кирпичей (D13): модуль модели возвращает список кирпичей, ModelBuilder делает из него Model.
--- Всё Anchored, верх Plastic-блоков с пупырышками. Шаблон собирается один раз и дальше клонируется;
+-- Всё Anchored и по умолчанию Plastic (пупырышки даёт MaterialVariant «LegoStuds»). Шаблон собирается один раз и дальше клонируется;
 -- в Play шаблоны лежат в ServerStorage.Templates, в предпросмотре — вне DataModel.
 -- Зависит от World/Studs.
 
@@ -11,7 +11,7 @@ export type Brick = {
 	size: Vector3,
 	cframe: CFrame, -- относительно начала модели
 	color: Color3,
-	material: Enum.Material?, -- по умолчанию Plastic (только на нём видны пупырышки)
+	material: Enum.Material?, -- по умолчанию Plastic; другое — только вода, стекло, неон и таблички с текстом
 	shape: string?, -- Block | Ball | Cylinder | Wedge | CornerWedge | Truss
 	collide: boolean?, -- по умолчанию из опций модели
 	shadow: boolean?, -- по умолчанию из опций модели

@@ -9,7 +9,7 @@ export type ItemDef = {
 	shape: string, -- Enum.PartType: Block | Ball | Cylinder | Wedge (у Ball размер берётся по X)
 	color: Color3,
 	size: Vector3,
-	material: Enum.Material?, -- по умолчанию SmoothPlastic
+	material: Enum.Material?, -- по умолчанию Plastic (LEGO-пупырышки); Neon — для свечения
 }
 
 local Items: { [string]: ItemDef } = {
@@ -57,7 +57,6 @@ local Items: { [string]: ItemDef } = {
 		shape = "Block",
 		color = Color3.fromRGB(60, 160, 70),
 		size = Vector3.new(1.2, 3.2, 1.2),
-		material = Enum.Material.Grass,
 	},
 	FluffySlipper = {
 		id = "FluffySlipper",
@@ -67,7 +66,6 @@ local Items: { [string]: ItemDef } = {
 		shape = "Wedge",
 		color = Color3.fromRGB(255, 150, 200),
 		size = Vector3.new(1.4, 0.9, 2.4),
-		material = Enum.Material.Fabric,
 	},
 	NeonTV = {
 		id = "NeonTV",
@@ -87,7 +85,6 @@ local Items: { [string]: ItemDef } = {
 		shape = "Block",
 		color = Color3.fromRGB(150, 210, 255),
 		size = Vector3.new(2.4, 4.2, 2.2),
-		material = Enum.Material.Metal,
 	},
 	TalkingSafe = {
 		id = "TalkingSafe",
@@ -97,7 +94,6 @@ local Items: { [string]: ItemDef } = {
 		shape = "Block",
 		color = Color3.fromRGB(70, 75, 85),
 		size = Vector3.new(2.6, 2.6, 2.6),
-		material = Enum.Material.DiamondPlate,
 	},
 	StarMeteorite = {
 		id = "StarMeteorite",

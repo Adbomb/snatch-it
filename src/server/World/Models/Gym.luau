@@ -16,7 +16,7 @@ end
 -- Цвет и материал гантели по id из GameConfig.Gym.
 local LOOKS = {
 	Wood = { color = hex("A0682F"), material = Enum.Material.Plastic },
-	Iron = { color = hex("78909C"), material = Enum.Material.Metal },
+	Iron = { color = hex("78909C"), material = Enum.Material.Plastic },
 	Gold = { color = hex("FFC21A"), material = Enum.Material.Plastic },
 	Diamond = { color = hex("5CE1FF"), material = Enum.Material.Glass },
 }
@@ -47,7 +47,12 @@ function Gym.Rack(dumbbellId: string): { ModelBuilder.Brick }
 	table.insert(bricks, B(Vector3.new(0.4, 2, 0.4), Vector3.new(0, 1, -2.4), Palette.WoodDark, { collide = false, shadow = false }))
 	table.insert(
 		bricks,
-		B(Vector3.new(4.6, 2.4, 0.4), Vector3.new(0, 2.8, -2.4), look.color, { name = "SignBoard", collide = false, shadow = false })
+		B(Vector3.new(4.6, 2.4, 0.4), Vector3.new(0, 2.8, -2.4), look.color, {
+			name = "SignBoard",
+			material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
+			collide = false,
+			shadow = false,
+		})
 	)
 	return bricks
 end
@@ -58,7 +63,10 @@ function Gym.Hall(size: Vector2): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {
 		B(Vector3.new(size.X, 0.4, size.Y), Vector3.new(0, -0.2, 0), floor),
 		B(Vector3.new(1, 10, size.Y), Vector3.new(-size.X / 2 + 0.5, 5, 0), Palette.HouseWalls[3]),
-		B(Vector3.new(0.6, 4, size.Y * 0.6), Vector3.new(-size.X / 2 + 1.3, 7, 0), Palette.HouseWalls[2], { name = "SignBoard" }),
+		B(Vector3.new(0.6, 4, size.Y * 0.6), Vector3.new(-size.X / 2 + 1.3, 7, 0), Palette.HouseWalls[2], {
+			name = "SignBoard",
+			material = Enum.Material.SmoothPlastic,
+		}),
 	}
 	-- Красные полосы-разметка на полу.
 	for _, z in { -size.Y / 2 + 2, size.Y / 2 - 2 } do

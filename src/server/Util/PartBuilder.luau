@@ -38,7 +38,7 @@ function PartBuilder.MakePart(props: PartProps): Part
 	part.Size = props.size
 	part.CFrame = props.cframe
 	part.Color = props.color
-	part.Material = props.material or Enum.Material.SmoothPlastic
+	part.Material = props.material or Enum.Material.Plastic
 	part.Transparency = props.transparency or 0
 	part.CanCollide = if props.canCollide == nil then true else props.canCollide
 	part.TopSurface = Enum.SurfaceType.Smooth
@@ -88,7 +88,6 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		size = cfg.PlotSize,
 		cframe = origin * CFrame.new(0, top - cfg.PlotSize.Y / 2, 0),
 		color = Color3.fromRGB(160, 120, 90),
-		material = Enum.Material.WoodPlanks,
 		parent = model,
 	})
 	model.PrimaryPart = floor
@@ -138,6 +137,7 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		size = Vector3.new(14, 3, 0.4),
 		cframe = origin * CFrame.new(0, top + 7.5, signZ),
 		color = Color3.fromRGB(40, 40, 60),
+		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
 		parent = model,
 	})
 	local signLabel = addSurfaceText(board, "")
@@ -156,7 +156,6 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 			size = showcaseSize,
 			cframe = origin * CFrame.new((column - 1) * 12, top + showcaseSize.Y / 2, -2 + row * 14),
 			color = Color3.fromRGB(70, 90, 120),
-			material = Enum.Material.Marble,
 			parent = showcaseFolder,
 		})
 		showcase:SetAttribute("Slot", slot)
@@ -172,7 +171,6 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		size = chestSize,
 		cframe = origin * CFrame.new(-half + 5, top + chestSize.Y / 2, -half + 5),
 		color = Color3.fromRGB(150, 95, 45),
-		material = Enum.Material.Wood,
 		parent = model,
 	})
 	addSurfaceText(chest, "Хранилище")

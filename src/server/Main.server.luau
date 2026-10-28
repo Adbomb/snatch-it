@@ -7,6 +7,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local LegoMaterial = require(ReplicatedStorage.Shared.LegoMaterial)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
@@ -26,6 +27,7 @@ local WorldBuilder = require(Server.World.WorldBuilder)
 Preview.Clear()
 
 Remotes.CreateAll()
+LegoMaterial.Apply()
 
 local world = PartBuilder.CreateWorldFolder()
 ModelBuilder.SetTemplateParent(ServerStorage)
