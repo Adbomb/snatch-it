@@ -79,6 +79,13 @@ UITokens.TextSize = {
 	Huge = 40,
 }
 
+-- Подсветка экспоната, выбранного для «Переставить».
+UITokens.Highlight = {
+	Fill = Color3.fromHex("FFE15A"), -- верх градиента Coin
+	FillTransparency = 0.55,
+	Outline = Color3.fromHex("FFFFFF"),
+}
+
 UITokens.Motion = {
 	Slide = 0.2, -- выезд и уезд уведомлений и окон, секунды
 }

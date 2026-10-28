@@ -221,6 +221,52 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 	return true, nil
 end
 
+-- Перестановка экспоната на пустую витрину того же владельца. Меняет только индекс витрин:
+-- состояние остаётся Displayed, профиль меняет вызывающий сервис в том же кадре.
+function ItemRegistry.MoveSlot(owner: number, fromSlot: number, toSlot: number): (boolean, string?)
+	local label = ("MoveSlot %d→%d"):format(fromSlot, toSlot)
+	local uid = ItemRegistry.GetSlotItem(owner, fromSlot)
+	local entry = uid and entries[uid]
+	if not uid or not entry then
+		return refuse("-", "Displayed", label, "на витрине нет экспоната")
+	end
+	if entry.state ~= "Displayed" then
+		return refuse(uid, entry.state, label, "экспонат не на витрине")
+	end
+	if fromSlot == toSlot or not isSlotFree(owner, toSlot) then
+		return refuse(uid, entry.state, label, "целевая витрина занята")
+	end
+	local slots = slotIndex[owner]
+	slots[fromSlot] = nil
+	slots[toSlot] = uid
+	entry.slot = toSlot
+	Log.Debug("ItemRegistry", ("%s: витрина %d → %d"):format(uid, fromSlot, toSlot))
+	notify(uid, "Displayed", "Displayed", entry)
+	return true, nil
+end
+
+-- Обмен витринами двух экспонатов одного владельца. Обе записи меняются без yield, состояние — Displayed.
+function ItemRegistry.SwapSlots(owner: number, slotA: number, slotB: number): (boolean, string?)
+	local label = ("SwapSlots %d↔%d"):format(slotA, slotB)
+	local uidA = ItemRegistry.GetSlotItem(owner, slotA)
+	local uidB = ItemRegistry.GetSlotItem(owner, slotB)
+	local a = uidA and entries[uidA]
+	local b = uidB and entries[uidB]
+	if not uidA or not uidB or not a or not b or slotA == slotB then
+		return refuse(uidA or "-", "Displayed", label, "на одной из витрин нет экспоната")
+	end
+	if a.state ~= "Displayed" or b.state ~= "Displayed" then
+		return refuse(uidA, a.state, label, "экспонат не на витрине")
+	end
+	local slots = slotIndex[owner]
+	slots[slotA], slots[slotB] = uidB, uidA
+	a.slot, b.slot = slotB, slotA
+	Log.Debug("ItemRegistry", ("%s ↔ %s: витрины %d ↔ %d"):format(uidA, uidB, slotA, slotB))
+	notify(uidA, "Displayed", "Displayed", a)
+	notify(uidB, "Displayed", "Displayed", b)
+	return true, nil
+end
+
 -- D3: предмет с карты или из рук пропадает без следа. Сохранённые экспонаты так удалить нельзя.
 function ItemRegistry.Discard(uid: string, reason: string): boolean
 	local entry = entries[uid]

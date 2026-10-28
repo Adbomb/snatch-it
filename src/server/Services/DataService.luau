@@ -172,6 +172,29 @@ function DataService.SetItemPlace(player: Player, uid: string, place: string, sl
 	return true
 end
 
+-- Обмен витринами двух экспонатов одного игрока. Откат — тот же вызов ещё раз.
+function DataService.SwapItemSlots(player: Player, uidA: string, uidB: string): boolean
+	local data = DataService.GetData(player)
+	local a = data and data.items[uidA]
+	local b = data and data.items[uidB]
+	if not a or not b or a.place ~= "slot" or b.place ~= "slot" or uidA == uidB then
+		Log.Warn("DataService", ("%s: обмен %s ↔ %s невозможен"):format(player.Name, uidA, uidB))
+		return false
+	end
+	a.slot, b.slot = b.slot, a.slot
+	return true
+end
+
+function DataService.SetItemRotation(player: Player, uid: string, rot: number): boolean
+	local data = DataService.GetData(player)
+	local record = data and data.items[uid]
+	if not record then
+		return false
+	end
+	record.rot = rot
+	return true
+end
+
 -- Только для отката AddItem в том же кадре (без yield между ними), если переход в ItemRegistry отказал.
 function DataService.RemoveItem(player: Player, uid: string)
 	local data = DataService.GetData(player)

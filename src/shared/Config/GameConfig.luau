@@ -35,6 +35,8 @@ GameConfig.Museum = {
 	StorageCapacity = 10, -- мест в хранилище
 	ChestSize = Vector3.new(4, 3, 3),
 	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
+	RotateStep = 45, -- градусов за одно «Повернуть»
+	MoveSelectTimeout = 15, -- секунд, через которые выбор «Переставить» отменяется
 }
 
 GameConfig.Carry = {
@@ -77,6 +79,8 @@ GameConfig.RateLimits = {
 	Display = 4,
 	Drop = 4,
 	Storage = 4,
+	Move = 4,
+	Rotate = 6,
 }
 
 return GameConfig

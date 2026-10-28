@@ -20,6 +20,12 @@ local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
 local Validate = require(ServerScriptService.Server.Util.Validate)
 
 local displayLimiter = RateLimiter.new(GameConfig.RateLimits.Display)
+local moveLimiter = RateLimiter.new(GameConfig.RateLimits.Move)
+local rotateLimiter = RateLimiter.new(GameConfig.RateLimits.Rotate)
+
+-- Выбор «Переставить»: витрина-источник и номер выбора (для таймера отмены).
+local selections: { [Player]: { slot: number, token: number } } = {}
+local selectionCounter = 0
 
 local MuseumService = {}
 
@@ -141,13 +147,175 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
 end
 
+-- Сброс выбора «Переставить». Атрибут MoveSlot видит клиент (подсветка и «Сюда»), сервер на него не смотрит.
+function MuseumService.CancelMove(player: Player)
+	selections[player] = nil
+	player:SetAttribute("MoveSlot", nil)
+end
+
+-- Общие проверки действий над своим экспонатом: свой участок, профиль, витрина, игрок рядом,
+-- на витрине экспонат и он совпадает с профилем. Возвращает uid и запись профиля или nil.
+local function ownExhibit(player: Player, plot: PlotService.Plot, slot: number): (string?, any)
+	if plot.owner ~= player then
+		Notify.Send(player, "Это чужой музей", "Stop")
+		return nil, nil
+	end
+	local data = DataService.GetData(player)
+	if not data or not MuseumService.IsValidSlot(player, slot) then
+		return nil, nil
+	end
+	if not Validate.IsNear(player, plot.showcases[slot].Position, GameConfig.Museum.DisplayDistance) then
+		return nil, nil
+	end
+	local uid = ItemRegistry.GetSlotItem(player.UserId, slot)
+	local record = uid and data.items[uid]
+	if not uid or not record or record.place ~= "slot" or record.slot ~= slot then
+		return nil, nil
+	end
+	return uid, record
+end
+
+-- E на своём экспонате: выбрать его для перестановки; повторно на нём же — отменить.
+local function tryMove(player: Player, plot: PlotService.Plot, slot: number)
+	if not moveLimiter:Allow(player) then
+		return
+	end
+	local uid = ownExhibit(player, plot, slot)
+	if not uid then
+		return
+	end
+	local current = selections[player]
+	if current and current.slot == slot then
+		MuseumService.CancelMove(player)
+		Notify.Send(player, "Перестановка отменена")
+		return
+	end
+	selectionCounter += 1
+	local token = selectionCounter
+	selections[player] = { slot = slot, token = token }
+	player:SetAttribute("MoveSlot", slot)
+	Notify.Send(player, "Выберите витрину — подсказка «Сюда»")
+	task.delay(GameConfig.Museum.MoveSelectTimeout, function()
+		local selection = selections[player]
+		if selection and selection.token == token then
+			MuseumService.CancelMove(player)
+			Notify.Send(player, "Перестановка отменена: время вышло")
+		end
+	end)
+end
+
+-- «Сюда» на другой своей витрине: пустая — перенос (MoveSlot), занятая — обмен (SwapSlots).
+local function tryPlaceHere(player: Player, plot: PlotService.Plot, slot: number)
+	if not moveLimiter:Allow(player) then
+		return
+	end
+	local selection = selections[player]
+	if not selection or selection.slot == slot then
+		return
+	end
+	if plot.owner ~= player then
+		Notify.Send(player, "Это чужой музей", "Stop")
+		return
+	end
+	if not MuseumService.IsValidSlot(player, slot) then
+		return
+	end
+	if not Validate.IsNear(player, plot.showcases[slot].Position, GameConfig.Museum.DisplayDistance) then
+		return
+	end
+	local fromSlot = selection.slot
+	local data = DataService.GetData(player)
+	local uidA = ItemRegistry.GetSlotItem(player.UserId, fromSlot)
+	local recordA = uidA and data and data.items[uidA]
+	local entryA = uidA and ItemRegistry.Get(uidA)
+	if not uidA or not recordA or not entryA or recordA.place ~= "slot" or recordA.slot ~= fromSlot then
+		MuseumService.CancelMove(player)
+		Notify.Send(player, "Экспонат уже не на витрине — перестановка отменена", "Stop")
+		return
+	end
+	local uidB = ItemRegistry.GetSlotItem(player.UserId, slot)
+
+	if not uidB then
+		if not DataService.IsSlotFree(player, slot) then
+			Notify.Send(player, "Эта витрина уже занята", "Stop")
+			return
+		end
+		if not DataService.SetItemPlace(player, uidA, "slot", slot) then
+			Notify.Send(player, "Не удалось переставить экспонат", "Stop")
+			return
+		end
+		if not ItemRegistry.MoveSlot(player.UserId, fromSlot, slot) then
+			DataService.SetItemPlace(player, uidA, "slot", fromSlot)
+			Notify.Send(player, "Не удалось переставить экспонат", "Stop")
+			return
+		end
+		MuseumService.ClearShowcase(plot, fromSlot, nil)
+		if entryA.part then
+			MuseumService.PlaceExhibit(entryA.part, plot, slot, recordA.rot or 0)
+		end
+		Notify.Send(player, ("Переставлено на витрину %d"):format(slot), "Go")
+	else
+		local recordB = data.items[uidB]
+		local entryB = ItemRegistry.Get(uidB)
+		if not recordB or not entryB or recordB.place ~= "slot" or recordB.slot ~= slot then
+			Notify.Send(player, "Не удалось поменять экспонаты местами", "Stop")
+			return
+		end
+		if not DataService.SwapItemSlots(player, uidA, uidB) then
+			Notify.Send(player, "Не удалось поменять экспонаты местами", "Stop")
+			return
+		end
+		if not ItemRegistry.SwapSlots(player.UserId, fromSlot, slot) then
+			DataService.SwapItemSlots(player, uidA, uidB)
+			Notify.Send(player, "Не удалось поменять экспонаты местами", "Stop")
+			return
+		end
+		if entryA.part then
+			MuseumService.PlaceExhibit(entryA.part, plot, slot, recordA.rot or 0)
+		end
+		if entryB.part then
+			MuseumService.PlaceExhibit(entryB.part, plot, fromSlot, recordB.rot or 0)
+		end
+		Notify.Send(player, ("Витрины %d и %d поменялись экспонатами"):format(fromSlot, slot), "Go")
+	end
+	MuseumService.CancelMove(player)
+	DataService.RequestSave(player)
+end
+
+-- R на своём экспонате: +RotateStep градусов, сохраняется в профиле (rot).
+local function tryRotate(player: Player, plot: PlotService.Plot, slot: number)
+	if not rotateLimiter:Allow(player) then
+		return
+	end
+	local uid, record = ownExhibit(player, plot, slot)
+	local entry = uid and ItemRegistry.Get(uid)
+	if not uid or not entry or not entry.part then
+		return
+	end
+	local rot = ((record.rot or 0) + GameConfig.Museum.RotateStep) % 360
+	if not DataService.SetItemRotation(player, uid, rot) then
+		return
+	end
+	MuseumService.PlaceExhibit(entry.part, plot, slot, rot)
+	DataService.RequestSave(player)
+end
+
 function MuseumService.Init()
+	local distance = GameConfig.Museum.DisplayDistance
 	for _, plot in PlotService.GetPlots() do
 		for slot, showcase in plot.showcases do
 			local objectText = "Витрина " .. slot
-			local distance = GameConfig.Museum.DisplayDistance
 			Prompts.Create(showcase, "Display", objectText, distance).Triggered:Connect(function(player)
 				tryDisplay(player, plot, slot)
+			end)
+			Prompts.Create(showcase, "Move", objectText, distance).Triggered:Connect(function(player)
+				tryMove(player, plot, slot)
+			end)
+			Prompts.Create(showcase, "Here", objectText, distance).Triggered:Connect(function(player)
+				tryPlaceHere(player, plot, slot)
+			end)
+			Prompts.Create(showcase, "Rotate", objectText, distance).Triggered:Connect(function(player)
+				tryRotate(player, plot, slot)
 			end)
 		end
 	end
@@ -202,6 +370,7 @@ end
 
 -- Игрок вышел: убрать его экспонаты из мира и из реестра (в профиле они остаются).
 function MuseumService.UnloadMuseum(player: Player)
+	selections[player] = nil
 	for _, uid in ItemRegistry.GetOwnedBy(player.UserId) do
 		local entry = ItemRegistry.Get(uid)
 		ItemRegistry.Unload(uid)

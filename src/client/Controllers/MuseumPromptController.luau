@@ -1,12 +1,14 @@
 -- Показывает подсказки музея только там, где действие имеет смысл: в своём музее, по состоянию витрины,
--- рукам и хранилищу. Только внешний вид: каждое действие всё равно проверяет сервер.
--- «Выставить из хранилища» открывает окно хранилища. Зависит от тега MuseumPrompt, атрибутов, StorageController.
+-- рукам, хранилищу и выбору «Переставить». Только внешний вид: каждое действие всё равно проверяет сервер.
+-- «Выставить из хранилища» открывает окно хранилища; выбранный для перестановки экспонат подсвечивается.
+-- Зависит от тега MuseumPrompt, атрибутов, StorageController, UITokens.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("GameConfig"))
+local UITokens = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("UITokens"))
 local StorageController = require(script.Parent:WaitForChild("StorageController"))
 
 local PROMPT_TAG = "MuseumPrompt"
@@ -14,6 +16,7 @@ local PROMPT_TAG = "MuseumPrompt"
 local player = Players.LocalPlayer
 local prompts: { [ProximityPrompt]: true } = {}
 local watched: { [Instance]: true } = {}
+local highlight: Highlight?
 
 local MuseumPromptController = {}
 
@@ -40,11 +43,23 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	local carrying = player:GetAttribute("CarryingItemId") ~= nil
 	local stored = player:GetAttribute("StorageCount") or 0
 	local occupied = holder:GetAttribute("Occupied") == true
+	local moveSlot = player:GetAttribute("MoveSlot")
+	local slot = holder:GetAttribute("Slot")
 
-	if action == "Display" then
+	if action == "Move" then
+		-- На выбранном экспонате та же клавиша отменяет выбор.
+		prompt.ActionText = if moveSlot == slot then "Отменить" else "Переставить"
+		return occupied and (moveSlot == nil or moveSlot == slot)
+	elseif action == "Here" then
+		return moveSlot ~= nil and moveSlot ~= slot
+	elseif moveSlot ~= nil then
+		return false -- пока идёт перестановка, остальные подсказки витрин прячутся
+	elseif action == "Display" then
 		return not occupied and carrying
 	elseif action == "FromStorage" then
 		return not occupied and not carrying and stored > 0
+	elseif action == "Rotate" then
+		return occupied
 	elseif action == "Store" then
 		return occupied and stored < GameConfig.Museum.StorageCapacity
 	elseif action == "ChestStore" then
@@ -53,10 +68,51 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	return false
 end
 
+-- Экспонат на витрине moveSlot своего музея (у Part экспоната атрибут Slot).
+local function findSelectedExhibit(moveSlot: number): BasePart?
+	for prompt in prompts do
+		local plot = prompt.Parent and prompt.Parent:FindFirstAncestorWhichIsA("Model")
+		if plot and plot:GetAttribute("OwnerUserId") == player.UserId then
+			local exhibits = plot:FindFirstChild("Exhibits")
+			for _, part in if exhibits then exhibits:GetChildren() else {} do
+				if part:IsA("BasePart") and part:GetAttribute("Slot") == moveSlot then
+					return part
+				end
+			end
+			return nil
+		end
+	end
+	return nil
+end
+
+local function refreshHighlight()
+	local moveSlot = player:GetAttribute("MoveSlot")
+	local target = if type(moveSlot) == "number" then findSelectedExhibit(moveSlot) else nil
+	if highlight and highlight.Adornee == target and highlight.Parent then
+		return
+	end
+	-- Подсветка живёт внутри Part экспоната и может исчезнуть вместе с ним — пересоздаём.
+	if highlight then
+		highlight:Destroy()
+		highlight = nil
+	end
+	if target then
+		local h = Instance.new("Highlight")
+		h.FillColor = UITokens.Highlight.Fill
+		h.FillTransparency = UITokens.Highlight.FillTransparency
+		h.OutlineColor = UITokens.Highlight.Outline
+		h.DepthMode = Enum.HighlightDepthMode.Occluded
+		h.Adornee = target
+		h.Parent = target
+		highlight = h
+	end
+end
+
 local function refreshAll()
 	for prompt in prompts do
 		prompt.Enabled = shouldShow(prompt)
 	end
+	refreshHighlight()
 end
 
 local function watch(instance: Instance?, attribute: string)
@@ -95,6 +151,7 @@ function MuseumPromptController.Init()
 	end
 	player:GetAttributeChangedSignal("CarryingItemId"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("StorageCount"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("MoveSlot"):Connect(refreshAll)
 end
 
 return MuseumPromptController

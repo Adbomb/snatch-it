@@ -176,6 +176,9 @@ local function tryStoreDisplayed(player: Player, plot: PlotService.Plot, slot: n
 		return
 	end
 	MuseumService.ClearShowcase(plot, slot, entry.part)
+	if player:GetAttribute("MoveSlot") == slot then
+		MuseumService.CancelMove(player)
+	end
 	DataService.RequestSave(player)
 	StorageService.Sync(player)
 	Notify.Send(

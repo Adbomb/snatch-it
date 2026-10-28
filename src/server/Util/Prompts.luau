@@ -19,6 +19,14 @@ Prompts.Actions = {
 		gamepadKey = Enum.KeyCode.ButtonX,
 		offset = Vector2.zero,
 	},
+	Move = { text = "Переставить", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
+	Here = { text = "Сюда", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
+	Rotate = {
+		text = "Повернуть",
+		key = Enum.KeyCode.R,
+		gamepadKey = Enum.KeyCode.ButtonY,
+		offset = Vector2.new(0, 80),
+	},
 	Store = {
 		text = "В хранилище",
 		key = Enum.KeyCode.F,
