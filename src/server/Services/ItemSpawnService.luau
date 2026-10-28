@@ -1,8 +1,7 @@
--- Появление предметов на карте в точках с тегом ItemSpawn (DESIGN.md §3, D11). Если точек нет —
--- ставит 16 по раскладке карты (World/MapLayout, D12).
--- Редкость выбирается по весам Tier точки, Legendary на сервере не больше MaxLegendaryOnMap, Secret не появляется.
--- Точка освобождается, когда предмет с неё подняли; через RespawnDelay секунд там появляется новый.
--- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
+-- Появление предметов в зонах добычи (D15): точки с тегом ItemSpawn стоят на постаментах, у точки атрибут Zone.
+-- Если точек нет — ставит их по MapLayout. Редкость — по весам зоны (GameConfig.Zones), Legendary на сервере
+-- не больше MaxLegendaryOnMap, Secret не появляется. Точка освобождается, когда предмет с неё подняли;
+-- через RespawnDelay секунд там появляется новый. D10: брошенный предмет, который никто не трогает, мигает и исчезает.
 -- Зависит от ItemRegistry, CarryService, Util/ItemFactory, Util/PartBuilder, World/MapLayout, Config.
 
 local CollectionService = game:GetService("CollectionService")
@@ -20,7 +19,7 @@ local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 
 local SPAWN_TAG = "ItemSpawn"
-local NEVER_SPAWNS = "Secret" -- D11: на этапе 2 Secret не появляется
+local NEVER_SPAWNS = "Secret" -- D15: Secret пока не появляется нигде
 
 local itemsByRarity: { [string]: { string } } = {}
 local pointByUid: { [string]: BasePart } = {}
@@ -31,7 +30,7 @@ local random = Random.new()
 
 local ItemSpawnService = {}
 
-local function makePoint(folder: Folder, name: string, position: Vector3, tier: string)
+local function makePoint(folder: Folder, name: string, position: Vector3, zone: number)
 	local point = PartBuilder.MakePart({
 		name = name,
 		size = Vector3.new(2, 0.2, 2),
@@ -43,18 +42,17 @@ local function makePoint(folder: Folder, name: string, position: Vector3, tier: 
 	})
 	point.CanQuery = false
 	point.CanTouch = false
-	point:SetAttribute("Tier", tier)
+	point:SetAttribute("Zone", zone)
 	CollectionService:AddTag(point, SPAWN_TAG)
 end
 
--- Точки по раскладке карты (D12): Near у входов в музеи, Center на площади и улице, Far на крышах,
--- в тупиках, в глубине леса и в беседке.
+-- Точки на постаментах всех зон (MapLayout).
 local function createDefaultPoints(world: Folder)
 	local folder = Instance.new("Folder")
 	folder.Name = "ItemSpawns"
 	folder.Parent = world
 	for _, spec in MapLayout.SpawnPoints() do
-		makePoint(folder, spec.name, spec.position, spec.tier)
+		makePoint(folder, spec.name, spec.position, spec.zone)
 	end
 	Log.Debug(
 		"ItemSpawnService",
@@ -62,9 +60,8 @@ local function createDefaultPoints(world: Folder)
 	)
 end
 
--- Редкость по весам Tier; withoutLegendary — повторный бросок, когда лимит Legendary исчерпан.
-local function rollRarity(tier: string, withoutLegendary: boolean): string
-	local weights = GameConfig.Spawn.TierWeights[tier] or GameConfig.Spawn.TierWeights[GameConfig.Spawn.DefaultTier]
+-- Редкость по весам зоны; withoutLegendary — повторный бросок, когда лимит Legendary исчерпан.
+local function rollRarity(weights: { [string]: number }, withoutLegendary: boolean): string
 	local total = 0
 	for _, rarity in Rarities.Order do
 		if rarity ~= NEVER_SPAWNS and not (withoutLegendary and rarity == "Legendary") then
@@ -84,11 +81,12 @@ local function rollRarity(tier: string, withoutLegendary: boolean): string
 	return Rarities.Order[1]
 end
 
--- D11: редкость по весам, затем предмет этой редкости (равные шансы); нет такой — ближайшая более низкая.
-local function chooseItemId(tier: string): string?
-	local rarity = rollRarity(tier, false)
+-- Редкость по весам зоны, затем предмет этой редкости (равные шансы); нет такой — ближайшая более низкая.
+local function chooseItemId(zone: number): string?
+	local weights = GameConfig.Zones[zone].weights
+	local rarity = rollRarity(weights, false)
 	if rarity == "Legendary" and ItemRegistry.CountLoose("Legendary") >= GameConfig.Spawn.MaxLegendaryOnMap then
-		rarity = rollRarity(tier, true)
+		rarity = rollRarity(weights, true)
 	end
 	for rank = Rarities.Rank(rarity), 1, -1 do
 		local pool = itemsByRarity[Rarities.Order[rank]]
@@ -103,8 +101,8 @@ local function spawnAt(point: BasePart)
 	if not point.Parent then
 		return
 	end
-	local tier = point:GetAttribute("Tier")
-	local itemId = chooseItemId(if type(tier) == "string" then tier else GameConfig.Spawn.DefaultTier)
+	local zone = point:GetAttribute("Zone")
+	local itemId = chooseItemId(if type(zone) == "number" and GameConfig.Zones[zone] then zone else 1)
 	if not itemId then
 		Log.Warn("ItemSpawnService", "Нет предметов для появления — проверьте Config/Items")
 		return

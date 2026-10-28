@@ -9,7 +9,8 @@
 		},
 		"Lighting": {
 			"$properties": {
-				"Technology": "Future",
+				"LightingStyle": "Realistic",
+				"PrioritizeLightingQuality": true,
 				"ClockTime": 13.5,
 				"Brightness": 3,
 				"Ambient": [0.38, 0.38, 0.42],

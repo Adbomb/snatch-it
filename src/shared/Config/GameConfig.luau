@@ -45,14 +45,51 @@ GameConfig.Spawn = {
 	LooseBlinkTime = 10,
 	BlinkInterval = 0.25,
 	BlinkTransparency = 0.8,
-	-- D11: веса редкостей по типу точки. Secret на этапе 2 не появляется.
-	TierWeights = {
-		Near = { Common = 100, Uncommon = 0, Rare = 0, Legendary = 0 },
-		Center = { Common = 70, Uncommon = 25, Rare = 5, Legendary = 0 },
-		Far = { Common = 20, Uncommon = 45, Rare = 30, Legendary = 5 },
-	},
-	DefaultTier = "Center", -- точка без атрибута Tier
 	MaxLegendaryOnMap = 1, -- лежащих или в руках на всём сервере
+}
+
+-- D15: зоны добычи. Порядок — от ворот аллеи вглубь (Свалка ближе всех, Банк дальше всех).
+-- rarity — главная редкость зоны (цвет вывески), weights — веса редкостей предметов,
+-- guard — страж и его сила (бой — D16). Secret не появляется нигде.
+GameConfig.Zones = {
+	{
+		id = "Junk",
+		name = "Свалка",
+		rarity = "Common",
+		weights = { Common = 100 },
+		guard = { name = "Сторожевой пёс", strength = 0 },
+	},
+	{
+		id = "Flea",
+		name = "Барахолка",
+		rarity = "Uncommon",
+		weights = { Common = 40, Uncommon = 60 },
+		guard = { name = "Торговец-громила", strength = 100 },
+	},
+	{
+		id = "Warehouse",
+		name = "Склад",
+		rarity = "Rare",
+		weights = { Uncommon = 40, Rare = 60 },
+		guard = { name = "Робот-охранник", strength = 1500 },
+	},
+	{
+		id = "Bank",
+		name = "Банк",
+		rarity = "Legendary",
+		weights = { Rare = 70, Legendary = 30 },
+		guard = { name = "Бронированный охранник", strength = 25000 },
+	},
+}
+
+-- D17: гантели спортзала. price в монетах (этап 3); пока монет нет, платные закрыты табличкой «Скоро».
+GameConfig.Gym = {
+	Dumbbells = {
+		{ id = "Wood", name = "Деревянная", power = 1, price = 0 },
+		{ id = "Iron", name = "Железная", power = 5, price = 500 },
+		{ id = "Gold", name = "Золотая", power = 25, price = 5000 },
+		{ id = "Diamond", name = "Алмазная", power = 100, price = 50000 },
+	},
 }
 
 -- Презентация экспоната после размещения (UI_KIT.md). 0 — только уведомление.

@@ -30,6 +30,18 @@ Remotes.CreateAll()
 local world = PartBuilder.CreateWorldFolder()
 ModelBuilder.SetTemplateParent(ServerStorage)
 WorldBuilder.Build(world)
+-- Игроки появляются только в начале аллеи: чужие SpawnLocation места (например, из шаблона) выключаются.
+for _, spawn in workspace:GetDescendants() do
+	if spawn:IsA("SpawnLocation") and not spawn:IsDescendantOf(world) then
+		spawn.Enabled = false
+		spawn.Transparency = 1
+		spawn.CanCollide = false
+		local decal = spawn:FindFirstChildOfClass("Decal")
+		if decal then
+			decal.Transparency = 1
+		end
+	end
+end
 PlotService.Init(world)
 CarryService.Init()
 MuseumService.Init()

@@ -1,7 +1,8 @@
 -- Предпросмотр карты в режиме редактирования: собирает город и участки в workspace.__Preview,
--- чтобы облетать их камерой без Play. Вызывается через MCP:
---   require(game.ServerScriptService.Server.World.Preview).Build()   -- собрать
---   require(game.ServerScriptService.Server.World.Preview).Clear()   -- убрать
+-- чтобы облетать их камерой без Play. Вызывается через MCP (FreshRequire берёт свежий код, а не кэш):
+--   local World = game.ServerScriptService.Server.World
+--   require(World.FreshRequire)(World.Preview).Build()   -- собрать
+--   require(World.FreshRequire)(World.Preview).Clear()   -- убрать
 -- Папка Archivable = false: в сохранение места и в копию для Play она не попадает;
 -- Main.server на всякий случай удаляет её при старте.
 -- Зависит от WorldBuilder, ModelBuilder, MapLayout, Util/PartBuilder, GameConfig.
