@@ -12,20 +12,12 @@ GameConfig.Data = {
 	SaveCooldown = 10, -- секунд между внеочередными сохранениями после изменения профиля
 }
 
+-- Раскладка карты — в ServerScriptService.Server.World.MapLayout (D12).
 GameConfig.World = {
-	PlazaSize = Vector3.new(60, 1, 60),
 	PlotCount = 8,
-	PlotRadius = 90, -- расстояние от центра площади до центра участка
 	PlotSize = Vector3.new(44, 1, 44),
 	WallHeight = 8,
-	-- Платформы-«крыши» на окраинах для точек Far: угол (градусы), расстояние от центра, размер.
-	Roofs = {
-		{ angle = 67.5, radius = 130, size = Vector3.new(14, 5, 14) },
-		{ angle = 157.5, radius = 130, size = Vector3.new(16, 9, 16) },
-		{ angle = 247.5, radius = 130, size = Vector3.new(18, 12, 18) },
-	},
-	StepHeight = 4.5, -- максимальный подъём между ступеньками (прыжок берёт ~7 стадов)
-	StepSize = Vector2.new(6, 4), -- ширина и глубина ступеньки
+	MaxParts = 12000, -- бюджет частей всей карты
 }
 
 GameConfig.Museum = {
@@ -61,13 +53,6 @@ GameConfig.Spawn = {
 	},
 	DefaultTier = "Center", -- точка без атрибута Tier
 	MaxLegendaryOnMap = 1, -- лежащих или в руках на всём сервере
-	-- Раскладка 12 точек, если в мире нет ни одной с тегом ItemSpawn.
-	CenterCount = 4,
-	CenterRadius = 18, -- на площади
-	NearCount = 4,
-	NearRadius = 64, -- между площадью и входами в музеи
-	FarGroundAngle = 337.5, -- четвёртая точка Far: на земле за музеями
-	FarGroundRadius = 140,
 }
 
 -- Презентация экспоната после размещения (UI_KIT.md). 0 — только уведомление.

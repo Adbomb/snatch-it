@@ -4,7 +4,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ServerStorage = game:GetService("ServerStorage")
 
+local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
@@ -13,18 +15,32 @@ local ItemSpawnService = require(Server.Services.ItemSpawnService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local StorageService = require(Server.Services.StorageService)
+local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 local PartBuilder = require(Server.Util.PartBuilder)
+local ModelBuilder = require(Server.World.ModelBuilder)
+local Preview = require(Server.World.Preview)
+local WorldBuilder = require(Server.World.WorldBuilder)
+
+-- Предпросмотр из режима редактирования в игру попадать не должен.
+Preview.Clear()
 
 Remotes.CreateAll()
 
 local world = PartBuilder.CreateWorldFolder()
-PartBuilder.BuildPlaza(world)
+ModelBuilder.SetTemplateParent(ServerStorage)
+WorldBuilder.Build(world)
 PlotService.Init(world)
 CarryService.Init()
 MuseumService.Init()
 StorageService.Init()
 ItemSpawnService.Init(world)
+
+local partCount = ModelBuilder.CountParts(world)
+Log.Debug("Main", ("Карта: %d частей (бюджет %d)"):format(partCount, GameConfig.World.MaxParts))
+if partCount > GameConfig.World.MaxParts then
+	Log.Warn("Main", ("Карта превышает бюджет: %d > %d частей"):format(partCount, GameConfig.World.MaxParts))
+end
 
 local function onPlayerAdded(player: Player)
 	local plot = PlotService.Assign(player)

@@ -1,9 +1,9 @@
 -- Появление предметов на карте в точках с тегом ItemSpawn (DESIGN.md §3, D11). Если точек нет —
--- строит 12: 4 Near у музеев, 4 Center на площади, 4 Far на крышах и окраине.
+-- ставит 16 по раскладке карты (World/MapLayout, D12).
 -- Редкость выбирается по весам Tier точки, Legendary на сервере не больше MaxLegendaryOnMap, Secret не появляется.
 -- Точка освобождается, когда предмет с неё подняли; через RespawnDelay секунд там появляется новый.
 -- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
--- Зависит от ItemRegistry, CarryService, Util/ItemFactory, Util/PartBuilder, Config.
+-- Зависит от ItemRegistry, CarryService, Util/ItemFactory, Util/PartBuilder, World/MapLayout, Config.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,6 +17,7 @@ local ItemRegistry = require(ServerScriptService.Server.Services.ItemRegistry)
 local ItemFactory = require(ServerScriptService.Server.Util.ItemFactory)
 local Log = require(ServerScriptService.Server.Util.Log)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
+local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 
 local SPAWN_TAG = "ItemSpawn"
 local NEVER_SPAWNS = "Secret" -- D11: на этапе 2 Secret не появляется
@@ -30,11 +31,11 @@ local random = Random.new()
 
 local ItemSpawnService = {}
 
-local function makePoint(folder: Folder, name: string, cframe: CFrame, tier: string)
+local function makePoint(folder: Folder, name: string, position: Vector3, tier: string)
 	local point = PartBuilder.MakePart({
 		name = name,
 		size = Vector3.new(2, 0.2, 2),
-		cframe = cframe * CFrame.new(0, 0.1, 0),
+		cframe = CFrame.new(position + Vector3.new(0, 0.1, 0)),
 		color = Color3.fromRGB(255, 210, 0),
 		transparency = if GameConfig.DevMode then 0.6 else 1,
 		canCollide = false,
@@ -46,31 +47,15 @@ local function makePoint(folder: Folder, name: string, cframe: CFrame, tier: str
 	CollectionService:AddTag(point, SPAWN_TAG)
 end
 
-local function ringCFrame(angleDeg: number, radius: number): CFrame
-	local angle = math.rad(angleDeg)
-	return CFrame.new(math.cos(angle) * radius, PartBuilder.FloorTop, math.sin(angle) * radius)
-end
-
+-- Точки по раскладке карты (D12): Near у входов в музеи, Center на площади и улице, Far на крышах,
+-- в тупиках, в глубине леса и в беседке.
 local function createDefaultPoints(world: Folder)
-	local cfg = GameConfig.Spawn
 	local folder = Instance.new("Folder")
 	folder.Name = "ItemSpawns"
 	folder.Parent = world
-
-	-- Сдвиги углов разводят точки разных типов, чтобы они не стояли на одной линии с музеями.
-	for i = 1, cfg.CenterCount do
-		makePoint(folder, "Center_" .. i, ringCFrame(45 + (i - 1) * 360 / cfg.CenterCount, cfg.CenterRadius), "Center")
+	for _, spec in MapLayout.SpawnPoints() do
+		makePoint(folder, spec.name, spec.position, spec.tier)
 	end
-	for i = 1, cfg.NearCount do
-		makePoint(folder, "Near_" .. i, ringCFrame(22.5 + (i - 1) * 360 / cfg.NearCount, cfg.NearRadius), "Near")
-	end
-	local farCount = 0
-	for _, top in PartBuilder.BuildRoofs(world) do
-		farCount += 1
-		makePoint(folder, "Far_" .. farCount, top, "Far")
-	end
-	makePoint(folder, "Far_" .. farCount + 1, ringCFrame(cfg.FarGroundAngle, cfg.FarGroundRadius), "Far")
-
 	Log.Debug(
 		"ItemSpawnService",
 		("Точек ItemSpawn не было — создано %d"):format(#folder:GetChildren())

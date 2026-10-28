@@ -2,6 +2,43 @@
 	"name": "snatch-it",
 	"tree": {
 		"$className": "DataModel",
+		"Workspace": {
+			"$properties": {
+				"StreamingEnabled": false
+			}
+		},
+		"Lighting": {
+			"$properties": {
+				"Technology": "Future",
+				"ClockTime": 13.5,
+				"Brightness": 3,
+				"Ambient": [0.38, 0.38, 0.42],
+				"OutdoorAmbient": [0.55, 0.55, 0.6],
+				"GlobalShadows": true,
+				"ShadowSoftness": 0.5,
+				"EnvironmentDiffuseScale": 1,
+				"EnvironmentSpecularScale": 0.4
+			},
+			"Atmosphere": {
+				"$className": "Atmosphere",
+				"$properties": {
+					"Density": 0.22,
+					"Offset": 0.1,
+					"Haze": 1.2,
+					"Glare": 0.2,
+					"Color": [0.78, 0.86, 0.95],
+					"Decay": [0.55, 0.7, 0.9]
+				}
+			},
+			"ColorCorrection": {
+				"$className": "ColorCorrectionEffect",
+				"$properties": {
+					"Saturation": 0.2,
+					"Contrast": 0.1,
+					"Brightness": 0.02
+				}
+			}
+		},
 		"ReplicatedStorage": {
 			"Shared": {
 				"$path": "src/shared"

@@ -1,14 +1,16 @@
--- Строит мир из простых Part: центральную площадь и участки-музеи с витринами.
--- Только геометрия, без логики. Зависит от GameConfig.
+-- Строит участки-музеи с витринами из простых Part. Город строит World/WorldBuilder.
+-- Только геометрия, без логики. Зависит от GameConfig, World/MapLayout.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 
 local PartBuilder = {}
 
--- Верх пола площади и участков (Baseplate из шаблона Studio имеет верх на Y = 0).
-PartBuilder.FloorTop = 0.1
+-- Верх пола участков (выше травы и дорог, см. MapLayout.Heights).
+PartBuilder.FloorTop = MapLayout.Heights.Floor
 
 export type PlotParts = {
 	model: Model,
@@ -70,65 +72,9 @@ function PartBuilder.CreateWorldFolder(): Folder
 	return world
 end
 
-function PartBuilder.BuildPlaza(parent: Instance): Part
-	local size = GameConfig.World.PlazaSize
-	return PartBuilder.MakePart({
-		name = "Plaza",
-		size = size,
-		cframe = CFrame.new(0, PartBuilder.FloorTop - size.Y / 2, 0),
-		color = Color3.fromRGB(200, 195, 185),
-		material = Enum.Material.Concrete,
-		parent = parent,
-	})
-end
-
--- Платформы-«крыши» на окраинах со ступеньками со стороны площади.
--- Возвращает CFrame верхней грани каждой крыши (центр) — туда ставятся точки Far.
-function PartBuilder.BuildRoofs(parent: Instance): { CFrame }
+-- Участок index стоит по MapLayout и смотрит входом (сторона -Z) в город.
+function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number, parent: Instance): PlotParts
 	local cfg = GameConfig.World
-	local folder = Instance.new("Folder")
-	folder.Name = "Roofs"
-	folder.Parent = parent
-	local tops = {}
-	for index, roof in cfg.Roofs do
-		local angle = math.rad(roof.angle)
-		local position = Vector3.new(math.cos(angle) * roof.radius, 0, math.sin(angle) * roof.radius)
-		local origin = CFrame.lookAt(position, Vector3.zero) -- -Z смотрит на площадь
-		local size = roof.size
-		local top = PartBuilder.FloorTop + size.Y
-		PartBuilder.MakePart({
-			name = "Roof_" .. index,
-			size = size,
-			cframe = origin * CFrame.new(0, top - size.Y / 2, 0),
-			color = Color3.fromRGB(150, 75, 60),
-			material = Enum.Material.Brick,
-			parent = folder,
-		})
-		-- Ступеньки: каждая выше предыдущей не больше чем на StepHeight, самая высокая — у крыши.
-		local steps = math.ceil(size.Y / cfg.StepHeight) - 1
-		for step = 1, steps do
-			local height = size.Y * step / (steps + 1)
-			local z = -size.Z / 2 - (steps - step + 0.5) * cfg.StepSize.Y
-			PartBuilder.MakePart({
-				name = ("Roof_%d_Step_%d"):format(index, step),
-				size = Vector3.new(cfg.StepSize.X, height, cfg.StepSize.Y),
-				cframe = origin * CFrame.new(0, PartBuilder.FloorTop + height / 2, z),
-				color = Color3.fromRGB(120, 110, 100),
-				material = Enum.Material.Concrete,
-				parent = folder,
-			})
-		end
-		table.insert(tops, origin * CFrame.new(0, top, 0))
-	end
-	return tops
-end
-
--- Участок index из count стоит на круге и смотрит входом (сторона -Z) в центр площади.
-function PartBuilder.BuildPlot(index: number, count: number, slotCount: number, parent: Instance): PlotParts
-	local cfg = GameConfig.World
-	local angle = (index - 1) / count * math.pi * 2
-	local position = Vector3.new(math.cos(angle) * cfg.PlotRadius, 0, math.sin(angle) * cfg.PlotRadius)
-	local origin = CFrame.lookAt(position, Vector3.zero)
 	local half = cfg.PlotSize.X / 2
 	local top = PartBuilder.FloorTop
 

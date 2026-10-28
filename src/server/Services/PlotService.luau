@@ -1,12 +1,13 @@
 -- 8 участков-музеев по кругу: строит их при старте, выдаёт при входе, освобождает при выходе.
 -- Хранит владельца участка на сервере и пишет его имя на табличке (DESIGN.md §3).
--- Зависит от Util/PartBuilder, GameConfig, Util/Log.
+-- Зависит от Util/PartBuilder, World/MapLayout, GameConfig, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Log = require(ServerScriptService.Server.Util.Log)
+local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 
 export type Plot = {
@@ -33,7 +34,7 @@ function PlotService.Init(world: Folder)
 	local count = GameConfig.World.PlotCount
 	local slotCount = GameConfig.Museum.SlotsByLevel[1]
 	for index = 1, count do
-		local parts = PartBuilder.BuildPlot(index, count, slotCount, folder)
+		local parts = PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), slotCount, folder)
 		parts.signLabel.Text = FREE_SIGN_TEXT
 		plots[index] = {
 			index = index,
