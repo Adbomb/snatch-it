@@ -1,0 +1,3 @@
+# Настройки линтера selene: стандартная библиотека Roblox, чужой код не проверяем.
+std = "roblox"
+exclude = ["src/server/Vendor/*"]
