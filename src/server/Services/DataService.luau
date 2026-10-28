@@ -147,6 +147,14 @@ function DataService.AddItem(player: Player, uid: string, record: { [string]: an
 	return true
 end
 
+-- Только для отката AddItem в том же кадре (без yield между ними), если переход в ItemRegistry отказал.
+function DataService.RemoveItem(player: Player, uid: string)
+	local data = DataService.GetData(player)
+	if data then
+		data.items[uid] = nil
+	end
+end
+
 function DataService.IncrementStat(player: Player, statName: string)
 	local data = DataService.GetData(player)
 	if data then

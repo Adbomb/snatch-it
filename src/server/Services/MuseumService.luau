@@ -75,12 +75,9 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		return
 	end
 
-	if not ItemRegistry.Transition(uid, "Displayed", { owner = player.UserId, slot = slot }) then
-		return
-	end
-	local part = CarryService.ReleaseForDisplay(player, uid) :: BasePart
-	placeOnShowcase(part, showcase, 0, plot.exhibits)
-	DataService.AddItem(player, uid, {
+	-- Сначала запись в профиль, потом переход. Между ними нет yield, поэтому откат записи
+	-- не успевает попасть в DataStore, а обратного перехода Displayed → Carried в графе нет.
+	local recorded = DataService.AddItem(player, uid, {
 		id = entry.itemId,
 		mods = {},
 		place = "slot",
@@ -89,6 +86,23 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		acquiredAt = os.time(),
 		source = "map",
 	})
+	if not recorded then
+		Notify.Send(
+			player,
+			"Не удалось сохранить экспонат — предмет остаётся у вас в руках"
+		)
+		return
+	end
+	if not ItemRegistry.Transition(uid, "Displayed", { owner = player.UserId, slot = slot }) then
+		DataService.RemoveItem(player, uid)
+		Notify.Send(
+			player,
+			"Не удалось выставить предмет — он остаётся у вас в руках"
+		)
+		return
+	end
+	local part = CarryService.ReleaseForDisplay(player, uid) :: BasePart
+	placeOnShowcase(part, showcase, 0, plot.exhibits)
 	DataService.IncrementStat(player, "delivered")
 	DataService.RequestSave(player)
 	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot))
