@@ -31,7 +31,10 @@ GameConfig.World = {
 GameConfig.Museum = {
 	SlotsByLevel = { [1] = 6 }, -- DESIGN.md §2: museumLevel 1 → 6 витрин
 	ShowcaseSize = Vector3.new(5, 3, 5),
-	DisplayDistance = 10, -- радиус подсказки «Выставить»
+	DisplayDistance = 10, -- радиус подсказок на витринах
+	StorageCapacity = 10, -- мест в хранилище
+	ChestSize = Vector3.new(4, 3, 3),
+	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
 }
 
 GameConfig.Carry = {
@@ -73,6 +76,7 @@ GameConfig.RateLimits = {
 	Pickup = 4,
 	Display = 4,
 	Drop = 4,
+	Storage = 4,
 }
 
 return GameConfig

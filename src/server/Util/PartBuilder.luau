@@ -15,6 +15,7 @@ export type PlotParts = {
 	showcases: { [number]: BasePart },
 	exhibits: Folder,
 	signLabel: TextLabel,
+	chest: BasePart,
 }
 
 type PartProps = {
@@ -218,6 +219,18 @@ function PartBuilder.BuildPlot(index: number, count: number, slotCount: number, 
 		showcases[slot] = showcase
 	end
 
+	-- Сундук-хранилище у входа, слева от прохода.
+	local chestSize = GameConfig.Museum.ChestSize
+	local chest = PartBuilder.MakePart({
+		name = "Chest",
+		size = chestSize,
+		cframe = origin * CFrame.new(-half + 5, top + chestSize.Y / 2, -half + 5),
+		color = Color3.fromRGB(150, 95, 45),
+		material = Enum.Material.Wood,
+		parent = model,
+	})
+	addSurfaceText(chest, "Хранилище")
+
 	local exhibits = Instance.new("Folder")
 	exhibits.Name = "Exhibits"
 	exhibits.Parent = model
@@ -228,6 +241,7 @@ function PartBuilder.BuildPlot(index: number, count: number, slotCount: number, 
 		showcases = showcases,
 		exhibits = exhibits,
 		signLabel = signLabel,
+		chest = chest,
 	}
 end
 

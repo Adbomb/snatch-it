@@ -147,6 +147,31 @@ function DataService.AddItem(player: Player, uid: string, record: { [string]: an
 	return true
 end
 
+-- Перенос записи между витриной и хранилищем. Поворот (rot) сохраняется.
+-- Откат — тот же вызов со старыми place/slot в том же кадре.
+function DataService.SetItemPlace(player: Player, uid: string, place: string, slot: number?): boolean
+	local data = DataService.GetData(player)
+	local record = data and data.items[uid]
+	if not record then
+		Log.Warn("DataService", ("%s: uid %s нет в профиле"):format(player.Name, uid))
+		return false
+	end
+	if place == "slot" then
+		if type(slot) ~= "number" or not DataService.IsSlotFree(player, slot) then
+			Log.Warn(
+				"DataService",
+				("%s: витрина %s занята или не указана"):format(player.Name, tostring(slot))
+			)
+			return false
+		end
+	elseif place ~= "storage" then
+		return false
+	end
+	record.place = place
+	record.slot = if place == "slot" then slot else nil
+	return true
+end
+
 -- Только для отката AddItem в том же кадре (без yield между ними), если переход в ItemRegistry отказал.
 function DataService.RemoveItem(player: Player, uid: string)
 	local data = DataService.GetData(player)

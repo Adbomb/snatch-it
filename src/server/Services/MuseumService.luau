@@ -1,8 +1,8 @@
 -- Музей игрока: подсказка «Выставить» на витринах, запись экспоната в профиль, восстановление при входе.
--- Свои экспонаты с витрины в руки не берутся (D2). Подсказку в чужом музее прячет клиент, проверяет сервер.
+-- Свои экспонаты с витрины в руки не берутся (D2). Подсказки в чужом музее прячет клиент,
+-- но каждый обработчик на сервере сам проверяет владельца, состояние и расстояние.
 -- Зависит от ItemRegistry, CarryService, DataService, PlotService, Util/*, Config.
 
-local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -15,10 +15,9 @@ local PlotService = require(ServerScriptService.Server.Services.PlotService)
 local ItemFactory = require(ServerScriptService.Server.Util.ItemFactory)
 local Log = require(ServerScriptService.Server.Util.Log)
 local Notify = require(ServerScriptService.Server.Util.Notify)
+local Prompts = require(ServerScriptService.Server.Util.Prompts)
 local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
 local Validate = require(ServerScriptService.Server.Util.Validate)
-
-local DISPLAY_PROMPT_TAG = "DisplayPrompt" -- по этому тегу клиент находит подсказки витрин
 
 local displayLimiter = RateLimiter.new(GameConfig.RateLimits.Display)
 
@@ -28,13 +27,45 @@ local function slotCount(museumLevel: number): number
 	return GameConfig.Museum.SlotsByLevel[museumLevel] or GameConfig.Museum.SlotsByLevel[1]
 end
 
-local function placeOnShowcase(part: BasePart, showcase: BasePart, rot: number, parent: Instance)
+-- Сколько витрин у игрока сейчас (0 — профиль не загружен).
+function MuseumService.SlotCount(player: Player): number
+	local data = DataService.GetData(player)
+	return if data then slotCount(data.museumLevel) else 0
+end
+
+-- Номер витрины пришёл от клиента: целое число в пределах музея игрока.
+function MuseumService.IsValidSlot(player: Player, slot: any): boolean
+	return type(slot) == "number" and slot == math.floor(slot) and slot >= 1 and slot <= MuseumService.SlotCount(player)
+end
+
+-- Есть ли у игрока витрина, свободная и в реестре, и в профиле.
+function MuseumService.HasFreeSlot(player: Player): boolean
+	for slot = 1, MuseumService.SlotCount(player) do
+		if not ItemRegistry.GetSlotItem(player.UserId, slot) and DataService.IsSlotFree(player, slot) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Ставит Part экспоната на витрину с поворотом rot (градусы) и помечает витрину занятой.
+function MuseumService.PlaceExhibit(part: BasePart, plot: PlotService.Plot, slot: number, rot: number)
+	local showcase = plot.showcases[slot]
 	part.Anchored = true
 	part.CFrame = showcase.CFrame
 		* CFrame.new(0, showcase.Size.Y / 2 + part.Size.Y / 2, 0)
 		* CFrame.Angles(0, math.rad(rot), 0)
-	part.Parent = parent
+	part:SetAttribute("Slot", slot)
+	part.Parent = plot.exhibits
 	showcase:SetAttribute("Occupied", true)
+end
+
+-- Убирает Part экспоната с витрины (экспонат ушёл в хранилище).
+function MuseumService.ClearShowcase(plot: PlotService.Plot, slot: number, part: BasePart?)
+	if part then
+		part:Destroy()
+	end
+	plot.showcases[slot]:SetAttribute("Occupied", false)
 end
 
 local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
@@ -103,8 +134,8 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		)
 		return
 	end
-	local part = CarryService.ReleaseForDisplay(player, uid) :: BasePart
-	placeOnShowcase(part, showcase, 0, plot.exhibits)
+	local part = CarryService.ReleaseToMuseum(player, uid) :: BasePart
+	MuseumService.PlaceExhibit(part, plot, slot, 0)
 	DataService.IncrementStat(player, "delivered")
 	DataService.RequestSave(player)
 	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
@@ -113,15 +144,9 @@ end
 function MuseumService.Init()
 	for _, plot in PlotService.GetPlots() do
 		for slot, showcase in plot.showcases do
-			local prompt = Instance.new("ProximityPrompt")
-			prompt.ActionText = "Выставить"
-			prompt.ObjectText = "Витрина " .. slot
-			prompt.HoldDuration = 0
-			prompt.MaxActivationDistance = GameConfig.Museum.DisplayDistance
-			prompt.RequiresLineOfSight = false
-			prompt.Parent = showcase
-			CollectionService:AddTag(prompt, DISPLAY_PROMPT_TAG)
-			prompt.Triggered:Connect(function(player)
+			local objectText = "Витрина " .. slot
+			local distance = GameConfig.Museum.DisplayDistance
+			Prompts.Create(showcase, "Display", objectText, distance).Triggered:Connect(function(player)
 				tryDisplay(player, plot, slot)
 			end)
 		end
@@ -160,7 +185,7 @@ function MuseumService.LoadMuseum(player: Player)
 			else
 				local part = ItemFactory.Create(record.id)
 				if ItemRegistry.Restore(uid, record.id, player.UserId, "slot", slot, part) then
-					placeOnShowcase(part, plot.showcases[slot], record.rot or 0, plot.exhibits)
+					MuseumService.PlaceExhibit(part, plot, slot, record.rot or 0)
 				else
 					part:Destroy()
 				end

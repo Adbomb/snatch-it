@@ -10,7 +10,9 @@ local Remotes = {}
 
 Remotes.Names = {
 	DropItem = "DropItem", -- клиент → сервер: «брось то, что я несу» (без аргументов)
-	Notify = "Notify", -- сервер → клиент: короткое сообщение (текст)
+	Notify = "Notify", -- сервер → клиент: короткое сообщение (текст, вид)
+	StorageChanged = "StorageChanged", -- сервер → владельцу: содержимое хранилища { {uid, itemId} }
+	DisplayFromStorage = "DisplayFromStorage", -- клиент → сервер: (uid, номер витрины)
 }
 
 function Remotes.CreateAll()

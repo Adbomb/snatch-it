@@ -12,6 +12,7 @@ local DataService = require(Server.Services.DataService)
 local ItemSpawnService = require(Server.Services.ItemSpawnService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
+local StorageService = require(Server.Services.StorageService)
 local Notify = require(Server.Util.Notify)
 local PartBuilder = require(Server.Util.PartBuilder)
 
@@ -22,6 +23,7 @@ PartBuilder.BuildPlaza(world)
 PlotService.Init(world)
 CarryService.Init()
 MuseumService.Init()
+StorageService.Init()
 ItemSpawnService.Init(world)
 
 local function onPlayerAdded(player: Player)
@@ -36,6 +38,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	MuseumService.LoadMuseum(player)
+	StorageService.Sync(player)
 	Notify.Send(
 		player,
 		("Ваш музей — участок %d (ищите табличку со своим именем)"):format(

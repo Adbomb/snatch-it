@@ -23,10 +23,10 @@ export type Entry = {
 
 type Listener = (uid: string, fromState: State, toState: State?, entry: Entry) -> ()
 
--- Полный граф переходов из DESIGN.md §1. Этап 1 реализует только OnMap, Carried, Displayed.
+-- Полный граф переходов из DESIGN.md §1. Этап 2 реализует OnMap, Carried, Displayed, Stored.
 local ALLOWED: { [State]: { [State]: boolean } } = {
 	OnMap = { Carried = true },
-	Carried = { OnMap = true, Displayed = true },
+	Carried = { OnMap = true, Displayed = true, Stored = true },
 	Displayed = { Stored = true, Lifting = true },
 	Stored = { Displayed = true },
 	Lifting = { Stolen = true, Displayed = true },
@@ -143,7 +143,8 @@ end
 -- Единая функция смены состояния. args зависят от целевого состояния:
 --   Carried   { carrier = Player }
 --   OnMap     {}
---   Displayed { owner = UserId, slot = number }
+--   Displayed { owner = UserId, slot = number, part = BasePart (только из Stored: у хранимого нет Part) }
+--   Stored    { owner = UserId } — Part экспоната удаляет вызывающий сервис
 function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: any }?): (boolean, string?)
 	local params = args or {}
 	local entry = entries[uid]
@@ -177,13 +178,41 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		if fromState == "Carried" and (entry.carrier :: Player).UserId ~= owner then
 			return refuse(uid, fromState, toState, "выставить можно только в свой музей")
 		end
+		local part = params.part
+		if fromState == "Stored" then
+			if entry.owner ~= owner then
+				return refuse(uid, fromState, toState, "предмет из чужого хранилища")
+			end
+			if typeof(part) ~= "Instance" or not part:IsA("BasePart") then
+				return refuse(uid, fromState, toState, "для витрины нужен Part")
+			end
+		end
 		if not isSlotFree(owner, slot) then
 			return refuse(uid, fromState, toState, ("витрина %d уже занята"):format(slot))
 		end
 		detach(entry)
 		occupySlot(entry, owner, slot)
+		if fromState == "Stored" then
+			entry.part = part
+			part:SetAttribute("ItemUid", uid)
+		end
+	elseif toState == "Stored" then
+		local owner = params.owner
+		if type(owner) ~= "number" then
+			return refuse(uid, fromState, toState, "не указан владелец")
+		end
+		if fromState == "Carried" and (entry.carrier :: Player).UserId ~= owner then
+			return refuse(uid, fromState, toState, "убрать можно только в своё хранилище")
+		elseif fromState == "Displayed" and entry.owner ~= owner then
+			return refuse(uid, fromState, toState, "чужой экспонат")
+		elseif fromState ~= "Carried" and fromState ~= "Displayed" then
+			return refuse(uid, fromState, toState, "переход ещё не реализован (этап 5)")
+		end
+		detach(entry)
+		entry.owner = owner
+		entry.part = nil
 	else
-		return refuse(uid, fromState, toState, "переход ещё не реализован (этап 1)")
+		return refuse(uid, fromState, toState, "переход ещё не реализован")
 	end
 
 	entry.state = toState
@@ -250,6 +279,17 @@ function ItemRegistry.GetOwnedBy(owner: number): { string }
 		end
 	end
 	return result
+end
+
+-- Сколько экземпляров лежит в хранилище владельца.
+function ItemRegistry.CountStored(owner: number): number
+	local count = 0
+	for _, entry in entries do
+		if entry.owner == owner and entry.state == "Stored" then
+			count += 1
+		end
+	end
+	return count
 end
 
 -- Сколько экземпляров этой редкости лежит на карте или в руках (D11: лимит Legendary).

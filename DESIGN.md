@@ -27,10 +27,11 @@
 ## 1. Состояния экземпляра предмета
 
 ```
-OnMap ──pickup──▶ Carried(by) ──display──▶ Displayed(owner, slot) ◀──swap──▶ Stored(owner)
-  ▲                  │drop/leave                │
-  └──────────────────┘                          │ (только Судная ночь)
-                                                ▼
+OnMap ──pickup──▶ Carried(by) ──display──▶ Displayed(owner, slot) ◀──store / display──▶ Stored(owner)
+  ▲                  │      │                     │                                     ▲
+  └──drop/leave──────┘      └──chest (все витрины заняты)──────────────────────────────────┘
+                                                  │ (только Судная ночь)
+                                                  ▼
                          Lifting(thief) ──done──▶ Stolen(thief, from) ──deliver──▶ Displayed/Stored(thief)
                               │cancel                 │drop / end / leave / tackle
                               ▼                       ▼
@@ -40,6 +41,7 @@ OnMap ──pickup──▶ Carried(by) ──display──▶ Displayed(owner, 
 - Каждый экземпляр имеет `uid` = `HttpService:GenerateGUID(false)`, выдаётся при появлении на карте.
 - Сервер держит одну таблицу `ItemRegistry[uid] = {state, ...}`. Любой переход — одна функция, которая проверяет текущее состояние. Невозможный переход = отказ + лог.
 - Только состояния `Displayed` и `Stored` попадают в сохранение.
+- **Хранилище (этап 2):** `Carried → Stored` — сундук «В хранилище», только когда все витрины заняты; `Displayed → Stored` — «В хранилище» на своём экспонате; `Stored → Displayed` — «Выставить из хранилища» на свою пустую витрину. Вместимость — `GameConfig.Museum.StorageCapacity`. Порядок как в правке 1.1: проверки → запись профиля (`DataService`) → переход в `ItemRegistry`; отказ реестра откатывает запись. Реестр в профиль не пишет.
 
 ## 2. Схема сохранения (Profile v1)
 

@@ -216,20 +216,20 @@ function CarryService.Drop(player: Player)
 	end
 end
 
--- Вызывается после перехода Carried → Displayed: снимает предмет с персонажа и убирает «Поднять» (D2).
-function CarryService.ReleaseForDisplay(player: Player, uid: string): BasePart?
+-- Вызывается после перехода Carried → Displayed или Carried → Stored: снимает предмет с персонажа
+-- и убирает «Поднять» (D2). Возвращает Part (для Stored его удаляет вызывающий).
+function CarryService.ReleaseToMuseum(player: Player, uid: string): BasePart?
 	local hold = holds[player]
 	if not hold or hold.uid ~= uid then
 		return nil
 	end
+	local part = hold.weld.Part1
 	releaseHold(player)
 	local prompt = prompts[uid]
 	prompts[uid] = nil
 	if prompt then
 		prompt:Destroy()
 	end
-	local entry = ItemRegistry.Get(uid)
-	local part = entry and entry.part
 	if part then
 		part.Anchored = true
 		setCarryPhysics(part, false)

@@ -16,6 +16,7 @@ export type Plot = {
 	showcases: { [number]: BasePart },
 	exhibits: Folder,
 	signLabel: TextLabel,
+	chest: BasePart,
 }
 
 local FREE_SIGN_TEXT = "Свободный участок"
@@ -41,6 +42,7 @@ function PlotService.Init(world: Folder)
 			showcases = parts.showcases,
 			exhibits = parts.exhibits,
 			signLabel = parts.signLabel,
+			chest = parts.chest,
 		}
 	end
 end
