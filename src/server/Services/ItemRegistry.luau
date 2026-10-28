@@ -252,4 +252,15 @@ function ItemRegistry.GetOwnedBy(owner: number): { string }
 	return result
 end
 
+-- Сколько экземпляров этой редкости лежит на карте или в руках (D11: лимит Legendary).
+function ItemRegistry.CountLoose(rarity: string): number
+	local count = 0
+	for _, entry in entries do
+		if (entry.state == "OnMap" or entry.state == "Carried") and Items[entry.itemId].rarity == rarity then
+			count += 1
+		end
+	end
+	return count
+end
+
 return ItemRegistry
