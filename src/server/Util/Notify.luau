@@ -1,5 +1,5 @@
 -- Короткие сообщения игроку («Это чужой музей», «Руки заняты»).
--- Отправляет текст через RemoteEvent Notify. Зависит от Shared/Remotes.
+-- Отправляет текст и вид уведомления через RemoteEvent Notify. Зависит от Shared/Remotes.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -7,8 +7,9 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 local Notify = {}
 
-function Notify.Send(player: Player, text: string)
-	Remotes.Get(Remotes.Names.Notify):FireClient(player, text)
+-- kind — цвет уведомления на клиенте: "Info" (по умолчанию), "Stop" (отказ), "Go" (успех).
+function Notify.Send(player: Player, text: string, kind: string?)
+	Remotes.Get(Remotes.Names.Notify):FireClient(player, text, kind or "Info")
 end
 
 return Notify

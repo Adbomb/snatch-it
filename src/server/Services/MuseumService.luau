@@ -42,7 +42,7 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		return
 	end
 	if plot.owner ~= player then
-		Notify.Send(player, "Это чужой музей")
+		Notify.Send(player, "Это чужой музей", "Stop")
 		return
 	end
 	local data = DataService.GetData(player)
@@ -59,11 +59,11 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	end
 	local uid = ItemRegistry.GetCarriedBy(player)
 	if not uid then
-		Notify.Send(player, "Сначала принесите предмет")
+		Notify.Send(player, "Сначала принесите предмет", "Stop")
 		return
 	end
 	if ItemRegistry.GetSlotItem(player.UserId, slot) or not DataService.IsSlotFree(player, slot) then
-		Notify.Send(player, "Эта витрина уже занята")
+		Notify.Send(player, "Эта витрина уже занята", "Stop")
 		return
 	end
 	if DataService.HasItem(player, uid) then
@@ -89,7 +89,8 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	if not recorded then
 		Notify.Send(
 			player,
-			"Не удалось сохранить экспонат — предмет остаётся у вас в руках"
+			"Не удалось сохранить экспонат — предмет остаётся у вас в руках",
+			"Stop"
 		)
 		return
 	end
@@ -97,7 +98,8 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		DataService.RemoveItem(player, uid)
 		Notify.Send(
 			player,
-			"Не удалось выставить предмет — он остаётся у вас в руках"
+			"Не удалось выставить предмет — он остаётся у вас в руках",
+			"Stop"
 		)
 		return
 	end
@@ -105,7 +107,7 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	placeOnShowcase(part, showcase, 0, plot.exhibits)
 	DataService.IncrementStat(player, "delivered")
 	DataService.RequestSave(player)
-	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot))
+	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
 end
 
 function MuseumService.Init()

@@ -83,7 +83,7 @@ local function tryPickup(player: Player, uid: string)
 		return
 	end
 	if ItemRegistry.GetCarriedBy(player) then
-		Notify.Send(player, "Руки заняты — сначала бросьте предмет (G)")
+		Notify.Send(player, "Руки заняты — сначала бросьте предмет (G)", "Stop")
 		return
 	end
 	local part = entry.part
