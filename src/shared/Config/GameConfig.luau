@@ -70,6 +70,27 @@ GameConfig.Spawn = {
 	FarGroundRadius = 140,
 }
 
+-- Презентация экспоната после размещения (UI_KIT.md). 0 — только уведомление.
+GameConfig.Presentation = {
+	Duration = { Common = 0, Uncommon = 0, Rare = 1.5, Legendary = 3, Secret = 4 }, -- секунды
+	ViewerRadius = 60, -- другие игроки в этом радиусе видят прожектор и название
+	LightHeight = 10, -- прожектор над верхом витрины, стадов
+	LightRange = 18,
+	LightAngle = 40,
+	LightBrightness = 6,
+	LiftHeight = 1.5, -- подъём экспоната у владельца, стадов
+	SpinTurns = 1, -- оборотов за презентацию
+	TitleHeight = 3, -- название над верхом экспоната, стадов
+	TitleSize = UDim2.fromOffset(320, 110),
+	TitleMaxDistance = 120,
+}
+
+-- Звуки. Пустая строка — звук не играет. Asset id выбирает дизайнер, сюда вписывает его.
+GameConfig.Sounds = {
+	Presentation = { Rare = "", Legendary = "", Secret = "" }, -- презентация экспоната по редкости
+	Place = "", -- любое выставление (и Common)
+}
+
 -- Запас к дистанции на сервере: позиция игрока на сервере слегка отстаёт от клиента.
 GameConfig.DistanceTolerance = 4
 

@@ -252,6 +252,7 @@ local function tryDisplayFromStorage(player: Player, uid: any, slot: any)
 	DataService.RequestSave(player)
 	StorageService.Sync(player)
 	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
+	MuseumService.Present(player, plot, slot, entry.itemId)
 end
 
 function StorageService.Init()

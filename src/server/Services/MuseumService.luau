@@ -3,6 +3,7 @@
 -- но каждый обработчик на сервере сам проверяет владельца, состояние и расстояние.
 -- Зависит от ItemRegistry, CarryService, DataService, PlotService, Util/*, Config.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -16,6 +17,7 @@ local ItemFactory = require(ServerScriptService.Server.Util.ItemFactory)
 local Log = require(ServerScriptService.Server.Util.Log)
 local Notify = require(ServerScriptService.Server.Util.Notify)
 local Prompts = require(ServerScriptService.Server.Util.Prompts)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
 local Validate = require(ServerScriptService.Server.Util.Validate)
 
@@ -64,6 +66,24 @@ function MuseumService.PlaceExhibit(part: BasePart, plot: PlotService.Plot, slot
 	part:SetAttribute("Slot", slot)
 	part.Parent = plot.exhibits
 	showcase:SetAttribute("Occupied", true)
+end
+
+-- Презентация после успешного размещения: событие владельцу и игрокам в радиусе ViewerRadius.
+-- Редкость и длительность клиент берёт из конфига; plot нужен, чтобы зрители нашли витрину.
+function MuseumService.Present(player: Player, plot: PlotService.Plot, slot: number, itemId: string)
+	local remote = Remotes.Get(Remotes.Names.ExhibitPlaced)
+	local payload = { itemId = itemId, slot = slot, plot = plot.index }
+	local position = plot.showcases[slot].Position
+	for _, other in Players:GetPlayers() do
+		if other == player then
+			remote:FireClient(other, payload)
+		else
+			local root = Validate.GetLiveRoot(other)
+			if root and (root.Position - position).Magnitude <= GameConfig.Presentation.ViewerRadius then
+				remote:FireClient(other, payload)
+			end
+		end
+	end
 end
 
 -- Убирает Part экспоната с витрины (экспонат ушёл в хранилище).
@@ -145,6 +165,7 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	DataService.IncrementStat(player, "delivered")
 	DataService.RequestSave(player)
 	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
+	MuseumService.Present(player, plot, slot, entry.itemId)
 end
 
 -- Сброс выбора «Переставить». Атрибут MoveSlot видит клиент (подсветка и «Сюда»), сервер на него не смотрит.

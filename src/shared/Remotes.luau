@@ -13,6 +13,7 @@ Remotes.Names = {
 	Notify = "Notify", -- сервер → клиент: короткое сообщение (текст, вид)
 	StorageChanged = "StorageChanged", -- сервер → владельцу: содержимое хранилища { {uid, itemId} }
 	DisplayFromStorage = "DisplayFromStorage", -- клиент → сервер: (uid, номер витрины)
+	ExhibitPlaced = "ExhibitPlaced", -- сервер → владельцу и игрокам рядом: { itemId, slot, plot }
 }
 
 function Remotes.CreateAll()
