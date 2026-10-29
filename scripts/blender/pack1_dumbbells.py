@@ -41,19 +41,19 @@ def one(role, color):
     return lambda i, j: (role, color)
 
 
-def bar(m, color, end_color=None):
-    """Квадратный толстый гриф насквозь через диски; торцы выступают за диски."""
-    m.box("Body", (0, 0, 0), (2 * END_X, BAR, BAR), color, bevel=0.3)
+def bar(m, color, end_color=None, end=END_X):
+    """Квадратный толстый гриф насквозь через диски; торцы (end) выступают за диски."""
+    m.box("Body", (0, 0, 0), (2 * end, BAR, BAR), color, bevel=0.3)
     if end_color:
         for s in (-1, 1):
-            m.box("Body", (s * (END_X + 0.3), 0, 0), (0.6, BAR - 0.8, BAR - 0.8), end_color, bevel=0.15)
+            m.box("Body", (s * (end + 0.3), 0, 0), (0.6, BAR - 0.8, BAR - 0.8), end_color, bevel=0.15)
 
 
-def ridges(m, role, color, count=3, width=0.7):
+def ridges(m, role, color, count=3, width=0.7, bevel=0.14):
     """Рифление рукояти: выпуклые полосы."""
     step = 2 * GRIP / (count + 1)
     for k in range(count):
-        m.box(role, (-GRIP + step * (k + 1), 0, 0), (width, BAR + 0.4, BAR + 0.4), color, bevel=0.14)
+        m.box(role, (-GRIP + step * (k + 1), 0, 0), (width, BAR + 0.4, BAR + 0.4), color, bevel=bevel)
 
 
 def discs(m, cells, paint, back_groove=False, lift=None, x=DISC_X, depth=DISC_D, cell=CELL):
@@ -91,11 +91,11 @@ def silver(m):
     discs(m, pixel_circle(7, windows), paint, back_groove=True)
 
 
-def gem(m, surface, normal, size=0.9, color="neongreen"):
+def gem(m, surface, normal, size=0.9, color="neongreen", role="Glow"):
     """Квадратный неоновый камень-пирамидка, вставленный в кубик: основание на поверхности, остриё наружу."""
     h = size * 0.5
     center = tuple(surface[k] + normal[k] * (h / 2 - 0.05) for k in range(3))
-    m.cylinder("Glow", center, size * 0.71, h, color, segments=4, radius2=size * 0.33, rotation=align(normal, 45),
+    m.cylinder(role, center, size * 0.71, h, color, segments=4, radius2=size * 0.33, rotation=align(normal, 45),
                bevel=0)
 
 
@@ -167,7 +167,235 @@ def neon(m):
     return {"lights": [{"position": list(p), "color": green, "range": 14, "brightness": 2} for p in lights]}
 
 
-BUILDERS = {1: ("Деревянная", wooden), 5: ("Серебряная", silver), 9: ("Неоновая", neon)}
+def basis(direction):
+    """Ось direction и два перпендикуляра к ней."""
+    d = Vector(direction).normalized()
+    ref = Vector((1, 0, 0)) if abs(d.x) < 0.9 else Vector((0, 1, 0))
+    e1 = d.cross(ref).normalized()
+    return d, e1, d.cross(e1)
+
+
+def lights(color, points, brightness=2, light_range=14):
+    """Места ламп (в игре — PointLight без теней): свет неона и кристаллов ложится на кубики."""
+    code = lego.PALETTE.get(color, color)
+    return {"lights": [{"position": list(p), "color": code, "range": light_range, "brightness": brightness}
+                       for p in points]}
+
+
+def disc_lights(color, x=DISC_X):
+    return lights(color, [(s * x, 1.0, sz * 6.5) for s in (-1, 1) for sz in (-1, 1)])
+
+
+def prism(m, role, polygon, x0, x1, color, bevel=0.18):
+    """Призма с фаской: многоугольник в плоскости y–z (точки (y, z)) от x0 до x1."""
+    m.hull(role, [(x, y, z) for x in (x0, x1) for y, z in polygon], color, bevel)
+
+
+def bolt(m, center, normal, color="black"):
+    """Болт: шестигранная головка."""
+    m.cylinder("Body", center, 0.42, 0.4, color, segments=6, rotation=align(normal), bevel=0)
+
+
+def crystal_prism(m, base, direction, length, radius, color="emerald"):
+    """Кристалл: шестигранный столбик с острой верхушкой, одна стеклянная оболочка (без внутренних граней)."""
+    d, e1, e2 = basis(direction)
+    b = Vector(base)
+    ring = [(e1 * math.cos(math.radians(60 * k)) + e2 * math.sin(math.radians(60 * k))) * radius for k in range(6)]
+    points = [b + r for r in ring] + [b + d * length * 0.68 + r for r in ring] + [b + d * length]
+    m.hull("Glass", [tuple(p) for p in points], color)
+
+
+def star(m, center, normal, size=1.0, color="star"):
+    """Четырёхлучевая звезда-вставка (неон): два скрещённых ромба."""
+    n, e1, e2 = basis(normal)
+    c = Vector(center)
+    for a, b in ((e1, e2), (e2, e1)):
+        points = [c + a * size, c - a * size, c + b * size * 0.28, c - b * size * 0.28, c + n * 0.3, c - n * 0.1]
+        m.hull("Glow", [tuple(p) for p in points], color)
+
+
+def stone(m):
+    """2 Каменная: диски из грубых глыб — неровные, со сколами: выбитые кубики по краю, торчащие обломки."""
+    bar(m, "darkrock")
+    for x, tilt in ((-1.7, -9), (1.7, 11)):  # каменная перевязь — рифление рукояти
+        m.box("Body", (x, 0, 0), (1.1, BAR + 0.5, BAR + 0.5), "rock", rotation=rot(z=tilt), bevel=0.2)
+
+    def paint(i, j):
+        n = noise(i, j, 11)
+        return ("Body", "darkrock" if n < 0.3 else "stone" if n > 0.82 else "rock")
+
+    def lift(i, j):
+        return (noise(i, j, 12) - 0.25) * 0.5  # грубая поверхность: глыбы разной высоты
+
+    chips = {1: ((3, 1), (-1, -3), (2, 2)), -1: ((-3, -1), (1, 3), (-2, -2), (3, 0))}
+    for s in (-1, 1):
+        m.voxel_plate((s * DISC_X, 0, 0), pixel_circle(7, chips[s]), CELL, DISC_D, paint, normal=(s, 0, 0),
+                      back_groove=True, lift=lift)
+        for k, a in enumerate((35, 150, 255)):  # обломки торчат из края
+            r = math.radians(a + 20 * s)
+            m.box("Body", (s * (DISC_X + 0.3 * k - 0.3), 4.7 * math.cos(r), 4.7 * math.sin(r)), (1.6, 1.5, 1.7),
+                  "darkrock" if k % 2 else "rock", rotation=rot(x=a + 17, y=14 * s, z=22), bevel=0.22)
+        m.box("Body", (s * (END_X + 0.35), 0, 0), (0.7, 2.6, 2.4), "rock", rotation=rot(x=8 * s), bevel=0.2)
+
+
+def iron(m):
+    """3 Железная: по два диска разного размера (большой и малый), болты на торцах, рифлёная рукоять."""
+    c = CELL
+    big, small = 2.2, 1.6
+    xb, xs, face = GRIP + big / 2, GRIP + big + small / 2, GRIP + big + small
+    bar(m, "steel", end=face + 0.7)
+    ridges(m, "Body", "iron")
+
+    def paint(i, j):
+        return ("Body", "steel" if noise(i, j, 21) < 0.2 else "iron")
+
+    for s in (-1, 1):
+        m.voxel_plate((s * xb, 0, 0), pixel_circle(7), c, big, paint, normal=(s, 0, 0))
+        m.voxel_plate((s * xs, 0, 0), pixel_circle(5), c, small, one("Body", "steel"), normal=(s, 0, 0))
+        for i, j in ((1, 1), (-1, 1), (1, -1), (-1, -1)):  # болты на малом диске
+            bolt(m, (s * (face + 0.15), j * c, i * c), (s, 0, 0))
+        for i, j in ((3, 0), (-3, 0), (0, 3), (0, -3)):  # и на открытом кольце большого
+            bolt(m, (s * (GRIP + big + 0.15), j * c, i * c), (s, 0, 0))
+        m.box("Body", (s * (face + 1.0), 0, 0), (0.6, 2.4, 2.4), "black", bevel=0.15)
+        bolt(m, (s * (face + 1.45), 0, 0), (s, 0, 0), "steel")
+
+
+def bronze(m):
+    """4 Бронзовая: три диска лесенкой (большой → средний → малый) и кольцо-замок с защёлкой на конце грифа."""
+    d1, d2, d3 = 2.0, 1.5, 1.3
+    x1, x2, x3 = GRIP + d1 / 2, GRIP + d1 + d2 / 2, GRIP + d1 + d2 + d3 / 2
+    lock = GRIP + d1 + d2 + d3 + 0.6
+    bar(m, "darkbronze", end=lock + 0.9)
+    ridges(m, "Body", "bronze", count=2, bevel=0)
+
+    def paint(i, j):
+        return ("Body", "darkbronze" if noise(i, j, 31) < 0.18 else "bronze")
+
+    block = {(i, j) for i in (-1, 0, 1) for j in (-1, 0, 1)}
+    for s in (-1, 1):
+        m.voxel_plate((s * x1, 0, 0), pixel_circle(7), CELL, d1, paint, normal=(s, 0, 0))
+        m.voxel_plate((s * x2, 0, 0), pixel_circle(5), CELL, d2, paint, normal=(s, 0, 0))
+        m.voxel_plate((s * x3, 0, 0), block, CELL, d3, paint, normal=(s, 0, 0))
+        # Кольцо-замок: восьмигранная обойма на грифе и защёлка сверху.
+        m.cylinder("Body", (s * lock, 0, 0), BAR * 0.78, 1.0, "darkbronze", axis="x", segments=8, bevel=0.1)
+        m.box("Body", (s * lock, BAR * 0.78 + 0.3, 0), (0.7, 0.9, 1.4), "bronze", bevel=0.15)
+
+
+def golden(m):
+    """6 Золотая: шестигранные диски из блоков-сегментов (швы видны), приподнятый кант тёмного золота, рубины."""
+    bar(m, "gold", end_color="darkgold")
+    ridges(m, "Body", "darkgold")
+    r_hub, r_mid, r_out = 2.6, 3.9, 5.5
+
+    def at(r, a):
+        return (r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
+
+    face = GRIP + DISC_D
+    for s in (-1, 1):
+        prism(m, "Body", [at(r_hub, 60 * k + 30) for k in range(6)], s * GRIP, s * (face + 0.3), "darkgold")
+        prism(m, "Body", [at(r_out + 0.25, 60 * k + 30) for k in range(6)], s * GRIP, s * (GRIP + 0.5), "darkgold")
+        for k in range(6):
+            a0, a1 = 60 * k + 31.2, 60 * k + 88.8  # узкий зазор между сегментами — шов
+            prism(m, "Body", [at(r_hub + 0.05, a0), at(r_hub + 0.05, a1), at(r_mid, a1), at(r_mid, a0)],
+                  s * (GRIP + 0.5), s * face, "gold")
+            prism(m, "Body", [at(r_mid + 0.05, a0), at(r_mid + 0.05, a1), at(r_out, a1), at(r_out, a0)],
+                  s * (GRIP + 0.5), s * (face + 0.35), "darkgold")  # кант выше лица
+            y, z = at((r_mid + r_out) / 2, 60 * k + 60)
+            gem(m, (s * (face + 0.35), y, z), (s, 0, 0), size=0.9, color="ruby", role="Glass")
+
+
+def emerald(m):
+    """7 Изумрудная: тёмно-изумрудные диски из кубиков с неоновыми вставками; из края и с торцов торчат кристаллы."""
+    bar(m, "deepemerald", end_color="gold")
+    ridges(m, "Body", "gold")
+    inlays = {(0, 2), (0, -2), (2, 0), (-2, 0), (2, 2), (-2, 2), (2, -2), (-2, -2)}
+
+    def paint(i, j):
+        if (i, j) in inlays:
+            return ("Glow", "neongreen")  # неоновые вставки кольцом
+        return ("Body", "darkemerald" if noise(i, j, 51) < 0.35 else "deepemerald")
+
+    for s in (-1, 1):
+        m.voxel_plate((s * DISC_X, 0, 0), pixel_circle(7), CELL, DISC_D, paint, normal=(s, 0, 0))
+        for k in range(8):  # кристаллы торчат из края, чуть наружу
+            a = math.radians(45 * k + 20)
+            tilt = math.radians(18)
+            d = (s * math.sin(tilt), math.cos(tilt) * math.cos(a), math.cos(tilt) * math.sin(a))
+            long = k % 2 == 0
+            crystal_prism(m, (s * DISC_X, 3.9 * math.cos(a), 3.9 * math.sin(a)), d, 4.4 if long else 3.0,
+                          0.8 if long else 0.6)
+        for d, length in (((s, 0.35, 0.2), 3.2), ((s, -0.3, -0.35), 2.4)):  # друза на торце
+            crystal_prism(m, (s * (END_X + 0.2), 0, 0), d, length, 0.7)
+    return disc_lights("neongreen")
+
+
+def diamond(m):
+    """8 Алмазная: диски — огранённые стеклянные кристаллы с неоновым ядром в серебряной оправе с лапками."""
+    ridges(m, "Body", "steel")
+    mount = 1.2
+    g0 = GRIP + mount  # начало кристалла
+    pav, gird, crown = 0.9, 1.0, 1.4
+    top = g0 + pav + gird + crown
+    bar(m, "silver", end=top + 0.5)
+
+    def ring(r, x, offset):
+        return [(x, r * math.cos(math.radians(30 * k + offset)), r * math.sin(math.radians(30 * k + offset)))
+                for k in range(12)]
+
+    for s in (-1, 1):
+        m.voxel_plate((s * (GRIP + mount / 2), 0, 0), pixel_circle(5), CELL, mount, one("Body", "silver"),
+                      normal=(s, 0, 0))
+        facets = ring(3.6, s * g0, 15) + ring(5.2, s * (g0 + pav), 0) + ring(5.2, s * (g0 + pav + gird), 0)
+        m.hull("Glass", facets + ring(3.3, s * top, 15), "diamond")
+        m.cylinder("Glow", (s * (g0 + pav + gird / 2), 0, 0), 2.3, pav + gird + 0.6, "neoncyan", axis="x",
+                   segments=8, bevel=0)  # неоновое ядро внутри
+        for k in range(6):  # лапки оправы держат кристалл за пояс
+            a = 60 * k
+            r = math.radians(a)
+            m.box("Body", (s * (g0 + 0.7), 5.35 * math.cos(r), 5.35 * math.sin(r)), (2.4, 0.55, 0.7), "silver",
+                  rotation=rot(x=a), bevel=0.12)
+        m.box("Body", (s * (top + 0.75), 0, 0), (0.5, 2.0, 2.0), "steel", bevel=0.12)
+        tip = s * (top + 1.0)
+        m.hull("Glass", ring(1.0, tip, 0) + [(tip + s * 1.2, 0, 0)], "diamond")
+    return disc_lights("neoncyan", x=GRIP + mount + pav + gird / 2)
+
+
+def cosmic(m):
+    """10 Космическая: тёмно-фиолетовые диски из кубиков со звёздными вставками, неоновые кольца-орбиты вокруг дисков."""
+    bar(m, "cosmicdark", end_color="cosmicmid")
+    ridges(m, "Glow", "violet", width=0.55)
+    stars = {(2, 1), (-1, 2), (-2, -2), (1, -3), (3, -1)}
+
+    def paint(i, j):
+        if (i, j) in stars:
+            return ("Glow", "star")  # звёзды-вставки в кубиках
+        return ("Body", "cosmicmid" if noise(i, j, 41) < 0.3 else "cosmicdark")
+
+    face = DISC_X + DISC_D / 2
+    for s in (-1, 1):
+        m.voxel_plate((s * DISC_X, 0, 0), pixel_circle(7), CELL, DISC_D, paint, normal=(s, 0, 0))
+        # Кольца-орбиты: соосное фиолетовое и наклонное голубое.
+        m.torus("Glow", (s * DISC_X, 0, 0), 6.3, 0.3, "violet", axis="x", segments=24, minor_segments=4)
+        m.torus("Glow", (s * DISC_X, 0, 0), 6.9, 0.25, "neoncyan", axis="x", segments=24, minor_segments=4,
+                rotation=rot(y=25 * s, z=15))
+        for y, z, size in ((3.2, 2.6, 0.9), (-2.4, -3.4, 0.7), (1.0, -3.9, 0.6)):  # звёзды на лице
+            star(m, (s * (face + 0.05), y, z), (s, 0, 0), size)
+        star(m, (s * (END_X + 0.65), 0, 0), (s, 0, 0), 1.1)
+    return disc_lights("violet")
+
+
+BUILDERS = {
+    1: ("Деревянная", wooden),
+    2: ("Каменная", stone),
+    3: ("Железная", iron),
+    4: ("Бронзовая", bronze),
+    5: ("Серебряная", silver),
+    6: ("Золотая", golden),
+    7: ("Изумрудная", emerald),
+    8: ("Алмазная", diamond),
+    9: ("Неоновая", neon),
+    10: ("Космическая", cosmic),
+}
 
 
 # ================================================================ сборка
@@ -176,15 +404,23 @@ collection = bpy.context.scene.collection
 layout = {}
 objects = []
 LIFT = 5.8  # в превью гантель висит над полем, как на референсе
-SPACING = 20
+SPACING = 22
+
+
+def spot(k):
+    """Место k-й гантели в превью: два ряда по пять."""
+    return ((k % 5) * SPACING, LIFT, -(k // 5) * 30)
+
+
 for k, index in enumerate(INDICES):
     title, builder = BUILDERS[index]
     m = Model(f"Dumbbell{index:02d}")
     extras = builder(m) or {}
-    roles = m.build(collection, (k * SPACING, LIFT, 0))
+    roles = m.build(collection, spot(k))
     total = sum(r["triangles"] for r in roles.values())
     layout[m.name] = {"title": title, "roles": roles, "triangles": total, **extras}
-    print(f"DUMBBELL {m.name} parts={len(roles)} triangles={total} budget={BUDGET}")
+    detail = ", ".join(f"{r}={v['triangles']}" for r, v in roles.items())
+    print(f"DUMBBELL {m.name} parts={len(roles)} triangles={total} budget={BUDGET} ({detail})")
     objects += [o for o in collection.objects if o.name.startswith(m.name + "_")]
 
 if sorted(INDICES) == list(range(1, 11)):
@@ -200,7 +436,8 @@ ground_obj = [o for o in collection.objects if o.name.startswith("Ground_")]
 lego.preview_materials(objects + ground_obj, os.path.join(REPO, "assets", "textures", "lego_studs_color.png"))
 lego.setup_render(1000)
 scene = bpy.context.scene
-# Лампы неона (в игре — PointLight без теней): зелёный свет ложится на кубики.
+# Лампы неона (в игре — PointLight без теней): свет ложится на кубики. На крупном плане — только свои.
+lamps = {}
 for k, index in enumerate(INDICES):
     for light in layout[f"Dumbbell{index:02d}"].get("lights", []):
         x, y, z = light["position"]
@@ -209,15 +446,24 @@ for k, index in enumerate(INDICES):
         data.energy = 35 * light["brightness"] * light["range"]
         data.use_shadow = False
         obj = bpy.data.objects.new("NeonLight", data)
-        obj.location = lego.to_blender((x + k * SPACING, y + LIFT, z))
+        ox, oy, oz = spot(k)
+        obj.location = lego.to_blender((x + ox, y + oy, z + oz))
         collection.objects.link(obj)
+        lamps.setdefault(k, []).append(obj)
 for k, index in enumerate(INDICES):
     name = f"Dumbbell{index:02d}"
     vis = [o for o in objects if o.name.startswith(name + "_")] + ground_obj
-    ox = k * SPACING
-    lego.render(os.path.join(PREVIEWS, f"{name}.png"), (ox - 2, LIFT + 3.5, 17), (ox, LIFT - 0.3, 0), vis, lens=22)
-mid = (len(INDICES) - 1) * SPACING / 2
-scene.render.resolution_x, scene.render.resolution_y = 1500, 700
-lego.render(os.path.join(PREVIEWS, "Dumbbells_row.png"), (mid - 20, LIFT + 17, 66), (mid, LIFT - 1.5, 0),
-            objects + ground_obj, lens=40)
+    for other, objs in lamps.items():
+        for obj in objs:
+            obj.hide_render = other != k
+    ox, oy, oz = spot(k)
+    lego.render(os.path.join(PREVIEWS, f"{name}.png"), (ox - 17, oy + 7.5, oz + 16), (ox, oy - 0.6, oz), vis, lens=36)
+for objs in lamps.values():
+    for obj in objs:
+        obj.hide_render = False
+mid = (min(len(INDICES), 5) - 1) * SPACING / 2
+back = -(len(INDICES) - 1) // 5 * 30 / 2
+scene.render.resolution_x, scene.render.resolution_y = 1800, 1000
+lego.render(os.path.join(PREVIEWS, "Dumbbells_row.png"), (mid - 10, LIFT + 40, back + 80), (mid, LIFT - 3, back),
+            objects + ground_obj, lens=30)
 print("DUMBBELLS_OK")

@@ -1,0 +1,822 @@
+{
+ "Dumbbell01": {
+  "title": "Деревянная",
+  "roles": {
+   "darkwood": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     7.25,
+     4.35
+    ],
+    "color": "6B4423",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 192
+   },
+   "wood": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     10.15,
+     10.15
+    ],
+    "color": "A0682F",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 748
+   },
+   "rope": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     7.263,
+     3.928,
+     3.96
+    ],
+    "color": "C9A86A",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 308
+   },
+   "lightwood": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     15.088,
+     7.25,
+     10.15
+    ],
+    "color": "C8945A",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 476
+   }
+  },
+  "triangles": 1724
+ },
+ "Dumbbell02": {
+  "title": "Каменная",
+  "roles": {
+   "darkrock": {
+    "center": [
+     0.0,
+     -0.292,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     10.735,
+     10.15
+    ],
+    "color": "5F5B57",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 628
+   },
+   "rock": {
+    "center": [
+     0.0,
+     0.285,
+     -0.288
+    ],
+    "size": [
+     17.8,
+     10.721,
+     10.726
+    ],
+    "color": "8F8A84",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1706
+   },
+   "stone": {
+    "center": [
+     0.032,
+     0.0,
+     -0.725
+    ],
+    "size": [
+     14.945,
+     4.35,
+     8.7
+    ],
+    "color": "B9B3A6",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 166
+   }
+  },
+  "triangles": 2500
+ },
+ "Dumbbell03": {
+  "title": "Железная",
+  "roles": {
+   "steel": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     19.7,
+     7.25,
+     10.15
+    ],
+    "color": "4A525E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1100
+   },
+   "iron": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     13.2,
+     10.15,
+     10.15
+    ],
+    "color": "7D8794",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1124
+   },
+   "black": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     19.0,
+     9.427,
+     9.54
+    ],
+    "color": "23252B",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 408
+   }
+  },
+  "triangles": 2632
+ },
+ "Dumbbell04": {
+  "title": "Бронзовая",
+  "roles": {
+   "darkbronze": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     21.4,
+     10.15,
+     10.15
+    ],
+    "color": "8C5320",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1088
+   },
+   "bronze": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     20.3,
+     10.15,
+     10.15
+    ],
+    "color": "C67A35",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1728
+   }
+  },
+  "triangles": 2816
+ },
+ "Dumbbell05": {
+  "title": "Серебряная",
+  "roles": {
+   "steel": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     3.6,
+     3.6
+    ],
+    "color": "4A525E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 108
+   },
+   "silver": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     10.15,
+     10.15
+    ],
+    "color": "D7DDE4",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 2068
+   },
+   "iron": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     14.8,
+     4.35,
+     4.65
+    ],
+    "color": "7D8794",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 464
+   }
+  },
+  "triangles": 2640
+ },
+ "Dumbbell06": {
+  "title": "Золотая",
+  "roles": {
+   "gold": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     6.835,
+     7.618
+    ],
+    "color": "F2B51E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 636
+   },
+   "darkgold": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     9.959,
+     11.32
+    ],
+    "color": "B8860B",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1020
+   },
+   "Glass_ruby": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.3,
+     10.304,
+     9.044
+    ],
+    "color": "E0115F",
+    "decor": false,
+    "material": "Glass",
+    "triangles": 144
+   }
+  },
+  "triangles": 1800
+ },
+ "Dumbbell07": {
+  "title": "Изумрудная",
+  "roles": {
+   "deepemerald": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     10.15,
+     10.15
+    ],
+    "color": "0B5C33",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 796
+   },
+   "gold": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     4.0,
+     4.0
+    ],
+    "color": "F2B51E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 220
+   },
+   "darkemerald": {
+    "center": [
+     0.0,
+     -0.725,
+     -0.0
+    ],
+    "size": [
+     14.8,
+     8.7,
+     10.15
+    ],
+    "color": "138A4C",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 292
+   },
+   "Glow_neongreen": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     14.8,
+     7.25,
+     7.55
+    ],
+    "color": "39FF6A",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 328
+   },
+   "Glass_emerald": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     22.736,
+     15.194,
+     15.194
+    ],
+    "color": "2ECC71",
+    "decor": false,
+    "material": "Glass",
+    "triangles": 440
+   }
+  },
+  "triangles": 2076,
+  "lights": [
+   {
+    "position": [
+     -5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     -5.9,
+     1.0,
+     6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   }
+  ]
+ },
+ "Dumbbell08": {
+  "title": "Алмазная",
+  "roles": {
+   "steel": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     19.8,
+     4.0,
+     4.0
+    ],
+    "color": "4A525E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 220
+   },
+   "silver": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     18.8,
+     11.25,
+     9.973
+    ],
+    "color": "D7DDE4",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1368
+   },
+   "Glass_diamond": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     22.2,
+     10.4,
+     10.4
+    ],
+    "color": "BFF3FF",
+    "decor": false,
+    "material": "Glass",
+    "triangles": 228
+   },
+   "Glow_neoncyan": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.5,
+     4.6,
+     4.6
+    ],
+    "color": "2CF6FF",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 56
+   }
+  },
+  "triangles": 1872,
+  "lights": [
+   {
+    "position": [
+     -7.000000000000001,
+     1.0,
+     -6.5
+    ],
+    "color": "2CF6FF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     -7.000000000000001,
+     1.0,
+     6.5
+    ],
+    "color": "2CF6FF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     7.000000000000001,
+     1.0,
+     -6.5
+    ],
+    "color": "2CF6FF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     7.000000000000001,
+     1.0,
+     6.5
+    ],
+    "color": "2CF6FF",
+    "range": 14,
+    "brightness": 2
+   }
+  ]
+ },
+ "Dumbbell09": {
+  "title": "Неоновая",
+  "roles": {
+   "black": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     20.44,
+     10.15,
+     10.15
+    ],
+    "color": "23252B",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 1208
+   },
+   "brass": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     15.64,
+     10.658,
+     10.658
+    ],
+    "color": "D6A436",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 496
+   },
+   "Glow_neongreen": {
+    "center": [
+     0.0,
+     0.0,
+     0.407
+    ],
+    "size": [
+     21.44,
+     12.123,
+     13.184
+    ],
+    "color": "39FF6A",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 576
+   },
+   "charcoal": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     18.84,
+     10.15,
+     10.15
+    ],
+    "color": "34363C",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 612
+   },
+   "Glass_emerald": {
+    "center": [
+     0.0,
+     0.0,
+     0.509
+    ],
+    "size": [
+     15.935,
+     13.768,
+     14.88
+    ],
+    "color": "2ECC71",
+    "decor": false,
+    "material": "Glass",
+    "triangles": 96
+   }
+  },
+  "triangles": 2988,
+  "lights": [
+   {
+    "position": [
+     -5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     -5.9,
+     1.0,
+     6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     6.5
+    ],
+    "color": "39FF6A",
+    "range": 14,
+    "brightness": 2
+   }
+  ]
+ },
+ "Dumbbell10": {
+  "title": "Космическая",
+  "roles": {
+   "cosmicdark": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     16.4,
+     10.15,
+     10.15
+    ],
+    "color": "241A4D",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 916
+   },
+   "cosmicmid": {
+    "center": [
+     0.0,
+     -0.725,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     8.7,
+     10.15
+    ],
+    "color": "3A2A75",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 354
+   },
+   "Glow_violet": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     12.4,
+     13.2,
+     13.2
+    ],
+    "color": "B36BFF",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 516
+   },
+   "Glow_star": {
+    "center": [
+     0.0,
+     -0.487,
+     -0.0
+    ],
+    "size": [
+     18.3,
+     9.175,
+     10.15
+    ],
+    "color": "FFF2A6",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 346
+   },
+   "Glow_neoncyan": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     18.907,
+     13.813,
+     12.96
+    ],
+    "color": "2CF6FF",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 384
+   }
+  },
+  "triangles": 2516,
+  "lights": [
+   {
+    "position": [
+     -5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "B36BFF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     -5.9,
+     1.0,
+     6.5
+    ],
+    "color": "B36BFF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     -6.5
+    ],
+    "color": "B36BFF",
+    "range": 14,
+    "brightness": 2
+   },
+   {
+    "position": [
+     5.9,
+     1.0,
+     6.5
+    ],
+    "color": "B36BFF",
+    "range": 14,
+    "brightness": 2
+   }
+  ]
+ }
+}

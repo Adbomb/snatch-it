@@ -32,7 +32,7 @@ PALETTE = {
     "pink": "F28DB2", "yellow": "FFD23F", "orange": "F28C28", "rock": "8F8A84", "darkrock": "5F5B57",
     "neongreen": "39FF6A", "neoncyan": "2CF6FF", "ruby": "E0115F",
     "rope": "C9A86A", "neonbody": "143222", "neonbody2": "245C3A", "neonlime": "D4FF3A", "grass": "63C92E",
-    "charcoal": "34363C", "brass": "D6A436",
+    "charcoal": "34363C", "brass": "D6A436", "deepemerald": "0B5C33", "cosmicmid": "3A2A75", "violet": "B36BFF",
 }
 SPECIAL = {"Accent", "AccentDark", "DecorAccent"}
 PREFIXED = {"Decor", "Glass", "Glow"}  # роль «<Префикс>_<цвет>»
@@ -194,9 +194,9 @@ class Model:
 
         self._add(role, color, build, 0)
 
-    def torus(self, role, center, major, minor, color, axis="x", segments=24, minor_segments=8):
+    def torus(self, role, center, major, minor, color, axis="x", segments=24, minor_segments=8, rotation=None):
         def build(bm):
-            m = self._matrix(center) @ self._axis(axis)
+            m = self._matrix(center, rotation) @ self._axis(axis)
             rings = []
             for i in range(segments):
                 a = 2 * math.pi * i / segments
@@ -213,6 +213,18 @@ class Model:
                     bm.faces.new((a[j], b[j], b[k], a[k]))
 
         self._add(role, color, build, 0)
+
+    def hull(self, role, points, color, bevel=0.0):
+        """Выпуклая оболочка точек (Roblox): огранённые кристаллы, сегменты шестигранника, звёзды."""
+
+        def build(bm):
+            verts = [bm.verts.new(to_blender(p)) for p in points]
+            bmesh.ops.convex_hull(bm, input=verts)
+            loose = [v for v in bm.verts if not v.link_faces]
+            if loose:
+                bmesh.ops.delete(bm, geom=loose, context="VERTS")
+
+        self._add(role, color, build, bevel)
 
     def wedge(self, role, center, size, color, down="-z", bevel=0.12):
         """Скат: брусок size со срезанным верхом; низкая сторона — down ('-z', '+z', '-x', '+x')."""
@@ -349,7 +361,7 @@ class Model:
             if r >= cell * 0.6:
                 self.voxel_disc(role, (x + v, y, z), r, cell, color, axis="x", cell=cell, bevel=bevel)
 
-    def voxel_plate(self, center, cells, cell, depth, paint, normal=(1, 0, 0), groove=0.15, back_groove=True,
+    def voxel_plate(self, center, cells, cell, depth, paint, normal=(1, 0, 0), groove=0.15, back_groove=False,
                     lift=None):
         """Плита из кубиков-вокселей с фаской: каждый кубик виден, между соседями — V-шов, как у кирпичей LEGO.
         Дешевле отдельных кубиков: скрытые грани между соседями не строятся, ямки на стыках швов закрыты
