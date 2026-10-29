@@ -1,0 +1,46 @@
+# Архитектура
+
+Обновлено: 2026-10-29. Подробности решений — `DESIGN.md`.
+
+## Сборка
+- Rojo (`default.project.json`): `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`,
+  `src/client` → `StarterPlayer.StarterPlayerScripts.Client`.
+- Там же свойства мест: `Workspace.StreamingEnabled = false` (D14), свет (LightingStyle Realistic,
+  PrioritizeLightingQuality, Atmosphere, ColorCorrection), `MaterialService` с вариантом «LegoStuds» и `PlasticName`.
+- `assets/textures` — LEGO-текстуры дизайнера (загружены в Roblox, ID в `Config/Textures`).
+  `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
+
+## Данные
+- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 1, DESIGN.md §2).
+  В профиль попадают только экспонаты (`Displayed`) и хранилище (`Stored`).
+- Состояния экземпляра предмета — `ItemRegistry` (uid → state), граф в DESIGN.md §1:
+  OnMap → Carried → Displayed ⇄ Stored, MoveSlot / SwapSlots на витринах.
+
+## Сервер (`src/server`)
+- `Main.server` — RemoteEvent'ы, LEGO-материал, постройка мира, запуск сервисов, вход/выход игроков.
+- Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
+  (подбор/перенос/бросок), `ItemSpawnService` (предметы в зонах, D10 исчезновение), `MuseumService`
+  (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище).
+- Util: `ItemFactory` (вид предмета, пока один Part), `PartBuilder` (участки-музеи, пока простые коробки),
+  `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
+- World: `MapLayout` (раскладка аллеи и зон данными), `WorldBuilder` (строит карту), `ModelBuilder`
+  (модель из списка кирпичей, шаблоны в `ServerStorage.Templates`), `Models/*` (кирпичные модели),
+  `Signs` (надписи на вывесках), `Palette`, `Studs`, `Preview` + `FreshRequire` (предпросмотр в Edit).
+
+## Клиент (`src/client`)
+- `Main.client` — LEGO-материал на клиенте, запуск контроллеров.
+- Controllers: `NotifyController` (тосты), `CarryController` («Бросить», «Ты несёшь…»),
+  `StorageController` (окно хранилища), `MuseumPromptController` (какие подсказки показывать, подсветка
+  перестановки), `PresentationController` (прожектор и название при выставлении).
+- `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
+
+## Общее (`src/shared`)
+- Config: `GameConfig` (баланс, зоны D15, гантели D17), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
+- `Remotes` — имена RemoteEvent'ов, `LegoMaterial` — включение пупырышков.
+
+## Мир (D12, D15)
+- Аллея вдоль Z: старт и спортзал на +Z, ворота на -Z. Музеи по 4 с каждой стороны, входом на аллею.
+- За воротами дорожка и 4 зоны (Свалка, Барахолка, Склад, Банк) — дальше от ворот = реже предметы.
+  В каждой зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`.
+- Около 1000 частей. Предпросмотр в Edit:
+  `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.
