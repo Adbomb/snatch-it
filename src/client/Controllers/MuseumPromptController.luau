@@ -88,7 +88,7 @@ end
 local function refreshHighlight()
 	local moveSlot = player:GetAttribute("MoveSlot")
 	local target = if type(moveSlot) == "number" then findSelectedExhibit(moveSlot) else nil
-	if highlight and highlight.Adornee == target and highlight.Parent then
+	if highlight and target and highlight.Parent == target then
 		return
 	end
 	-- Подсветка живёт внутри Part экспоната и может исчезнуть вместе с ним — пересоздаём.
@@ -102,7 +102,9 @@ local function refreshHighlight()
 		h.FillTransparency = UITokens.Highlight.FillTransparency
 		h.OutlineColor = UITokens.Highlight.Outline
 		h.DepthMode = Enum.HighlightDepthMode.Occluded
-		h.Adornee = target
+		-- У предмета-модели корень невидимый: подсвечиваем саму модель («Visual»).
+		local visual = target:FindFirstChild("Visual")
+		h.Adornee = if visual and visual:IsA("BasePart") then visual else target
 		h.Parent = target
 		highlight = h
 	end

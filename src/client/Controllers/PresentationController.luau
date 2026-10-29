@@ -156,14 +156,25 @@ end
 local function liftAndSpin(exhibit: BasePart, duration: number): () -> ()
 	local cfg = GameConfig.Presentation
 	local copy = exhibit:Clone()
+	-- У копии оставляем только детали (модель «Visual»), подпись и прочее убираем.
 	for _, child in copy:GetChildren() do
-		child:Destroy()
+		if not child:IsA("BasePart") then
+			child:Destroy()
+		end
 	end
 	copy.Anchored = true
 	copy.CanCollide = false
 	copy.CanQuery = false
 	copy.Parent = workspace
-	exhibit.LocalTransparencyModifier = 1
+	local hidden = { exhibit }
+	for _, d in exhibit:GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(hidden, d)
+		end
+	end
+	for _, p in hidden do
+		p.LocalTransparencyModifier = 1
+	end
 	local label = exhibit:FindFirstChild("Label")
 	if label and label:IsA("BillboardGui") then
 		label.Enabled = false
@@ -183,7 +194,9 @@ local function liftAndSpin(exhibit: BasePart, duration: number): () -> ()
 		tween:Cancel()
 		progress:Destroy()
 		copy:Destroy()
-		exhibit.LocalTransparencyModifier = 0
+		for _, p in hidden do
+			p.LocalTransparencyModifier = 0
+		end
 		if label and label:IsA("BillboardGui") then
 			label.Enabled = true
 		end

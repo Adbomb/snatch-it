@@ -45,9 +45,9 @@ local Items: { [string]: ItemDef } = {
 		displayName = "Резиновая уточка",
 		rarity = "Common",
 		weight = "Light",
-		shape = "Ball",
+		shape = "Block",
 		color = Color3.fromRGB(255, 220, 40),
-		size = Vector3.new(1.4, 1.4, 1.4),
+		size = Vector3.new(1.79, 1.85, 2.39), -- как у меша из ItemModels (запасной вид, если меш не загрузится)
 	},
 	DancingCactus = {
 		id = "DancingCactus",

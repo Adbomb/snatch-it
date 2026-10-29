@@ -7,6 +7,10 @@
   `src/client` → `StarterPlayer.StarterPlayerScripts.Client`.
 - Там же свойства мест: `Workspace.StreamingEnabled = false` (D14), свет (LightingStyle Realistic,
   PrioritizeLightingQuality, Atmosphere, ColorCorrection), `MaterialService` с вариантом «LegoStuds» и `PlasticName`.
+- Предметы-меши (V3): `scripts/blender/*.py` строит модель из LEGO-кирпичей в Blender без интерфейса →
+  `assets/models/*.fbx` → импорт в Studio (File → Import 3D, делает заказчик) → ID меша и текстуры в
+  `Config/ItemModels`. Текстура-палитра всех предметов — `assets/textures/item_palette.png` (4×4 цвета).
+  Материал мешей — SmoothPlastic (пупырышки у модели свои). Оригинал импорта лежит в `ServerStorage.ImportedModels`.
 - `assets/textures` — LEGO-текстуры дизайнера (загружены в Roblox, ID в `Config/Textures`).
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
@@ -21,7 +25,8 @@
 - Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
   (подбор/перенос/бросок), `ItemSpawnService` (предметы в зонах, D10 исчезновение), `MuseumService`
   (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище).
-- Util: `ItemFactory` (вид предмета, пока один Part), `PartBuilder` (участок: части с механикой — Floor,
+- Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
+  а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
   Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание — `Models/Museum`),
   `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
 - World: `MapLayout` (раскладка аллеи и зон данными), `WorldBuilder` (строит карту), `ModelBuilder`

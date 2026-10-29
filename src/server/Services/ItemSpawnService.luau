@@ -131,7 +131,7 @@ local function startLooseTimer(uid: string)
 				return
 			end
 			hidden = not hidden
-			entry.part.Transparency = if hidden then cfg.BlinkTransparency else 0
+			ItemFactory.SetVisualTransparency(entry.part, if hidden then cfg.BlinkTransparency else 0)
 			task.wait(cfg.BlinkInterval)
 		end
 		if looseTimers[uid] ~= timer then
@@ -161,7 +161,7 @@ local function onRegistryChanged(uid: string, fromState: string, toState: string
 		-- Подняли или удалили: таймер сброшен, предмет снова непрозрачный.
 		looseTimers[uid] = nil
 		if entry.part then
-			entry.part.Transparency = 0
+			ItemFactory.SetVisualTransparency(entry.part, 0)
 		end
 	end
 end

@@ -21,4 +21,9 @@
   `SetBaseMaterialOverride` на сервере и клиенте.
 - Rojo: изменения `$properties` служб из проекта на лету не применяются; после перезапуска `rojo serve`
   плагин надо переподключить (кнопка Connect в Studio). Rojo 7.7.0 — `~/.aftman/tool-storage/rojo-rbx/rojo/7.7.0/rojo.exe`.
+- `WeldConstraint`, созданный до попадания деталей в мир, не тянет приваренную деталь, когда закреплённый
+  корень переставляют через CFrame. Для меша предмета используется `Weld` с C0/C1.
+- Blender MCP в сессии Claude Code не подключён; Blender 5.2 запускается из командной строки
+  (`--background --python`), пути к файлам передавать абсолютные.
+- Импорт FBX в Studio через MCP невозможен — только File → Import 3D руками.
 - Windows PowerShell 5.1 читает `.ps1` в UTF-8 только с BOM.

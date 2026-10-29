@@ -16,6 +16,7 @@ local ItemSpawnService = require(Server.Services.ItemSpawnService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local StorageService = require(Server.Services.StorageService)
+local ItemFactory = require(Server.Util.ItemFactory)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 local PartBuilder = require(Server.Util.PartBuilder)
@@ -45,6 +46,7 @@ for _, spawn in workspace:GetDescendants() do
 	end
 end
 PlotService.Init(world)
+ItemFactory.Preload() -- меши предметов из Blender (ждёт загрузку один раз)
 CarryService.Init()
 MuseumService.Init()
 StorageService.Init()
