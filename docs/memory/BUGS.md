@@ -9,6 +9,13 @@
 - Stud-UI: 9 собственных текстур набора (`UI.Assets.Studs`, `ShopHeader`, `Basket`, `RobuxCoin`, плашки
   редкостей `UI.Rarities.*.panel`) в нашем месте дают Failure — без них нет пупырышков на кнопках и плашек.
   Из реестра иконок не грузятся 7: Nature/Banana/Banana_1st, Social/Discord/Gamepad_* (5), Social/Twitter/Bird_White.
+  Решение D32: плашки и заголовки — Frame + UIGradient + UIStroke, пупырышки — LegoStuds, монета Robux — иконка реестра.
+
+## Перед релизом (загрузить в Roblox / проверить)
+- Всё, что подключено через `rbxasset://` (локальные файлы Studio), у игроков не загрузится — заменить загруженными ID.
+  Сейчас таких нет: LegoStuds (3 карты), палитра предметов и меш уточки уже загружены (`Config/Textures`, `Config/ItemModels`).
+- `GameConfig.DevMode = false`.
+- Звуки `GameConfig.Sounds` — ID выбирает дизайнер.
 
 ## Studio и инструменты
 - `require` из MCP (Edit и Play) получает отдельную копию модулей, не ту, что у игры, и кэширует её.

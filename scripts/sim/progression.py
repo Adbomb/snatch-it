@@ -1,4 +1,4 @@
-"""Симулятор долгой прогрессии (D29, D30; перерождений нет).
+"""Симулятор долгой прогрессии (D29–D31; перерождений нет, сила = гантель × (1 + сила музея)).
 
 Читает числа баланса из src/shared/Config/Progression.luau (тот же файл берёт игра), прогоняет типичного игрока
 и печатает таблицы «день → сила, перерождения, зона, монеты, музей, гантель» и дни событий.
@@ -41,6 +41,7 @@ VARIANTS = ["Normal", "Golden", "Giant", "Rainbow"]
 ZONE_TARGETS = {2: 4 / 90, 3: 30 / 90, 4: 1.0, 5: 3.5, 6: 7, 7: 10.5, 8: 24.5, 9: 45, 10: 75}
 MUSEUM_TARGETS = {2: 0.15, 3: 1.0, 4: 2.5, 5: 5, 6: 9.5, 7: 15, 8: 24, 9: 37, 10: 58}  # между уровнями гантели
 DUMBBELL_TARGETS = {2: 0.5, 3: 1.5, 4: 3.5, 5: 7, 6: 12, 7: 19, 8: 30, 9: 45, 10: 70}
+SECRET_TARGET = (30, 40)  # первый Secret у среднего игрока, не раньше 25-го дня
 
 
 # --- Чтение и запись Luau-таблицы ---
@@ -121,7 +122,7 @@ class Player:
 		self.earned = 0.0
 		self.level = 1  # уровень музея
 		self.bell = 1  # уровень гантели
-		self.items = []  # доход каждого предмета в музее и хранилище, по убыванию
+		self.items = []  # (доход, бонус силы) каждого предмета в музее и хранилище, по убыванию дохода
 		self.found = {}  # (редкость, вид) → номера найденных предметов
 		self.catalog_bonus = 0.0
 		self.max_zone = 1
@@ -129,9 +130,14 @@ class Player:
 		self.raids = 0
 
 	# Сила, скорость, зоны
+	def museum_power(self):
+		"""Бонус силы от экспонатов на витринах (D31), с потолком."""
+		mp = self.cfg["MuseumPower"]
+		return min(mp["cap"], sum(b for _, b in self.items[: self.slots()]))
+
 	def rate(self):
-		"""Сила в секунду — сила гантели."""
-		return self.cfg["Dumbbell"]["Power"][self.bell - 1]
+		"""Сила в секунду — сила гантели × (1 + сила музея)."""
+		return self.cfg["Dumbbell"]["Power"][self.bell - 1] * (1 + self.museum_power())
 
 	def speed(self):
 		sp = self.cfg["Speed"]
@@ -150,7 +156,7 @@ class Player:
 		return int(self.cfg["Museum"]["Slots"][self.level - 1])
 
 	def income(self):
-		shown = sum(self.items[: self.slots()])
+		shown = sum(v for v, _ in self.items[: self.slots()])
 		return shown * (1 + self.catalog_bonus)
 
 	def earn(self, dt):
@@ -178,6 +184,7 @@ class Player:
 		item = self.rng.randrange(int(cfg["ItemCounts"][rarity]))
 		mult = cfg["Modifiers"][variant]["income"] if variant != "Normal" else 1
 		value = cfg["Income"][rarity] * mult
+		bonus = cfg["MuseumPower"]["Rarity"][rarity] * cfg["MuseumPower"]["Variant"][variant]
 
 		got = self.found.setdefault((rarity, variant), set())
 		if item not in got:
@@ -187,7 +194,7 @@ class Player:
 		if rarity == "Secret":
 			self.events.setdefault(("secret", 1), self.t)
 
-		self.items.append(value)
+		self.items.append((value, bonus))
 		self.items.sort(reverse=True)
 		del self.items[self.slots() + STORAGE :]
 		self.raids += 1
@@ -250,7 +257,9 @@ def run(cfg, seed=1, days=DAYS, until=None, snapshots=None):
 	while p.t < end:
 		p.cycle()
 		while want and p.t >= want[0] * SESSION:
-			rows.append((want.pop(0), p.S, p.zone(), p.coins, p.level, p.bell, p.income(), p.catalog_bonus))
+			rows.append(
+				(want.pop(0), p.S, p.zone(), p.coins, p.level, p.bell, p.income(), p.catalog_bonus, p.museum_power())
+			)
 		if until and until(p):
 			break
 	return p, rows
@@ -262,7 +271,7 @@ def event_day(cfg, key, seed, limit):
 	return p.events.get(key, math.inf) / SESSION
 
 
-def tune_value(cfg, values, i, key, target, seeds=(1, 2, 3)):
+def tune_value(cfg, values, i, key, target, seeds):
 	"""Двоичный поиск по логарифму: values[i], при котором событие key случается в день target (медиана сидов).
 	Нижняя граница — предыдущее число списка: цены и силы только растут."""
 	lo, hi = max(values[i - 1] * 1.05, 1) if i > 0 else 1, 9e15
@@ -277,7 +286,7 @@ def tune_value(cfg, values, i, key, target, seeds=(1, 2, 3)):
 	values[i] = nice(math.sqrt(lo * hi))
 
 
-def tune(cfg, ratio, passes=2):
+def tune(cfg, ratio, passes=2, seeds=3):
 	"""Подбирает боссов, цены музея и гантели. Музей и гантель тратят одни монеты, а сила зависит от гантели,
 	поэтому все события подбираются вместе в порядке целевых дней: раннее число не зависит от позднего."""
 	cfg["Dumbbell"]["Power"] = [nice(ratio**i) if ratio**i >= 100 else round(ratio**i, 1) for i in range(10)]
@@ -289,7 +298,7 @@ def tune(cfg, ratio, passes=2):
 	jobs.sort(key=lambda j: j[0])
 	for n in range(passes):
 		for target, values, i, key in jobs:
-			tune_value(cfg, values, i, key, target)
+			tune_value(cfg, values, i, key, target, range(1, seeds + 1))
 		print(f"проход {n + 1}: боссы {[short(b) for b in cfg['Bosses']]}", flush=True)
 
 
@@ -307,10 +316,13 @@ def report(cfg, seeds=200):
 		print(f"| {i + 1} | {dn['Names'][i]} | {short(power) if power >= 1000 else f'{power:g}'} | {price} |")
 
 	print("\nТипичный игрок (сид 1), конец дня:")
-	print("| день | сила | зона | монеты | музей | гантель | доход/с | каталог |")
-	print("|---|---|---|---|---|---|---|---|")
-	for d, S, z, coins, lvl, bell, inc, cat in rows:
-		print(f"| {d} | {short(S)} | {z} | {short(coins)} | {lvl} | {bell} | {short(inc)} | +{cat * 100:.0f}% |")
+	print("| день | сила | зона | монеты | музей | гантель | доход/с | каталог | сила музея |")
+	print("|---|---|---|---|---|---|---|---|---|")
+	for d, S, z, coins, lvl, bell, inc, cat, mp in rows:
+		print(
+			f"| {d} | {short(S)} | {z} | {short(coins)} | {lvl} | {bell} | {short(inc)} | +{cat * 100:.0f}% "
+			f"| +{mp * 100:.0f}% |"
+		)
 
 	runs = [run(cfg, seed=s)[0] for s in range(seeds)]
 
@@ -332,7 +344,8 @@ def report(cfg, seeds=200):
 			print(f"| {name} {k} | {m} | {a} | {b} | {day_str(targets[k])} |")
 	m, a, b = stat(("secret", 1))
 	got = sum(("secret", 1) in p.events for p in runs)
-	print(f"| первый Secret | {m} | {a} | {b} | ~30 | ({got}/{seeds} получили за {DAYS} дней)")
+	lo, hi = SECRET_TARGET
+	print(f"| первый Secret | {m} | {a} | {b} | {lo}–{hi} | ({got}/{seeds} получили за {DAYS} дней)")
 	print(f"\nПредметов в день (медиана): {statistics.median(p.raids for p in runs) / DAYS:.0f}")
 	peak = max(max(p.earned, p.S) for p in runs)
 	print(f"Максимум чисел: {short(peak)} (предел 9e15)")
@@ -345,10 +358,12 @@ def main():
 	ap.add_argument("--ratio", type=float, default=4)
 	ap.add_argument("--dry", action="store_true", help="не записывать подобранные числа")
 	ap.add_argument("--seeds", type=int, default=200)
+	ap.add_argument("--passes", type=int, default=2, help="проходов подбора")
+	ap.add_argument("--tune-seeds", type=int, default=3, help="игроков на каждую пробу подбора (медиана)")
 	args = ap.parse_args()
 	cfg = load_config()
 	if args.tune:
-		tune(cfg, args.ratio)
+		tune(cfg, args.ratio, args.passes, args.tune_seeds)
 		if not args.dry:
 			save_numbers(cfg)
 	report(cfg, args.seeds)
