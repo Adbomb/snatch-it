@@ -1,4 +1,4 @@
--- Граница карты: стена из кирпичей в шахматку по прямоугольнику и ступенчатые холмы из кирпичей за ней
+-- Граница карты: стена из кирпичей в шахматку по контуру острова и ступенчатые холмы из кирпичей за ней
 -- (с местами под деревья), чтобы не было видно края мира. Ни одна деталь не длиннее MAX_PIECE стадов.
 -- Координаты мировые (начало модели — 0, 0, 0). Зависит от ModelBuilder, Palette.
 
@@ -21,10 +21,38 @@ local HILL_ROWS = {
 }
 -- Ступени холма снизу вверх: размер вдоль стены и поперёк (≤ MAX_PIECE).
 local HILL_TIERS = { Vector2.new(40, 28), Vector2.new(30, 20), Vector2.new(20, 12) }
-
-export type Bounds = { minX: number, maxX: number, minZ: number, maxZ: number }
+local CONCAVE_GAP = 24 -- отступ холмов от вогнутого угла: полхолма (20) + толщина стены (4)
 
 local Border = {}
+
+-- Контур — точки по часовой стрелке (вид сверху, x вправо, z вверх), стороны только вдоль осей.
+-- Наружная нормаль стороны с направлением d — (-d.z, d.x).
+local function outward(d: Vector2): Vector2
+	return Vector2.new(-d.Y, d.X)
+end
+
+-- Выпуклая вершина (поворот направо при обходе по часовой) — стены продлеваются, вогнутая — нет.
+local function convex(d1: Vector2, d2: Vector2): boolean
+	return d1.X * d2.Y - d1.Y * d2.X < 0
+end
+
+local function edges(outline: { Vector2 }): { { a: Vector2, b: Vector2, d: Vector2, n: Vector2, convexA: boolean, convexB: boolean } }
+	local list = {}
+	local count = #outline
+	for i = 1, count do
+		local prev, a, b, next = outline[(i - 2) % count + 1], outline[i], outline[i % count + 1], outline[(i + 1) % count + 1]
+		local d = (b - a).Unit
+		table.insert(list, {
+			a = a,
+			b = b,
+			d = d,
+			n = outward(d),
+			convexA = convex((a - prev).Unit, d),
+			convexB = convex(d, (next - b).Unit),
+		})
+	end
+	return list
+end
 
 -- Ряд кирпичей вдоль отрезка a→b (по оси X или Z), со сдвигом через ряд, как кладка.
 local function wallRun(bricks: { ModelBuilder.Brick }, a: Vector3, b: Vector3, groundTop: number)
@@ -52,43 +80,43 @@ local function wallRun(bricks: { ModelBuilder.Brick }, a: Vector3, b: Vector3, g
 	end
 end
 
-function Border.Wall(bounds: Bounds, groundTop: number): { ModelBuilder.Brick }
+function Border.Wall(outline: { Vector2 }, groundTop: number): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {}
 	local h = THICKNESS / 2
-	local x0, x1 = bounds.minX - h, bounds.maxX + h
-	local z0, z1 = bounds.minZ - h, bounds.maxZ + h
-	wallRun(bricks, Vector3.new(x0 - h, 0, z0), Vector3.new(x1 + h, 0, z0), groundTop)
-	wallRun(bricks, Vector3.new(x0 - h, 0, z1), Vector3.new(x1 + h, 0, z1), groundTop)
-	wallRun(bricks, Vector3.new(x0, 0, z0 + h), Vector3.new(x0, 0, z1 - h), groundTop)
-	wallRun(bricks, Vector3.new(x1, 0, z0 + h), Vector3.new(x1, 0, z1 - h), groundTop)
+	for _, e in edges(outline) do
+		-- Осевая линия стены — снаружи контура на h; на выпуклых углах стена заходит за угол на 2h.
+		local from = e.a + e.n * h - e.d * (if e.convexA then 2 * h else 0)
+		local to = e.b + e.n * h + e.d * (if e.convexB then 2 * h else 0)
+		wallRun(bricks, Vector3.new(from.X, 0, from.Y), Vector3.new(to.X, 0, to.Y), groundTop)
+	end
 	return bricks
 end
 
--- Ступенчатые холмы в два ряда вдоль всех сторон. Возвращает кирпичи и CFrame вершин (под деревья).
-function Border.Hills(bounds: Bounds, groundTop: number): ({ ModelBuilder.Brick }, { CFrame })
+-- Ступенчатые холмы в два ряда снаружи каждой стороны. Возвращает кирпичи и CFrame вершин (под деревья).
+function Border.Hills(outline: { Vector2 }, groundTop: number): ({ ModelBuilder.Brick }, { CFrame })
 	local bricks: { ModelBuilder.Brick } = {}
 	local tops: { CFrame } = {}
 	local colors = { Palette.GrassDark, Palette.Hill, Palette.Grass }
 	for _, row in HILL_ROWS do
 		local random = Random.new(row.seed)
-		local function hill(center: Vector3, alongX: boolean)
-			local y = groundTop
-			local jitter = random:NextNumber(0.8, 1)
-			for tier, size in HILL_TIERS do
-				local w, d = math.min(size.X * jitter, MAX_PIECE), math.min(size.Y * jitter, MAX_PIECE)
-				local dims = if alongX then Vector3.new(w, row.step, d) else Vector3.new(d, row.step, w)
-				table.insert(bricks, B(dims, center + Vector3.new(0, y + row.step / 2, 0), colors[tier], { shadow = false }))
-				y += row.step
+		for _, e in edges(outline) do
+			local alongX = math.abs(e.d.X) > 0.5
+			local length = (e.b - e.a).Magnitude
+			-- У вогнутого угла холмы не доходят до угла: иначе залезут на остров с другой стороны.
+			local first = if e.convexA then -10 else CONCAVE_GAP
+			local last = if e.convexB then length + 10 else length - CONCAVE_GAP
+			for t = first, last, row.spacing do
+				local at = e.a + e.d * t + e.n * row.distance
+				local y = groundTop
+				local jitter = random:NextNumber(0.8, 1)
+				for tier, size in HILL_TIERS do
+					local w, d = math.min(size.X * jitter, MAX_PIECE), math.min(size.Y * jitter, MAX_PIECE)
+					local dims = if alongX then Vector3.new(w, row.step, d) else Vector3.new(d, row.step, w)
+					table.insert(bricks, B(dims, Vector3.new(at.X, y + row.step / 2, at.Y), colors[tier], { shadow = false }))
+					y += row.step
+				end
+				table.insert(tops, CFrame.new(at.X, y, at.Y))
 			end
-			table.insert(tops, CFrame.new(center + Vector3.new(0, y, 0)))
-		end
-		for x = bounds.minX - 10, bounds.maxX + 10, row.spacing do
-			hill(Vector3.new(x, 0, bounds.minZ - row.distance), true)
-			hill(Vector3.new(x, 0, bounds.maxZ + row.distance), true)
-		end
-		for z = bounds.minZ - 10, bounds.maxZ + 10, row.spacing do
-			hill(Vector3.new(bounds.minX - row.distance, 0, z), false)
-			hill(Vector3.new(bounds.maxX + row.distance, 0, z), false)
 		end
 	end
 	return bricks, tops

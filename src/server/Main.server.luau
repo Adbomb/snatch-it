@@ -33,6 +33,12 @@ LegoMaterial.Apply()
 local world = PartBuilder.CreateWorldFolder()
 ModelBuilder.SetTemplateParent(ServerStorage)
 WorldBuilder.Build(world)
+WorldBuilder.BuildWater()
+-- Baseplate шаблона закрыл бы воду вокруг острова.
+local baseplate = workspace:FindFirstChild("Baseplate")
+if baseplate then
+	baseplate:Destroy()
+end
 -- Игроки появляются только в начале аллеи: чужие SpawnLocation места (например, из шаблона) выключаются.
 for _, spawn in workspace:GetDescendants() do
 	if spawn:IsA("SpawnLocation") and not spawn:IsDescendantOf(world) then

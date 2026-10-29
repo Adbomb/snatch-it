@@ -12,7 +12,8 @@
 				"LightingStyle": "Realistic",
 				"PrioritizeLightingQuality": true,
 				"ClockTime": 13.5,
-				"Brightness": 4,
+				"Brightness": 3,
+				"ExposureCompensation": -0.3,
 				"Ambient": [0.38, 0.38, 0.42],
 				"OutdoorAmbient": [0.55, 0.55, 0.6],
 				"GlobalShadows": true,
@@ -25,17 +26,17 @@
 				"$properties": {
 					"Density": 0.25,
 					"Offset": 0.1,
-					"Haze": 1.2,
+					"Haze": 0.8,
 					"Glare": 0.2,
-					"Color": [0.78, 0.86, 0.95],
-					"Decay": [0.55, 0.7, 0.9]
+					"Color": [0.66, 0.82, 1],
+					"Decay": [0.4, 0.62, 0.95]
 				}
 			},
 			"ColorCorrection": {
 				"$className": "ColorCorrectionEffect",
 				"$properties": {
-					"Saturation": 0.2,
-					"Contrast": 0.1,
+					"Saturation": 0.15,
+					"Contrast": 0.15,
 					"Brightness": 0.02
 				}
 			}

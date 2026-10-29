@@ -1,5 +1,5 @@
 -- Общие настройки игры: числа баланса, размеры мира, лимиты запросов.
--- Читается и сервером, и клиентом. Зависит от Config/Progression (числа D29).
+-- Читается и сервером, и клиентом. Зависит от Config/Progression (числа D29–D31).
 
 local GameConfig = {}
 
@@ -44,52 +44,28 @@ GameConfig.Spawn = {
 	LooseBlinkTime = 10,
 	BlinkInterval = 0.25,
 	BlinkTransparency = 0.8,
-	MaxLegendaryOnMap = 1, -- лежащих или в руках на всём сервере
 }
 
--- D15: зоны добычи. Порядок — от ворот аллеи вглубь (Свалка ближе всех, Банк дальше всех).
--- rarity — главная редкость зоны (цвет вывески), weights — веса редкостей предметов,
--- guard — страж и его сила (бой — D16). Secret не появляется нигде.
+-- D22: 10 зон добычи одним коридором, порядок — от ворот аллеи вглубь. boss — имя босса-стража
+-- (сила — Progression.Bosses[номер зоны]), floor — цвет пола, accent — цвет ворот и вывески.
+-- Шансы редкости — Progression.RarityFirst → RarityLast по номеру зоны, Secret — с SecretFromZone.
 GameConfig.Zones = {
-	{
-		id = "Junk",
-		name = "Свалка",
-		rarity = "Common",
-		weights = { Common = 100 },
-		guard = { name = "Сторожевой пёс", strength = 0 },
-	},
-	{
-		id = "Flea",
-		name = "Барахолка",
-		rarity = "Uncommon",
-		weights = { Common = 40, Uncommon = 60 },
-		guard = { name = "Торговец-громила", strength = 100 },
-	},
-	{
-		id = "Warehouse",
-		name = "Склад",
-		rarity = "Rare",
-		weights = { Uncommon = 40, Rare = 60 },
-		guard = { name = "Робот-охранник", strength = 1500 },
-	},
-	{
-		id = "Bank",
-		name = "Банк",
-		rarity = "Legendary",
-		weights = { Rare = 70, Legendary = 30 },
-		guard = { name = "Бронированный охранник", strength = 25000 },
-	},
+	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "A1887F", accent = "8D6E63" },
+	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E" },
+	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0" },
+	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E" },
+	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7" },
+	{ id = "Jungle", name = "Джунгли", boss = "Горилла", floor = "2E8B3A", accent = "1B7A2B" },
+	{ id = "Bank", name = "Банк", boss = "Бронированный охранник", floor = "ECEFF1", accent = "F5A215" },
+	{ id = "Volcano", name = "Вулкан", boss = "Лавовый голем", floor = "4E342E", accent = "FF5722" },
+	{ id = "Spaceport", name = "Космопорт", boss = "Пришелец-генерал", floor = "3B3561", accent = "6A45F5" },
+	{ id = "Castle", name = "Замок", boss = "Король-дракон", floor = "9E9E9E", accent = "C62828" },
 }
 
--- D17: гантели спортзала. price в монетах (этап 3); пока монет нет, платные закрыты табличкой «Скоро».
-GameConfig.Gym = {
-	Dumbbells = {
-		{ id = "Wood", name = "Деревянная", power = 1, price = 0 },
-		{ id = "Iron", name = "Железная", power = 5, price = 500 },
-		{ id = "Gold", name = "Золотая", power = 25, price = 5000 },
-		{ id = "Diamond", name = "Алмазная", power = 100, price = 50000 },
-	},
-}
+-- Сколько лежащих или несомых предметов редкости может быть на всём сервере одновременно.
+GameConfig.MaxOnMap = { Legendary = 3, Secret = 1 }
+
+-- D31: качалка — одно поле с огромной гантелью; уровни и сила гантели — Progression.Dumbbell (шаг 4).
 
 -- Презентация экспоната после размещения (UI_KIT.md). 0 — только уведомление.
 GameConfig.Presentation = {
@@ -125,7 +101,7 @@ GameConfig.RateLimits = {
 	Rotate = 6,
 }
 
--- Долгая прогрессия (D29): боссы, круги, перерождение, музей, доход, редкость, каталог, скорость.
+-- Долгая прогрессия (D29–D31): боссы, гантель, музей, сила музея, доход, редкость, каталог, скорость.
 -- Отдельный файл, чтобы его читал симулятор scripts/sim/progression.py.
 GameConfig.Progression = require(script.Parent.Progression)
 

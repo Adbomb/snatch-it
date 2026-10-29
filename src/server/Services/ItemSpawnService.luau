@@ -1,6 +1,7 @@
 -- Появление предметов в зонах добычи (D15): точки с тегом ItemSpawn стоят на постаментах, у точки атрибут Zone.
--- Если точек нет — ставит их по MapLayout. Редкость — по весам зоны (GameConfig.Zones), Legendary на сервере
--- не больше MaxLegendaryOnMap, Secret не появляется. Точка освобождается, когда предмет с неё подняли;
+-- Если точек нет — ставит их по MapLayout. Редкость — по шансам зоны (Progression: плавно от зоны 1 к зоне 10,
+-- Secret — с SecretFromZone), лежащих и несомых Legendary и Secret на сервере не больше GameConfig.MaxOnMap.
+-- Точка освобождается, когда предмет с неё подняли;
 -- через RespawnDelay секунд там появляется новый. D10: брошенный предмет, который никто не трогает, мигает и исчезает.
 -- Зависит от ItemRegistry, CarryService, Util/ItemFactory, Util/PartBuilder, World/MapLayout, Config.
 
@@ -19,7 +20,6 @@ local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 
 local SPAWN_TAG = "ItemSpawn"
-local NEVER_SPAWNS = "Secret" -- D15: Secret пока не появляется нигде
 
 local itemsByRarity: { [string]: { string } } = {}
 local pointByUid: { [string]: BasePart } = {}
@@ -60,34 +60,45 @@ local function createDefaultPoints(world: Folder)
 	)
 end
 
--- Редкость по весам зоны; withoutLegendary — повторный бросок, когда лимит Legendary исчерпан.
-local function rollRarity(weights: { [string]: number }, withoutLegendary: boolean): string
+-- Веса редкостей в зоне: линейно от RarityFirst (зона 1) к RarityLast (последняя зона); Secret — только
+-- с SecretFromZone; редкости, чей лимит на сервере исчерпан, выпадают из броска.
+local function zoneWeights(zone: number): { [string]: number }
+	local progression = GameConfig.Progression
+	local f = (zone - 1) / math.max(#GameConfig.Zones - 1, 1)
+	local weights = {}
+	for _, rarity in Rarities.Order do
+		local first, last = progression.RarityFirst[rarity] or 0, progression.RarityLast[rarity] or 0
+		local weight = first + (last - first) * f
+		local limit = GameConfig.MaxOnMap[rarity]
+		if rarity == "Secret" and zone < progression.SecretFromZone then
+			weight = 0
+		elseif limit and ItemRegistry.CountLoose(rarity) >= limit then
+			weight = 0
+		end
+		weights[rarity] = weight
+	end
+	return weights
+end
+
+local function rollRarity(weights: { [string]: number }): string
 	local total = 0
 	for _, rarity in Rarities.Order do
-		if rarity ~= NEVER_SPAWNS and not (withoutLegendary and rarity == "Legendary") then
-			total += weights[rarity] or 0
-		end
+		total += weights[rarity]
 	end
 	local roll = random:NextNumber(0, total)
 	for _, rarity in Rarities.Order do
-		if rarity ~= NEVER_SPAWNS and not (withoutLegendary and rarity == "Legendary") then
-			local weight = weights[rarity] or 0
-			if weight > 0 and roll <= weight then
-				return rarity
-			end
-			roll -= weight
+		local weight = weights[rarity]
+		if weight > 0 and roll <= weight then
+			return rarity
 		end
+		roll -= weight
 	end
 	return Rarities.Order[1]
 end
 
--- Редкость по весам зоны, затем предмет этой редкости (равные шансы); нет такой — ближайшая более низкая.
+-- Редкость по шансам зоны, затем предмет этой редкости (равные шансы); нет такой — ближайшая более низкая.
 local function chooseItemId(zone: number): string?
-	local weights = GameConfig.Zones[zone].weights
-	local rarity = rollRarity(weights, false)
-	if rarity == "Legendary" and ItemRegistry.CountLoose("Legendary") >= GameConfig.Spawn.MaxLegendaryOnMap then
-		rarity = rollRarity(weights, true)
-	end
+	local rarity = rollRarity(zoneWeights(zone))
 	for rank = Rarities.Rank(rarity), 1, -1 do
 		local pool = itemsByRarity[Rarities.Order[rank]]
 		if pool and #pool > 0 then
@@ -168,10 +179,8 @@ end
 
 function ItemSpawnService.Init(world: Folder)
 	for id, def in Items do
-		if def.rarity ~= NEVER_SPAWNS then
-			itemsByRarity[def.rarity] = itemsByRarity[def.rarity] or {}
-			table.insert(itemsByRarity[def.rarity], id)
-		end
+		itemsByRarity[def.rarity] = itemsByRarity[def.rarity] or {}
+		table.insert(itemsByRarity[def.rarity], id)
 	end
 	for _, pool in itemsByRarity do
 		table.sort(pool)

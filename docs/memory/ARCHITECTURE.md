@@ -29,7 +29,8 @@
   а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
   Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание — `Models/Museum`),
   `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
-- World: `MapLayout` (раскладка аллеи и зон данными), `WorldBuilder` (строит карту), `ModelBuilder`
+- World: `MapLayout` (раскладка аллеи, коридора зон и контур острова данными), `WorldBuilder` (строит карту;
+  `BuildWater` — вода Terrain, только в Play), `ModelBuilder`
   (модель из списка кирпичей, шаблоны в `ServerStorage.Templates`), `Models/*` (кирпичные модели),
   `Signs` (надписи на вывесках), `Palette`, `Studs`, `Preview` + `FreshRequire` (предпросмотр в Edit).
 
@@ -41,19 +42,25 @@
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
 
 ## Общее (`src/shared`)
-- Config: `GameConfig` (баланс, зоны D15, гантели D17; `GameConfig.Progression` = `Progression.luau` — числа D29/D30,
-  только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune --ratio 6` подбирает боссов, цены музея и гантели), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
+- Config: `GameConfig` (баланс, 10 зон D22, лимиты `MaxOnMap`; `GameConfig.Progression` = `Progression.luau` — числа D29–D31,
+  только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune --ratio 6 --passes 4 --tune-seeds 5`
+  подбирает боссов, цены музея и гантели), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
+- `NumberFormat.Short` — числа для игрока: 1.2K / 3.4M / 5.6B / 7.8T / 9.1Qa (D29).
 - `Remotes` — имена RemoteEvent'ов, `LegoMaterial` — включение пупырышков.
 - `StudUI/StudUI`, `StudUI/StudMotion`, `StudUI/CheckUIIcons` — стандарт интерфейса Stud-UI (D20), копия `src/`
   из Skill `stud-ui-clean-roblox` (MIT, LICENSE и THIRD_PARTY_NOTICES рядом). Пока не используются: переход
   интерфейса — шаг 8. Instance-имена набора французские (`Fenetre`, `Entete`, `Corps`…) — так требует Skill.
 
-## Мир (D12, D15)
-- Аллея вдоль Z: старт и спортзал на +Z, ворота на -Z. Музеи по 4 с каждой стороны, входом на аллею.
-- За воротами дорожка и 4 зоны (Свалка, Барахолка, Склад, Банк) — дальше от ворот = реже предметы.
-  В каждой зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`.
-- Граница: стена из кирпичей в шахматку и два ряда ступенчатых холмов с деревьями (детали ≤ 40 стадов),
-  на траве крупные пятна другого оттенка.
+## Мир (D12, D22, D31)
+- Аллея вдоль Z (z 130 → −130): старт и качалка на +Z, ворота на −Z. Музеи по 4 с каждой стороны, входом на аллею.
+  Качалка (D31): поле `GymField` (атрибут GymField) и огромная гантель у задней стены.
+- За воротами двор (12) и 10 зон одним коридором шириной 60, каждая 60 в длину (z −142 → −742): игрок проходит
+  зону N, чтобы попасть в N+1. На входе каждой зоны — стена `ZoneWall` с проёмом 16 и ворота с вывеской
+  «N. Название» и «Босс 💪 сила». В зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`, место босса
+  `MapLayout.GuardSpot`, точка возврата `ZoneEntrance(i)` и ночная `NightReturn` (D21).
+- Остров = прямоугольник аллеи + коридор (`MapLayout.Outline`, `IslandRects`). Стена-граница в шахматку и два
+  ряда холмов с деревьями — по контуру; дальше трава, песок (плиты без перекрытий) и вода Terrain до горизонта
+  с песчаным дном. Baseplate шаблона Main удаляет в Play.
 - Музей (`World/Models/Museum`): пол на ступень выше аллеи (1.4), здание ~190 частей, свой цвет участка
-  (`Museum.Accents`). Вся карта около 3650 частей. Предпросмотр в Edit:
+  (`Museum.Accents`). Вся карта около 4750 частей. Предпросмотр в Edit:
   `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.
