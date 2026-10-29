@@ -2,3 +2,6 @@
 *.rbxlx
 *.lock
 sourcemap.json
+
+# Папки текстур, которые FBX-экспорт Blender кладёт рядом с моделью (текстура уже внутри FBX)
+assets/models/*.fbm/
