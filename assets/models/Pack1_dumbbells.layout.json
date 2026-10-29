@@ -694,6 +694,22 @@
  "Dumbbell10": {
   "title": "Космическая",
   "roles": {
+   "cosmicblack": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     18.4,
+     10.272,
+     10.272
+    ],
+    "color": "140A2E",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 970
+   },
    "cosmicdark": {
     "center": [
      0.0,
@@ -701,62 +717,94 @@
      -0.0
     ],
     "size": [
-     16.4,
-     10.15,
-     10.15
+     19.6,
+     2.8,
+     2.8
     ],
-    "color": "241A4D",
+    "color": "2A1A5E",
     "decor": false,
     "material": "Plastic",
-    "triangles": 916
+    "triangles": 88
    },
-   "cosmicmid": {
-    "center": [
-     0.0,
-     -0.725,
-     -0.0
-    ],
-    "size": [
-     17.6,
-     8.7,
-     10.15
-    ],
-    "color": "3A2A75",
-    "decor": false,
-    "material": "Plastic",
-    "triangles": 354
-   },
-   "Glow_violet": {
+   "Glow_magenta": {
     "center": [
      0.0,
      0.0,
      -0.0
     ],
     "size": [
-     12.4,
-     13.2,
-     13.2
+     11.9,
+     13.1,
+     13.1
     ],
-    "color": "B36BFF",
+    "color": "FF4FD8",
     "decor": false,
     "material": "Neon",
     "triangles": 516
    },
-   "Glow_star": {
+   "cosmicblue": {
     "center": [
      0.0,
-     -0.487,
+     1.45,
      -0.0
     ],
     "size": [
-     18.3,
-     9.175,
+     17.2,
+     7.25,
      10.15
     ],
-    "color": "FFF2A6",
+    "color": "22309A",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 200
+   },
+   "cosmicmid": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     17.2,
+     10.15,
+     10.15
+    ],
+    "color": "42229A",
+    "decor": false,
+    "material": "Plastic",
+    "triangles": 312
+   },
+   "Glow_violet": {
+    "center": [
+     0.0,
+     0.725,
+     -0.0
+    ],
+    "size": [
+     17.6,
+     5.8,
+     10.55
+    ],
+    "color": "B36BFF",
     "decor": false,
     "material": "Neon",
-    "triangles": 346
+    "triangles": 156
+   },
+   "Glow_whiteglow": {
+    "center": [
+     0.0,
+     0.0,
+     -0.0
+    ],
+    "size": [
+     18.5,
+     10.15,
+     11.45
+    ],
+    "color": "F4F0FF",
+    "decor": false,
+    "material": "Neon",
+    "triangles": 274
    },
    "Glow_neoncyan": {
     "center": [
@@ -765,9 +813,9 @@
      -0.0
     ],
     "size": [
-     18.907,
-     13.813,
-     12.96
+     19.388,
+     12.09,
+     12.535
     ],
     "color": "2CF6FF",
     "decor": false,
@@ -775,47 +823,47 @@
     "triangles": 384
    }
   },
-  "triangles": 2516,
+  "triangles": 2900,
   "lights": [
    {
     "position": [
-     -5.9,
+     -3.9,
      1.0,
      -6.5
     ],
     "color": "B36BFF",
     "range": 14,
-    "brightness": 2
+    "brightness": 1
    },
    {
     "position": [
-     -5.9,
+     -3.9,
      1.0,
      6.5
     ],
     "color": "B36BFF",
     "range": 14,
-    "brightness": 2
+    "brightness": 1
    },
    {
     "position": [
-     5.9,
+     3.9,
      1.0,
      -6.5
     ],
     "color": "B36BFF",
     "range": 14,
-    "brightness": 2
+    "brightness": 1
    },
    {
     "position": [
-     5.9,
+     3.9,
      1.0,
      6.5
     ],
     "color": "B36BFF",
     "range": 14,
-    "brightness": 2
+    "brightness": 1
    }
   ]
  }

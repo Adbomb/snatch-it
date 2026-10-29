@@ -28,11 +28,12 @@ PALETTE = {
     "darkwood": "6B4423", "lightwood": "C8945A", "iron": "7D8794", "steel": "4A525E", "black": "23252B",
     "bronze": "C67A35", "darkbronze": "8C5320", "silver": "D7DDE4", "emerald": "2ECC71",
     "darkemerald": "138A4C", "diamond": "BFF3FF", "red": "D93B30", "velvet": "9E1B1B", "glass": "A9DDF5",
-    "cosmic": "6A45F5", "cosmicdark": "241A4D", "star": "FFF2A6", "green": "43A047", "leaf": "5BC24A",
+    "cosmic": "6A45F5", "cosmicdark": "2A1A5E", "star": "FFF2A6", "green": "43A047", "leaf": "5BC24A",
     "pink": "F28DB2", "yellow": "FFD23F", "orange": "F28C28", "rock": "8F8A84", "darkrock": "5F5B57",
     "neongreen": "39FF6A", "neoncyan": "2CF6FF", "ruby": "E0115F",
     "rope": "C9A86A", "neonbody": "143222", "neonbody2": "245C3A", "neonlime": "D4FF3A", "grass": "63C92E",
-    "charcoal": "34363C", "brass": "D6A436", "deepemerald": "0B5C33", "cosmicmid": "3A2A75", "violet": "B36BFF",
+    "charcoal": "34363C", "brass": "D6A436", "deepemerald": "0B5C33", "cosmicmid": "42229A", "violet": "B36BFF",
+    "magenta": "FF4FD8", "cosmicblack": "140A2E", "cosmicblue": "22309A", "whiteglow": "F4F0FF",
 }
 SPECIAL = {"Accent", "AccentDark", "DecorAccent"}
 PREFIXED = {"Decor", "Glass", "Glow"}  # роль «<Префикс>_<цвет>»

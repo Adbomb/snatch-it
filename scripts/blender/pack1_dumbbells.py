@@ -49,11 +49,11 @@ def bar(m, color, end_color=None, end=END_X):
             m.box("Body", (s * (end + 0.3), 0, 0), (0.6, BAR - 0.8, BAR - 0.8), end_color, bevel=0.15)
 
 
-def ridges(m, role, color, count=3, width=0.7, bevel=0.14):
-    """Рифление рукояти: выпуклые полосы."""
-    step = 2 * GRIP / (count + 1)
+def ridges(m, role, color, count=3, width=0.7, bevel=0.14, half=GRIP):
+    """Рифление рукояти: выпуклые полосы (half — полудлина рукояти)."""
+    step = 2 * half / (count + 1)
     for k in range(count):
-        m.box(role, (-GRIP + step * (k + 1), 0, 0), (width, BAR + 0.4, BAR + 0.4), color, bevel=bevel)
+        m.box(role, (-half + step * (k + 1), 0, 0), (width, BAR + 0.4, BAR + 0.4), color, bevel=bevel)
 
 
 def discs(m, cells, paint, back_groove=False, lift=None, x=DISC_X, depth=DISC_D, cell=CELL):
@@ -205,15 +205,6 @@ def crystal_prism(m, base, direction, length, radius, color="emerald"):
     m.hull("Glass", [tuple(p) for p in points], color)
 
 
-def star(m, center, normal, size=1.0, color="star"):
-    """Четырёхлучевая звезда-вставка (неон): два скрещённых ромба."""
-    n, e1, e2 = basis(normal)
-    c = Vector(center)
-    for a, b in ((e1, e2), (e2, e1)):
-        points = [c + a * size, c - a * size, c + b * size * 0.28, c - b * size * 0.28, c + n * 0.3, c - n * 0.1]
-        m.hull("Glow", [tuple(p) for p in points], color)
-
-
 def stone(m):
     """2 Каменная: диски из грубых глыб — неровные, со сколами: выбитые кубики по краю, торчащие обломки."""
     bar(m, "darkrock")
@@ -361,28 +352,45 @@ def diamond(m):
 
 
 def cosmic(m):
-    """10 Космическая: тёмно-фиолетовые диски из кубиков со звёздными вставками, неоновые кольца-орбиты вокруг дисков."""
-    bar(m, "cosmicdark", end_color="cosmicmid")
-    ridges(m, "Glow", "violet", width=0.55)
-    stars = {(2, 1), (-1, 2), (-2, -2), (1, -3), (3, -1)}
+    """10 Космическая (референс заказчика): толстые, почти кубические диски из тёмных «космических» кубиков
+    (чёрно-фиолетовые, фиолетовые, синие, светящиеся «туманности»), рельеф к грифу, по ободу тёмные швы рядов;
+    белые светящиеся кубики по краю, светящиеся ядра со звездой на ободе и снаружи; на диске толстое розовое
+    неоновое кольцо, вокруг — два тонких голубых кольца-орбиты; короткий гриф с розовыми неоновыми полосами."""
+    grip = 3.4  # гриф короче, чем у остальных: диски почти вплотную, как на референсе
+    depth = 5.2
+    x = grip + depth / 2
+    face = grip + depth
+    bar(m, "cosmicblack", end_color="cosmicdark", end=face + 0.6)
+    ridges(m, "Glow", "magenta", width=0.6, half=grip)
+    glow_cells = {(-1, -3), (0, -3), (1, 3), (3, 1)}  # белые светящиеся кубики по краю
+    nebula = {(-2, 1), (2, -1), (0, 2)}  # светящиеся фиолетовые кубики-«туманности»
 
     def paint(i, j):
-        if (i, j) in stars:
-            return ("Glow", "star")  # звёзды-вставки в кубиках
-        return ("Body", "cosmicmid" if noise(i, j, 41) < 0.3 else "cosmicdark")
+        if (i, j) in glow_cells:
+            return ("Glow", "whiteglow")
+        if (i, j) in nebula:
+            return ("Glow", "violet")
+        n = noise(i, j, 61)
+        return ("Body", "cosmicblue" if n < 0.12 else "cosmicmid" if n < 0.4 else "cosmicblack")
 
-    face = DISC_X + DISC_D / 2
+    r = 3.5 * CELL
     for s in (-1, 1):
-        m.voxel_plate((s * DISC_X, 0, 0), pixel_circle(7), CELL, DISC_D, paint, normal=(s, 0, 0))
-        # Кольца-орбиты: соосное фиолетовое и наклонное голубое.
-        m.torus("Glow", (s * DISC_X, 0, 0), 6.3, 0.3, "violet", axis="x", segments=24, minor_segments=4)
-        m.torus("Glow", (s * DISC_X, 0, 0), 6.9, 0.25, "neoncyan", axis="x", segments=24, minor_segments=4,
-                rotation=rot(y=25 * s, z=15))
-        for y, z, size in ((3.2, 2.6, 0.9), (-2.4, -3.4, 0.7), (1.0, -3.9, 0.6)):  # звёзды на лице
-            star(m, (s * (face + 0.05), y, z), (s, 0, 0), size)
-        star(m, (s * (END_X + 0.65), 0, 0), (s, 0, 0), 1.1)
-    return disc_lights("violet")
-
+        m.voxel_plate((s * x, 0, 0), pixel_circle(7), CELL, depth, paint, normal=(-s, 0, 0))
+        for t in (-1, 1):  # тёмные швы рядов по ободу
+            m.voxel_plate((s * (x + t * depth / 6), 0, 0), pixel_circle(7), CELL * 1.012, 0.14,
+                          one("Body", "cosmicblack"), normal=(s, 0, 0), groove=0)
+        for sz in (-1, 1):  # светящееся ядро на ободе спереди и сзади
+            m.box("Glow", (s * x, 0, sz * (r + 0.05)), (2.2, 2.2, 0.3), "violet", bevel=0)
+            gem(m, (s * x, 0, sz * (r + 0.2)), (0, 0, sz), size=1.0, color="whiteglow")
+        m.box("Glow", (s * (face + 0.05), 2.2, 2.2), (0.3, 2.2, 2.2), "violet", bevel=0)  # и снаружи
+        gem(m, (s * (face + 0.2), 2.2, 2.2), (s, 0, 0), size=1.0, color="whiteglow")
+        # Толстое розовое кольцо на диске и два тонких голубых кольца-орбиты, прижатых к нему.
+        m.torus("Glow", (s * (x - 0.6), 0, 0), 6.0, 0.55, "magenta", axis="x", segments=24, minor_segments=4)
+        for yaw, roll in ((22, 25), (-20, -28)):
+            m.torus("Glow", (s * x, 0, 0), 6.5, 0.17, "neoncyan", axis="x", segments=16, minor_segments=3,
+                    rotation=rot(y=yaw * s, z=roll))
+    lamps = [(s * (grip + 0.5), 1.0, sz * 6.5) for s in (-1, 1) for sz in (-1, 1)]
+    return lights("violet", lamps, brightness=1)  # тело тёмное, светятся детали — как на референсе
 
 BUILDERS = {
     1: ("Деревянная", wooden),
@@ -405,6 +413,7 @@ layout = {}
 objects = []
 LIFT = 5.8  # в превью гантель висит над полем, как на референсе
 SPACING = 22
+FRONT = {9, 10}  # гантели с референсом заказчика — превью ещё и в его ракурсе
 
 
 def spot(k):
@@ -458,6 +467,9 @@ for k, index in enumerate(INDICES):
             obj.hide_render = other != k
     ox, oy, oz = spot(k)
     lego.render(os.path.join(PREVIEWS, f"{name}.png"), (ox - 17, oy + 7.5, oz + 16), (ox, oy - 0.6, oz), vis, lens=36)
+    if index in FRONT:  # ракурс референса заказчика: спереди, на уровне грифа
+        lego.render(os.path.join(PREVIEWS, f"{name}_front.png"), (ox - 2, oy + 3.5, oz + 21), (ox, oy - 0.3, oz), vis,
+                    lens=22)
 for objs in lamps.values():
     for obj in objs:
         obj.hide_render = False

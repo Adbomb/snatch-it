@@ -13,7 +13,7 @@
      После импорта: модель `Pack1` → `ServerStorage.ImportedModels`, ID мешей → конфиг из `Pack1.layout.json`, музей
      по уровню из мешей (без столкновений + невидимые простые стены из кода), проверки этапа 2, снимки, Render stats
      в Play с 8 музеями.
-   - Гантели (D34): `assets/models/Pack1_dumbbells.fbx` + `.layout.json` (10 уровней, 1 724–2 988 треугольников,
+   - Гантели (D34): `assets/models/Pack1_dumbbells.fbx` + `.layout.json` (10 уровней, 1 724–2 988 треугольников; неоновая и космическая — по референсам заказчика,
      скрипт `scripts/blender/pack1_dumbbells.py`, диски — `Model.voxel_plate`), **ждёт импорта** вместе с Pack1.
      Неоновая — по второму референсу заказчика (тело тёмное, неоновые только детали). При подключении: layout
      `lights` → PointLight без теней (у 7–10); роли Glass → Transparency = `lego.GLASS_TRANSPARENCY` (0.35) —
