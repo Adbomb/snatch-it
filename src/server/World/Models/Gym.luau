@@ -1,5 +1,5 @@
--- Качалка (D31): площадка с задней стеной, поле, где качаются, и огромная гантель. Вывеска — кирпич
--- "SignBoard" на стене, надпись ставит WorldBuilder.
+-- Качалка (D31): площадка с задней стеной и поле, где качаются; огромная гантель — модель из Blender
+-- (World/MeshBuilder, ставит WorldBuilder). Вывеска — кирпич "SignBoard" на стене, надпись ставит WorldBuilder.
 -- Зависит от ModelBuilder, Palette.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -15,29 +15,8 @@ end
 
 local Gym = {}
 
--- Огромная гантель на подставках: рукоять вдоль Z, диски по краям. Начало — центр основания.
--- Уровень 1 — Деревянная; модели уровней 2–10 придут из Blender (D30, шаг 3).
-function Gym.GiantDumbbell(): { ModelBuilder.Brick }
-	local wood, woodDark = hex("A0682F"), Palette.WoodDark
-	local y = 6 -- высота оси
-	local bricks: { ModelBuilder.Brick } = {
-		B(Vector3.new(16, 2.4, 2.4), CFrame.new(0, y, 0) * CFrame.Angles(0, math.rad(90), 0), woodDark, { shape = "Cylinder" }),
-	}
-	for _, z in { -6.5, 6.5 } do
-		-- Подставка под рукоятью, два толстых диска и стопор (у цилиндра ось — X, поэтому поворот на 90°).
-		table.insert(bricks, B(Vector3.new(3, y - 1.2, 1), Vector3.new(0, (y - 1.2) / 2, z * 0.45), Palette.Metal))
-		for _, dz in { -1.4, 1.4 } do
-			table.insert(bricks, B(Vector3.new(2.6, 9, 9), CFrame.new(0, y, z + dz) * CFrame.Angles(0, math.rad(90), 0), wood, {
-				shape = "Cylinder",
-			}))
-		end
-		local collar = z - math.sign(z) * 3.2
-		table.insert(bricks, B(Vector3.new(1, 3.6, 3.6), CFrame.new(0, y, collar) * CFrame.Angles(0, math.rad(90), 0), woodDark, {
-			shape = "Cylinder",
-		}))
-	end
-	return bricks
-end
+-- Высота оси огромной гантели над полом: диски (радиус 5.1) не касаются поля, как на референсе.
+Gym.DumbbellHeight = 6
 
 -- Поле, где качаются: резиновый пол цвета акцента и светящаяся рамка. size — по X и Z, начало — центр.
 function Gym.Field(size: Vector2): { ModelBuilder.Brick }

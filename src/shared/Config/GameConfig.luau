@@ -22,12 +22,21 @@ GameConfig.World = {
 GameConfig.Museum = {
 	SlotsByLevel = { [1] = 6 }, -- DESIGN.md §2: museumLevel 1 → 6 витрин
 	ShowcaseSize = Vector3.new(5, 3, 5),
+	ShowcaseStep = Vector2.new(10, 14), -- шаг сетки витрин по X и Z (влезает в самый узкий зал)
 	DisplayDistance = 10, -- радиус подсказок на витринах
 	StorageCapacity = 10, -- мест в хранилище
 	ChestSize = Vector3.new(4, 3, 3),
 	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
 	RotateStep = 45, -- градусов за одно «Повернуть»
 	MoveSelectTimeout = 15, -- секунд, через которые выбор «Переставить» отменяется
+}
+
+-- Модели из Blender (World/MeshBuilder, D33): музей уровня L — модель ceil(L / 2), на чётных уровнях с декором.
+GameConfig.Models = {
+	MuseumModelCount = 5, -- Museum1 … Museum5
+	GlassTransparency = 0.35, -- стекло и кристаллы (то же число в scripts/blender/lego.py для превью)
+	AccentDarken = 0.45, -- тёмный оттенок цвета участка (роль AccentDark: крыша, купол)
+	DefaultAccent = "2F6FD6", -- цвет участка, если не задан (гантель в качалке)
 }
 
 GameConfig.Carry = {

@@ -1,5 +1,6 @@
 -- 8 участков-музеев по кругу: строит их при старте, выдаёт при входе, освобождает при выходе.
--- Хранит владельца участка на сервере и пишет его имя на табличке (DESIGN.md §3).
+-- Хранит владельца участка на сервере и пишет его имя на табличке (DESIGN.md §3). Здание — модель уровня
+-- музея владельца (D33), у свободного участка — руины (уровень 1).
 -- Зависит от Util/PartBuilder, World/MapLayout, GameConfig, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +19,9 @@ export type Plot = {
 	exhibits: Folder,
 	signLabel: TextLabel,
 	chest: BasePart,
+	floorOrigin: CFrame,
+	accent: Color3,
+	level: number,
 }
 
 local FREE_SIGN_TEXT = "СВОБОДНЫЙ УЧАСТОК"
@@ -44,6 +48,9 @@ function PlotService.Init(world: Folder)
 			exhibits = parts.exhibits,
 			signLabel = parts.signLabel,
 			chest = parts.chest,
+			floorOrigin = parts.floorOrigin,
+			accent = parts.accent,
+			level = 1,
 		}
 	end
 end
@@ -75,6 +82,15 @@ function PlotService.Assign(player: Player): Plot?
 	return nil
 end
 
+-- Показывает здание музея уровня level на участке (если уровень другой — модель меняется).
+function PlotService.ShowLevel(plot: Plot, level: number)
+	if plot.level == level then
+		return
+	end
+	plot.level = level
+	PartBuilder.SetBuilding(plot.model, plot.floorOrigin, plot.accent, level)
+end
+
 function PlotService.Release(player: Player)
 	local plot = plotByPlayer[player]
 	if not plot then
@@ -84,6 +100,7 @@ function PlotService.Release(player: Player)
 	plot.owner = nil
 	plot.model:SetAttribute("OwnerUserId", 0)
 	plot.signLabel.Text = FREE_SIGN_TEXT
+	PlotService.ShowLevel(plot, 1)
 	Log.Debug("PlotService", ("Участок %d освобождён"):format(plot.index))
 end
 

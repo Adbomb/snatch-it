@@ -2,7 +2,7 @@
 -- точку появления с фонтаном, качалку (D31), сквер, ворота, двор и 10 зон одним коридором — пол, стена
 -- с воротами и вывеской, постаменты, декор, — стену и холмы по контуру острова. Воду вокруг острова
 -- строит BuildWater (Terrain; только в Play). Участки-музеи строит PlotService.
--- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, UITokens, NumberFormat.
+-- Зависит от MapLayout, MeshBuilder, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, UITokens, NumberFormat.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -12,6 +12,7 @@ local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
+local MeshBuilder = require(World.MeshBuilder)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
 local Signs = require(World.Signs)
@@ -233,8 +234,11 @@ local function buildGym(parent: Instance)
 	local fieldCenter = gym.center + Vector3.new(2, 0, 0)
 	local field = ModelBuilder.Place(ModelBuilder.Build("GymField", Gym.Field(gym.field)), CFrame.new(fieldCenter), f)
 	field:SetAttribute("GymField", true)
-	local dumbbellAt = Vector3.new(gym.center.X - gym.size.X / 2 + 7, gym.center.Y, gym.center.Z)
-	ModelBuilder.Place(ModelBuilder.Build("GiantDumbbell", Gym.GiantDumbbell()), CFrame.new(dumbbellAt), f)
+	-- Огромная гантель из Blender (уровень 1 — Деревянная) висит над полем, рукоять вдоль Z, как на референсе.
+	local dumbbellAt = Vector3.new(gym.center.X - gym.size.X / 2 + 9, gym.center.Y + Gym.DumbbellHeight, gym.center.Z)
+	MeshBuilder.Build("Dumbbell01", CFrame.new(dumbbellAt) * CFrame.Angles(0, math.rad(90), 0), f, {
+		name = "GiantDumbbell",
+	})
 end
 
 local function buildGateAndYard(parent: Instance)

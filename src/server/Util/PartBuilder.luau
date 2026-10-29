@@ -1,12 +1,14 @@
--- Строит участки-музеи: здание из кирпичей (World/Models/Museum) и части с механикой витрин.
+-- Строит участки-музеи: здание из Blender по уровню (World/MeshBuilder, D33) с невидимыми стенами и части
+-- с механикой витрин (окружение витрин и сундука — кирпичи World/Models/Museum).
 -- Карту строит World/WorldBuilder. Только геометрия, без логики.
--- Зависит от GameConfig, World/MapLayout, World/ModelBuilder, World/Models/Museum, World/Signs.
+-- Зависит от GameConfig, World/MapLayout, World/MeshBuilder, World/ModelBuilder, World/Models/Museum, World/Signs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
+local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local Museum = require(ServerScriptService.Server.World.Models.Museum)
 local Signs = require(ServerScriptService.Server.World.Signs)
@@ -22,7 +24,23 @@ export type PlotParts = {
 	exhibits: Folder,
 	signLabel: TextLabel,
 	chest: BasePart,
+	floorOrigin: CFrame, -- центр участка на уровне пола, вход в -Z
+	accent: Color3,
 }
+
+-- Размеры зала, общие для всех моделей музея: фасад и вывеска одинаковые, лампы — под самым низким потолком.
+local function hallSize(): (number, number, number, number)
+	local facadeZ, signY, lamp, ceiling = 0, 0, math.huge, math.huge
+	for i = 1, GameConfig.Models.MuseumModelCount do
+		local hall = MeshBuilder.Get("Museum" .. i)
+		if hall then
+			facadeZ, signY = hall.facadeZ :: number, hall.signY :: number
+			lamp = math.min(lamp, hall.lampHeight :: number)
+			ceiling = math.min(ceiling, hall.wallHeight :: number)
+		end
+	end
+	return facadeZ, signY, lamp, ceiling
+end
 
 type PartProps = {
 	name: string,
@@ -82,13 +100,14 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	})
 	model.PrimaryPart = floor
 
-	ModelBuilder.Place(ModelBuilder.Build("Building", Museum.Building(accent)), floorOrigin, model)
+	local facadeZ, signY, lampHeight, ceiling = hallSize()
+	PartBuilder.SetBuilding(model, floorOrigin, accent, 1)
 
 	-- Вывеска «МУЗЕЙ <имя>» над входом.
 	local board = PartBuilder.MakePart({
 		name = "Sign",
 		size = Vector3.new(18, 3.2, 0.4),
-		cframe = floorOrigin * CFrame.new(0, Museum.SignY, Museum.FacadeZ - 0.75),
+		cframe = floorOrigin * CFrame.new(0, signY, facadeZ - 0.75),
 		color = accent:Lerp(Color3.new(0, 0, 0), 0.25),
 		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
 		parent = model,
@@ -106,12 +125,12 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	lampFolder.Name = "Lamps"
 	lampFolder.Parent = model
 	local showcaseSize = GameConfig.Museum.ShowcaseSize
-	local lampHeight = Museum.WallHeight - 2.5
+	local step = GameConfig.Museum.ShowcaseStep
 	local showcases = {}
 	for slot = 1, slotCount do
 		local column = (slot - 1) % 3
 		local row = (slot - 1) // 3
-		local base = floorOrigin * CFrame.new((column - 1) * 12, 0, -2 + row * 14)
+		local base = floorOrigin * CFrame.new((column - 1) * step.X, 0, -2 + row * step.Y)
 		local showcase = PartBuilder.MakePart({
 			name = "Showcase_" .. slot,
 			size = showcaseSize,
@@ -125,7 +144,8 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		showcases[slot] = showcase
 
 		ModelBuilder.Place(ModelBuilder.Build("Decor_" .. slot, Museum.ShowcaseDecor(showcaseSize, accent)), base, decorFolder)
-		local lamp = ModelBuilder.Place(ModelBuilder.Build("Lamp_" .. slot, Museum.Lamp(lampHeight)), base, lampFolder)
+		local lamp =
+			ModelBuilder.Place(ModelBuilder.Build("Lamp_" .. slot, Museum.Lamp(lampHeight, ceiling)), base, lampFolder)
 		local bulb = lamp:FindFirstChild("Bulb")
 		if bulb then
 			-- Прожектор презентации: выключен, включает PresentationController у зрителей.
@@ -148,7 +168,7 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 
 	-- Сундук-хранилище у входа, слева от прохода: корпус (Chest) + крышка, полосы, замок.
 	local chestSize = GameConfig.Museum.ChestSize
-	local chestCFrame = floorOrigin * CFrame.new(-15, chestSize.Y / 2, Museum.FacadeZ + 4)
+	local chestCFrame = floorOrigin * CFrame.new(-12, chestSize.Y / 2, facadeZ + 4)
 	local chest = PartBuilder.MakePart({
 		name = "Chest",
 		size = chestSize,
@@ -169,7 +189,50 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		exhibits = exhibits,
 		signLabel = signLabel,
 		chest = chest,
+		floorOrigin = floorOrigin,
+		accent = accent,
 	}
+end
+
+-- Здание музея уровня level (1–10): модель ceil(level / 2), на чётных уровнях с декором, и невидимые простые
+-- стены зала вместо столкновений мешей. Прежнее здание участка заменяется.
+function PartBuilder.SetBuilding(model: Model, floorOrigin: CFrame, accent: Color3, level: number)
+	for _, name in { "Building", "Walls" } do
+		local old = model:FindFirstChild(name)
+		if old then
+			old:Destroy()
+		end
+	end
+	local count = GameConfig.Models.MuseumModelCount
+	local hallName = "Museum" .. math.clamp(math.ceil(level / 2), 1, count)
+	MeshBuilder.Build(hallName, floorOrigin, model, { accent = accent, decor = level % 2 == 0, name = "Building" })
+	local hall = MeshBuilder.Get(hallName)
+	if not hall then
+		return
+	end
+	local walls = Instance.new("Folder")
+	walls.Name = "Walls"
+	walls.Parent = model
+	local half, t, h = hall.halfWidth :: number, hall.wallThickness :: number, hall.wallHeight :: number
+	local front, back, door = hall.facadeZ :: number, hall.back :: number, hall.doorWidth :: number
+	local function wall(name: string, size: Vector3, center: Vector3)
+		local part = PartBuilder.MakePart({
+			name = name,
+			size = size,
+			cframe = floorOrigin * CFrame.new(center),
+			color = accent,
+			transparency = 1,
+			parent = walls,
+		})
+		part.CanQuery = false
+		part.CanTouch = false
+	end
+	for _, sx in { -1, 1 } do
+		wall("Side", Vector3.new(t, h, back - front), Vector3.new(sx * (half - t / 2), h / 2, (front + back) / 2))
+		local side = half - door / 2
+		wall("Facade", Vector3.new(side, h, t), Vector3.new(sx * (door / 2 + side / 2), h / 2, front + t / 2))
+	end
+	wall("Back", Vector3.new(half * 2, h, t), Vector3.new(0, h / 2, back - t / 2))
 end
 
 return PartBuilder

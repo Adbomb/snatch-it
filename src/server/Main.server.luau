@@ -20,6 +20,7 @@ local ItemFactory = require(Server.Util.ItemFactory)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 local PartBuilder = require(Server.Util.PartBuilder)
+local MeshBuilder = require(Server.World.MeshBuilder)
 local ModelBuilder = require(Server.World.ModelBuilder)
 local Preview = require(Server.World.Preview)
 local WorldBuilder = require(Server.World.WorldBuilder)
@@ -30,6 +31,7 @@ Preview.Clear()
 Remotes.CreateAll()
 LegoMaterial.Apply()
 
+MeshBuilder.Preload() -- меши музеев и гантелей из Blender (ждёт загрузку один раз)
 local world = PartBuilder.CreateWorldFolder()
 ModelBuilder.SetTemplateParent(ServerStorage)
 WorldBuilder.Build(world)
@@ -75,6 +77,7 @@ local function onPlayerAdded(player: Player)
 	if not DataService.LoadAsync(player) then
 		return
 	end
+	PlotService.ShowLevel(plot, DataService.GetData(player).museumLevel)
 	MuseumService.LoadMuseum(player)
 	StorageService.Sync(player)
 	Notify.Send(

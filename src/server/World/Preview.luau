@@ -5,7 +5,7 @@
 --   require(World.FreshRequire)(World.Preview).Clear()   -- убрать
 -- Папка Archivable = false: в сохранение места и в копию для Play она не попадает;
 -- Main.server на всякий случай удаляет её при старте.
--- Зависит от WorldBuilder, ModelBuilder, MapLayout, Util/PartBuilder, GameConfig.
+-- Зависит от WorldBuilder, MeshBuilder, ModelBuilder, MapLayout, Util/PartBuilder, GameConfig.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -13,6 +13,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
+local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local WorldBuilder = require(ServerScriptService.Server.World.WorldBuilder)
 
@@ -36,6 +37,7 @@ function Preview.Build(): string
 	root.Archivable = false
 
 	ModelBuilder.SetTemplateParent(nil)
+	MeshBuilder.Preload()
 	WorldBuilder.Build(root)
 	local plots = Instance.new("Folder")
 	plots.Name = "Plots"
