@@ -1,0 +1,536 @@
+{
+ "museums": {
+  "Museum1": {
+   "roles": {
+    "Accent": {
+     "center": [
+      0.0,
+      7.4,
+      1.25
+     ],
+     "size": [
+      44.2,
+      14.8,
+      41.7
+     ],
+     "triangles": 5170
+    },
+    "Body": {
+     "center": [
+      0.0,
+      7.45,
+      1.3
+     ],
+     "size": [
+      44.948,
+      14.9,
+      42.2
+     ],
+     "triangles": 3762
+    },
+    "AccentDark": {
+     "center": [
+      12.0,
+      13.2,
+      20.0
+     ],
+     "size": [
+      16.0,
+      1.448,
+      2.989
+     ],
+     "triangles": 44
+    },
+    "Decor": {
+     "center": [
+      0.0,
+      9.525,
+      -18.9
+     ],
+     "size": [
+      32.0,
+      19.05,
+      6.0
+     ],
+     "triangles": 956
+    }
+   },
+   "wallHeight": 14.4,
+   "signY": 11.5,
+   "lampHeight": 13.4
+  },
+  "Museum2": {
+   "roles": {
+    "Accent": {
+     "center": [
+      0.0,
+      12.1,
+      1.25
+     ],
+     "size": [
+      44.0,
+      24.2,
+      41.5
+     ],
+     "triangles": 5208
+    },
+    "Body": {
+     "center": [
+      0.0,
+      14.1,
+      1.0
+     ],
+     "size": [
+      45.6,
+      28.2,
+      43.6
+     ],
+     "triangles": 3672
+    },
+    "AccentDark": {
+     "center": [
+      0.0,
+      20.0,
+      1.5
+     ],
+     "size": [
+      46.4,
+      9.6,
+      43.35
+     ],
+     "triangles": 112
+    },
+    "Decor": {
+     "center": [
+      0.0,
+      15.625,
+      -4.95
+     ],
+     "size": [
+      47.0,
+      31.25,
+      33.9
+     ],
+     "triangles": 1428
+    }
+   },
+   "wallHeight": 14.4,
+   "signY": 11.5,
+   "lampHeight": 11.9
+  },
+  "Museum3": {
+   "roles": {
+    "Accent": {
+     "center": [
+      0.0,
+      10.9,
+      -0.4
+     ],
+     "size": [
+      44.0,
+      21.8,
+      44.8
+     ],
+     "triangles": 5376
+    },
+    "Body": {
+     "center": [
+      0.0,
+      11.0,
+      -0.95
+     ],
+     "size": [
+      45.4,
+      24.8,
+      47.3
+     ],
+     "triangles": 6250
+    },
+    "AccentDark": {
+     "center": [
+      0.0,
+      15.6,
+      1.5
+     ],
+     "size": [
+      43.0,
+      0.8,
+      40.0
+     ],
+     "triangles": 12
+    },
+    "Decor": {
+     "center": [
+      0.0,
+      6.7,
+      -24.55
+     ],
+     "size": [
+      29.8,
+      13.4,
+      6.7
+     ],
+     "triangles": 664
+    }
+   },
+   "wallHeight": 14.4,
+   "signY": 11.5,
+   "lampHeight": 11.9
+  },
+  "Museum4": {
+   "roles": {
+    "Accent": {
+     "center": [
+      0.0,
+      12.6,
+      -0.4
+     ],
+     "size": [
+      44.0,
+      25.2,
+      44.8
+     ],
+     "triangles": 6168
+    },
+    "Body": {
+     "center": [
+      0.0,
+      17.2,
+      -1.1
+     ],
+     "size": [
+      45.6,
+      37.2,
+      47.8
+     ],
+     "triangles": 8338
+    },
+    "AccentDark": {
+     "center": [
+      0.0,
+      24.8,
+      1.5
+     ],
+     "size": [
+      43.0,
+      14.4,
+      40.0
+     ],
+     "triangles": 232
+    },
+    "Decor": {
+     "center": [
+      0.0,
+      12.425,
+      -1.6
+     ],
+     "size": [
+      42.666,
+      24.85,
+      51.4
+     ],
+     "triangles": 1216
+    }
+   },
+   "wallHeight": 16.8,
+   "signY": 11.5,
+   "lampHeight": 13.8
+  },
+  "Museum5": {
+   "roles": {
+    "Accent": {
+     "center": [
+      0.0,
+      13.188,
+      -0.0
+     ],
+     "size": [
+      46.019,
+      26.375,
+      46.2
+     ],
+     "triangles": 8144
+    },
+    "Body": {
+     "center": [
+      0.0,
+      18.25,
+      -1.35
+     ],
+     "size": [
+      46.019,
+      40.7,
+      48.9
+     ],
+     "triangles": 7238
+    },
+    "AccentDark": {
+     "center": [
+      0.0,
+      28.7,
+      -0.0
+     ],
+     "size": [
+      47.579,
+      17.4,
+      47.8
+     ],
+     "triangles": 124
+    },
+    "Trim": {
+     "center": [
+      0.0,
+      24.4,
+      -0.0
+     ],
+     "size": [
+      47.6,
+      8.8,
+      47.6
+     ],
+     "triangles": 5772
+    },
+    "Decor": {
+     "center": [
+      0.0,
+      21.425,
+      -2.6
+     ],
+     "size": [
+      39.666,
+      42.85,
+      50.4
+     ],
+     "triangles": 1472
+    }
+   },
+   "wallHeight": 19.2,
+   "signY": 11.5,
+   "lampHeight": 16.2
+  }
+ },
+ "dumbbells": {
+  "Dumbbell01": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      16.0,
+      8.579,
+      8.8
+     ],
+     "triangles": 644
+    }
+   }
+  },
+  "Dumbbell02": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.498,
+      -0.298
+     ],
+     "size": [
+      16.4,
+      8.203,
+      7.803
+     ],
+     "triangles": 564
+    }
+   }
+  },
+  "Dumbbell03": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      17.0,
+      9.06,
+      9.2
+     ],
+     "triangles": 924
+    }
+   }
+  },
+  "Dumbbell04": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      17.3,
+      7.275,
+      8.4
+     ],
+     "triangles": 344
+    }
+   }
+  },
+  "Dumbbell05": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      22.0,
+      8.4,
+      8.4
+     ],
+     "triangles": 876
+    }
+   }
+  },
+  "Dumbbell06": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      17.102,
+      12.6,
+      12.6
+     ],
+     "triangles": 768
+    }
+   }
+  },
+  "Dumbbell07": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      13.0,
+      4.0,
+      4.0
+     ],
+     "triangles": 84
+    },
+    "Crystal": {
+     "center": [
+      0.0,
+      0.058,
+      -0.449
+     ],
+     "size": [
+      20.0,
+      8.485,
+      8.899
+     ],
+     "triangles": 192
+    }
+   }
+  },
+  "Dumbbell08": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      12.0,
+      3.2,
+      3.2
+     ],
+     "triangles": 124
+    },
+    "Crystal": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      19.6,
+      9.2,
+      9.2
+     ],
+     "triangles": 184
+    }
+   }
+  },
+  "Dumbbell09": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      16.5,
+      6.8,
+      6.8
+     ],
+     "triangles": 276
+    },
+    "Glow": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      15.1,
+      8.5,
+      8.5
+     ],
+     "triangles": 2352
+    }
+   }
+  },
+  "Dumbbell10": {
+   "roles": {
+    "Body": {
+     "center": [
+      0.0,
+      0.65,
+      0.303
+     ],
+     "size": [
+      21.3,
+      9.7,
+      9.106
+     ],
+     "triangles": 1400
+    },
+    "Glow": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      25.9,
+      0.7,
+      13.1
+     ],
+     "triangles": 768
+    }
+   }
+  }
+ }
+}

@@ -11,6 +11,15 @@
   `assets/models/*.fbx` → импорт в Studio (File → Import 3D, делает заказчик) → ID меша и текстуры в
   `Config/ItemModels`. Текстура-палитра всех предметов — `assets/textures/item_palette.png` (4×4 цвета).
   Материал мешей — SmoothPlastic (пупырышки у модели свои). Оригинал импорта лежит в `ServerStorage.ImportedModels`.
+- Пачки моделей мира (шаг 3): библиотека `scripts/blender/lego.py` (кирпичи, пупырышки, цилиндры, купола,
+  скаты, стены с перевязкой; координаты как в Roblox; bmesh) + скрипт пачки `scripts/blender/packN_*.py` →
+  `assets/models/PackN.fbx` и `PackN.layout.json` (для каждой детали центр и размер в координатах модели —
+  центр габаритов = точка опоры MeshPart). Деталь = «роль» модели, объект `<Модель>_<Роль>`:
+  Accent / AccentDark — игра красит в цвет участка и его тёмный оттенок (TextureID убрать), Body / Trim /
+  Decor — палитра `assets/textures/model_palette.png` (8×8, встроена в FBX), Crystal — стекло, Glow — неон.
+  Decor музея ставится на чётных уровнях (D31). Музеи вписаны в участок 44×44: фасад z = −19, вход 12×10,
+  вывеска y = 11.5; высоты стен и ламп — в layout. Гантели: центр рукояти в начале, ось x, ~16 стадов.
+  Запас — ≤ 10 000 треугольников на деталь.
 - `assets/textures` — LEGO-текстуры дизайнера (загружены в Roblox, ID в `Config/Textures`).
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
