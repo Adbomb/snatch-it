@@ -60,22 +60,40 @@ local function playSound(soundId: string)
 	task.delay(SOUND_LIFETIME, sound.Destroy, sound)
 end
 
--- Прожектор сверху на витрину цветом редкости.
-local function addSpotlight(showcase: BasePart, rarity: string): Instance
+-- Прожектор цветом редкости: SpotLight в лампе над витриной (Lamps/Lamp_<slot>/Bulb/PresentationLight).
+-- Если лампы нет — временный прожектор над витриной. Возвращает функцию, которая всё возвращает как было.
+local function addSpotlight(plot: Model, showcase: BasePart, slot: number, rarity: string): () -> ()
 	local cfg = GameConfig.Presentation
+	local lamps = plot:FindFirstChild("Lamps")
+	local lamp = lamps and lamps:FindFirstChild("Lamp_" .. slot)
+	local bulb = lamp and lamp:FindFirstChild("Bulb")
+	local light = bulb and bulb:FindFirstChild("PresentationLight")
+	if light and light:IsA("SpotLight") then
+		light.Color = UITokens.RarityColor(rarity)
+		light.Range = cfg.LightRange
+		light.Angle = cfg.LightAngle
+		light.Brightness = cfg.LightBrightness
+		light.Shadows = true
+		light.Enabled = true
+		return function()
+			light.Enabled = false
+		end
+	end
 	local attachment = Instance.new("Attachment")
 	attachment.Name = "PresentationLight"
 	attachment.Position = Vector3.new(0, showcase.Size.Y / 2 + cfg.LightHeight, 0)
-	local light = Instance.new("SpotLight")
-	light.Face = Enum.NormalId.Bottom
-	light.Color = UITokens.RarityColor(rarity)
-	light.Range = cfg.LightRange
-	light.Angle = cfg.LightAngle
-	light.Brightness = cfg.LightBrightness
-	light.Shadows = true
-	light.Parent = attachment
+	local spot = Instance.new("SpotLight")
+	spot.Face = Enum.NormalId.Bottom
+	spot.Color = UITokens.RarityColor(rarity)
+	spot.Range = cfg.LightRange
+	spot.Angle = cfg.LightAngle
+	spot.Brightness = cfg.LightBrightness
+	spot.Shadows = true
+	spot.Parent = attachment
 	attachment.Parent = showcase
-	return attachment
+	return function()
+		attachment:Destroy()
+	end
 end
 
 -- Крупное название и плашка редкости над экспонатом (BillboardGui в PlayerGui, Adornee — экспонат).
@@ -200,10 +218,9 @@ local function present(payload: Payload)
 	end
 
 	local cleanup: { () -> () } = {}
-	local light = addSpotlight(showcase, def.rarity)
+	table.insert(cleanup, addSpotlight(plot, showcase, payload.slot, def.rarity))
 	local title = addTitle(exhibit, def)
 	table.insert(cleanup, function()
-		light:Destroy()
 		title:Destroy()
 	end)
 	if isOwnerEvent then

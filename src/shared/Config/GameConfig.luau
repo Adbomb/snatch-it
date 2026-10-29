@@ -16,7 +16,6 @@ GameConfig.Data = {
 GameConfig.World = {
 	PlotCount = 8,
 	PlotSize = Vector3.new(44, 1, 44),
-	WallHeight = 8,
 	MaxParts = 12000, -- бюджет частей всей карты
 }
 

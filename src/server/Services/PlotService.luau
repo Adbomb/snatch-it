@@ -20,7 +20,7 @@ export type Plot = {
 	chest: BasePart,
 }
 
-local FREE_SIGN_TEXT = "Свободный участок"
+local FREE_SIGN_TEXT = "СВОБОДНЫЙ УЧАСТОК"
 
 local plots: { Plot } = {}
 local plotByPlayer: { [Player]: Plot } = {}
@@ -66,7 +66,7 @@ function PlotService.Assign(player: Player): Plot?
 			plot.owner = player
 			plotByPlayer[player] = plot
 			plot.model:SetAttribute("OwnerUserId", player.UserId)
-			plot.signLabel.Text = "Музей: " .. player.DisplayName
+			plot.signLabel.Text = "МУЗЕЙ " .. player.DisplayName
 			Log.Debug("PlotService", ("%s получил участок %d"):format(player.Name, plot.index))
 			return plot
 		end

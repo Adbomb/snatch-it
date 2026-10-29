@@ -1,19 +1,18 @@
--- Надписи на вывесках мира (SurfaceGui): шрифт, белый текст и толстая обводка Ink из UI_KIT.md.
--- Зависит от Config/UITokens.
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
+-- Надписи на вывесках мира (SurfaceGui): GothamBlack (Check-UI, D20), белый текст, толстая чёрная обводка.
+-- Ни от чего не зависит.
 
 local PIXELS_PER_STUD = 50
 local STROKE = 4 -- толще, чем в интерфейсе: вывеску читают издалека
+local FONT = Font.fromEnum(Enum.Font.GothamBlack)
+local TEXT = Color3.new(1, 1, 1)
+local OUTLINE = Color3.new(0, 0, 0)
 
 export type Line = { text: string, scale: number } -- scale — доля высоты вывески
 
 local Signs = {}
 
--- Пишет строки сверху вниз на грани face детали part.
-function Signs.Write(part: BasePart, face: Enum.NormalId, lines: { Line })
+-- Пишет строки сверху вниз на грани face детали part. Возвращает подписи (чтобы менять текст позже).
+function Signs.Write(part: BasePart, face: Enum.NormalId, lines: { Line }): { TextLabel }
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Sign"
 	gui.Face = face
@@ -28,22 +27,25 @@ function Signs.Write(part: BasePart, face: Enum.NormalId, lines: { Line })
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	layout.Parent = gui
 
+	local labels: { TextLabel } = {}
 	for order, line in lines do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(0.94, line.scale)
 		label.LayoutOrder = order
-		label.FontFace = UITokens.BodyFont(UITokens.Fonts.Heavy)
+		label.FontFace = FONT
 		label.TextScaled = true
-		label.TextColor3 = UITokens.Colors.TextOnColor
+		label.TextColor3 = TEXT
 		label.Text = line.text
 		local stroke = Instance.new("UIStroke")
-		stroke.Color = UITokens.Colors.Ink
+		stroke.Color = OUTLINE
 		stroke.Thickness = STROKE
 		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 		stroke.Parent = label
 		label.Parent = gui
+		table.insert(labels, label)
 	end
+	return labels
 end
 
 return Signs

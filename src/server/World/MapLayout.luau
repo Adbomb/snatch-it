@@ -14,7 +14,7 @@ MapLayout.Heights = {
 	Ground = 0.1,
 	Path = 0.3, -- дорожка к зонам, полы зон
 	Alley = 0.4, -- аллея, спортзал
-	Floor = 0.4, -- пол музеев (PartBuilder.FloorTop)
+	Floor = 1.4, -- пол музеев (PartBuilder.FloorTop): на ступень выше аллеи
 }
 
 MapLayout.Alley = {

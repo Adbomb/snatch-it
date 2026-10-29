@@ -1,11 +1,15 @@
--- Строит участки-музеи с витринами из простых Part. Город строит World/WorldBuilder.
--- Только геометрия, без логики. Зависит от GameConfig, World/MapLayout.
+-- Строит участки-музеи: здание из кирпичей (World/Models/Museum) и части с механикой витрин.
+-- Карту строит World/WorldBuilder. Только геометрия, без логики.
+-- Зависит от GameConfig, World/MapLayout, World/ModelBuilder, World/Models/Museum, World/Signs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
+local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
+local Museum = require(ServerScriptService.Server.World.Models.Museum)
+local Signs = require(ServerScriptService.Server.World.Signs)
 
 local PartBuilder = {}
 
@@ -47,24 +51,6 @@ function PartBuilder.MakePart(props: PartProps): Part
 	return part
 end
 
-local function addSurfaceText(part: BasePart, text: string): TextLabel
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = Enum.NormalId.Front
-	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	gui.PixelsPerStud = 40
-	gui.Parent = part
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextScaled = true
-	label.Font = Enum.Font.GothamBold
-	label.Text = text
-	label.Parent = gui
-	return label
-end
-
 function PartBuilder.CreateWorldFolder(): Folder
 	local world = Instance.new("Folder")
 	world.Name = "World"
@@ -72,108 +58,105 @@ function PartBuilder.CreateWorldFolder(): Folder
 	return world
 end
 
--- Участок index стоит по MapLayout и смотрит входом (сторона -Z) в город.
+-- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на аллею. Здание — World/Models/Museum;
+-- здесь части с механикой: Floor, витрины Showcase_i (папка Showcases), Chest, табличка, лампы, Exhibits.
 function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number, parent: Instance): PlotParts
 	local cfg = GameConfig.World
-	local half = cfg.PlotSize.X / 2
 	local top = PartBuilder.FloorTop
+	local accent = Museum.Accents[(index - 1) % #Museum.Accents + 1]
+	local floorOrigin = origin * CFrame.new(0, top, 0)
 
 	local model = Instance.new("Model")
 	model.Name = "Plot_" .. index
 	model:SetAttribute("PlotIndex", index)
 	model:SetAttribute("OwnerUserId", 0)
 
+	-- Пол: толстая плита от земли до уровня пола музея.
+	local floorThickness = top + 0.2
 	local floor = PartBuilder.MakePart({
 		name = "Floor",
-		size = cfg.PlotSize,
-		cframe = origin * CFrame.new(0, top - cfg.PlotSize.Y / 2, 0),
-		color = Color3.fromRGB(160, 120, 90),
+		size = Vector3.new(cfg.PlotSize.X, floorThickness, cfg.PlotSize.Z),
+		cframe = origin * CFrame.new(0, top - floorThickness / 2, 0),
+		color = accent:Lerp(Color3.new(0, 0, 0), 0.55),
 		parent = model,
 	})
 	model.PrimaryPart = floor
 
-	local wallColor = Color3.fromRGB(235, 225, 205)
-	local h = cfg.WallHeight
-	local walls = {
-		{
-			name = "WallLeft",
-			size = Vector3.new(1, h, cfg.PlotSize.Z),
-			offset = CFrame.new(-half + 0.5, top + h / 2, 0),
-		},
-		{
-			name = "WallRight",
-			size = Vector3.new(1, h, cfg.PlotSize.Z),
-			offset = CFrame.new(half - 0.5, top + h / 2, 0),
-		},
-		{
-			name = "WallBack",
-			size = Vector3.new(cfg.PlotSize.X, h, 1),
-			offset = CFrame.new(0, top + h / 2, half - 0.5),
-		},
-	}
-	for _, wall in walls do
-		PartBuilder.MakePart({
-			name = wall.name,
-			size = wall.size,
-			cframe = origin * wall.offset,
-			color = wallColor,
-			parent = model,
-		})
-	end
+	ModelBuilder.Place(ModelBuilder.Build("Building", Museum.Building(accent)), floorOrigin, model)
 
-	-- Табличка у входа: две стойки и доска с текстом, повёрнутая лицом к площади.
-	local signZ = -half + 1
-	for _, x in { -6.5, 6.5 } do
-		PartBuilder.MakePart({
-			name = "SignPost",
-			size = Vector3.new(0.6, 9, 0.6),
-			cframe = origin * CFrame.new(x, top + 4.5, signZ),
-			color = Color3.fromRGB(90, 60, 40),
-			parent = model,
-		})
-	end
+	-- Вывеска «МУЗЕЙ <имя>» над входом.
 	local board = PartBuilder.MakePart({
 		name = "Sign",
-		size = Vector3.new(14, 3, 0.4),
-		cframe = origin * CFrame.new(0, top + 7.5, signZ),
-		color = Color3.fromRGB(40, 40, 60),
+		size = Vector3.new(18, 3.2, 0.4),
+		cframe = floorOrigin * CFrame.new(0, Museum.SignY, Museum.FacadeZ - 0.75),
+		color = accent:Lerp(Color3.new(0, 0, 0), 0.25),
 		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
 		parent = model,
 	})
-	local signLabel = addSurfaceText(board, "")
+	local signLabel = Signs.Write(board, Enum.NormalId.Front, { { text = "", scale = 0.8 } })[1]
 
-	-- Витрины: два ряда по три, номер написан на передней грани.
+	-- Витрины: два ряда по три, номер на передней грани; вокруг — колпак, канаты, лампа сверху.
 	local showcaseFolder = Instance.new("Folder")
 	showcaseFolder.Name = "Showcases"
 	showcaseFolder.Parent = model
+	local decorFolder = Instance.new("Folder")
+	decorFolder.Name = "ShowcaseDecor"
+	decorFolder.Parent = model
+	local lampFolder = Instance.new("Folder")
+	lampFolder.Name = "Lamps"
+	lampFolder.Parent = model
 	local showcaseSize = GameConfig.Museum.ShowcaseSize
+	local lampHeight = Museum.WallHeight - 2.5
 	local showcases = {}
 	for slot = 1, slotCount do
 		local column = (slot - 1) % 3
 		local row = (slot - 1) // 3
+		local base = floorOrigin * CFrame.new((column - 1) * 12, 0, -2 + row * 14)
 		local showcase = PartBuilder.MakePart({
 			name = "Showcase_" .. slot,
 			size = showcaseSize,
-			cframe = origin * CFrame.new((column - 1) * 12, top + showcaseSize.Y / 2, -2 + row * 14),
-			color = Color3.fromRGB(70, 90, 120),
+			cframe = base * CFrame.new(0, showcaseSize.Y / 2, 0),
+			color = Color3.fromHex("3C4A5C"),
 			parent = showcaseFolder,
 		})
 		showcase:SetAttribute("Slot", slot)
 		showcase:SetAttribute("Occupied", false)
-		addSurfaceText(showcase, tostring(slot))
+		Signs.Write(showcase, Enum.NormalId.Front, { { text = tostring(slot), scale = 0.7 } })
 		showcases[slot] = showcase
+
+		ModelBuilder.Place(ModelBuilder.Build("Decor_" .. slot, Museum.ShowcaseDecor(showcaseSize, accent)), base, decorFolder)
+		local lamp = ModelBuilder.Place(ModelBuilder.Build("Lamp_" .. slot, Museum.Lamp(lampHeight)), base, lampFolder)
+		local bulb = lamp:FindFirstChild("Bulb")
+		if bulb then
+			-- Прожектор презентации: выключен, включает PresentationController у зрителей.
+			local spot = Instance.new("SpotLight")
+			spot.Name = "PresentationLight"
+			spot.Face = Enum.NormalId.Bottom
+			spot.Enabled = false
+			spot.Parent = bulb
+			-- Мягкий свет зала: по одной лампе в центре каждого ряда.
+			if column == 1 then
+				local glow = Instance.new("PointLight")
+				glow.Range = 22
+				glow.Brightness = 1
+				glow.Color = Color3.fromHex("FFE8B0")
+				glow.Shadows = false
+				glow.Parent = bulb
+			end
+		end
 	end
 
-	-- Сундук-хранилище у входа, слева от прохода.
+	-- Сундук-хранилище у входа, слева от прохода: корпус (Chest) + крышка, полосы, замок.
 	local chestSize = GameConfig.Museum.ChestSize
+	local chestCFrame = floorOrigin * CFrame.new(-15, chestSize.Y / 2, Museum.FacadeZ + 4)
 	local chest = PartBuilder.MakePart({
 		name = "Chest",
 		size = chestSize,
-		cframe = origin * CFrame.new(-half + 5, top + chestSize.Y / 2, -half + 5),
-		color = Color3.fromRGB(150, 95, 45),
+		cframe = chestCFrame,
+		color = Color3.fromHex("8A5A2B"),
 		parent = model,
 	})
-	addSurfaceText(chest, "Хранилище")
+	ModelBuilder.Place(ModelBuilder.Build("ChestDecor", Museum.ChestDecor(chestSize)), chestCFrame, model)
 
 	local exhibits = Instance.new("Folder")
 	exhibits.Name = "Exhibits"

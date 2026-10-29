@@ -21,7 +21,8 @@
 - Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
   (подбор/перенос/бросок), `ItemSpawnService` (предметы в зонах, D10 исчезновение), `MuseumService`
   (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище).
-- Util: `ItemFactory` (вид предмета, пока один Part), `PartBuilder` (участки-музеи, пока простые коробки),
+- Util: `ItemFactory` (вид предмета, пока один Part), `PartBuilder` (участок: части с механикой — Floor,
+  Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание — `Models/Museum`),
   `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
 - World: `MapLayout` (раскладка аллеи и зон данными), `WorldBuilder` (строит карту), `ModelBuilder`
   (модель из списка кирпичей, шаблоны в `ServerStorage.Templates`), `Models/*` (кирпичные модели),
@@ -45,5 +46,7 @@
 - За воротами дорожка и 4 зоны (Свалка, Барахолка, Склад, Банк) — дальше от ворот = реже предметы.
   В каждой зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`.
 - Граница: стена из кирпичей в шахматку и два ряда ступенчатых холмов с деревьями (детали ≤ 40 стадов),
-  на траве крупные пятна другого оттенка. Около 2250 частей. Предпросмотр в Edit:
+  на траве крупные пятна другого оттенка.
+- Музей (`World/Models/Museum`): пол на ступень выше аллеи (1.4), здание ~190 частей, свой цвет участка
+  (`Museum.Accents`). Вся карта около 3650 частей. Предпросмотр в Edit:
   `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.
