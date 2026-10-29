@@ -44,8 +44,9 @@
 - Config: `GameConfig` (баланс, зоны D15, гантели D17; `GameConfig.Progression` = `Progression.luau` — числа D29,
   только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune` подбирает боссов и цены музея), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
 - `Remotes` — имена RemoteEvent'ов, `LegoMaterial` — включение пупырышков.
-- `CheckUI/CheckUI`, `CheckUI/Responsive` — стандарт интерфейса Check-UI (D20), копия модулей из Skill.
-  Пока не используются: переход интерфейса — отдельный шаг.
+- `StudUI/StudUI`, `StudUI/StudMotion`, `StudUI/CheckUIIcons` — стандарт интерфейса Stud-UI (D20), копия `src/`
+  из Skill `stud-ui-clean-roblox` (MIT, LICENSE и THIRD_PARTY_NOTICES рядом). Пока не используются: переход
+  интерфейса — шаг 8. Instance-имена набора французские (`Fenetre`, `Entete`, `Corps`…) — так требует Skill.
 
 ## Мир (D12, D15)
 - Аллея вдоль Z: старт и спортзал на +Z, ворота на -Z. Музеи по 4 с каждой стороны, входом на аллею.

@@ -1,11 +1,11 @@
-# SNATCH IT! — UI-kit v1 — **заменён Check-UI (D20)**
+# SNATCH IT! — UI-kit v1 — **заменён Stud-UI (D20)**
 
-Стандарт интерфейса игры — Check-UI: Skill `check-ui-clean-roblox`, модули `src/shared/CheckUI/`.
-Из UI-kit v1 действуют только два раздела ниже: цвета редкостей и раскладка.
+Стандарт интерфейса игры — Stud-UI: Skill `stud-ui-clean-roblox`, модули `src/shared/StudUI/`.
+Из UI-kit v1 действует только раздел «Раскладка». Цвета редкостей теперь из Stud-UI (`UITokens.Rarity`).
 
 ## Редкость
 
-Common #B8C4D0 · Uncommon #4CD964 · Rare #3FA2FF · Legendary #FFB800 · Secret #FF3DAA → #8C3DFF
+~~Common #B8C4D0 · Uncommon #4CD964 · Rare #3FA2FF · Legendary #FFB800 · Secret #FF3DAA → #8C3DFF~~ Заменено D20: цвета Stud-UI.
 
 ## Раскладка
 

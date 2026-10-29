@@ -17,8 +17,12 @@ Roblox-игра на Luau. Код в репозитории, в Studio попа�
 
 ## Источники правды
 - `DESIGN.md` — дизайн и решения D1…D29 (зачёркнутые — заменены более поздними). Реализуй только то, что там записано; нет решения — спроси, не придумывай.
-- Интерфейс — стандарт **Check-UI** (D20): Skill `check-ui-clean-roblox` (загружай только при работе
-  над интерфейсом) и модули `src/shared/CheckUI/`. Из `UI_KIT.md` действуют только цвета редкостей и раскладка.
+- Интерфейс — стандарт **Stud-UI** (D20): Skill `stud-ui-clean-roblox` (загружай только при работе
+  над интерфейсом) и модули `src/shared/StudUI/`. Иконку перед использованием проверь в Studio (Success).
+  Из `UI_KIT.md` действует только раскладка; цвета редкостей — из Stud-UI (`UITokens.Rarity`).
+- Навыки Roblox (`~/.claude/skills`: roblox-data-stores, roblox-security, roblox-networking, roblox-npc-ai,
+  roblox-characters-animation, roblox-performance, roblox-studio-mcp, roblox-vfx и др.) — подсказки.
+  Если навык советует одно, а DESIGN.md решает другое — прав DESIGN.md; спорное выписать заказчику.
   Текущий интерфейс ещё на UIKit/UITokens — переход после шагов «цвета» и «музеи».
 
 ## Порядок работы

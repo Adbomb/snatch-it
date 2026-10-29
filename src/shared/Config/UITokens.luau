@@ -28,13 +28,13 @@ UITokens.Gradients = {
 	Disabled = gradient("C9D0DA", "8E98A8"),
 }
 
--- Редкость: у всех, кроме Secret, верх и низ совпадают (сплошной цвет).
+-- Редкость (D20): градиенты подписей Stud-UI, верх светлый → низ насыщенный. Secret — цвета Cosmic.
 UITokens.Rarity = {
-	Common = gradient("B8C4D0", "B8C4D0"),
-	Uncommon = gradient("4CD964", "4CD964"),
-	Rare = gradient("3FA2FF", "3FA2FF"),
-	Legendary = gradient("FFB800", "FFB800"),
-	Secret = gradient("FF3DAA", "8C3DFF"),
+	Common = gradient("D9D7E3", "ADA6B4"),
+	Uncommon = gradient("C4F79A", "43C22E"),
+	Rare = gradient("84CAE8", "3D8EE0"),
+	Legendary = gradient("FFE27A", "F5A215"),
+	Secret = gradient("CDBCFF", "6A45F5"),
 }
 
 UITokens.Corner = {
@@ -147,7 +147,7 @@ UITokens.Layout = {
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common
-	return g.top
+	return g.bottom -- насыщенный край: им светят прожектор и подсветка
 end
 
 function UITokens.ToColorSequence(g: Gradient): ColorSequence
