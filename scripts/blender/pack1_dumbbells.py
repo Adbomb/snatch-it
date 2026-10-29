@@ -90,22 +90,26 @@ def silver(m):
 
 
 def neon(m):
-    """9 Неоновая: тёмное тело, неоновый контур за дисками и светящиеся «камни» на дисках (как на референсе)."""
+    """9 Неоновая: тёмное тело в два тона, неоновые кольца по контуру дисков, светящиеся «камни» (как на референсе)."""
     bar(m, "neonbody", end_color="neonbody2")
     ridges(m, "Glow", "neongreen", width=0.6)
 
     def paint(i, j):
-        return ("Body", "neonbody2" if noise(i, j, 5) < 0.25 else "neonbody")
+        return ("Body", "neonbody2" if noise(i, j, 5) < 0.4 else "neonbody")  # два тёмных тона: кубики видны
 
-    glow_d = 0.7
-    discs(m, pixel_circle(7), paint, x=DISC_X + glow_d / 2, depth=DISC_D - glow_d)
+    discs(m, pixel_circle(7), paint)
+    ring = pixel_circle(7) - pixel_circle(5)
+    rim = 0.35
     for s in (-1, 1):
-        # Неоновый контур: тыльный слой диска светится и чуть шире тела — светящийся край со всех сторон.
-        m.voxel_plate((s * (GRIP + glow_d / 2), 0, 0), pixel_circle(7), CELL * 1.06, glow_d,
-                      one("Glow", "neongreen"), normal=(s, 0, 0), groove=0)
+        # Неоновый контур: тонкие светящиеся кольца у переднего и заднего края, чуть шире диска —
+        # снаружи видна только яркая линия по ступенчатому краю, тело остаётся тёмным.
+        for edge in (DISC_X + DISC_D / 2 - 0.2 - rim / 2, DISC_X - DISC_D / 2 + 0.2 + rim / 2):
+            m.voxel_plate((s * edge, 0, 0), ring, CELL * 1.07, rim, one("Glow", "neongreen"), normal=(s, 0, 0),
+                          groove=0)
         face = s * (DISC_X + DISC_D / 2)
-        for u, v in ((-1.5, 1.5), (1.5, -1.5), (1.5, 1.5)):  # камни на лице диска
-            m.box("Glow", (face + s * 0.3, v * CELL, u * CELL), (0.9, 1.1, 1.1), "neonlime", bevel=0.18)
+        for u, v in ((-1.5, 1.5), (1.5, -1.5), (1.5, 1.5), (-1.5, -1.5)):  # камни на лице диска, на стыках кубиков
+            m.box("Glow", (face + s * 0.45, v * CELL, u * CELL), (1.2, 1.25, 1.25), "neonlime",
+                  rotation=rot(x=45), bevel=0.2)
         for u, tilt in ((-0.6, -18), (0.8, 14)):  # камни торчат из верхнего края
             m.box("Glow", (s * DISC_X, 3.5 * CELL + 0.35, u * CELL), (1.2, 1.4, 1.2), "neonlime",
                   rotation=rot(x=tilt, z=8 * s), bevel=0.2)

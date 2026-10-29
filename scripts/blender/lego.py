@@ -31,7 +31,7 @@ PALETTE = {
     "cosmic": "6A45F5", "cosmicdark": "241A4D", "star": "FFF2A6", "green": "43A047", "leaf": "5BC24A",
     "pink": "F28DB2", "yellow": "FFD23F", "orange": "F28C28", "rock": "8F8A84", "darkrock": "5F5B57",
     "neongreen": "39FF6A", "neoncyan": "2CF6FF", "ruby": "E0115F",
-    "rope": "C9A86A", "neonbody": "18291D", "neonbody2": "24402C", "neonlime": "D4FF3A", "grass": "63C92E",
+    "rope": "C9A86A", "neonbody": "143222", "neonbody2": "245C3A", "neonlime": "D4FF3A", "grass": "63C92E",
 }
 SPECIAL = {"Accent", "AccentDark", "DecorAccent"}
 PREFIXED = {"Decor", "Glass", "Glow"}  # роль «<Префикс>_<цвет>»
@@ -547,7 +547,7 @@ def preview_materials(objects, studs_texture):
                 nt.links.remove(bsdf.inputs["Base Color"].links[0])
                 bsdf.inputs["Base Color"].default_value = (0, 0, 0, 1)
                 nt.links.new(mix.outputs["Color"], bsdf.inputs["Emission Color"])
-                bsdf.inputs["Emission Strength"].default_value = 1.6
+                bsdf.inputs["Emission Strength"].default_value = 2.4
             cache[key] = mat
         obj.data.materials.clear()
         obj.data.materials.append(cache[key])
@@ -569,6 +569,29 @@ def setup_render(resolution=900):
     scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in engines else "BLENDER_EEVEE"
     scene.render.resolution_x = resolution
     scene.render.resolution_y = resolution
+    _glow(scene)
+
+
+def _glow(scene):
+    """Ореол вокруг неона в превью (как Neon в игре): композитор Glare. API композитора менялся между версиями
+    Blender — при ошибке превью просто без ореола."""
+    try:
+        tree = bpy.data.node_groups.new("Glow", "CompositorNodeTree")
+        tree.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+        scene.compositing_node_group = tree
+        layers = tree.nodes.new("CompositorNodeRLayers")
+        glare = tree.nodes.new("CompositorNodeGlare")
+        out = tree.nodes.new("NodeGroupOutput")
+        settings = {"Type": "Bloom", "Quality": "High", "Threshold": 0.95, "Strength": 1.4, "Size": 0.8}
+        for name, value in settings.items():
+            socket = glare.inputs.get(name)
+            if socket is not None:
+                socket.default_value = value
+        tree.links.new(layers.outputs["Image"], glare.inputs["Image"])
+        tree.links.new(glare.outputs["Image"], out.inputs[0])
+        print("GLOW_OK", [s.name for s in glare.inputs])
+    except Exception as error:  # noqa: BLE001
+        print("GLOW_SKIP", error)
 
 
 def render(path, eye, target, visible, lens=35):
