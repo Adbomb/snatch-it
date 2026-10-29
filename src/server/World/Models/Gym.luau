@@ -66,8 +66,9 @@ function Gym.Hall(size: Vector2): { ModelBuilder.Brick }
 	local floor = hex("37474F")
 	local bricks: { ModelBuilder.Brick } = {
 		B(Vector3.new(size.X, 0.4, size.Y), Vector3.new(0, -0.2, 0), floor),
-		B(Vector3.new(1, 10, size.Y), Vector3.new(-size.X / 2 + 0.5, 5, 0), Palette.HouseWalls[3]),
-		B(Vector3.new(0.6, 4, size.Y * 0.6), Vector3.new(-size.X / 2 + 1.3, 7, 0), Palette.HouseWalls[2], {
+		-- Стена выше огромной гантели (верх дисков ~10.5), вывеска над ней.
+		B(Vector3.new(1, 17, size.Y), Vector3.new(-size.X / 2 + 0.5, 8.5, 0), Palette.HouseWalls[3]),
+		B(Vector3.new(0.6, 4.4, size.Y * 0.6), Vector3.new(-size.X / 2 + 1.3, 13.6, 0), Palette.HouseWalls[2], {
 			name = "SignBoard",
 			material = Enum.Material.SmoothPlastic,
 		}),
