@@ -32,11 +32,13 @@ PALETTE = {
     "pink": "F28DB2", "yellow": "FFD23F", "orange": "F28C28", "rock": "8F8A84", "darkrock": "5F5B57",
     "neongreen": "39FF6A", "neoncyan": "2CF6FF", "ruby": "E0115F",
     "rope": "C9A86A", "neonbody": "143222", "neonbody2": "245C3A", "neonlime": "D4FF3A", "grass": "63C92E",
+    "charcoal": "34363C", "brass": "D6A436",
 }
 SPECIAL = {"Accent", "AccentDark", "DecorAccent"}
 PREFIXED = {"Decor", "Glass", "Glow"}  # роль «<Префикс>_<цвет>»
 PREVIEW_SPECIAL = {"Accent": "2F6FD6", "AccentDark": "1F3F7A", "DecorAccent": "2F6FD6"}
 
+GLASS_TRANSPARENCY = 0.35  # прозрачность стекла (кристаллы); то же число игра ставит MeshPart с Glass
 BRICK = 2.4  # высота кирпича, стадов
 BEVEL = 0.22
 
@@ -65,6 +67,12 @@ def rot(x=0.0, y=0.0, z=0.0):
         @ Matrix.Rotation(math.radians(x), 4, "X")
         @ Matrix.Rotation(math.radians(-z), 4, "Y")
     )
+
+
+def align(direction, spin=0.0):
+    """Поворот, который ставит ось +y Roblox по направлению direction (конусы, камни); spin — градусы вокруг оси."""
+    d = to_blender(direction).normalized()
+    return Vector((0, 0, 1)).rotation_difference(d).to_matrix().to_4x4() @ Matrix.Rotation(math.radians(spin), 4, "Z")
 
 
 def role_color(role):
@@ -520,7 +528,8 @@ def preview_materials(objects, studs_texture):
         color = role_color(role)
         glow = role.startswith("Glow_")
         code = PREVIEW_SPECIAL.get(color) or PALETTE.get(color, "FF00FF")
-        key = code + ("g" if glow else "")
+        glass = role.startswith("Glass_")
+        key = code + ("g" if glow else "") + ("t" if glass else "")
         if key not in cache:
             mat = bpy.data.materials.new("P_" + code)
             mat.use_nodes = True
@@ -548,6 +557,12 @@ def preview_materials(objects, studs_texture):
                 bsdf.inputs["Base Color"].default_value = (0, 0, 0, 1)
                 nt.links.new(mix.outputs["Color"], bsdf.inputs["Emission Color"])
                 bsdf.inputs["Emission Strength"].default_value = 2.4
+            if glass:
+                # Стекло в игре — Glass с прозрачностью (GLASS_TRANSPARENCY); в превью — полупрозрачный материал.
+                bsdf.inputs["Alpha"].default_value = 1 - GLASS_TRANSPARENCY
+                bsdf.inputs["Roughness"].default_value = 0.15
+                if hasattr(mat, "surface_render_method"):
+                    mat.surface_render_method = "BLENDED"
             cache[key] = mat
         obj.data.materials.clear()
         obj.data.materials.append(cache[key])
