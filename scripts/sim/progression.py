@@ -1,10 +1,11 @@
-"""Симулятор долгой прогрессии (D29).
+"""Симулятор долгой прогрессии (D29, D30; перерождений нет).
 
 Читает числа баланса из src/shared/Config/Progression.luau (тот же файл берёт игра), прогоняет типичного игрока
-и печатает таблицу «день → сила, перерождения, зона, монеты, уровень музея».
+и печатает таблицы «день → сила, перерождения, зона, монеты, музей, гантель» и дни событий.
 
-  python scripts/sim/progression.py           — таблица по текущим числам
-  python scripts/sim/progression.py --tune    — подобрать силы боссов и цены музея под цели и записать в файл
+  python scripts/sim/progression.py                 — таблицы по текущим числам
+  python scripts/sim/progression.py --tune          — подобрать боссов, цены музея и гантели и записать в файл
+  python scripts/sim/progression.py --tune --ratio 4 --dry — то же с множителем гантели ×4, без записи
 
 Здесь только модель поведения игрока (сколько играет, сколько идёт до зоны). Числа игры — в Progression.luau.
 """
@@ -22,7 +23,7 @@ CONFIG = ROOT / "src" / "shared" / "Config" / "Progression.luau"
 
 # --- Модель игрока (не баланс игры) ---
 SESSION = 5400  # секунд в игре за день (1,5 ч)
-TRAIN_SHARE = 0.6  # доля времени на лучшем круге, остальное — походы в зоны и музей
+TRAIN_SHARE = 0.6  # доля времени на тренировке, остальное — походы в зоны и музей
 DAYS = 90
 STEP = 5  # шаг тренировки, с
 ZONE_NEAR = 120  # стадов от музея до входа в зону 1
@@ -32,19 +33,17 @@ FIGHT = 5  # автобой, с
 HANDLE = 6  # подбор и выставление, с
 LOAD = 0.9  # средний множитель скорости с грузом (Light 1 / Medium 0.9 / Heavy 0.8)
 STORAGE = 10  # вместимость хранилища
-MUSEUM_WAIT = 0.5  # не перерождаться, если до следующего уровня музея копить меньше стольких дней
-PUSH_DAYS = 0.5  # не перерождаться, если до следующего босса тренироваться меньше стольких дней
-FINAL_REBIRTH_DAYS = 1.0  # после зоны 10: перерождаться, если вернуть силу босса 10 можно за столько дней
 
 RARITIES = ["Common", "Uncommon", "Rare", "Legendary", "Secret"]
 VARIANTS = ["Normal", "Golden", "Giant", "Rainbow"]
 
-# Цели D29 в днях игры (1 день = SESSION секунд).
+# Цели в днях игры (1 день = SESSION секунд).
 ZONE_TARGETS = {2: 4 / 90, 3: 30 / 90, 4: 1.0, 5: 3.5, 6: 7, 7: 10.5, 8: 24.5, 9: 45, 10: 75}
-MUSEUM_TARGETS = {2: 0.1, 3: 0.5, 4: 1.5, 5: 3, 6: 6, 7: 11, 8: 20, 9: 35, 10: 60}
+MUSEUM_TARGETS = {2: 0.15, 3: 1.0, 4: 2.5, 5: 5, 6: 9.5, 7: 15, 8: 24, 9: 37, 10: 58}  # между уровнями гантели
+DUMBBELL_TARGETS = {2: 0.5, 3: 1.5, 4: 3.5, 5: 7, 6: 12, 7: 19, 8: 30, 9: 45, 10: 70}
 
 
-# --- Чтение Luau-таблицы ---
+# --- Чтение и запись Luau-таблицы ---
 def load_config(path=CONFIG):
 	src = re.sub(r"--[^\n]*", "", path.read_text(encoding="utf-8"))
 	tokens = re.findall(r"[A-Za-z_]\w*|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\"[^\"]*\"|[{}=,\[\]]", src)
@@ -72,20 +71,30 @@ def load_config(path=CONFIG):
 	return value()
 
 
-def save_numbers(bosses, prices, path=CONFIG):
+def save_numbers(cfg, path=CONFIG):
+	"""Записывает подобранные числа в Progression.luau: строки вида «Имя = { … }» внутри своих разделов."""
 	text = path.read_text(encoding="utf-8")
-	fmt = lambda xs: ", ".join(str(int(x)) for x in xs)
-	text = re.sub(r"Bosses = \{[^}]*\}", "Bosses = { " + fmt(bosses) + " }", text)
-	text = re.sub(r"Prices = \{[^}]*\}", "Prices = { " + fmt(prices) + " }", text)
+	fmt = lambda xs: "{ " + ", ".join(f"{x:g}" if x < 1e6 else str(int(x)) for x in xs) + " }"
+
+	def put(section, key, values):
+		nonlocal text
+		start = text.index(section) if section else 0
+		m = re.compile(key + r" = \{[^}]*\}").search(text, start)
+		text = text[: m.start()] + f"{key} = " + fmt(values) + text[m.end() :]
+
+	put(None, "Bosses", cfg["Bosses"])
+	put("Museum = {", "Prices", cfg["Museum"]["Prices"])
+	put("Dumbbell = {", "Power", cfg["Dumbbell"]["Power"])
+	put("Dumbbell = {", "Prices", cfg["Dumbbell"]["Prices"])
 	path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def nice(x):
-	"""Округление до двух значащих цифр."""
+	"""Округление вниз до двух значащих цифр (вниз — чтобы не перескочить равную цену другой покупки)."""
 	if x <= 0:
 		return 0
 	e = 10 ** (math.floor(math.log10(x)) - 1)
-	return round(x / e) * e
+	return math.floor(x / e) * e
 
 
 def short(x):
@@ -96,47 +105,33 @@ def short(x):
 	return f"{x:.0f}"
 
 
+def day_str(d):
+	if d == math.inf:
+		return "—"
+	return f"{d * SESSION / 60:.0f} мин" if d < 1 else f"{d:.1f}"
+
+
 # --- Игрок ---
 class Player:
 	def __init__(self, cfg, rng):
 		self.cfg, self.rng = cfg, rng
 		self.t = 0.0
 		self.S = 0.0
-		self.R = 0
 		self.coins = 0.0
 		self.earned = 0.0
-		self.level = 1
+		self.level = 1  # уровень музея
+		self.bell = 1  # уровень гантели
 		self.items = []  # доход каждого предмета в музее и хранилище, по убыванию
 		self.found = {}  # (редкость, вид) → номера найденных предметов
 		self.catalog_bonus = 0.0
 		self.max_zone = 1
-		self.events = {}  # ("zone", k) / ("museum", k) / ("rebirth", n) / ("secret", 1) → время
+		self.events = {}  # ("zone"|"museum"|"dumbbell"|"secret", n) → время
 		self.raids = 0
 
 	# Сила, скорость, зоны
-	def circle_rate(self, S=None, R=None):
-		S = self.S if S is None else S
-		R = self.R if R is None else R
-		rate = 0
-		for c in self.cfg["Circles"]:
-			if S >= c["strength"] and R >= c["rebirths"]:
-				rate = max(rate, c["rate"])
-		return rate
-
-	def gain(self, R=None):
-		R = self.R if R is None else R
-		return 1 + self.cfg["Rebirth"]["strengthBonus"] * R
-
-	def time_to(self, S, target, R):
-		"""Секунды тренировки, чтобы дойти от силы S до target при R перерождениях."""
-		t = 0.0
-		while S < target:
-			rate = self.circle_rate(S, R) * self.gain(R)
-			nxt = [c["strength"] for c in self.cfg["Circles"] if S < c["strength"] < target and R >= c["rebirths"]]
-			stop = min(nxt) if nxt else target
-			t += (stop - S) / rate
-			S = stop
-		return t
+	def rate(self):
+		"""Сила в секунду — сила гантели."""
+		return self.cfg["Dumbbell"]["Power"][self.bell - 1]
 
 	def speed(self):
 		sp = self.cfg["Speed"]
@@ -156,7 +151,7 @@ class Player:
 
 	def income(self):
 		shown = sum(self.items[: self.slots()])
-		return shown * (1 + self.cfg["Rebirth"]["incomeBonus"] * self.R) * (1 + self.catalog_bonus)
+		return shown * (1 + self.catalog_bonus)
 
 	def earn(self, dt):
 		got = self.income() * dt
@@ -184,8 +179,7 @@ class Player:
 		mult = cfg["Modifiers"][variant]["income"] if variant != "Normal" else 1
 		value = cfg["Income"][rarity] * mult
 
-		key = (rarity, variant)
-		got = self.found.setdefault(key, set())
+		got = self.found.setdefault((rarity, variant), set())
 		if item not in got:
 			got.add(item)
 			if len(got) == cfg["ItemCounts"][rarity]:
@@ -202,7 +196,7 @@ class Player:
 	def train(self, dt):
 		while dt > 0:
 			step = min(STEP, dt)
-			self.S += self.circle_rate() * self.gain() * step
+			self.S += self.rate() * step
 			self.earn(step)
 			self.t += step
 			dt -= step
@@ -212,35 +206,29 @@ class Player:
 					self.events[("zone", k)] = self.t
 				self.max_zone = z
 
-	# Решения: музей и перерождение
-	def decide(self):
-		cfg = self.cfg
-		prices = cfg["Museum"]["Prices"]
-		while self.level < 10 and self.coins >= prices[self.level - 1]:
-			self.coins -= prices[self.level - 1]
-			self.level += 1
-			self.events[("museum", self.level)] = self.t
-
-		rb = cfg["Rebirth"]
-		need_s = rb["strength"] * rb["strengthGrowth"] ** self.R
-		need_c = rb["coins"] * rb["coinGrowth"] ** self.R
-		if self.S < need_s or self.coins < need_c:
-			return
+	# Решения: покупки (дешёвая из доступных — первой)
+	def next_buys(self):
+		"""Доступные покупки: (цена, вид)."""
+		buys = []
 		if self.level < 10:
-			left = prices[self.level - 1] - self.coins
-			if left > 0 and left <= self.income() * SESSION * MUSEUM_WAIT:
-				return
-		bosses = cfg["Bosses"]
-		day = SESSION * TRAIN_SHARE
-		if self.max_zone < 10:
-			if self.time_to(self.S, bosses[self.max_zone], self.R) <= day * PUSH_DAYS:
-				return
-		elif self.time_to(0, bosses[9], self.R + 1) > day * FINAL_REBIRTH_DAYS:
-			return
-		self.R += 1
-		self.S = 0.0
-		self.coins = 0.0
-		self.events[("rebirth", self.R)] = self.t
+			buys.append((self.cfg["Museum"]["Prices"][self.level - 1], "museum"))
+		if self.bell < 10:
+			buys.append((self.cfg["Dumbbell"]["Prices"][self.bell - 1], "dumbbell"))
+		return buys
+
+	def decide(self):
+		while True:
+			buys = [b for b in self.next_buys() if b[0] <= self.coins]
+			if not buys:
+				break
+			price, kind = min(buys)
+			self.coins -= price
+			if kind == "museum":
+				self.level += 1
+				self.events[("museum", self.level)] = self.t
+			else:
+				self.bell += 1
+				self.events[("dumbbell", self.bell)] = self.t
 
 	def cycle(self):
 		z = self.zone()
@@ -255,14 +243,14 @@ class Player:
 
 
 def run(cfg, seed=1, days=DAYS, until=None, snapshots=None):
-	"""Прогон игрока. until(p) → True останавливает раньше. snapshots: список дней для таблицы."""
+	"""Прогон игрока. until(p) → True останавливает раньше. snapshots: дни для таблицы."""
 	p = Player(cfg, random.Random(seed))
 	rows, want = [], sorted(snapshots or [])
 	end = days * SESSION
 	while p.t < end:
 		p.cycle()
 		while want and p.t >= want[0] * SESSION:
-			rows.append((want.pop(0), p.S, p.R, p.zone(), p.max_zone, p.coins, p.level, p.income(), p.catalog_bonus))
+			rows.append((want.pop(0), p.S, p.zone(), p.coins, p.level, p.bell, p.income(), p.catalog_bonus))
 		if until and until(p):
 			break
 	return p, rows
@@ -274,71 +262,74 @@ def event_day(cfg, key, seed, limit):
 	return p.events.get(key, math.inf) / SESSION
 
 
-def tune_value(cfg, setter, key, target, lo, hi, seeds=(1,)):
-	"""Двоичный поиск по логарифму: значение, при котором событие key случается в день target (медиана сидов)."""
+def tune_value(cfg, values, i, key, target, seeds=(1, 2, 3)):
+	"""Двоичный поиск по логарифму: values[i], при котором событие key случается в день target (медиана сидов).
+	Нижняя граница — предыдущее число списка: цены и силы только растут."""
+	lo, hi = max(values[i - 1] * 1.05, 1) if i > 0 else 1, 9e15
 	limit = target * 2 + 1
-	for _ in range(22):
-		mid = math.sqrt(lo * hi)
-		setter(mid)
+	for _ in range(16):
+		values[i] = math.sqrt(lo * hi)
 		day = statistics.median(event_day(cfg, key, s, limit) for s in seeds)
 		if day < target:
-			lo = mid
+			lo = values[i]
 		else:
-			hi = mid
-	setter(nice(math.sqrt(lo * hi)))
+			hi = values[i]
+	values[i] = nice(math.sqrt(lo * hi))
 
 
-def tune(cfg, passes=2):
-	bosses, prices = cfg["Bosses"], cfg["Museum"]["Prices"]
+def tune(cfg, ratio, passes=2):
+	"""Подбирает боссов, цены музея и гантели. Музей и гантель тратят одни монеты, а сила зависит от гантели,
+	поэтому все события подбираются вместе в порядке целевых дней: раннее число не зависит от позднего."""
+	cfg["Dumbbell"]["Power"] = [nice(ratio**i) if ratio**i >= 100 else round(ratio**i, 1) for i in range(10)]
+	jobs = []
+	for k in range(2, 11):
+		jobs.append((ZONE_TARGETS[k], cfg["Bosses"], k - 1, ("zone", k)))
+		jobs.append((MUSEUM_TARGETS[k], cfg["Museum"]["Prices"], k - 2, ("museum", k)))
+		jobs.append((DUMBBELL_TARGETS[k], cfg["Dumbbell"]["Prices"], k - 2, ("dumbbell", k)))
+	jobs.sort(key=lambda j: j[0])
 	for n in range(passes):
-		for k in range(2, 11):
-
-			def set_boss(v, k=k):
-				bosses[k - 1] = v
-
-			lo = max(bosses[k - 2] * 1.05, 1)
-			tune_value(cfg, set_boss, ("zone", k), ZONE_TARGETS[k], lo, max(lo * 10, 9e15))
-		for k in range(2, 11):
-
-			def set_price(v, k=k):
-				prices[k - 2] = v
-
-			lo = prices[k - 3] * 1.05 if k > 2 else 10
-			tune_value(cfg, set_price, ("museum", k), MUSEUM_TARGETS[k], lo, 9e15)
-		print(f"проход {n + 1}: боссы {[short(b) for b in bosses]}")
-		print(f"          музей {[short(x) for x in prices]}")
+		for target, values, i, key in jobs:
+			tune_value(cfg, values, i, key, target)
+		print(f"проход {n + 1}: боссы {[short(b) for b in cfg['Bosses']]}", flush=True)
 
 
 # --- Отчёт ---
 def report(cfg, seeds=200):
 	snaps = [1, 2, 3, 4, 5, 7, 10, 14, 21, 28, 35, 45, 60, 75, 90]
 	_, rows = run(cfg, seed=1, snapshots=snaps)
+	dn = cfg["Dumbbell"]
+	print("\nГантель:")
+	print("| ур. | гантель | сила/с | цена |")
+	print("|---|---|---|---|")
+	for i in range(10):
+		price = "—" if i == 0 else short(dn["Prices"][i - 1])
+		power = dn["Power"][i]
+		print(f"| {i + 1} | {dn['Names'][i]} | {short(power) if power >= 1000 else f'{power:g}'} | {price} |")
+
 	print("\nТипичный игрок (сид 1), конец дня:")
-	print("| день | сила | перерожд. | зона (макс.) | монеты | музей | доход/с | каталог |")
+	print("| день | сила | зона | монеты | музей | гантель | доход/с | каталог |")
 	print("|---|---|---|---|---|---|---|---|")
-	for d, S, R, z, mz, coins, lvl, inc, cat in rows:
-		print(f"| {d} | {short(S)} | {R} | {z} ({mz}) | {short(coins)} | {lvl} | {short(inc)} | +{cat * 100:.0f}% |")
+	for d, S, z, coins, lvl, bell, inc, cat in rows:
+		print(f"| {d} | {short(S)} | {z} | {short(coins)} | {lvl} | {bell} | {short(inc)} | +{cat * 100:.0f}% |")
 
 	runs = [run(cfg, seed=s)[0] for s in range(seeds)]
 
 	def stat(key):
 		days = sorted(p.events.get(key, math.inf) / SESSION for p in runs)
 		q = lambda f: days[int(f * (len(days) - 1))]
-		fmt = lambda d: "—" if d == math.inf else (f"{d * 90:.0f} мин" if d < 1 else f"{d:.1f}")
-		return fmt(q(0.5)), fmt(q(0.1)), fmt(q(0.9))
+		return day_str(q(0.5)), day_str(q(0.1)), day_str(q(0.9))
 
 	print(f"\nСобытия, день игры (медиана и 10–90 % по {seeds} игрокам):")
 	print("| событие | медиана | 10 % | 90 % | цель |")
 	print("|---|---|---|---|---|")
-	for k in range(2, 11):
-		m, a, b = stat(("zone", k))
-		print(f"| зона {k} | {m} | {a} | {b} | {ZONE_TARGETS[k]:.1f} |")
-	for k in range(2, 11):
-		m, a, b = stat(("museum", k))
-		print(f"| музей {k} | {m} | {a} | {b} | {MUSEUM_TARGETS[k]:.1f} |")
-	for k in (1, 3, 6, 9, 12):
-		m, a, b = stat(("rebirth", k))
-		print(f"| перерождение {k} | {m} | {a} | {b} | |")
+	for kind, name, targets in (
+		("dumbbell", "гантель", DUMBBELL_TARGETS),
+		("zone", "зона", ZONE_TARGETS),
+		("museum", "музей", MUSEUM_TARGETS),
+	):
+		for k in range(2, 11):
+			m, a, b = stat((kind, k))
+			print(f"| {name} {k} | {m} | {a} | {b} | {day_str(targets[k])} |")
 	m, a, b = stat(("secret", 1))
 	got = sum(("secret", 1) in p.events for p in runs)
 	print(f"| первый Secret | {m} | {a} | {b} | ~30 | ({got}/{seeds} получили за {DAYS} дней)")
@@ -351,12 +342,15 @@ def main():
 	sys.stdout.reconfigure(encoding="utf-8")
 	ap = argparse.ArgumentParser()
 	ap.add_argument("--tune", action="store_true")
+	ap.add_argument("--ratio", type=float, default=4)
+	ap.add_argument("--dry", action="store_true", help="не записывать подобранные числа")
 	ap.add_argument("--seeds", type=int, default=200)
 	args = ap.parse_args()
 	cfg = load_config()
 	if args.tune:
-		tune(cfg)
-		save_numbers(cfg["Bosses"], cfg["Museum"]["Prices"])
+		tune(cfg, args.ratio)
+		if not args.dry:
+			save_numbers(cfg)
 	report(cfg, args.seeds)
 
 

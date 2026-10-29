@@ -41,8 +41,8 @@
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
 
 ## Общее (`src/shared`)
-- Config: `GameConfig` (баланс, зоны D15, гантели D17; `GameConfig.Progression` = `Progression.luau` — числа D29,
-  только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune` подбирает боссов и цены музея), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
+- Config: `GameConfig` (баланс, зоны D15, гантели D17; `GameConfig.Progression` = `Progression.luau` — числа D29/D30,
+  только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune --ratio 6` подбирает боссов, цены музея и гантели), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
 - `Remotes` — имена RemoteEvent'ов, `LegoMaterial` — включение пупырышков.
 - `StudUI/StudUI`, `StudUI/StudMotion`, `StudUI/CheckUIIcons` — стандарт интерфейса Stud-UI (D20), копия `src/`
   из Skill `stud-ui-clean-roblox` (MIT, LICENSE и THIRD_PARTY_NOTICES рядом). Пока не используются: переход
