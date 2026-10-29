@@ -22,6 +22,7 @@ MapLayout.Alley = {
 	startZ = 130, -- начало аллеи (точка появления)
 	endZ = -130, -- ворота в зоны
 	curbWidth = 1.5,
+	checkSize = 6, -- сторона клетки мостовой
 }
 
 MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Alley, 122), size = Vector3.new(8, 0.6, 8) }

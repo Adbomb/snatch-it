@@ -6,10 +6,11 @@ end
 
 return {
 	Grass = rgb("4CD43B"),
+	GrassPatch = rgb("3FB832"), -- большие пятна на траве
 	GrassDark = rgb("2FA52A"),
 	Hill = rgb("3CC03A"),
 	Asphalt = rgb("4A4E58"),
-	Curb = rgb("C8CCD4"),
+	Curb = rgb("6B7280"), -- бордюр аллеи
 	Marking = rgb("FFFFFF"),
 	Street = rgb("9AA0AA"),
 	Plaza = rgb("E8DCC0"),
@@ -22,7 +23,9 @@ return {
 	Trunk = rgb("7A4A22"),
 	Leaves = { rgb("3FBF3A"), rgb("2E9E30"), rgb("5AD84A") },
 	Bush = rgb("37B23A"),
-	BorderWall = { rgb("D93A3A"), rgb("F2C230"), rgb("3A7BD9") },
+	Alley = rgb("C8CDD6"), -- мостовая аллеи
+	AlleyCheck = rgb("AEB4BF"), -- клетки мостовой
+	BorderChecker = { rgb("2E9E3A"), rgb("3FB832") }, -- стена-граница в шахматку
 	Metal = rgb("6B7280"),
 	Lamp = rgb("FFE08A"),
 	White = rgb("FFFFFF"),

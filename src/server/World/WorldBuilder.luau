@@ -53,12 +53,31 @@ local function place(key: string, build: () -> { ModelBuilder.Brick }, at: CFram
 	return ModelBuilder.Place(model, at, parent)
 end
 
+local GRASS_PATCHES = 70
+local PATCH_SIZE = Vector2.new(18, 40) -- мин. и макс. сторона пятна
+local PATCH_MARGIN = 140 -- пятна и за стеной, до холмов
+
 local function buildGround(parent: Instance)
 	-- Одна большая плита травы закрывает Baseplate и уходит к горизонту.
 	local size = 2048
 	ModelBuilder.Build("Ground", {
 		B(Vector3.new(size, 2, size), Vector3.new(0, H.Ground - 1, 0), Palette.Grass),
 	}).Parent = parent
+	-- Крупные пятна травы другого оттенка (детерминированно), чуть выше земли.
+	local bounds = MapLayout.Bounds
+	local random = Random.new(5)
+	local patches: { ModelBuilder.Brick } = {}
+	for _ = 1, GRASS_PATCHES do
+		local w = random:NextNumber(PATCH_SIZE.X, PATCH_SIZE.Y)
+		local d = random:NextNumber(PATCH_SIZE.X, PATCH_SIZE.Y)
+		local x = random:NextNumber(bounds.minX - PATCH_MARGIN, bounds.maxX + PATCH_MARGIN)
+		local z = random:NextNumber(bounds.minZ - PATCH_MARGIN, bounds.maxZ + PATCH_MARGIN)
+		table.insert(
+			patches,
+			B(Vector3.new(w, 0.1, d), Vector3.new(x, H.Ground + 0.04, z), Palette.GrassPatch, { collide = false, shadow = false })
+		)
+	end
+	ModelBuilder.Build("GrassPatches", patches).Parent = parent
 end
 
 local function buildAlley(parent: Instance)
@@ -66,24 +85,31 @@ local function buildAlley(parent: Instance)
 	local f = folder("Alley", parent)
 	local length = alley.startZ - alley.endZ
 	local midZ = (alley.startZ + alley.endZ) / 2
-	slab("AlleyFloor", Vector2.new(alley.halfWidth * 2, length), Vector3.new(0, 0, midZ), H.Alley, Palette.Plaza, f)
+	slab("AlleyFloor", Vector2.new(alley.halfWidth * 2, length), Vector3.new(0, 0, midZ), H.Alley, Palette.Alley, f)
 
-	-- Бордюры, полосы-«дорожки» и плитка-зебра поперёк аллеи.
+	-- Бордюры и мостовая в клетку.
 	local bricks: { ModelBuilder.Brick } = {}
 	local curbTop = H.Alley + 0.5
 	for _, sign in { -1, 1 } do
 		local x = sign * (alley.halfWidth - alley.curbWidth / 2)
 		table.insert(bricks, B(Vector3.new(alley.curbWidth, curbTop, length), Vector3.new(x, curbTop / 2, midZ), Palette.Curb))
-		table.insert(
-			bricks,
-			B(Vector3.new(2, 0.1, length), Vector3.new(sign * 9, H.Alley + 0.05, midZ), Palette.PlazaAccent, { collide = false, shadow = false })
-		)
 	end
-	for z = alley.startZ - 30, alley.endZ + 10, -25 do
-		table.insert(
-			bricks,
-			B(Vector3.new(16, 0.1, 3), Vector3.new(0, H.Alley + 0.06, z), Palette.PlazaAccent, { collide = false, shadow = false })
-		)
+	local inner = alley.halfWidth - alley.curbWidth
+	local columns = math.floor(inner * 2 / alley.checkSize)
+	local width = inner * 2 / columns
+	local rows = math.floor(length / alley.checkSize)
+	local depth = length / rows
+	for column = 0, columns - 1 do
+		for row = 0, rows - 1 do
+			if (column + row) % 2 == 0 then
+				local x = -inner + (column + 0.5) * width
+				local z = alley.startZ - (row + 0.5) * depth
+				table.insert(
+					bricks,
+					B(Vector3.new(width, 0.1, depth), Vector3.new(x, H.Alley + 0.05, z), Palette.AlleyCheck, { collide = false, shadow = false })
+				)
+			end
+		end
 	end
 	ModelBuilder.Build("AlleyDetails", bricks).Parent = f
 
@@ -272,7 +298,15 @@ function WorldBuilder.Build(parent: Instance)
 	end
 	local border = folder("Border", map)
 	ModelBuilder.Build("BorderWall", Border.Wall(MapLayout.Bounds, H.Ground)).Parent = border
-	ModelBuilder.Build("BorderHills", Border.Hills(MapLayout.Bounds, H.Ground)).Parent = border
+	local hills, tops = Border.Hills(MapLayout.Bounds, H.Ground)
+	ModelBuilder.Build("BorderHills", hills).Parent = border
+	for i, top in tops do
+		local size = if i % 3 == 0 then "L" else "M"
+		local color = i % #Palette.Leaves + 1
+		place(("Tree_%s_%d"):format(size, color), function()
+			return Tree(size, color)
+		end, top * CFrame.Angles(0, i, 0), border)
+	end
 end
 
 return WorldBuilder

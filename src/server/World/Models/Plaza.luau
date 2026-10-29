@@ -19,16 +19,16 @@ function Plaza.Fountain(): { ModelBuilder.Brick }
 	for i, offset in { Vector3.new(0, 0, -1), Vector3.new(0, 0, 1), Vector3.new(-1, 0, 0), Vector3.new(1, 0, 0) } do
 		local alongX = offset.X == 0
 		local dims = if alongX then Vector3.new(size, height, rim) else Vector3.new(rim, height, size - 2 * rim)
-		local color = if i % 2 == 0 then Palette.Stone else Palette.White
+		local color = if i % 2 == 0 then Palette.Stone else Palette.Curb
 		table.insert(bricks, B(dims, offset * (size / 2 - rim / 2) + Vector3.new(0, height / 2, 0), color))
 	end
 	table.insert(bricks, B(Vector3.new(size - 2 * rim, 1.2, size - 2 * rim), Vector3.new(0, 0.9, 0), Palette.Water, WATER))
 	-- Колонна, чаша, верхняя чаша и струя.
 	table.insert(bricks, B(Vector3.new(3, 4, 3), Vector3.new(0, 2, 0), Palette.Stone))
-	table.insert(bricks, B(Vector3.new(8, 1, 8), Vector3.new(0, 4.5, 0), Palette.White))
+	table.insert(bricks, B(Vector3.new(8, 1, 8), Vector3.new(0, 4.5, 0), Palette.AlleyCheck))
 	table.insert(bricks, B(Vector3.new(6.6, 0.4, 6.6), Vector3.new(0, 5.1, 0), Palette.Water, WATER))
 	table.insert(bricks, B(Vector3.new(1.6, 2.4, 1.6), Vector3.new(0, 6.2, 0), Palette.Stone))
-	table.insert(bricks, B(Vector3.new(3.4, 0.6, 3.4), Vector3.new(0, 7.6, 0), Palette.White))
+	table.insert(bricks, B(Vector3.new(3.4, 0.6, 3.4), Vector3.new(0, 7.6, 0), Palette.AlleyCheck))
 	table.insert(bricks, B(Vector3.new(0.8, 3.2, 0.8), Vector3.new(0, 9.5, 0), Palette.Water, {
 		material = Enum.Material.Neon,
 		transparency = 0.25,
