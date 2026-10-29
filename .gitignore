@@ -5,3 +5,6 @@ sourcemap.json
 
 # Папки текстур, которые FBX-экспорт Blender кладёт рядом с моделью (текстура уже внутри FBX)
 assets/models/*.fbm/
+
+# Кэш Python (скрипты Blender)
+__pycache__/
