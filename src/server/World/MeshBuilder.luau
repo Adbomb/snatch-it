@@ -78,6 +78,7 @@ function MeshBuilder.Build(name: string, cframe: CFrame, parent: Instance, optio
 		warn("[MeshBuilder] Нет модели " .. name)
 		return nil
 	end
+	MeshBuilder.Preload() -- в игре уже загружено в Main; в предпросмотре (свежие копии модулей) — здесь
 	local opts = options or {}
 	local accent = opts.accent or Color3.fromHex(GameConfig.Models.DefaultAccent)
 	local model = Instance.new("Model")

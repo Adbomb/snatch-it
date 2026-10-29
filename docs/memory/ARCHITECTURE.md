@@ -19,7 +19,12 @@
   AccentDark / DecorAccent — цвет участка), material (Plastic / Glass / Neon), decor (только чётные уровни),
   triangles. В игре MeshPart: Color, Material, без TextureID — пупырышки даёт MaterialVariant «LegoStuds».
   Музей: фасад z = −12, портик с колоннами z ≈ −19.4, вход 12×10, вывеска y = 11.5; высоты стен и ламп — в layout.
-  Гантели: центр рукояти в начале, ось x, ~16 стадов. Превью — Blender с текстурой пупырышков.
+  Гантели (D34, `pack1_dumbbells.py`, диски — `Model.voxel_plate`): центр рукояти в начале, ось x; у светящихся в
+  layout `lights` (PointLight без теней). Превью — Blender с текстурой пупырышков и ореолом неона.
+- После импорта: модели → `ServerStorage.ImportedModels` (Rojo его не трогает), ID мешей →
+  `assets/models/PackN.meshids.json`, затем `python scripts/models_to_luau.py` пишет `World/MeshModels.luau`.
+  `World/MeshBuilder` грузит меши при старте (`CreateMeshPartAsync`) и собирает модель: деталь в центр из layout
+  и поворот на π (импорт повернул меши), без столкновений и запросов; Glass — прозрачность из GameConfig.Models.
 - `assets/textures` — LEGO-текстуры дизайнера (загружены в Roblox, ID в `Config/Textures`).
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
@@ -36,7 +41,8 @@
   (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище).
 - Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
   а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
-  Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание — `Models/Museum`),
+  Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание `Building` — меши
+  музея уровня ceil(L/2), декор на чётных, `SetBuilding`; невидимые стены `Walls`; окружение витрин — `Models/Museum`),
   `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
 - World: `MapLayout` (раскладка аллеи, коридора зон и контур острова данными), `WorldBuilder` (строит карту;
   `BuildWater` — вода Terrain, только в Play), `ModelBuilder`
