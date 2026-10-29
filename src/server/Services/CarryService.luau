@@ -1,6 +1,6 @@
--- Подбор («Поднять»), перенос над головой и бросок предметов карты; скорость по весу (DESIGN.md §4).
+-- Подбор («Поднять»), перенос над головой и бросок предметов карты; скорость от силы и груза (D24).
 -- Смерть с предметом → предмет падает рядом; выход с предметом → исчезает (D3).
--- Зависит от ItemRegistry, Util/Validate, Util/RateLimiter, Util/Notify, Remotes, Config.
+-- Зависит от ItemRegistry, Util/Validate, Util/RateLimiter, Util/Notify, Remotes, Speed, Config.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,6 +9,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Speed = require(ReplicatedStorage.Shared.Speed)
 local ItemRegistry = require(ServerScriptService.Server.Services.ItemRegistry)
 local Notify = require(ServerScriptService.Server.Util.Notify)
 local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
@@ -19,7 +20,7 @@ local CARRY_HEIGHT = 2.8 -- насколько выше центра персо�
 local pickupLimiter = RateLimiter.new(GameConfig.RateLimits.Pickup)
 local dropLimiter = RateLimiter.new(GameConfig.RateLimits.Drop)
 
-local holds: { [Player]: { uid: string, weld: WeldConstraint } } = {}
+local holds: { [Player]: { uid: string, weld: WeldConstraint, weight: string } } = {}
 local prompts: { [string]: ProximityPrompt } = {}
 
 local CarryService = {}
@@ -38,11 +39,7 @@ local function releaseHold(player: Player)
 		hold.weld:Destroy()
 	end
 	player:SetAttribute("CarryingItemId", nil)
-	local character = player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.WalkSpeed = GameConfig.Carry.NormalWalkSpeed
-	end
+	CarryService.RefreshSpeed(player)
 end
 
 -- Точка на земле перед игроком (или под ним). nil — под игроком пустота.
@@ -109,10 +106,8 @@ local function tryPickup(player: Player, uid: string)
 	weld.Part1 = part
 	weld.Parent = part
 	part.Anchored = false
-	holds[player] = { uid = uid, weld = weld }
-
-	local def = Items[entry.itemId]
-	humanoid.WalkSpeed = GameConfig.Carry.SpeedByWeight[def.weight] or GameConfig.Carry.NormalWalkSpeed
+	holds[player] = { uid = uid, weld = weld, weight = Items[entry.itemId].weight }
+	CarryService.RefreshSpeed(player)
 	player:SetAttribute("CarryingItemId", entry.itemId)
 end
 
@@ -136,6 +131,7 @@ end
 local function watchCharacter(player: Player, character: Model)
 	local humanoid = character:WaitForChild("Humanoid", 10)
 	if humanoid and humanoid:IsA("Humanoid") then
+		CarryService.RefreshSpeed(player)
 		humanoid.Died:Connect(function()
 			if player.Parent == Players then
 				CarryService.Drop(player)
@@ -150,6 +146,17 @@ local function watchPlayer(player: Player)
 	end)
 	if player.Character then
 		task.spawn(watchCharacter, player, player.Character)
+	end
+end
+
+-- Скорость ходьбы от силы (атрибут Strength) и груза в руках (D24). Вызывается при подборе, броске,
+-- появлении персонажа и росте силы.
+function CarryService.RefreshSpeed(player: Player)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local hold = holds[player]
+		humanoid.WalkSpeed = Speed.Walk(player:GetAttribute("Strength") or 0, hold and hold.weight)
 	end
 end
 

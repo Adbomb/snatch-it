@@ -64,6 +64,9 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 		return occupied and stored < GameConfig.Museum.StorageCapacity
 	elseif action == "ChestStore" then
 		return carrying and allShowcasesOccupied(plot)
+	elseif action == "Upgrade" then
+		-- Табличка «Улучшение» своего двора (D34): пока гантель не максимальная и руки пустые.
+		return not carrying and (player:GetAttribute("DumbbellLevel") or 1) < #GameConfig.Progression.Dumbbell.Power
 	end
 	return false
 end
@@ -154,6 +157,7 @@ function MuseumPromptController.Init()
 	player:GetAttributeChangedSignal("CarryingItemId"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("StorageCount"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("MoveSlot"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("DumbbellLevel"):Connect(refreshAll)
 end
 
 return MuseumPromptController

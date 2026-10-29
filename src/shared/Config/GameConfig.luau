@@ -12,9 +12,9 @@ GameConfig.Data = {
 	SaveCooldown = 10, -- секунд между внеочередными сохранениями после изменения профиля
 }
 
--- Раскладка карты — в ServerScriptService.Server.World.MapLayout (D12).
+-- Раскладка карты — в ServerScriptService.Server.World.MapLayout (D35: 5 музеев в линию, впереди уровни).
 GameConfig.World = {
-	PlotCount = 8,
+	PlotCount = 5, -- D35: до 5 игроков на сервере (Max Players места = 5)
 	PlotSize = Vector3.new(44, 1, 44),
 	MaxParts = 12000, -- бюджет частей всей карты
 }
@@ -23,7 +23,7 @@ GameConfig.Museum = {
 	SlotsByLevel = { [1] = 6 }, -- DESIGN.md §2: museumLevel 1 → 6 витрин
 	ShowcaseSize = Vector3.new(5, 3, 5),
 	ShowcaseStep = Vector2.new(10, 14), -- шаг сетки витрин по X и Z (влезает в самый узкий зал)
-	DisplayDistance = 10, -- радиус подсказок на витринах
+	DisplayDistance = 7, -- радиус подсказок на витринах: у своей ≈ 5–6, соседний ряд дальше 8.5 (не перехватит)
 	StorageCapacity = 10, -- мест в хранилище
 	ChestSize = Vector3.new(4, 3, 3),
 	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
@@ -36,12 +36,24 @@ GameConfig.Models = {
 	MuseumModelCount = 5, -- Museum1 … Museum5
 	GlassTransparency = 0.35, -- стекло и кристаллы (то же число в scripts/blender/lego.py для превью)
 	AccentDarken = 0.45, -- тёмный оттенок цвета участка (роль AccentDark: крыша, купол)
-	DefaultAccent = "2F6FD6", -- цвет участка, если не задан (гантель в качалке)
+	DefaultAccent = "2F6FD6", -- цвет участка, если не задан
+}
+
+-- Качалка (D31, D34, D35): поле и огромная гантель во дворе каждого музея. Сила в секунду и цены уровней —
+-- Progression.Dumbbell, сила музея — Progression.MuseumPower.
+GameConfig.Gym = {
+	TickSeconds = 1, -- как часто владелец в поле получает силу
+	FieldSize = Vector2.new(14, 20), -- поле во дворе: по X и Z
+	FieldHeight = 8, -- до какой высоты над полем игрок считается «в поле»
+	SignDistance = 12, -- радиус подсказки и кнопки «Улучшить» у таблички
+	GuestHintCooldown = 5, -- секунд между подсказками «Это гантель игрока X»
+	MaxStrength = 9e15, -- потолок силы (числа ≤ 9e15)
+	UpgradesPerSecond = 2, -- лимит запросов «Улучшить» от игрока
 }
 
 GameConfig.Carry = {
-	NormalWalkSpeed = 16, -- DESIGN.md §4
-	SpeedByWeight = { Light = 14, Medium = 12, Heavy = 10 }, -- DESIGN.md §4
+	-- Скорость — от силы (D24, Progression.Speed); груз умножает её (D24).
+	WeightSpeed = { Light = 1, Medium = 0.9, Heavy = 0.8 },
 	PickupDistance = 10, -- радиус подсказки «Поднять»
 	DropForward = 4, -- на сколько стадов перед собой кладётся брошенный предмет
 }

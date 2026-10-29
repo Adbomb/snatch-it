@@ -1,7 +1,9 @@
 -- 8 участков-музеев по кругу: строит их при старте, выдаёт при входе, освобождает при выходе.
 -- Хранит владельца участка на сервере и пишет его имя на табличке (DESIGN.md §3). Здание — модель уровня
--- музея владельца (D33), у свободного участка — руины (уровень 1).
--- Зависит от Util/PartBuilder, World/MapLayout, GameConfig, Util/Log.
+-- музея владельца (D33), у свободного участка — руины (уровень 1). Во дворе — огромная гантель уровня
+-- владельца (D34), у свободного участка её нет. Атрибуты модели участка для клиента: OwnerUserId,
+-- OwnerName, DumbbellLevel (0 — гантели нет).
+-- Зависит от Util/PartBuilder, World/MapLayout, World/MeshBuilder, GameConfig, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -9,6 +11,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Log = require(ServerScriptService.Server.Util.Log)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
+local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 
 export type Plot = {
@@ -22,6 +25,10 @@ export type Plot = {
 	floorOrigin: CFrame,
 	accent: Color3,
 	level: number,
+	fieldCFrame: CFrame,
+	dumbbellCFrame: CFrame,
+	signBoard: BasePart,
+	dumbbell: Model?,
 }
 
 local FREE_SIGN_TEXT = "СВОБОДНЫЙ УЧАСТОК"
@@ -51,7 +58,12 @@ function PlotService.Init(world: Folder)
 			floorOrigin = parts.floorOrigin,
 			accent = parts.accent,
 			level = 1,
+			fieldCFrame = parts.fieldCFrame,
+			dumbbellCFrame = parts.dumbbellCFrame,
+			signBoard = parts.signBoard,
 		}
+		parts.model:SetAttribute("OwnerName", "")
+		parts.model:SetAttribute("DumbbellLevel", 0)
 	end
 end
 
@@ -73,6 +85,7 @@ function PlotService.Assign(player: Player): Plot?
 			plot.owner = player
 			plotByPlayer[player] = plot
 			plot.model:SetAttribute("OwnerUserId", player.UserId)
+			plot.model:SetAttribute("OwnerName", player.DisplayName)
 			plot.signLabel.Text = "МУЗЕЙ " .. player.DisplayName
 			Log.Debug("PlotService", ("%s получил участок %d"):format(player.Name, plot.index))
 			return plot
@@ -91,6 +104,21 @@ function PlotService.ShowLevel(plot: Plot, level: number)
 	PartBuilder.SetBuilding(plot.model, plot.floorOrigin, plot.accent, level)
 end
 
+-- Огромная гантель уровня level во дворе участка (nil — убрать). Модель меняется сразу, видна всем.
+function PlotService.ShowDumbbell(plot: Plot, level: number?)
+	if plot.dumbbell then
+		plot.dumbbell:Destroy()
+		plot.dumbbell = nil
+	end
+	plot.model:SetAttribute("DumbbellLevel", level or 0)
+	if level then
+		plot.dumbbell = MeshBuilder.Build(("Dumbbell%02d"):format(level), plot.dumbbellCFrame, plot.model, {
+			accent = plot.accent,
+			name = "GiantDumbbell",
+		})
+	end
+end
+
 function PlotService.Release(player: Player)
 	local plot = plotByPlayer[player]
 	if not plot then
@@ -99,7 +127,9 @@ function PlotService.Release(player: Player)
 	plotByPlayer[player] = nil
 	plot.owner = nil
 	plot.model:SetAttribute("OwnerUserId", 0)
+	plot.model:SetAttribute("OwnerName", "")
 	plot.signLabel.Text = FREE_SIGN_TEXT
+	PlotService.ShowDumbbell(plot, nil)
 	PlotService.ShowLevel(plot, 1)
 	Log.Debug("PlotService", ("Участок %d освобождён"):format(plot.index))
 end

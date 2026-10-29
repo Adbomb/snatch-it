@@ -1,7 +1,9 @@
--- Строит участки-музеи: здание из Blender по уровню (World/MeshBuilder, D33) с невидимыми стенами и части
--- с механикой витрин (окружение витрин и сундука — кирпичи World/Models/Museum).
+-- Строит участки-музеи: здание из Blender по уровню (World/MeshBuilder, D33) с невидимыми стенами, части
+-- с механикой витрин (окружение витрин и сундука — кирпичи World/Models/Museum) и двор перед входом (D34,
+-- D35): дорожка, поле качалки, табличка «Улучшение» и место огромной гантели (её ставит GymService).
 -- Карту строит World/WorldBuilder. Только геометрия, без логики.
--- Зависит от GameConfig, World/MapLayout, World/MeshBuilder, World/ModelBuilder, World/Models/Museum, World/Signs.
+-- Зависит от GameConfig, World/MapLayout, World/MeshBuilder, World/ModelBuilder, World/Models/Museum,
+-- World/Models/Gym, World/Signs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -10,6 +12,7 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
+local Gym = require(ServerScriptService.Server.World.Models.Gym)
 local Museum = require(ServerScriptService.Server.World.Models.Museum)
 local Signs = require(ServerScriptService.Server.World.Signs)
 
@@ -17,6 +20,10 @@ local PartBuilder = {}
 
 -- Верх пола участков (выше травы и дорог, см. MapLayout.Heights).
 PartBuilder.FloorTop = MapLayout.Heights.Floor
+
+local PATH_COLOR = Color3.fromHex("B0B6BF") -- дорожка ко входу
+local SIGN_COLOR = Color3.fromHex("1E2A4A") -- табло таблички «Улучшение» (тёмно-синее, как на референсе)
+local YARD_DARKEN = 0.6 -- двор — тёмный оттенок цвета участка
 
 export type PlotParts = {
 	model: Model,
@@ -26,6 +33,9 @@ export type PlotParts = {
 	chest: BasePart,
 	floorOrigin: CFrame, -- центр участка на уровне пола, вход в -Z
 	accent: Color3,
+	fieldCFrame: CFrame, -- центр поля качалки на уровне двора
+	dumbbellCFrame: CFrame, -- где висит огромная гантель (рукоять вдоль Z участка)
+	signBoard: BasePart, -- табло таблички «Улучшение» (лицо — сторона -Z, к площади)
 }
 
 -- Размеры зала, общие для всех моделей музея: фасад и вывеска одинаковые, лампы — под самым низким потолком.
@@ -178,6 +188,39 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	})
 	ModelBuilder.Place(ModelBuilder.Build("ChestDecor", Museum.ChestDecor(chestSize)), chestCFrame, model)
 
+	-- Двор перед музеем (D34, D35): плита, дорожка ко входу, поле качалки, табличка «Улучшение».
+	local yard = MapLayout.PlotYard
+	local yardOrigin = origin * CFrame.new(0, MapLayout.Heights.Plaza, 0)
+	PartBuilder.MakePart({
+		name = "Yard",
+		size = Vector3.new(yard.size.X, 0.4, yard.size.Y),
+		cframe = yardOrigin * CFrame.new(yard.center.X, -0.2, yard.center.Y),
+		color = accent:Lerp(Color3.new(0, 0, 0), YARD_DARKEN),
+		parent = model,
+	})
+	PartBuilder.MakePart({
+		name = "YardPath",
+		size = Vector3.new(yard.path, 0.1, yard.size.Y),
+		cframe = yardOrigin * CFrame.new(0, 0.05, yard.center.Y),
+		color = PATH_COLOR,
+		canCollide = false,
+		parent = model,
+	})
+	local fieldCFrame = yardOrigin * CFrame.new(yard.field.X, 0, yard.field.Y)
+	local fieldBricks = Gym.Field(GameConfig.Gym.FieldSize, accent)
+	local field = ModelBuilder.Place(ModelBuilder.Build("GymField", fieldBricks), fieldCFrame, model)
+	field:SetAttribute("GymField", true)
+	local signCFrame = yardOrigin * CFrame.new(yard.sign.X, 0, yard.sign.Y)
+	ModelBuilder.Place(ModelBuilder.Build("SignPost", Gym.SignPost()), signCFrame, model)
+	local signBoard = PartBuilder.MakePart({
+		name = "UpgradeBoard",
+		size = Gym.SignBoard,
+		cframe = signCFrame * CFrame.new(0, Gym.SignHeight, 0),
+		color = SIGN_COLOR,
+		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
+		parent = model,
+	})
+
 	local exhibits = Instance.new("Folder")
 	exhibits.Name = "Exhibits"
 	exhibits.Parent = model
@@ -191,6 +234,9 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		chest = chest,
 		floorOrigin = floorOrigin,
 		accent = accent,
+		fieldCFrame = fieldCFrame,
+		dumbbellCFrame = fieldCFrame * CFrame.new(0, Gym.DumbbellHeight, 0) * CFrame.Angles(0, math.rad(90), 0),
+		signBoard = signBoard,
 	}
 end
 

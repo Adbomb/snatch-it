@@ -12,10 +12,12 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
+local GymService = require(Server.Services.GymService)
 local ItemSpawnService = require(Server.Services.ItemSpawnService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local StorageService = require(Server.Services.StorageService)
+local DevTools = require(Server.Util.DevTools)
 local ItemFactory = require(Server.Util.ItemFactory)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
@@ -31,7 +33,6 @@ Preview.Clear()
 Remotes.CreateAll()
 LegoMaterial.Apply()
 
-MeshBuilder.Preload() -- меши музеев и гантелей из Blender (ждёт загрузку один раз)
 local world = PartBuilder.CreateWorldFolder()
 ModelBuilder.SetTemplateParent(ServerStorage)
 WorldBuilder.Build(world)
@@ -41,7 +42,7 @@ local baseplate = workspace:FindFirstChild("Baseplate")
 if baseplate then
 	baseplate:Destroy()
 end
--- Игроки появляются только в начале аллеи: чужие SpawnLocation места (например, из шаблона) выключаются.
+-- Игроки появляются только на площади (D35): чужие SpawnLocation места (например, из шаблона) выключаются.
 for _, spawn in workspace:GetDescendants() do
 	if spawn:IsA("SpawnLocation") and not spawn:IsDescendantOf(world) then
 		spawn.Enabled = false
@@ -53,12 +54,17 @@ for _, spawn in workspace:GetDescendants() do
 		end
 	end
 end
+-- Меши музеев и гантелей из Blender (ждёт загрузку один раз) — после карты и точки появления: игрок,
+-- вошедший во время загрузки, появляется уже на площади.
+MeshBuilder.Preload()
 PlotService.Init(world)
 ItemFactory.Preload() -- меши предметов из Blender (ждёт загрузку один раз)
 CarryService.Init()
 MuseumService.Init()
 StorageService.Init()
 ItemSpawnService.Init(world)
+GymService.Init()
+DevTools.Init()
 
 local partCount = ModelBuilder.CountParts(world)
 Log.Debug("Main", ("Карта: %d частей (бюджет %d)"):format(partCount, GameConfig.World.MaxParts))
@@ -78,6 +84,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	PlotService.ShowLevel(plot, DataService.GetData(player).museumLevel)
+	GymService.OnPlayerLoaded(player, plot)
 	MuseumService.LoadMuseum(player)
 	StorageService.Sync(player)
 	Notify.Send(

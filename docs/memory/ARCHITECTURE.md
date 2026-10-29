@@ -29,7 +29,8 @@
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
 ## Данные
-- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 1, DESIGN.md §2).
+- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 2: + strength, dumbbellLevel;
+  миграция v1 → v2 в `DataService.LoadAsync`, DESIGN.md §2).
   В профиль попадают только экспонаты (`Displayed`) и хранилище (`Stored`).
 - Состояния экземпляра предмета — `ItemRegistry` (uid → state), граф в DESIGN.md §1:
   OnMap → Carried → Displayed ⇄ Stored, MoveSlot / SwapSlots на витринах.
@@ -38,12 +39,19 @@
 - `Main.server` — RemoteEvent'ы, LEGO-материал, постройка мира, запуск сервисов, вход/выход игроков.
 - Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
   (подбор/перенос/бросок), `ItemSpawnService` (предметы в зонах, D10 исчезновение), `MuseumService`
-  (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище).
+  (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище), `GymService` (D34:
+  такт качания — владелец в поле своего двора, сила = Power[уровень] × (1 + сила музея D31); гостю подсказка;
+  «Улучшить» — подсказка на табло и запрос GymUpgrade, все проверки на сервере; атрибуты игрока Strength,
+  Coins, DumbbellLevel). Скорость от силы — `Shared/Speed` + `CarryService.RefreshSpeed`.
 - Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
   а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
   Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание `Building` — меши
   музея уровня ceil(L/2), декор на чётных, `SetBuilding`; невидимые стены `Walls`; окружение витрин — `Models/Museum`),
-  `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`.
+  `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`, `DevTools` (только
+  Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info и GiveCoins для проверок через MCP).
+- Участок (D35): `PartBuilder.BuildPlot` — музей, витрины, сундук и двор: Yard, YardPath, GymField (поле с
+  неоновыми плитками цвета участка), SignPost и UpgradeBoard (табло; текст рисует клиент); `PlotService.ShowDumbbell`
+  ставит огромную гантель уровня владельца (`GiantDumbbell`), атрибуты модели OwnerUserId, OwnerName, DumbbellLevel.
 - World: `MapLayout` (раскладка аллеи, коридора зон и контур острова данными), `WorldBuilder` (строит карту;
   `BuildWater` — вода Terrain, только в Play), `ModelBuilder`
   (модель из списка кирпичей, шаблоны в `ServerStorage.Templates`), `Models/*` (кирпичные модели),
@@ -53,7 +61,9 @@
 - `Main.client` — LEGO-материал на клиенте, запуск контроллеров.
 - Controllers: `NotifyController` (тосты), `CarryController` («Бросить», «Ты несёшь…»),
   `StorageController` (окно хранилища), `MuseumPromptController` (какие подсказки показывать, подсветка
-  перестановки), `PresentationController` (прожектор и название при выставлении).
+  перестановки, «Улучшить гантель» на своей табличке), `PresentationController` (прожектор и название при
+  выставлении), `GymController` (табличка «Улучшение» — SurfaceGui в PlayerGui на UpgradeBoard каждого участка,
+  текст владельцу/гостю свой; «+N» над головой; временные надписи силы и монет внизу слева).
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
 
 ## Общее (`src/shared`)
@@ -66,16 +76,18 @@
   из Skill `stud-ui-clean-roblox` (MIT, LICENSE и THIRD_PARTY_NOTICES рядом). Пока не используются: переход
   интерфейса — шаг 8. Instance-имена набора французские (`Fenetre`, `Entete`, `Corps`…) — так требует Skill.
 
-## Мир (D12, D22, D31)
-- Аллея вдоль Z (z 130 → −130): старт и качалка на +Z, ворота на −Z. Музеи по 4 с каждой стороны, входом на аллею.
-  Качалка (D31): поле `GymField` (атрибут GymField) и огромная гантель у задней стены.
+## Мир (D35, D22, D34)
+- База (D35): 5 музеев в линию (центры x = −116 … 116 шагом 58, z = −32), фасадом к зонам (−Z); перед каждым
+  двор 44 × 26 (дорожка 12, поле 14 × 20 справа по x участка, табличка слева). Площадь z −130 … −80 в клетку:
+  точка появления (0, −95) смотрит на музеи, фонтан (0, −113), фонари, кусты в проходах, деревья за музеями.
+  Ворота в зоны на z = −130.
 - За воротами двор (12) и 10 зон одним коридором шириной 60, каждая 60 в длину (z −142 → −742): игрок проходит
   зону N, чтобы попасть в N+1. На входе каждой зоны — стена `ZoneWall` с проёмом 16 и ворота с вывеской
   «N. Название» и «Босс 💪 сила». В зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`, место босса
   `MapLayout.GuardSpot`, точка возврата `ZoneEntrance(i)` и ночная `NightReturn` (D21).
-- Остров = прямоугольник аллеи + коридор (`MapLayout.Outline`, `IslandRects`). Стена-граница в шахматку и два
+- Остров = прямоугольник базы (x ±160, z −130 … 14) + коридор (`MapLayout.Outline`, `IslandRects`). Стена-граница в шахматку и два
   ряда холмов с деревьями — по контуру; дальше трава, песок (плиты без перекрытий) и вода Terrain до горизонта
   с песчаным дном. Baseplate шаблона Main удаляет в Play.
-- Музей (`World/Models/Museum`): пол на ступень выше аллеи (1.4), здание ~190 частей, свой цвет участка
-  (`Museum.Accents`). Вся карта около 4750 частей. Предпросмотр в Edit:
+- Музей: пол на ступень выше площади (1.4), здание — меши уровня (D33), свой цвет участка
+  (`Museum.Accents`). Вся карта около 4 000 частей. Предпросмотр в Edit:
   `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.

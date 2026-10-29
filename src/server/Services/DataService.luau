@@ -43,6 +43,10 @@ function DataService.LoadAsync(player: Player): boolean
 
 	profile:AddUserId(player.UserId)
 	profile:Reconcile()
+	-- Миграция: schema 1 → 2 — новые поля (strength, dumbbellLevel) уже добавил Reconcile.
+	if profile.Data.schema == 1 then
+		profile.Data.schema = 2
+	end
 	if profile.Data.schema ~= ProfileTemplate.schema then
 		Log.Warn(
 			"DataService",
@@ -201,6 +205,38 @@ function DataService.RemoveItem(player: Player, uid: string)
 	if data then
 		data.items[uid] = nil
 	end
+end
+
+-- Сила от качания (D30): прибавка, потолок GameConfig.Gym.MaxStrength. Возвращает новую силу или nil.
+function DataService.AddStrength(player: Player, amount: number): number?
+	local data = DataService.GetData(player)
+	if not data or amount ~= amount or amount <= 0 then
+		return nil
+	end
+	data.strength = math.min(data.strength + amount, GameConfig.Gym.MaxStrength)
+	return data.strength
+end
+
+-- Улучшение гантели за монеты: списывает price и поднимает уровень на 1. false — не хватает монет
+-- или уровень уже последний (проверки — в GymService, здесь последняя защита данных).
+function DataService.UpgradeDumbbell(player: Player, price: number, maxLevel: number): boolean
+	local data = DataService.GetData(player)
+	if not data or data.dumbbellLevel >= maxLevel or data.coins < price then
+		return false
+	end
+	data.coins -= price
+	data.dumbbellLevel += 1
+	return true
+end
+
+-- Монеты (только DevTools в Studio, пока нет экономики шага 7).
+function DataService.AddCoins(player: Player, amount: number): number?
+	local data = DataService.GetData(player)
+	if not data or amount ~= amount then
+		return nil
+	end
+	data.coins = math.max(data.coins + amount, 0)
+	return data.coins
 end
 
 function DataService.IncrementStat(player: Player, statName: string)

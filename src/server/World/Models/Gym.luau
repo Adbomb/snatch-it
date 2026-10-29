@@ -1,6 +1,6 @@
--- Качалка (D31): площадка с задней стеной и поле, где качаются; огромная гантель — модель из Blender
--- (World/MeshBuilder, ставит WorldBuilder). Вывеска — кирпич "SignBoard" на стене, надпись ставит WorldBuilder.
--- Зависит от ModelBuilder, Palette.
+-- Качалка во дворе музея (D34, D35): поле, где качаются, — тёмный резиновый пол и светящиеся плитки цвета
+-- участка по краю (как на референсе), и стойка таблички «Улучшение». Огромная гантель — модель из Blender
+-- (World/MeshBuilder), табло таблички — деталь участка (Util/PartBuilder). Зависит от ModelBuilder, Palette.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -8,30 +8,40 @@ local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local Palette = require(ServerScriptService.Server.World.Palette)
 
 local B = ModelBuilder.Brick
-
-local function hex(code: string): Color3
-	return Color3.fromHex(code)
-end
+local DECOR = { collide = false, shadow = false }
 
 local Gym = {}
 
--- Высота оси огромной гантели над полом: диски (радиус 5.1) не касаются поля, как на референсе.
+-- Высота оси огромной гантели над полем: диски (радиус 5.1) не касаются поля, как на референсе.
 Gym.DumbbellHeight = 6
+-- Табло таблички: размер и высота центра над двором.
+Gym.SignBoard = Vector3.new(9, 5, 0.6)
+Gym.SignHeight = 5.2
 
--- Поле, где качаются: резиновый пол цвета акцента и светящаяся рамка. size — по X и Z, начало — центр.
-function Gym.Field(size: Vector2): { ModelBuilder.Brick }
-	local glow = hex("FFC21A")
-	local border = 0.8
+local FLOOR = Color3.fromHex("2B2F3A")
+local TILE = 2 -- сторона светящейся плитки
+local TILE_STEP = 3.4 -- шаг плиток по краю поля
+
+-- Поле: size — по X и Z, начало — центр поля на уровне двора; glow — цвет плиток (цвет участка).
+function Gym.Field(size: Vector2, glow: Color3): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {
-		B(Vector3.new(size.X, 0.2, size.Y), Vector3.new(0, 0.1, 0), hex("FF7043"), { collide = false, shadow = false }),
+		B(Vector3.new(size.X, 0.2, size.Y), Vector3.new(0, 0.1, 0), FLOOR, DECOR),
 	}
-	for _, sign in { -1, 1 } do
-		table.insert(bricks, B(Vector3.new(size.X, 0.3, border), Vector3.new(0, 0.15, sign * (size.Y - border) / 2), glow, {
-			material = Enum.Material.Neon,
-			collide = false,
-			shadow = false,
-		}))
-		table.insert(bricks, B(Vector3.new(border, 0.3, size.Y - border * 2), Vector3.new(sign * (size.X - border) / 2, 0.15, 0), glow, {
+	-- Плитки по краю, чуть повёрнутые (детерминированно), как разбросанные неоновые кирпичики.
+	local hx, hz = size.X / 2 - TILE / 2 - 0.3, size.Y / 2 - TILE / 2 - 0.3
+	local points: { Vector2 } = {}
+	for x = -hx, hx + 0.01, TILE_STEP do
+		table.insert(points, Vector2.new(x, -hz))
+		table.insert(points, Vector2.new(x, hz))
+	end
+	for z = -hz + TILE_STEP, hz - TILE_STEP + 0.01, TILE_STEP do
+		table.insert(points, Vector2.new(-hx, z))
+		table.insert(points, Vector2.new(hx, z))
+	end
+	for i, p in points do
+		local turn = math.rad((i * 37) % 30 - 15)
+		local at = CFrame.new(p.X, 0.25, p.Y) * CFrame.Angles(0, turn, 0)
+		table.insert(bricks, B(Vector3.new(TILE, 0.3, TILE), at, glow, {
 			material = Enum.Material.Neon,
 			collide = false,
 			shadow = false,
@@ -40,23 +50,13 @@ function Gym.Field(size: Vector2): { ModelBuilder.Brick }
 	return bricks
 end
 
--- Площадка зала: резиновый пол и задняя стена с местом под вывеску "SignBoard". size — по X и Z.
-function Gym.Hall(size: Vector2): { ModelBuilder.Brick }
-	local floor = hex("37474F")
-	local bricks: { ModelBuilder.Brick } = {
-		B(Vector3.new(size.X, 0.4, size.Y), Vector3.new(0, -0.2, 0), floor),
-		-- Стена выше огромной гантели (верх дисков ~10.5), вывеска над ней.
-		B(Vector3.new(1, 17, size.Y), Vector3.new(-size.X / 2 + 0.5, 8.5, 0), Palette.HouseWalls[3]),
-		B(Vector3.new(0.6, 4.4, size.Y * 0.6), Vector3.new(-size.X / 2 + 1.3, 13.6, 0), Palette.HouseWalls[2], {
-			name = "SignBoard",
-			material = Enum.Material.SmoothPlastic,
-		}),
+-- Стойка таблички: столб под табло и основание. Начало — точка на дворе под табло.
+function Gym.SignPost(): { ModelBuilder.Brick }
+	local bottom = Gym.SignHeight - Gym.SignBoard.Y / 2
+	return {
+		B(Vector3.new(1, bottom, 1), Vector3.new(0, bottom / 2, 0.6), Palette.Black),
+		B(Vector3.new(2.4, 0.5, 2.4), Vector3.new(0, 0.25, 0.6), Palette.Black),
 	}
-	-- Красные полосы-разметка на полу.
-	for _, z in { -size.Y / 2 + 2, size.Y / 2 - 2 } do
-		table.insert(bricks, B(Vector3.new(size.X - 2, 0.1, 0.8), Vector3.new(1, 0.05, z), Palette.HouseWalls[1], { collide = false, shadow = false }))
-	end
-	return bricks
 end
 
 return Gym

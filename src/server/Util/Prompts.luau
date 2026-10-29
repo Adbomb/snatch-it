@@ -33,6 +33,12 @@ Prompts.Actions = {
 		gamepadKey = Enum.KeyCode.ButtonB,
 		offset = Vector2.new(0, 160),
 	},
+	Upgrade = {
+		text = "Улучшить гантель",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 	ChestStore = {
 		text = "В хранилище",
 		key = Enum.KeyCode.E,

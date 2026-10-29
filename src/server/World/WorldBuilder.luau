@@ -1,8 +1,9 @@
--- Строит карту (D12, D22) по MapLayout: остров с травой и песчаным берегом, аллею с фонарями и лавочками,
--- точку появления с фонтаном, качалку (D31), сквер, ворота, двор и 10 зон одним коридором — пол, стена
--- с воротами и вывеской, постаменты, декор, — стену и холмы по контуру острова. Воду вокруг острова
--- строит BuildWater (Terrain; только в Play). Участки-музеи строит PlotService.
--- Зависит от MapLayout, MeshBuilder, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, UITokens, NumberFormat.
+-- Строит карту (D35, D22) по MapLayout: остров с травой и песчаным берегом, площадь в клетку с фонарями,
+-- точку появления, фонтан и лавочки, кусты в проходах между музеями и деревья за ними, ворота, двор и
+-- 10 зон одним коридором — пол, стена с воротами и вывеской, постаменты, декор, — стену и холмы по контуру
+-- острова. Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с дворами и
+-- гантелями строит PlotService.
+-- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, UITokens, NumberFormat.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -12,14 +13,12 @@ local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
-local MeshBuilder = require(World.MeshBuilder)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
 local Signs = require(World.Signs)
 local Studs = require(World.Studs)
 local Border = require(World.Models.Border)
 local Gate = require(World.Models.Gate)
-local Gym = require(World.Models.Gym)
 local Plaza = require(World.Models.Plaza)
 local Props = require(World.Models.Props)
 local Tree = require(World.Models.Tree)
@@ -122,129 +121,85 @@ local function buildGround(parent: Instance)
 	ModelBuilder.Build("GrassPatches", patches).Parent = parent
 end
 
-local function buildAlley(parent: Instance)
-	local alley = MapLayout.Alley
-	local f = folder("Alley", parent)
-	local length = alley.startZ - alley.endZ
-	local midZ = (alley.startZ + alley.endZ) / 2
-	slab("AlleyFloor", Vector2.new(alley.halfWidth * 2, length), Vector3.new(0, 0, midZ), H.Alley, Palette.Alley, f)
+local function buildPlaza(parent: Instance)
+	local plaza = MapLayout.Plaza
+	local f = folder("Plaza", parent)
+	local width, depth = plaza.maxX - plaza.minX, plaza.maxZ - plaza.minZ
+	local midZ = (plaza.minZ + plaza.maxZ) / 2
+	slab("PlazaFloor", Vector2.new(width, depth), Vector3.new(0, 0, midZ), H.Plaza, Palette.Alley, f)
 
-	-- Бордюры и мостовая в клетку.
+	-- Мостовая в клетку.
 	local bricks: { ModelBuilder.Brick } = {}
-	local curbTop = H.Alley + 0.5
-	for _, sign in { -1, 1 } do
-		local x = sign * (alley.halfWidth - alley.curbWidth / 2)
-		table.insert(bricks, B(Vector3.new(alley.curbWidth, curbTop, length), Vector3.new(x, curbTop / 2, midZ), Palette.Curb))
-	end
-	local inner = alley.halfWidth - alley.curbWidth
-	local columns = math.floor(inner * 2 / alley.checkSize)
-	local width = inner * 2 / columns
-	local rows = math.floor(length / alley.checkSize)
-	local depth = length / rows
+	local columns = math.floor(width / MapLayout.CheckSize)
+	local rows = math.floor(depth / MapLayout.CheckSize)
+	local cellW, cellD = width / columns, depth / rows
 	for column = 0, columns - 1 do
 		for row = 0, rows - 1 do
 			if (column + row) % 2 == 0 then
-				local x = -inner + (column + 0.5) * width
-				local z = alley.startZ - (row + 0.5) * depth
-				table.insert(
-					bricks,
-					B(Vector3.new(width, 0.1, depth), Vector3.new(x, H.Alley + 0.05, z), Palette.AlleyCheck, { collide = false, shadow = false })
-				)
+				local x = plaza.minX + (column + 0.5) * cellW
+				local z = plaza.maxZ - (row + 0.5) * cellD
+				local cell = Vector3.new(x, H.Plaza + 0.05, z)
+				table.insert(bricks, B(Vector3.new(cellW, 0.1, cellD), cell, Palette.AlleyCheck, { collide = false, shadow = false }))
 			end
 		end
 	end
-	ModelBuilder.Build("AlleyDetails", bricks).Parent = f
+	ModelBuilder.Build("PlazaDetails", bricks).Parent = f
 
-	-- Фонари и лавочки в промежутках между музеями, кусты в самих промежутках.
-	local gaps = { 87, 37, -13, -63, -115 }
-	for _, z in gaps do
-		for _, sign in { -1, 1 } do
-			place("Lamp", Props.Lamp, CFrame.new(sign * (alley.halfWidth - 3), H.Alley, z), f)
+	-- Фонари вдоль дворов (в проходах между музеями и по краям) и у ворот; кусты в проходах, деревья за музеями.
+	local count = GameConfig.World.PlotCount
+	local front = plaza.maxZ - 2
+	for gap = 0, count do
+		local x = (gap - count / 2) * MapLayout.PlotStep
+		place("Lamp", Props.Lamp, CFrame.new(x, H.Plaza, front), f)
+		if gap > 0 and gap < count then
+			local plotZ = MapLayout.PlotCFrame(1).Position.Z
+			place("Bush_" .. (gap % 3 + 1), function()
+				return Props.Bush(gap % 3 + 1)
+			end, CFrame.new(x, H.Ground, plotZ), f)
 		end
+		local size = if gap % 2 == 0 then "L" else "M"
+		local color = gap % #Palette.Leaves + 1
+		place(("Tree_%s_%d"):format(size, color), function()
+			return Tree(size, color)
+		end, CFrame.new(x, H.Ground, MapLayout.Outline[1].Y - 10) * CFrame.Angles(0, gap, 0), f)
 	end
-	for i = 2, 4 do
-		local z = gaps[i]
-		for _, sign in { -1, 1 } do
-			local at = Vector3.new(sign * (alley.halfWidth - 6), H.Alley, z + 4)
-			place("Bench", Props.Bench, CFrame.lookAt(at, at + Vector3.new(-sign, 0, 0)), f)
-			place("Bush_" .. i, function()
-				return Props.Bush(i)
-			end, CFrame.new(sign * 44, H.Ground, z), f)
-		end
-	end
-	-- Деревья за музеями.
-	for i, z in { 80, 40, 0, -40, -80, -120 } do
-		for _, sign in { -1, 1 } do
-			local size = if i % 2 == 0 then "L" else "M"
-			local color = (i + (sign + 1) / 2) % #Palette.Leaves + 1
-			place(("Tree_%s_%d"):format(size, color), function()
-				return Tree(size, color)
-			end, CFrame.new(sign * 80, H.Ground, z) * CFrame.Angles(0, i, 0), f)
-		end
+	for _, sign in { -1, 1 } do
+		place("Lamp", Props.Lamp, CFrame.new(sign * (MapLayout.Gate.width / 2 + 8), H.Plaza, plaza.minZ + 4), f)
+		local corner = Vector3.new(sign * (plaza.maxX - 12), H.Plaza, plaza.minZ + 12)
+		place("Tree_M_2", function()
+			return Tree("M", 2)
+		end, CFrame.new(corner), f)
 	end
 end
 
 local function buildStart(parent: Instance)
 	local f = folder("Start", parent)
 	place("Fountain", Plaza.Fountain, CFrame.new(MapLayout.Fountain), f)
+	-- Лавочки у фонтана смотрят на него.
+	for _, sign in { -1, 1 } do
+		local at = MapLayout.Fountain + Vector3.new(sign * 14, 0, 0)
+		place("Bench", Props.Bench, CFrame.lookAt(at, at + Vector3.new(-sign, 0, 0)), f)
+	end
 
-	-- Точка появления игроков. Своя SpawnLocation; чужие выключает Main (только в Play).
+	-- Точка появления игроков смотрит на музеи. Своя SpawnLocation; чужие выключает Main (только в Play).
 	local spawn = Instance.new("SpawnLocation")
-	spawn.Name = "AlleySpawn"
+	spawn.Name = "PlazaSpawn"
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Duration = 0
 	spawn.Size = MapLayout.Spawn.size
-	spawn.CFrame = CFrame.lookAt(
-		MapLayout.Spawn.position + Vector3.new(0, MapLayout.Spawn.size.Y / 2, 0),
-		MapLayout.Spawn.position + Vector3.new(0, MapLayout.Spawn.size.Y / 2, -1)
-	)
+	local center = MapLayout.Spawn.position + Vector3.new(0, MapLayout.Spawn.size.Y / 2, 0)
+	spawn.CFrame = CFrame.lookAt(center, center + Vector3.new(0, 0, 1))
 	spawn.Color = UITokens.Gradients.Go.top
 	spawn.Material = Enum.Material.Plastic
 	Studs.Apply(spawn)
 	spawn.Parent = f
-
-	-- Сквер напротив качалки.
-	local garden = MapLayout.Garden
-	for i, offset in { Vector2.new(-10, -10), Vector2.new(10, 8), Vector2.new(-6, 12) } do
-		local color = i % #Palette.Leaves + 1
-		place(("Tree_M_%d"):format(color), function()
-			return Tree("M", color)
-		end, CFrame.new(garden.center + Vector3.new(offset.X, 0, offset.Y)), f)
-	end
-	for _, offset in { Vector2.new(8, -10), Vector2.new(14, -4) } do
-		place("Bush_1", function()
-			return Props.Bush(1)
-		end, CFrame.new(garden.center + Vector3.new(offset.X, 0, offset.Y)), f)
-	end
-	local benchAt = garden.center + Vector3.new(-16, 0, 0)
-	place("Bench", Props.Bench, CFrame.lookAt(benchAt, benchAt + Vector3.new(-1, 0, 0)), f)
-end
-
--- Качалка (D31): площадка, поле и огромная гантель у задней стены. Поле — деталь "GymField"
--- с атрибутом GymField (по нему шаг 4 узнаёт, что игрок качается).
-local function buildGym(parent: Instance)
-	local gym = MapLayout.Gym
-	local f = folder("Gym", parent)
-	local hall = ModelBuilder.Place(ModelBuilder.Build("GymHall", Gym.Hall(gym.size)), CFrame.new(gym.center), f)
-	local hallSign = hall:FindFirstChild("SignBoard")
-	if hallSign and hallSign:IsA("BasePart") then
-		Signs.Write(hallSign, Enum.NormalId.Right, { { text = "КАЧАЛКА " .. BICEPS, scale = 0.8 } })
-	end
-	local fieldCenter = gym.center + Vector3.new(2, 0, 0)
-	local field = ModelBuilder.Place(ModelBuilder.Build("GymField", Gym.Field(gym.field)), CFrame.new(fieldCenter), f)
-	field:SetAttribute("GymField", true)
-	-- Огромная гантель из Blender (уровень 1 — Деревянная) висит над полем, рукоять вдоль Z, как на референсе.
-	local dumbbellAt = Vector3.new(gym.center.X - gym.size.X / 2 + 9, gym.center.Y + Gym.DumbbellHeight, gym.center.Z)
-	MeshBuilder.Build("Dumbbell01", CFrame.new(dumbbellAt) * CFrame.Angles(0, math.rad(90), 0), f, {
-		name = "GiantDumbbell",
-	})
 end
 
 local function buildGateAndYard(parent: Instance)
 	local f = folder("Gate", parent)
 	local gate = MapLayout.Gate
-	local at = Vector3.new(0, H.Alley, gate.z)
+	local at = Vector3.new(0, H.Plaza, gate.z)
 	local arch = ModelBuilder.Place(ModelBuilder.Build("AlleyGate", Gate.Alley(gate.width)), CFrame.lookAt(at, at + Vector3.new(0, 0, 1)), f)
 	local board = arch:FindFirstChild("SignBoard")
 	if board and board:IsA("BasePart") then
@@ -325,9 +280,8 @@ end
 function WorldBuilder.Build(parent: Instance)
 	local map = folder("Map", parent)
 	buildGround(map)
-	buildAlley(map)
+	buildPlaza(map)
 	buildStart(map)
-	buildGym(map)
 	buildGateAndYard(map)
 	local zones = folder("Zones", map)
 	for index in GameConfig.Zones do

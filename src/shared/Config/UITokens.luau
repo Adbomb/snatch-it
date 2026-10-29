@@ -142,6 +142,31 @@ UITokens.Layout = {
 		minSize = Vector2.new(260, 70),
 		maxSize = Vector2.new(560, 110),
 	},
+	-- Временные надписи силы и монет: внизу слева (до шага интерфейса Stud-UI).
+	GymHud = {
+		position = UDim2.fromScale(0.015, 0.97), -- нижний левый угол столбика
+		pill = Vector2.new(190, 44), -- надпись, px (кнопок нет — 52×52 не нужно)
+		gap = 8, -- между надписями, px
+	},
+}
+
+-- Табличка «Улучшение» во дворе (D34): SurfaceGui на табло участка и всплывающее «+N» при качании.
+UITokens.GymSign = {
+	PixelsPerStud = 50,
+	MaxDistance = 90, -- дальше табличку не рисуем
+	Level = Color3.fromHex("5BEA72"), -- строка «Уровень N > N+1» (верх градиента Go)
+	TitleSize = 46,
+	LineSize = 34,
+	ButtonSize = 30,
+}
+UITokens.GymGain = {
+	Color = Color3.fromHex("FFE15A"), -- верх градиента Coin
+	Size = UDim2.fromScale(6, 1.6), -- BillboardGui, стады
+	Start = 3, -- стадов над головой
+	Rise = 3, -- на сколько всплывает
+	Spread = 1.5, -- разброс по горизонтали, стады
+	Time = 0.9, -- секунды
+	TextSize = 40,
 }
 
 -- Основной цвет редкости (для подписи над предметом и т. п.).

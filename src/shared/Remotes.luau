@@ -14,6 +14,8 @@ Remotes.Names = {
 	StorageChanged = "StorageChanged", -- сервер → владельцу: содержимое хранилища { {uid, itemId} }
 	DisplayFromStorage = "DisplayFromStorage", -- клиент → сервер: (uid, номер витрины)
 	ExhibitPlaced = "ExhibitPlaced", -- сервер → владельцу и игрокам рядом: { itemId, slot, plot }
+	GymUpgrade = "GymUpgrade", -- клиент → сервер: «улучши мою гантель» (без аргументов)
+	GymGain = "GymGain", -- сервер → владельцу: прибавка силы за такт качания (число)
 }
 
 function Remotes.CreateAll()
