@@ -41,7 +41,8 @@
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
 
 ## Общее (`src/shared`)
-- Config: `GameConfig` (баланс, зоны D15, гантели D17), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
+- Config: `GameConfig` (баланс, зоны D15, гантели D17; `GameConfig.Progression` = `Progression.luau` — числа D29,
+  только данные: его же читает симулятор `scripts/sim/progression.py`, `--tune` подбирает боссов и цены музея), `Items` (10 предметов), `Rarities`, `UITokens`, `Textures`.
 - `Remotes` — имена RemoteEvent'ов, `LegoMaterial` — включение пупырышков.
 - `CheckUI/CheckUI`, `CheckUI/Responsive` — стандарт интерфейса Check-UI (D20), копия модулей из Skill.
   Пока не используются: переход интерфейса — отдельный шаг.

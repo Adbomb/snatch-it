@@ -1,5 +1,5 @@
 -- Общие настройки игры: числа баланса, размеры мира, лимиты запросов.
--- Читается и сервером, и клиентом. Ни от чего не зависит.
+-- Читается и сервером, и клиентом. Зависит от Config/Progression (числа D29).
 
 local GameConfig = {}
 
@@ -124,5 +124,9 @@ GameConfig.RateLimits = {
 	Move = 4,
 	Rotate = 6,
 }
+
+-- Долгая прогрессия (D29): боссы, круги, перерождение, музей, доход, редкость, каталог, скорость.
+-- Отдельный файл, чтобы его читал симулятор scripts/sim/progression.py.
+GameConfig.Progression = require(script.Parent.Progression)
 
 return GameConfig
