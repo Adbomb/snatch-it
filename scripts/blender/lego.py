@@ -31,6 +31,7 @@ PALETTE = {
     "cosmic": "6A45F5", "cosmicdark": "241A4D", "star": "FFF2A6", "green": "43A047", "leaf": "5BC24A",
     "pink": "F28DB2", "yellow": "FFD23F", "orange": "F28C28", "rock": "8F8A84", "darkrock": "5F5B57",
     "neongreen": "39FF6A", "neoncyan": "2CF6FF", "ruby": "E0115F",
+    "rope": "C9A86A", "neonbody": "18291D", "neonbody2": "24402C", "neonlime": "D4FF3A", "grass": "63C92E",
 }
 SPECIAL = {"Accent", "AccentDark", "DecorAccent"}
 PREFIXED = {"Decor", "Glass", "Glow"}  # роль «<Префикс>_<цвет>»
@@ -70,6 +71,18 @@ def role_color(role):
     """Имя цвета роли: «Decor_gold» → gold, «Accent» → Accent."""
     prefix, _, rest = role.partition("_")
     return rest if prefix in PREFIXED and rest else role
+
+
+def pixel_circle(diameter, holes=()):
+    """Клетки (i, j) «пиксельного» круга нечётного диаметра с центром в (0, 0); holes — вырезанные клетки."""
+    n = diameter // 2
+    r2 = (diameter / 2) ** 2
+    return {(i, j) for i in range(-n, n + 1) for j in range(-n, n + 1) if i * i + j * j <= r2} - set(holes)
+
+
+def noise(i, j, seed=0):
+    """Детерминированный шум 0..1 по клетке (без random — модели собираются одинаково)."""
+    return ((i * 73856093) ^ (j * 19349663) ^ (seed * 83492791)) % 1000 / 1000
 
 
 def _bevel(bm, width, segments=None):
@@ -328,6 +341,130 @@ class Model:
             if r >= cell * 0.6:
                 self.voxel_disc(role, (x + v, y, z), r, cell, color, axis="x", cell=cell, bevel=bevel)
 
+    def voxel_plate(self, center, cells, cell, depth, paint, normal=(1, 0, 0), groove=0.15, back_groove=True,
+                    lift=None):
+        """Плита из кубиков-вокселей с фаской: каждый кубик виден, между соседями — V-шов, как у кирпичей LEGO.
+        Дешевле отдельных кубиков: скрытые грани между соседями не строятся, ямки на стыках швов закрыты
+        подложкой. cells — клетки (i, j) в плоскости плиты (j вдоль y Roblox для normal по x), шаг cell,
+        paint(i, j) → (роль, цвет), normal — куда смотрит лицевая сторона (±x или ±y).
+        back_groove=False — тыльная сторона гладкая (дешевле). lift(i, j) — выпуклость лица кубика (неровность).
+        groove=0 — простая плита без швов (ступенчатый контур)."""
+        W = Vector(normal)
+        V = Vector((0, 1, 0)) if abs(W.y) < 0.5 else Vector((1, 0, 0))
+        U = V.cross(W)
+        c0 = Vector(center)
+        h, hw, g = cell / 2, depth / 2, groove
+        groups = {}
+        for ij in sorted(cells):
+            groups.setdefault(paint(*ij), []).append(ij)
+
+        def has(i, j):
+            return (i, j) in cells
+
+        for (role, color), group in groups.items():
+
+            def build(bm, group=group):
+                def emit(points, outward):
+                    verts = [bm.verts.new(to_blender(c0 + p[0] * U + p[1] * V + p[2] * W)) for p in points]
+                    face = bm.faces.new(verts)
+                    face.normal_update()
+                    o = to_blender(outward[0] * U + outward[1] * V + outward[2] * W)
+                    if face.normal.dot(o) < 0:
+                        face.normal_flip()
+
+                def runs(at_w, sign):
+                    """Ряды подряд идущих клеток одним прямоугольником на высоте at_w (подложка или гладкий тыл)."""
+                    rows = {}
+                    for i, j in group:
+                        rows.setdefault(j, []).append(i)
+                    for j, row in rows.items():
+                        row.sort()
+                        start = prev = row[0]
+                        for i in row[1:] + [None]:
+                            if i is not None and i == prev + 1:
+                                prev = i
+                                continue
+                            u0, u1, v0, v1 = start * cell - h, prev * cell + h, j * cell - h, j * cell + h
+                            emit([(u0, v0, at_w), (u1, v0, at_w), (u1, v1, at_w), (u0, v1, at_w)], (0, 0, sign))
+                            if i is not None:
+                                start = prev = i
+
+                if g <= 0:
+                    runs(hw, 1)
+                    runs(-hw, -1)
+                    for i, j in group:
+                        cu, cv = i * cell, j * cell
+                        for su, sv in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                            if has(i + su, j + sv):
+                                continue
+                            if su:
+                                pts = [(cu + su * h, cv + t * h, w) for t, w in ((-1, -hw), (1, -hw), (1, hw), (-1, hw))]
+                            else:
+                                pts = [(cu + t * h, cv + sv * h, w) for t, w in ((-1, -hw), (1, -hw), (1, hw), (-1, hw))]
+                            emit(pts, (su, sv, 0))
+                    return
+
+                gb = g if back_groove else 0.0
+                w_front, w_back = hw - g, -(hw - gb)  # глубина швов спереди и сзади
+                runs(w_front, 1)
+                runs(w_back if back_groove else -hw, -1)
+                for i, j in group:
+                    cu, cv = i * cell, j * cell
+                    up = (lift(i, j) if lift else 0.0) + hw
+                    side = {(0, s): not has(i + s, j) for s in (-1, 1)} | {(1, s): not has(i, j + s) for s in (-1, 1)}
+
+                    def P(a, b, w):
+                        return (cu + a, cv + b, w)
+
+                    # Лицо (и тыл со швами).
+                    emit([P(-h + g, -h + g, up), P(h - g, -h + g, up), P(h - g, h - g, up), P(-h + g, h - g, up)],
+                         (0, 0, 1))
+                    if back_groove:
+                        emit([P(-h + g, -h + g, -hw), P(h - g, -h + g, -hw), P(h - g, h - g, -hw),
+                              P(-h + g, h - g, -hw)], (0, 0, -1))
+                    # Фаски лица/тыла по четырём рёбрам (у соседа это половина шва).
+                    for wz, wface, ws in ((w_front, up, 1), (w_back, -hw, -1)):
+                        if ws < 0 and not back_groove:
+                            continue
+                        for s in (-1, 1):
+                            emit([P(s * (h - g), -h + g, wface), P(s * (h - g), h - g, wface), P(s * h, h - g, wz),
+                                  P(s * h, -h + g, wz)], (s, 0, ws))
+                            emit([P(-h + g, s * (h - g), wface), P(h - g, s * (h - g), wface), P(h - g, s * h, wz),
+                                  P(-h + g, s * h, wz)], (0, s, ws))
+                    # Открытые бока.
+                    for s in (-1, 1):
+                        if side[(0, s)]:
+                            emit([P(s * h, -h + g, w_back), P(s * h, h - g, w_back), P(s * h, h - g, w_front),
+                                  P(s * h, -h + g, w_front)], (s, 0, 0))
+                        if side[(1, s)]:
+                            emit([P(-h + g, s * h, w_back), P(h - g, s * h, w_back), P(h - g, s * h, w_front),
+                                  P(-h + g, s * h, w_front)], (0, s, 0))
+                    # Рёбра между боками и углы.
+                    for su in (-1, 1):
+                        for sv in (-1, 1):
+                            ku, kv = side[(0, su)], side[(1, sv)]
+                            if not ku and not kv:
+                                continue
+                            diag = has(i + su, j + sv)
+                            if ku and kv or not diag:
+                                emit([P(su * h, sv * (h - g), w_back), P(su * h, sv * (h - g), w_front),
+                                      P(su * (h - g), sv * h, w_front), P(su * (h - g), sv * h, w_back)], (su, sv, 0))
+                            elif ku:
+                                # Внутренний угол лесенки: перемычка до бока соседа по диагонали и крышки.
+                                a, b = P(su * h, sv * (h - g), 0), P(su * (h + g), sv * h, 0)
+                                k = P(su * h, sv * h, 0)
+                                emit([(a[0], a[1], w_back), (a[0], a[1], w_front), (b[0], b[1], w_front),
+                                      (b[0], b[1], w_back)], (su, -sv, 0))
+                                for wz, ws in ((w_front, 1), (w_back if back_groove else -hw, -1)):
+                                    emit([(a[0], a[1], wz), (b[0], b[1], wz), (k[0], k[1], wz)], (0, 0, ws))
+                            for wz, wface, ws in ((w_front, up, 1), (w_back, -hw, -1)):
+                                if ws < 0 and not back_groove:
+                                    continue
+                                emit([P(su * h, sv * (h - g), wz), P(su * (h - g), sv * h, wz),
+                                      P(su * (h - g), sv * (h - g), wface)], (su, sv, ws))
+
+            self._add(role, color, build, 0)
+
     # --- вывод ---
     def build(self, collection, offset=(0, 0, 0)):
         """Создаёт объекты ролей (без материала — для FBX). Возвращает раскладку роль → центр, размер, цвет."""
@@ -406,8 +543,11 @@ def preview_materials(objects, studs_texture):
             nt.links.new(tex.outputs["Color"], mix.inputs["Color1"])
             nt.links.new(mix.outputs["Color"], bsdf.inputs["Base Color"])
             if glow:
-                bsdf.inputs["Emission Color"].default_value = (*hex_to_rgb(code), 1)
-                bsdf.inputs["Emission Strength"].default_value = 2.5
+                # Неон как в игре: насыщенный цвет без пересвета — тело тёмное, светится сам цвет.
+                nt.links.remove(bsdf.inputs["Base Color"].links[0])
+                bsdf.inputs["Base Color"].default_value = (0, 0, 0, 1)
+                nt.links.new(mix.outputs["Color"], bsdf.inputs["Emission Color"])
+                bsdf.inputs["Emission Strength"].default_value = 1.6
             cache[key] = mat
         obj.data.materials.clear()
         obj.data.materials.append(cache[key])

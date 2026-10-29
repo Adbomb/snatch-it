@@ -1,4 +1,5 @@
-"""Пачка 1 (D28, D30, D31): 5 моделей музея и 10 гантелей из LEGO-кирпичей → assets/models/Pack1.fbx.
+"""Пачка 1 (D28, D31, D33): 5 моделей музея из LEGO-кирпичей → assets/models/Pack1.fbx.
+Гантели — отдельно: pack1_dumbbells.py (D34).
 
 Музей — классическое здание с колоннами, игрок восстанавливает его по уровням:
 1 (ур. 1–2) руины: сломанные и упавшие колонны, обломки фронтона, дыры в крыше, леса и доски;
@@ -8,11 +9,10 @@
 Светлый камень; цвет участка — крыша и купол (AccentDark), тимпан (Accent), знамёна и брезент (DecorAccent).
 Начало координат — центр участка на уровне пола, вход в -z: фасад на z = FACADE, проём 12×10, над ним
 место под вывеску (y ≈ 11.5, ширина 18); внутри свободно для витрин. Бюджет: музей ≤ 20 000 треугольников.
-Гантели: центр рукояти в начале координат, ось x, ~16 стадов, ≤ 3 000 треугольников.
 
 Запуск из корня репозитория:
 "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup \\
-    --python scripts/blender/pack1_museums_dumbbells.py -- . <папка превью>
+    --python scripts/blender/pack1_museums.py -- . <папка превью>
 Пишет assets/models/Pack1.fbx и assets/models/Pack1.layout.json, превью — в указанную папку.
 """
 
@@ -37,7 +37,6 @@ COLUMN_Z = -19.4
 SIGN_Y = 11.5
 WALL_T = 1.4
 MUSEUM_BUDGET = 20000
-DUMBBELL_BUDGET = 3000
 
 
 # ================================================================ части классики
@@ -476,120 +475,19 @@ MUSEUMS = [
 ]
 
 
-# ================================================================ гантели
-def handle(m, length, color, ring=None, radius=0.9, segments=10):
-    m.cylinder("Body", (0, 0, 0), radius, length, color, axis="x", segments=segments, bevel=0.1)
-    if ring:
-        for k in (-1.4, 0, 1.4):
-            m.cylinder("Body", (k, 0, 0), radius + 0.18, 0.5, ring, axis="x", segments=segments, bevel=0.08)
-
-
-def dumbbell(index):
-    m = Model(f"Dumbbell{index:02d}")
-    sides = (-1, 1)
-    if index == 1:  # Деревянная: круглые чурбаки из досок на брёвнышке
-        handle(m, 15.0, "darkwood", ring="wood", radius=1.0, segments=8)
-        for s in sides:
-            m.voxel_disc("Body", (s * 5.2, 0, 0), 4.6, 1.8, "wood", cell=1.5)
-            m.voxel_disc("Body", (s * 6.9, 0, 0), 3.6, 1.4, "lightwood", cell=1.5)
-            m.box("Body", (s * 7.8, 0, 0), (0.5, 1.4, 1.4), "darkwood", bevel=0.1)
-    elif index == 2:  # Каменная: грубые каменные глыбы на перевязанной ручке
-        m.box("Body", (0, 0, 0), (14.0, 1.8, 1.8), "darkrock", bevel=0.25)
-        m.box("Body", (0, 0, 0), (4.0, 2.1, 2.1), "wood", bevel=0.2)
-        for s in sides:
-            m.box("Body", (s * 5.8, 0, 0), (4.8, 6.4, 6.0), "rock", rotation=rot(y=6 * s), bevel=0.5)
-            m.box("Body", (s * 5.4, 3.4, 0.8), (3.6, 1.6, 3.4), "darkrock", bevel=0.35)
-            m.box("Body", (s * 6.6, -2.2, -2.8), (2.6, 2.4, 1.6), "darkrock", bevel=0.3)
-            m.box("Body", (s * 8.0, 1.0, 1.6), (1.2, 2.0, 2.0), "rock", rotation=rot(x=20), bevel=0.25)
-    elif index == 3:  # Железная: стопка блинов из брусков
-        handle(m, 17.0, "steel", ring="iron", radius=0.8)
-        for s in sides:
-            for k, (r, c) in enumerate(((4.8, "iron"), (4.0, "steel"), (3.2, "iron"))):
-                m.voxel_disc("Body", (s * (4.6 + k * 1.15), 0, 0), r, 1.05, c, cell=1.6)
-            m.cylinder("Body", (s * 3.6, 0, 0), 1.4, 0.9, "black", axis="x", segments=10, bevel=0.1)
-    elif index == 4:  # Бронзовая: шестигранные головы
-        handle(m, 14.0, "steel", ring="black")
-        for s in sides:
-            m.cylinder("Body", (s * 6.0, 0, 0), 4.3, 4.4, "bronze", axis="x", segments=6, bevel=0.4)
-            m.cylinder("Body", (s * 8.45, 0, 0), 3.0, 0.6, "darkbronze", axis="x", segments=6, bevel=0.12)
-            m.cylinder("Body", (s * 3.55, 0, 0), 3.4, 0.6, "darkbronze", axis="x", segments=6, bevel=0.12)
-    elif index == 5:  # Серебряная: шары из брусков
-        handle(m, 12.0, "steel", ring="silver")
-        for s in sides:
-            m.voxel_ball("Body", (s * 6.6, 0, 0), 4.4, "silver", cell=1.6)
-            m.cylinder("Body", (s * 3.0, 0, 0), 1.8, 1.0, "steel", axis="x", segments=10, bevel=0.1)
-    elif index == 6:  # Золотая: диски-короны с рубинами
-        handle(m, 15.0, "darkgold", ring="gold")
-        for s in sides:
-            m.voxel_disc("Body", (s * 5.6, 0, 0), 4.8, 2.2, "gold", cell=1.6)
-            for k in range(8):
-                a = 2 * math.pi * k / 8
-                m.box("Body", (s * 5.6, 5.3 * math.cos(a), 5.3 * math.sin(a)), (1.6, 1.4, 1.4), "gold",
-                      rotation=rot(x=math.degrees(a)), bevel=0.2)
-            m.voxel_disc("Body", (s * 7.0, 0, 0), 2.6, 0.8, "darkgold", cell=1.3)
-            m.gem("Glass", (s * 7.6, 0, 0), 1.3, 0.6, 0.8, "ruby", segments=8, axis="x" if s > 0 else "-x")
-    elif index == 7:  # Изумрудная: друзы кристаллов
-        handle(m, 13.0, "darkemerald", ring="gold")
-        for s in sides:
-            m.cylinder("Body", (s * 3.6, 0, 0), 2.6, 1.0, "gold", axis="x", segments=8, bevel=0.1)
-            m.cylinder("Glass", (s * 5.6, 0, 0), 2.8, 3.2, "emerald", axis="x", segments=6, bevel=0.15)
-            m.gem("Glass", (s * 8.2, 0, 0), 2.8, 0.01, 2.6, "emerald", segments=6, axis="-x" if s > 0 else "x",
-                  table=1.0)
-            for k in range(5):
-                a = 2 * math.pi * k / 5 + 0.3
-                m.cylinder("Glass", (s * 5.2, 3.0 * math.cos(a), 3.0 * math.sin(a)), 0.9, 3.2, "emerald", segments=6,
-                           radius2=0.0, rotation=rot(x=math.degrees(a), z=25 * s), bevel=0)
-    elif index == 8:  # Алмазная: два бриллианта в серебряной оправе
-        handle(m, 12.0, "silver", ring="steel")
-        for s in sides:
-            m.gem("Glass", (s * 5.2, 0, 0), 4.8, 1.7, 4.6, "diamond", segments=12, axis="-x" if s > 0 else "x",
-                  table=0.55)
-            m.cylinder("Body", (s * 3.3, 0, 0), 2.4, 0.8, "silver", axis="x", segments=12, bevel=0.1)
-            for k in range(6):
-                a = 2 * math.pi * k / 6
-                m.box("Body", (s * 4.6, 4.2 * math.cos(a), 4.2 * math.sin(a)), (2.6, 0.6, 0.6), "silver",
-                      rotation=rot(x=math.degrees(a)), bevel=0.1)
-    elif index == 9:  # Неоновая: тёмные диски с неоновыми кольцами
-        handle(m, 15.0, "black", ring="steel")
-        for s in sides:
-            for k, x in enumerate((4.6, 6.0, 7.4)):
-                m.voxel_disc("Body", (s * x, 0, 0), 4.4 - k * 0.4, 1.1, "black", cell=1.6)
-            for x in (5.3, 6.7):
-                m.torus("Glow", (s * x, 0, 0), 4.0, 0.3, "neongreen", axis="x", segments=16, minor_segments=5)
-            m.cylinder("Glow", (s * 8.1, 0, 0), 2.0, 0.4, "neongreen", axis="x", segments=12, bevel=0)
-            for k in range(4):
-                a = 2 * math.pi * k / 4 + math.pi / 4
-                m.box("Glow", (s * 6.0, 4.6 * math.cos(a), 4.6 * math.sin(a)), (3.0, 1.0, 1.0), "neongreen",
-                      rotation=rot(x=math.degrees(a)), bevel=0.12)
-    elif index == 10:  # Космическая: планеты с кольцами, луны и звёзды
-        handle(m, 14.0, "cosmicdark", ring="star")
-        for s in sides:
-            m.sphere("Body", (s * 6.6, 0, 0), 4.4, "cosmic", segments=16, rings=10)
-            m.sphere("Body", (s * 6.6, 0, 0), 4.46, "cosmicdark", segments=16, rings=10, scale=(1.0, 0.3, 1.0))
-            m.torus("Glow", (s * 6.6, 0, 0), 6.4, 0.4, "neoncyan", axis="y", segments=20, minor_segments=5)
-            m.sphere("Body", (s * 6.6, 4.4, 4.4), 1.0, "star", segments=8, rings=6)
-            m.gem("Glow", (s * 9.0, 3.0, -3.0), 0.8, 0.4, 0.4, "star", segments=4, axis="y")
-    return m
-
-
 # ================================================================ сборка
 bpy.ops.wm.read_factory_settings(use_empty=True)
 collection = bpy.context.scene.collection
-layout = {"museums": {}, "dumbbells": {}}
+layout = {"museums": {}}
 objects = []
 for i, build in enumerate(MUSEUMS):
     model, anchors = build()
     roles = model.build(collection, (i * 70, 0, 0))
     layout["museums"][model.name] = {"roles": roles, **anchors}
     objects += [o for o in collection.objects if o.name.startswith(model.name + "_")]
-for index in range(1, 11):
-    model = dumbbell(index)
-    roles = model.build(collection, ((index - 1) % 5 * 24, 0, 120 + (index - 1) // 5 * 18))
-    layout["dumbbells"][model.name] = {"roles": roles}
-    objects += [o for o in collection.objects if o.name.startswith(model.name + "_")]
 
 over = []
-for group, budget in (("museums", MUSEUM_BUDGET), ("dumbbells", DUMBBELL_BUDGET)):
+for group, budget in (("museums", MUSEUM_BUDGET),):
     for name, data in layout[group].items():
         total = sum(info["triangles"] for info in data["roles"].values())
         data["triangles"] = total
@@ -612,7 +510,5 @@ for i in range(5):
 vis = [o for o in objects if o.name.startswith("Museum1_")]
 lego.render(os.path.join(PREVIEWS, "Museum1_left.png"), (-44, 30, -50), (0, 6, -4), vis, lens=32)
 lego.render(os.path.join(PREVIEWS, "Museum1_top.png"), (10, 70, -40), (0, 0, 2), vis, lens=32)
-vis = [o for o in objects if o.name.startswith("Dumbbell")]
-lego.render(os.path.join(PREVIEWS, "Dumbbells.png"), (48, 60, 175), (48, 0, 129), vis, lens=32)
 print("PACK1_OVER " + (",".join(over) if over else "none"))
 print("PACK1_OK")

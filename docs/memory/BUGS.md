@@ -50,3 +50,7 @@
 - Blender: пути к файлам — абсолютные (`os.path.abspath`), иначе `image.save()` молча не пишет PNG и
   текстура не встраивается в FBX.
 - Windows PowerShell 5.1 читает `.ps1` в UTF-8 только с BOM.
+- Скриншоты заказчика бывают WebP с расширением `.jpg`: System.Drawing их не открывает («Out of memory»),
+  Blender грузит, но `image.save()` пишет «нет данных» — копировать через `pixels` в новый образ и сохранять PNG.
+- Превью Eevee рисует обе стороны граней: вывернутые нормали в нём не видны, а Roblox их не рисует. Проверять
+  отладочным рендером с `use_backface_culling` (так проверен `Model.voxel_plate`).
