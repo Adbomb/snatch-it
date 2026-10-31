@@ -108,3 +108,7 @@
   выключен) — данные мешей только через временный модуль Rojo.
 - Rojo 7.7.1 падает, если удалить папку в `src` во время `rojo serve` (change_processor.rs:179) — перезапустить.
   Плагин после перезапуска сервера переподключается кнопкой Connect (всплывает окно Rojo в окне вида Studio).
+- Только что загруженные картинки (`upload_image`) Roblox обрабатывает ~20–30 с: SurfaceAppearance сначала серый
+  («Asset content representation is being generated») — снимки делать после паузы.
+- Blender 5.2: запекание цвета для SurfaceAppearance — через EMIT (цвет материала → Emission), а не DIFFUSE: у металла
+  диффузный цвет чёрный. Шероховатость и металл — так же, константой в Emission.
