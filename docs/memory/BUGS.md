@@ -100,3 +100,11 @@
 - Предпросмотр модели из Blender в Studio без импорта FBX: данные меша → временный модуль в src (Rojo) →
   `AssetService:CreateEditableMesh` + `CreateMeshPartAsync(Content.fromObject(em))` в Edit. Меш НЕ центрируется:
   все детали ставить в одну точку (CFrame начала модели), не в центр габаритов. Модуль и детали — удалить.
+- Тело вращения в bmesh: quad `[кольцо k: i, i+1; кольцо k+1: i+1, i]` даёт нормаль к оси — для наружной
+  поверхности обход обратный. Eevee рисует обе стороны и прячет ошибку, а Roblox — нет (ножка «полумесяцем»),
+  и окклюзия при запекании выходит чёрной. В превью материалов `use_backface_culling = True`.
+- SurfaceAppearance (ColorMap/NormalMap/RoughnessMap/MetalnessMap) работает на MeshPart из EditableMesh с UV
+  (`AddUV` + `SetFaceUVs`), свойства пишутся из MCP в Edit. HttpService в Edit через MCP недоступен (HttpEnabled
+  выключен) — данные мешей только через временный модуль Rojo.
+- Rojo 7.7.1 падает, если удалить папку в `src` во время `rojo serve` (change_processor.rs:179) — перезапустить.
+  Плагин после перезапуска сервера переподключается кнопкой Connect (всплывает окно Rojo в окне вида Studio).
