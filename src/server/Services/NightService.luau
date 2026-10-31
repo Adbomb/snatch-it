@@ -1,6 +1,7 @@
 -- Ночь (D37): с началом ночи (обычной и Судной) вход в коридор уровней закрывает барьер в воротах уровня 1 (только
--- на ночь, карта не меняется), несомые предметы теряются (D37: недоставленное теряется), игроки из опасной зоны
--- (коридор, MapLayout.InDangerZone) переносятся на место появления — Safe Zone. Пока ночь, сервер раз в
+-- на ночь, карта не меняется). Кто в этот момент вне Safe Zone — в опасной зоне (коридор, MapLayout.InDangerZone), —
+-- теряет несомый предмет и переносится к месту появления. Кто успел добежать с предметом до Safe Zone, сохраняет
+-- его и может выставить позже (доход — только на витрине). Пока ночь, сервер раз в
 -- GameConfig.Time.NightCheckSeconds выводит из коридора тех, кто туда попал. С рассветом барьер убирается.
 -- Бои с боссами прерывает BossService (этап 4), слоты боссов обновляет BossLootService (этап 3).
 -- Зависит от TimeService, CarryService, Shared/GameTime, World/MapLayout, GameConfig, Util/Notify, Util/Log.
@@ -48,13 +49,20 @@ local function sweep(players: { Player }): number
 	return moved
 end
 
--- Начало ночи: барьер, потеря несомого, вывод из коридора.
+-- Игрок вне Safe Zone (в опасной зоне)?
+local function outside(player: Player): boolean
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root ~= nil and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position)
+end
+
+-- Начало ночи: барьер; кто вне Safe Zone — теряет несомое и переносится к месту появления.
 local function startNight(players: { Player })
 	night = true
 	barrier.Parent = world
 	for _, player in players do
-		if CarryService.LoseCarried(player, "наступила ночь (D37)") then
-			Notify.Send(player, "Наступила ночь — недоставленный предмет потерян", "Stop")
+		if outside(player) and CarryService.LoseCarried(player, "ночь застала вне Safe Zone (D37)") then
+			Notify.Send(player, "Ночь застала вас вне безопасной зоны — предмет потерян", "Stop")
 		end
 	end
 	local moved = sweep(players)

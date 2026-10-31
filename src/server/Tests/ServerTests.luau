@@ -1,8 +1,9 @@
 -- Серверные тесты на двух игроков (только Studio, в Play): владение участками, профили, запрет действий с чужими
 -- витринами, сундуком, хранилищем, гантелью и полем качалки, один носитель у предмета, повторный вход, перестройка
 -- музея; время и ночь (этап 2 D37). Игроки — Tests/TestPlayer с профилями в памяти (ProfileStore.Mock): в DataStore
--- ничего не пишется, участки берутся свободные (настоящий игрок не трогается). Вход и выход — тем же Services/PlayerSession, действия
--- — теми же обработчиками, что вызывают подсказки (Handlers). Это серверная симуляция: подсказки на клиенте,
+-- ничего не пишется, участки берутся свободные (настоящий игрок не трогается). Вход и выход — тем же
+-- Services/PlayerSession, действия — теми же обработчиками, что вызывают подсказки (Handlers). Это серверная
+-- симуляция: подсказки на клиенте,
 -- интерфейс, сеть и физику персонажа она не проверяет — для этого нужен тест с настоящими клиентами.
 -- Запуск через MCP в Play: game.ServerStorage.DevTools.RunServerTests:Invoke() → отчёт строкой.
 -- Зависит от Services/*, Util/ItemFactory, Tests/TestPlayer, GameConfig.
@@ -391,20 +392,28 @@ test("Время: сервер публикует ту же фазу, что с�
 	check(ReplicatedStorage:GetAttribute("PhaseEndsAt") == state.endsAt, "атрибут PhaseEndsAt")
 end)
 
-test("Ночь: несомое теряется, из коридора — в Safe Zone, барьер до рассвета", function(A, B, ctx)
+test("Ночь: не успел до Safe Zone — предмет потерян и перенос; успел — предмет при нём", function(A, B, ctx)
 	local corridor = Vector3.new(10, MapLayout.Heights.Path + 3, MapLayout.ZoneStartZ(1) - 40)
 	A:MoveTo(corridor)
 	local uidA = carry(ctx, A)
-	B:MoveTo(MapLayout.Spawn.position + Vector3.new(20, 3, 20))
+	local safe = MapLayout.Spawn.position + Vector3.new(20, 3, 20)
+	B:MoveTo(safe)
 	local uidB = carry(ctx, B)
+	local bPosition = B.Character.PrimaryPart.Position
 	local day = GameTime.At(GameConfig.Time.Epoch)
 	local nightState = GameTime.At(GameConfig.Time.Epoch + GameConfig.Time.DayLength)
 	NightService.Handlers.Apply(nightState, day, { A, B })
 	check(not MapLayout.InDangerZone(A.Character.PrimaryPart.Position), "A остался в коридоре")
 	check((A.Character.PrimaryPart.Position - MapLayout.Spawn.position).Magnitude < 20, "A не у места появления")
-	check(ItemRegistry.Get(uidA) == nil and ItemRegistry.GetCarriedBy(A) == nil, "предмет A не потерян")
-	check(ItemRegistry.Get(uidB) == nil and ItemRegistry.GetCarriedBy(B) == nil, "предмет B не потерян")
-	check(A:WasNotified("недоставленный предмет потерян"), "нет сообщения о потере")
+	check(ItemRegistry.Get(uidA) == nil and ItemRegistry.GetCarriedBy(A) == nil, "предмет A (вне Safe Zone) не потерян")
+	check(A:WasNotified("предмет потерян"), "нет сообщения о потере")
+	check(ItemRegistry.GetCarriedBy(B) == uidB, "предмет B (в Safe Zone) потерян")
+	check((B.Character.PrimaryPart.Position - bPosition).Magnitude < 0.01, "B в Safe Zone перенесли")
+	-- B выставляет сохранённый предмет уже ночью.
+	local plotB = plotOf(B)
+	near(B, plotB.showcases[1])
+	MuseumService.Handlers.Display(B, plotB, 1)
+	check(ItemRegistry.Get(uidB).state == "Displayed", "B не смог выставить предмет после наступления ночи")
 	check(NightService.Handlers.Barrier().Parent ~= nil, "барьер не поставлен")
 	A:MoveTo(corridor)
 	check(NightService.Handlers.Sweep({ A }) == 1, "зашедшего ночью в коридор не вывели")
