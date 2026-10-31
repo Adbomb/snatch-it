@@ -23,7 +23,7 @@ GameConfig.Museum = {
 	SlotsByLevel = { [1] = 6 }, -- DESIGN.md §2: museumLevel 1 → 6 витрин
 	ShowcaseSize = Vector3.new(5, 3, 5),
 	ShowcaseStep = Vector2.new(10, 14), -- шаг сетки витрин по X и Z (влезает в самый узкий зал)
-	DisplayDistance = 7, -- радиус подсказок на витринах: у своей ≈ 5–6, соседний ряд дальше 8.5 (не перехватит)
+	DisplayDistance = 6.5, -- радиус подсказок на витринах: у канатов ≈ 5; от сундука до витрины 1 — 8.5 (не перехватит)
 	StorageCapacity = 10, -- мест в хранилище
 	ChestSize = Vector3.new(4, 3, 3),
 	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
@@ -31,19 +31,18 @@ GameConfig.Museum = {
 	MoveSelectTimeout = 15, -- секунд, через которые выбор «Переставить» отменяется
 }
 
--- Модели из Blender (World/MeshBuilder, D33): музей уровня L — модель ceil(L / 2), на чётных уровнях с декором.
+-- Модели из Blender (World/MeshBuilder): гантели (D34). Музеи строятся кодом (World/Models/MuseumHall, D36).
 GameConfig.Models = {
-	MuseumModelCount = 5, -- Museum1 … Museum5
 	GlassTransparency = 0.35, -- стекло и кристаллы (то же число в scripts/blender/lego.py для превью)
 	AccentDarken = 0.45, -- тёмный оттенок цвета участка (роль AccentDark: крыша, купол)
 	DefaultAccent = "2F6FD6", -- цвет участка, если не задан
 }
 
--- Качалка (D31, D34, D35): поле и огромная гантель во дворе каждого музея. Сила в секунду и цены уровней —
+-- Качалка (D31, D34, D36): поле и огромная гантель перед каждым музеем. Сила в секунду и цены уровней —
 -- Progression.Dumbbell, сила музея — Progression.MuseumPower.
 GameConfig.Gym = {
 	TickSeconds = 1, -- как часто владелец в поле получает силу
-	FieldSize = Vector2.new(14, 20), -- поле во дворе: по X и Z
+	FieldSize = Vector2.new(12, 12), -- поле качалки перед музеем: по X и Z (D36)
 	FieldHeight = 8, -- до какой высоты над полем игрок считается «в поле»
 	SignDistance = 12, -- радиус подсказки и кнопки «Улучшить» у таблички
 	GuestHintCooldown = 5, -- секунд между подсказками «Это гантель игрока X»

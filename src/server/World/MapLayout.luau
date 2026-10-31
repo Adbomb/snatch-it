@@ -1,8 +1,8 @@
--- Раскладка карты (D35, D22) только данными. База — прямоугольник: 5 музеев в линию фасадом к зонам (-Z),
--- перед каждым — двор с полем качалки, огромной гантелью и табличкой «Улучшение» (D34); перед дворами —
--- площадь с фонтаном и точкой появления; на краю площади — ворота, за ними короткий двор и 10 зон одним
--- прямым коридором: игрок проходит зону N, чтобы попасть в N+1. Вокруг острова стена, холмы, песок и вода.
--- Ни от чего не зависит, кроме GameConfig.
+-- Раскладка карты (D36, утверждённый рисунок заказчика; D22) только данными. Безопасная зона — поле травы между
+-- земляными обрывами: у дальней стены (+Z) пять музеев в ряд входом к полю, у каждого спереди слева (по +X —
+-- левая рука игрока, смотрящего на музеи) поле качалки с огромной гантелью и табличкой «Улучшение»; у переднего
+-- края — лавки «Аура» и «Продажа» по бокам от коридора уровней. Коридор уходит в -Z: 10 зон подряд, игрок
+-- проходит зону N, чтобы попасть в N+1. Ни от чего не зависит, кроме GameConfig.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -12,65 +12,68 @@ local MapLayout = {}
 
 -- Высоты верхних граней поверхностей: разные, чтобы плоскости не мерцали (у Baseplate шаблона верх на 0).
 MapLayout.Heights = {
-	Ground = 0.1,
-	Sand = -0.2, -- песчаный берег
-	Water = -1.2, -- уровень воды
-	Path = 0.3, -- двор перед зонами, полы зон
-	Plaza = 0.4, -- площадь и дворы участков
-	Floor = 1.4, -- пол музеев (PartBuilder.FloorTop): на ступень выше площади
+	Ground = 0.1, -- трава
+	Water = -1.2, -- уровень воды вокруг острова
+	Path = 0.3, -- полы зон
+	Floor = 1.4, -- пол музеев (PartBuilder.FloorTop): на ступень выше травы
 }
 
--- Ворота в зоны на краю площади; за ними двор до первой зоны.
-MapLayout.Gate = { z = -130, width = 60 }
-MapLayout.Yard = 12 -- длина двора между воротами и входом в зону 1
+-- Безопасная зона: от входа в коридор (z = 0) до дальней стены; коридор уровней — полоса ±CorridorHalf.
+MapLayout.SafeZone = { halfX = 183, back = 131 }
+MapLayout.CorridorHalf = 92
 
--- Участки (D35): музей 44 × 44 (центр — PlotCFrame), перед фасадом двор глубиной YardDepth, между музеями
--- проходы. Координаты двора — в системе участка: x вправо, вход в -Z, фасад на z = -22.
-local PLOT_HALF = GameConfig.World.PlotSize.X / 2
-MapLayout.PlotStep = 58 -- между центрами музеев (проход 14)
-MapLayout.YardDepth = 26
-MapLayout.PlazaDepth = 50
-local PLAZA_FRONT = MapLayout.Gate.z + MapLayout.PlazaDepth -- граница площади и дворов
-local PLOT_Z = PLAZA_FRONT + MapLayout.YardDepth + PLOT_HALF
+-- Обрывы (D36): земля 30 с травой поверху; у безопасной зоны сзади и по бокам — уступом: нижняя терраса
+-- Low высотой и Terrace вглубь, за ней верхний обрыв. Outer — ширина плато за обрывом.
+MapLayout.Cliff = {
+	height = 30,
+	grass = 3,
+	low = 12,
+	lowGrass = 2,
+	terrace = 14,
+	outer = 60,
+	lip = 1, -- трава нависает над гранью обрыва
+}
+
+-- Участки: центр музея (44 × 44, вход в -Z) — PlotCFrame. Участок 1 — по +X (левая рука игрока).
+local PLOT_XS = { 150, 75, 0, -75, -150 }
+local PLOT_Z = 100
+assert(#PLOT_XS == GameConfig.World.PlotCount, "MapLayout: число участков не совпадает с GameConfig.World.PlotCount")
 
 function MapLayout.PlotCFrame(index: number): CFrame
-	local x = (index - (GameConfig.World.PlotCount + 1) / 2) * MapLayout.PlotStep
-	return CFrame.new(x, 0, PLOT_Z) -- без поворота: вход (-Z участка) смотрит к зонам
+	return CFrame.new(PLOT_XS[index], 0, PLOT_Z)
 end
 
-local yardMidZ = -PLOT_HALF - MapLayout.YardDepth / 2
+-- Поле качалки и табличка «Улучшение» — в координатах участка (x — от центра музея, z < -22 — перед фасадом).
 MapLayout.PlotYard = {
-	center = Vector2.new(0, yardMidZ), -- середина двора
-	size = Vector2.new(PLOT_HALF * 2, MapLayout.YardDepth),
-	path = 12, -- ширина дорожки ко входу
-	field = Vector2.new(PLOT_HALF - 7.5, yardMidZ - 1), -- центр поля качалки (справа от дорожки)
-	sign = Vector2.new(-PLOT_HALF + 8, yardMidZ + 6), -- табличка «Улучшение» (слева от дорожки)
+	field = Vector2.new(20, -32),
+	sign = Vector2.new(7, -30),
 }
 
--- Площадь от ворот до дворов; точка появления смотрит на музеи, фонтан — между ней и воротами.
-local BASE_X = MapLayout.PlotStep * (GameConfig.World.PlotCount - 1) / 2 + PLOT_HALF + 20
-MapLayout.Plaza = { minX = -BASE_X, maxX = BASE_X, minZ = MapLayout.Gate.z, maxZ = PLAZA_FRONT }
-MapLayout.Spawn = {
-	position = Vector3.new(0, MapLayout.Heights.Plaza, PLAZA_FRONT - 15),
-	size = Vector3.new(8, 0.6, 8),
+-- Лавки у переднего края, прилавком к полю; awning — пара цветов навеса из Palette.Awnings.
+MapLayout.Shops = {
+	{ title = "Аура", position = Vector3.new(MapLayout.CorridorHalf, 0, 12), awning = 2 },
+	{ title = "Продажа", position = Vector3.new(-MapLayout.CorridorHalf, 0, 12), awning = 3 },
 }
-MapLayout.Fountain = Vector3.new(0, MapLayout.Heights.Plaza, MapLayout.Gate.z + 17)
-MapLayout.CheckSize = 6 -- сторона клетки мостовой площади
+MapLayout.ShopScale = 2.6 -- ларёк Plaza.Stall в 2.6 раза больше
 
--- Коридор зон: ширина, длина зоны, проём ворот между зонами.
-MapLayout.ZoneSize = 60
-MapLayout.ZoneHalfWidth = 30
+-- Точка появления посередине поля, лицом к музеям.
+MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), size = Vector3.new(8, 0.4, 8) }
+
+-- Коридор зон: длина зоны, проём ворот между зонами. Вход в зону 1 — граница безопасной зоны (z = 0).
+MapLayout.ZoneSize = 95
+MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
 MapLayout.ZoneDoor = 16 -- ширина проёма ворот зоны
 MapLayout.ZoneWallHeight = 8
-local ZONES_START = MapLayout.Gate.z - MapLayout.Yard
+local ZONES_START = 0
 local ZONE_COUNT = #GameConfig.Zones
+MapLayout.ZonesEnd = ZONES_START - ZONE_COUNT * MapLayout.ZoneSize
 
--- Мировая z входа в зону index (сторона площади).
+-- Мировая z входа в зону index (сторона безопасной зоны).
 function MapLayout.ZoneStartZ(index: number): number
 	return ZONES_START - (index - 1) * MapLayout.ZoneSize
 end
 
--- CFrame зоны: центр пола, -Z смотрит на вход (к площади), +Z — на выход в следующую зону.
+-- CFrame зоны: центр пола, -Z смотрит на вход (к безопасной зоне), +Z — на выход в следующую зону.
 function MapLayout.ZoneCFrame(index: number): CFrame
 	local center = Vector3.new(0, MapLayout.Heights.Path, MapLayout.ZoneStartZ(index) - MapLayout.ZoneSize / 2)
 	return CFrame.lookAt(center, center + Vector3.new(0, 0, 1))
@@ -81,44 +84,29 @@ function MapLayout.ZoneEntrance(index: number): Vector3
 	return Vector3.new(0, MapLayout.Heights.Path, MapLayout.ZoneStartZ(index) + 4)
 end
 
--- Куда ночью уводить всех из зон (D21): площадь перед воротами.
-MapLayout.NightReturn = Vector3.new(0, MapLayout.Heights.Plaza, MapLayout.Gate.z + 6)
+-- Куда ночью уводить всех из зон (D21): поле перед входом в коридор.
+MapLayout.NightReturn = Vector3.new(0, MapLayout.Heights.Ground, 12)
 
--- Постаменты в локальных координатах зоны (x поперёк коридора, z от входа вглубь, вход на z = -Size/2).
+-- Постаменты в локальных координатах зоны (x поперёк коридора, z от центра; вход на z = -Size/2).
 MapLayout.Pedestals = {
-	Vector2.new(-18, 2),
-	Vector2.new(18, 2),
-	Vector2.new(0, 10),
-	Vector2.new(-12, 20),
-	Vector2.new(12, 20),
+	Vector2.new(-43, 3),
+	Vector2.new(43, 3),
+	Vector2.new(0, 15),
+	Vector2.new(-29, 30),
+	Vector2.new(29, 30),
 }
 MapLayout.PedestalHeight = 2.5
-MapLayout.GuardSpot = Vector2.new(0, -14) -- место босса (шаг 5)
+MapLayout.GuardSpot = Vector2.new(0, -21) -- место босса (шаг 5)
 
--- Контур острова по часовой стрелке (вид сверху): база с музеями и площадью и узкий коридор зон.
--- Стена-граница идёт по контуру, холмы, песок и вода — снаружи.
-local ISLAND_X = BASE_X + 2
-local ISLAND_TOP = PLOT_Z + PLOT_HALF + 24 -- за музеями место под деревья
-local zonesEnd = ZONES_START - ZONE_COUNT * MapLayout.ZoneSize
-MapLayout.Outline = {
-	Vector2.new(-ISLAND_X, ISLAND_TOP),
-	Vector2.new(ISLAND_X, ISLAND_TOP),
-	Vector2.new(ISLAND_X, MapLayout.Gate.z),
-	Vector2.new(MapLayout.ZoneHalfWidth, MapLayout.Gate.z),
-	Vector2.new(MapLayout.ZoneHalfWidth, zonesEnd),
-	Vector2.new(-MapLayout.ZoneHalfWidth, zonesEnd),
-	Vector2.new(-MapLayout.ZoneHalfWidth, MapLayout.Gate.z),
-	Vector2.new(-ISLAND_X, MapLayout.Gate.z),
+-- Границы острова (трава и плато за обрывами) — для земли и воды вокруг.
+local cliff = MapLayout.Cliff
+local OUTER_X = MapLayout.SafeZone.halfX + cliff.terrace + cliff.outer
+MapLayout.Island = {
+	minX = -OUTER_X,
+	maxX = OUTER_X,
+	minZ = MapLayout.ZonesEnd - cliff.outer,
+	maxZ = MapLayout.SafeZone.back + cliff.terrace + cliff.outer,
 }
-
--- Прямоугольники острова (для земли и пятен травы): база и коридор.
-export type Rect = { minX: number, maxX: number, minZ: number, maxZ: number }
-MapLayout.IslandRects = {
-	{ minX = -ISLAND_X, maxX = ISLAND_X, minZ = MapLayout.Gate.z, maxZ = ISLAND_TOP },
-	{ minX = -MapLayout.ZoneHalfWidth, maxX = MapLayout.ZoneHalfWidth, minZ = zonesEnd, maxZ = MapLayout.Gate.z },
-} :: { Rect }
-MapLayout.GrassMargin = 110 -- трава за стеной (под холмами)
-MapLayout.SandMargin = 150 -- песок до воды
 
 -- Точки появления предметов: верх постаментов в зонах (D15).
 export type SpawnPoint = { name: string, position: Vector3, zone: number }

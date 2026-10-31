@@ -1,9 +1,10 @@
 -- Собирает модели из Blender (World/MeshModels): меши загружаются один раз при старте (AssetService), дальше
 -- модель — клоны шаблонов, расставленные по данным. Импорт FBX повернул данные мешей на 180° вокруг вертикали
--- (BUGS.md), поэтому каждая деталь стоит в своём центре и повёрнута на π. Цвет — из данных роли, роли участка
--- (Accent, AccentDark, DecorAccent) красятся цветом участка. Стекло — Glass с прозрачностью, неон — Neon без тени.
+-- (BUGS.md), поэтому каждая деталь стоит в своём центре и повёрнута на π. Цвет — из данных роли (с поправкой
+-- под палитру карты, Palette.MeshColors), роли участка (Accent, AccentDark, DecorAccent) красятся цветом участка.
+-- Стекло — Glass с прозрачностью, неон — Neon без тени.
 -- Детали без столкновений и без запросов (не мешают подсказкам): стены, где нужны, ставит владелец модели.
--- Зависит от AssetService, GameConfig, World/MeshModels.
+-- Зависит от AssetService, GameConfig, World/MeshModels, World/Palette.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,6 +12,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MeshModels = require(ServerScriptService.Server.World.MeshModels)
+local Palette = require(ServerScriptService.Server.World.Palette)
 
 local FLIP = CFrame.Angles(0, math.pi, 0)
 
@@ -62,7 +64,7 @@ local function roleColor(code: string, accent: Color3): Color3
 	elseif code == "AccentDark" then
 		return accent:Lerp(Color3.new(0, 0, 0), GameConfig.Models.AccentDarken)
 	end
-	return Color3.fromHex(code)
+	return Palette.MeshColors[code] or Color3.fromHex(code)
 end
 
 export type BuildOptions = {

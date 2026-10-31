@@ -95,7 +95,8 @@ function ZoneDecor.Warehouse(): { ModelBuilder.Brick }
 		end
 		for shelf = 1, 3 do
 			local y = shelf * 3.2
-			table.insert(bricks, B(Vector3.new(length + 0.6, 0.4, 3.8), Vector3.new(rackX, y, z), hex("FF7043")))
+			-- Полка выступает за стойки на 0.1: грани не совпадают (D36).
+			table.insert(bricks, B(Vector3.new(length + 0.8, 0.4, 4), Vector3.new(rackX, y, z), hex("FF7043")))
 			for box = 1, 3 do
 				local size = Vector3.new(3.4, 2.2, 2.8)
 				table.insert(
@@ -117,9 +118,11 @@ function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 	for ix = 0, count - 1 do
 		for iz = 0, count - 1 do
 			if (ix + iz) % 2 == 0 then
-				local x = -size / 2 + (ix + 0.5) * tile
-				local z = -size / 2 + (iz + 0.5) * tile
-				table.insert(bricks, B(Vector3.new(tile, 0.1, tile), Vector3.new(x, 0.05, z), marbleB, {
+				-- Плитки по центру: их края не совпадают с краем подложки (D36).
+				local x = -count * tile / 2 + (ix + 0.5) * tile
+				local z = -count * tile / 2 + (iz + 0.5) * tile
+				-- Плитка выше подложки на 0.12: зазор 0.02 издалека мерцал (D36).
+				table.insert(bricks, B(Vector3.new(tile, 0.2, tile), Vector3.new(x, 0.1, z), marbleB, {
 					collide = false,
 					shadow = false,
 				}))

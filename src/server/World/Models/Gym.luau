@@ -1,6 +1,6 @@
--- Качалка во дворе музея (D34, D35): поле, где качаются, — тёмный резиновый пол и светящиеся плитки цвета
--- участка по краю (как на референсе), и стойка таблички «Улучшение». Огромная гантель — модель из Blender
--- (World/MeshBuilder), табло таблички — деталь участка (Util/PartBuilder). Зависит от ModelBuilder, Palette.
+-- Качалка во дворе музея (D34, D36): поле, где качаются, — светлый пол и плитки приглушённого цвета участка по
+-- краю, и стойка таблички «Улучшение». Огромная гантель — модель из Blender (World/MeshBuilder), табло таблички —
+-- деталь участка (Util/PartBuilder). Зависит от ModelBuilder, Palette.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -18,34 +18,33 @@ Gym.DumbbellHeight = 6
 Gym.SignBoard = Vector3.new(9, 5, 0.6)
 Gym.SignHeight = 5.2
 
-local FLOOR = Color3.fromHex("2B2F3A")
-local TILE = 2 -- сторона светящейся плитки
-local TILE_STEP = 3.4 -- шаг плиток по краю поля
+local TILE = 2 -- сторона плитки
+local TILE_GAP = 1.2 -- примерный зазор между плитками по краю
 
--- Поле: size — по X и Z, начало — центр поля на уровне двора; glow — цвет плиток (цвет участка).
-function Gym.Field(size: Vector2, glow: Color3): { ModelBuilder.Brick }
+-- Поле: size — по X и Z, начало — центр поля на уровне травы; tile — цвет плиток (приглушённый цвет участка).
+function Gym.Field(size: Vector2, tile: Color3): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {
-		B(Vector3.new(size.X, 0.2, size.Y), Vector3.new(0, 0.1, 0), FLOOR, DECOR),
+		B(Vector3.new(size.X, 0.2, size.Y), Vector3.new(0, 0.1, 0), Palette.FieldFloor, DECOR),
 	}
-	-- Плитки по краю, чуть повёрнутые (детерминированно), как разбросанные неоновые кирпичики.
+	-- Плитки по краю поровну, чуть повёрнутые (детерминированно), выше пола на 0.1.
 	local hx, hz = size.X / 2 - TILE / 2 - 0.3, size.Y / 2 - TILE / 2 - 0.3
+	local nx = math.max(2, math.floor(2 * hx / (TILE + TILE_GAP)) + 1)
+	local nz = math.max(2, math.floor(2 * hz / (TILE + TILE_GAP)) + 1)
 	local points: { Vector2 } = {}
-	for x = -hx, hx + 0.01, TILE_STEP do
+	for i = 0, nx - 1 do
+		local x = -hx + 2 * hx * i / (nx - 1)
 		table.insert(points, Vector2.new(x, -hz))
 		table.insert(points, Vector2.new(x, hz))
 	end
-	for z = -hz + TILE_STEP, hz - TILE_STEP + 0.01, TILE_STEP do
+	for i = 1, nz - 2 do
+		local z = -hz + 2 * hz * i / (nz - 1)
 		table.insert(points, Vector2.new(-hx, z))
 		table.insert(points, Vector2.new(hx, z))
 	end
 	for i, p in points do
-		local turn = math.rad((i * 37) % 30 - 15)
+		local turn = math.rad((i * 37) % 24 - 12)
 		local at = CFrame.new(p.X, 0.25, p.Y) * CFrame.Angles(0, turn, 0)
-		table.insert(bricks, B(Vector3.new(TILE, 0.3, TILE), at, glow, {
-			material = Enum.Material.Neon,
-			collide = false,
-			shadow = false,
-		}))
+		table.insert(bricks, B(Vector3.new(TILE, 0.3, TILE), at, tile, DECOR))
 	end
 	return bricks
 end

@@ -43,16 +43,36 @@
 		},
 		"MaterialService": {
 			"$properties": {
-				"PlasticName": "LegoStuds"
+				"PlasticName": "LegoSquares"
 			},
-			"LegoStuds": {
+			"LegoSquares": {
 				"$className": "MaterialVariant",
 				"$properties": {
 					"BaseMaterial": "Plastic",
-					"ColorMap": "rbxassetid://133407646216237",
-					"NormalMap": "rbxassetid://95611195247391",
-					"RoughnessMap": "rbxassetid://135539982711389",
-					"StudsPerTile": 4
+					"ColorMap": "rbxassetid://90809959209755",
+					"NormalMap": "rbxassetid://108191277429237",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 8
+				}
+			},
+			"LegoSquaresDeep": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://91540160577187",
+					"NormalMap": "rbxassetid://116664288395547",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 8
+				}
+			},
+			"LegoSquaresSoft": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://94676505361870",
+					"NormalMap": "rbxassetid://95409488837994",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 8
 				}
 			}
 		},

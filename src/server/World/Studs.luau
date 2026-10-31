@@ -1,4 +1,4 @@
--- Поверхности деталей (D13). Пупырышки теперь даёт MaterialVariant «LegoStuds» на всём Plastic
+-- Поверхности деталей (D13, D36). Квадратные пупырышки даёт MaterialVariant «LegoSquares» на всём Plastic
 -- (см. shared/LegoMaterial), поэтому SurfaceType.Studs не используется: все грани гладкие.
 -- Ни от чего не зависит.
 

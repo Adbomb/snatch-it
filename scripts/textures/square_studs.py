@@ -4,7 +4,8 @@
 
 Два рельефа (настройки — VARIANTS):
 - squares — трава, дорожки, постройки: мелкий рельеф, тёмный только контур квадратика;
-- squares_deep — земляные стены: квадратики глубже, дно тёмное (как ямки на стене референса).
+- squares_deep — земляные обрывы: квадратики глубже, дно темнее (как ямки на стене референса), без резкого контраста;
+- squares_soft — музеи (фасады и интерьер): тот же рельеф, шахматка едва заметна — чистые спокойные стены.
 
 Плитка — 8 × 8 стадов (2 × 2 клетки), поэтому в MaterialVariant StudsPerTile = 8.
 Пишет в assets/textures: lego_<вариант>_color.png (светлая основа, шахматка, тени), lego_<вариант>_normal.png
@@ -35,7 +36,8 @@ ROUGHNESS = 0.55
 # dark_cell — тёмная клетка шахматки, wall_shade — затемнение стенок, floor_shade — затемнение дна.
 VARIANTS = {
     "squares": {"half": 0.30, "depth": 9.0, "dark_cell": 0.80, "wall_shade": 0.42, "floor_shade": 0.05},
-    "squares_deep": {"half": 0.29, "depth": 16.0, "dark_cell": 0.84, "wall_shade": 0.30, "floor_shade": 0.62},
+    "squares_deep": {"half": 0.29, "depth": 12.0, "dark_cell": 0.90, "wall_shade": 0.24, "floor_shade": 0.30},
+    "squares_soft": {"half": 0.30, "depth": 7.0, "dark_cell": 0.95, "wall_shade": 0.26, "floor_shade": 0.03},
 }
 
 

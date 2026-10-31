@@ -1,4 +1,4 @@
--- Стена поперёк коридора зон с проёмом посередине: кладка из кирпичей цвета акцента зоны и белых.
+-- Стена поперёк коридора зон с проёмом посередине: кладка из кирпичей цвета акцента зоны и светлых.
 -- Начало координат — центр проёма на земле, стена вдоль X. Зависит от ModelBuilder, Palette.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -25,7 +25,7 @@ return function(halfWidth: number, door: number, height: number, accent: Color3)
 			while t < to do
 				local a, b = math.max(t, from), math.min(t + BRICK_LENGTH, to)
 				if b - a > 0.05 then
-					local color = if (index + row) % 2 == 0 then accent else Palette.White
+					local color = if (index + row) % 2 == 0 then accent else Palette.MuseumWall
 					table.insert(
 						bricks,
 						B(Vector3.new(b - a, BRICK_HEIGHT, THICKNESS), Vector3.new(side * (a + b) / 2, (row + 0.5) * BRICK_HEIGHT, 0), color)

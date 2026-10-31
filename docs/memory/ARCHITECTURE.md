@@ -6,7 +6,7 @@
 - Rojo (`default.project.json`): `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`,
   `src/client` → `StarterPlayer.StarterPlayerScripts.Client`.
 - Там же свойства мест: `Workspace.StreamingEnabled = false` (D14), свет (LightingStyle Realistic,
-  PrioritizeLightingQuality, Atmosphere, ColorCorrection), `MaterialService` с вариантом «LegoStuds» и `PlasticName`.
+  PrioritizeLightingQuality, Atmosphere, ColorCorrection), `MaterialService` с вариантами LegoSquares / LegoSquaresDeep / LegoSquaresSoft (D36) и `PlasticName`.
 - Предметы-меши (V3): `scripts/blender/*.py` строит модель из LEGO-кирпичей в Blender без интерфейса →
   `assets/models/*.fbx` → импорт в Studio (File → Import 3D, делает заказчик) → ID меша и текстуры в
   `Config/ItemModels`. Текстура-палитра всех предметов — `assets/textures/item_palette.png` (4×4 цвета).
@@ -17,7 +17,7 @@
   материалов и текстур) и `PackN.layout.json`. Деталь = «роль» = цвет, объект `<Модель>_<Роль>`; в layout для
   каждой: центр и размер в координатах модели (центр габаритов = точка опоры MeshPart), color (hex или Accent /
   AccentDark / DecorAccent — цвет участка), material (Plastic / Glass / Neon), decor (только чётные уровни),
-  triangles. В игре MeshPart: Color, Material, без TextureID — пупырышки даёт MaterialVariant «LegoStuds».
+  triangles. В игре MeshPart: Color, Material, без TextureID — квадратные пупырышки даёт MaterialVariant LegoSquares (D36).
   Музей: фасад z = −12, портик с колоннами z ≈ −19.4, вход 12×10, вывеска y = 11.5; высоты стен и ламп — в layout.
   Гантели (D34, `pack1_dumbbells.py`, диски — `Model.voxel_plate`): центр рукояти в начале, ось x; у светящихся в
   layout `lights` (PointLight без теней). Превью — Blender с текстурой пупырышков и ореолом неона.
@@ -76,18 +76,23 @@
   из Skill `stud-ui-clean-roblox` (MIT, LICENSE и THIRD_PARTY_NOTICES рядом). Пока не используются: переход
   интерфейса — шаг 8. Instance-имена набора французские (`Fenetre`, `Entete`, `Corps`…) — так требует Skill.
 
-## Мир (D35, D22, D34)
-- База (D35): 5 музеев в линию (центры x = −116 … 116 шагом 58, z = −32), фасадом к зонам (−Z); перед каждым
-  двор 44 × 26 (дорожка 12, поле 14 × 20 справа по x участка, табличка слева). Площадь z −130 … −80 в клетку:
-  точка появления (0, −95) смотрит на музеи, фонтан (0, −113), фонари, кусты в проходах, деревья за музеями.
-  Ворота в зоны на z = −130.
-- За воротами двор (12) и 10 зон одним коридором шириной 60, каждая 60 в длину (z −142 → −742): игрок проходит
-  зону N, чтобы попасть в N+1. На входе каждой зоны — стена `ZoneWall` с проёмом 16 и ворота с вывеской
-  «N. Название» и «Босс 💪 сила». В зоне 5 постаментов-точек `ItemSpawn` с атрибутом `Zone`, место босса
-  `MapLayout.GuardSpot`, точка возврата `ZoneEntrance(i)` и ночная `NightReturn` (D21).
-- Остров = прямоугольник базы (x ±160, z −130 … 14) + коридор (`MapLayout.Outline`, `IslandRects`). Стена-граница в шахматку и два
-  ряда холмов с деревьями — по контуру; дальше трава, песок (плиты без перекрытий) и вода Terrain до горизонта
-  с песчаным дном. Baseplate шаблона Main удаляет в Play.
-- Музей: пол на ступень выше площади (1.4), здание — меши уровня (D33), свой цвет участка
-  (`Museum.Accents`). Вся карта около 4 000 частей. Предпросмотр в Edit:
+## Мир (D36, D22, D34)
+- Безопасная зона: поле травы x ±183, z 0 … 131 между обрывами (`MapLayout.SafeZone`). Музеи у дальней стены:
+  центры x 150, 75, 0, −75, −150, z 100 (участок 1 по +X — левая рука игрока, смотрящего на музеи), вход в −Z.
+  Перед каждым спереди слева (`MapLayout.PlotYard`) поле качалки 12 × 12 (x + 20, z − 32 от центра) с гантелью и
+  табличка (x + 7, z − 30). Лавки «Аура» (+X) и «Продажа» (−X) на x ±92, z 12 — ларёк ×2.6 с табло. Точка
+  появления (0, 40) лицом к музеям. Фонтана, дорожек, заборов нет.
+- Коридор уровней x ±92 от z = 0 вниз: 10 зон по 95 (`ZoneSize`), вход в зону 1 — граница безопасной зоны. На
+  входе каждой зоны стена `ZoneWall` (начинается внутри стоек ворот) и ворота с вывеской к игроку. Постаменты —
+  `MapLayout.Pedestals`, место босса `GuardSpot`, точки `ZoneEntrance(i)` и `NightReturn` (D21).
+- Обрывы (`WorldBuilder.buildCliffs`): земля CliffDirt с вариантом LegoSquaresDeep, трава CliffGrass поверху,
+  свесы травы и «натёки» на открытых гранях; сзади и по бокам поля — уступом (терраса 12 вглубь 14 с
+  деревьями, выше обрыв 30), коридор — обрыв 30. Блоки не перекрываются, свесы обрезаны друг о друга.
+  Земля (`Island`) — одна плита, вода Terrain вокруг (только Play).
+- Музей (`World/Models/MuseumHall`): главный зал 36 × 33.4, высота 14.4, фасад z −12.7, вход 12 × 10, портик до
+  z −23; уровни: 1–2 зал + портик 4 колонны; 3–4 + боковые залы x до ±29 (проход 8 × 8); 5–6 портик 6 колонн и
+  парапеты; 7–8 купол; 9–10 позолота; чётные — кадки/фонари/знамёна/статуи/вазы. Все детали LegoSquaresSoft.
+  Цвета — `Palette` (Museum*, Muted, Roof). Пол участка — Floor (MuseumFloor, LegoSquaresSoft).
+- Проверка мерцания: `require(W.FreshRequire)(W.FaceCheck).Report(workspace.__Preview)` после Preview.Build.
+  Вся карта ≈ 3 500 деталей. Предпросмотр в Edit:
   `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.

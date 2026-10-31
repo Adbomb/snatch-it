@@ -1,19 +1,20 @@
--- Строит участки-музеи: здание из Blender по уровню (World/MeshBuilder, D33) с невидимыми стенами, части
--- с механикой витрин (окружение витрин и сундука — кирпичи World/Models/Museum) и двор перед входом (D34,
--- D35): дорожка, поле качалки, табличка «Улучшение» и место огромной гантели (её ставит GymService).
--- Карту строит World/WorldBuilder. Только геометрия, без логики.
--- Зависит от GameConfig, World/MapLayout, World/MeshBuilder, World/ModelBuilder, World/Models/Museum,
--- World/Models/Gym, World/Signs.
+-- Строит участки-музеи: здание музея по уровню (World/Models/MuseumHall, D36), части с механикой витрин (окружение
+-- витрин и сундука — кирпичи World/Models/Museum), поле качалки и табличку «Улучшение» перед музеем (D34, D36) и
+-- место огромной гантели (её ставит GymService). Карту строит World/WorldBuilder. Только геометрия, без логики.
+-- Зависит от GameConfig, World/MapLayout, World/ModelBuilder, World/Palette, World/Models/Museum,
+-- World/Models/MuseumHall, World/Models/Gym, World/Signs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local Textures = require(ReplicatedStorage.Shared.Config.Textures)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
-local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local Gym = require(ServerScriptService.Server.World.Models.Gym)
 local Museum = require(ServerScriptService.Server.World.Models.Museum)
+local MuseumHall = require(ServerScriptService.Server.World.Models.MuseumHall)
+local Palette = require(ServerScriptService.Server.World.Palette)
 local Signs = require(ServerScriptService.Server.World.Signs)
 
 local PartBuilder = {}
@@ -21,9 +22,6 @@ local PartBuilder = {}
 -- Верх пола участков (выше травы и дорог, см. MapLayout.Heights).
 PartBuilder.FloorTop = MapLayout.Heights.Floor
 
-local PATH_COLOR = Color3.fromHex("B0B6BF") -- дорожка ко входу
-local SIGN_COLOR = Color3.fromHex("1E2A4A") -- табло таблички «Улучшение» (тёмно-синее, как на референсе)
-local YARD_DARKEN = 0.6 -- двор — тёмный оттенок цвета участка
 
 export type PlotParts = {
 	model: Model,
@@ -35,22 +33,8 @@ export type PlotParts = {
 	accent: Color3,
 	fieldCFrame: CFrame, -- центр поля качалки на уровне двора
 	dumbbellCFrame: CFrame, -- где висит огромная гантель (рукоять вдоль Z участка)
-	signBoard: BasePart, -- табло таблички «Улучшение» (лицо — сторона -Z, к площади)
+	signBoard: BasePart, -- табло таблички «Улучшение» (лицо — сторона -Z, к полю)
 }
-
--- Размеры зала, общие для всех моделей музея: фасад и вывеска одинаковые, лампы — под самым низким потолком.
-local function hallSize(): (number, number, number, number)
-	local facadeZ, signY, lamp, ceiling = 0, 0, math.huge, math.huge
-	for i = 1, GameConfig.Models.MuseumModelCount do
-		local hall = MeshBuilder.Get("Museum" .. i)
-		if hall then
-			facadeZ, signY = hall.facadeZ :: number, hall.signY :: number
-			lamp = math.min(lamp, hall.lampHeight :: number)
-			ceiling = math.min(ceiling, hall.wallHeight :: number)
-		end
-	end
-	return facadeZ, signY, lamp, ceiling
-end
 
 type PartProps = {
 	name: string,
@@ -86,7 +70,7 @@ function PartBuilder.CreateWorldFolder(): Folder
 	return world
 end
 
--- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на аллею. Здание — World/Models/Museum;
+-- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на поле. Здание — World/Models/MuseumHall;
 -- здесь части с механикой: Floor, витрины Showcase_i (папка Showcases), Chest, табличка, лампы, Exhibits.
 function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number, parent: Instance): PlotParts
 	local cfg = GameConfig.World
@@ -99,18 +83,20 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	model:SetAttribute("PlotIndex", index)
 	model:SetAttribute("OwnerUserId", 0)
 
-	-- Пол: толстая плита от земли до уровня пола музея.
+	-- Пол: толстая плита от земли до уровня пола музея (светлый, спокойный рельеф — как у здания).
 	local floorThickness = top + 0.2
 	local floor = PartBuilder.MakePart({
 		name = "Floor",
 		size = Vector3.new(cfg.PlotSize.X, floorThickness, cfg.PlotSize.Z),
 		cframe = origin * CFrame.new(0, top - floorThickness / 2, 0),
-		color = accent:Lerp(Color3.new(0, 0, 0), 0.55),
+		color = Palette.MuseumFloor,
 		parent = model,
 	})
+	floor.MaterialVariant = Textures.SquaresSoft.name
 	model.PrimaryPart = floor
 
-	local facadeZ, signY, lampHeight, ceiling = hallSize()
+	local facadeZ, signY = MuseumHall.FacadeZ, MuseumHall.SignY
+	local lampHeight, ceiling = MuseumHall.LampHeight, MuseumHall.Ceiling
 	PartBuilder.SetBuilding(model, floorOrigin, accent, 1)
 
 	-- Вывеска «МУЗЕЙ <имя>» над входом.
@@ -118,7 +104,7 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		name = "Sign",
 		size = Vector3.new(18, 3.2, 0.4),
 		cframe = floorOrigin * CFrame.new(0, signY, facadeZ - 0.75),
-		color = accent:Lerp(Color3.new(0, 0, 0), 0.25),
+		color = Palette.Muted(accent),
 		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
 		parent = model,
 	})
@@ -178,7 +164,10 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 
 	-- Сундук-хранилище у входа, слева от прохода: корпус (Chest) + крышка, полосы, замок.
 	local chestSize = GameConfig.Museum.ChestSize
-	local chestCFrame = floorOrigin * CFrame.new(-12, chestSize.Y / 2, facadeZ + 4)
+	-- Вплотную к фасаду (зазор 0.1), замком в зал: подсказки витрины 1 не перехватывают E у сундука.
+	local chestCFrame = floorOrigin
+		* CFrame.new(-12, chestSize.Y / 2, facadeZ + 1.4 + chestSize.Z / 2 + 0.1)
+		* CFrame.Angles(0, math.pi, 0)
 	local chest = PartBuilder.MakePart({
 		name = "Chest",
 		size = chestSize,
@@ -188,26 +177,11 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	})
 	ModelBuilder.Place(ModelBuilder.Build("ChestDecor", Museum.ChestDecor(chestSize)), chestCFrame, model)
 
-	-- Двор перед музеем (D34, D35): плита, дорожка ко входу, поле качалки, табличка «Улучшение».
+	-- Поле качалки и табличка «Улучшение» перед музеем, спереди слева (D34, D36).
 	local yard = MapLayout.PlotYard
-	local yardOrigin = origin * CFrame.new(0, MapLayout.Heights.Plaza, 0)
-	PartBuilder.MakePart({
-		name = "Yard",
-		size = Vector3.new(yard.size.X, 0.4, yard.size.Y),
-		cframe = yardOrigin * CFrame.new(yard.center.X, -0.2, yard.center.Y),
-		color = accent:Lerp(Color3.new(0, 0, 0), YARD_DARKEN),
-		parent = model,
-	})
-	PartBuilder.MakePart({
-		name = "YardPath",
-		size = Vector3.new(yard.path, 0.1, yard.size.Y),
-		cframe = yardOrigin * CFrame.new(0, 0.05, yard.center.Y),
-		color = PATH_COLOR,
-		canCollide = false,
-		parent = model,
-	})
+	local yardOrigin = origin * CFrame.new(0, MapLayout.Heights.Ground, 0)
 	local fieldCFrame = yardOrigin * CFrame.new(yard.field.X, 0, yard.field.Y)
-	local fieldBricks = Gym.Field(GameConfig.Gym.FieldSize, accent)
+	local fieldBricks = Gym.Field(GameConfig.Gym.FieldSize, Palette.Muted(accent))
 	local field = ModelBuilder.Place(ModelBuilder.Build("GymField", fieldBricks), fieldCFrame, model)
 	field:SetAttribute("GymField", true)
 	local signCFrame = yardOrigin * CFrame.new(yard.sign.X, 0, yard.sign.Y)
@@ -216,7 +190,7 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		name = "UpgradeBoard",
 		size = Gym.SignBoard,
 		cframe = signCFrame * CFrame.new(0, Gym.SignHeight, 0),
-		color = SIGN_COLOR,
+		color = Palette.SignBoard,
 		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
 		parent = model,
 	})
@@ -240,45 +214,14 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	}
 end
 
--- Здание музея уровня level (1–10): модель ceil(level / 2), на чётных уровнях с декором, и невидимые простые
--- стены зала вместо столкновений мешей. Прежнее здание участка заменяется.
+-- Здание музея уровня level (1–10, D36): стартовый зал, с уровнем — боковые залы, портик на 6 колонн, купол,
+-- позолота; на чётных уровнях — оформление. Прежнее здание участка заменяется.
 function PartBuilder.SetBuilding(model: Model, floorOrigin: CFrame, accent: Color3, level: number)
-	for _, name in { "Building", "Walls" } do
-		local old = model:FindFirstChild(name)
-		if old then
-			old:Destroy()
-		end
+	local old = model:FindFirstChild("Building")
+	if old then
+		old:Destroy()
 	end
-	local count = GameConfig.Models.MuseumModelCount
-	local hallName = "Museum" .. math.clamp(math.ceil(level / 2), 1, count)
-	MeshBuilder.Build(hallName, floorOrigin, model, { accent = accent, decor = level % 2 == 0, name = "Building" })
-	local hall = MeshBuilder.Get(hallName)
-	if not hall then
-		return
-	end
-	local walls = Instance.new("Folder")
-	walls.Name = "Walls"
-	walls.Parent = model
-	local half, t, h = hall.halfWidth :: number, hall.wallThickness :: number, hall.wallHeight :: number
-	local front, back, door = hall.facadeZ :: number, hall.back :: number, hall.doorWidth :: number
-	local function wall(name: string, size: Vector3, center: Vector3)
-		local part = PartBuilder.MakePart({
-			name = name,
-			size = size,
-			cframe = floorOrigin * CFrame.new(center),
-			color = accent,
-			transparency = 1,
-			parent = walls,
-		})
-		part.CanQuery = false
-		part.CanTouch = false
-	end
-	for _, sx in { -1, 1 } do
-		wall("Side", Vector3.new(t, h, back - front), Vector3.new(sx * (half - t / 2), h / 2, (front + back) / 2))
-		local side = half - door / 2
-		wall("Facade", Vector3.new(side, h, t), Vector3.new(sx * (door / 2 + side / 2), h / 2, front + t / 2))
-	end
-	wall("Back", Vector3.new(half * 2, h, t), Vector3.new(0, h / 2, back - t / 2))
+	ModelBuilder.Place(ModelBuilder.Build("Building", MuseumHall.Build(level, accent)), floorOrigin, model)
 end
 
 return PartBuilder

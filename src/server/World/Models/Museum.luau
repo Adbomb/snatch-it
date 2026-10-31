@@ -30,16 +30,16 @@ Museum.Accents = {
 	hex("EC407A"), -- розовый
 }
 
-local GOLD = hex("FFC21A")
-local VELVET = hex("B71C1C")
+local GOLD = Palette.MuseumGold
+local VELVET = hex("9E2A2A")
 
 -- Окружение витрины: основание, золотой бортик, стеклянный колпак, столбики с бархатными канатами.
 -- Начало — центр витрины на уровне пола; pedestal — размер самой витрины (Showcase_i).
 function Museum.ShowcaseDecor(pedestal: Vector3, accent: Color3): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {
 		B(Vector3.new(pedestal.X + 1.2, 0.6, pedestal.Z + 1.2), Vector3.new(0, 0.3, 0), accent:Lerp(Palette.Black, 0.4)),
-		-- Золотой пояс у верхнего края витрины (верх витрины свободен под экспонат).
-		B(Vector3.new(pedestal.X + 0.4, 0.5, pedestal.Z + 0.4), Vector3.new(0, pedestal.Y - 0.25, 0), GOLD, DECOR),
+		-- Золотой пояс у верхнего края витрины, верхом на 0.1 ниже крышки (иначе грани совпадают и мерцают, D36).
+		B(Vector3.new(pedestal.X + 0.4, 0.5, pedestal.Z + 0.4), Vector3.new(0, pedestal.Y - 0.35, 0), GOLD, DECOR),
 		B(Vector3.new(pedestal.X, 6.4, pedestal.Z), Vector3.new(0, pedestal.Y + 3.2, 0), Palette.Glass, {
 			name = "GlassCap",
 			material = Enum.Material.Glass,

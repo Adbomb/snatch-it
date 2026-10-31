@@ -11,7 +11,7 @@ import json
 import os
 import re
 
-PACKS = ["Pack1", "Pack1_dumbbells"]
+PACKS = ["Pack1_dumbbells"]  # музеи (Pack1) строятся кодом — World/Models/MuseumHall (D36)
 OUT = os.path.join("src", "server", "World", "MeshModels.luau")
 
 
@@ -72,7 +72,7 @@ def main():
         "",
         "return {",
     ]
-    museum_extra = museum_constants()
+    museum_extra = museum_constants() if "Pack1" in PACKS else {}
     for pack in PACKS:
         layout = json.load(open(os.path.join("assets", "models", pack + ".layout.json"), encoding="utf-8"))
         ids = json.load(open(os.path.join("assets", "models", pack + ".meshids.json"), encoding="utf-8"))[pack]

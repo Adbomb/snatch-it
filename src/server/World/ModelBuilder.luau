@@ -1,5 +1,6 @@
 -- Сборка моделей из кирпичей (D13): модуль модели возвращает список кирпичей, ModelBuilder делает из него Model.
--- Всё Anchored и по умолчанию Plastic (пупырышки даёт MaterialVariant «LegoStuds»). Шаблон собирается один раз и дальше клонируется;
+-- Всё Anchored и по умолчанию Plastic (квадратные пупырышки даёт MaterialVariant «LegoSquares», D36).
+-- Шаблон собирается один раз и дальше клонируется;
 -- в Play шаблоны лежат в ServerStorage.Templates, в предпросмотре — вне DataModel.
 -- Зависит от World/Studs.
 
@@ -12,6 +13,7 @@ export type Brick = {
 	cframe: CFrame, -- относительно начала модели
 	color: Color3,
 	material: Enum.Material?, -- по умолчанию Plastic; другое — только вода, стекло, неон и таблички с текстом
+	variant: string?, -- MaterialVariant (LegoSquaresDeep — обрывы, LegoSquaresSoft — музеи); иначе общий LegoSquares
 	shape: string?, -- Block | Ball | Cylinder | Wedge | CornerWedge | Truss
 	collide: boolean?, -- по умолчанию из опций модели
 	shadow: boolean?, -- по умолчанию из опций модели
@@ -62,6 +64,9 @@ local function makePart(brick: Brick, opts: Options): BasePart
 	part.CFrame = brick.cframe
 	part.Color = brick.color
 	part.Material = brick.material or Enum.Material.Plastic
+	if brick.variant then
+		part.MaterialVariant = brick.variant
+	end
 	part.Transparency = brick.transparency or 0
 	local collide = if brick.collide ~= nil then brick.collide else opts.collide
 	local shadow = if brick.shadow ~= nil then brick.shadow else opts.shadow

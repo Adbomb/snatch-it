@@ -1,13 +1,34 @@
--- Текстуры игры. LEGO-пупырышки (D13) — MaterialVariant «LegoStuds», заменяет весь Plastic.
--- Картинки — assets/textures (от дизайнера), загружены в Roblox; на картинке 4×4 пупырышка,
--- поэтому StudsPerTile = 4 даёт один пупырышек на стад. Ни от чего не зависит.
+-- Текстуры поверхности (D36): «квадратные пупырышки» — мелкие вдавленные квадратики (один на стад) и шахматка клеток
+-- 4 × 4 стада. Картинки генерирует scripts/textures/square_studs.py (assets/textures/lego_squares*), загружены в
+-- Roblox; плитка 8 × 8 стадов, поэтому StudsPerTile = 8. Три рельефа:
+-- Squares — весь Plastic (трава, постройки), SquaresDeep — земляные обрывы, SquaresSoft — музеи (спокойная шахматка).
+-- Круглые пупырышки (LegoStuds) больше не используются. Ни от чего не зависит.
+
+export type Variant = { name: string, color: string, normal: string, roughness: string, studsPerTile: number }
+
+local ROUGHNESS = "rbxassetid://86272303409120"
 
 return {
-	LegoStuds = {
-		name = "LegoStuds",
-		color = "rbxassetid://133407646216237",
-		normal = "rbxassetid://95611195247391",
-		roughness = "rbxassetid://135539982711389",
-		studsPerTile = 4,
+	-- Заменяет весь Plastic (MaterialService.PlasticName / SetBaseMaterialOverride).
+	Squares = {
+		name = "LegoSquares",
+		color = "rbxassetid://90809959209755",
+		normal = "rbxassetid://108191277429237",
+		roughness = ROUGHNESS,
+		studsPerTile = 8,
 	},
-}
+	SquaresDeep = {
+		name = "LegoSquaresDeep",
+		color = "rbxassetid://91540160577187",
+		normal = "rbxassetid://116664288395547",
+		roughness = ROUGHNESS,
+		studsPerTile = 8,
+	},
+	SquaresSoft = {
+		name = "LegoSquaresSoft",
+		color = "rbxassetid://94676505361870",
+		normal = "rbxassetid://95409488837994",
+		roughness = ROUGHNESS,
+		studsPerTile = 8,
+	},
+} :: { [string]: Variant }

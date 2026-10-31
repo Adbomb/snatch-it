@@ -1,7 +1,8 @@
--- Включает LEGO-пупырышки (D13): MaterialVariant «LegoStuds» в MaterialService и замену им всего Plastic.
--- Вариант и MaterialService.PlasticName задаёт default.project.json; этот модуль — гарантия на случай,
--- если синхронизация Rojo их не выставила (PlasticName из скриптов не пишется, только через
--- SetBaseMaterialOverride). Вызывается на сервере и на клиенте. Зависит от Config/Textures.
+-- Включает квадратные пупырышки (D36): три MaterialVariant из Config/Textures в MaterialService и замену первым
+-- (LegoSquares) всего Plastic; два других детали ставят себе сами (MaterialVariant = имя). Варианты и
+-- MaterialService.PlasticName задаёт default.project.json; этот модуль — гарантия на случай, если синхронизация
+-- Rojo их не выставила (PlasticName из скриптов не пишется, только через SetBaseMaterialOverride).
+-- Вызывается на сервере и на клиенте. Зависит от Config/Textures.
 
 local MaterialService = game:GetService("MaterialService")
 local RunService = game:GetService("RunService")
@@ -10,8 +11,7 @@ local Textures = require(script.Parent:WaitForChild("Config"):WaitForChild("Text
 
 local LegoMaterial = {}
 
-function LegoMaterial.Apply()
-	local cfg = Textures.LegoStuds
+local function ensure(cfg: Textures.Variant): MaterialVariant?
 	local variant = MaterialService:FindFirstChild(cfg.name)
 	if not variant and RunService:IsServer() then
 		local created = Instance.new("MaterialVariant")
@@ -22,12 +22,18 @@ function LegoMaterial.Apply()
 		created.RoughnessMap = cfg.roughness
 		created.StudsPerTile = cfg.studsPerTile
 		created.Parent = MaterialService
-		variant = created
+		return created
 	elseif not variant then
-		variant = MaterialService:WaitForChild(cfg.name, 10)
+		return MaterialService:WaitForChild(cfg.name, 10) :: MaterialVariant?
 	end
-	if variant then
-		MaterialService:SetBaseMaterialOverride(Enum.Material.Plastic, cfg.name)
+	return variant :: MaterialVariant
+end
+
+function LegoMaterial.Apply()
+	ensure(Textures.SquaresDeep)
+	ensure(Textures.SquaresSoft)
+	if ensure(Textures.Squares) then
+		MaterialService:SetBaseMaterialOverride(Enum.Material.Plastic, Textures.Squares.name)
 	end
 end
 

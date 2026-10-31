@@ -33,10 +33,8 @@ return function(size: string, colorIndex: number): { ModelBuilder.Brick }
 	local base = spec.crowns[1]
 	for i = 1, spec.side do
 		local sign = if i == 1 then 1 else -1
-		table.insert(
-			bricks,
-			B(Vector3.new(4, 3, 4), Vector3.new(sign * (base[1] / 2 + 1), t.Y + 1.5, -sign * 2), leaves, { collide = false })
-		)
+		local at = Vector3.new(sign * (base[1] / 2 + 1), t.Y + 1.6, -sign * 2)
+		table.insert(bricks, B(Vector3.new(4, 3, 4), at, leaves, { collide = false }))
 	end
 	return bricks
 end

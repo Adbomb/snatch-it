@@ -1,15 +1,14 @@
--- Строит карту (D35, D22) по MapLayout: остров с травой и песчаным берегом, площадь в клетку с фонарями,
--- точку появления, фонтан и лавочки, кусты в проходах между музеями и деревья за ними, ворота, двор и
--- 10 зон одним коридором — пол, стена с воротами и вывеской, постаменты, декор, — стену и холмы по контуру
--- острова. Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с дворами и
--- гантелями строит PlotService.
--- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, UITokens, NumberFormat.
+-- Строит карту (D36, D22) по MapLayout: остров травы, земляные обрывы с травой поверху вокруг безопасной зоны
+-- (сзади и по бокам — уступом с травяной террасой) и коридора уровней, деревья на террасах и плато, лавки
+-- «Аура» и «Продажа», точку появления и 10 зон коридором — пол, стена с воротами и вывеской, постаменты, декор.
+-- Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с полем качалки строит PlotService.
+-- Совпадающих граней у разных деталей нет (D36): трава обрывов, свесы и «натёки» лежат встык или с выступом.
+-- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, NumberFormat.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
-local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
@@ -17,7 +16,6 @@ local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
 local Signs = require(World.Signs)
 local Studs = require(World.Studs)
-local Border = require(World.Models.Border)
 local Gate = require(World.Models.Gate)
 local Plaza = require(World.Models.Plaza)
 local Props = require(World.Models.Props)
@@ -28,8 +26,10 @@ local ZoneWall = require(World.Models.ZoneWall)
 local B = ModelBuilder.Brick
 local H = MapLayout.Heights
 local SLAB = 0.4 -- толщина плит покрытия
-local GROUND = 2 -- толщина плит травы и песка
+local GROUND = 2 -- толщина плиты травы
 local BICEPS = "💪"
+local DEEP = "LegoSquaresDeep" -- рельеф обрывов
+local DRIP_SEED = 7
 
 local WorldBuilder = {}
 
@@ -56,163 +56,199 @@ local function place(key: string, build: () -> { ModelBuilder.Brick }, at: CFram
 	return ModelBuilder.Place(model, at, parent)
 end
 
--- Прямоугольники острова, расширенные на margin, без перекрытий: второй (коридор, уже первого)
--- обрезается по краю первого, чтобы верхние грани плит не мерцали.
-local function islandRects(margin: number): { MapLayout.Rect }
-	local rects: { MapLayout.Rect } = {}
-	for i, rect in MapLayout.IslandRects do
-		local r = {
-			minX = rect.minX - margin,
-			maxX = rect.maxX + margin,
-			minZ = rect.minZ - margin,
-			maxZ = rect.maxZ + margin,
-		}
-		if i > 1 then
-			r.maxZ = math.min(r.maxZ, rects[1].minZ)
-		end
-		table.insert(rects, r)
-	end
-	return rects
+-- Брусок по границам (x0 < x1, z0 < z1).
+local function box(
+	x0: number,
+	x1: number,
+	y0: number,
+	y1: number,
+	z0: number,
+	z1: number,
+	color: Color3,
+	extra: { [string]: any }?
+)
+	local size = Vector3.new(x1 - x0, y1 - y0, z1 - z0)
+	return B(size, Vector3.new((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), color, extra)
 end
-
-local function rectBrick(r: MapLayout.Rect, top: number, color: Color3): ModelBuilder.Brick
-	return B(
-		Vector3.new(r.maxX - r.minX, GROUND, r.maxZ - r.minZ),
-		Vector3.new((r.minX + r.maxX) / 2, top - GROUND / 2, (r.minZ + r.maxZ) / 2),
-		color
-	)
-end
-
-local GRASS_PATCHES = 90
-local PATCH_SIZE = Vector2.new(18, 40) -- мин. и макс. сторона пятна
 
 local function buildGround(parent: Instance)
-	-- Трава острова (и под холмами), под ней песчаный берег до воды.
-	local bricks: { ModelBuilder.Brick } = {}
-	for _, r in islandRects(MapLayout.GrassMargin) do
-		table.insert(bricks, rectBrick(r, H.Ground, Palette.Grass))
-	end
-	for _, r in islandRects(MapLayout.SandMargin) do
-		table.insert(bricks, rectBrick(r, H.Sand, Palette.Sand))
-	end
-	ModelBuilder.Build("Ground", bricks).Parent = parent
-
-	-- Крупные пятна травы другого оттенка (детерминированно), чуть выше земли; число — по площади.
-	local rects = islandRects(MapLayout.GrassMargin - PATCH_SIZE.Y)
-	local total = 0
-	for _, r in rects do
-		total += (r.maxX - r.minX) * (r.maxZ - r.minZ)
-	end
-	local random = Random.new(5)
-	local patches: { ModelBuilder.Brick } = {}
-	for _, r in rects do
-		local count = math.round(GRASS_PATCHES * (r.maxX - r.minX) * (r.maxZ - r.minZ) / total)
-		for _ = 1, count do
-			local w = random:NextNumber(PATCH_SIZE.X, PATCH_SIZE.Y)
-			local d = random:NextNumber(PATCH_SIZE.X, PATCH_SIZE.Y)
-			local x = random:NextNumber(r.minX, r.maxX)
-			local z = random:NextNumber(r.minZ, r.maxZ)
-			table.insert(
-				patches,
-				B(Vector3.new(w, 0.1, d), Vector3.new(x, H.Ground + 0.04, z), Palette.GrassPatch, { collide = false, shadow = false })
-			)
-		end
-	end
-	ModelBuilder.Build("GrassPatches", patches).Parent = parent
+	local island = MapLayout.Island
+	ModelBuilder.Build("Ground", {
+		-- Шире обрывов на 2: боковые грани земли и обрывов не совпадают (D36).
+		box(
+			island.minX - 2,
+			island.maxX + 2,
+			H.Ground - GROUND,
+			H.Ground,
+			island.minZ - 2,
+			island.maxZ + 2,
+			Palette.Field
+		),
+	}).Parent = parent
 end
 
-local function buildPlaza(parent: Instance)
-	local plaza = MapLayout.Plaza
-	local f = folder("Plaza", parent)
-	local width, depth = plaza.maxX - plaza.minX, plaza.maxZ - plaza.minZ
-	local midZ = (plaza.minZ + plaza.maxZ) / 2
-	slab("PlazaFloor", Vector2.new(width, depth), Vector3.new(0, 0, midZ), H.Plaza, Palette.Alley, f)
-
-	-- Мостовая в клетку.
-	local bricks: { ModelBuilder.Brick } = {}
-	local columns = math.floor(width / MapLayout.CheckSize)
-	local rows = math.floor(depth / MapLayout.CheckSize)
-	local cellW, cellD = width / columns, depth / rows
-	for column = 0, columns - 1 do
-		for row = 0, rows - 1 do
-			if (column + row) % 2 == 0 then
-				local x = plaza.minX + (column + 0.5) * cellW
-				local z = plaza.maxZ - (row + 0.5) * cellD
-				local cell = Vector3.new(x, H.Plaza + 0.05, z)
-				table.insert(bricks, B(Vector3.new(cellW, 0.1, cellD), cell, Palette.AlleyCheck, { collide = false, shadow = false }))
-			end
+-- «Натёки» травы на грани обрыва: бруски разной длины свисают с травы. Грань — along ("x" или "z") от a до b
+-- на fixed, inward — куда смотрит грань (±1 по другой оси), top — верх земли, maxLen — длиннейший натёк.
+-- Натёк выступает из грани на 1.4 (дальше свеса травы на 1), верх уходит в траву.
+local function drips(
+	bricks: { ModelBuilder.Brick },
+	random: Random,
+	along: string,
+	a: number,
+	b: number,
+	fixed: number,
+	inward: number,
+	top: number,
+	maxLen: number
+)
+	local t = a + 2 -- от края грани отступ: натёк не совпадает гранью со свесом соседней грани
+	while t < b - 2 do
+		local w = math.min(random:NextInteger(3, 7), b - 2 - t)
+		local len = random:NextInteger(1, maxLen)
+		local c = fixed + inward * 0.4
+		local center = t + w / 2
+		local y = top - len / 2 + 0.5
+		if along == "x" then
+			table.insert(bricks, B(Vector3.new(w, len + 1, 2), Vector3.new(center, y, c), Palette.CliffGrass))
+		else
+			table.insert(bricks, B(Vector3.new(2, len + 1, w), Vector3.new(c, y, center), Palette.CliffGrass))
 		end
-	end
-	ModelBuilder.Build("PlazaDetails", bricks).Parent = f
-
-	-- Фонари вдоль дворов (в проходах между музеями и по краям) и у ворот; кусты в проходах, деревья за музеями.
-	local count = GameConfig.World.PlotCount
-	local front = plaza.maxZ - 2
-	for gap = 0, count do
-		local x = (gap - count / 2) * MapLayout.PlotStep
-		place("Lamp", Props.Lamp, CFrame.new(x, H.Plaza, front), f)
-		if gap > 0 and gap < count then
-			local plotZ = MapLayout.PlotCFrame(1).Position.Z
-			place("Bush_" .. (gap % 3 + 1), function()
-				return Props.Bush(gap % 3 + 1)
-			end, CFrame.new(x, H.Ground, plotZ), f)
-		end
-		local size = if gap % 2 == 0 then "L" else "M"
-		local color = gap % #Palette.Leaves + 1
-		place(("Tree_%s_%d"):format(size, color), function()
-			return Tree(size, color)
-		end, CFrame.new(x, H.Ground, MapLayout.Outline[1].Y - 10) * CFrame.Angles(0, gap, 0), f)
-	end
-	for _, sign in { -1, 1 } do
-		place("Lamp", Props.Lamp, CFrame.new(sign * (MapLayout.Gate.width / 2 + 8), H.Plaza, plaza.minZ + 4), f)
-		local corner = Vector3.new(sign * (plaza.maxX - 12), H.Plaza, plaza.minZ + 12)
-		place("Tree_M_2", function()
-			return Tree("M", 2)
-		end, CFrame.new(corner), f)
+		t += w + random:NextInteger(1, 4)
 	end
 end
 
-local function buildStart(parent: Instance)
-	local f = folder("Start", parent)
-	place("Fountain", Plaza.Fountain, CFrame.new(MapLayout.Fountain), f)
-	-- Лавочки у фонтана смотрят на него.
-	for _, sign in { -1, 1 } do
-		local at = MapLayout.Fountain + Vector3.new(sign * 14, 0, 0)
-		place("Bench", Props.Bench, CFrame.lookAt(at, at + Vector3.new(-sign, 0, 0)), f)
+-- Обрывы вокруг безопасной зоны и коридора. Земляные блоки не перекрываются; трава поверху — по их следу,
+-- свесы травы (lip) — отдельными полосами вдоль открытых граней, обрезанными так, чтобы не накладываться.
+local function buildCliffs(parent: Instance)
+	local f = folder("Cliffs", parent)
+	local c = MapLayout.Cliff
+	local SX, SZ, CX = MapLayout.SafeZone.halfX, MapLayout.SafeZone.back, MapLayout.CorridorHalf
+	local D, HI, LO, L = c.terrace, c.height, c.low, c.lip
+	local ZE = MapLayout.ZonesEnd
+	local OX = SX + D + c.outer
+	local deep = { variant = DEEP }
+	local dirt, grass = Palette.CliffDirt, Palette.CliffGrass
+	local bricks: { ModelBuilder.Brick } = {}
+	local function block(x0, x1, z0, z1, top, grassH)
+		table.insert(bricks, box(x0, x1, 0, top, z0, z1, dirt, deep))
+		table.insert(bricks, box(x0, x1, top, top + grassH, z0, z1, grass))
 	end
+	-- Нижние террасы: сзади и по бокам безопасной зоны.
+	block(-SX, SX, SZ, SZ + D, LO, c.lowGrass)
+	-- Верхний обрыв сзади.
+	block(-(SX + D), SX + D, SZ + D, SZ + D + c.outer, HI, c.grass)
+	-- Конец коридора.
+	block(-CX, CX, ZE - c.outer, ZE, HI, c.grass)
+	for _, s in { -1, 1 } do
+		local function X(a: number, b: number): (number, number)
+			return math.min(s * a, s * b), math.max(s * a, s * b)
+		end
+		local x0, x1 = X(SX, SX + D)
+		block(x0, x1, 0, SZ + D, LO, c.lowGrass)
+		x0, x1 = X(SX + D, OX)
+		block(x0, x1, 0, SZ + D + c.outer, HI, c.grass)
+		-- Передний обрыв: от коридора до края острова, вдоль всего коридора.
+		x0, x1 = X(CX, OX)
+		block(x0, x1, ZE - c.outer, 0, HI, c.grass)
 
-	-- Точка появления игроков смотрит на музеи. Своя SpawnLocation; чужие выключает Main (только в Play).
+		-- Свесы травы: боковая терраса, боковой верхний обрыв, передний обрыв со стороны поля, стенка коридора.
+		x0, x1 = X(SX - L, SX)
+		table.insert(bricks, box(x0, x1, LO, LO + c.lowGrass, 0, SZ - L, grass))
+		x0, x1 = X(SX + D - L, SX + D)
+		table.insert(bricks, box(x0, x1, HI, HI + c.grass, L, SZ + D - L, grass))
+		x0, x1 = X(CX, SX + D)
+		table.insert(bricks, box(x0, x1, HI, HI + c.grass, 0, L, grass))
+		x0, x1 = X(CX - L, CX)
+		table.insert(bricks, box(x0, x1, HI, HI + c.grass, ZE + L, 0, grass))
+	end
+	table.insert(bricks, box(-SX, SX, LO, LO + c.lowGrass, SZ - L, SZ, grass))
+	table.insert(bricks, box(-(SX + D), SX + D, HI, HI + c.grass, SZ + D - L, SZ + D, grass))
+	table.insert(bricks, box(-(CX - L), CX - L, HI, HI + c.grass, ZE, ZE + L, grass))
+
+	-- Натёки травы на открытых гранях.
+	local random = Random.new(DRIP_SEED)
+	drips(bricks, random, "x", -SX, SX, SZ, -1, LO, 4)
+	drips(bricks, random, "x", -(SX + D), SX + D, SZ + D, -1, HI, 6)
+	drips(bricks, random, "x", -CX, CX, ZE, 1, HI, 8)
+	for _, s in { -1, 1 } do
+		drips(bricks, random, "z", 0, SZ, s * SX, -s, LO, 4)
+		drips(bricks, random, "z", 0, SZ + D, s * (SX + D), -s, HI, 6)
+		local a, b = math.min(s * CX, s * (SX + D)), math.max(s * CX, s * (SX + D))
+		drips(bricks, random, "x", a, b, 0, 1, HI, 8)
+		drips(bricks, random, "z", ZE, 0, s * CX, -s, HI, 8)
+	end
+	ModelBuilder.Build("Cliffs", bricks).Parent = f
+
+	-- Деревья: на задней террасе — в просветах между музеями и по углам, на боковых террасах, на плато у края.
+	local trees: { { pos: Vector3, size: string } } = {}
+	local terrace = LO + c.lowGrass
+	for _, x in { -165, -112, -37, 37, 112, 165 } do
+		table.insert(trees, { pos = Vector3.new(x, terrace, SZ + D / 2), size = "M" })
+	end
+	for _, s in { -1, 1 } do
+		for _, z in { 25, 70, 112 } do
+			table.insert(trees, { pos = Vector3.new(s * (SX + D / 2), terrace, z), size = "M" })
+		end
+		for _, z in { 10, 60, 120, 160 } do
+			table.insert(trees, { pos = Vector3.new(s * (SX + D + 9), HI + c.grass, z), size = "L" })
+		end
+	end
+	for _, x in { -150, -75, 0, 75, 150 } do
+		table.insert(trees, { pos = Vector3.new(x + 20, HI + c.grass, SZ + D + 10), size = "L" })
+	end
+	for i, tree in trees do
+		local color = i % #Palette.Leaves + 1
+		place(("Tree_%s_%d"):format(tree.size, color), function()
+			return Tree(tree.size, color)
+		end, CFrame.new(tree.pos) * CFrame.Angles(0, i, 0), f)
+	end
+end
+
+-- Лавки «Аура» и «Продажа»: ларёк в ShopScale раз больше, прилавком к полю (+Z), табло над навесом.
+-- Табло в координатах ларька до увеличения.
+local SHOP_BOARD = { size = Vector3.new(9, 2, 0.3), at = Vector3.new(0, 9.6, 2.7) }
+
+local function buildShops(parent: Instance)
+	local f = folder("Shops", parent)
+	local k = MapLayout.ShopScale
+	for _, shop in MapLayout.Shops do
+		local stripes = Palette.Awnings[shop.awning]
+		local stall = ModelBuilder.Build(shop.title, Plaza.Stall(Palette.Muted(stripes[1]), stripes[2]))
+		stall:ScaleTo(k)
+		local base = shop.position + Vector3.new(0, H.Ground, 0)
+		local at = CFrame.lookAt(base, base + Vector3.new(0, 0, 1))
+		ModelBuilder.Place(stall, at, f)
+		local board = Instance.new("Part")
+		board.Name = "SignBoard"
+		board.Anchored = true
+		board.Size = SHOP_BOARD.size * k
+		board.CFrame = at * CFrame.new(SHOP_BOARD.at * k)
+		board.Color = Palette.SignBoard
+		board.Material = Enum.Material.SmoothPlastic -- табличка с текстом: без пупырышков
+		Studs.Apply(board)
+		board.Parent = stall
+		Signs.Write(board, Enum.NormalId.Front, { { text = string.upper(shop.title), scale = 0.7 } })
+	end
+end
+
+local function buildSpawn(parent: Instance)
+	-- Точка появления игроков лицом к музеям. Своя SpawnLocation; чужие выключает Main (только в Play).
 	local spawn = Instance.new("SpawnLocation")
-	spawn.Name = "PlazaSpawn"
+	spawn.Name = "FieldSpawn"
 	spawn.Anchored = true
 	spawn.Neutral = true
 	spawn.Duration = 0
 	spawn.Size = MapLayout.Spawn.size
 	local center = MapLayout.Spawn.position + Vector3.new(0, MapLayout.Spawn.size.Y / 2, 0)
 	spawn.CFrame = CFrame.lookAt(center, center + Vector3.new(0, 0, 1))
-	spawn.Color = UITokens.Gradients.Go.top
+	spawn.Color = Palette.FieldFloor
 	spawn.Material = Enum.Material.Plastic
 	Studs.Apply(spawn)
-	spawn.Parent = f
-end
-
-local function buildGateAndYard(parent: Instance)
-	local f = folder("Gate", parent)
-	local gate = MapLayout.Gate
-	local at = Vector3.new(0, H.Plaza, gate.z)
-	local arch = ModelBuilder.Place(ModelBuilder.Build("AlleyGate", Gate.Alley(gate.width)), CFrame.lookAt(at, at + Vector3.new(0, 0, 1)), f)
-	local board = arch:FindFirstChild("SignBoard")
-	if board and board:IsA("BasePart") then
-		Signs.Write(board, Enum.NormalId.Front, { { text = "ЗОНЫ ДОБЫЧИ", scale = 0.7 } })
+	local decal = spawn:FindFirstChildOfClass("Decal")
+	if decal then
+		decal:Destroy()
 	end
-	slab(
-		"Yard",
-		Vector2.new(MapLayout.ZoneHalfWidth * 2, MapLayout.Yard),
-		Vector3.new(0, 0, gate.z - MapLayout.Yard / 2),
-		H.Path,
-		Palette.Street,
-		f
-	)
+	spawn.Parent = folder("Spawn", parent)
 end
 
 local function buildZone(index: number, parent: Instance)
@@ -228,7 +264,9 @@ local function buildZone(index: number, parent: Instance)
 
 	-- Стена поперёк коридора на входе и ворота с вывеской: номер, название, босс и его сила.
 	local entrance = ground * CFrame.new(0, 0, -size / 2)
-	ModelBuilder.Place(ModelBuilder.Build("ZoneWall", ZoneWall(MapLayout.ZoneHalfWidth, MapLayout.ZoneDoor, MapLayout.ZoneWallHeight, accent)), entrance, f)
+	-- Стена начинается внутри стоек ворот: торцы стены и стоек не совпадают (D36).
+	local wall = ZoneWall(MapLayout.ZoneHalfWidth, MapLayout.ZoneDoor + Gate.Post, MapLayout.ZoneWallHeight, accent)
+	ModelBuilder.Place(ModelBuilder.Build("ZoneWall", wall), entrance, f)
 	local gate = ModelBuilder.Place(ModelBuilder.Build("ZoneGate", Gate.Zone(MapLayout.ZoneDoor, accent)), entrance, f)
 	local board = gate:FindFirstChild("SignBoard")
 	if board and board:IsA("BasePart") then
@@ -277,26 +315,16 @@ local function buildZone(index: number, parent: Instance)
 	ModelBuilder.Place(ModelBuilder.Build("Decor", decor), frame, f)
 end
 
+
 function WorldBuilder.Build(parent: Instance)
 	local map = folder("Map", parent)
 	buildGround(map)
-	buildPlaza(map)
-	buildStart(map)
-	buildGateAndYard(map)
+	buildCliffs(map)
+	buildShops(map)
+	buildSpawn(map)
 	local zones = folder("Zones", map)
 	for index in GameConfig.Zones do
 		buildZone(index, zones)
-	end
-	local border = folder("Border", map)
-	ModelBuilder.Build("BorderWall", Border.Wall(MapLayout.Outline, H.Ground)).Parent = border
-	local hills, tops = Border.Hills(MapLayout.Outline, H.Ground)
-	ModelBuilder.Build("BorderHills", hills).Parent = border
-	for i, top in tops do
-		local size = if i % 3 == 0 then "L" else "M"
-		local color = i % #Palette.Leaves + 1
-		place(("Tree_%s_%d"):format(size, color), function()
-			return Tree(size, color)
-		end, top * CFrame.Angles(0, i, 0), border)
 	end
 end
 
@@ -310,7 +338,8 @@ function WorldBuilder.BuildWater()
 	terrain.WaterColor = Palette.Water
 	terrain.WaterTransparency = 0.4
 	terrain.WaterWaveSize = 0.1
-	local center = Vector3.new(0, H.Water - WATER_DEPTH / 2, (MapLayout.Outline[1].Y + MapLayout.Outline[5].Y) / 2)
+	local island = MapLayout.Island
+	local center = Vector3.new(0, H.Water - WATER_DEPTH / 2, (island.minZ + island.maxZ) / 2)
 	terrain:FillBlock(CFrame.new(center), Vector3.new(WATER_SIZE, WATER_DEPTH, WATER_SIZE), Enum.Material.Water)
 	terrain:FillBlock(
 		CFrame.new(center - Vector3.new(0, WATER_DEPTH / 2 + 2, 0)),
