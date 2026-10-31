@@ -75,14 +75,14 @@
 					"StudsPerTile": 8
 				}
 			},
-			"LegoSquaresArt": {
+			"LegoSquaresItem": {
 				"$className": "MaterialVariant",
 				"$properties": {
 					"BaseMaterial": "Plastic",
-					"ColorMap": "rbxassetid://89532853999247",
-					"NormalMap": "rbxassetid://131709166848159",
+					"ColorMap": "rbxassetid://72169564431115",
+					"NormalMap": "rbxassetid://116456877518185",
 					"RoughnessMap": "rbxassetid://86272303409120",
-					"StudsPerTile": 2.4
+					"StudsPerTile": 4
 				}
 			}
 		},

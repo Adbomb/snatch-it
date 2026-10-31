@@ -31,13 +31,13 @@ return {
 		roughness = ROUGHNESS,
 		studsPerTile = 8,
 	},
-	-- Предметы искусства (референсы владельца 2026-10-31): крупные выпуклые скруглённые квадраты с тонкими швами,
-	-- без шахматки; 4 × 4 квадрата на плитку (scripts/textures/art_squares.py), квадрат ≈ 0.6 стада.
-	SquaresArt = {
-		name = "LegoSquaresArt",
-		color = "rbxassetid://89532853999247",
-		normal = "rbxassetid://131709166848159",
+	-- Предметы искусства и боссы (референсы владельца 2026-10-31): редкие вдавленные квадраты с фаской, без
+	-- шахматки (square_studs.py, вариант squares_item); квадрат — полстада (StudsPerTile 4).
+	SquaresItem = {
+		name = "LegoSquaresItem",
+		color = "rbxassetid://72169564431115",
+		normal = "rbxassetid://116456877518185",
 		roughness = ROUGHNESS,
-		studsPerTile = 2.4,
+		studsPerTile = 4,
 	},
 } :: { [string]: Variant }

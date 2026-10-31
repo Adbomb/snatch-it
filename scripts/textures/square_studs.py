@@ -38,6 +38,8 @@ VARIANTS = {
     "squares": {"half": 0.30, "depth": 9.0, "dark_cell": 0.80, "wall_shade": 0.42, "floor_shade": 0.05},
     "squares_deep": {"half": 0.29, "depth": 12.0, "dark_cell": 0.90, "wall_shade": 0.24, "floor_shade": 0.30},
     "squares_soft": {"half": 0.30, "depth": 7.0, "dark_cell": 0.95, "wall_shade": 0.26, "floor_shade": 0.03},
+    # Предметы (референсы владельца 2026-10-31): редкие вдавленные квадраты с заметной фаской, без шахматки.
+    "squares_item": {"half": 0.27, "depth": 12.0, "dark_cell": 1.0, "wall_shade": 0.42, "floor_shade": 0.02},
 }
 
 

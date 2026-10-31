@@ -32,7 +32,7 @@ end
 function LegoMaterial.Apply()
 	ensure(Textures.SquaresDeep)
 	ensure(Textures.SquaresSoft)
-	ensure(Textures.SquaresArt)
+	ensure(Textures.SquaresItem)
 	if ensure(Textures.Squares) then
 		MaterialService:SetBaseMaterialOverride(Enum.Material.Plastic, Textures.Squares.name)
 	end
