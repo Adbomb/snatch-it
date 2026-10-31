@@ -46,16 +46,24 @@
 - `Services/PlayerSession` — вход (участок → профиль → здание и гантель → музей → хранилище → сообщение) и выход;
   один путь для игры и тестов (`Join(player, { mock = true })` — профиль в памяти, ProfileStore.Mock).
 - Тесты (`Server/Tests`, только Studio, в Play): `ServerTests.Run()` через `ServerStorage.DevTools.RunServerTests`
-  — 13 сценариев на двух тестовых игроках (`TestPlayer`: таблица с полями Player и персонаж-манекен, UserId < 0).
+  — 17 сценариев (двое тестовых игроков, время и ночь) (`TestPlayer`: таблица с полями Player и персонаж-манекен, UserId < 0).
   Действия — теми же обработчиками, что подсказки (`MuseumService/StorageService/GymService/CarryService.Handlers`).
   События клиенту — `Remotes.FireClient` (тестовому игроку пишет в журнал `Sent`). Это серверная симуляция:
   подсказки, интерфейс и сеть проверяются только на настоящих клиентах.
+- Время (D37): `Shared/GameTime` — фаза, день и границы фазы как функция общего времени
+  (`workspace:GetServerTimeNow()`, `GameConfig.Time`), круг 3 360 с, одинаково на всех серверах и у клиента.
+  `Services/TimeService` — такт 0.25 с, атрибуты ReplicatedStorage (Phase, Day, Cycle, PhaseStartsAt, PhaseEndsAt),
+  `OnPhaseChanged`; Studio: `DevTools.TimeScale/TimeSkip/TimeReset` (атрибуты TimeScale, TimeAnchorReal,
+  TimeAnchorGame — их читает и клиент). `Services/NightService` — ночью барьер `NightBarrier` в воротах уровня 1
+  (только на ночь), потеря несомого (`CarryService.LoseCarried`), вывод из коридора (`MapLayout.InDangerZone`) к
+  месту появления и проверка раз в 0.5 с. Клиент: `Controllers/TimeController` — панель Stud-UI внизу справа
+  (`UITokens.TimeHud`), фазу считает сам через `GameTime`.
 - Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
   а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
   Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание `Building` — меши
   музея уровня ceil(L/2), декор на чётных, `SetBuilding`; невидимые стены `Walls`; окружение витрин — `Models/Museum`),
   `Prompts` (подсказки музея с атрибутом Action), `Validate`, `RateLimiter`, `Notify`, `Log`, `DevTools` (только
-  Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info, GiveCoins и RunServerTests для проверок через MCP).
+  Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info, GiveCoins, RunServerTests и TimeScale/TimeSkip/TimeReset для проверок через MCP).
 - Участок (D35): `PartBuilder.BuildPlot` — музей, витрины, сундук и двор: Yard, YardPath, GymField (поле с
   неоновыми плитками цвета участка), SignPost и UpgradeBoard (табло; текст рисует клиент); `PlotService.ShowDumbbell`
   ставит огромную гантель уровня владельца (`GiantDumbbell`), атрибуты модели OwnerUserId, OwnerName, DumbbellLevel.

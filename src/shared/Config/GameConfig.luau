@@ -50,6 +50,19 @@ GameConfig.Gym = {
 	UpgradesPerSecond = 2, -- лимит запросов «Улучшить» от игрока
 }
 
+-- Игровое время (D37): одно на всех серверах — фазу считает Shared/GameTime от общего времени.
+GameConfig.Time = {
+	DayLength = 300, -- секунд дня
+	NightLength = 30, -- обычная ночь
+	DoomNightLength = 90, -- Судная ночь (каждая DoomEvery-я)
+	PreparationLength = 120, -- подготовка к Судной ночи: последние секунды DoomEvery-го дня (день не удлиняется)
+	DoomEvery = 10,
+	Epoch = 0, -- Unix-время начала отсчёта кругов (общее для всех серверов)
+	TickSeconds = 0.25, -- как часто сервер проверяет смену фазы
+	NightCheckSeconds = 0.5, -- как часто ночью сервер выводит игроков из коридора уровней
+	SafeSpread = 6, -- разброс точки переноса в Safe Zone вокруг места появления, стадов
+}
+
 GameConfig.Carry = {
 	-- Скорость — от силы (D24, Progression.Speed); груз умножает её (D24).
 	WeightSpeed = { Light = 1, Medium = 0.9, Heavy = 0.8 },

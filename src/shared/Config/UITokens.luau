@@ -169,6 +169,21 @@ UITokens.GymGain = {
 	TextSize = 40,
 }
 
+-- Таймер фазы (D37, место — D27: внизу справа; на телефоне — над кнопкой прыжка).
+UITokens.TimeHud = {
+	Size = Vector2.new(250, 84), -- пиксели при масштабе 1 (дальше — UIScale по экрану, StudMotion.BindResponsive)
+	Margin = 16,
+	TouchLift = 170, -- на сенсорном экране поднять над кнопкой прыжка
+	PhaseSize = 22,
+	TimeSize = 34,
+	InfoSize = 14,
+	Refresh = 0.2, -- секунды между обновлениями отсчёта
+	-- Градиенты панели по фазам (верх → низ); день и ночь — из тем Stud-UI.
+	Theme = { Day = "blue", Preparation = "amber", Night = "violet" },
+	DoomNight = { Color3.fromHex("FF5A5A"), Color3.fromHex("B3122E") },
+	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common

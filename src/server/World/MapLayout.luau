@@ -68,6 +68,11 @@ local ZONES_START = 0
 local ZONE_COUNT = #GameConfig.Zones
 MapLayout.ZonesEnd = ZONES_START - ZONE_COUNT * MapLayout.ZoneSize
 
+-- Опасная зона (D37): коридор уровней — от входа в зону 1 (z = 0) вглубь, в ширину коридора.
+function MapLayout.InDangerZone(position: Vector3): boolean
+	return position.Z < ZONES_START and math.abs(position.X) <= MapLayout.CorridorHalf + 2
+end
+
 -- Мировая z входа в зону index (сторона безопасной зоны).
 function MapLayout.ZoneStartZ(index: number): number
 	return ZONES_START - (index - 1) * MapLayout.ZoneSize

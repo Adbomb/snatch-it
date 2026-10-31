@@ -1,7 +1,7 @@
 -- Серверные тесты на двух игроков (только Studio, в Play): владение участками, профили, запрет действий с чужими
 -- витринами, сундуком, хранилищем, гантелью и полем качалки, один носитель у предмета, повторный вход, перестройка
--- музея. Игроки — Tests/TestPlayer с профилями в памяти (ProfileStore.Mock): в DataStore ничего не пишется,
--- участки берутся свободные (настоящий игрок не трогается). Вход и выход — тем же Services/PlayerSession, действия
+-- музея; время и ночь (этап 2 D37). Игроки — Tests/TestPlayer с профилями в памяти (ProfileStore.Mock): в DataStore
+-- ничего не пишется, участки берутся свободные (настоящий игрок не трогается). Вход и выход — тем же Services/PlayerSession, действия
 -- — теми же обработчиками, что вызывают подсказки (Handlers). Это серверная симуляция: подсказки на клиенте,
 -- интерфейс, сеть и физику персонажа она не проверяет — для этого нужен тест с настоящими клиентами.
 -- Запуск через MCP в Play: game.ServerStorage.DevTools.RunServerTests:Invoke() → отчёт строкой.
@@ -20,7 +20,11 @@ local ItemRegistry = require(Server.Services.ItemRegistry)
 local MuseumService = require(Server.Services.MuseumService)
 local PlayerSession = require(Server.Services.PlayerSession)
 local PlotService = require(Server.Services.PlotService)
+local NightService = require(Server.Services.NightService)
 local StorageService = require(Server.Services.StorageService)
+local TimeService = require(Server.Services.TimeService)
+local GameTime = require(ReplicatedStorage.Shared.GameTime)
+local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
 local TestPlayer = require(Server.Tests.TestPlayer)
 
@@ -319,6 +323,97 @@ test("Когда свободных участков нет, новый игро
 	check(PlotService.GetPlotOf(late) == nil, "лишний игрок получил участок")
 end)
 
+-- ── Время и ночь (этап 2 D37) ──────────────────────────────────────────────────────────────────────────
+
+test("Время: фазы на границах круга", function()
+	local length = GameTime.CycleLength()
+	check(length == 3360, "длина круга " .. length)
+	local base = GameConfig.Time.Epoch + 123 * length -- любой круг: расписание одинаково
+	local cases = {
+		{ 0, "Day", 1 },
+		{ 299.9, "Day", 1 },
+		{ 300, "Night", 1 },
+		{ 329.9, "Night", 1 },
+		{ 330, "Day", 2 },
+		{ 2969.9, "Night", 9 },
+		{ 2970, "Day", 10 },
+		{ 3149.9, "Day", 10 },
+		{ 3150, "Preparation", 10 },
+		{ 3269.9, "Preparation", 10 },
+		{ 3270, "DoomNight", 10 },
+		{ 3359.9, "DoomNight", 10 },
+		{ 3360, "Day", 1 },
+	}
+	for _, case in cases do
+		local state = GameTime.At(base + case[1])
+		check(
+			state.phase == case[2] and state.day == case[3],
+			("t=%s: %s день %d, ждали %s день %d"):format(case[1], state.phase, state.day, case[2], case[3])
+		)
+	end
+	check(GameTime.At(base + 3360).cycle == 124, "новый круг не начался")
+end)
+
+test("Время: полный круг шагом 0.1 с — порядок и длительность фаз", function()
+	local base = GameConfig.Time.Epoch + 77 * GameTime.CycleLength()
+	local order, lengths = {}, {}
+	local last: string? = nil
+	for i = 0, 33599 do
+		local state = GameTime.At(base + i / 10)
+		local key = state.phase .. state.day
+		if key ~= last then
+			last = key
+			table.insert(order, state.phase)
+			table.insert(lengths, state.endsAt - state.startsAt)
+		end
+	end
+	local expected = {}
+	for _ = 1, 9 do
+		table.insert(expected, "Day")
+		table.insert(expected, "Night")
+	end
+	for _, phase in { "Day", "Preparation", "DoomNight" } do
+		table.insert(expected, phase)
+	end
+	check(table.concat(order, ",") == table.concat(expected, ","), "порядок фаз: " .. table.concat(order, ","))
+	local want = { Day = 300, Night = 30, Preparation = 120, DoomNight = 90 }
+	for i, phase in order do
+		local need = if phase == "Day" and i == #order - 2 then 180 else want[phase]
+		check(math.abs(lengths[i] - need) < 1e-6, ("%s №%d длится %s"):format(phase, i, lengths[i]))
+	end
+end)
+
+test("Время: сервер публикует ту же фазу, что считает общая функция", function()
+	TimeService.Update()
+	local state = GameTime.Current()
+	check(ReplicatedStorage:GetAttribute("Phase") == state.phase, "атрибут Phase")
+	check(ReplicatedStorage:GetAttribute("Day") == state.day, "атрибут Day")
+	check(ReplicatedStorage:GetAttribute("PhaseEndsAt") == state.endsAt, "атрибут PhaseEndsAt")
+end)
+
+test("Ночь: несомое теряется, из коридора — в Safe Zone, барьер до рассвета", function(A, B, ctx)
+	local corridor = Vector3.new(10, MapLayout.Heights.Path + 3, MapLayout.ZoneStartZ(1) - 40)
+	A:MoveTo(corridor)
+	local uidA = carry(ctx, A)
+	B:MoveTo(MapLayout.Spawn.position + Vector3.new(20, 3, 20))
+	local uidB = carry(ctx, B)
+	local day = GameTime.At(GameConfig.Time.Epoch)
+	local nightState = GameTime.At(GameConfig.Time.Epoch + GameConfig.Time.DayLength)
+	NightService.Handlers.Apply(nightState, day, { A, B })
+	check(not MapLayout.InDangerZone(A.Character.PrimaryPart.Position), "A остался в коридоре")
+	check((A.Character.PrimaryPart.Position - MapLayout.Spawn.position).Magnitude < 20, "A не у места появления")
+	check(ItemRegistry.Get(uidA) == nil and ItemRegistry.GetCarriedBy(A) == nil, "предмет A не потерян")
+	check(ItemRegistry.Get(uidB) == nil and ItemRegistry.GetCarriedBy(B) == nil, "предмет B не потерян")
+	check(A:WasNotified("недоставленный предмет потерян"), "нет сообщения о потере")
+	check(NightService.Handlers.Barrier().Parent ~= nil, "барьер не поставлен")
+	A:MoveTo(corridor)
+	check(NightService.Handlers.Sweep({ A }) == 1, "зашедшего ночью в коридор не вывели")
+	NightService.Handlers.Apply(GameTime.At(GameConfig.Time.Epoch + 330), nightState, { A, B })
+	check(NightService.Handlers.Barrier().Parent == nil, "барьер не убран на рассвете")
+	-- вернуть правила текущей фазы
+	NightService.Handlers.Apply(TimeService.Current(), nil, {})
+end)
+
 local ServerTests = {}
 
 -- Прогоняет все тесты по очереди: свежие игроки A и B на каждый, после — выход и уборка. Отчёт строкой.
@@ -363,7 +458,8 @@ function ServerTests.Run(): string
 		end
 		local mark = if ok then "OK  " else "FAIL"
 		local reason = if ok then "" else ": " .. tostring(err)
-		table.insert(lines, ("%s %s (%.1f с)%s"):format(mark, case.name, (DateTime.now().UnixTimestampMillis - started) / 1000, reason))
+		local seconds = (DateTime.now().UnixTimestampMillis - started) / 1000
+		table.insert(lines, ("%s %s (%.1f с)%s"):format(mark, case.name, seconds, reason))
 	end
 	table.insert(lines, 1, ("Серверные тесты: %d из %d пройдено"):format(passed, #tests))
 	return table.concat(lines, "\n")

@@ -53,7 +53,9 @@ UI.Fonts = {
 }
 
 UI.Assets = {
-	Studs = "rbxassetid://140544932962041", -- 56x56 tileable stud pattern
+	-- Своя текстура вместо недоступной месту 140544932962041 (D32): квадратные пупырышки LegoSquares (D36,
+	-- Config/Textures.Squares.color, загружена нами).
+	Studs = "rbxassetid://90809959209755",
 	Sunburst = "rbxassetid://130563114903838", -- radial rays, used at 0.45-0.55 transparency, always spinning
 	ShopHeader = "rbxassetid://108268925256584", -- pre-rendered pink stud header texture (shop windows)
 	Basket = "rbxassetid://120530633952826", -- red shop basket (header icon of shops)

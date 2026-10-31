@@ -4,6 +4,7 @@
 --   Info(userId) → { coins, strength, dumbbellLevel, museumLevel }
 --   GiveCoins(userId, amount) → новые монеты (пока нет экономики шага 7)
 --   RunServerTests() → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests)
+--   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -58,6 +59,20 @@ function DevTools.Init()
 		return require(ServerScriptService.Server.Tests.ServerTests).Run()
 	end
 	runTests.Parent = folder
+	local TimeService = require(ServerScriptService.Server.Services.TimeService)
+	for name, handler in {
+		TimeScale = TimeService.SetScale,
+		TimeSkip = TimeService.SkipTo,
+		TimeReset = TimeService.ResetClock,
+	} :: { [string]: (...any) -> any } do
+		local fn = Instance.new("BindableFunction")
+		fn.Name = name
+		fn.OnInvoke = function(...)
+			local state = handler(...)
+			return state and ("%s, день %d"):format(state.phase, state.day) or nil
+		end
+		fn.Parent = folder
+	end
 	folder.Parent = ServerStorage
 end
 

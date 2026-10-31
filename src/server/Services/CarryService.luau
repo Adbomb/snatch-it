@@ -244,17 +244,24 @@ function CarryService.ReleaseToMuseum(player: Player, uid: string): BasePart?
 	return part
 end
 
--- D3: игрок вышел с предметом в руках — предмет исчезает.
-function CarryService.OnPlayerRemoving(player: Player)
+-- Несомый предмет теряется: исчезает из рук и с сервера (D3 — выход из игры, D37 — наступление ночи).
+-- true — предмет был.
+function CarryService.LoseCarried(player: Player, reason: string): boolean
 	local uid = ItemRegistry.GetCarriedBy(player)
 	if uid then
 		local entry = ItemRegistry.Get(uid)
-		ItemRegistry.Discard(uid, "игрок вышел (D3)")
+		ItemRegistry.Discard(uid, reason)
 		if entry and entry.part then
 			entry.part:Destroy()
 		end
 	end
 	releaseHold(player)
+	return uid ~= nil
+end
+
+-- D3: игрок вышел с предметом в руках — предмет исчезает.
+function CarryService.OnPlayerRemoving(player: Player)
+	CarryService.LoseCarried(player, "игрок вышел (D3)")
 end
 
 -- Обработчики для серверных тестов (Server/Tests): та же функция, что вызывает подсказка «Поднять».
