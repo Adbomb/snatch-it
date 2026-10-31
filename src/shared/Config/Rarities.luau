@@ -3,12 +3,12 @@
 
 local Rarities = {}
 
-Rarities.Order = { "Common", "Uncommon", "Rare", "Legendary", "Secret" }
+Rarities.Order = { "Common", "Rare", "Epic", "Legendary", "Secret" } -- D37
 
 Rarities.Names = {
 	Common = "Обычный",
-	Uncommon = "Необычный",
 	Rare = "Редкий",
+	Epic = "Эпический",
 	Legendary = "Легендарный",
 	Secret = "Секретный",
 }

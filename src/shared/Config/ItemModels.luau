@@ -11,12 +11,5 @@ export type ItemModel = {
 	material: Enum.Material, -- SmoothPlastic: пупырышки у модели свои, из геометрии
 }
 
-return {
-	RubberDuck = {
-		mesh = "rbxassetid://91115944871956",
-		texture = "rbxassetid://103158563600468",
-		meshSize = Vector3.new(5.98, 6.18, 7.98),
-		scale = 0.3,
-		material = Enum.Material.SmoothPlastic,
-	},
-} :: { [string]: ItemModel }
+-- Пилотная уточка (хлам) удалена вместе с хламом (D37); модели произведений — этап 7.
+return {} :: { [string]: ItemModel }

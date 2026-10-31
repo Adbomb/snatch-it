@@ -141,7 +141,8 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		slot = slot,
 		rot = 0,
 		acquiredAt = os.time(),
-		source = "map",
+		source = if entry.boss then "boss" else "map",
+		boss = entry.boss, -- уровень босса-источника (D37, доход — этап 6)
 	})
 	if not recorded then
 		Notify.Send(

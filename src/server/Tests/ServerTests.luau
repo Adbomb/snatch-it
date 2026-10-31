@@ -1,10 +1,10 @@
 -- Серверные тесты на двух игроков (только Studio, в Play): владение участками, профили, запрет действий с чужими
 -- витринами, сундуком, хранилищем, гантелью и полем качалки, один носитель у предмета, повторный вход, перестройка
--- музея; время и ночь (этап 2 D37). Игроки — Tests/TestPlayer с профилями в памяти (ProfileStore.Mock): в DataStore
--- ничего не пишется, участки берутся свободные (настоящий игрок не трогается). Вход и выход — тем же
--- Services/PlayerSession, действия — теми же обработчиками, что вызывают подсказки (Handlers). Это серверная
--- симуляция: подсказки на клиенте,
--- интерфейс, сеть и физику персонажа она не проверяет — для этого нужен тест с настоящими клиентами.
+-- музея; время и ночь (этап 2 D37); предметы у боссов (этап 3). Игроки — Tests/TestPlayer с профилями в памяти
+-- (ProfileStore.Mock): в DataStore ничего не пишется, участки берутся свободные (настоящий игрок не трогается).
+-- Вход и выход — тем же Services/PlayerSession, действия — теми же обработчиками, что вызывают подсказки
+-- (Handlers). Это серверная симуляция: подсказки на клиенте, интерфейс, сеть и физику персонажа она не
+-- проверяет — для этого нужен тест с настоящими клиентами.
 -- Запуск через MCP в Play: game.ServerStorage.DevTools.RunServerTests:Invoke() → отчёт строкой.
 -- Зависит от Services/*, Util/ItemFactory, Tests/TestPlayer, GameConfig.
 
@@ -13,7 +13,10 @@ local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local Items = require(ReplicatedStorage.Shared.Config.Items)
+local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
 local Server = ServerScriptService.Server
+local BossLootService = require(Server.Services.BossLootService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local GymService = require(Server.Services.GymService)
@@ -29,7 +32,7 @@ local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
 local TestPlayer = require(Server.Tests.TestPlayer)
 
-local TEST_ITEM = "Mug" -- предмет для тестов (до замены хлама на произведения искусства, этап 3 D37)
+local TEST_ITEM = "FolkWhistle" -- Common из коллекции босса 1 (D37)
 local ITEMS_FOLDER = "__TestItems"
 
 type Context = { track: (any) -> (), items: { string } }
@@ -78,7 +81,7 @@ local function countUid(uid: string): number
 	return count
 end
 
--- Предмет на карте в точке position (как у ItemSpawnService: Part, uid в реестре, подсказка «Поднять»).
+-- Предмет на карте в точке position (брошенный: Part, uid в реестре, подсказка «Поднять»).
 local function mapItem(ctx: Context, position: Vector3): (string, BasePart)
 	local folder = workspace:FindFirstChild(ITEMS_FOLDER)
 	if not folder then
@@ -421,6 +424,155 @@ test("Ночь: не успел до Safe Zone — предмет потерян
 	check(NightService.Handlers.Barrier().Parent == nil, "барьер не убран на рассвете")
 	-- вернуть правила текущей фазы
 	NightService.Handlers.Apply(TimeService.Current(), nil, {})
+end)
+
+-- ── Предметы у боссов (этап 3 D37) ────────────────────────────────────────────────────────────────────
+
+local function bossSlots()
+	return BossLootService.Handlers.Slots()
+end
+
+-- Днём, чтобы забрать предмет: если сейчас ночь, перейти к рассвету (и вернуть часы после теста).
+local function ensureDay(): boolean
+	if GameTime.IsNight(TimeService.Current().phase) then
+		TimeService.SkipTo("Day", 0)
+		task.wait(0.3)
+		return true
+	end
+	return false
+end
+
+test("Коллекции: у каждого босса есть все доступные ему редкости и нет недоступных", function()
+	for id, def in Items do
+		check(table.find(Rarities.Order, def.rarity), id .. ": редкость " .. tostring(def.rarity))
+		check(def.boss >= 1 and def.boss <= #GameConfig.Zones, id .. ": босс " .. tostring(def.boss))
+	end
+	for boss = 1, #GameConfig.Zones do
+		local chances = BossLootService.Chances(boss)
+		for _, rarity in Rarities.Order do
+			local count = 0
+			for _, def in Items do
+				if def.boss == boss and def.rarity == rarity then
+					count += 1
+				end
+			end
+			if (chances[rarity] or 0) > 0 then
+				check(count > 0, ("босс %d: нет предметов %s"):format(boss, rarity))
+			else
+				check(count == 0, ("босс %d: %s ему недоступна"):format(boss, rarity))
+			end
+		end
+	end
+end)
+
+test("Шансы: Legendary только у боссов 4–10, Secret — 8–10; частоты как в таблице", function()
+	for boss = 1, #GameConfig.Zones do
+		local chances = BossLootService.Chances(boss)
+		check(((chances.Legendary or 0) > 0) == (boss >= 4), ("босс %d: Legendary"):format(boss))
+		check(((chances.Secret or 0) > 0) == (boss >= 8), ("босс %d: Secret"):format(boss))
+	end
+	local rng = Random.new(37)
+	local n = 200000
+	for _, tier in GameConfig.Progression.BossLoot.Tiers do
+		local total = 0
+		for _, chance in tier.chances do
+			total += chance
+		end
+		check(math.abs(total - 100) < 1e-9, ("боссы %d–%d: сумма шансов %s"):format(tier.from, tier.to, total))
+		local counts = {}
+		for _ = 1, n do
+			local rarity = BossLootService.RollRarity(tier.from, rng)
+			counts[rarity] = (counts[rarity] or 0) + 1
+		end
+		for _, rarity in Rarities.Order do
+			local got = (counts[rarity] or 0) / n * 100
+			local want = tier.chances[rarity] or 0
+			local ok = if want == 0 then got == 0 else math.abs(got - want) < 0.3
+			check(ok, ("боссы %d–%d: %s %.2f%%, ждали %s%%"):format(tier.from, tier.to, rarity, got, want))
+		end
+	end
+end)
+
+test("Слоты: у каждого из 10 боссов 4 предмета из его коллекции", function()
+	BossLootService.Handlers.Refresh()
+	local slots = bossSlots()
+	for boss = 1, #GameConfig.Zones do
+		for slot = 1, GameConfig.Progression.BossLoot.Slots do
+			local uid = slots[boss][slot].uid
+			local entry = uid and ItemRegistry.Get(uid)
+			check(entry and entry.state == "AtBoss", ("босс %d слот %d пуст"):format(boss, slot))
+			check(entry.boss == boss and entry.bossSlot == slot, ("босс %d слот %d: чужие данные"):format(boss, slot))
+			local own = Items[entry.itemId].boss == boss
+			check(own, ("босс %d: предмет %s не из его коллекции"):format(boss, entry.itemId))
+		end
+	end
+end)
+
+test("Рассвет: все 40 предметов заменяются новыми uid, старые удалены, дублей нет", function()
+	local seen = {}
+	local previous = {}
+	for round = 1, 25 do
+		BossLootService.Handlers.Refresh()
+		local current = {}
+		for boss, bySlot in bossSlots() do
+			for slot, entry in bySlot do
+				check(entry.uid, ("обновление %d: босс %d слот %d пуст"):format(round, boss, slot))
+				check(not seen[entry.uid], "uid повторился: " .. entry.uid)
+				seen[entry.uid] = true
+				table.insert(current, entry.uid)
+			end
+		end
+		check(#current == 40, ("обновление %d: предметов %d"):format(round, #current))
+		for _, old in previous do
+			check(ItemRegistry.Get(old) == nil, "старый предмет остался в реестре")
+			check(countUid(old) == 0, "старый предмет остался в мире")
+		end
+		previous = current
+	end
+end)
+
+test("Забранный слот пуст до рассвета; у босса не поднять обычным «Поднять»; экспонат помнит босса", function(A, B)
+	local shifted = ensureDay()
+	BossLootService.Handlers.Refresh()
+	local entry = bossSlots()[1][1]
+	local uid = entry.uid :: string
+	local part = (ItemRegistry.Get(uid) :: any).part
+	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
+	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
+	CarryService.Handlers.Pickup(A, uid)
+	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
+	BossLootService.Handlers.Take(A, 1, 1)
+	local taken = ItemRegistry.GetCarriedBy(A) == uid
+	local emptied = entry.uid == nil
+	BossLootService.Handlers.Take(B, 1, 1)
+	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil
+	if shifted then
+		TimeService.ResetClock()
+	end
+	check(stillThere, "предмет у босса подняли обычным «Поднять»")
+	check(taken and ItemRegistry.Get(uid).boss == 1, "A не забрал предмет в тестовом режиме")
+	check(emptied and bEmpty, "слот не опустел или B что-то получил")
+	local plotA = plotOf(A)
+	near(A, plotA.showcases[1])
+	MuseumService.Handlers.Display(A, plotA, 1)
+	local record = DataService.GetData(A).items[uid]
+	check(record and record.boss == 1 and record.source == "boss", "в профиле нет босса-источника")
+	BossLootService.Handlers.Refresh()
+	check(entry.uid ~= nil, "слот не заполнен на рассвете")
+	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
+end)
+
+test("Без боя забрать нельзя вне тестового режима Studio", function(A)
+	BossLootService.Handlers.Refresh()
+	local uid = bossSlots()[2][1].uid :: string
+	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
+	local saved = GameConfig.Bosses.FreeTakeInStudio
+	GameConfig.Bosses.FreeTakeInStudio = false
+	local ok, err = pcall(BossLootService.Handlers.Take, A, 2, 1)
+	GameConfig.Bosses.FreeTakeInStudio = saved
+	check(ok, tostring(err))
+	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
+	check(A:WasNotified("победите босса"), "нет сообщения «победите босса»")
 end)
 
 local ServerTests = {}

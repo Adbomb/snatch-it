@@ -33,23 +33,29 @@ return {
 		Prices = { 2300, 260000, 1100000, 3400000, 13000000, 32000000, 79000000, 370000000, 1200000000 },
 	},
 
-	-- Доход экспоната в секунду, пока владелец в игре.
-	Income = { Common = 1, Uncommon = 5, Rare = 25, Legendary = 150, Secret = 1000 },
+	-- Доход — у каждого произведения свой (D37, этап 6, не утверждён).
 
 	-- Сила музея (D31): каждый экспонат на витрине добавляет владельцу к набору силы Rarity[редкость] ×
 	-- Variant[вид]. Бонусы складываются, потолок cap (3 = +300 %). В хранилище бонуса нет.
 	MuseumPower = {
-		Rarity = { Common = 0.01, Uncommon = 0.02, Rare = 0.05, Legendary = 0.12, Secret = 0.3 },
+		-- Epic — предварительно (лестница редкостей D37 сменилась), ждёт утверждения.
+		Rarity = { Common = 0.01, Rare = 0.05, Epic = 0.08, Legendary = 0.12, Secret = 0.3 },
 		Variant = { Normal = 1, Golden = 2, Giant = 3, Rainbow = 5 },
 		cap = 3,
 	},
 
-	-- Шансы редкости (веса) в зоне 1 и в зоне 10, между ними — линейно. Secret — с зоны SecretFromZone.
-	RarityFirst = { Common = 90, Uncommon = 9.5, Rare = 0.5, Legendary = 0, Secret = 0 },
-	RarityLast = { Common = 40, Uncommon = 35, Rare = 20, Legendary = 4.7, Secret = 0.3 },
-	SecretFromZone = 8,
+	-- Шансы редкости каждого из 4 слотов у босса, % (D37, утверждено): Legendary — с босса 4, Secret — с босса 8,
+	-- глобальных лимитов нет. Затем предмет этой редкости из коллекции босса (Config/Items), шансы равные.
+	BossLoot = {
+		Slots = 4,
+		Tiers = {
+			{ from = 1, to = 3, chances = { Common = 70, Rare = 25, Epic = 5, Legendary = 0, Secret = 0 } },
+			{ from = 4, to = 7, chances = { Common = 52, Rare = 30, Epic = 13, Legendary = 5, Secret = 0 } },
+			{ from = 8, to = 10, chances = { Common = 32.5, Rare = 35, Epic = 20, Legendary = 11.25, Secret = 1.25 } },
+		},
+	},
 
-	-- Модификаторы при появлении предмета: шанс и множитель дохода.
+	-- Модификаторы и каталог (D29) в D37 не утверждены и не используются.
 	Modifiers = {
 		Golden = { chance = 0.02, income = 2 },
 		Giant = { chance = 0.01, income = 3 },
@@ -66,6 +72,4 @@ return {
 	-- Скорость (D24): 14 при нулевой силе → 20 на потолке, логарифмически.
 	Speed = { min = 14, max = 20, cap = 1000000000000 },
 
-	-- Предметов в каждой редкости (D23).
-	ItemCounts = { Common = 10, Uncommon = 8, Rare = 6, Legendary = 4, Secret = 2 },
 }

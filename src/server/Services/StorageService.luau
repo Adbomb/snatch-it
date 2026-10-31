@@ -106,7 +106,8 @@ local function tryStoreCarried(player: Player, plot: PlotService.Plot)
 		place = "storage",
 		rot = 0,
 		acquiredAt = os.time(),
-		source = "map",
+		source = if entry.boss then "boss" else "map",
+		boss = entry.boss, -- уровень босса-источника (D37, доход — этап 6)
 	})
 	if not recorded then
 		Notify.Send(player, "Не удалось сохранить предмет — он остаётся у вас в руках", "Stop")

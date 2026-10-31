@@ -92,16 +92,17 @@ end
 -- Куда ночью уводить всех из зон (D21): поле перед входом в коридор.
 MapLayout.NightReturn = Vector3.new(0, MapLayout.Heights.Ground, 12)
 
--- Постаменты в локальных координатах зоны (x поперёк коридора, z от центра; вход на z = -Size/2).
-MapLayout.Pedestals = {
-	Vector2.new(-43, 3),
-	Vector2.new(43, 3),
-	Vector2.new(0, 15),
-	Vector2.new(-29, 30),
-	Vector2.new(29, 30),
+-- Босс и его 4 предмета (D37) в локальных координатах зоны (x поперёк коридора, z от центра; вход на
+-- z = -Size/2). Босс — в центре зоны (круг радиусом 16 свободен от оформления во всех зонах), постаменты
+-- раскиданы вокруг него не в ряд; мимо проходят по бокам коридора.
+MapLayout.BossSpot = Vector2.new(0, -5)
+MapLayout.ArtSlots = {
+	Vector2.new(-12, -13),
+	Vector2.new(11, -11),
+	Vector2.new(-9, 7),
+	Vector2.new(13, 5),
 }
 MapLayout.PedestalHeight = 2.5
-MapLayout.GuardSpot = Vector2.new(0, -21) -- место босса (шаг 5)
 
 -- Границы острова (трава и плато за обрывами) — для земли и воды вокруг.
 local cliff = MapLayout.Cliff
@@ -113,16 +114,17 @@ MapLayout.Island = {
 	maxZ = MapLayout.SafeZone.back + cliff.terrace + cliff.outer,
 }
 
--- Точки появления предметов: верх постаментов в зонах (D15).
-export type SpawnPoint = { name: string, position: Vector3, zone: number }
+-- Точки предметов у боссов: верх постаментов (D37), лицом ко входу в зону.
+export type ArtSlotPoint = { name: string, cframe: CFrame, zone: number, slot: number }
 
-function MapLayout.SpawnPoints(): { SpawnPoint }
-	local points: { SpawnPoint } = {}
+function MapLayout.ArtSlotPoints(): { ArtSlotPoint }
+	local points: { ArtSlotPoint } = {}
 	for zone = 1, ZONE_COUNT do
 		local frame = MapLayout.ZoneCFrame(zone)
-		for i, spot in MapLayout.Pedestals do
+		for slot, spot in MapLayout.ArtSlots do
 			local top = frame * CFrame.new(spot.X, MapLayout.PedestalHeight, spot.Y)
-			table.insert(points, { name = ("Zone%d_%d"):format(zone, i), position = top.Position, zone = zone })
+			local name = ("Boss%d_Slot%d"):format(zone, slot)
+			table.insert(points, { name = name, cframe = top, zone = zone, slot = slot })
 		end
 	end
 	return points

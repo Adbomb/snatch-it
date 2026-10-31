@@ -71,7 +71,6 @@ GameConfig.Carry = {
 }
 
 GameConfig.Spawn = {
-	RespawnDelay = 30, -- секунд от освобождения точки до нового предмета
 	-- D10: брошенный предмет, который никто не трогает, исчезает; последние секунды мигает.
 	LooseDespawnTime = 60,
 	LooseBlinkTime = 10,
@@ -81,7 +80,7 @@ GameConfig.Spawn = {
 
 -- D22: 10 зон добычи одним коридором, порядок — от ворот аллеи вглубь. boss — имя босса-стража
 -- (сила — Progression.Bosses[номер зоны]), floor — цвет пола, accent — цвет ворот и вывески.
--- Шансы редкости — Progression.RarityFirst → RarityLast по номеру зоны, Secret — с SecretFromZone.
+-- Предметы у боссов — Progression.BossLoot (D37), коллекции — Config/Items.
 GameConfig.Zones = {
 	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "A1887F", accent = "8D6E63" },
 	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E" },
@@ -95,14 +94,19 @@ GameConfig.Zones = {
 	{ id = "Castle", name = "Замок", boss = "Король-дракон", floor = "9E9E9E", accent = "C62828" },
 }
 
--- Сколько лежащих или несомых предметов редкости может быть на всём сервере одновременно.
-GameConfig.MaxOnMap = { Legendary = 3, Secret = 1 }
+-- Боссы (D37): 4 предмета у каждого, бой — этап 4. Пока боя нет, забрать предмет без боя можно только в
+-- тестовом режиме Studio (DevMode); в опубликованной игре — нельзя.
+GameConfig.Bosses = {
+	FreeTakeInStudio = true,
+	TakeDistance = 10, -- радиус подсказки «Забрать» у предмета
+	TakeHold = 0.5, -- секунды удержания
+}
 
 -- D31: качалка — одно поле с огромной гантелью; уровни и сила гантели — Progression.Dumbbell (шаг 4).
 
 -- Презентация экспоната после размещения (UI_KIT.md). 0 — только уведомление.
 GameConfig.Presentation = {
-	Duration = { Common = 0, Uncommon = 0, Rare = 1.5, Legendary = 3, Secret = 4 }, -- секунды
+	Duration = { Common = 0, Rare = 0, Epic = 1.5, Legendary = 3, Secret = 4 }, -- секунды
 	ViewerRadius = 60, -- другие игроки в этом радиусе видят прожектор и название
 	LightHeight = 10, -- прожектор над верхом витрины, стадов
 	LightRange = 18,

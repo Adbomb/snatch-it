@@ -38,7 +38,7 @@
 ## Сервер (`src/server`)
 - `Main.server` — RemoteEvent'ы, LEGO-материал, постройка мира, запуск сервисов; вход/выход — `Services/PlayerSession`.
 - Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
-  (подбор/перенос/бросок), `ItemSpawnService` (предметы в зонах, D10 исчезновение), `MuseumService`
+  (подбор/перенос/бросок, `AttachCarried`), `BossLootService` (4 предмета у каждого босса, D37, D10 исчезновение), `MuseumService`
   (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище), `GymService` (D34:
   такт качания — владелец в поле своего двора, сила = Power[уровень] × (1 + сила музея D31); гостю подсказка;
   «Улучшить» — подсказка на табло и запрос GymUpgrade, все проверки на сервере; атрибуты игрока Strength,
@@ -46,7 +46,7 @@
 - `Services/PlayerSession` — вход (участок → профиль → здание и гантель → музей → хранилище → сообщение) и выход;
   один путь для игры и тестов (`Join(player, { mock = true })` — профиль в памяти, ProfileStore.Mock).
 - Тесты (`Server/Tests`, только Studio, в Play): `ServerTests.Run()` через `ServerStorage.DevTools.RunServerTests`
-  — 17 сценариев (двое тестовых игроков, время и ночь) (`TestPlayer`: таблица с полями Player и персонаж-манекен, UserId < 0).
+  — 23 сценария (двое тестовых игроков, время и ночь, предметы у боссов) (`TestPlayer`: таблица с полями Player и персонаж-манекен, UserId < 0).
   Действия — теми же обработчиками, что подсказки (`MuseumService/StorageService/GymService/CarryService.Handlers`).
   События клиенту — `Remotes.FireClient` (тестовому игроку пишет в журнал `Sent`). Это серверная симуляция:
   подсказки, интерфейс и сеть проверяются только на настоящих клиентах.
@@ -58,6 +58,11 @@
   (только на ночь), потеря несомого (`CarryService.LoseCarried`), вывод из коридора (`MapLayout.InDangerZone`) к
   месту появления и проверка раз в 0.5 с. Клиент: `Controllers/TimeController` — панель Stud-UI внизу справа
   (`UITokens.TimeHud`), фазу считает сам через `GameTime`.
+- Предметы у боссов (D37, D38): `Config/Items` — 60 произведений (boss, rarity, kind, source; вид пока — заготовка),
+  `Progression.BossLoot` — шансы по группам боссов. `Services/BossLootService` — слоты `MapLayout.ArtSlots` вокруг
+  `MapLayout.BossSpot` в каждой зоне, заполнение при старте и на каждом рассвете (`TimeService`), состояние реестра
+  `AtBoss` (`ItemRegistry.CreateAtBoss`, у записи `boss`), подсказка «Забрать» — без боя только в Studio+DevMode
+  (`GameConfig.Bosses.FreeTakeInStudio`), D10 для брошенных. В профиле у экспоната `boss` и `source = "boss"`.
 - Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
   а меш «Visual» приварен Weld'ом; `Preload` грузит меши при старте), `PartBuilder` (участок: части с механикой — Floor,
   Showcases/Showcase_i, Chest, Sign, Lamps/Lamp_i/Bulb/PresentationLight, Exhibits; здание `Building` — меши

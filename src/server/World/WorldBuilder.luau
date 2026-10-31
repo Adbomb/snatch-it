@@ -276,8 +276,8 @@ local function buildZone(index: number, parent: Instance)
 		}, accent)
 	end
 
-	-- Постаменты под предметы.
-	for i, spot in MapLayout.Pedestals do
+	-- Постаменты под 4 предмета босса (D37).
+	for i, spot in MapLayout.ArtSlots do
 		place("Pedestal_" .. zone.id, function()
 			return ZoneDecor.Pedestal(accent)
 		end, frame * CFrame.new(spot.X, 0, spot.Y), f).Name = "Pedestal_" .. i
@@ -288,7 +288,7 @@ local function buildZone(index: number, parent: Instance)
 	if zone.id == "Junk" then
 		decor = ZoneDecor.Junk()
 	elseif zone.id == "Flea" then
-		decor = ZoneDecor.Flea(MapLayout.Pedestals)
+		decor = ZoneDecor.Flea(MapLayout.ArtSlots)
 		for i, spot in { Vector2.new(-20, 26), Vector2.new(20, 26) } do
 			local stripes = Palette.Awnings[i + 1]
 			place("Stall_Flea_" .. i, function()

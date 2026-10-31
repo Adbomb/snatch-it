@@ -93,3 +93,7 @@
   `StudUI.UI.Assets.Studs` заменена нашей LegoSquares (90809959209755), D32 + D36.
 - Ускорение времени в Studio: при ×120 ночь длится 0.25 с, это не больше такта `TimeService` (0.25 с) — для проверки
   ночных правил брать `DevTools.TimeSkip("Night", 2)` без ускорения.
+- Blender MCP подключён к Claude Code 2026-10-31 (`claude mcp add blender --scope user -- <uvx.exe> mcp-for-blender`,
+  CLI — `~/.local/bin/claude.exe`); инструменты появляются только в новой сессии. В старой сессии тот же сервер
+  можно вызвать по stdio (scratchpad `mcp_probe.py`) — проверено: `execute_blender_code` создаёт и удаляет объект.
+- `ServerStorage.ImportedModels` Rojo не трогает: уточка удалена оттуда через MCP 2026-10-31 (сохранить место).

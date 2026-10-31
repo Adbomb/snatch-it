@@ -31,8 +31,8 @@ UITokens.Gradients = {
 -- Редкость (D20): градиенты подписей Stud-UI, верх светлый → низ насыщенный. Secret — цвета Cosmic.
 UITokens.Rarity = {
 	Common = gradient("D9D7E3", "ADA6B4"),
-	Uncommon = gradient("C4F79A", "43C22E"),
 	Rare = gradient("84CAE8", "3D8EE0"),
+	Epic = gradient("E2B0FF", "9A3EF0"), -- лестница Stud-UI
 	Legendary = gradient("FFE27A", "F5A215"),
 	Secret = gradient("CDBCFF", "6A45F5"),
 }

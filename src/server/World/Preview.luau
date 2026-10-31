@@ -46,13 +46,13 @@ function Preview.Build(): string
 		PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), GameConfig.Museum.SlotsByLevel[1], plots)
 	end
 	local points = Instance.new("Folder")
-	points.Name = "SpawnPoints"
+	points.Name = "ArtSlots"
 	points.Parent = root
-	for _, spec in MapLayout.SpawnPoints() do
+	for _, spec in MapLayout.ArtSlotPoints() do
 		PartBuilder.MakePart({
 			name = spec.name,
 			size = Vector3.new(2, 0.2, 2),
-			cframe = CFrame.new(spec.position + Vector3.new(0, 0.1, 0)),
+			cframe = spec.cframe * CFrame.new(0, 0.1, 0),
 			color = Color3.fromRGB(255, 210, 0),
 			transparency = 0.3,
 			canCollide = false,

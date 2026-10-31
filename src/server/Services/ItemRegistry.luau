@@ -10,7 +10,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Log = require(ServerScriptService.Server.Util.Log)
 
-export type State = "OnMap" | "Carried" | "Displayed" | "Stored" | "Lifting" | "Stolen" | "Dropped"
+export type State = "AtBoss" | "OnMap" | "Carried" | "Displayed" | "Stored" | "Lifting" | "Stolen" | "Dropped"
 
 export type Entry = {
 	uid: string,
@@ -20,12 +20,15 @@ export type Entry = {
 	owner: number?, -- UserId владельца (Displayed / Stored)
 	slot: number?, -- номер витрины (Displayed)
 	part: BasePart?, -- видимый предмет в мире (у Stored его нет)
+	boss: number?, -- босс-источник (D37): с какого уровня предмет (для дохода, этап 6)
+	bossSlot: number?, -- слот у босса, пока предмет там (AtBoss)
 }
 
 type Listener = (uid: string, fromState: State, toState: State?, entry: Entry) -> ()
 
--- Полный граф переходов из DESIGN.md §1. Этап 2 реализует OnMap, Carried, Displayed, Stored.
+-- Полный граф переходов из DESIGN.md §1 (+ AtBoss, D37). Реализованы AtBoss, OnMap, Carried, Displayed, Stored.
 local ALLOWED: { [State]: { [State]: boolean } } = {
+	AtBoss = { Carried = true }, -- забрать у босса (после победы, этап 4; пока — тестовый режим Studio)
 	OnMap = { Carried = true },
 	Carried = { OnMap = true, Displayed = true, Stored = true },
 	Displayed = { Stored = true, Lifting = true },
@@ -80,6 +83,7 @@ local function detach(entry: Entry)
 	end
 	entry.owner = nil
 	entry.slot = nil
+	entry.bossSlot = nil
 end
 
 local function occupySlot(entry: Entry, owner: number, slot: number)
@@ -109,6 +113,16 @@ function ItemRegistry.CreateOnMap(itemId: string, part: BasePart): string
 	entries[uid] = { uid = uid, itemId = itemId, state = "OnMap", part = part }
 	part:SetAttribute("ItemUid", uid)
 	Log.Debug("ItemRegistry", ("Появился %s (%s)"):format(itemId, uid))
+	return uid
+end
+
+-- Новый экземпляр у босса boss в слоте slot (D37). uid выдаётся здесь.
+function ItemRegistry.CreateAtBoss(itemId: string, part: BasePart, boss: number, slot: number): string
+	local uid = ItemRegistry.CreateOnMap(itemId, part)
+	local entry = entries[uid]
+	entry.state = "AtBoss"
+	entry.boss = boss
+	entry.bossSlot = slot
 	return uid
 end
 
@@ -276,13 +290,14 @@ function ItemRegistry.SwapSlots(owner: number, slotA: number, slotB: number): (b
 	return true, nil
 end
 
--- D3: предмет с карты или из рук пропадает без следа. Сохранённые экспонаты так удалить нельзя.
+-- D3: предмет с карты, из рук или у босса (обновление слотов, D37) пропадает без следа. Сохранённые
+-- экспонаты так удалить нельзя.
 function ItemRegistry.Discard(uid: string, reason: string): boolean
 	local entry = entries[uid]
 	if not entry then
 		return false
 	end
-	if entry.state ~= "OnMap" and entry.state ~= "Carried" then
+	if entry.state ~= "OnMap" and entry.state ~= "Carried" and entry.state ~= "AtBoss" then
 		refuse(uid, entry.state, "Discard", "сохраняемый предмет нельзя уничтожить")
 		return false
 	end
@@ -341,17 +356,6 @@ function ItemRegistry.CountStored(owner: number): number
 	local count = 0
 	for _, entry in entries do
 		if entry.owner == owner and entry.state == "Stored" then
-			count += 1
-		end
-	end
-	return count
-end
-
--- Сколько экземпляров этой редкости лежит на карте или в руках (D11: лимит Legendary).
-function ItemRegistry.CountLoose(rarity: string): number
-	local count = 0
-	for _, entry in entries do
-		if (entry.state == "OnMap" or entry.state == "Carried") and Items[entry.itemId].rarity == rarity then
 			count += 1
 		end
 	end

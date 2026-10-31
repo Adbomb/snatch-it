@@ -94,7 +94,18 @@ local function tryPickup(player: Player, uid: string)
 	if not ItemRegistry.Transition(uid, "Carried", { carrier = player }) then
 		return
 	end
+	CarryService.AttachCarried(player, uid)
+end
 
+-- После перехода в Carried (подбор с карты или предмет у босса, D37): предмет над головой, скорость от груза,
+-- атрибут CarryingItemId. false — предмет не в руках этого игрока или нет персонажа.
+function CarryService.AttachCarried(player: Player, uid: string): boolean
+	local entry = ItemRegistry.Get(uid)
+	local root = Validate.GetLiveRoot(player)
+	if not entry or entry.state ~= "Carried" or entry.carrier ~= player or not entry.part or not root then
+		return false
+	end
+	local part = entry.part
 	local prompt = prompts[uid]
 	if prompt then
 		prompt.Enabled = false
@@ -109,6 +120,7 @@ local function tryPickup(player: Player, uid: string)
 	holds[player] = { uid = uid, weld = weld, weight = Items[entry.itemId].weight }
 	CarryService.RefreshSpeed(player)
 	player:SetAttribute("CarryingItemId", entry.itemId)
+	return true
 end
 
 local function onPartDestroyed(uid: string)
