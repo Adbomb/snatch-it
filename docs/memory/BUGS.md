@@ -80,3 +80,11 @@
   удалять ручные (в Studio должно быть по одному LegoSquares/Deep/Soft).
 - Сканер совпадающих граней округляет плоскости до 0.05: детали с зазором 0.02 считаются совпадающими — и
   правильно, такой зазор издалека тоже мерцает (плитки Банка подняты на 0.12).
+- `os.clock()` в Roblox — процессорное время, не настенное: для длительностей с ожиданием брать
+  `DateTime.now().UnixTimestampMillis`.
+- Тестовые игроки (`Server/Tests/TestPlayer`) — таблицы: их нет в `Players:GetPlayers()`, поэтому циклы по игрокам
+  (такт качалки, презентация) их не видят — для тестов есть `Handlers` (например, `GymService.Handlers.TickPlayer`).
+  `ItemRegistry` принимает их носителями только в Studio.
+- Blender MCP прописан только в Claude Desktop (`%APPDATA%\Claude\claude_desktop_config.json`, `uvx mcp-for-blender`);
+  в Claude Code (`~/.claude.json`) его нет. Аддон «MCP for Blender» 1.8 в Blender 5.2 слушает порт 9876, когда
+  в Blender нажат запуск сервера; без MCP Blender доступен через этот порт или из командной строки.

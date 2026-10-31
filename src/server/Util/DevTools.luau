@@ -3,6 +3,7 @@
 -- В опубликованной игре не создаётся. Зависит от DataService, GymService, GameConfig.
 --   Info(userId) → { coins, strength, dumbbellLevel, museumLevel }
 --   GiveCoins(userId, amount) → новые монеты (пока нет экономики шага 7)
+--   RunServerTests() → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,6 +52,12 @@ function DevTools.Init()
 		GymService.SyncAttributes(player)
 		return coins
 	end)
+	local runTests = Instance.new("BindableFunction")
+	runTests.Name = "RunServerTests"
+	runTests.OnInvoke = function()
+		return require(ServerScriptService.Server.Tests.ServerTests).Run()
+	end
+	runTests.Parent = folder
 	folder.Parent = ServerStorage
 end
 

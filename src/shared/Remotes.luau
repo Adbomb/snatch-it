@@ -38,4 +38,17 @@ function Remotes.Get(name: string): RemoteEvent
 	return ReplicatedStorage:WaitForChild(FOLDER_NAME):WaitForChild(name) :: RemoteEvent
 end
 
+-- Событие сервера одному игроку. Тестовый игрок (Server/Tests/TestPlayer — таблица, а не Instance) получает его
+-- в свой журнал Sent вместо отправки: так серверные тесты проходят тем же путём, что и игра.
+function Remotes.FireClient(name: string, player: Player, ...: any)
+	if typeof(player) ~= "Instance" then
+		local sent = (player :: any).Sent
+		if type(sent) == "table" then
+			table.insert(sent, { name = name, args = table.pack(...) })
+		end
+		return
+	end
+	Remotes.Get(name):FireClient(player, ...)
+end
+
 return Remotes

@@ -64,7 +64,7 @@ function StorageService.Sync(player: Player)
 		return a.uid < b.uid
 	end)
 	player:SetAttribute("StorageCount", #list)
-	Remotes.Get(Remotes.Names.StorageChanged):FireClient(player, list)
+	Remotes.FireClient(Remotes.Names.StorageChanged, player, list)
 end
 
 -- Сундук: предмет из рук в хранилище (Carried → Stored). Только когда все витрины заняты.
@@ -274,5 +274,12 @@ function StorageService.Init()
 	end
 	Remotes.Get(Remotes.Names.DisplayFromStorage).OnServerEvent:Connect(tryDisplayFromStorage)
 end
+
+-- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки и RemoteEvent.
+StorageService.Handlers = {
+	StoreCarried = tryStoreCarried,
+	StoreDisplayed = tryStoreDisplayed,
+	DisplayFromStorage = tryDisplayFromStorage,
+}
 
 return StorageService

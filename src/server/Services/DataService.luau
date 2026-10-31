@@ -26,8 +26,10 @@ local function getActiveProfile(player: Player): any
 end
 
 -- Загружает профиль (ждёт). true — профиль готов; false — игрока кикнули или он уже вышел.
-function DataService.LoadAsync(player: Player): boolean
-	local profile = store:StartSessionAsync(GameConfig.Data.KeyPrefix .. player.UserId, {
+-- mock — профиль в памяти (ProfileStore.Mock), в DataStore не пишется: только для серверных тестов.
+function DataService.LoadAsync(player: Player, mock: boolean?): boolean
+	local source = if mock then store.Mock else store
+	local profile = source:StartSessionAsync(GameConfig.Data.KeyPrefix .. player.UserId, {
 		Cancel = function()
 			return player.Parent ~= Players
 		end,

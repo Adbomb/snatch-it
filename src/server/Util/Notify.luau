@@ -9,7 +9,7 @@ local Notify = {}
 
 -- kind — цвет уведомления на клиенте: "Info" (по умолчанию), "Stop" (отказ), "Go" (успех).
 function Notify.Send(player: Player, text: string, kind: string?)
-	Remotes.Get(Remotes.Names.Notify):FireClient(player, text, kind or "Info")
+	Remotes.FireClient(Remotes.Names.Notify, player, text, kind or "Info")
 end
 
 return Notify

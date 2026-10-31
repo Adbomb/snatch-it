@@ -257,4 +257,7 @@ function CarryService.OnPlayerRemoving(player: Player)
 	releaseHold(player)
 end
 
+-- Обработчики для серверных тестов (Server/Tests): та же функция, что вызывает подсказка «Поднять».
+CarryService.Handlers = { Pickup = tryPickup }
+
 return CarryService

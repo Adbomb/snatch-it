@@ -4,6 +4,7 @@
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Items = require(ReplicatedStorage.Shared.Config.Items)
@@ -44,6 +45,14 @@ local ItemRegistry = {}
 local function refuse(uid: string, fromState: string, toState: string, reason: string): (boolean, string)
 	Log.Warn("ItemRegistry", ("Отказ %s → %s (uid %s): %s"):format(fromState, toState, uid, reason))
 	return false, reason
+end
+
+-- Носитель — настоящий игрок; в Studio ещё и тестовый игрок серверных тестов (Server/Tests/TestPlayer).
+local function isCarrier(value: any): boolean
+	if typeof(value) == "Instance" then
+		return value:IsA("Player")
+	end
+	return RunService:IsStudio() and type(value) == "table" and value.IsTestPlayer == true
 end
 
 local function snapshot(entry: Entry): Entry
@@ -159,7 +168,7 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 
 	if toState == "Carried" then
 		local carrier = params.carrier
-		if typeof(carrier) ~= "Instance" or not carrier:IsA("Player") then
+		if not isCarrier(carrier) then
 			return refuse(uid, fromState, toState, "не указан игрок")
 		end
 		if carrierIndex[carrier] then

@@ -407,4 +407,7 @@ function MuseumService.UnloadMuseum(player: Player)
 	end
 end
 
+-- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки витрин.
+MuseumService.Handlers = { Display = tryDisplay, Move = tryMove, Here = tryPlaceHere, Rotate = tryRotate }
+
 return MuseumService

@@ -1,5 +1,5 @@
 -- Точка входа сервера: создаёт RemoteEvent'ы и мир, запускает сервисы по порядку.
--- Связывает вход и выход игрока между сервисами. Зависит от всех Services.
+-- Вход и выход игрока — Services/PlayerSession. Зависит от всех Services.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,16 +11,15 @@ local LegoMaterial = require(ReplicatedStorage.Shared.LegoMaterial)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
-local DataService = require(Server.Services.DataService)
 local GymService = require(Server.Services.GymService)
 local ItemSpawnService = require(Server.Services.ItemSpawnService)
 local MuseumService = require(Server.Services.MuseumService)
+local PlayerSession = require(Server.Services.PlayerSession)
 local PlotService = require(Server.Services.PlotService)
 local StorageService = require(Server.Services.StorageService)
 local DevTools = require(Server.Util.DevTools)
 local ItemFactory = require(Server.Util.ItemFactory)
 local Log = require(Server.Util.Log)
-local Notify = require(Server.Util.Notify)
 local PartBuilder = require(Server.Util.PartBuilder)
 local MeshBuilder = require(Server.World.MeshBuilder)
 local ModelBuilder = require(Server.World.ModelBuilder)
@@ -72,38 +71,8 @@ if partCount > GameConfig.World.MaxParts then
 	Log.Warn("Main", ("Карта превышает бюджет: %d > %d частей"):format(partCount, GameConfig.World.MaxParts))
 end
 
-local function onPlayerAdded(player: Player)
-	local plot = PlotService.Assign(player)
-	if not plot then
-		player:Kick(
-			"На сервере нет свободного музея. Зайдите на другой сервер."
-		)
-		return
-	end
-	if not DataService.LoadAsync(player) then
-		return
-	end
-	PlotService.ShowLevel(plot, DataService.GetData(player).museumLevel)
-	GymService.OnPlayerLoaded(player, plot)
-	MuseumService.LoadMuseum(player)
-	StorageService.Sync(player)
-	Notify.Send(
-		player,
-		("Ваш музей — участок %d (ищите табличку со своим именем)"):format(
-			plot.index
-		)
-	)
-end
-
-local function onPlayerRemoving(player: Player)
-	CarryService.OnPlayerRemoving(player)
-	MuseumService.UnloadMuseum(player)
-	PlotService.Release(player)
-	DataService.Release(player)
-end
-
-Players.PlayerAdded:Connect(onPlayerAdded)
-Players.PlayerRemoving:Connect(onPlayerRemoving)
+Players.PlayerAdded:Connect(PlayerSession.Join)
+Players.PlayerRemoving:Connect(PlayerSession.Leave)
 for _, player in Players:GetPlayers() do
-	task.spawn(onPlayerAdded, player)
+	task.spawn(PlayerSession.Join, player)
 end

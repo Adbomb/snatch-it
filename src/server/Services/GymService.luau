@@ -86,7 +86,7 @@ local function train(player: Player)
 	if strength then
 		player:SetAttribute("Strength", strength)
 		CarryService.RefreshSpeed(player)
-		Remotes.Get(Remotes.Names.GymGain):FireClient(player, gain)
+		Remotes.FireClient(Remotes.Names.GymGain, player, gain)
 	end
 end
 
@@ -99,17 +99,22 @@ local function hintGuest(player: Player, owner: Player)
 	Notify.Send(player, ("Это гантель игрока %s — качаться можно только на своей"):format(owner.DisplayName))
 end
 
+-- Такт качания одного игрока: владелец в своём поле с пустыми руками качается, гость — получает подсказку.
+local function tickPlayer(player: Player)
+	local root = Validate.GetLiveRoot(player)
+	local plot = root and fieldAt(root.Position)
+	if plot and plot.owner == player then
+		if player:GetAttribute("CarryingItemId") == nil then
+			train(player)
+		end
+	elseif plot and plot.owner then
+		hintGuest(player, plot.owner)
+	end
+end
+
 local function tick()
 	for _, player in Players:GetPlayers() do
-		local root = Validate.GetLiveRoot(player)
-		local plot = root and fieldAt(root.Position)
-		if plot and plot.owner == player then
-			if player:GetAttribute("CarryingItemId") == nil then
-				train(player)
-			end
-		elseif plot and plot.owner then
-			hintGuest(player, plot.owner)
-		end
+		tickPlayer(player)
 	end
 end
 
@@ -182,5 +187,8 @@ function GymService.Init()
 		end
 	end)
 end
+
+-- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки и такт.
+GymService.Handlers = { Upgrade = upgrade, TickPlayer = tickPlayer }
 
 return GymService
