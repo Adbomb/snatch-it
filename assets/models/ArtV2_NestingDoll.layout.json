@@ -1,0 +1,156 @@
+{
+ "Art_NestingDoll": {
+  "parts": {
+   "red": {
+    "center": [
+     0.171,
+     1.053,
+     -0.002
+    ],
+    "size": [
+     2.621,
+     2.054,
+     1.505
+    ],
+    "color": "D8343A",
+    "material": "SmoothPlastic",
+    "triangles": 4360
+   },
+   "gold": {
+    "center": [
+     0.185,
+     0.746,
+     -0.0
+    ],
+    "size": [
+     2.55,
+     0.668,
+     1.42
+    ],
+    "color": "E9A825",
+    "material": "SmoothPlastic",
+    "triangles": 152
+   },
+   "darkred": {
+    "center": [
+     0.159,
+     0.05,
+     -0.0
+    ],
+    "size": [
+     2.678,
+     0.1,
+     1.58
+    ],
+    "color": "A82230",
+    "material": "SmoothPlastic",
+    "triangles": 152
+   },
+   "yellow": {
+    "center": [
+     0.223,
+     1.629,
+     -0.13
+    ],
+    "size": [
+     2.366,
+     2.342,
+     1.54
+    ],
+    "color": "F2B73A",
+    "material": "SmoothPlastic",
+    "triangles": 2802
+   },
+   "cream": {
+    "center": [
+     0.197,
+     1.401,
+     -0.509
+    ],
+    "size": [
+     2.493,
+     2.498,
+     0.522
+    ],
+    "color": "FFF1DC",
+    "material": "SmoothPlastic",
+    "triangles": 1420
+   },
+   "brown": {
+    "center": [
+     0.295,
+     1.843,
+     -0.525
+    ],
+    "size": [
+     2.011,
+     1.615,
+     0.479
+    ],
+    "color": "6B3A22",
+    "material": "SmoothPlastic",
+    "triangles": 584
+   },
+   "black": {
+    "center": [
+     0.327,
+     1.685,
+     -0.528
+    ],
+    "size": [
+     1.854,
+     1.53,
+     0.473
+    ],
+    "color": "1C1D22",
+    "material": "SmoothPlastic",
+    "triangles": 304
+   },
+   "blue": {
+    "center": [
+     0.374,
+     1.701,
+     -0.551
+    ],
+    "size": [
+     1.739,
+     1.437,
+     0.468
+    ],
+    "color": "BFE4FF",
+    "material": "SmoothPlastic",
+    "triangles": 432
+   },
+   "pink": {
+    "center": [
+     0.305,
+     1.262,
+     -0.576
+    ],
+    "size": [
+     1.961,
+     1.785,
+     0.568
+    ],
+    "color": "F08BB4",
+    "material": "SmoothPlastic",
+    "triangles": 1040
+   },
+   "green": {
+    "center": [
+     0.318,
+     0.589,
+     -0.582
+    ],
+    "size": [
+     1.896,
+     0.641,
+     0.525
+    ],
+    "color": "4CB848",
+    "material": "SmoothPlastic",
+    "triangles": 456
+   }
+  }
+ }
+}

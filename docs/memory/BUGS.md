@@ -97,3 +97,6 @@
   CLI — `~/.local/bin/claude.exe`); инструменты появляются только в новой сессии. В старой сессии тот же сервер
   можно вызвать по stdio (scratchpad `mcp_probe.py`) — проверено: `execute_blender_code` создаёт и удаляет объект.
 - `ServerStorage.ImportedModels` Rojo не трогает: уточка удалена оттуда через MCP 2026-10-31 (сохранить место).
+- Предпросмотр модели из Blender в Studio без импорта FBX: данные меша → временный модуль в src (Rojo) →
+  `AssetService:CreateEditableMesh` + `CreateMeshPartAsync(Content.fromObject(em))` в Edit. Меш НЕ центрируется:
+  все детали ставить в одну точку (CFrame начала модели), не в центр габаритов. Модуль и детали — удалить.
