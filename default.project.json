@@ -74,6 +74,16 @@
 					"RoughnessMap": "rbxassetid://86272303409120",
 					"StudsPerTile": 8
 				}
+			},
+			"LegoSquaresArt": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://89532853999247",
+					"NormalMap": "rbxassetid://131709166848159",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 2.4
+				}
 			}
 		},
 		"ReplicatedStorage": {
