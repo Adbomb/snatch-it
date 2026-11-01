@@ -106,8 +106,20 @@
 - SurfaceAppearance (ColorMap/NormalMap/RoughnessMap/MetalnessMap) работает на MeshPart из EditableMesh с UV
   (`AddUV` + `SetFaceUVs`), свойства пишутся из MCP в Edit. HttpService в Edit через MCP недоступен (HttpEnabled
   выключен) — данные мешей только через временный модуль Rojo.
-- Rojo 7.7.1 падает, если удалить папку в `src` во время `rojo serve` (change_processor.rs:179) — перезапустить.
-  Плагин после перезапуска сервера переподключается кнопкой Connect (всплывает окно Rojo в окне вида Studio).
+- Rojo «постоянно отключается» (разобрано 2026-11-01), три причины:
+  1) `rojo serve` запускался фоновой задачей сессии Claude и умирал вместе с ней (сжатие контекста, конец сессии,
+     остановка задачи). Теперь сервер держит `scripts/rojo-serve.ps1` — отдельный процесс (запуск через
+     `Invoke-CimMethod Win32_Process Create`, чтобы не зависеть от сессии), перезапускает Rojo через 2 с, журнал
+     `%TEMP%\snatch-it-rojo.log`. Из сессии Claude `rojo serve` не запускать.
+  2) Rojo 7.7.1 (последний выпуск) падает при удалении ПАПКИ в `src` во время работы: для каждого файла ищет уже
+     удалённую родительскую папку (`change_processor.rs:179`, `canonicalize(parent).unwrap()`). Удаление файлов —
+     безопасно. Правило: сначала файлы, через ≥ 1 с — пустую папку (проверено). `git checkout`/`stash`, которые
+     удаляют папки, тоже роняют сервер — его поднимет `rojo-serve.ps1`.
+  3) Плагин сам не переподключается к перезапущенному серверу посреди сессии: `autoReconnect` (выключен по
+     умолчанию, включён 2026-11-01 в настройках плагина) работает только при открытии места; в остальное время
+     раз в 30 с всплывает «Project 'snatch-it' is serving… Connect» — нажать Connect (через MCP-клик или вручную).
+  Плагин в Studio был 7.7.0 при сервере 7.7.1 — `rojo plugin install` поставил 7.7.1 (загрузится после перезапуска
+  Studio).
 - Только что загруженные картинки (`upload_image`) Roblox обрабатывает ~20–30 с: SurfaceAppearance сначала серый
   («Asset content representation is being generated») — снимки делать после паузы.
 - Blender 5.2: запекание цвета для SurfaceAppearance — через EMIT (цвет материала → Emission), а не DIFFUSE: у металла
