@@ -7,7 +7,8 @@
 скруглённые квадраты-контуры (тонкое вдавленное кольцо, шаг RING["step"]) одного масштаба на всей модели: проекция по
 осям объекта, квадраты обрезаются краями деталей. Мелкие детали-накладки — гладкие.
 Модель — один меш; цвет, окклюзия и нормали запекаются в карты TEX × TEX для SurfaceAppearance; шероховатость общая
-(константа 0.5, уже загружена: ROUGHNESS_ID).
+(константа 0.5, уже загружена: ROUGHNESS_ID). Подвижный персонаж (босс) — тот же меш с группами деталей (Art.group):
+после запекания split_groups режет его на части с точками вращения для Motor6D (D18).
 
 Координаты Blender: z вверх, лицевая сторона смотрит в -y, 1 единица = 1 стад, низ модели на z = 0.
 Studio: (x, y, z) Blender → (x, z, -y) Roblox; экспорт FBX (-Z вперёд, Y вверх).
@@ -219,7 +220,9 @@ class Art:
         self.name = name
         self.ring_z0 = ring_z0  # высота центра ряда квадратов D39
         self.colors = {}  # ключ → (hex, кольца?)
-        self.parts = []  # (bmesh, ключ, тело)
+        self.parts = []  # (bmesh, ключ, тело, группа)
+        self.group = None  # подвижная часть, к которой идут следующие детали (у предметов — одна, None)
+        self.transform = None  # Matrix: сдвиг всех следующих деталей (поднять голову, не переписывая координаты)
 
     def paint(self, key, code, rings=False):
         self.colors[key] = (code, rings)
@@ -228,11 +231,13 @@ class Art:
         """planes = None — деталь невыпуклая: она не прячет чужие грани и не проходит проверку нормалей."""
         if key not in self.colors:
             raise KeyError(f"{self.name}: нет цвета {key}")
+        if self.transform is not None:
+            matrix = self.transform @ (matrix if matrix is not None else Matrix.Identity(4))
         if matrix is not None:
             bmesh.ops.transform(bm, matrix=matrix, verts=bm.verts)
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         solid = None if planes is None else _Solid(planes, matrix if matrix is not None else Matrix.Identity(4))
-        self.parts.append((bm, key, solid))
+        self.parts.append((bm, key, solid, self.group))
 
     def extrude(self, key, pts, a0, a1, axis="y", bevel=0.0, matrix=None):
         """Любой простой (в том числе невыпуклый, ступенчатый) многоугольник, вытянутый по оси: цельная деталь
@@ -281,6 +286,30 @@ class Art:
         _bevel(bm, min(bevel, (x1 - x0) / 3, (y1 - y0) / 3, (z1 - z0) / 3))
         self._add(bm, key, planes, matrix)
 
+    def frustum(self, key, bottom, top, z0, z1, axis="z", bevel=BEVEL, matrix=None):
+        """Усечённая пирамида: прямоугольник bottom = (x0, x1, y0, y1) на z0 и top на z1 (клыки, шипы, пирамиды).
+        Верх нулевого размера — острая вершина."""
+        bm = bmesh.new()
+        lo = [bm.verts.new((x, y, z0)) for x, y in ((bottom[0], bottom[2]), (bottom[1], bottom[2]),
+                                                     (bottom[1], bottom[3]), (bottom[0], bottom[3]))]
+        bm.faces.new(lo)
+        if top[1] - top[0] < 1e-6 and top[3] - top[2] < 1e-6:
+            apex = bm.verts.new((top[0], top[2], z1))
+            for i in range(4):
+                bm.faces.new((lo[i], lo[(i + 1) % 4], apex))
+        else:
+            hi = [bm.verts.new((x, y, z1)) for x, y in ((top[0], top[2]), (top[1], top[2]), (top[1], top[3]),
+                                                         (top[0], top[3]))]
+            bm.faces.new(hi)
+            for i in range(4):
+                j = (i + 1) % 4
+                bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+        bmesh.ops.transform(bm, matrix=AXES[axis], verts=bm.verts)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        planes = _convex_planes(bm)
+        _bevel(bm, bevel)
+        self._add(bm, key, planes, matrix)
+
     def prism(self, key, pts, a0, a1, axis="z", bevel=BEVEL, matrix=None):
         """Выпуклый многоугольник pts (в плоскости, поперечной оси axis), вытянутый по оси от a0 до a1."""
         bm = bmesh.new()
@@ -317,13 +346,13 @@ class Art:
     def build(self, collection):
         """Убирает грани, целиком спрятанные в других деталях, собирает один меш, проверяет совпадающие грани."""
         boxes = []
-        for bm, _, _ in self.parts:
+        for bm, _, _, _ in self.parts:
             co = [v.co for v in bm.verts]
             boxes.append((Vector([min(c[i] for c in co) for i in range(3)]),
                           Vector([max(c[i] for c in co) for i in range(3)])))
         # Нормали: детали выпуклые, поэтому вся деталь должна лежать позади каждой своей грани.
         flipped = degenerate = 0
-        for bm, _, solid in self.parts:
+        for bm, _, solid, _ in self.parts:
             for f in bm.faces:
                 c = f.calc_center_median()
                 if solid is not None and max(f.normal.dot(v.co - c) for v in bm.verts) > 1e-4:
@@ -331,14 +360,15 @@ class Art:
                 if f.calc_area() < 1e-7:
                     degenerate += 1
         hidden = 0
-        for i, (bm, _, _) in enumerate(self.parts):
+        for i, (bm, _, _, group) in enumerate(self.parts):
             dead = []
             for f in bm.faces:
                 pts = [v.co for v in f.verts]
                 lo = Vector([min(p[k] for p in pts) for k in range(3)])
                 hi = Vector([max(p[k] for p in pts) for k in range(3)])
-                for j, (_, _, solid) in enumerate(self.parts):
-                    if j == i or solid is None or any(lo[k] > boxes[j][1][k] + EPS or hi[k] < boxes[j][0][k] - EPS for k in range(3)):
+                for j, (_, _, solid, other) in enumerate(self.parts):
+                    # подвижные части прячут грани только внутри себя: в другой позе грань откроется
+                    if j == i or solid is None or other != group or any(lo[k] > boxes[j][1][k] + EPS or hi[k] < boxes[j][0][k] - EPS for k in range(3)):
                         continue
                     if all(solid.contains(p) for p in pts):
                         dead.append(f)
@@ -353,12 +383,14 @@ class Art:
                         else _flat_material(f"{self.name}_{key}", code))
         whole = bmesh.new()
         owner = []  # номер детали у каждой грани итогового меша
-        for i, (bm, key, _) in enumerate(self.parts):
+        self.face_groups = []  # подвижная часть у каждой грани
+        for i, (bm, key, _, group) in enumerate(self.parts):
             for f in bm.faces:
                 f.material_index = keys.index(key)
             me = bpy.data.meshes.new("_part")
             bm.to_mesh(me)
             owner += [i] * len(me.polygons)
+            self.face_groups += [group] * len(me.polygons)
             whole.from_mesh(me)
             bpy.data.meshes.remove(me)
             bm.free()
@@ -500,6 +532,34 @@ def _save_png(path, arr):
     img.filepath_raw = path
     img.file_format = "PNG"
     img.save()
+
+
+def split_groups(obj, art, pivots, collection):
+    """Запечённый меш → отдельные объекты по группам art.face_groups; начало координат каждого — его точка вращения
+    pivots[группа] (Vector в координатах модели). Материал общий. Исходный объект удаляется."""
+    out = {}
+    me = obj.data
+    for group, pivot in pivots.items():
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.faces.ensure_lookup_table()
+        dead = [f for f in bm.faces if art.face_groups[f.index] != group]
+        bmesh.ops.delete(bm, geom=dead, context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+        bmesh.ops.translate(bm, vec=-Vector(pivot), verts=bm.verts)
+        part = bpy.data.meshes.new(f"{obj.name}_{group}")
+        bm.to_mesh(part)
+        bm.free()
+        part.materials.append(me.materials[0])
+        o = bpy.data.objects.new(f"{obj.name}_{group}", part)
+        o.location = pivot
+        collection.objects.link(o)
+        out[group] = o
+    missing = set(art.face_groups) - set(pivots)
+    if missing:
+        raise KeyError(f"{obj.name}: нет точек вращения для {missing}")
+    bpy.data.objects.remove(obj)
+    return out
 
 
 def export_fbx(objs, path):
