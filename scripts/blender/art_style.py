@@ -5,7 +5,8 @@
 
 Стиль D39: блоки с острыми рёбрами (фаска BEVEL в один сегмент), яркие чистые цвета; на крупных деталях — отдельные
 скруглённые квадраты-контуры (тонкое вдавленное кольцо, шаг RING["step"]) одного масштаба на всей модели: проекция по
-осям объекта, квадраты обрезаются краями деталей. Мелкие детали-накладки — гладкие.
+осям объекта, квадраты обрезаются краями деталей. Мелкие детали-накладки — гладкие. Картина — изображение на холсте
+(paint_image), его остров в развёртке крупнее остальных (uv_boost), чтобы картина была чёткой.
 Модель — один меш; цвет, окклюзия и нормали запекаются в карты TEX × TEX для SurfaceAppearance; шероховатость общая
 (константа 0.5, уже загружена: ROUGHNESS_ID). Подвижный персонаж (босс) — тот же меш с группами деталей (Art.group):
 после запекания split_groups режет его на части с точками вращения для Motor6D (D18).
@@ -129,6 +130,34 @@ def _ring_material(name, code, z0):
     return mat
 
 
+def _image_material(name, path, window):
+    """Изображение спереди (проекция по оси y) в окно (x0, x1, z0, z1): окно заполняется целиком, пропорции
+    изображения сохраняются, лишнее обрезается поровну с двух сторон."""
+    mat = _flat_material(name, "FFFFFF")
+    nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    img = bpy.data.images.load(path, check_existing=True)
+    img.colorspace_settings.name = "sRGB"
+    x0, x1, z0, z1 = window
+    aspect = img.size[0] / img.size[1]
+    img_w = max(x1 - x0, (z1 - z0) * aspect)
+    img_h = img_w / aspect
+    p = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(nt.nodes.new("ShaderNodeTexCoord").outputs["Object"], p.inputs["Vector"])
+    u = _math(nt, "ADD", _math(nt, "DIVIDE", _math(nt, "SUBTRACT", p.outputs["X"], (x0 + x1) / 2), img_w), 0.5)
+    v = _math(nt, "ADD", _math(nt, "DIVIDE", _math(nt, "SUBTRACT", p.outputs["Z"], (z0 + z1) / 2), img_h), 0.5)
+    uv = nt.nodes.new("ShaderNodeCombineXYZ")
+    nt.links.new(u, uv.inputs["X"])
+    nt.links.new(v, uv.inputs["Y"])
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    tex.extension = "EXTEND"
+    nt.links.new(uv.outputs["Vector"], tex.inputs["Vector"])
+    nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(tex.outputs["Color"], bsdf.inputs["Emission Color"])
+    return mat
+
+
 # ── Геометрия ────────────────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -220,12 +249,22 @@ class Art:
         self.name = name
         self.ring_z0 = ring_z0  # высота центра ряда квадратов D39
         self.colors = {}  # ключ → (hex, кольца?)
+        self.images = {}  # ключ → (путь к изображению, окно (x0, x1, z0, z1) на лицевой плоскости)
+        self.uv_boost = {}  # ключ → во сколько раз крупнее его острова в развёртке (холст картины — чётче)
         self.parts = []  # (bmesh, ключ, тело, группа)
         self.group = None  # подвижная часть, к которой идут следующие детали (у предметов — одна, None)
         self.transform = None  # Matrix: сдвиг всех следующих деталей (поднять голову, не переписывая координаты)
 
     def paint(self, key, code, rings=False):
         self.colors[key] = (code, rings)
+
+    def paint_image(self, key, path, window, boost=1.0):
+        """Изображение (картина) на гранях детали key: проекция спереди, окно (x0, x1, z0, z1) заполняется целиком
+        с сохранением пропорций (лишнее по краям обрезается)."""
+        self.colors[key] = ("FFFFFF", False)
+        self.images[key] = (path, window)
+        if boost != 1.0:
+            self.uv_boost[key] = boost
 
     def _add(self, bm, key, planes, matrix):
         """planes = None — деталь невыпуклая: она не прячет чужие грани и не проходит проверку нормалей."""
@@ -379,8 +418,11 @@ class Art:
         mats = []
         for key in keys:
             code, rings = self.colors[key]
-            mats.append(_ring_material(f"{self.name}_{key}", code, self.ring_z0) if rings
-                        else _flat_material(f"{self.name}_{key}", code))
+            if key in self.images:
+                mats.append(_image_material(f"{self.name}_{key}", *self.images[key]))
+            else:
+                mats.append(_ring_material(f"{self.name}_{key}", code, self.ring_z0) if rings
+                            else _flat_material(f"{self.name}_{key}", code))
         whole = bmesh.new()
         owner = []  # номер детали у каждой грани итогового меша
         self.face_groups = []  # подвижная часть у каждой грани
@@ -441,6 +483,42 @@ def _select_only(obj):
     bpy.context.view_layer.objects.active = obj
 
 
+def _boost_islands(obj, art):
+    """Острова развёртки граней с ключами art.uv_boost увеличиваются вокруг своих центров (до упаковки): им
+    достаётся больше текстуры. Остров — грани, связанные общими вершинами с одинаковыми UV."""
+    keys = list(art.colors)
+    factor = {keys.index(k): f for k, f in art.uv_boost.items()}
+    bm = bmesh.from_edit_mesh(obj.data)
+    uvl = bm.loops.layers.uv.active
+    faces = [f for f in bm.faces if f.material_index in factor]
+    parent = {f.index: f.index for f in faces}
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    seen = {}  # (вершина, UV) → грань
+    for f in faces:
+        for loop in f.loops:
+            key = (loop.vert.index, round(loop[uvl].uv.x, 5), round(loop[uvl].uv.y, 5))
+            if key in seen:
+                parent[root(f.index)] = root(seen[key])
+            else:
+                seen[key] = f.index
+    islands = {}
+    for f in faces:
+        islands.setdefault(root(f.index), []).append(f)
+    for group in islands.values():
+        loops = [loop for f in group for loop in f.loops]
+        center = sum((loop[uvl].uv for loop in loops), Vector((0.0, 0.0))) / len(loops)
+        k = factor[group[0].material_index]
+        for loop in loops:
+            loop[uvl].uv = center + (loop[uvl].uv - center) * k
+    bmesh.update_edit_mesh(obj.data)
+
+
 def bake(obj, art, texdir, prefix):
     """Развёртка, запекание цвета (эмиссия), окклюзии и нормалей, итоговые карты и материал для превью и FBX.
     Пишет <prefix>_color.png и <prefix>_normal.png; возвращает статистику развёртки."""
@@ -452,6 +530,8 @@ def bake(obj, art, texdir, prefix):
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.uv.smart_project(angle_limit=math.radians(50), island_margin=0.0, area_weight=0.0, scale_to_bounds=False)
+    if art.uv_boost:
+        _boost_islands(obj, art)
     bpy.ops.uv.pack_islands(rotate=True, margin_method="FRACTION", margin=0.004, shape_method="CONCAVE")
     bpy.ops.object.mode_set(mode="OBJECT")
     scene.render.engine = "CYCLES"
