@@ -133,6 +133,9 @@
   Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 ojo-serve.ps1`).
   Плагин: всплывающее «You synced project 'snatch-it'… Connect» → Connect → окно «Confirm sync» → Accept.
+- Загрузить меш из Studio кодом нельзя: `AssetService:CreateAssetAsync` (EditableMesh → Mesh) в Studio отвечает
+  «CreateAssetAsync and CreateAssetVersionAsync are not available yet» (проверено 2026-11-02). Меши — только
+  File → Import 3D руками владельца; потом `scripts/bind_meshes.py` вписывает MeshId.
 - `execute_luau` из MCP в Server: `require` модулей даёт ОТДЕЛЬНУЮ копию (без участков и игроков) — бой, выход и
   прочее с данными вызывать только через `ServerStorage.DevTools` (BindableFunction), как и тесты.
 - Временные показы `workspace.__WondersPreview` / `__BossPreview` в Play — коробки; Main.server удаляет их при старте.
