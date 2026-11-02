@@ -141,6 +141,14 @@ ojo-serve.ps1`).
   (Из MCP в Edit писать можно — поэтому предпросмотры работали.)
 - Импорт FBX в Studio (File → Import 3D) ставит меши лицом в −Z (повёрнуты на 180° от Blender, где лицо в −y): у
   предметов и пса turn = 0, лицо совпадает с LookVector. Части пса после импорта: `Boss1_Dog{Head,Body}_<Часть>`.
+- SurfaceGui: TextScaled не крупнее 100 px — при большой PixelsPerStud крупная надпись выходит мелкой; для надписей
+  в мире 10–12 px на стад. На грани Top холст идёт вдоль оси Z детали (длинная сторона надписи — по Z).
+- `string.upper` в Luau не меняет кириллицу — `Shared/TextCase.Upper`.
+- Material ForceField на большой стене почти не виден в лоб (только кромки) — для «сплошного» поля нужен
+  занавес-градиент SurfaceGui под ним.
+- screen_capture сразу после переноса камеры иногда снимает без SurfaceGui — повторить снимок; параллельные
+  снимки отваливаются по таймауту. start_stop_play может зависнуть («Start play hasn't finished yet») — F5 в окне
+  Studio запускает Play, MCP его подхватывает.
 - `execute_luau` из MCP в Server: `require` модулей даёт ОТДЕЛЬНУЮ копию (без участков и игроков) — бой, выход и
   прочее с данными вызывать только через `ServerStorage.DevTools` (BindableFunction), как и тесты.
 - Временные показы `workspace.__WondersPreview` / `__BossPreview` в Play — коробки; Main.server удаляет их при старте.
