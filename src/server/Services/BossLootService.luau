@@ -1,8 +1,10 @@
 -- Предметы у боссов (D37): у каждого из 10 боссов 4 слота на постаментах вокруг него (MapLayout.ArtSlots). Каждый
 -- слот независимо выбирает редкость по шансам группы босса (Progression.BossLoot), затем предмет этой редкости из
 -- коллекции босса (Config/Items). После каждой ночи (на рассвете) все 4 слота заполняются заново — нетронутые
--- тоже, новые uid. Забранный предмет освобождает слот до следующего рассвета. Забрать предмет — после победы над
--- боссом (этап 4); пока боя нет — только в тестовом режиме Studio (GameConfig.Bosses.FreeTakeInStudio).
+-- тоже, новые uid. Забранный предмет освобождает слот до следующего рассвета. Забрать предмет — только победой
+-- над боссом: «Забрать» у предмета начинает бой (BattleService через OnTakeRequest), на время боя предмет закреплён
+-- за бойцом, подсказки у занятого босса выключены. У боссов без боя (пока 2–10) забрать без боя можно только в
+-- тестовом режиме Studio (GameConfig.Bosses.FreeTakeInStudio), в опубликованной игре — нельзя.
 -- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
 -- Зависит от ItemRegistry, CarryService, TimeService, Util/ItemFactory, Util/Validate, Util/Notify, Util/Log,
 -- World/MapLayout, Shared/GameTime, Config.
@@ -25,7 +27,7 @@ local Notify = require(Server.Util.Notify)
 local Validate = require(Server.Util.Validate)
 local MapLayout = require(Server.World.MapLayout)
 
-type Slot = { boss: number, slot: number, point: CFrame, uid: string? }
+type Slot = { boss: number, slot: number, point: CFrame, uid: string?, reservedBy: any? }
 
 local loot = GameConfig.Progression.BossLoot
 local slots: { [number]: { [number]: Slot } } = {}
@@ -36,6 +38,10 @@ local itemsFolder: Folder
 local random = Random.new()
 
 local BossLootService = {}
+
+-- Бой за предмет: задаёт BattleService. Возвращает true, если просьбу «Забрать» взял на себя бой этого босса.
+BossLootService.OnTakeRequest = nil :: ((player: Player, boss: number, slot: number) -> boolean)?
+local closed: { [number]: boolean } = {} -- босс занят боем или возвращается: подсказки выключены
 
 -- Шансы редкостей (%) для босса boss.
 function BossLootService.Chances(boss: number): { [string]: number }
@@ -85,6 +91,7 @@ local function addPrompt(part: BasePart, entry: Slot)
 	prompt.HoldDuration = GameConfig.Bosses.TakeHold
 	prompt.MaxActivationDistance = GameConfig.Bosses.TakeDistance
 	prompt.RequiresLineOfSight = false
+	prompt.Enabled = not closed[entry.boss]
 	prompt.Parent = part
 	prompt.Triggered:Connect(function(player)
 		tryTake(player, entry)
@@ -104,7 +111,15 @@ local function fill(entry: Slot)
 		end
 		entry.uid = nil
 	end
-	local itemId = BossLootService.ChooseItem(entry.boss, BossLootService.RollRarity(entry.boss))
+	entry.reservedBy = nil
+	local rarity = BossLootService.RollRarity(entry.boss)
+	local itemId = BossLootService.ChooseItem(entry.boss, rarity)
+	-- Черновые коллекции боссов 2–10 неполные: нет нужной редкости — ближайшая ниже.
+	local rank = Rarities.Rank(rarity)
+	while not itemId and rank > 1 do
+		rank -= 1
+		itemId = BossLootService.ChooseItem(entry.boss, Rarities.Order[rank])
+	end
 	if not itemId then
 		Log.Warn("BossLootService", ("Босс %d: нет предмета нужной редкости"):format(entry.boss))
 		return
@@ -129,10 +144,40 @@ local function refresh()
 	Log.Debug("BossLootService", "Слоты всех боссов обновлены")
 end
 
+-- Отдать предмет слота игроку в руки (после победы или в тестовом режиме). false — не получилось (руки заняты,
+-- предмета уже нет); предмет тогда остаётся у босса.
+local function give(player: Player, entry: Slot): boolean
+	local uid = entry.uid
+	local item = uid and ItemRegistry.Get(uid)
+	if not uid or not item or item.state ~= "AtBoss" or not item.part then
+		return false
+	end
+	if not ItemRegistry.Transition(uid, "Carried", { carrier = player }) then
+		return false
+	end
+	entry.uid = nil -- слот пуст до рассвета
+	entry.reservedBy = nil
+	local prompt = item.part:FindFirstChild("TakePrompt")
+	if prompt then
+		prompt:Destroy()
+	end
+	CarryService.RegisterMapItem(uid, item.part)
+	CarryService.AttachCarried(player, uid)
+	return true
+end
+
 tryTake = function(player: Player, entry: Slot)
 	local uid = entry.uid
 	local item = uid and ItemRegistry.Get(uid)
 	if not uid or not item or item.state ~= "AtBoss" or not item.part then
+		return
+	end
+	if closed[entry.boss] then
+		Notify.Send(player, "Босс занят: дождитесь конца боя", "Stop")
+		return
+	end
+	local hook = BossLootService.OnTakeRequest
+	if hook and hook(player, entry.boss, entry.slot) then
 		return
 	end
 	if not BossLootService.FreeTakeAllowed() then
@@ -149,16 +194,65 @@ tryTake = function(player: Player, entry: Slot)
 	if not Validate.IsNear(player, item.part.Position, GameConfig.Bosses.TakeDistance) then
 		return
 	end
-	if not ItemRegistry.Transition(uid, "Carried", { carrier = player }) then
-		return
+	give(player, entry)
+end
+
+-- Предмет в слоте: uid и его Part (nil — слот пуст).
+function BossLootService.SlotItem(boss: number, slot: number): (string?, BasePart?)
+	local entry = slots[boss] and slots[boss][slot]
+	local uid = entry and entry.uid
+	local item = uid and ItemRegistry.Get(uid)
+	if not uid or not item or item.state ~= "AtBoss" then
+		return nil, nil
 	end
-	entry.uid = nil -- слот пуст до рассвета
-	local prompt = item.part:FindFirstChild("TakePrompt")
-	if prompt then
-		prompt:Destroy()
+	return uid, item.part
+end
+
+-- Подсказки «Забрать» у всех предметов босса: выключены, пока босс занят боем или возвращается.
+function BossLootService.SetOpen(boss: number, open: boolean)
+	closed[boss] = if open then nil else true
+	for _, entry in slots[boss] or {} do
+		local item = entry.uid and ItemRegistry.Get(entry.uid)
+		local prompt = item and item.part and item.part:FindFirstChild("TakePrompt")
+		if prompt then
+			(prompt :: ProximityPrompt).Enabled = open
+		end
 	end
-	CarryService.RegisterMapItem(uid, item.part)
-	CarryService.AttachCarried(player, uid)
+end
+
+function BossLootService.IsOpen(boss: number): boolean
+	return not closed[boss]
+end
+
+-- Закрепить предмет слота за бойцом на время боя (другие его не заберут).
+function BossLootService.Reserve(boss: number, slot: number, player: any): boolean
+	local entry = slots[boss] and slots[boss][slot]
+	if not entry or not entry.uid or entry.reservedBy then
+		return false
+	end
+	entry.reservedBy = player
+	return true
+end
+
+-- Бой закончился без победы: предмет снова свободен (он не покидал постамент).
+function BossLootService.Release(boss: number, slot: number)
+	local entry = slots[boss] and slots[boss][slot]
+	if entry then
+		entry.reservedBy = nil
+	end
+end
+
+-- Победа: предмет слота — в руки победителю. false — не получилось, предмет остаётся у босса.
+function BossLootService.Award(boss: number, slot: number, player: Player): boolean
+	local entry = slots[boss] and slots[boss][slot]
+	if not entry or entry.reservedBy ~= player then
+		return false
+	end
+	if not give(player, entry) then
+		entry.reservedBy = nil
+		return false
+	end
+	return true
 end
 
 -- D10: через LooseDespawnTime секунд без касания брошенный предмет исчезает, последние LooseBlinkTime мигает.
@@ -207,6 +301,9 @@ end
 
 function BossLootService.Init(world: Folder)
 	for id, def in Items do
+		if def.legacy then
+			continue -- прежние предметы — только для старых сохранений
+		end
 		pools[def.boss] = pools[def.boss] or {}
 		pools[def.boss][def.rarity] = pools[def.boss][def.rarity] or {}
 		table.insert(pools[def.boss][def.rarity], id)

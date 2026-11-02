@@ -179,12 +179,15 @@ local function buildHud()
 	end
 	local strength = pill(0, nil)
 	local coins = pill(1, UITokens.Gradients.Coin)
+	local income = pill(2, UITokens.Gradients.Go) -- общий доход экспонатов на витринах (IncomeService)
 	local function update()
 		strength.Text = ("%s %s"):format(BICEPS, NumberFormat.Short(player:GetAttribute("Strength") or 0))
 		coins.Text = "$" .. NumberFormat.Short(player:GetAttribute("Coins") or 0)
+		income.Text = ("+%s/сек"):format(NumberFormat.Short(player:GetAttribute("Income") or 0))
 	end
 	player:GetAttributeChangedSignal("Strength"):Connect(update)
 	player:GetAttributeChangedSignal("Coins"):Connect(update)
+	player:GetAttributeChangedSignal("Income"):Connect(update)
 	update()
 end
 

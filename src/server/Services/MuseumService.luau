@@ -1,7 +1,8 @@
 -- Музей игрока: подсказка «Выставить» на витринах, запись экспоната в профиль, восстановление при входе.
 -- Свои экспонаты с витрины в руки не берутся (D2). Подсказки в чужом музее прячет клиент,
 -- но каждый обработчик на сервере сам проверяет владельца, состояние и расстояние.
--- Зависит от ItemRegistry, CarryService, DataService, PlotService, Util/*, Config.
+-- Над экспонатом — его доход «+X/сек» (IncomeService.Label).
+-- Зависит от ItemRegistry, CarryService, DataService, IncomeService, PlotService, Util/*, Config.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,6 +13,7 @@ local Items = require(ReplicatedStorage.Shared.Config.Items)
 local CarryService = require(ServerScriptService.Server.Services.CarryService)
 local DataService = require(ServerScriptService.Server.Services.DataService)
 local ItemRegistry = require(ServerScriptService.Server.Services.ItemRegistry)
+local IncomeService = require(ServerScriptService.Server.Services.IncomeService)
 local PlotService = require(ServerScriptService.Server.Services.PlotService)
 local ItemFactory = require(ServerScriptService.Server.Util.ItemFactory)
 local Log = require(ServerScriptService.Server.Util.Log)
@@ -66,6 +68,7 @@ function MuseumService.PlaceExhibit(part: BasePart, plot: PlotService.Plot, slot
 	part:SetAttribute("Slot", slot)
 	part.Parent = plot.exhibits
 	showcase:SetAttribute("Occupied", true)
+	IncomeService.Label(part, part:GetAttribute("ItemId")) -- «+X/сек» над экспонатом (D40)
 end
 
 -- Презентация после успешного размещения: событие владельцу и игрокам в радиусе ViewerRadius.

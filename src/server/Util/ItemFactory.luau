@@ -1,8 +1,9 @@
 -- Создаёт видимый предмет с подписью над ним (BillboardGui, цвет редкости из UI_KIT.md).
 -- Корень предмета — всегда один Part: с ним работают реестр, перенос, витрины и сохранение.
--- Если для предмета есть меш (Config/ItemModels), корень — невидимый хитбокс, а модель из Blender
--- («Visual», MeshPart) приварена к нему внутри. Иначе корень — сам цветной Part нужной формы.
--- Только внешний вид, без логики и состояний. Зависит от AssetService, Config/Items, Config/ItemModels, Config/UITokens.
+-- Если для предмета загружен меш (Config/ItemModels), корень — невидимый хитбокс по габаритам модели, а модель из
+-- Blender («Visual», MeshPart с SurfaceAppearance D39) приварена к нему внутри. Иначе корень — сам цветной Part
+-- нужной формы (заготовка до импорта). Только внешний вид, без логики и состояний.
+-- Зависит от AssetService, Config/Items, Config/ItemModels, Config/UITokens.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,29 +21,56 @@ local templates: { [string]: MeshPart } = {}
 
 local ItemFactory = {}
 
--- Загружает меши всех предметов из ItemModels один раз при старте (ждёт сеть), чтобы Create
--- дальше работал без задержек. Ошибка загрузки — предмет останется простым Part.
-function ItemFactory.Preload()
-	for itemId, model in ItemModels do
-		local ok, result = pcall(function()
-			return AssetService:CreateMeshPartAsync(Content.fromUri(model.mesh))
-		end)
-		if ok and result then
-			local mesh = result :: MeshPart
-			mesh.Name = VISUAL_NAME
-			mesh.TextureID = model.texture
-			mesh.Material = model.material
-			mesh.Size = model.meshSize * model.scale
-			mesh.Anchored = false
-			mesh.Massless = true
-			mesh.CanCollide = false
-			mesh.CanQuery = false
-			mesh.CanTouch = false
-			templates[itemId] = mesh
-		else
-			warn(("[ItemFactory] Меш %s не загрузился: %s"):format(itemId, tostring(result)))
-		end
+-- Меш предмета с картами D39 по описанию из ItemModels (ждёт сеть). nil — меша нет или он не загрузился.
+local function loadModel(itemId: string): MeshPart?
+	local model = ItemModels.Models[itemId]
+	if not model or not model.mesh then
+		return nil
 	end
+	local ok, result = pcall(function()
+		return AssetService:CreateMeshPartAsync(Content.fromUri(model.mesh :: string))
+	end)
+	if not ok or not result then
+		warn(("[ItemFactory] Меш %s не загрузился: %s"):format(itemId, tostring(result)))
+		return nil
+	end
+	local mesh = result :: MeshPart
+	mesh.Name = VISUAL_NAME
+	mesh.Size = model.size
+	mesh.Material = Enum.Material.SmoothPlastic -- цвет, кольца и тени — в SurfaceAppearance
+	mesh.Anchored = false
+	mesh.Massless = true
+	mesh.CanCollide = false
+	mesh.CanQuery = false
+	mesh.CanTouch = false
+	local look = Instance.new("SurfaceAppearance")
+	look.ColorMap = model.color
+	look.NormalMap = model.normal
+	look.RoughnessMap = ItemModels.Roughness
+	look.Parent = mesh
+	mesh:SetAttribute("Turn", model.turn or 0)
+	return mesh
+end
+
+-- Загружает меши всех предметов один раз при старте (параллельно, ждёт сеть), чтобы Create дальше работал без
+-- задержек. Ошибка загрузки — предмет останется заготовкой.
+function ItemFactory.Preload()
+	local pending = 0
+	for itemId in ItemModels.Models do
+		pending += 1
+		task.spawn(function()
+			templates[itemId] = loadModel(itemId)
+			pending -= 1
+		end)
+	end
+	while pending > 0 do
+		task.wait()
+	end
+end
+
+-- Есть ли у предмета загруженная модель (для тестов и проверок).
+function ItemFactory.HasModel(itemId: string): boolean
+	return templates[itemId] ~= nil
 end
 
 local function addLabel(part: BasePart, def: Items.ItemDef)
@@ -94,14 +122,15 @@ function ItemFactory.Create(itemId: string): Part
 		part.Transparency = 1
 		part.CastShadow = false
 		local visual = template:Clone()
-		visual.CFrame = part.CFrame
+		local turn = CFrame.Angles(0, math.rad(template:GetAttribute("Turn") or 0), 0)
+		visual.CFrame = part.CFrame * turn
 		visual.Parent = part
 		-- Weld (не WeldConstraint): жёстко держит модель в центре корня, даже когда закреплённый
 		-- корень переставляют через CFrame (WeldConstraint в этом случае модель не тянул).
 		local weld = Instance.new("Weld")
 		weld.Part0 = part
 		weld.Part1 = visual
-		weld.C0 = CFrame.identity
+		weld.C0 = turn
 		weld.C1 = CFrame.identity
 		weld.Parent = visual
 	else

@@ -1,6 +1,8 @@
 -- Серверные тесты на двух игроков (только Studio, в Play): владение участками, профили, запрет действий с чужими
 -- витринами, сундуком, хранилищем, гантелью и полем качалки, один носитель у предмета, повторный вход, перестройка
--- музея; время и ночь (этап 2 D37); предметы у боссов (этап 3). Игроки — Tests/TestPlayer с профилями в памяти
+-- музея; время и ночь (этап 2 D37); предметы у боссов (этап 3); босс 1 (D40): каталог из 20 предметов, модели,
+-- автобой (победа, поражение с отбросом, повтор без ожидания, один бой на босса, ночь, побег, сила), доход экспонатов
+-- и полный путь «победа → витрина → доход → повторный вход». Игроки — Tests/TestPlayer с профилями в памяти
 -- (ProfileStore.Mock): в DataStore ничего не пишется, участки берутся свободные (настоящий игрок не трогается).
 -- Вход и выход — тем же Services/PlayerSession, действия — теми же обработчиками, что вызывают подсказки
 -- (Handlers). Это серверная симуляция: подсказки на клиенте, интерфейс, сеть и физику персонажа она не
@@ -13,13 +15,20 @@ local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local Battle = require(ReplicatedStorage.Shared.Config.Battle)
+local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
+local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
+local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
 local Server = ServerScriptService.Server
+local BattleService = require(Server.Services.BattleService)
 local BossLootService = require(Server.Services.BossLootService)
+local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local GymService = require(Server.Services.GymService)
+local IncomeService = require(Server.Services.IncomeService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local MuseumService = require(Server.Services.MuseumService)
 local PlayerSession = require(Server.Services.PlayerSession)
@@ -32,7 +41,7 @@ local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
 local TestPlayer = require(Server.Tests.TestPlayer)
 
-local TEST_ITEM = "FolkWhistle" -- Common из коллекции босса 1 (D37)
+local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
 
 type Context = { track: (any) -> (), items: { string } }
@@ -82,7 +91,7 @@ local function countUid(uid: string): number
 end
 
 -- Предмет на карте в точке position (брошенный: Part, uid в реестре, подсказка «Поднять»).
-local function mapItem(ctx: Context, position: Vector3): (string, BasePart)
+local function mapItem(ctx: Context, position: Vector3, itemId: string?): (string, BasePart)
 	local folder = workspace:FindFirstChild(ITEMS_FOLDER)
 	if not folder then
 		folder = Instance.new("Folder")
@@ -90,30 +99,30 @@ local function mapItem(ctx: Context, position: Vector3): (string, BasePart)
 		folder.Archivable = false
 		folder.Parent = workspace
 	end
-	local part = ItemFactory.Create(TEST_ITEM)
+	local part = ItemFactory.Create(itemId or TEST_ITEM)
 	part.Anchored = true
 	part.CFrame = CFrame.new(position)
 	part.Parent = folder
-	local uid = ItemRegistry.CreateOnMap(TEST_ITEM, part)
+	local uid = ItemRegistry.CreateOnMap(itemId or TEST_ITEM, part)
 	CarryService.RegisterMapItem(uid, part)
 	table.insert(ctx.items, uid)
 	return uid, part
 end
 
 -- Игрок поднимает новый предмет с карты (через обработчик подсказки «Поднять»).
-local function carry(ctx: Context, player: any): string
+local function carry(ctx: Context, player: any, itemId: string?): string
 	local position = player.Character.PrimaryPart.Position + Vector3.new(0, 0, 3)
-	local uid = mapItem(ctx, position)
+	local uid = mapItem(ctx, position, itemId)
 	CarryService.Handlers.Pickup(player, uid)
 	check(ItemRegistry.GetCarriedBy(player) == uid, player.Name .. " не поднял предмет")
 	return uid
 end
 
 -- Игрок приносит предмет и выставляет его на свою витрину slot.
-local function displayOwn(ctx: Context, player: any, slot: number): string
+local function displayOwn(ctx: Context, player: any, slot: number, itemId: string?): string
 	local plot = plotOf(player)
 	near(player, plot.showcases[slot])
-	local uid = carry(ctx, player)
+	local uid = carry(ctx, player, itemId)
 	MuseumService.Handlers.Display(player, plot, slot)
 	local entry = ItemRegistry.Get(uid)
 	local shown = entry and entry.state == "Displayed" and entry.slot == slot
@@ -442,23 +451,28 @@ local function ensureDay(): boolean
 	return false
 end
 
-test("Коллекции: у каждого босса есть все доступные ему редкости и нет недоступных", function()
+test("Коллекции: у босса 1 ровно 8 Common, 8 Rare, 4 Epic с доходом; у черновых нет недоступных редкостей", function()
 	for id, def in Items do
 		check(table.find(Rarities.Order, def.rarity), id .. ": редкость " .. tostring(def.rarity))
 		check(def.boss >= 1 and def.boss <= #GameConfig.Zones, id .. ": босс " .. tostring(def.boss))
 	end
+	local want = { Common = 8, Rare = 8, Epic = 4, Legendary = 0, Secret = 0 }
 	for boss = 1, #GameConfig.Zones do
 		local chances = BossLootService.Chances(boss)
 		for _, rarity in Rarities.Order do
 			local count = 0
-			for _, def in Items do
-				if def.boss == boss and def.rarity == rarity then
+			for id, def in Items do
+				if def.boss == boss and def.rarity == rarity and not def.legacy then
 					count += 1
+					if boss == 1 then
+						check(def.income > 0, id .. ": нет дохода")
+						check(ItemModels.Models[id], id .. ": нет модели в ItemModels")
+					end
 				end
 			end
-			if (chances[rarity] or 0) > 0 then
-				check(count > 0, ("босс %d: нет предметов %s"):format(boss, rarity))
-			else
+			if boss == 1 then
+				check(count == want[rarity], ("босс 1: %s %d, по D40 %d"):format(rarity, count, want[rarity]))
+			elseif (chances[rarity] or 0) == 0 then
 				check(count == 0, ("босс %d: %s ему недоступна"):format(boss, rarity))
 			end
 		end
@@ -531,32 +545,32 @@ test("Рассвет: все 40 предметов заменяются новы
 	end
 end)
 
-test("Забранный слот пуст до рассвета; у босса не поднять обычным «Поднять»; экспонат помнит босса", function(A, B)
+test("Без боя (босс 2, тестовый режим): слот пуст до рассвета, «Поднять» не берёт, экспонат помнит босса", function(A, B)
 	local shifted = ensureDay()
 	BossLootService.Handlers.Refresh()
-	local entry = bossSlots()[1][1]
+	local entry = bossSlots()[2][1]
 	local uid = entry.uid :: string
 	local part = (ItemRegistry.Get(uid) :: any).part
 	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
 	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
 	CarryService.Handlers.Pickup(A, uid)
 	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
-	BossLootService.Handlers.Take(A, 1, 1)
+	BossLootService.Handlers.Take(A, 2, 1)
 	local taken = ItemRegistry.GetCarriedBy(A) == uid
 	local emptied = entry.uid == nil
-	BossLootService.Handlers.Take(B, 1, 1)
+	BossLootService.Handlers.Take(B, 2, 1)
 	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil
 	if shifted then
 		TimeService.ResetClock()
 	end
 	check(stillThere, "предмет у босса подняли обычным «Поднять»")
-	check(taken and ItemRegistry.Get(uid).boss == 1, "A не забрал предмет в тестовом режиме")
+	check(taken and ItemRegistry.Get(uid).boss == 2, "A не забрал предмет в тестовом режиме")
 	check(emptied and bEmpty, "слот не опустел или B что-то получил")
 	local plotA = plotOf(A)
 	near(A, plotA.showcases[1])
 	MuseumService.Handlers.Display(A, plotA, 1)
 	local record = DataService.GetData(A).items[uid]
-	check(record and record.boss == 1 and record.source == "boss", "в профиле нет босса-источника")
+	check(record and record.boss == 2 and record.source == "boss", "в профиле нет босса-источника")
 	BossLootService.Handlers.Refresh()
 	check(entry.uid ~= nil, "слот не заполнен на рассвете")
 	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
@@ -575,15 +589,273 @@ test("Без боя забрать нельзя вне тестового реж
 	check(A:WasNotified("победите босса"), "нет сообщения «победите босса»")
 end)
 
+-- ── Босс 1: модели, автобой, доход, полный путь (D40) ────────────────────────────────────────────────────────
+
+local function waitUntil(condition: () -> boolean, timeout: number): boolean
+	local started = os.clock()
+	while not condition() do
+		if os.clock() - started > timeout then
+			return false
+		end
+		task.wait(0.1)
+	end
+	return true
+end
+
+-- Пёс дома, спит или засыпает, подсказки открыты (после прошлого боя).
+local function waitDogHome(): boolean
+	local boss = BossService.Get(1) :: BossService.Boss
+	return waitUntil(function()
+		return BossLootService.IsOpen(1)
+			and not BattleService.Handlers.IsReturning(1)
+			and (boss.state == "Sleep" or boss.state == "FallAsleep")
+	end, 45)
+end
+
+-- Начало боя за слот slot: день, пёс дома, свежие предметы; игрок у предмета.
+local function prepareFight(player: any, slot: number): (string, BasePart)
+	ensureDay()
+	check(waitDogHome(), "пёс не вернулся на место после прошлого боя")
+	BossLootService.Handlers.Refresh()
+	local uid, part = BossLootService.SlotItem(1, slot)
+	check(uid and part, "слот пуст")
+	player:MoveTo((part :: BasePart).Position + Vector3.new(0, 0, 4))
+	return uid :: string, part :: BasePart
+end
+
+local function fightTo(fight: any, timeout: number): boolean
+	return waitUntil(function()
+		return not fight.active
+	end, timeout)
+end
+
+test("Модели: у всех 20 предметов и 16 частей пса загружены настоящие меши (импорт FBX)", function()
+	local missing = {}
+	for id, def in Items do
+		if def.boss == 1 and not def.legacy and not ItemFactory.HasModel(id) then
+			table.insert(missing, id)
+		end
+	end
+	local dog = BossModels[1]
+	local parts = 0
+	for _, name in Boss1DogRig.Order do
+		if dog.meshes[name] then
+			parts += 1
+		end
+	end
+	check(#missing == 0, ("нет мешей у %d предметов: %s"):format(#missing, table.concat(missing, ", ")))
+	check(parts == #Boss1DogRig.Order, ("у пса мешей %d из %d"):format(parts, #Boss1DogRig.Order))
+end)
+
+test("Сила: урон и HP растут с силой, частота ударов от силы не зависит", function()
+	local hp0, dmg0 = BattleService.PlayerStats(0)
+	local hp1, dmg1 = BattleService.PlayerStats(100)
+	local hp2, dmg2 = BattleService.PlayerStats(1e6)
+	check(hp0 == Battle.Player.BaseHP and dmg0 == Battle.Player.BaseDamage, "базовые HP и урон")
+	check(hp1 > hp0 and dmg1 > dmg0 and hp2 > hp1 and dmg2 > dmg1, "HP и урон не растут с силой")
+	check(type(Battle.Player.AttackInterval) == "number", "интервал ударов не число")
+	local bossHp, bossDmg = BattleService.BossStats(1)
+	check(bossHp > 0 and bossDmg > 0, "у босса 1 нет HP или урона")
+end)
+
+test("Бой с псом (сила 50): проснулся, HP падают, победа — предмет в руках, соседние на месте, пёс уснул дома", function(A)
+	DataService.AddStrength(A, 50)
+	local uid = prepareFight(A, 2)
+	local others = {}
+	for slot = 1, 4 do
+		if slot ~= 2 then
+			others[slot] = BossLootService.SlotItem(1, slot)
+		end
+	end
+	local boss = BossService.Get(1) :: BossService.Boss
+	local fight = BattleService.Handlers.Begin(A, 1, 2)
+	check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+	check(boss.state == "Wake", "пёс не просыпается: " .. boss.state)
+	check(not BossLootService.IsOpen(1), "подсказки у занятого босса не выключены")
+	local sawCombat = false
+	check(waitUntil(function()
+		sawCombat = sawCombat or boss.state == "Combat"
+		return not fight.active
+	end, 60), "бой не закончился за минуту")
+	check(sawCombat, "пёс не встал в боевую стойку")
+	check(fight.result == "win", "результат " .. tostring(fight.result) .. ": " .. table.concat(fight.log, ", "))
+	check(fight.bossHp <= 0, "HP босса не дошло до нуля")
+	check(ItemRegistry.GetCarriedBy(A) == uid, "предмет не у победителя")
+	check(BossLootService.SlotItem(1, 2) == nil, "слот не опустел")
+	for slot, other in others do
+		check(BossLootService.SlotItem(1, slot) == other, ("соседний слот %d тронут"):format(slot))
+	end
+	check(waitUntil(function()
+		return boss.state == "Sleep"
+	end, 45), "пёс не уснул: " .. boss.state)
+	check(BossService.DistanceHome(boss) <= Battle.ArriveDistance + 0.5, "пёс уснул не на своём месте")
+	check(BossLootService.IsOpen(1), "подсказки не открылись после возвращения")
+	TimeService.ResetClock()
+end)
+
+test("Бой при силе 0: удары по-настоящему, HP у обоих уменьшаются, исход — по ударам", function(A)
+	prepareFight(A, 3)
+	local fight = BattleService.Handlers.Begin(A, 1, 3)
+	check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+	local started = os.clock()
+	check(fightTo(fight, 90), "бой не закончился за 90 с")
+	local took = os.clock() - started
+	local playerHits, bossHits = 0, 0
+	for _, line in fight.log do
+		if line:find("игрок") then
+			playerHits += 1
+		elseif line:find("босс −") then
+			bossHits += 1
+		end
+	end
+	check(fight.result == "win" or fight.result == "lose", "результат " .. tostring(fight.result))
+	check(playerHits >= 3 and bossHits >= 1, ("ударов игрока %d, босса %d"):format(playerHits, bossHits))
+	check(took > 5, ("бой длился %.1f с — слишком быстро для силы 0"):format(took))
+	if ItemRegistry.GetCarriedBy(A) then
+		CarryService.LoseCarried(A, "уборка после теста")
+	end
+	TimeService.ResetClock()
+end)
+
+test("Поражение: отброс без телепорта, предмет на постаменте, пёс засыпает, новый бой — сразу", function(A)
+	local uid = prepareFight(A, 1)
+	local cfg = Battle.Bosses[1]
+	local saved = cfg.Damage
+	cfg.Damage = 1e6 -- первый же укус
+	local before = A.Character.PrimaryPart.Position
+	local fight = BattleService.Handlers.Begin(A, 1, 1)
+	local ok = fight ~= nil and fightTo(fight, 30)
+	cfg.Damage = saved
+	check(ok, "бой не начался или не закончился")
+	check(fight.result == "lose", "результат " .. tostring(fight.result))
+	check(A:GetAttribute("KnockedAt") ~= nil, "проигравшего не отбросило")
+	check((A.Character.PrimaryPart.Position - before).Magnitude < 0.01, "проигравшего телепортировали")
+	check(BossLootService.SlotItem(1, 1) == uid, "предмет не вернулся на постамент")
+	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "предмет у проигравшего")
+	check(waitDogHome(), "пёс не вернулся и не лёг")
+	local again = BattleService.Handlers.Begin(A, 1, 1)
+	check(again, "новый бой не начался сразу: " .. table.concat(A:Notices(), "; "))
+	BattleService.Handlers.Finish(again, "abort")
+	check(waitDogHome(), "пёс не вернулся после второго боя")
+	TimeService.ResetClock()
+end)
+
+test("Один бой на босса: второй игрок не начнёт бой и не заберёт предмет занятого пса", function(A, B)
+	prepareFight(A, 1)
+	local uidB, partB = BossLootService.SlotItem(1, 3)
+	B:MoveTo((partB :: BasePart).Position + Vector3.new(0, 0, 4))
+	local fight = BattleService.Handlers.Begin(A, 1, 1)
+	check(fight, "бой A не начался")
+	B:ClearSent()
+	BossLootService.Handlers.Take(B, 1, 3)
+	local second = BattleService.Handlers.Begin(B, 1, 3)
+	local busyNoticed = B:WasNotified("занят")
+	local untouched = BossLootService.SlotItem(1, 3) == uidB and ItemRegistry.GetCarriedBy(B) == nil
+	BattleService.Handlers.Finish(fight, "abort")
+	check(second == nil, "второй бой с тем же боссом начался")
+	check(busyNoticed, "B не сообщили, что босс занят")
+	check(untouched, "B забрал предмет занятого босса")
+	check(waitDogHome(), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+test("Ночь прерывает бой (предмет у пса, на рассвете — новый), побег за поводок — тоже", function(A)
+	local uid = prepareFight(A, 4)
+	local fight = BattleService.Handlers.Begin(A, 1, 4)
+	check(fight, "бой не начался")
+	TimeService.SkipTo("Night", 0)
+	local ended = fightTo(fight, 5)
+	local keptAtNight = BossLootService.SlotItem(1, 4) == uid and ItemRegistry.GetCarriedBy(A) == nil
+	TimeService.ResetClock() -- рассвет: все 4 слота обновляются (D37)
+	task.wait(0.3)
+	local refreshed = BossLootService.SlotItem(1, 4)
+	check(ended and fight.result == "night", "ночь не прервала бой: " .. tostring(fight.result))
+	check(keptAtNight, "ночью предмет ушёл от пса")
+	check(refreshed and refreshed ~= uid, "на рассвете слот не обновился")
+	prepareFight(A, 4)
+	local escape = BattleService.Handlers.Begin(A, 1, 4)
+	check(escape, "второй бой не начался")
+	local home = (BossService.Get(1) :: BossService.Boss).home.Position
+	A:MoveTo(home + Vector3.new(0, 3, Battle.Bosses[1].Leash + 6))
+	check(fightTo(escape, 5) and escape.result == "escape", "побег не засчитан: " .. tostring(escape.result))
+	check(waitDogHome(), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+test("Доход: свой у каждого экспоната на витрине, сумма в Income, надпись «+X/сек»; в руках и хранилище — 0", function(A, B, ctx)
+	local moai = displayOwn(ctx, A, 1, "Moai")
+	local starry = displayOwn(ctx, A, 2, "StarryNight")
+	local m, s = Items.Moai.income, Items.StarryNight.income
+	local coins = DataService.GetData(A).coins
+	IncomeService.Handlers.Tick({ A })
+	check(DataService.GetData(A).coins == coins + m + s, "за секунду начислено не m + s")
+	check(A:GetAttribute("Income") == m + s, "атрибут Income " .. tostring(A:GetAttribute("Income")))
+	local label = (ItemRegistry.Get(moai) :: any).part:FindFirstChild("IncomeLabel")
+	check(label and label.Text.Text == ("+%d/сек"):format(m), "нет надписи дохода над экспонатом")
+	carry(ctx, A, "TRexSkeleton")
+	local plotA = plotOf(A)
+	CarryService.LoseCarried(A, "тест")
+	near(A, plotA.showcases[2])
+	StorageService.Handlers.StoreDisplayed(A, plotA, 2)
+	check(ItemRegistry.Get(starry).state == "Stored", "экспонат не убран в хранилище")
+	coins = DataService.GetData(A).coins
+	IncomeService.Handlers.Tick({ A })
+	check(DataService.GetData(A).coins == coins + m, "хранилище или руки приносят доход")
+	check(A:GetAttribute("Income") == m, "Income не пересчитан после хранилища")
+	coins = DataService.GetData(B).coins
+	IncomeService.Handlers.Tick({ B })
+	check(DataService.GetData(B).coins == coins, "доход A попал B")
+end)
+
+test("Полный путь: победа → в руках → витрина → доход → повторный вход без дублей", function(A, _B, ctx)
+	DataService.AddStrength(A, 50)
+	local uid = prepareFight(A, 3)
+	local fight = BattleService.Handlers.Begin(A, 1, 3)
+	check(fight and fightTo(fight, 60) and fight.result == "win", "бой не выигран")
+	check(ItemRegistry.GetCarriedBy(A) == uid, "добыча не в руках")
+	local itemId = ItemRegistry.Get(uid).itemId
+	local plotA = plotOf(A)
+	near(A, plotA.showcases[1])
+	MuseumService.Handlers.Display(A, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "добыча не выставлена")
+	local record = DataService.GetData(A).items[uid]
+	check(record and record.id == itemId and record.boss == 1 and record.source == "boss", "запись в профиле неполная")
+	local coins = DataService.GetData(A).coins
+	IncomeService.Handlers.Tick({ A })
+	check(DataService.GetData(A).coins == coins + Items[itemId].income, "доход добычи не начислен")
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл повторно")
+	local entry = ItemRegistry.Get(uid)
+	check(entry and entry.state == "Displayed" and entry.slot == 1 and entry.itemId == itemId, "добыча не восстановлена")
+	check(countUid(uid) == 1, "дубли добычи после повторного входа")
+	local label = (entry :: any).part:FindFirstChild("IncomeLabel")
+	check(label ~= nil, "нет надписи дохода после повторного входа")
+	coins = DataService.GetData(again).coins
+	IncomeService.Handlers.Tick({ again })
+	check(DataService.GetData(again).coins == coins + Items[itemId].income, "после входа доход не идёт")
+	check(waitDogHome(), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+
 local ServerTests = {}
 
 -- Прогоняет все тесты по очереди: свежие игроки A и B на каждый, после — выход и уборка. Отчёт строкой.
-function ServerTests.Run(): string
+-- filter — часть имени: прогнать только подходящие тесты (долгие бои удобно запускать отдельно).
+function ServerTests.Run(filter: string?): string
 	if not RunService:IsStudio() then
 		return "Серверные тесты запускаются только в Studio"
 	end
-	local lines, passed = {}, 0
+	local lines, passed, total = {}, 0, 0
 	for _, case in tests do
+		if filter and not string.find(case.name, filter, 1, true) then
+			continue
+		end
+		total += 1
 		local A, B = TestPlayer.new("Тест_A"), TestPlayer.new("Тест_B")
 		local tracked = { A, B }
 		local ctx: Context = {
@@ -622,7 +894,7 @@ function ServerTests.Run(): string
 		local seconds = (DateTime.now().UnixTimestampMillis - started) / 1000
 		table.insert(lines, ("%s %s (%.1f с)%s"):format(mark, case.name, seconds, reason))
 	end
-	table.insert(lines, 1, ("Серверные тесты: %d из %d пройдено"):format(passed, #tests))
+	table.insert(lines, 1, ("Серверные тесты: %d из %d пройдено"):format(passed, total))
 	return table.concat(lines, "\n")
 end
 

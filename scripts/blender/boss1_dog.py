@@ -221,6 +221,49 @@ POSES = {
 }
 
 
+def _pose(base, **parts):
+    """Поза на основе другой: base + замены частей (часть → (поворот, сдвиг))."""
+    out = dict(POSES[base])
+    out.update(parts)
+    return out
+
+
+Z3 = (0, 0, 0)
+# Ключевые позы игровых анимаций (D40, шаг 6): между ними клиент плавно переходит (Controllers/BossAnimController).
+POSES["alert"] = _pose("sleep", **OPEN_EYES,  # проснулся лёжа: голова поднята, уши торчком
+                       Head=((-14, 0, 0), (0, -0.1, -0.36)), EarL=(Z3, Z3), EarR=(Z3, Z3), Tail=((-55, 0, 0), Z3))
+POSES["combat2"] = _pose("combat", Torso=(Z3, (0, 0, -0.16)), Head=((16, 0, 0), (0, -0.08, -0.1)),
+                         Jaw=((16, 0, 0), Z3), Tail=((32, 0, 0), Z3))  # вдох-выдох в стойке
+POSES["bite"] = _pose("combat", Torso=((6, 0, 0), (0, -0.32, -0.12)), Head=((-6, 0, 0), (0, -0.12, 0.02)),
+                      Jaw=((40, 0, 0), Z3), EarL=((-45, 0, 0), Z3), EarR=((-45, 0, 0), Z3), Tail=((30, 0, 0), Z3),
+                      FUpperL=((-8, -7, 0), Z3), FLowerL=((10, 0, 0), Z3), FUpperR=((-8, 7, 0), Z3),
+                      FLowerR=((10, 0, 0), Z3), BUpperL=((-30, -6, 0), Z3), BLowerL=((30, 0, 0), Z3),
+                      BUpperR=((-30, 6, 0), Z3), BLowerR=((30, 0, 0), Z3))  # выпад с укусом
+POSES["swipe"] = _pose("combat", Torso=((0, 6, 0), (0, -0.1, -0.06)), Head=((8, 0, -10), (0, -0.04, -0.04)),
+                       Jaw=((16, 0, 0), Z3), FUpperR=((-75, 0, 0), Z3), FLowerR=((45, 0, 0), Z3),
+                       FUpperL=((20, -7, 0), Z3))  # удар правой лапой
+POSES["hit"] = _pose("combat", Torso=((-8, 0, 0), (0, 0.3, 0)), Head=((-18, 0, 0), (0, 0.06, 0.04)),
+                     Jaw=((10, 0, 0), Z3), EyelidL=(Z3, (0, 0, LIFT * 0.4)), EyelidR=(Z3, (0, 0, LIFT * 0.4)),
+                     EarL=((-50, 0, 0), Z3), EarR=((-50, 0, 0), Z3), Tail=((-20, 0, 0), Z3),
+                     FUpperL=((-10, -7, 0), Z3), FUpperR=((-10, 7, 0), Z3), BUpperL=((-28, -6, 0), Z3),
+                     BUpperR=((-28, 6, 0), Z3))  # отшатнулся от удара, зажмурился
+POSES["bark"] = _pose("stand", Torso=((-4, 0, 0), (0, 0, 0.06)), Head=((-28, 0, 0), (0, 0, 0.06)),
+                      Jaw=((34, 0, 0), Z3), Tail=((45, 0, 25), Z3), EarL=((10, 0, 0), Z3), EarR=((10, 0, 0), Z3))
+POSES["bark2"] = _pose("bark", Jaw=((6, 0, 0), Z3), Tail=((45, 0, -25), Z3))  # победа: лает и виляет хвостом
+POSES["dizzy"] = _pose("sleep", Torso=((0, 14, 0), (0, 0, -0.45)), Head=((14, 0, 22), (0, 0, -0.1)),
+                       Jaw=((12, 0, 0), Z3), EarL=((0, -35, 0), Z3), EarR=((0, 35, 0), Z3), Tail=((-70, 0, 0), Z3),
+                       FUpperL=((-35, -10, 0), Z3), FLowerL=((-20, 0, 0), Z3), FUpperR=((-35, 10, 0), Z3),
+                       FLowerR=((-20, 0, 0), Z3))  # поражение: повалился, глаза закрыты
+POSES["walkA"] = _pose("stand", Torso=(Z3, (0, 0, 0.05)), Head=((4, 0, 3), Z3), Tail=((10, 0, 15), Z3),
+                       FUpperL=((22, 0, 0), Z3), FLowerL=((-18, 0, 0), Z3), FUpperR=((-22, 0, 0), Z3),
+                       FLowerR=((10, 0, 0), Z3), BUpperL=((-20, 0, 0), Z3), BLowerL=((14, 0, 0), Z3),
+                       BUpperR=((20, 0, 0), Z3), BLowerR=((-6, 0, 0), Z3))
+POSES["walkB"] = _pose("stand", Torso=(Z3, (0, 0, 0.05)), Head=((4, 0, -3), Z3), Tail=((10, 0, -15), Z3),
+                       FUpperR=((22, 0, 0), Z3), FLowerR=((-18, 0, 0), Z3), FUpperL=((-22, 0, 0), Z3),
+                       FLowerL=((10, 0, 0), Z3), BUpperR=((-20, 0, 0), Z3), BLowerR=((14, 0, 0), Z3),
+                       BUpperL=((20, 0, 0), Z3), BLowerL=((-6, 0, 0), Z3))
+
+
 def pose_matrices(pose):
     """Мировые матрицы частей в позе (в стадах), низ пса — на z = 0."""
     out = {}
@@ -262,6 +305,63 @@ if CHECK:
     for art in arts:
         art.build(collection)
         print("CHECK", art.name, json.dumps(art.stats, ensure_ascii=False))
+    sys.exit(0)
+
+# Оси Roblox: (x, y, z) Blender → (x, z, −y) Roblox.
+AX = Matrix(((1, 0, 0), (0, 0, 1), (0, -1, 0)))
+PART_COLOR = {"Head": "D98C3A", "Jaw": "F2E2C4", "EyelidL": "D98C3A", "EyelidR": "D98C3A", "EarL": "8A4E2B",
+              "EarR": "8A4E2B", "Tail": "D98C3A"}  # цвет заготовки до импорта; лапы и тело — fur
+
+
+def write_rig_module(path):
+    """Скелет для игры (режим rig, без запекания): части, точки вращения, габариты, позы — модуль Luau."""
+    parts = {}
+    for art in arts:
+        obj = art.build(collection)
+        groups = dict.fromkeys(art.face_groups)
+        for g, o in S.split_groups(obj, art, {g: RIG[g][1] for g in groups}, collection).items():
+            o.data.transform(Matrix.Scale(SCALE, 4))
+            o.location = Vector(RIG[g][1]) * SCALE
+            parts[g] = o
+
+    def v3(v):
+        return "Vector3.new(%s)" % ", ".join("%.4f" % c for c in v)
+
+    lines = ["-- Скелет босса 1 «Сторожевой пёс» для Motor6D (D18, D40): части, точки вращения, габариты и ключевые позы.",
+             "-- Сгенерировано scripts/blender/boss1_dog.py (режим rig) — руками не править. Оси Roblox, стады; лицо пса",
+             "-- смотрит в +Z модели. pivot — точка вращения части в покое (низ лап на y = 0), center и size — габариты меша",
+             "-- относительно точки вращения. Позы: часть → {x, y, z, r00…r22} — Transform сустава относительно покоя",
+             "-- (у Torso — вместе с подъёмом к земле). Ни от чего не зависит.", "", "return {",
+             "\tScale = %s," % SCALE, "\tOrder = { %s }," % ", ".join('"%s"' % n for n in RIG), "\tParts = {"]
+    for n, (parent, pivot) in RIG.items():
+        co = [AX @ v.co for v in parts[n].data.vertices]
+        lo = Vector([min(c[i] for c in co) for i in range(3)])
+        hi = Vector([max(c[i] for c in co) for i in range(3)])
+        lines.append('\t\t%s = { parent = %s, pivot = %s, center = %s, size = %s, map = "%s", color = "%s" },' % (
+            n, '"%s"' % parent if parent else "nil", v3(AX @ (Vector(pivot) * SCALE)), v3((lo + hi) / 2),
+            v3(hi - lo), "Head" if n in HEAD_PARTS else "Body", PART_COLOR.get(n, "D98C3A")))
+    lines += ["\t},", "\tPoses = {"]
+    for name, pose in POSES.items():
+        mats = pose_matrices(pose)
+        low = min((mats[n] @ v.co).z for n, o in parts.items() for v in o.data.vertices)
+        lines.append("\t\t%s = {" % name)
+        for n in RIG:
+            rot, off = pose.get(n, (Z3, Z3))
+            r = AX @ Euler([math.radians(d) for d in rot], "XYZ").to_matrix() @ AX.transposed()
+            t = AX @ (Vector(off) * SCALE)
+            if n == "Torso":
+                t.y -= low  # подъём к земле: самая низкая точка позы на y = 0
+            nums = [t.x, t.y, t.z] + [r[i][j] for i in range(3) for j in range(3)]
+            lines.append("\t\t\t%s = { %s }," % (n, ", ".join("%.4f" % x for x in nums)))
+        lines.append("\t\t},")
+    lines += ["\t},", "}", ""]
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines))
+    print("RIG_OK", path, len(POSES), "поз")
+
+
+if len(argv) > 2 and argv[2] == "rig":
+    write_rig_module(os.path.join(REPO, "src", "shared", "Config", "Boss1DogRig.luau"))
     sys.exit(0)
 
 

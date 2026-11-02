@@ -3,8 +3,11 @@
 -- В опубликованной игре не создаётся. Зависит от DataService, GymService, GameConfig.
 --   Info(userId) → { coins, strength, dumbbellLevel, museumLevel }
 --   GiveCoins(userId, amount) → новые монеты (пока нет экономики шага 7)
---   RunServerTests() → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests)
+--   RunServerTests(filter?) → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests); filter —
+--   часть имени теста
 --   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37)
+--   Battle(userId, slot) → бой настоящим персонажем с псом за предмет слота (показ анимаций)
+--   BossState(state) → состояние пса для показа анимаций
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -53,10 +56,42 @@ function DevTools.Init()
 		GymService.SyncAttributes(player)
 		return coins
 	end)
+	-- Бой настоящим персонажем для показа анимаций (тот же BattleService.Begin, что у подсказки «Забрать»). bossHp и
+	-- bossDamage — только на этот бой (сильный игрок иначе побеждает с одного удара), потом числа возвращаются.
+	bind(folder, "Battle", function(player, slot: number, bossHp: number?, bossDamage: number?)
+		local Battle = require(ReplicatedStorage.Shared.Config.Battle)
+		local BossLootService = require(ServerScriptService.Server.Services.BossLootService)
+		local BattleService = require(ServerScriptService.Server.Services.BattleService)
+		local _, part = BossLootService.SlotItem(1, slot)
+		local character = player.Character
+		if not part or not character then
+			return "слот пуст или нет персонажа"
+		end
+		character:PivotTo(CFrame.new(part.Position + Vector3.new(0, 1, 5)))
+		task.wait(0.3)
+		local cfg = Battle.Bosses[1]
+		local savedHp, savedDamage = cfg.HP, cfg.Damage
+		cfg.HP, cfg.Damage = bossHp or savedHp, bossDamage or savedDamage
+		local started = BattleService.Begin(player, 1, slot) ~= nil
+		cfg.HP, cfg.Damage = savedHp, savedDamage
+		return started
+	end)
+	-- Состояние пса для показа анимаций (Sleep, Wake, StandUp, ToCombat, Combat, Victory, Defeat, Return, FallAsleep).
+	local bossState = Instance.new("BindableFunction")
+	bossState.Name = "BossState"
+	bossState.OnInvoke = function(state: string)
+		local BossService = require(ServerScriptService.Server.Services.BossService)
+		local boss = BossService.Get(1)
+		if boss then
+			BossService.SetState(boss, state)
+		end
+		return boss ~= nil
+	end
+	bossState.Parent = folder
 	local runTests = Instance.new("BindableFunction")
 	runTests.Name = "RunServerTests"
-	runTests.OnInvoke = function()
-		return require(ServerScriptService.Server.Tests.ServerTests).Run()
+	runTests.OnInvoke = function(filter: string?)
+		return require(ServerScriptService.Server.Tests.ServerTests).Run(filter)
 	end
 	runTests.Parent = folder
 	local TimeService = require(ServerScriptService.Server.Services.TimeService)

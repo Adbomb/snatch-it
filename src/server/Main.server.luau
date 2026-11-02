@@ -10,9 +10,12 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local LegoMaterial = require(ReplicatedStorage.Shared.LegoMaterial)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
+local BattleService = require(Server.Services.BattleService)
 local BossLootService = require(Server.Services.BossLootService)
+local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local GymService = require(Server.Services.GymService)
+local IncomeService = require(Server.Services.IncomeService)
 local MuseumService = require(Server.Services.MuseumService)
 local NightService = require(Server.Services.NightService)
 local PlayerSession = require(Server.Services.PlayerSession)
@@ -28,8 +31,14 @@ local ModelBuilder = require(Server.World.ModelBuilder)
 local Preview = require(Server.World.Preview)
 local WorldBuilder = require(Server.World.WorldBuilder)
 
--- Предпросмотр из режима редактирования в игру попадать не должен.
+-- Предпросмотр из режима редактирования в игру попадать не должен (карта и временные показы моделей из Blender).
 Preview.Clear()
+for _, name in { "__WondersPreview", "__BossPreview", "__ArtPreview" } do
+	local folder = workspace:FindFirstChild(name)
+	if folder then
+		folder:Destroy()
+	end
+end
 
 Remotes.CreateAll()
 LegoMaterial.Apply()
@@ -64,6 +73,9 @@ CarryService.Init()
 MuseumService.Init()
 StorageService.Init()
 BossLootService.Init(world)
+BossService.Init(world) -- модель босса 1 (меши грузятся один раз)
+BattleService.Init()
+IncomeService.Init()
 GymService.Init()
 TimeService.Init()
 NightService.Init(world)

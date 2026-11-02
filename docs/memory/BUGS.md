@@ -130,8 +130,12 @@
   с текстурой-развёрткой («ящики с узором», висят в воздухе на местах деталей). После перезапуска такие превью
   удалить и собрать заново из `<id>.json`.
 - После перезапуска ПК сторож `rojo-serve.ps1` не работает — запустить отдельным процессом (`Invoke-CimMethod
-  Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scriptsojo-serve.ps1`).
+  Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
+ojo-serve.ps1`).
   Плагин: всплывающее «You synced project 'snatch-it'… Connect» → Connect → окно «Confirm sync» → Accept.
+- `execute_luau` из MCP в Server: `require` модулей даёт ОТДЕЛЬНУЮ копию (без участков и игроков) — бой, выход и
+  прочее с данными вызывать только через `ServerStorage.DevTools` (BindableFunction), как и тесты.
+- Временные показы `workspace.__WondersPreview` / `__BossPreview` в Play — коробки; Main.server удаляет их при старте.
 - Только что загруженные картинки (`upload_image`) Roblox обрабатывает ~20–30 с: SurfaceAppearance сначала серый
   («Asset content representation is being generated») — снимки делать после паузы.
 - Blender 5.2: запекание цвета для SurfaceAppearance — через EMIT (цвет материала → Emission), а не DIFFUSE: у металла

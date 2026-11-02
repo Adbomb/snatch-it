@@ -1,6 +1,6 @@
 # Архитектура
 
-Обновлено: 2026-10-29. Подробности решений — `DESIGN.md`.
+Обновлено: 2026-11-02. Подробности решений — `DESIGN.md`.
 
 ## Сборка
 - Rojo (`default.project.json`): `src/shared` → `ReplicatedStorage.Shared`, `src/server` → `ServerScriptService.Server`,
@@ -72,7 +72,24 @@
   (только на ночь), потеря несомого (`CarryService.LoseCarried`), вывод из коридора (`MapLayout.InDangerZone`) к
   месту появления и проверка раз в 0.5 с. Клиент: `Controllers/TimeController` — панель Stud-UI внизу справа
   (`UITokens.TimeHud`), фазу считает сам через `GameTime`.
-- Предметы у боссов (D37, D38): `Config/Items` — 60 произведений (boss, rarity, kind, source; вид пока — заготовка),
+- Босс 1 и бой (D40): `Config/Boss1DogRig` (скелет пса: 16 частей, точки вращения, габариты, 13 ключевых поз —
+  генерирует `scripts/blender/boss1_dog.py -- . <превью> rig`), `Config/BossModels` (MeshId частей после импорта и
+  карты), `Config/Battle` (тестовые числа боя, длительности состояний). `Services/BossService` — модель из частей на
+  Motor6D от невидимого корня с AlignPosition/AlignOrientation (владелец — сервер), атрибуты для анимаций (State,
+  StateAt, Moving, AttackSeq/Kind/At, HitSeq/At, HP/MaxHP); пока меша нет — блок цвета части. `Services/BattleService`
+  — автобой: «Забрать» у предмета (BossLootService.OnTakeRequest) → Reserve предмета, подсказки босса выключены
+  (SetOpen) → Wake → StandUp → ToCombat → Combat (удары по интервалам в цикле 0.1 с, урон в момент удара, промах если
+  отошёл) → win (Award: предмет в руки) / lose (отброс LinearVelocity, без телепорта) / escape (дальше Leash) / night /
+  abort → Victory или Defeat → Return → FallAsleep (подсказки открыты) → Sleep. Полоски HP — BillboardGui над боссом
+  и бойцом. Клиент: `Shared/BossAnim` (Transform суставов по состоянию и времени — смешение поз, циклы дыхания,
+  шагов, выпады и попадания поверх) + `Controllers/BossAnimController` (Stepped, у всех клиентов одинаково, «Z z z»).
+- Доход (D40): `Config/Items.income` у каждого предмета; `Services/IncomeService` — раз в секунду монеты владельцу за
+  экспонаты Displayed, атрибуты Coins и Income, надпись «+X/сек» над экспонатом (MuseumService.PlaceExhibit);
+  клиент — плашка «+X/сек» над монетами (GymController).
+- Модели предметов D39: `Config/ItemModels` (Models: MeshId после импорта, карты, размер, turn; Roughness);
+  `Util/ItemFactory` — MeshPart + SurfaceAppearance, приварен к невидимому хитбоксу; без меша — заготовка из Items.
+- Предметы у боссов (D37, D38): `Config/Items` — коллекция босса 1 «Музей чудес» (20, D40, `wonder`) и черновые
+  коллекции 2–10 (вид — заготовка), прежние предметы босса 1 — `legacy` (только для старых сохранений);
   `Progression.BossLoot` — шансы по группам боссов. `Services/BossLootService` — слоты `MapLayout.ArtSlots` вокруг
   `MapLayout.BossSpot` в каждой зоне, заполнение при старте и на каждом рассвете (`TimeService`), состояние реестра
   `AtBoss` (`ItemRegistry.CreateAtBoss`, у записи `boss`), подсказка «Забрать» — без боя только в Studio+DevMode

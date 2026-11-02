@@ -1,9 +1,9 @@
--- Каталог произведений искусства (D37, D38): у каждого из 10 боссов своя тематическая коллекция; Common и Rare —
--- вымышленные или общие предметы, с Epic — реальные произведения в общественном достоянии (автор умер больше 70 лет
--- назад, создано до 1929 года; без обнажённых фигур — модерация Roblox). Своя стилизация, без чужих фото и сканов
--- объёмных предметов. Шансы редкостей у боссов — Progression.BossLoot.
--- Вид (shape, color, size) — временная заготовка до моделей из Blender (этап 7 D37), не финальный результат.
--- Доход каждого произведения — этап 6 (не утверждён). Читается сервером и клиентом. Ни от чего не зависит.
+-- Каталог произведений искусства (D37, D40): у каждого из 10 боссов своя коллекция. Коллекция босса 1 «Музей чудес»
+-- (D40, docs/CATALOG.md) — 20 предметов с моделями из Blender (Config/ItemModels) и своим доходом в секунду
+-- (income, предварительный баланс D40, без множителей редкости). Коллекции боссов 2–10 — черновик (вид — заготовка,
+-- дохода нет), до их очереди. legacy — прежние предметы босса 1 (народные промыслы D38): у босса не появляются, но
+-- описание остаётся, чтобы старые сохранения загружались. Шансы редкостей у боссов — Progression.BossLoot.
+-- Читается сервером и клиентом. Ни от чего не зависит.
 
 export type ItemDef = {
 	id: string,
@@ -17,6 +17,8 @@ export type ItemDef = {
 	color: Color3,
 	size: Vector3,
 	material: Enum.Material?, -- по умолчанию Plastic; Neon — для свечения
+	income: number, -- доход в секунду на витрине музея (D37, D40); 0 — не приносит
+	legacy: boolean?, -- прежний предмет: только для старых сохранений, у босса не появляется
 }
 
 local Items: { [string]: ItemDef } = {}
@@ -45,41 +47,100 @@ local function art(
 		shape = shape,
 		color = Color3.fromHex(color),
 		size = size,
+		income = 0,
 	}
+end
+
+-- Предмет коллекции босса 1 (D40): модель из Blender, свой доход в секунду. Форма, цвет и размер — запасной вид, пока
+-- меш не загружен; размер равен размеру модели.
+local function wonder(
+	id: string,
+	rarity: string,
+	displayName: string,
+	kind: string,
+	weight: string,
+	income: number,
+	color: string,
+	size: Vector3,
+	source: string
+)
+	art(id, 1, rarity, displayName, kind, weight, "Block", color, size, source)
+	Items[id].income = income
 end
 
 local V = Vector3.new
 
--- 1. Свалка — «Сторожевой пёс»: народные промыслы.
-art("FolkWhistle", 1, "Common", "Глиняная свистулька", "Sculpture", "Light", "Block", "E8D5B0", V(1.2, 1.6, 1.8))
-art("PaintedTray", 1, "Common", "Расписной поднос", "Artifact", "Light", "Cylinder", "1E1E1E", V(0.3, 2.6, 2.6))
-art("NestingDoll", 1, "Rare", "Матрёшка-великан", "Sculpture", "Medium", "Ball", "D93A3A", V(2.2, 2.2, 2.2))
-art("RockingHorse", 1, "Rare", "Лошадка-качалка", "Sculpture", "Medium", "Wedge", "F2A93B", V(1.4, 2, 2.8))
-art("Sunflowers", 1, "Epic", "Подсолнухи", "Painting", "Medium", "Block", "F4C430", V(2.4, 3, 0.4), "Винсент ван Гог, 1888")
+-- 1. Свалка — «Сторожевой пёс»: «Музей чудес» (D40). Доход — предварительный баланс, не утверждён.
+-- Common
+wonder("Moai", "Common", "Голова моаи", "Sculpture", "Medium", 16, "8A8278", V(2, 3.05, 1.59),
+	"остров Пасхи, 1250–1500")
+wonder("EgyptianCat", "Common", "Египетская кошка", "Sculpture", "Light", 10, "2C2D36", V(1.24, 2.45, 1.55),
+	"Египет, ок. 600 до н. э.")
+wonder("AnubisStatue", "Common", "Статуя Анубиса", "Sculpture", "Medium", 13, "26272F", V(1.24, 2.628, 1.92),
+	"Египет, гробница Тутанхамона")
+wonder("TerracottaWarrior", "Common", "Терракотовый воин", "Sculpture", "Medium", 12, "C2845A", V(1.2, 2.8, 1.15),
+	"Китай, ок. 210 до н. э.")
+wonder("MiniStonehenge", "Common", "Мини-Стоунхендж", "Artifact", "Heavy", 15, "A7A196", V(3.1, 1.68, 3.1),
+	"Британия, ок. 3000–2000 до н. э.")
+wonder("TriceratopsSkull", "Common", "Череп трицератопса", "Artifact", "Medium", 18, "E9DDBF", V(2.611, 2.669, 3.309),
+	"окаменелость, меловой период")
+wonder("EgyptianSarcophagus", "Common", "Египетский саркофаг", "Artifact", "Medium", 14, "EFBF3A",
+	V(1.24, 2.62, 1.09), "Египет, Новое царство")
+wonder("GladiatorHelmet", "Common", "Шлем гладиатора", "Artifact", "Light", 11, "D19A3E", V(1.84, 2.66, 1.84),
+	"Рим, I век")
+-- Rare
+wonder("Sunflowers", "Rare", "Подсолнухи", "Painting", "Medium", 35, "E8B530", V(3.2, 4.56, 1.285),
+	"Винсент ван Гог, 1888")
+wonder("GreatWave", "Rare", "Большая волна в Канагаве", "Painting", "Medium", 38, "B8322A", V(4.04, 3.98, 1.285),
+	"Кацусика Хокусай, ок. 1831")
+wonder("PearlEarring", "Rare", "Девушка с жемчужной серёжкой", "Painting", "Medium", 40, "6B4228",
+	V(3.1, 4.64, 1.285), "Ян Вермеер, ок. 1665")
+wonder("TheScream", "Rare", "Крик", "Painting", "Medium", 42, "E0782C", V(3.1, 4.64, 1.285), "Эдвард Мунк, 1893")
+wonder("GreatSphinx", "Rare", "Большой Сфинкс", "Sculpture", "Heavy", 45, "D9B26E", V(1.9, 1.7, 3.16),
+	"Гиза, ок. 2500 до н. э.")
+wonder("NefertitiBust", "Rare", "Бюст Нефертити", "Sculpture", "Light", 48, "2E5BA8", V(1.24, 2.112, 1.04),
+	"Тутмос, ок. 1345 до н. э.")
+wonder("GizaPyramids", "Rare", "Пирамиды Гизы", "Artifact", "Heavy", 50, "E0B66C", V(3.2, 1.24, 2.64),
+	"Гиза, ок. 2600–2500 до н. э.")
+wonder("Colosseum", "Rare", "Колизей", "Artifact", "Heavy", 55, "E3CFA3", V(3.56, 1.515, 2.88), "Рим, 80 год")
+-- Epic
+wonder("StarryNight", "Epic", "Звёздная ночь", "Painting", "Medium", 180, "1E3A8A", V(3.7, 3.98, 1.285),
+	"Винсент ван Гог, 1889")
+wonder("StatueOfLiberty", "Epic", "Статуя Свободы", "Sculpture", "Medium", 165, "5FB59A", V(1.9, 4.326, 1.94),
+	"Фредерик Бартольди, 1886")
+wonder("TRexSkeleton", "Epic", "Скелет тираннозавра", "Artifact", "Heavy", 200, "EDE3C8", V(3.866, 2.04, 1.28),
+	"окаменелость, меловой период")
+wonder("TutMask", "Epic", "Золотая маска Тутанхамона", "Mask", "Light", 150, "EFBF3A", V(2.1, 2.82, 1.59),
+	"Египет, ок. 1323 до н. э.")
+
+-- Прежние предметы босса 1 (народные промыслы D38): только для старых сохранений.
+for _, entry in {
+	{ "FolkWhistle", "Common", "Глиняная свистулька", "Sculpture", "Light", "Block", "E8D5B0", V(1.2, 1.6, 1.8) },
+	{ "PaintedTray", "Common", "Расписной поднос", "Artifact", "Light", "Cylinder", "1E1E1E", V(0.3, 2.6, 2.6) },
+	{ "NestingDoll", "Rare", "Матрёшка-великан", "Sculpture", "Medium", "Ball", "D93A3A", V(2.2, 2.2, 2.2) },
+	{ "RockingHorse", "Rare", "Лошадка-качалка", "Sculpture", "Medium", "Wedge", "F2A93B", V(1.4, 2, 2.8) },
+} do
+	art(entry[1], 1, entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8])
+	Items[entry[1]].legacy = true
+end
 
 -- 2. Барахолка — «Торговец-громила»: антиквариат.
 art("PorcelainDog", 2, "Common", "Фарфоровая собачка", "Sculpture", "Light", "Block", "F5F0E6", V(1.4, 1.8, 1.8))
 art("MantelClock", 2, "Common", "Каминные часы", "Artifact", "Light", "Block", "8A5A2B", V(2, 2, 1))
 art("Gramophone", 2, "Rare", "Граммофон", "Instrument", "Medium", "Wedge", "C9A227", V(2, 2.6, 2.4))
 art("MusicBox", 2, "Rare", "Музыкальная шкатулка", "Artifact", "Light", "Block", "6B2E5F", V(2, 1.4, 1.4))
-art("PearlEarring", 2, "Epic", "Девушка с жемчужной серёжкой", "Painting", "Medium", "Block", "2B4C7E", V(2.2, 2.8, 0.4),
-	"Ян Вермеер, ок. 1665")
 
 -- 3. Склад — «Робот-охранник»: запасники музея.
 art("CratedVase", 3, "Common", "Ваза в ящике", "Vase", "Medium", "Block", "B98B5B", V(2.2, 2.2, 2.2))
 art("PlasterBust", 3, "Common", "Гипсовый бюст", "Sculpture", "Medium", "Block", "EDEDED", V(1.6, 2.4, 1.4))
 art("KnightArmor", 3, "Rare", "Рыцарские доспехи", "Sculpture", "Heavy", "Block", "A8B2BD", V(1.8, 3.4, 1.4))
 art("BronzeHorse", 3, "Rare", "Бронзовый конь", "Sculpture", "Heavy", "Wedge", "8C6A3D", V(1.4, 2.4, 3))
-art("GreatWave", 3, "Epic", "Большая волна в Канагаве", "Painting", "Medium", "Block", "2F5D8C", V(3.2, 2.2, 0.4),
-	"Кацусика Хокусай, ок. 1831")
 
 -- 4. Пустыня — «Сфинкс»: Древний Египет.
 art("CanopicJar", 4, "Common", "Канопа", "Vase", "Light", "Cylinder", "D9C7A1", V(2.2, 1.3, 1.3))
 art("ScarabAmulet", 4, "Common", "Амулет-скарабей", "Jewel", "Light", "Ball", "1F8A70", V(1.6, 1.6, 1.6))
 art("BastetCat", 4, "Rare", "Статуэтка кошки Бастет", "Sculpture", "Medium", "Block", "23262B", V(1.2, 2.8, 1.6))
 art("GoldenAnkh", 4, "Rare", "Золотой анх", "Jewel", "Light", "Block", "E3B341", V(1.6, 2.6, 0.5))
-art("TutMask", 4, "Epic", "Маска Тутанхамона", "Mask", "Medium", "Block", "D4A62A", V(2.2, 2.8, 1.4),
-	"Древний Египет, ок. 1323 до н. э.")
 art("Nefertiti", 4, "Legendary", "Бюст Нефертити", "Sculpture", "Medium", "Block", "2C6EB5", V(1.6, 3, 1.8),
 	"Тутмос, ок. 1345 до н. э.")
 
@@ -88,7 +149,6 @@ art("VikingFigure", 5, "Common", "Фигурка викинга", "Sculpture", "
 art("RuneStone", 5, "Common", "Рунический камень", "Artifact", "Heavy", "Block", "8E9AA5", V(1.6, 2.8, 0.8))
 art("Longship", 5, "Rare", "Ладья викингов", "Sculpture", "Medium", "Wedge", "9C6B3C", V(1.2, 1.8, 3.4))
 art("IceSwan", 5, "Rare", "Ледяной лебедь", "Sculpture", "Medium", "Block", "BFE9FF", V(1.6, 2.4, 2.4))
-art("TheScream", 5, "Epic", "Крик", "Painting", "Medium", "Block", "E07A2E", V(2.2, 2.8, 0.4), "Эдвард Мунк, 1893")
 art("NinthWave", 5, "Legendary", "Девятый вал", "Painting", "Medium", "Block", "3A8F8C", V(3.4, 2.2, 0.4),
 	"Иван Айвазовский, 1850")
 
@@ -132,8 +192,6 @@ art("StarryRhone", 9, "Epic", "Звёздная ночь над Роной", "Pa
 	"Винсент ван Гог, 1888")
 art("PragueOrloj", 9, "Legendary", "Пражские куранты", "Artifact", "Heavy", "Cylinder", "2E5D9F", V(0.8, 3, 3),
 	"Микулаш из Кадани, 1410")
-art("StarryNight", 9, "Secret", "Звёздная ночь", "Painting", "Medium", "Block", "22408C", V(3.2, 2.6, 0.4),
-	"Винсент ван Гог, 1889")
 
 -- 10. Замок — «Король-дракон»: королевская коллекция.
 art("CrestGoblet", 10, "Common", "Кубок с гербом", "Artifact", "Light", "Cylinder", "9AA3AD", V(2, 1.2, 1.2))
