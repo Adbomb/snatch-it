@@ -415,10 +415,222 @@ def gladiator_helmet():
     return a
 
 
+# ── 8. Статуя Анубиса: чёрный шакал лежит на золотом ларце-святилище (как в гробнице Тутанхамона) ─────────────
+
+
+def anubis_statue():
+    a = S.Art("Art_AnubisStatue", ring_z0=0.62)
+    a.paint("jackal", "26272F", rings=True)  # чёрный лак
+    a.paint("gold", "EFBF3A", rings=True)  # позолоченный ларец
+    for key, code in (("gold2", "C9952A"), ("lapis", "1F3E9A"), ("black", "101014"), ("stand", "1F2433"),
+                      ("plate", "F2C230")):
+        a.paint(key, code)
+    # подставка, ларец с карнизом и синими поясками, спереди — табличка с анхами
+    a.box("stand", -0.62, 0.62, -0.94, 0.94, 0.0, 0.22)
+    a.box("plate", -0.36, 0.36, -0.98, -0.92, 0.05, 0.17, bevel=0)
+    a.box("gold", -0.5, 0.5, -0.81, 0.81, 0.2, 1.02)
+    a.box("gold2", -0.56, 0.56, -0.87, 0.87, 1.0, 1.1)  # карниз
+    for zb in (0.28, 0.9):
+        a.box("lapis", -0.52, 0.52, -0.83, 0.83, zb, zb + 0.06, bevel=0)
+    a.box("lapis", -0.3, 0.3, -0.84, -0.8, 0.42, 0.82, bevel=0)
+    for x in (-0.15, 0.15):
+        a.pixels(ANKH, {"#": ("plate", 0.02)}, 0.05, x - 0.125, 0.77, "xz", 0.84)
+    # шакал лежит: туловище, бёдра, вытянутые передние лапы, хвост вдоль бока
+    a.box("jackal", -0.3, 0.3, -0.3, 0.72, 1.08, 1.52)
+    a.box("jackal", -0.34, 0.34, 0.3, 0.76, 1.08, 1.62)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.1, s * 0.25))
+        a.box("jackal", x0, x1, -0.82, -0.2, 1.08, 1.22)
+    a.box("jackal", 0.28, 0.38, 0.2, 0.84, 1.08, 1.18)
+    # поднятые грудь и шея с золотым ошейником, голова, длинная морда, золотые глаза
+    a.box("jackal", -0.2, 0.2, -0.5, -0.08, 1.3, 1.95)
+    a.box("gold2", -0.23, 0.23, -0.53, -0.05, 1.64, 1.72, bevel=0)
+    a.box("jackal", -0.22, 0.22, -0.6, -0.2, 1.88, 2.18)
+    a.box("jackal", -0.09, 0.09, -0.98, -0.55, 1.9, 2.06)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.09, s * 0.19))
+        a.box("plate", x0, x1, -0.62, -0.58, 2.07, 2.13, bevel=0)
+        x0, x1 = sorted((s * 0.12, s * 0.15))
+        a.box("black", x0, x1, -0.63, -0.61, 2.08, 2.12, bevel=0)
+        # высокие острые уши с золотой внутренней стороной
+        a.prism("jackal", [(s * 0.06, 2.16), (s * 0.21, 2.16), (s * 0.14, 2.64)], -0.4, -0.28, axis="y")
+        a.prism("plate", [(s * 0.09, 2.21), (s * 0.18, 2.21), (s * 0.14, 2.5)], -0.415, -0.39, axis="y")
+    return a
+
+
+# ── 9. Терракотовый воин: стоящий солдат в пластинчатом панцире, усы, пучок волос ────────────────────────────
+
+LAMELLAR = ["PP.PP.PP.PP",  # пластинчатый панцирь: ряды пластин со сдвигом
+            "PP.PP.PP.PP",
+            "...........",
+            ".PP.PP.PP.P",
+            ".PP.PP.PP.P",
+            "...........",
+            "PP.PP.PP.PP",
+            "PP.PP.PP.PP",
+            "...........",
+            ".PP.PP.PP.P",
+            ".PP.PP.PP.P"]
+
+
+def terracotta_warrior():
+    a = S.Art("Art_TerracottaWarrior", ring_z0=1.0)
+    a.paint("clay", "C2845A", rings=True)  # терракота
+    a.paint("armor", "8B5A3E", rings=True)  # панцирь
+    for key, code in (("lamella", "B07650"), ("hair", "4A3020"), ("dark", "2A1E18"), ("base", "6E5A4C"),
+                      ("plate", "F2C230"), ("belt", "5E3A26"), ("scarf", "D9A070")):
+        a.paint(key, code)
+    a.box("base", -0.6, 0.6, -0.55, 0.55, 0.0, 0.24)
+    a.box("plate", -0.32, 0.32, -0.59, -0.53, 0.05, 0.19, bevel=0)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.06, s * 0.3))
+        a.box("dark", x0, x1, -0.42, 0.12, 0.22, 0.38)  # башмаки
+        x0, x1 = sorted((s * 0.08, s * 0.27))
+        a.box("clay", x0, x1, -0.2, 0.14, 0.36, 1.1)  # ноги
+        x0, x1 = sorted((s * 0.07, s * 0.28))
+        a.box("belt", x0, x1, -0.21, 0.15, 0.42, 0.7)  # обмотки
+    # халат, пластинчатый панцирь, пояс, наплечники
+    a.box("clay", -0.44, 0.44, -0.33, 0.31, 0.95, 1.12)
+    a.box("clay", -0.4, 0.4, -0.3, 0.28, 1.1, 1.42)
+    a.box("armor", -0.38, 0.38, -0.29, 0.27, 1.35, 2.1)
+    a.pixels(LAMELLAR, {"P": ("lamella", 0.025)}, 0.06, -0.33, 2.05, "xz", 0.29)
+    a.box("belt", -0.41, 0.41, -0.32, 0.3, 1.36, 1.45)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.36, s * 0.56))
+        a.box("armor", x0, x1, -0.24, 0.22, 1.86, 2.08)
+        x0, x1 = sorted((s * 0.38, s * 0.54))
+        a.box("clay", x0, x1, -0.14, 0.14, 1.45, 1.9)  # плечо
+        x0, x1 = sorted((s * 0.3, s * 0.48))
+        a.box("clay", x0, x1, -0.5, -0.12, 1.42, 1.58)  # предплечье вперёд
+        x0, x1 = sorted((s * 0.28, s * 0.46))
+        a.box("clay", x0, x1, -0.6, -0.44, 1.4, 1.6)  # кулак, как будто держит копьё
+    # шея, шарф, голова: глаза, брови, нос, усы с поднятыми кончиками, уши, волосы и пучок
+    a.box("clay", -0.11, 0.11, -0.1, 0.1, 2.06, 2.2)
+    a.box("scarf", -0.2, 0.2, -0.2, 0.17, 2.06, 2.16)
+    a.box("clay", -0.2, 0.2, -0.24, 0.16, 2.15, 2.58)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.06, s * 0.15))
+        a.box("dark", x0, x1, -0.26, -0.23, 2.4, 2.44, bevel=0)
+        x0, x1 = sorted((s * 0.05, s * 0.16))
+        a.box("dark", x0, x1, -0.26, -0.23, 2.47, 2.5, bevel=0)
+        x0, x1 = sorted((s * 0.11, s * 0.15))
+        a.box("dark", x0, x1, -0.255, -0.235, 2.255, 2.33, bevel=0)  # поднятые кончики усов
+        x0, x1 = sorted((s * 0.2, s * 0.24))
+        a.box("clay", x0, x1, -0.06, 0.06, 2.3, 2.44)
+    a.box("clay", -0.035, 0.035, -0.29, -0.22, 2.3, 2.42)
+    a.box("dark", -0.13, 0.13, -0.26, -0.23, 2.25, 2.29, bevel=0)
+    a.box("hair", -0.215, 0.215, -0.2, 0.175, 2.5, 2.62)
+    a.box("hair", 0.02, 0.18, -0.08, 0.12, 2.6, 2.8)
+    a.box("belt", 0.0, 0.2, -0.1, 0.14, 2.62, 2.66, bevel=0)
+    return a
+
+
+# ── 10. Мини-Стоунхендж: кольцо камней с перемычками, большой трилит, синие камни, упавший камень ─────────────
+
+
+def mini_stonehenge():
+    a = S.Art("Art_MiniStonehenge", ring_z0=0.6)
+    a.paint("stone", "A7A196", rings=True)
+    a.paint("grass", "62B848", rings=True)
+    for key, code in (("dirt", "7A5A3A"), ("blue", "6E7888"), ("tuft", "3F8F35"), ("flower", "F5D24A")):
+        a.paint(key, code)
+    a.prism("dirt", S.octagon(-1.55, 1.55, -1.55, 1.55, 0.46), 0.0, 0.12)
+    a.prism("grass", S.octagon(-1.5, 1.5, -1.5, 1.5, 0.44), 0.08, 0.22)
+
+    def stone(key, ang, r, x0, x1, y0, y1, z0, z1, turn=0.0):
+        """Камень на окружности: локальная y смотрит от центра, x — по касательной."""
+        t = math.radians(ang)
+        m = Matrix.Translation((r * math.cos(t), r * math.sin(t), 0)) @ Matrix.Rotation(t - math.pi / 2 + turn, 4, "Z")
+        a.box(key, x0, x1, y0, y1, z0, z1, matrix=m)
+
+    # внешнее кольцо: 7 стоячих камней, перемычки на парах (спереди, справа, сзади), один камень упал
+    angles = [-112.5 + 45 * k for k in range(8)]
+    for k, ang in enumerate(angles[:7]):
+        stone("stone", ang, 1.08, -0.18, 0.18, -0.12, 0.12, 0.18, 1.12)
+    for mid in (-90, 0, 90):
+        stone("stone", mid, 0.998, -0.6, 0.6, -0.13, 0.13, 1.1, 1.3)
+    stone("stone", 205, 1.2, -0.47, 0.47, -0.18, 0.18, 0.18, 0.42, turn=math.radians(20))
+    # большой трилит сзади и два малых по бокам
+    stone("stone", 90, 0.42, -0.4, -0.12, -0.15, 0.15, 0.18, 1.5)
+    stone("stone", 90, 0.42, 0.12, 0.4, -0.15, 0.15, 0.18, 1.5)
+    stone("stone", 90, 0.42, -0.46, 0.46, -0.14, 0.14, 1.48, 1.68)
+    for ang in (25, 155):
+        stone("stone", ang, 0.58, -0.32, -0.08, -0.12, 0.12, 0.18, 1.18)
+        stone("stone", ang, 0.58, 0.08, 0.32, -0.12, 0.12, 0.18, 1.18)
+        stone("stone", ang, 0.58, -0.37, 0.37, -0.11, 0.11, 1.16, 1.33)
+    # синие камни, плоский алтарный камень, трава и цветы
+    for ang in (-140, -40, 20, 175, 255):
+        stone("blue", ang, 0.8, -0.07, 0.07, -0.06, 0.06, 0.18, 0.62)
+    a.box("stone", -0.32, 0.32, -0.12, 0.12, 0.18, 0.3)
+    for x, y in ((-1.2, -0.6), (1.1, 0.8), (0.9, -1.0), (-0.8, 1.1), (0.2, -1.25)):
+        a.box("tuft", x - 0.07, x + 0.07, y - 0.07, y + 0.07, 0.2, 0.32, bevel=0)
+        a.box("flower", x - 0.035, x + 0.035, y - 0.035, y + 0.035, 0.3, 0.37, bevel=0)
+    return a
+
+
+# ── 11. Египетский саркофаг: золотой гроб-«мумия» стоя, полосатый парик, лицо, ожерелье, скрещённые руки ───────
+
+
+def egyptian_sarcophagus():
+    a = S.Art("Art_EgyptianSarcophagus", ring_z0=1.0)
+    a.paint("gold", "EFBF3A", rings=True)
+    for key, code in (("lapis", "1F3E9A"), ("turq", "2EC4B6"), ("carn", "D9452B"), ("gold2", "C9952A"),
+                      ("white", "F5F2E8"), ("black", "15161C"), ("stand", "1F2433"), ("plate", "F2C230")):
+        a.paint(key, code)
+    a.box("stand", -0.62, 0.62, -0.55, 0.5, 0.0, 0.2)
+    a.box("plate", -0.32, 0.32, -0.59, -0.53, 0.04, 0.16, bevel=0)
+    # тело расширяется к плечам, внизу коробка стоп; синие пояса и столбец с анхами
+    a.box("gold", -0.32, 0.32, -0.36, 0.3, 0.18, 0.5)
+    a.box("gold", -0.36, 0.36, -0.34, 0.32, 0.48, 1.25)
+    a.box("gold", -0.44, 0.44, -0.38, 0.34, 1.22, 1.95)
+    a.box("turq", -0.34, 0.34, -0.38, 0.32, 0.25, 0.31, bevel=0)
+    for zb in (0.65, 0.99):  # края поясов — не на границах пикселей анхов
+        a.box("lapis", -0.38, 0.38, -0.36, 0.34, zb, zb + 0.06, bevel=0)
+    a.box("lapis", -0.11, 0.11, -0.37, -0.33, 0.55, 1.2, bevel=0)
+    for zt in (1.14, 0.86):
+        a.pixels(ANKH, {"#": ("plate", 0.02)}, 0.04, -0.1, zt, "xz", 0.37)
+    # ожерелье тремя поясами, скрещённые руки
+    for key, w, y0, y1, z0, z1 in (("lapis", 0.48, -0.42, 0.38, 1.59, 1.67), ("carn", 0.47, -0.41, 0.37, 1.67, 1.75),
+                                   ("turq", 0.46, -0.4, 0.36, 1.75, 1.83)):
+        a.box(key, -w, w, y0, y1, z0, z1, bevel=0)
+    a.box("gold2", -0.3, 0.3, -0.45, -0.37, 1.38, 1.48, matrix=tilt((0, -0.41, 1.43), "Y", 28))
+    a.box("gold2", -0.3, 0.3, -0.46, -0.38, 1.38, 1.48, matrix=tilt((0, -0.42, 1.43), "Y", -28))
+    # полосатый парик с концами на груди, лицо, глаза с подводкой, нос, губы, борода
+    a.box("lapis", -0.42, 0.42, -0.3, 0.36, 1.85, 2.62)
+    for zb in (1.97, 2.14, 2.31, 2.48):
+        a.box("plate", -0.44, 0.44, -0.32, 0.38, zb, zb + 0.07, bevel=0)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.2, s * 0.42))
+        a.box("lapis", x0, x1, -0.47, -0.3, 1.55, 2.2)
+        for zb in (1.62, 1.8, 1.98):
+            x0, x1 = sorted((s * 0.19, s * 0.43))
+            a.box("plate", x0, x1, -0.48, -0.29, zb, zb + 0.07, bevel=0)
+    a.box("gold", -0.21, 0.21, -0.5, -0.2, 1.95, 2.48)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.05, s * 0.15))
+        a.box("white", x0, x1, -0.52, -0.49, 2.22, 2.29, bevel=0)
+        x0, x1 = sorted((s * 0.08, s * 0.12))
+        a.box("black", x0, x1, -0.53, -0.51, 2.225, 2.285, bevel=0)
+        x0, x1 = sorted((s * 0.04, s * 0.17))
+        a.box("lapis", x0, x1, -0.515, -0.49, 2.29, 2.32, bevel=0)
+        x0, x1 = sorted((s * 0.15, s * 0.2))
+        a.box("lapis", x0, x1, -0.51, -0.49, 2.25, 2.27, bevel=0)
+        x0, x1 = sorted((s * 0.05, s * 0.17))
+        a.box("lapis", x0, x1, -0.51, -0.49, 2.35, 2.38, bevel=0)
+    a.box("gold", -0.04, 0.04, -0.56, -0.48, 2.08, 2.26)
+    a.box("carn", -0.08, 0.08, -0.52, -0.48, 2.02, 2.06, bevel=0)
+    a.box("lapis", -0.06, 0.06, -0.5, -0.36, 1.7, 1.96)
+    for zb in (1.76, 1.86):
+        a.box("plate", -0.07, 0.07, -0.51, -0.35, zb, zb + 0.04, bevel=0)
+    return a
+
+
 # ── Сборка, запекание, экспорт, проверочные рендеры ─────────────────────────────────────────────────────────
 
 ITEMS = [("Moai", moai), ("Sunflowers", sunflowers), ("TriceratopsSkull", triceratops_skull), ("TutMask", tut_mask),
-         ("StarryNight", starry_night), ("EgyptianCat", egyptian_cat), ("GladiatorHelmet", gladiator_helmet)]
+         ("StarryNight", starry_night), ("EgyptianCat", egyptian_cat), ("GladiatorHelmet", gladiator_helmet),
+         ("AnubisStatue", anubis_statue), ("TerracottaWarrior", terracotta_warrior),
+         ("MiniStonehenge", mini_stonehenge), ("EgyptianSarcophagus", egyptian_sarcophagus)]
 ITEMS = [(i, f) for i, f in ITEMS if not ONLY or i in ONLY]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
