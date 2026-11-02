@@ -49,12 +49,12 @@ MapLayout.PlotYard = {
 	sign = Vector2.new(7, -30),
 }
 
--- Лавки у переднего края, прилавком к полю; awning — пара цветов навеса из Palette.Awnings.
+-- Лавки у переднего края по бокам от входа в коридор, лицом к полю (D41: павильоны World/Models/Shops).
 MapLayout.Shops = {
-	{ title = "Аура", position = Vector3.new(MapLayout.CorridorHalf, 0, 12), awning = 2 },
-	{ title = "Продажа", position = Vector3.new(-MapLayout.CorridorHalf, 0, 12), awning = 3 },
+	{ title = "Аура", position = Vector3.new(MapLayout.CorridorHalf + 4, 0, 24) },
+	{ title = "Продажа", position = Vector3.new(-MapLayout.CorridorHalf - 4, 0, 24) },
 }
-MapLayout.ShopScale = 2.6 -- ларёк Plaza.Stall в 2.6 раза больше
+MapLayout.ShopScale = 1.45 -- павильоны World/Models/Shops крупнее в 1.45 раза: видны от точки появления (D41)
 
 -- Точка появления посередине поля, лицом к музеям.
 MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), size = Vector3.new(8, 0.4, 8) }
@@ -63,9 +63,10 @@ MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), siz
 MapLayout.ZoneSize = 95
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
 -- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
-MapLayout.HologramSize = Vector2.new(44, 12) -- надпись уровня, стадов
-MapLayout.HologramHeight = 12.5 -- центр надписи над полом (низ — выше головы персонажа)
-MapLayout.HologramInset = 14 -- от входа в зону вглубь
+MapLayout.HologramSize = Vector2.new(40, 11) -- надпись уровня, стадов
+MapLayout.HologramHeight = 22 -- центр надписи над полом: низ на 16.5 — выше головы, выше босса (9.6), не мешает обзору
+MapLayout.HologramInset = 10 -- от входа в зону вглубь
+MapLayout.PylonX = 86 -- светящиеся столбики на границах зон, у обрывов
 MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНАЯ ЗОНА» на траве у входа в коридор
 -- Ночной барьер (D41): сплошная стена во всю ширину коридора на входе в опасную зону, только ночью.
 MapLayout.Barrier = { height = 28, thickness = 1 }

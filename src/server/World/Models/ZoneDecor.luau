@@ -27,38 +27,7 @@ function ZoneDecor.Pedestal(accent: Color3): { ModelBuilder.Brick }
 	}
 end
 
--- Свалка: горы хлама в углах, шины, бочки.
-function ZoneDecor.Junk(): { ModelBuilder.Brick }
-	local bricks: { ModelBuilder.Brick } = {}
-	local random = Random.new(11)
-	local junk = { hex("8D6E63"), hex("9E9E9E"), hex("C0CA33"), hex("E57373"), hex("64B5F6"), hex("FFB74D"), hex("795548") }
-	for _, corner in { Vector2.new(-22, -20), Vector2.new(22, -20), Vector2.new(-24, 25), Vector2.new(24, 25) } do
-		local y = 0
-		for layer = 1, 4 do
-			local spread = 6 - layer
-			for _ = 1, 3 do
-				local size = Vector3.new(random:NextNumber(2, 4.5), random:NextNumber(1, 2.4), random:NextNumber(2, 4.5))
-				local at = CFrame.new(
-					corner.X + random:NextNumber(-spread, spread),
-					y + size.Y / 2,
-					corner.Y + random:NextNumber(-spread, spread)
-				) * CFrame.Angles(0, random:NextNumber(0, math.pi), 0)
-				table.insert(bricks, B(size, at, junk[random:NextInteger(1, #junk)]))
-			end
-			y += 1.6
-		end
-	end
-	for i, spot in { Vector2.new(-14, -24), Vector2.new(-11, -23), Vector2.new(14, 26) } do
-		-- Шины лежат плашмя.
-		table.insert(bricks, B(Vector3.new(1.4, 4, 4), CFrame.new(spot.X, 0.7 + (i - 1) % 2 * 1.4, spot.Y) * UPRIGHT, Palette.Black, {
-			shape = "Cylinder",
-		}))
-	end
-	for _, spot in { Vector2.new(26, -4), Vector2.new(26, 0), Vector2.new(-26, 8) } do
-		table.insert(bricks, B(Vector3.new(4, 2.6, 2.6), CFrame.new(spot.X, 2, spot.Y) * UPRIGHT, hex("B23B2B"), { shape = "Cylinder" }))
-	end
-	return bricks
-end
+-- Свалка (уровень 1) — World/Models/Junkyard (D41).
 
 -- Барахолка: цветные коврики под постаментами (ларьки и ящики ставит WorldBuilder).
 function ZoneDecor.Flea(pedestals: { Vector2 }): { ModelBuilder.Brick }

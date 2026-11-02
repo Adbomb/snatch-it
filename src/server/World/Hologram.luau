@@ -1,7 +1,8 @@
--- Голографическое название уровня (D41): светящаяся надпись в воздухе над полом зоны, без таблички — невидимая
--- деталь с SurfaceGui (свечение Brightness, без влияния света), градиент цвета зоны по буквам, под ней — светящийся
--- «проектор» на полу. Лицо надписи — сторона Front детали; клиент слегка покачивает и мерцает надписью
--- (Controllers/ZoneController, тег Hologram). Зависит от Palette, Shared/TextCase.
+-- Голографические надписи в воздухе (D41): название уровня («УРОВЕНЬ N», название, босс) и вывески магазинов — без
+-- табличек: невидимая деталь с SurfaceGui (свечение Brightness, без влияния света), градиент цвета по буквам. Висят
+-- высоко, над головой игрока и над боссом, не закрывают обзор. Лицо надписи — сторона Front детали (LookVector);
+-- клиент слегка покачивает и мерцает надписью, ночью гасит надписи уровней (Controllers/ZoneController, тег Hologram;
+-- атрибут Night = false — не гасить). Зависит от Palette, Shared/TextCase.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,11 +18,12 @@ local BOLD = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeig
 local TAG = "Hologram"
 
 export type Spec = {
-	number: number,
+	top: string?, -- мелкая строка над названием («УРОВЕНЬ 1»); nil — нет
 	title: string,
-	subtitle: string,
+	subtitle: string?, -- строка под названием (имя босса); nil — нет
 	accent: Color3,
 	size: Vector2, -- ширина и высота надписи, стадов
+	hideAtNight: boolean?, -- гаснуть ночью (надписи уровней: коридор закрыт)
 }
 
 local Hologram = {}
@@ -39,15 +41,20 @@ local function text(parent: Instance, value: string, props: { [string]: any }): 
 	return label
 end
 
--- Надпись в точке at (центр надписи; лицо — LookVector), проектор на полу под ней (верх пола — floorY).
-function Hologram.Build(spec: Spec, at: CFrame, floorY: number, parent: Instance): Model
-	local model = Instance.new("Model")
-	model.Name = "Hologram"
+local function stroke(label: TextLabel, color: Color3, thickness: number)
+	local s = Instance.new("UIStroke")
+	s.Color = color
+	s.Thickness = thickness
+	s.Parent = label
+end
+
+-- Надпись с центром в at (лицо — LookVector).
+function Hologram.Build(spec: Spec, at: CFrame, parent: Instance): BasePart
 	local glow = spec.accent:Lerp(Color3.new(1, 1, 1), 0.55)
 	local dark = spec.accent:Lerp(Palette.Black, 0.6)
 
 	local panel = Instance.new("Part")
-	panel.Name = "Panel"
+	panel.Name = "Hologram"
 	panel.Anchored = true
 	panel.CanCollide = false
 	panel.CanQuery = false
@@ -56,7 +63,7 @@ function Hologram.Build(spec: Spec, at: CFrame, floorY: number, parent: Instance
 	panel.Transparency = 1
 	panel.Size = Vector3.new(spec.size.X, spec.size.Y, 0.2)
 	panel.CFrame = at
-	panel.Parent = model
+	panel:SetAttribute("Night", spec.hideAtNight == true)
 	CollectionService:AddTag(panel, TAG)
 
 	local gui = Instance.new("SurfaceGui")
@@ -66,63 +73,44 @@ function Hologram.Build(spec: Spec, at: CFrame, floorY: number, parent: Instance
 	gui.PixelsPerStud = PIXELS_PER_STUD
 	gui.LightInfluence = 0
 	gui.Brightness = 2.2 -- светится (свечение Bloom)
-	gui.AlwaysOnTop = false
 	gui.Parent = panel
 
-	local number = text(gui, ("УРОВЕНЬ %d"):format(spec.number), {
-		Name = "Number",
-		FontFace = BOLD,
-		Size = UDim2.fromScale(1, 0.2),
-		Position = UDim2.fromScale(0, 0.02),
-		TextColor3 = glow,
-	})
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = dark
-	stroke.Thickness = 1.5
-	stroke.Parent = number
-
+	-- Доли высоты: строка сверху, название, строка снизу (что есть — то и делится).
+	local topShare = if spec.top then 0.22 else 0
+	local subShare = if spec.subtitle then 0.24 else 0
+	local titleShare = 1 - topShare - subShare
+	if spec.top then
+		local top = text(gui, TextCase.Upper(spec.top), {
+			Name = "Top",
+			FontFace = BOLD,
+			Size = UDim2.fromScale(1, topShare * 0.9),
+			TextColor3 = glow,
+		})
+		stroke(top, dark, 1.5)
+	end
 	local title = text(gui, TextCase.Upper(spec.title), {
 		Name = "Title",
 		FontFace = FONT,
-		Size = UDim2.fromScale(1, 0.5),
-		Position = UDim2.fromScale(0, 0.2),
+		Size = UDim2.fromScale(1, titleShare),
+		Position = UDim2.fromScale(0, topShare),
 	})
 	local shade = Instance.new("UIGradient")
 	shade.Rotation = 90
 	shade.Color = ColorSequence.new(Color3.new(1, 1, 1), glow)
 	shade.Parent = title
-	local outline = Instance.new("UIStroke")
-	outline.Color = dark
-	outline.Thickness = 3
-	outline.Parent = title
+	stroke(title, dark, 3)
+	if spec.subtitle then
+		local subtitle = text(gui, spec.subtitle, {
+			Name = "Subtitle",
+			FontFace = BOLD,
+			Size = UDim2.fromScale(1, subShare * 0.9),
+			Position = UDim2.fromScale(0, topShare + titleShare + subShare * 0.05),
+		})
+		stroke(subtitle, dark, 1.5)
+	end
 
-	local subtitle = text(gui, spec.subtitle, {
-		Name = "Subtitle",
-		FontFace = BOLD,
-		Size = UDim2.fromScale(1, 0.2),
-		Position = UDim2.fromScale(0, 0.74),
-	})
-	local subStroke = Instance.new("UIStroke")
-	subStroke.Color = dark
-	subStroke.Thickness = 1.5
-	subStroke.Parent = subtitle
-
-	-- Проектор: светящаяся полоса на полу под надписью (верх на 0.32 над полом — выше плит декора, без совпадающих граней).
-	local base = Instance.new("Part")
-	base.Name = "Projector"
-	base.Anchored = true
-	base.CanCollide = false
-	base.CanQuery = false
-	base.CastShadow = false
-	base.Material = Enum.Material.Neon
-	base.Color = spec.accent
-	base.Transparency = 0.15
-	base.Size = Vector3.new(spec.size.X * 0.55, 0.32, 1.2)
-	base.CFrame = CFrame.new(at.Position.X, floorY + 0.16, at.Position.Z) * at.Rotation
-	base.Parent = model
-
-	model.Parent = parent
-	return model
+	panel.Parent = parent
+	return panel
 end
 
 return Hologram

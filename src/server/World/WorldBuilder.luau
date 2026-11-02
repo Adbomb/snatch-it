@@ -4,23 +4,23 @@
 -- цвета зоны, голографическое название, постаменты, декор; у входа в коридор — разметка «Безопасная зона».
 -- Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с полем качалки строит PlotService.
 -- Совпадающих граней у разных деталей нет (D36): трава обрывов, свесы и «натёки» лежат встык или с выступом.
--- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, Hologram, World/Models/*, GameConfig, ZonePatterns,
--- NumberFormat.
+-- Зависит от MapLayout, ModelBuilder, Palette, Studs, Hologram, World/Models/*, GameConfig, ZonePatterns.
 
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local ZonePatterns = require(ReplicatedStorage.Shared.Config.ZonePatterns)
-local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local World = ServerScriptService.Server.World
 local Hologram = require(World.Hologram)
 local MapLayout = require(World.MapLayout)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
-local Signs = require(World.Signs)
 local Studs = require(World.Studs)
+local Junkyard = require(World.Models.Junkyard)
 local Plaza = require(World.Models.Plaza)
+local Shops = require(World.Models.Shops)
 local Props = require(World.Models.Props)
 local Tree = require(World.Models.Tree)
 local ZoneDecor = require(World.Models.ZoneDecor)
@@ -29,7 +29,7 @@ local B = ModelBuilder.Brick
 local H = MapLayout.Heights
 local SLAB = 0.4 -- толщина плит покрытия
 local GROUND = 2 -- толщина плиты травы
-local BICEPS = "💪"
+local UPRIGHT = CFrame.Angles(0, 0, math.rad(90)) -- ось цилиндра вертикально
 local LINE = { width = 1, height = 0.2 } -- полосы на полу: граница Safe Zone и границы зон
 local SAFE_LINE = Color3.fromHex("E5484D")
 local DEEP = "LegoSquaresDeep" -- рельеф обрывов
@@ -208,30 +208,81 @@ local function buildCliffs(parent: Instance)
 	end
 end
 
--- Лавки «Аура» и «Продажа»: ларёк в ShopScale раз больше, прилавком к полю (+Z), табло над навесом.
--- Табло в координатах ларька до увеличения.
-local SHOP_BOARD = { size = Vector3.new(9, 2, 0.3), at = Vector3.new(0, 9.6, 2.7) }
+-- Лавки «Аура» и «Продажа» (D41, World/Models/Shops): павильоны лицом к полю (+Z), название — голограмма над крышей.
+-- Детали с именами Spin и Bob получают теги (вращение и покачивание делает клиент), у кристалла ауры — искры.
+local SHOP_BUILD = { ["Продажа"] = Shops.Sell, ["Аура"] = Shops.Aura }
+local SHOP_STYLE = {
+	["Продажа"] = { title = "💰 Продажа", accent = Color3.fromHex("2EBD4E"), size = Vector2.new(22, 5.5),
+		height = Shops.SellTitleHeight, z = 2 },
+	["Аура"] = { title = "✨ Аура", accent = Color3.fromHex("B04BFF"), size = Vector2.new(18, 5.5),
+		height = Shops.AuraTitleHeight, z = 0 },
+}
+local SPARKLES = "rbxasset://textures/particles/sparkles_main.dds" -- встроенная текстура Roblox
 
 local function buildShops(parent: Instance)
 	local f = folder("Shops", parent)
-	local k = MapLayout.ShopScale
 	for _, shop in MapLayout.Shops do
-		local stripes = Palette.Awnings[shop.awning]
-		local stall = ModelBuilder.Build(shop.title, Plaza.Stall(Palette.Muted(stripes[1]), stripes[2]))
-		stall:ScaleTo(k)
+		local model = ModelBuilder.Build(shop.title, SHOP_BUILD[shop.title]())
+		model:ScaleTo(MapLayout.ShopScale)
 		local base = shop.position + Vector3.new(0, H.Ground, 0)
 		local at = CFrame.lookAt(base, base + Vector3.new(0, 0, 1))
-		ModelBuilder.Place(stall, at, f)
-		local board = Instance.new("Part")
-		board.Name = "SignBoard"
-		board.Anchored = true
-		board.Size = SHOP_BOARD.size * k
-		board.CFrame = at * CFrame.new(SHOP_BOARD.at * k)
-		board.Color = Palette.SignBoard
-		board.Material = Enum.Material.SmoothPlastic -- табличка с текстом: без пупырышков
-		Studs.Apply(board)
-		board.Parent = stall
-		Signs.Write(board, Enum.NormalId.Front, { { text = string.upper(shop.title), scale = 0.7 } })
+		ModelBuilder.Place(model, at, f)
+		for _, part in model:GetChildren() do
+			if part.Name == "Spin" or part.Name == "Bob" then
+				CollectionService:AddTag(part, part.Name)
+				if part.Name == "Bob" then
+					part:SetAttribute("BobHeight", 0.4)
+				end
+			end
+		end
+		local style = SHOP_STYLE[shop.title]
+		if shop.title == "Продажа" then
+			-- «$» на обеих сторонах монеты (круглые грани цилиндра — Left и Right)
+			for _, part in model:GetChildren() do
+				if part.Name == "Spin" and part.Size.X > 1.1 then
+					for _, face in { Enum.NormalId.Left, Enum.NormalId.Right } do
+						local gui = Instance.new("SurfaceGui")
+						gui.Face = face
+						gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+						gui.PixelsPerStud = 14
+						gui.LightInfluence = 0.3
+						gui.Parent = part
+						local label = Instance.new("TextLabel")
+						label.BackgroundTransparency = 1
+						label.Size = UDim2.fromScale(1, 1)
+						label.TextScaled = true
+						label.FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
+						label.TextColor3 = Color3.fromHex("FFF4C2")
+						label.Text = "$"
+						label.Parent = gui
+						local stroke = Instance.new("UIStroke")
+						stroke.Color = Color3.fromHex("8A5A12")
+						stroke.Thickness = 4
+						stroke.Parent = label
+					end
+				end
+			end
+		else
+			for _, part in model:GetChildren() do
+				if part.Name == "Spin" then
+					local sparks = Instance.new("ParticleEmitter")
+					sparks.Texture = SPARKLES
+					sparks.Color = ColorSequence.new(Color3.fromHex("FFB8F0"), Color3.fromHex("9FE8FF"))
+					sparks.LightEmission = 1
+					sparks.Rate = 14
+					sparks.Lifetime = NumberRange.new(1.2, 2)
+					sparks.Speed = NumberRange.new(1, 2.5)
+					sparks.SpreadAngle = Vector2.new(180, 180)
+					sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
+					sparks.Parent = part
+				end
+			end
+		end
+		Hologram.Build({
+			title = style.title,
+			accent = style.accent,
+			size = style.size * MapLayout.ShopScale,
+		}, at * CFrame.new(0, style.height * MapLayout.ShopScale, -style.z * MapLayout.ShopScale), model)
 	end
 end
 
@@ -245,14 +296,26 @@ local function buildSpawn(parent: Instance)
 	spawn.Size = MapLayout.Spawn.size
 	local center = MapLayout.Spawn.position + Vector3.new(0, MapLayout.Spawn.size.Y / 2, 0)
 	spawn.CFrame = CFrame.lookAt(center, center + Vector3.new(0, 0, 1))
-	spawn.Color = Palette.FieldFloor
-	spawn.Material = Enum.Material.Plastic
-	Studs.Apply(spawn)
+	spawn.Transparency = 1 -- видна площадка вокруг
 	local decal = spawn:FindFirstChildOfClass("Decal")
 	if decal then
 		decal:Destroy()
 	end
-	spawn.Parent = folder("Spawn", parent)
+	local f = folder("Spawn", parent)
+	spawn.Parent = f
+	-- Круглая площадка появления: светлая плита в два яруса и голубое светящееся кольцо (D41).
+	local ground = MapLayout.Spawn.position
+	local pad = ModelBuilder.Build("SpawnPad", {
+		B(Vector3.new(0.3, 16, 16), CFrame.new(0, 0.15, 0) * UPRIGHT, Palette.MuseumTrim, { shape = "Cylinder" }),
+		B(Vector3.new(0.12, 14.2, 14.2), CFrame.new(0, 0.36, 0) * UPRIGHT, Color3.fromHex("5CB0FF"), {
+			shape = "Cylinder",
+			material = Enum.Material.Neon,
+			collide = false,
+			shadow = false,
+		}),
+		B(Vector3.new(0.2, 13, 13), CFrame.new(0, 0.4, 0) * UPRIGHT, Palette.White, { shape = "Cylinder" }),
+	})
+	ModelBuilder.Place(pad, CFrame.new(ground), f)
 end
 
 -- Граница Safe Zone у входа в коридор (D41, как у референса владельца): красная линия поперёк и надпись
@@ -330,7 +393,6 @@ local function buildZone(index: number, parent: Instance)
 	end
 
 	-- Граница с предыдущей зоной — светящаяся полоса цвета зоны поперёк коридора (у зоны 1 — линия Safe Zone).
-	local half = MapLayout.ZoneHalfWidth
 	if index > 1 then
 		local line = Instance.new("Part")
 		line.Name = "Border"
@@ -339,19 +401,41 @@ local function buildZone(index: number, parent: Instance)
 		line.Color = accent
 		line.Transparency = 0.2
 		line.CastShadow = false
-		line.Size = Vector3.new(half * 2 - 0.4, LINE.height, LINE.width)
+		line.Size = Vector3.new((MapLayout.PylonX - 2) * 2, LINE.height, LINE.width) -- от столбика до столбика
 		line.CFrame = CFrame.new(0, H.Path + LINE.height / 2, MapLayout.ZoneStartZ(index))
 		line.Parent = f
 	end
 
-	-- Голографическое название уровня над полом у входа, лицом к входящему (D41): номер, название, босс и его сила.
+	-- Голографическое название уровня высоко над входом, лицом к входящему (D41): номер, название, босс. Низ надписи —
+	-- выше головы игрока и выше босса: не закрывает обзор.
 	Hologram.Build({
-		number = index,
+		top = ("Уровень %d"):format(index),
 		title = zone.name,
-		subtitle = ("%s %s %s"):format(zone.boss, BICEPS, NumberFormat.Short(GameConfig.Progression.Bosses[index])),
+		subtitle = zone.boss,
 		accent = accent,
 		size = MapLayout.HologramSize,
-	}, ground * CFrame.new(0, MapLayout.HologramHeight, -size / 2 + MapLayout.HologramInset), H.Path, f)
+		hideAtNight = true,
+	}, ground * CFrame.new(0, MapLayout.HologramHeight, -size / 2 + MapLayout.HologramInset), f)
+
+	-- Светящиеся столбики у обрывов на границе с предыдущей зоной (цвет зоны): смена уровня без рамок.
+	if index > 1 then
+		for _, x in { -MapLayout.PylonX, MapLayout.PylonX } do
+			local at = CFrame.new(x, H.Path, MapLayout.ZoneStartZ(index))
+			place("Pylon_" .. zone.id, function()
+				return {
+					B(Vector3.new(3, 1, 3), Vector3.new(0, 0.5, 0), Palette.Stone),
+					B(Vector3.new(1.6, 8, 1.6), Vector3.new(0, 5, 0), accent:Lerp(Palette.White, 0.35)),
+					B(Vector3.new(2.6, 0.4, 2.6), Vector3.new(0, 9, 0), accent:Lerp(Palette.Black, 0.4)),
+					B(Vector3.new(2.2, 2.2, 2.2), Vector3.new(0, 10.3, 0), accent, {
+						material = Enum.Material.Neon,
+						collide = false,
+						shadow = false,
+						light = { range = 16, brightness = 1.2, color = accent },
+					}),
+				}
+			end, at, f)
+		end
+	end
 
 	-- Постаменты под 4 предмета босса (D37).
 	for i, spot in MapLayout.ArtSlots do
@@ -363,7 +447,7 @@ local function buildZone(index: number, parent: Instance)
 	-- Декор по теме зоны.
 	local decor: { ModelBuilder.Brick } = {}
 	if zone.id == "Junk" then
-		decor = ZoneDecor.Junk()
+		decor = Junkyard.Zone() -- уровень 1 «Свалка» (D41)
 	elseif zone.id == "Flea" then
 		decor = ZoneDecor.Flea(MapLayout.ArtSlots)
 		for i, spot in { Vector2.new(-20, 26), Vector2.new(20, 26) } do

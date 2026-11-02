@@ -3,7 +3,7 @@
 -- «УРОВЕНЬ N» и название; цвет панели — по номеру зоны (UITokens.LevelBanner). Показывается при каждом входе в
 -- уровень (из Safe Zone или из соседнего уровня). В какой зоне игрок — по полу зон (workspace.World.Map.Zones,
 -- атрибут Zone у папки зоны). Голограммы (тег Hologram) слегка покачиваются и мерцают — только у этого клиента;
--- ночью (на карте NightBarrier) гаснут.
+-- ночью (на карте NightBarrier) надписи уровней гаснут. Теги Spin и Bob — вращение и покачивание украшений магазинов.
 -- Зависит от Config/GameConfig, Config/UITokens, Shared/StudUI, Shared/TextCase.
 
 local CollectionService = game:GetService("CollectionService")
@@ -199,39 +199,62 @@ local function watchZones()
 	end
 end
 
--- Голограммы: покачивание по вертикали и лёгкое мерцание (у каждой своя фаза).
-local holograms: { [BasePart]: { base: CFrame, phase: number, gui: SurfaceGui? } } = {}
+-- Голограммы: покачивание по вертикали и лёгкое мерцание (у каждой своя фаза). Детали с тегом Spin вращаются вокруг
+-- вертикали (монета продажи, кристалл ауры), с тегом Bob — плавают вверх-вниз (огоньки ауры).
+type Floating = { base: CFrame, phase: number, gui: SurfaceGui?, night: boolean, spin: number, bob: number }
+local floating: { [BasePart]: Floating } = {}
 
-local function trackHologram(part: Instance)
-	if part:IsA("BasePart") and not holograms[part] then
-		holograms[part] = {
+local function track(part: Instance, kind: string)
+	if not part:IsA("BasePart") then
+		return
+	end
+	local info = floating[part]
+	if not info then
+		info = {
 			base = part.CFrame,
-			phase = (part.Position.Z % 7) / 7 * math.pi * 2,
+			phase = ((part.Position.X + part.Position.Z) % 7) / 7 * math.pi * 2,
 			gui = part:FindFirstChildWhichIsA("SurfaceGui"),
+			night = false,
+			spin = 0,
+			bob = 0,
 		}
+		floating[part] = info
+	end
+	if kind == "Hologram" then
+		info.bob = BOB
+		info.night = part:GetAttribute("Night") == true
+	elseif kind == "Spin" then
+		info.spin = part:GetAttribute("SpinSpeed") or 1
+	elseif kind == "Bob" then
+		info.bob = part:GetAttribute("BobHeight") or 0.6
 	end
 end
 
 local world: Instance? = nil
 
-local function animateHolograms()
+local function animate()
 	local t = os.clock()
 	world = world or workspace:FindFirstChild("World")
 	-- Ночью коридор закрыт барьером: названия уровней гаснут, не спорят с надписью «НОЧЬ» на барьере.
 	local night = world ~= nil and world:FindFirstChild("NightBarrier") ~= nil
-	for part, info in holograms do
+	for part, info in floating do
 		if not part.Parent then
-			holograms[part] = nil
+			floating[part] = nil
 			continue
 		end
+		local hidden = night and info.night
 		if info.gui then
-			info.gui.Enabled = not night
+			info.gui.Enabled = not hidden
 		end
-		if night then
+		if hidden then
 			continue
 		end
 		local wave = math.sin(t / BOB_PERIOD * 2 * math.pi + info.phase)
-		part.CFrame = info.base * CFrame.new(0, BOB * wave, 0)
+		local cf = info.base * CFrame.new(0, info.bob * wave, 0)
+		if info.spin ~= 0 then
+			cf = cf * CFrame.Angles(0, t * info.spin, 0)
+		end
+		part.CFrame = cf
 		if info.gui then
 			-- мерцание: изредка короткий «сбой» яркости, как у проектора
 			local flick = if math.sin(t * 23 + info.phase) > 0.985 then 0.7 else 1
@@ -248,11 +271,15 @@ function ZoneController.Init()
 		collectZones()
 		watchZones()
 	end)
-	CollectionService:GetInstanceAddedSignal("Hologram"):Connect(trackHologram)
-	for _, part in CollectionService:GetTagged("Hologram") do
-		trackHologram(part)
+	for _, kind in { "Hologram", "Spin", "Bob" } do
+		CollectionService:GetInstanceAddedSignal(kind):Connect(function(part)
+			track(part, kind)
+		end)
+		for _, part in CollectionService:GetTagged(kind) do
+			track(part, kind)
+		end
 	end
-	RunService.RenderStepped:Connect(animateHolograms)
+	RunService.RenderStepped:Connect(animate)
 end
 
 return ZoneController
