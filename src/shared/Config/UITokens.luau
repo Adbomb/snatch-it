@@ -184,6 +184,40 @@ UITokens.TimeHud = {
 	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
 }
 
+-- Плашка входа в уровень (D41): сверху по центру, 1.5 с, цвет — от спокойного зелёного к тревожному (по номеру зоны).
+UITokens.LevelBanner = {
+	Size = Vector2.new(380, 96), -- пиксели при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
+	Top = 64, -- отступ сверху (под кнопками Roblox)
+	Hold = 1.5, -- секунд на экране после появления
+	In = 0.35,
+	Out = 0.3,
+	Emoji = 64, -- круг со смайликом
+	NumberSize = 16,
+	TitleSize = 38,
+	Check = 0.15, -- секунды между проверками, в какой зоне игрок
+	-- Градиенты панели по номеру зоны 1…10 (верх → низ): добрый зелёный → жёлтый → оранжевый → красный → тёмный.
+	Themes = {
+		{ "7DF06A", "2BB84A" },
+		{ "B6F04E", "56C223" },
+		{ "FFE45A", "E8B10C" },
+		{ "FFC048", "F08A12" },
+		{ "FF9F4A", "E85F16" },
+		{ "FF7A5A", "D93A2A" },
+		{ "FF5A6E", "C21A3A" },
+		{ "E24A8A", "9C1460" },
+		{ "B04BFF", "6A1FC9" },
+		{ "6A5A7A", "1E1428" },
+	},
+}
+
+-- Круглое фото и ник владельца над входом в музей (D41): размеры в стадах (BillboardGui в мире).
+UITokens.OwnerTag = {
+	Size = Vector2.new(10, 8.2), -- ширина и высота подписи, стадов (фото — в середине сверху, ник — снизу во всю ширину)
+	Ring = Color3.fromHex("FFFFFF"),
+	RingDark = Color3.fromHex("1E2433"),
+	MaxDistance = 260,
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common

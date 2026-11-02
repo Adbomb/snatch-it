@@ -1,6 +1,6 @@
 -- 8 участков-музеев по кругу: строит их при старте, выдаёт при входе, освобождает при выходе.
--- Хранит владельца участка на сервере и пишет его имя на табличке (DESIGN.md §3). Здание — модель уровня
--- музея владельца (D33), у свободного участка — руины (уровень 1). Во дворе — огромная гантель уровня
+-- Хранит владельца участка на сервере; круглое фото и ник владельца над входом рисует клиент по атрибутам (D41).
+-- Здание — модель уровня музея владельца (D33), у свободного участка — руины (уровень 1). Во дворе — огромная гантель уровня
 -- владельца (D34), у свободного участка её нет. Атрибуты модели участка для клиента: OwnerUserId,
 -- OwnerName, DumbbellLevel (0 — гантели нет).
 -- Зависит от Util/PartBuilder, World/MapLayout, World/MeshBuilder, GameConfig, Util/Log.
@@ -20,7 +20,6 @@ export type Plot = {
 	model: Model,
 	showcases: { [number]: BasePart },
 	exhibits: Folder,
-	signLabel: TextLabel,
 	chest: BasePart,
 	floorOrigin: CFrame,
 	accent: Color3,
@@ -31,7 +30,6 @@ export type Plot = {
 	dumbbell: Model?,
 }
 
-local FREE_SIGN_TEXT = "СВОБОДНЫЙ УЧАСТОК"
 
 local plots: { Plot } = {}
 local plotByPlayer: { [Player]: Plot } = {}
@@ -46,14 +44,12 @@ function PlotService.Init(world: Folder)
 	local slotCount = GameConfig.Museum.SlotsByLevel[1]
 	for index = 1, count do
 		local parts = PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), slotCount, folder)
-		parts.signLabel.Text = FREE_SIGN_TEXT
 		plots[index] = {
 			index = index,
 			owner = nil,
 			model = parts.model,
 			showcases = parts.showcases,
 			exhibits = parts.exhibits,
-			signLabel = parts.signLabel,
 			chest = parts.chest,
 			floorOrigin = parts.floorOrigin,
 			accent = parts.accent,
@@ -86,7 +82,6 @@ function PlotService.Assign(player: Player): Plot?
 			plotByPlayer[player] = plot
 			plot.model:SetAttribute("OwnerUserId", player.UserId)
 			plot.model:SetAttribute("OwnerName", player.DisplayName)
-			plot.signLabel.Text = "МУЗЕЙ " .. player.DisplayName
 			Log.Debug("PlotService", ("%s получил участок %d"):format(player.Name, plot.index))
 			return plot
 		end
@@ -128,7 +123,6 @@ function PlotService.Release(player: Player)
 	plot.owner = nil
 	plot.model:SetAttribute("OwnerUserId", 0)
 	plot.model:SetAttribute("OwnerName", "")
-	plot.signLabel.Text = FREE_SIGN_TEXT
 	PlotService.ShowDumbbell(plot, nil)
 	PlotService.ShowLevel(plot, 1)
 	Log.Debug("PlotService", ("Участок %d освобождён"):format(plot.index))

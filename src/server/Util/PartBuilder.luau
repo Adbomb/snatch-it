@@ -1,4 +1,5 @@
--- Строит участки-музеи: здание музея по уровню (World/Models/MuseumHall, D36), части с механикой витрин (окружение
+-- Строит участки-музеи: здание музея по уровню (World/Models/MuseumHall, D36), точка круглого фото владельца над
+-- входом (D41), части с механикой витрин (окружение
 -- витрин и сундука — кирпичи World/Models/Museum), поле качалки и табличку «Улучшение» перед музеем (D34, D36) и
 -- место огромной гантели (её ставит GymService). Карту строит World/WorldBuilder. Только геометрия, без логики.
 -- Зависит от GameConfig, World/MapLayout, World/ModelBuilder, World/Palette, World/Models/Museum,
@@ -27,7 +28,6 @@ export type PlotParts = {
 	model: Model,
 	showcases: { [number]: BasePart },
 	exhibits: Folder,
-	signLabel: TextLabel,
 	chest: BasePart,
 	floorOrigin: CFrame, -- центр участка на уровне пола, вход в -Z
 	accent: Color3,
@@ -71,7 +71,7 @@ function PartBuilder.CreateWorldFolder(): Folder
 end
 
 -- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на поле. Здание — World/Models/MuseumHall;
--- здесь части с механикой: Floor, витрины Showcase_i (папка Showcases), Chest, табличка, лампы, Exhibits.
+-- здесь части с механикой: Floor (с точкой OwnerTag), витрины Showcase_i (папка Showcases), Chest, лампы, Exhibits.
 function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number, parent: Instance): PlotParts
 	local cfg = GameConfig.World
 	local top = PartBuilder.FloorTop
@@ -95,20 +95,16 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	floor.MaterialVariant = Textures.SquaresSoft.name
 	model.PrimaryPart = floor
 
-	local facadeZ, signY = MuseumHall.FacadeZ, MuseumHall.SignY
+	local facadeZ = MuseumHall.FacadeZ
 	local lampHeight, ceiling = MuseumHall.LampHeight, MuseumHall.Ceiling
 	PartBuilder.SetBuilding(model, floorOrigin, accent, 1)
 
-	-- Вывеска «МУЗЕЙ <имя>» над входом.
-	local board = PartBuilder.MakePart({
-		name = "Sign",
-		size = Vector3.new(18, 3.2, 0.4),
-		cframe = floorOrigin * CFrame.new(0, signY, facadeZ - 0.75),
-		color = Palette.Muted(accent),
-		material = Enum.Material.SmoothPlastic, -- табличка с текстом: без пупырышков
-		parent = model,
-	})
-	local signLabel = Signs.Write(board, Enum.NormalId.Front, { { text = "", scale = 0.8 } })[1]
+	-- Владелец музея (D41): вместо вывески «МУЗЕЙ <имя>» над входом — круглое фото и ник; их рисует клиент
+	-- (Controllers/OwnerTagController) у этой точки.
+	local tag = Instance.new("Attachment")
+	tag.Name = "OwnerTag"
+	tag.Parent = floor
+	tag.WorldPosition = (floorOrigin * CFrame.new(MuseumHall.OwnerTag)).Position
 
 	-- Витрины: два ряда по три, номер на передней грани; вокруг — колпак, канаты, лампа сверху.
 	local showcaseFolder = Instance.new("Folder")
@@ -204,7 +200,6 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		model = model,
 		showcases = showcases,
 		exhibits = exhibits,
-		signLabel = signLabel,
 		chest = chest,
 		floorOrigin = floorOrigin,
 		accent = accent,
