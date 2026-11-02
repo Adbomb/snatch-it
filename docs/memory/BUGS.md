@@ -126,6 +126,12 @@
      раз в 30 с всплывает «Project 'snatch-it' is serving… Connect» — нажать Connect (через MCP-клик или вручную).
   Плагин в Studio был 7.7.0 при сервере 7.7.1 — `rojo plugin install` поставил 7.7.1 (загрузится после перезапуска
   Studio).
+- Превью EditableMesh не переживает перезапуск Studio: меш в месте не сохраняется, MeshPart становится коробкой
+  с текстурой-развёрткой («ящики с узором», висят в воздухе на местах деталей). После перезапуска такие превью
+  удалить и собрать заново из `<id>.json`.
+- После перезапуска ПК сторож `rojo-serve.ps1` не работает — запустить отдельным процессом (`Invoke-CimMethod
+  Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scriptsojo-serve.ps1`).
+  Плагин: всплывающее «You synced project 'snatch-it'… Connect» → Connect → окно «Confirm sync» → Accept.
 - Только что загруженные картинки (`upload_image`) Roblox обрабатывает ~20–30 с: SurfaceAppearance сначала серый
   («Asset content representation is being generated») — снимки делать после паузы.
 - Blender 5.2: запекание цвета для SurfaceAppearance — через EMIT (цвет материала → Emission), а не DIFFUSE: у металла
