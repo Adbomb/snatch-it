@@ -625,12 +625,429 @@ def egyptian_sarcophagus():
     return a
 
 
+# ── Общее для новых картин и скелета ─────────────────────────────────────────────────────────────────────────
+
+
+def bone(a, key, p0, p1, w, h=None):
+    """Брусок от точки p0 до p1 с сечением w × h (кости, рёбра, позвонки)."""
+    p0, p1 = Vector(p0), Vector(p1)
+    d = p1 - p0
+    up = "Y" if abs(d.normalized().z) > 0.95 else "Z"
+    m = Matrix.Translation((p0 + p1) / 2) @ d.to_track_quat("X", up).to_matrix().to_4x4()
+    h = h or w
+    a.box(key, -d.length / 2, d.length / 2, -w / 2, w / 2, -h / 2, h / 2, matrix=m)
+
+
+def framed_painting(name, image, xl, xr, rows, colors, medal, boost=3.0):
+    """Картина в объёмной раме D39, как «Подсолнухи» и «Звёздная ночь»: боковые планки — на столбцах квадратов
+    (xl, xr), верхняя и нижняя — на рядах через rows (2.4 или 3.0), камни редкости в углах, уступ, холст, задник,
+    подставка с табличкой и упорами, навершие с пиксельным медальоном. colors: frame (с кольцами), step, gem, medal;
+    medal = (строки, символ → (ключ, выступ), ключ → цвет)."""
+    z = 0.34
+    tb = 0.5 if rows >= 3.0 else 0.44
+    cx = (xl + xr) / 2
+    top = z + rows + tb
+    hw = min((xr - xl) / 2 + 0.35, 1.85)  # подставка не шире постамента босса
+    a = S.Art(name, ring_z0=z + tb / 2)
+    a.paint("frame", colors["frame"], rings=True)
+    for key in ("step", "gem", "medal"):
+        a.paint(key, colors[key])
+    for key, code in (("wood", "4A2C1C"), ("wood2", "5E3A24"), ("back", "3A2418"), ("plate", "F2C230"),
+                      *medal[2].items()):
+        a.paint(key, code)
+    a.box("wood", cx - hw, cx + hw, -0.62, 0.62, 0.0, 0.24)
+    a.box("wood2", cx - hw + 0.07, cx + hw - 0.07, -0.5, 0.5, 0.22, z + 0.02)
+    a.box("plate", cx - 0.55, cx + 0.55, -0.665, -0.6, 0.05, 0.19, bevel=0)
+    for x in (cx - (xr - xl) / 2 + 0.3, cx + (xr - xl) / 2 - 0.3):
+        a.prism("wood2", [(z, 0.24), (z, 0.5), (z + 1.0, 0.24)], x - 0.08, x + 0.08, axis="x")
+    for x in (xl, xr):
+        a.box("frame", x - 0.22, x + 0.22, -0.25, 0.25, z, top)
+    a.box("frame", xl + 0.22, xr - 0.22, -0.25, 0.25, z, z + tb)
+    a.box("frame", xl + 0.22, xr - 0.22, -0.25, 0.25, z + rows, top)
+    for x in (xl, xr):
+        for zc in (z + tb / 2, z + rows + tb / 2):
+            a.box("gem", x - 0.13, x + 0.13, -0.33, -0.2, zc - 0.13, zc + 0.13)
+    window = (xl + 0.28, xr - 0.28, z + tb + 0.03, z + rows - 0.03)
+    a.frame("step", [(xl + 0.16, z + tb - 0.09), (xr - 0.16, z + tb - 0.09), (xr - 0.16, z + rows + 0.09),
+                     (xl + 0.16, z + rows + 0.09)], 0.12, -0.18, -0.03, axis="y")
+    a.paint_image("canvas", painting_image(image, 1100), window, boost=boost)
+    a.box("canvas", xl + 0.22, xr - 0.22, -0.06, 0.06, z + tb, z + rows, bevel=0)
+    a.box("back", xl + 0.2, xr - 0.2, 0.04, 0.2, z + tb - 0.02, z + rows + 0.02, bevel=0)
+    a.box("frame", cx - 0.62, cx + 0.62, -0.2, 0.2, top - 0.02, top + 0.26)
+    a.prism("medal", S.octagon(cx - 0.34, cx + 0.34, top + 0.12, top + 0.8, 0.13), -0.24, -0.04, axis="y")
+    px, palette = medal[0], medal[1]
+    a.pixels(px, palette, 0.07, cx - 0.035 * len(px[0]), top + 0.46 + 0.035 * len(px), "xz", 0.24)
+    return a
+
+
+# ── 12–14. Картины Rare: «Большая волна» (красный лак), «Девушка с жемчужной серёжкой», «Крик» ─────────────────
+
+FUJI = ["...W...",
+        "..WWW..",
+        ".BWBWB.",
+        ".BBBBB.",
+        "BBBBBBB"]
+PEARL = [".WWW.",
+         "WWWLW",
+         "WWWWW",
+         "WWWWW",
+         ".WWW."]
+SCREAM = ["..WWW..",
+          ".WWWWW.",
+          "HWBWBWH",
+          "HWWWWWH",
+          "HWWBWWH",
+          ".WWBWW.",
+          "..WWW.."]
+
+
+def great_wave():
+    # широкая гравюра: планки на столбцах −1.8 и 1.8, окно 3.04 × 1.84 (лист 1.49 : 1, сверху и снизу чуть обрезано)
+    return framed_painting("Art_GreatWave", "GreatWave_Met_JP1847.jpg", -1.8, 1.8, 2.4,
+                           {"frame": "B8322A", "step": "1E1E24", "gem": "2E5BD8", "medal": "F3E6C8"},
+                           (FUJI, {"W": ("snow", 0.03), "B": ("fuji", 0.03)}, {"snow": "FFFFFF", "fuji": "2B4C8C"}))
+
+
+def pearl_earring():
+    return framed_painting("Art_PearlEarring", "PearlEarring_Mauritshuis.jpg", -1.2, 1.2, 3.0,
+                           {"frame": "6B4228", "step": "E8B530", "gem": "2E5BD8", "medal": "1F3E9A"},
+                           (PEARL, {"W": ("pearl", 0.04), "L": ("shine", 0.05)}, {"pearl": "F2EEE4", "shine": "FFFFFF"}))
+
+
+def the_scream():
+    return framed_painting("Art_TheScream", "TheScream_NasjonalMuseet.jpg", -1.2, 1.2, 3.0,
+                           {"frame": "E0782C", "step": "1F2A55", "gem": "2E5BD8", "medal": "1F2A55"},
+                           (SCREAM, {"W": ("face", 0.03), "B": ("hole", 0.04), "H": ("hand", 0.04)},
+                            {"face": "F0E6C8", "hole": "15161C", "hand": "C9A27A"}))
+
+
+# ── 15. Большой Сфинкс: лежащий лев с головой фараона в полосатом немесе, песчаная площадка ─────────────────────
+
+
+def great_sphinx():
+    a = S.Art("Art_GreatSphinx", ring_z0=0.55)
+    a.paint("sand", "D9B26E", rings=True)  # известняк
+    a.paint("base", "E8C98A", rings=True)
+    for key, code in (("band", "A57A3E"), ("dark", "3B2E24"), ("plate", "F2C230")):
+        a.paint(key, code)
+    a.box("base", -0.95, 0.95, -1.62, 1.5, 0.0, 0.22)
+    a.box("plate", -0.4, 0.4, -1.66, -1.6, 0.05, 0.17, bevel=0)
+    # лежащее тело, круп, вытянутые лапы, хвост, поднятая грудь
+    a.box("sand", -0.48, 0.48, -0.55, 1.15, 0.2, 0.92)
+    a.box("sand", -0.56, 0.56, 0.55, 1.3, 0.2, 0.86)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.16, s * 0.44))
+        a.box("sand", x0, x1, -1.42, -0.4, 0.2, 0.44)
+        for xt in (0.24, 0.36):
+            x0, x1 = sorted((s * (xt - 0.012), s * (xt + 0.012)))
+            a.box("band", x0, x1, -1.44, -1.4, 0.24, 0.4, bevel=0)  # пальцы
+    a.box("sand", 0.5, 0.62, 0.1, 1.2, 0.2, 0.32)
+    a.box("sand", -0.38, 0.38, -0.7, -0.3, 0.2, 1.3)  # грудь за концами немеса
+    # голова: немес с полосами и концами на груди, лицо, повязка, глаза, нос, рот (голова мельче тела, как у льва)
+    a.box("sand", -0.4, 0.4, -0.64, -0.14, 1.12, 1.7)
+    for zb in (1.22, 1.38, 1.54):
+        a.box("band", -0.42, 0.42, -0.66, -0.12, zb, zb + 0.07, bevel=0)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.25, s * 0.36))
+        a.box("sand", x0, x1, -0.76, -0.5, 0.85, 1.4)
+        for zb in (0.95, 1.13):
+            x0, x1 = sorted((s * 0.24, s * 0.39))
+            a.box("band", x0, x1, -0.78, -0.48, zb, zb + 0.07, bevel=0)
+    a.box("sand", -0.24, 0.24, -0.84, -0.4, 1.1, 1.58)
+    a.box("band", -0.27, 0.27, -0.86, -0.6, 1.56, 1.63, bevel=0)  # повязка надо лбом
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.06, s * 0.16))
+        a.box("dark", x0, x1, -0.86, -0.83, 1.4, 1.45, bevel=0)
+        x0, x1 = sorted((s * 0.05, s * 0.18))
+        a.box("band", x0, x1, -0.86, -0.83, 1.49, 1.52, bevel=0)
+    a.box("sand", -0.05, 0.05, -0.9, -0.82, 1.28, 1.4)
+    a.box("band", -0.09, 0.09, -0.86, -0.83, 1.2, 1.23, bevel=0)
+    return a
+
+
+# ── 16. Бюст Нефертити: синяя корона с плоским верхом, золотой обруч и цветная лента, длинная шея, ожерелье ───────
+
+
+def nefertiti_bust():
+    a = S.Art("Art_NefertitiBust", ring_z0=0.9)
+    a.paint("skin", "C88A55", rings=True)
+    a.paint("crown", "2E5BA8", rings=True)
+    for key, code in (("gold", "F2C230"), ("red", "D9452B"), ("green", "2FAE5A"), ("turq", "2EC4B6"),
+                      ("dark", "15161C"), ("white", "F5F2E8"), ("lips", "C0503C"), ("stand", "1F2433")):
+        a.paint(key, code)
+    a.box("stand", -0.62, 0.62, -0.5, 0.5, 0.0, 0.2)
+    a.box("gold", -0.32, 0.32, -0.54, -0.48, 0.04, 0.16, bevel=0)
+    # плечи и ожерелье ярусами
+    a.box("skin", -0.58, 0.58, -0.32, 0.32, 0.18, 0.5)
+    for key, w, y0, y1, z0, z1 in (("gold", 0.5, -0.3, 0.28, 0.48, 0.56), ("red", 0.42, -0.27, 0.25, 0.56, 0.63),
+                                   ("green", 0.34, -0.24, 0.22, 0.63, 0.7), ("gold", 0.26, -0.21, 0.19, 0.7, 0.76)):
+        a.box(key, -w, w, y0, y1, z0, z1)
+    # голова на длинной шее чуть наклонена вперёд
+    a.transform = tilt((0, 0, 0.75), "X", 8)
+    a.box("skin", -0.15, 0.15, -0.18, 0.12, 0.7, 1.2)
+    a.box("skin", -0.18, 0.18, -0.36, 0.08, 1.12, 1.5)
+    a.box("skin", -0.09, 0.09, -0.37, -0.2, 1.07, 1.15)  # узкий подбородок
+    a.box("skin", -0.04, 0.04, -0.43, -0.34, 1.24, 1.38)  # нос
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.045, s * 0.14))
+        a.box("white", x0, x1, -0.38, -0.35, 1.36, 1.405, bevel=0)
+        x0, x1 = sorted((s * 0.075, s * 0.11))
+        a.box("dark", x0, x1, -0.39, -0.37, 1.365, 1.4, bevel=0)
+        x0, x1 = sorted((s * 0.035, s * 0.155))
+        a.box("dark", x0, x1, -0.375, -0.355, 1.405, 1.42, bevel=0)
+        x0, x1 = sorted((s * 0.14, s * 0.175))
+        a.box("dark", x0, x1, -0.37, -0.355, 1.385, 1.4, bevel=0)
+        x0, x1 = sorted((s * 0.05, s * 0.15))
+        a.box("dark", x0, x1, -0.37, -0.355, 1.455, 1.467, bevel=0)
+        x0, x1 = sorted((s * 0.18, s * 0.23))
+        a.box("skin", x0, x1, -0.12, 0.0, 1.28, 1.42)  # ухо
+        x0, x1 = sorted((s * 0.05, s * 0.12))
+        a.box("red", x0, x1, 0.1, 0.16, 0.95, 1.45, bevel=0)  # ленты короны сзади
+    a.box("lips", -0.06, 0.06, -0.38, -0.34, 1.18, 1.215, bevel=0)
+    # корона шире кверху и откинута назад; золотой обруч и цветная лента — срезы той же формы чуть крупнее
+    def crown_slice(key, z0, z1, grow):
+        def at(zz):
+            t = (zz - 1.42) / 0.63
+            return 0.24 + 0.09 * t + grow, -0.26 + 0.14 * t - grow, 0.18 + 0.37 * t + grow
+        w0, a0, b0 = at(z0)
+        w1, a1, b1 = at(z1)
+        a.frustum(key, (-w0, w0, a0, b0), (-w1, w1, a1, b1), z0, z1)
+    crown_slice("crown", 1.42, 2.05, 0.0)
+    crown_slice("gold", 1.46, 1.56, 0.02)
+    crown_slice("red", 1.74, 1.79, 0.015)
+    crown_slice("turq", 1.79, 1.84, 0.015)
+    a.transform = None
+    return a
+
+
+# ── 17. Пирамиды Гизы: Хеопс, Хефрен с белой верхушкой, Микерин, малые пирамиды, пальмы, песок ──────────────────
+
+
+def giza_pyramids():
+    a = S.Art("Art_GizaPyramids", ring_z0=0.55)
+    a.paint("stone", "E0B66C", rings=True)
+    a.paint("sand", "EBCF93", rings=True)
+    for key, code in (("cap", "F5EEDC"), ("dune", "D9B470"), ("trunk", "8A5A2E"), ("leaf", "3FAE4A"),
+                      ("plate", "F2C230"), ("stand", "1F2433")):
+        a.paint(key, code)
+    a.box("stand", -1.6, 1.6, -1.3, 1.3, 0.0, 0.16)
+    a.box("plate", -0.45, 0.45, -1.34, -1.28, 0.03, 0.13, bevel=0)
+    a.box("sand", -1.52, 1.52, -1.22, 1.22, 0.14, 0.28)
+    a.box("sand", 0.0, 0.92, -0.52, 0.62, 0.26, 0.36)  # плато Хефрена выше
+
+    def pyramid(cx, cy, half, z0, h, cap=False):
+        a.frustum("stone", (cx - half, cx + half, cy - half, cy + half), (cx, cx, cy, cy), z0, z0 + h)
+        if cap:  # облицовка, сохранившаяся у вершины Хефрена
+            r = half * 0.22 + 0.012
+            a.frustum("cap", (cx - r, cx + r, cy - r, cy + r), (cx, cx, cy, cy), z0 + h * 0.78, z0 + h + 0.02,
+                      bevel=0)
+
+    pyramid(-0.85, 0.35, 0.62, 0.26, 1.0)
+    pyramid(0.35, 0.05, 0.55, 0.34, 0.88, cap=True)
+    pyramid(1.2, -0.7, 0.3, 0.26, 0.48)
+    for x, half in ((0.0, 0.14), (0.35, 0.12)):
+        pyramid(x, 0.95, half, 0.26, half * 1.6)
+    for x0, x1, y0, y1 in ((-1.48, -0.95, -1.18, -0.85), (0.9, 1.48, 0.7, 1.18)):
+        a.box("dune", x0, x1, y0, y1, 0.26, 0.34)
+    for px, py in ((-1.25, -0.6), (-0.3, -0.9)):  # пальмы
+        bone(a, "trunk", (px, py, 0.26), (px + 0.06, py, 0.72), 0.07)
+        for ang in (0, 90, 180, 270):
+            t = math.radians(ang)
+            bone(a, "leaf", (px + 0.06, py, 0.74), (px + 0.06 + 0.24 * math.cos(t), py + 0.24 * math.sin(t), 0.62),
+                 0.09, 0.03)
+    return a
+
+
+# ── 18. Колизей: эллипс арок в три яруса, обрушенная передняя часть, ярусы трибун, арена с подземельями ─────────
+
+
+def colosseum():
+    a = S.Art("Art_Colosseum", ring_z0=0.75)
+    a.paint("stone", "E3CFA3", rings=True)  # травертин
+    a.paint("inner", "CDB487", rings=True)
+    for key, code in (("arch", "4A3B2C"), ("pier", "F0E2C0"), ("arena", "D9B26E"), ("ground", "7DAF5A"),
+                      ("stand", "1F2433"), ("plate", "F2C230")):
+        a.paint(key, code)
+    a.box("stand", -1.78, 1.78, -1.42, 1.42, 0.0, 0.16)
+    a.box("plate", -0.45, 0.45, -1.46, -1.4, 0.03, 0.13, bevel=0)
+    a.box("ground", -1.7, 1.7, -1.34, 1.34, 0.14, 0.24)
+
+    def ring(key, ra, rb, n, thick, height, arches):
+        """Эллиптическое кольцо стен из n отрезков; height(угол) — высота отрезка."""
+        pts = [(ra * math.cos(2 * math.pi * k / n), rb * math.sin(2 * math.pi * k / n)) for k in range(n)]
+        tops = []
+        for k in range(n):
+            (x0, y0), (x1, y1) = pts[k], pts[(k + 1) % n]
+            mid = math.degrees(math.atan2((y0 + y1) / 2, (x0 + x1) / 2))
+            h = height(mid)
+            tops.append(h)
+            length = math.hypot(x1 - x0, y1 - y0)
+            m = (Matrix.Translation(((x0 + x1) / 2, (y0 + y1) / 2, 0))
+                 @ Matrix.Rotation(math.atan2(y1 - y0, x1 - x0), 4, "Z"))
+            h += 0.015 * (k % 2)  # соседние отрезки разной высоты: на стыке нет общей верхней грани
+            a.box(key, -length / 2 - 0.02, length / 2 + 0.02, -thick / 2 - 0.006 * (k % 2), thick / 2 + 0.006 * (k % 2),
+                  0.22, h, matrix=m)
+            if arches:  # проёмы арок на наружной стороне (локальная −y — снаружи)
+                for z0, z1 in ((0.3, 0.62), (0.72, 1.0), (1.1, 1.36)):
+                    if z1 > h - 0.06:
+                        break
+                    for xa in (-length / 4, length / 4):
+                        a.box("arch", xa - 0.065, xa + 0.065, -thick / 2 - 0.01, -thick / 2 + 0.03, z0, z1,
+                              bevel=0, matrix=m)
+
+    def outer_height(mid):
+        if -160 < mid < -20:  # передняя часть обрушена: два яруса, неровный верх
+            return 1.12 if int(mid) % 2 else 1.06
+        return 1.5
+
+    ring("stone", 1.5, 1.15, 16, 0.22, outer_height, True)
+    ring("inner", 1.2, 0.88, 12, 0.2, lambda mid: 0.92, False)
+    ring("inner", 0.95, 0.64, 12, 0.2, lambda mid: 0.6, False)
+    a.prism("arena", S.octagon(-0.85, 0.85, -0.55, 0.55, 0.22), 0.22, 0.28)
+    for y in (-0.2, 0.0, 0.2):  # стены подземелий под ареной
+        a.box("arch", -0.6, 0.6, y - 0.025, y + 0.025, 0.26, 0.32, bevel=0)
+    return a
+
+
+# ── 19. Статуя Свободы (Epic): медная фигура с факелом и скрижалью, корона с семью лучами, гранитный постамент ────
+
+
+def statue_of_liberty():
+    a = S.Art("Art_StatueOfLiberty", ring_z0=0.68)
+    a.paint("copper", "5FB59A", rings=True)  # патина
+    a.paint("granite", "CFC6B2", rings=True)
+    for key, code in (("copper2", "3F8F78"), ("fort", "9E9A8E"), ("gold", "F2C230"), ("flame", "FF9A2E"),
+                      ("plate", "F2C230")):
+        a.paint(key, code)
+    # форт-основание, постамент с карнизом
+    a.prism("fort", S.octagon(-0.95, 0.95, -0.95, 0.95, 0.3), 0.0, 0.28)
+    a.box("plate", -0.35, 0.35, -0.99, -0.93, 0.06, 0.2, bevel=0)
+    a.box("granite", -0.56, 0.56, -0.56, 0.56, 0.26, 1.1)
+    a.box("granite", -0.64, 0.64, -0.64, 0.64, 1.02, 1.12)
+    a.box("granite", -0.48, 0.48, -0.48, 0.48, 1.1, 1.24)
+    # одеяние ступенями, складки, перевязь
+    a.box("copper", -0.36, 0.36, -0.3, 0.3, 1.22, 1.85)
+    a.box("copper", -0.32, 0.32, -0.27, 0.27, 1.85, 2.45)
+    a.box("copper", -0.28, 0.28, -0.24, 0.24, 2.45, 2.98)
+    for x in (-0.2, 0.0, 0.2):
+        a.box("copper2", x - 0.025, x + 0.025, -0.32, -0.29, 1.24, 1.8, bevel=0)
+    for x in (-0.15, 0.1):
+        a.box("copper2", x - 0.02, x + 0.02, -0.29, -0.26, 1.88, 2.4, bevel=0)
+    a.box("copper2", -0.3, 0.3, -0.27, -0.235, 2.6, 2.7, bevel=0, matrix=tilt((0, -0.25, 2.65), "Y", 30))
+    # голова, корона с семью лучами
+    a.box("copper", -0.09, 0.09, -0.08, 0.08, 2.96, 3.08)
+    a.box("copper", -0.16, 0.16, -0.2, 0.12, 3.06, 3.4)
+    a.box("copper", -0.03, 0.03, -0.24, -0.19, 3.16, 3.26)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.04, s * 0.11))
+        a.box("copper2", x0, x1, -0.215, -0.195, 3.24, 3.27, bevel=0)
+    a.box("copper", -0.19, 0.19, -0.23, 0.15, 3.3, 3.4)
+    for ang in (-75, -50, -25, 0, 25, 50, 75):
+        m = Matrix.Translation((0, -0.04, 3.38)) @ Matrix.Rotation(math.radians(ang), 4, "Y") @ Matrix.Translation(
+            (0, 0, 0.12))
+        a.frustum("copper", (-0.04, 0.04, -0.04, 0.04), (0, 0, 0, 0), 0.0, 0.36, matrix=m, bevel=0)
+    # поднятая правая рука с факелом (для зрителя — слева)
+    arm = Matrix.Translation((-0.3, 0.0, 2.82)) @ Matrix.Rotation(math.radians(-12), 4, "Y")
+    a.box("copper", -0.08, 0.08, -0.08, 0.08, 0.0, 0.86, matrix=arm)
+    a.box("copper", -0.05, 0.05, -0.05, 0.05, 0.84, 1.1, matrix=arm)
+    a.box("copper", -0.11, 0.11, -0.11, 0.11, 1.08, 1.2, matrix=arm)
+    a.frustum("gold", (-0.1, 0.1, -0.1, 0.1), (-0.05, 0.05, -0.05, 0.05), 1.18, 1.36, matrix=arm)
+    a.frustum("flame", (-0.052, 0.052, -0.052, 0.052), (0, 0, 0, 0), 1.34, 1.54, matrix=arm, bevel=0)
+    # левая рука со скрижалью
+    a.box("copper", 0.27, 0.39, -0.08, 0.08, 2.55, 2.95)
+    a.box("copper", 0.16, 0.4, -0.3, -0.1, 2.5, 2.62)
+    tablet = tilt((0.41, -0.16, 2.62), "Y", 15)
+    a.box("copper", 0.3, 0.52, -0.25, -0.07, 2.35, 2.9, matrix=tablet)
+    a.box("copper2", 0.3, 0.52, -0.26, -0.06, 2.84, 2.88, bevel=0, matrix=tablet)
+    return a
+
+
+# ── 20. Скелет тираннозавра (Epic): огромный череп с зубами, позвоночник, рёбра, лапы на подставке ──────────────
+
+
+def trex_skeleton():
+    a = S.Art("Art_TRexSkeleton", ring_z0=1.75)
+    a.paint("bone", "EDE3C8", rings=True)  # череп и таз — крупные кости с квадратами D39
+    for key, code in (("bone2", "D9CBA8"), ("dark", "3B2E24"), ("tooth", "FFFFFF"), ("rod", "8E98A8"),
+                      ("stand", "1F2433"), ("stand2", "2C3448"), ("plate", "F2C230")):
+        a.paint(key, code)
+    a.box("stand", -1.85, 1.85, -0.62, 0.62, 0.0, 0.18)
+    a.box("stand2", -1.75, 1.75, -0.52, 0.52, 0.16, 0.24)
+    a.box("plate", -0.45, 0.45, -0.66, -0.6, 0.03, 0.15, bevel=0)
+    for x in (-0.45, 0.75):  # опорные штанги
+        a.box("rod", x - 0.035, x + 0.035, -0.035, 0.035, 0.22, 1.42 if x < 0 else 1.25)
+    # позвоночник от кончика хвоста до затылка: позвонки с зазорами, остистые отростки сверху
+    spine = [(2.02, 0.72), (1.65, 0.92), (1.28, 1.14), (0.9, 1.34), (0.5, 1.48), (0.1, 1.52), (-0.3, 1.5),
+             (-0.68, 1.55), (-0.92, 1.7), (-1.06, 1.8)]
+    for i in range(len(spine) - 1):
+        (x0, z0), (x1, z1) = spine[i], spine[i + 1]
+        d = Vector((x1 - x0, 0, z1 - z0))
+        g = d.normalized() * 0.025
+        w = (0.09 + 0.012 * i if i < 6 else 0.15) + 0.01 * (i % 2)  # соседние позвонки разной толщины
+        bone(a, "bone2", Vector((x0, 0, z0)) + g, Vector((x1, 0, z1)) - g, w, w + 0.01)
+        if 2 <= i <= 7:
+            mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
+            bone(a, "bone2", (mx, 0, mz), (mx + 0.04, 0, mz + 0.14 + 0.02 * (i < 6)), 0.035, 0.05)
+    # рёбра: по две кости на ребро, клетка сужается книзу
+    for i, x in enumerate((-0.55, -0.35, -0.15, 0.05, 0.25)):
+        zs = 1.5 + (0.03 if x < -0.4 else 0)
+        drop = 0.62 - 0.07 * abs(i - 1.5)
+        for s in (1, -1):
+            bone(a, "bone2", (x, s * 0.05, zs - 0.04), (x + 0.04, s * 0.28, zs - 0.32), 0.055)
+            bone(a, "bone2", (x + 0.04, s * 0.28, zs - 0.32), (x + 0.1, s * 0.16, zs - drop), 0.05)
+    # таз и лобковая кость
+    a.box("bone", 0.22, 0.68, -0.12, 0.12, 1.3, 1.6)
+    bone(a, "bone2", (0.42, 0, 1.34), (0.26, 0, 0.98), 0.08)
+    a.box("bone2", 0.16, 0.36, -0.06, 0.06, 0.92, 1.0)
+    # ноги: ближняя шагает вперёд (к голове, −x), дальняя отставлена
+    for y, pts in ((-0.22, [(0.42, 1.42), (0.1, 0.95), (0.3, 0.55), (0.12, 0.28)]),
+                   (0.22, [(0.42, 1.42), (0.62, 0.98), (0.85, 0.58), (0.72, 0.28)])):
+        widths = (0.13, 0.1, 0.08)
+        for k in range(3):
+            (xa, za), (xb, zb) = pts[k], pts[k + 1]
+            bone(a, "bone2", (xa, y, za), (xb, y, zb), widths[k])
+        for (xj, zj) in pts[1:3]:
+            a.box("bone", xj - 0.07, xj + 0.07, y - 0.07, y + 0.07, zj - 0.07, zj + 0.07)  # суставы
+        fx, fz = pts[3]
+        for dy in (-0.07, 0.0, 0.07):
+            bone(a, "bone2", (fx, y + dy, fz), (fx - 0.24, y + dy * 1.6, 0.26), 0.05)
+    # крошечные передние лапки
+    for s in (1, -1):
+        bone(a, "bone2", (-0.62, s * 0.14, 1.36), (-0.74, s * 0.2, 1.16), 0.045)
+        bone(a, "bone2", (-0.74, s * 0.2, 1.16), (-0.88, s * 0.2, 1.22), 0.04)
+    # череп: коробка, морда, надбровный бугор, глазницы, окна, ноздря; нижняя челюсть приоткрыта; зубы
+    a.box("bone", -1.62, -1.02, -0.2, 0.2, 1.6, 1.98)
+    a.box("bone", -1.85, -1.5, -0.15, 0.15, 1.62, 1.88)
+    a.box("bone", -1.46, -1.3, -0.12, 0.12, 1.96, 2.04)
+    for s in (1, -1):
+        y0, y1 = sorted((s * 0.19, s * 0.21))
+        a.box("dark", -1.42, -1.28, y0, y1, 1.8, 1.92, bevel=0)  # глазница
+        a.box("dark", -1.22, -1.08, y0, y1, 1.66, 1.86, bevel=0)  # окно черепа
+        y0, y1 = sorted((s * 0.14, s * 0.16))
+        a.box("dark", -1.82, -1.72, y0, y1, 1.78, 1.84, bevel=0)  # ноздря
+        for xt in (-1.8, -1.68, -1.56, -1.44, -1.32, -1.2):
+            w = 0.022
+            yt = s * (0.13 if xt < -1.5 else 0.17)
+            a.frustum("tooth", (xt - w, xt + w, yt - w, yt + w), (xt, xt, yt, yt), 1.63, 1.52, bevel=0)
+    jaw = tilt((-1.1, 0, 1.58), "Y", -10)
+    a.box("bone", -1.82, -1.08, -0.17, 0.17, 1.44, 1.58, matrix=jaw)
+    for s in (1, -1):
+        for xt in (-1.74, -1.62, -1.5, -1.38, -1.26):
+            w = 0.02
+            yt = s * 0.13
+            a.frustum("tooth", (xt - w, xt + w, yt - w, yt + w), (xt, xt, yt, yt), 1.57, 1.66, matrix=jaw, bevel=0)
+    return a
+
+
 # ── Сборка, запекание, экспорт, проверочные рендеры ─────────────────────────────────────────────────────────
 
 ITEMS = [("Moai", moai), ("Sunflowers", sunflowers), ("TriceratopsSkull", triceratops_skull), ("TutMask", tut_mask),
          ("StarryNight", starry_night), ("EgyptianCat", egyptian_cat), ("GladiatorHelmet", gladiator_helmet),
          ("AnubisStatue", anubis_statue), ("TerracottaWarrior", terracotta_warrior),
-         ("MiniStonehenge", mini_stonehenge), ("EgyptianSarcophagus", egyptian_sarcophagus)]
+         ("MiniStonehenge", mini_stonehenge), ("EgyptianSarcophagus", egyptian_sarcophagus),
+         ("GreatWave", great_wave), ("PearlEarring", pearl_earring), ("TheScream", the_scream),
+         ("GreatSphinx", great_sphinx), ("NefertitiBust", nefertiti_bust), ("GizaPyramids", giza_pyramids),
+         ("Colosseum", colosseum), ("StatueOfLiberty", statue_of_liberty), ("TRexSkeleton", trex_skeleton)]
 ITEMS = [(i, f) for i, f in ITEMS if not ONLY or i in ONLY]
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
