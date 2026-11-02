@@ -78,20 +78,35 @@ GameConfig.Spawn = {
 	BlinkTransparency = 0.8,
 }
 
--- D22: 10 зон добычи одним коридором, порядок — от ворот аллеи вглубь. boss — имя босса-стража
--- (сила — Progression.Bosses[номер зоны]), floor — цвет пола, accent — цвет ворот и вывески.
+-- D22: 10 зон добычи одним коридором без рамок (D41), порядок — от Safe Zone вглубь. boss — имя босса-стража
+-- (сила — Progression.Bosses[номер зоны]), floor — цвет пола, accent — цвет голограммы и полосы-границы зоны.
+-- mood — смайлик плашки входа в уровень (от доброго к страшному, D41). pattern — узор пола (Config/ZonePatterns):
+-- kind, color, tile (стадов на плитку узора), alpha (непрозрачность узора, 0…1).
 -- Предметы у боссов — Progression.BossLoot (D37), коллекции — Config/Items.
+local function pattern(kind: string, color: string, tile: number, alpha: number)
+	return { kind = kind, color = color, tile = tile, alpha = alpha }
+end
 GameConfig.Zones = {
-	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "A1887F", accent = "8D6E63" },
-	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E" },
-	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0" },
-	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E" },
-	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7" },
-	{ id = "Jungle", name = "Джунгли", boss = "Горилла", floor = "2E8B3A", accent = "1B7A2B" },
-	{ id = "Bank", name = "Банк", boss = "Бронированный охранник", floor = "ECEFF1", accent = "F5A215" },
-	{ id = "Volcano", name = "Вулкан", boss = "Лавовый голем", floor = "4E342E", accent = "FF5722" },
-	{ id = "Spaceport", name = "Космопорт", boss = "Пришелец-генерал", floor = "3B3561", accent = "6A45F5" },
-	{ id = "Castle", name = "Замок", boss = "Король-дракон", floor = "9E9E9E", accent = "C62828" },
+	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "A1887F", accent = "8D6E63", mood = "😊",
+		pattern = pattern("tiles", "6D4C41", 24, 0.4) },
+	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E", mood = "🙂",
+		pattern = pattern("diamonds", "E0A84E", 16, 0.4) },
+	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0", mood = "😐",
+		pattern = pattern("grid", "455A64", 12, 0.55) },
+	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E", mood = "😬",
+		pattern = pattern("waves", "D99A3A", 28, 0.38) },
+	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7", mood = "😨",
+		pattern = pattern("diamonds", "8FD3F5", 20, 0.45) },
+	{ id = "Jungle", name = "Джунгли", boss = "Горилла", floor = "2E8B3A", accent = "1B7A2B", mood = "😠",
+		pattern = pattern("tiles", "1E6B2A", 16, 0.45) },
+	{ id = "Bank", name = "Банк", boss = "Бронированный охранник", floor = "ECEFF1", accent = "F5A215", mood = "😡",
+		pattern = pattern("grid", "D9A21E", 10, 0.7) },
+	{ id = "Volcano", name = "Вулкан", boss = "Лавовый голем", floor = "4E342E", accent = "FF5722", mood = "👹",
+		pattern = pattern("waves", "FF6A1E", 22, 0.55) },
+	{ id = "Spaceport", name = "Космопорт", boss = "Пришелец-генерал", floor = "3B3561", accent = "6A45F5", mood = "😈",
+		pattern = pattern("grid", "9B7BFF", 12, 0.75) },
+	{ id = "Castle", name = "Замок", boss = "Король-дракон", floor = "9E9E9E", accent = "C62828", mood = "☠️",
+		pattern = pattern("tiles", "6E6E6E", 8, 0.4) },
 }
 
 -- Боссы (D37, D40): 4 предмета у каждого. Забрать предмет — победой в автобое (BattleService, Config/Battle); у боссов,

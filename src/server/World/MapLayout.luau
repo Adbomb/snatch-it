@@ -59,11 +59,16 @@ MapLayout.ShopScale = 2.6 -- ларёк Plaza.Stall в 2.6 раза больше
 -- Точка появления посередине поля, лицом к музеям.
 MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), size = Vector3.new(8, 0.4, 8) }
 
--- Коридор зон: длина зоны, проём ворот между зонами. Вход в зону 1 — граница безопасной зоны (z = 0).
+-- Коридор зон: длина зоны. Вход в зону 1 — граница безопасной зоны (z = 0).
 MapLayout.ZoneSize = 95
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
-MapLayout.ZoneDoor = 16 -- ширина проёма ворот зоны
-MapLayout.ZoneWallHeight = 8
+-- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
+MapLayout.HologramSize = Vector2.new(44, 12) -- надпись уровня, стадов
+MapLayout.HologramHeight = 12.5 -- центр надписи над полом (низ — выше головы персонажа)
+MapLayout.HologramInset = 14 -- от входа в зону вглубь
+MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНАЯ ЗОНА» на траве у входа в коридор
+-- Ночной барьер (D41): сплошная стена во всю ширину коридора на входе в опасную зону, только ночью.
+MapLayout.Barrier = { height = 28, thickness = 1 }
 local ZONES_START = 0
 local ZONE_COUNT = #GameConfig.Zones
 MapLayout.ZonesEnd = ZONES_START - ZONE_COUNT * MapLayout.ZoneSize

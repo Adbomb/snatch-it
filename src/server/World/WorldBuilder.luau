@@ -1,33 +1,37 @@
 -- Строит карту (D36, D22) по MapLayout: остров травы, земляные обрывы с травой поверху вокруг безопасной зоны
 -- (сзади и по бокам — уступом с травяной террасой) и коридора уровней, деревья на террасах и плато, лавки
--- «Аура» и «Продажа», точку появления и 10 зон коридором — пол, стена с воротами и вывеской, постаменты, декор.
+-- «Аура» и «Продажа», точку появления и 10 зон одним коридором без рамок (D41) — пол с узором зоны, полоса-граница
+-- цвета зоны, голографическое название, постаменты, декор; у входа в коридор — разметка «Безопасная зона».
 -- Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с полем качалки строит PlotService.
 -- Совпадающих граней у разных деталей нет (D36): трава обрывов, свесы и «натёки» лежат встык или с выступом.
--- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, World/Models/*, GameConfig, NumberFormat.
+-- Зависит от MapLayout, ModelBuilder, Palette, Signs, Studs, Hologram, World/Models/*, GameConfig, ZonePatterns,
+-- NumberFormat.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local ZonePatterns = require(ReplicatedStorage.Shared.Config.ZonePatterns)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local World = ServerScriptService.Server.World
+local Hologram = require(World.Hologram)
 local MapLayout = require(World.MapLayout)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
 local Signs = require(World.Signs)
 local Studs = require(World.Studs)
-local Gate = require(World.Models.Gate)
 local Plaza = require(World.Models.Plaza)
 local Props = require(World.Models.Props)
 local Tree = require(World.Models.Tree)
 local ZoneDecor = require(World.Models.ZoneDecor)
-local ZoneWall = require(World.Models.ZoneWall)
 
 local B = ModelBuilder.Brick
 local H = MapLayout.Heights
 local SLAB = 0.4 -- толщина плит покрытия
 local GROUND = 2 -- толщина плиты травы
 local BICEPS = "💪"
+local LINE = { width = 1, height = 0.2 } -- полосы на полу: граница Safe Zone и границы зон
+local SAFE_LINE = Color3.fromHex("E5484D")
 local DEEP = "LegoSquaresDeep" -- рельеф обрывов
 local DRIP_SEED = 7
 
@@ -251,6 +255,55 @@ local function buildSpawn(parent: Instance)
 	spawn.Parent = folder("Spawn", parent)
 end
 
+-- Граница Safe Zone у входа в коридор (D41, как у референса владельца): красная линия поперёк и надпись
+-- «БЕЗОПАСНАЯ ЗОНА» на траве — со стороны Safe Zone, читается, когда идёшь к уровням.
+local function buildSafeLine(parent: Instance)
+	local f = folder("SafeLine", parent)
+	local half = MapLayout.CorridorHalf
+	local line = Instance.new("Part")
+	line.Name = "Line"
+	line.Anchored = true
+	line.Color = SAFE_LINE
+	line.Size = Vector3.new(half * 2 - 0.4, LINE.height, LINE.width)
+	line.CFrame = CFrame.new(0, H.Ground + LINE.height / 2, LINE.width / 2 + 0.1)
+	line.Parent = f
+	Studs.Apply(line)
+
+	local label = Instance.new("Part")
+	label.Name = "Label"
+	label.Anchored = true
+	label.CanCollide = false
+	label.CanQuery = false
+	label.CanTouch = false
+	label.CastShadow = false
+	label.Transparency = 1
+	-- Холст грани Top идёт вдоль оси Z детали: длинная сторона — по Z, поворот на −90° кладёт её поперёк коридора,
+	-- надпись читается со стороны Safe Zone (проверено в Studio).
+	label.Size = Vector3.new(MapLayout.SafeLabel.Y, 0.2, MapLayout.SafeLabel.X)
+	label.CFrame = CFrame.new(0, H.Ground + 0.15, MapLayout.SafeLabel.Y / 2 + 2.5) * CFrame.Angles(0, -math.pi / 2, 0)
+	label.Parent = f
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Top
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 10 -- TextScaled не крупнее 100 px
+	gui.LightInfluence = 0.4
+	gui.Parent = label
+	local text = Instance.new("TextLabel")
+	text.BackgroundTransparency = 1
+	text.Size = UDim2.fromScale(1, 1)
+	text.TextScaled = true
+	text.FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
+	text.TextColor3 = Color3.new(1, 1, 1)
+	text.TextTransparency = 0.1
+	text.Text = "🛡 БЕЗОПАСНАЯ ЗОНА 🛡"
+	text.Parent = gui
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromHex("1E3A5A")
+	stroke.Thickness = 2
+	stroke.Transparency = 0.2
+	stroke.Parent = text
+end
+
 local function buildZone(index: number, parent: Instance)
 	local zone = GameConfig.Zones[index]
 	local frame = MapLayout.ZoneCFrame(index)
@@ -260,21 +313,45 @@ local function buildZone(index: number, parent: Instance)
 	local ground = CFrame.new(frame.Position.X, H.Ground, frame.Position.Z) * frame.Rotation
 	local accent = Color3.fromHex(zone.accent)
 
-	slab("Floor", Vector2.new(MapLayout.ZoneHalfWidth * 2, size), frame.Position, H.Path, Color3.fromHex(zone.floor), f)
-
-	-- Стена поперёк коридора на входе и ворота с вывеской: номер, название, босс и его сила.
-	local entrance = ground * CFrame.new(0, 0, -size / 2)
-	-- Стена начинается внутри стоек ворот: торцы стены и стоек не совпадают (D36).
-	local wall = ZoneWall(MapLayout.ZoneHalfWidth, MapLayout.ZoneDoor + Gate.Post, MapLayout.ZoneWallHeight, accent)
-	ModelBuilder.Place(ModelBuilder.Build("ZoneWall", wall), entrance, f)
-	local gate = ModelBuilder.Place(ModelBuilder.Build("ZoneGate", Gate.Zone(MapLayout.ZoneDoor, accent)), entrance, f)
-	local board = gate:FindFirstChild("SignBoard")
-	if board and board:IsA("BasePart") then
-		Signs.Write(board, Enum.NormalId.Front, {
-			{ text = ("%d. %s"):format(index, zone.name), scale = 0.46 },
-			{ text = ("%s %s %s"):format(zone.boss, BICEPS, NumberFormat.Short(GameConfig.Progression.Bosses[index])), scale = 0.3 },
-		}, accent)
+	-- Пол с узором зоны (Texture поверх пупырышков): зоны различаются полом, а не рамками (D41).
+	local floor = slab("Floor", Vector2.new(MapLayout.ZoneHalfWidth * 2, size), frame.Position, H.Path, Color3.fromHex(zone.floor), f)
+	local spec = zone.pattern
+	local top = floor:FindFirstChildWhichIsA("BasePart")
+	if spec and top then
+		local texture = Instance.new("Texture")
+		texture.Name = "Pattern"
+		texture.Face = Enum.NormalId.Top
+		texture.Texture = ZonePatterns[spec.kind]
+		texture.Color3 = Color3.fromHex(spec.color)
+		texture.Transparency = 1 - spec.alpha
+		texture.StudsPerTileU = spec.tile
+		texture.StudsPerTileV = spec.tile
+		texture.Parent = top
 	end
+
+	-- Граница с предыдущей зоной — светящаяся полоса цвета зоны поперёк коридора (у зоны 1 — линия Safe Zone).
+	local half = MapLayout.ZoneHalfWidth
+	if index > 1 then
+		local line = Instance.new("Part")
+		line.Name = "Border"
+		line.Anchored = true
+		line.Material = Enum.Material.Neon
+		line.Color = accent
+		line.Transparency = 0.2
+		line.CastShadow = false
+		line.Size = Vector3.new(half * 2 - 0.4, LINE.height, LINE.width)
+		line.CFrame = CFrame.new(0, H.Path + LINE.height / 2, MapLayout.ZoneStartZ(index))
+		line.Parent = f
+	end
+
+	-- Голографическое название уровня над полом у входа, лицом к входящему (D41): номер, название, босс и его сила.
+	Hologram.Build({
+		number = index,
+		title = zone.name,
+		subtitle = ("%s %s %s"):format(zone.boss, BICEPS, NumberFormat.Short(GameConfig.Progression.Bosses[index])),
+		accent = accent,
+		size = MapLayout.HologramSize,
+	}, ground * CFrame.new(0, MapLayout.HologramHeight, -size / 2 + MapLayout.HologramInset), H.Path, f)
 
 	-- Постаменты под 4 предмета босса (D37).
 	for i, spot in MapLayout.ArtSlots do
@@ -322,6 +399,7 @@ function WorldBuilder.Build(parent: Instance)
 	buildCliffs(map)
 	buildShops(map)
 	buildSpawn(map)
+	buildSafeLine(map)
 	local zones = folder("Zones", map)
 	for index in GameConfig.Zones do
 		buildZone(index, zones)
