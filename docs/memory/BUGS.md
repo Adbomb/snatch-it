@@ -136,6 +136,11 @@ ojo-serve.ps1`).
 - Загрузить меш из Studio кодом нельзя: `AssetService:CreateAssetAsync` (EditableMesh → Mesh) в Studio отвечает
   «CreateAssetAsync and CreateAssetVersionAsync are not available yet» (проверено 2026-11-02). Меши — только
   File → Import 3D руками владельца; потом `scripts/bind_meshes.py` вписывает MeshId.
+- Игровой скрипт не может писать ColorMap/NormalMap/RoughnessMap у SurfaceAppearance («lacking capability Plugin») —
+  в Play карты не ставились. Решение: шаблоны SurfaceAppearance создаёт Rojo (`src/server/Looks`), игра их клонирует.
+  (Из MCP в Edit писать можно — поэтому предпросмотры работали.)
+- Импорт FBX в Studio (File → Import 3D) ставит меши лицом в −Z (повёрнуты на 180° от Blender, где лицо в −y): у
+  предметов и пса turn = 0, лицо совпадает с LookVector. Части пса после импорта: `Boss1_Dog{Head,Body}_<Часть>`.
 - `execute_luau` из MCP в Server: `require` модулей даёт ОТДЕЛЬНУЮ копию (без участков и игроков) — бой, выход и
   прочее с данными вызывать только через `ServerStorage.DevTools` (BindableFunction), как и тесты.
 - Временные показы `workspace.__WondersPreview` / `__BossPreview` в Play — коробки; Main.server удаляет их при старте.

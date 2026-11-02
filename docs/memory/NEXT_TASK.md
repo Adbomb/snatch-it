@@ -30,18 +30,15 @@
    Проверено в Studio через EditableMesh (`workspace.__WondersPreview`: ряды с R15 и постаменты босса 1).
    **Нужно действие владельца**: импорт `Art_Boss1_MuseumOfWonders.fbx` и `Boss1_Dog.fbx` в Studio (через MCP нельзя).
    ТЗ владельца от 2026-11-02 пришло оборванным на п. 14 — остальное (бой, анимации, переноска, доход) запрошено.
-5. **Интеграция и бой — код готов (2026-11-02), ждёт импорта FBX владельцем.** Каталог 20 предметов с доходом
-   (`Config/Items`), модели (`Config/ItemModels`, `Util/ItemFactory`), пёс на Motor6D (`Services/BossService`,
-   `Config/Boss1DogRig`, `Config/BossModels`), автобой (`Services/BattleService`, `Config/Battle` — тестовые числа),
-   анимации 10 состояний на клиенте (`Shared/BossAnim`, `Controllers/BossAnimController`), доход
-   (`Services/IncomeService`), надписи «+X/сек» и общий доход в интерфейсе. Серверные тесты: 31 из 32 (не проходит
-   только «Модели» — нет MeshId до импорта).
-   **Импорт (делает владелец, через MCP нельзя):** File → Import 3D → `assets/models/Art_Boss1_MuseumOfWonders.fbx` и
-   `assets/models/Boss1_Dog.fbx`, оставить в Workspace. Затем: собрать MeshId (`Art_<id>` и `Boss1_Dog<Часть>`), вписать
-   в `Config/ItemModels` (MESHES) и `Config/BossModels` (DOG_MESHES), проверить ориентацию (turn), размеры, карты;
-   убрать `workspace.__WondersPreview` и `__BossPreview`; снимки; тест «Модели»; повторное открытие Studio.
-6. После импорта — визуальная проверка в Play (сон, пробуждение, бой, победа, поражение, возврат), показ владельцу;
-   тест с двумя настоящими клиентами (Studio → Test → 2 Players) — пока не проводился.
+5. **Интеграция — сделано (2026-11-02).** Меши импортированы владельцем, MeshId в `Config/ItemModels` и
+   `Config/BossModels` (`assets/models/Boss1_meshids.json`), карты — шаблоны `Server/Looks`. Импортированные модели —
+   `ServerStorage.ImportedModels` (Art_Boss1_MuseumOfWonders, Boss1_Dog); временные показы из Workspace убраны.
+   В Play: все 20 предметов (`DevTools.Showroom`), пёс с картами D39, 4 случайных предмета у постаментов.
+6. **Бой и полный цикл — сделано и проверено** серверными тестами (32 из 32) и настоящим персонажем в Play: E у
+   предмета → бой → победа → несёт → E у витрины → «+X/сек», монеты растут; поражение — отброс ≈ 12 стадов.
+   Не проверено: бой с двумя настоящими клиентами (Studio → Test → 2 Players), телефоны. Числа боя
+   (`Config/Battle`) и доход (`Config/Items.income`) — предварительные, ждут утверждения владельца.
+   Сохранить место в Studio (Ctrl+S), чтобы перенос импорта в ServerStorage и очистка Workspace остались.
 Темы и число предметов у боссов 2–10 — после босса 1 (черновик v2, a5fc207, не утверждён).
 
 ## Сделано в стиле D39 (народные промыслы отклонены по теме — образец стиля, в игру не идут)

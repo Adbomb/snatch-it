@@ -8,6 +8,7 @@
 --   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37)
 --   Battle(userId, slot) → бой настоящим персонажем с псом за предмет слота (показ анимаций)
 --   BossState(state) → состояние пса для показа анимаций
+--   Showroom(boss?, origin?) → все предметы коллекции босса в ряд (папка __Showroom, только показ)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -88,6 +89,43 @@ function DevTools.Init()
 		return boss ~= nil
 	end
 	bossState.Parent = folder
+	-- Выставка всех предметов коллекции босса в ряд на поле Safe Zone (только показ, без реестра и подсказок).
+	local showroom = Instance.new("BindableFunction")
+	showroom.Name = "Showroom"
+	showroom.OnInvoke = function(boss: number?, origin: Vector3?): number
+		local Items = require(ReplicatedStorage.Shared.Config.Items)
+		local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
+		local ItemFactory = require(ServerScriptService.Server.Util.ItemFactory)
+		local old = workspace:FindFirstChild("__Showroom")
+		if old then
+			old:Destroy()
+		end
+		local hall = Instance.new("Folder")
+		hall.Name = "__Showroom"
+		hall.Archivable = false
+		local ids = {}
+		for id, def in Items do
+			if def.boss == (boss or 1) and not def.legacy then
+				table.insert(ids, id)
+			end
+		end
+		table.sort(ids, function(a, b)
+			local ra, rb = Rarities.Rank(Items[a].rarity), Rarities.Rank(Items[b].rarity)
+			return if ra == rb then a < b else ra < rb
+		end)
+		local start = origin or Vector3.new(-60, 0.1, 70)
+		for i, id in ids do
+			local part = ItemFactory.Create(id)
+			local row, col = (i - 1) // 10, (i - 1) % 10
+			local x = start.X + col * 6
+			local z = start.Z - row * 9
+			part.CFrame = CFrame.new(x, start.Y + part.Size.Y / 2, z) -- лицом к −Z (к коридору уровней)
+			part.Parent = hall
+		end
+		hall.Parent = workspace
+		return #ids
+	end
+	showroom.Parent = folder
 	local runTests = Instance.new("BindableFunction")
 	runTests.Name = "RunServerTests"
 	runTests.OnInvoke = function(filter: string?)

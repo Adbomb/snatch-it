@@ -2,15 +2,18 @@
 -- Корень предмета — всегда один Part: с ним работают реестр, перенос, витрины и сохранение.
 -- Если для предмета загружен меш (Config/ItemModels), корень — невидимый хитбокс по габаритам модели, а модель из
 -- Blender («Visual», MeshPart с SurfaceAppearance D39) приварена к нему внутри. Иначе корень — сам цветной Part
--- нужной формы (заготовка до импорта). Только внешний вид, без логики и состояний.
--- Зависит от AssetService, Config/Items, Config/ItemModels, Config/UITokens.
+-- нужной формы (заготовка до импорта). Карты SurfaceAppearance игровой скрипт задать не может (права плагина) —
+-- копируется шаблон из Server/Looks (его создаёт Rojo, scripts/make_looks.py). Только внешний вид, без логики.
+-- Зависит от AssetService, Config/Items, Config/ItemModels, Config/UITokens, Server/Looks.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
+local Looks = ServerScriptService.Server.Looks
 
 local LABEL_SIZE = UDim2.fromOffset(200, 36)
 local LABEL_GAP = 1.2 -- стадов между верхом предмета и подписью
@@ -43,11 +46,12 @@ local function loadModel(itemId: string): MeshPart?
 	mesh.CanCollide = false
 	mesh.CanQuery = false
 	mesh.CanTouch = false
-	local look = Instance.new("SurfaceAppearance")
-	look.ColorMap = model.color
-	look.NormalMap = model.normal
-	look.RoughnessMap = ItemModels.Roughness
-	look.Parent = mesh
+	local look = Looks:FindFirstChild(itemId)
+	if look then
+		look:Clone().Parent = mesh
+	else
+		warn(("[ItemFactory] Нет шаблона карт Looks/%s (scripts/make_looks.py)"):format(itemId))
+	end
 	mesh:SetAttribute("Turn", model.turn or 0)
 	return mesh
 end

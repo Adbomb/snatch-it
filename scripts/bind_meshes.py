@@ -1,6 +1,6 @@
 """Вписывает MeshId после импорта FBX в Studio (D40): предметы — Config/ItemModels (MESHES), части пса —
 Config/BossModels (DOG_MESHES). Вход — JSON {имя объекта импорта: MeshId}, который собирает сценарий в Studio по
-импортированным MeshPart: Art_<id> → предмет <id>, Boss1_Dog<Часть> → часть пса. turn — поворот после импорта
+импортированным MeshPart: Art_<id> → предмет <id>, Boss1_Dog{Head,Body}_<Часть> → часть пса. turn — поворот после импорта
 (градусы вокруг Y), если меши повёрнуты относительно Blender.
 Запуск: python scripts/bind_meshes.py <meshids.json> [--item-turn 180] [--dog-turn 180]
 """
@@ -42,7 +42,7 @@ def main():
         if name.startswith("Art_"):
             items[name[4:]] = mesh
         elif name.startswith("Boss1_Dog"):
-            dog[name[len("Boss1_Dog"):]] = mesh
+            dog[name.rsplit("_", 1)[-1]] = mesh  # Boss1_DogBody_Tail, Boss1_DogHead_Jaw → Tail, Jaw
     text = open(ITEMS, encoding="utf-8").read()
     text = replace_block(text, "MESHES", items)
     if args.item_turn is not None:

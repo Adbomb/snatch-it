@@ -86,8 +86,11 @@
 - Доход (D40): `Config/Items.income` у каждого предмета; `Services/IncomeService` — раз в секунду монеты владельцу за
   экспонаты Displayed, атрибуты Coins и Income, надпись «+X/сек» над экспонатом (MuseumService.PlaceExhibit);
   клиент — плашка «+X/сек» над монетами (GymController).
-- Модели предметов D39: `Config/ItemModels` (Models: MeshId после импорта, карты, размер, turn; Roughness);
-  `Util/ItemFactory` — MeshPart + SurfaceAppearance, приварен к невидимому хитбоксу; без меша — заготовка из Items.
+- Модели предметов D39: `Config/ItemModels` (Models: MeshId из импорта, карты, размер, turn; Roughness);
+  `Util/ItemFactory` — MeshPart + копия SurfaceAppearance из `Server/Looks`, приварен к невидимому хитбоксу; без меша —
+  заготовка из Items. `Server/Looks/*.model.json` — шаблоны карт (Rojo; `scripts/make_looks.py` из ItemModels и
+  BossModels): свойства карт SurfaceAppearance скрипт игры задать не может. MeshId после импорта —
+  `scripts/bind_meshes.py <json>` (json — имена MeshPart импорта → MeshId).
 - Предметы у боссов (D37, D38): `Config/Items` — коллекция босса 1 «Музей чудес» (20, D40, `wonder`) и черновые
   коллекции 2–10 (вид — заготовка), прежние предметы босса 1 — `legacy` (только для старых сохранений);
   `Progression.BossLoot` — шансы по группам боссов. `Services/BossLootService` — слоты `MapLayout.ArtSlots` вокруг

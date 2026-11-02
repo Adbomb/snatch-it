@@ -12,8 +12,26 @@ export type BossModel = {
 
 local ROUGHNESS = "rbxassetid://120633114716941"
 
--- MeshId частей пса из импорта Boss1_Dog.fbx: заполняется после импорта в Studio.
-local DOG_MESHES: { [string]: number } = {}
+-- MeshId частей пса из импорта Boss1_Dog.fbx (владелец, 2026-11-02; assets/models/Boss1_meshids.json).
+-- Импорт повернул меши на 180° вокруг вертикали — turn = 180.
+local DOG_MESHES: { [string]: number } = {
+	BLowerL = 137250136190249,
+	BLowerR = 124331422196767,
+	BUpperL = 104633290669632,
+	BUpperR = 125922436330102,
+	EarL = 106455314556039,
+	EarR = 139039230448770,
+	EyelidL = 90682315510664,
+	EyelidR = 102060066850738,
+	FLowerL = 119589483306303,
+	FLowerR = 103144601510934,
+	FUpperL = 89740211608879,
+	FUpperR = 76645415165349,
+	Head = 132977355807397,
+	Jaw = 85791501528323,
+	Tail = 106766032217885,
+	Torso = 103252526545154,
+}
 
 local function ids(list: { [string]: number }): { [string]: string }
 	local out = {}
@@ -32,6 +50,6 @@ return table.freeze({
 			Body = { color = "rbxassetid://94835517459826", normal = "rbxassetid://94675390063511" },
 		},
 		meshes = ids(DOG_MESHES),
-		turn = 0,
+		turn = 180,
 	} :: BossModel,
 })

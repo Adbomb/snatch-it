@@ -441,9 +441,11 @@ local function bossSlots()
 	return BossLootService.Handlers.Slots()
 end
 
--- Днём, чтобы забрать предмет: если сейчас ночь, перейти к рассвету (и вернуть часы после теста).
+-- Днём, чтобы забрать предмет: если сейчас ночь или до неё меньше полутора минут (бой не должен застать ночь),
+-- перейти к началу дня (и вернуть часы после теста).
 local function ensureDay(): boolean
-	if GameTime.IsNight(TimeService.Current().phase) then
+	local state = TimeService.Current()
+	if GameTime.IsNight(state.phase) or state.endsAt - GameTime.Now() < 90 then
 		TimeService.SkipTo("Day", 0)
 		task.wait(0.3)
 		return true
@@ -766,7 +768,7 @@ test("Ночь прерывает бой (предмет у пса, на рас�
 	TimeService.SkipTo("Night", 0)
 	local ended = fightTo(fight, 5)
 	local keptAtNight = BossLootService.SlotItem(1, 4) == uid and ItemRegistry.GetCarriedBy(A) == nil
-	TimeService.ResetClock() -- рассвет: все 4 слота обновляются (D37)
+	TimeService.SkipTo("Day", 0) -- рассвет: все 4 слота обновляются (D37)
 	task.wait(0.3)
 	local refreshed = BossLootService.SlotItem(1, 4)
 	check(ended and fight.result == "night", "ночь не прервала бой: " .. tostring(fight.result))

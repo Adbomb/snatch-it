@@ -50,8 +50,31 @@ local ItemModels: { [string]: ItemModel } = {
 	TutMask = model(85785727862394, 132482211480983, V(2.1, 2.82, 1.59)),
 }
 
--- MeshId из импорта (Art_Boss1_MuseumOfWonders.fbx): заполняется после импорта в Studio.
-local MESHES: { [string]: number } = {}
+-- MeshId из импорта Art_Boss1_MuseumOfWonders.fbx (владелец, 2026-11-02; assets/models/Boss1_meshids.json).
+-- Лицо модели смотрит вдоль LookVector корня (−Z, как принято в Roblox): импорт повернул меши на 180°, и лицо
+-- как раз в −Z меша — turn = 0. У босса LookVector слота смотрит к входу зоны, у витрины — к входу в музей.
+local MESHES: { [string]: number } = {
+	AnubisStatue = 72471382385582,
+	Colosseum = 130691704356145,
+	EgyptianCat = 77547660556391,
+	EgyptianSarcophagus = 72167735231107,
+	GizaPyramids = 121300305001766,
+	GladiatorHelmet = 116895933236713,
+	GreatSphinx = 94641147537472,
+	GreatWave = 101238889976695,
+	MiniStonehenge = 99952358954292,
+	Moai = 103135057319657,
+	NefertitiBust = 114408460945483,
+	PearlEarring = 140488510279558,
+	StarryNight = 108672604205460,
+	StatueOfLiberty = 89914358189856,
+	Sunflowers = 128458988572967,
+	TRexSkeleton = 118278022347551,
+	TerracottaWarrior = 77073529408916,
+	TheScream = 94029497308524,
+	TriceratopsSkull = 81000202521326,
+	TutMask = 76920497781136,
+}
 
 for itemId, meshId in MESHES do
 	ItemModels[itemId].mesh = "rbxassetid://" .. meshId

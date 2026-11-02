@@ -3,7 +3,9 @@
 -- AlignPosition и AlignOrientation, владелец — сервер, поэтому все клиенты видят плавное движение. Состояние для
 -- анимаций — атрибуты модели: State и StateAt (время сервера начала), Moving, AttackSeq/AttackKind/AttackAt,
 -- HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
--- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета. Сейчас модель есть только у босса 1.
+-- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета. Карты — копии шаблонов Server/Looks
+-- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модель есть только
+-- у босса 1.
 -- Бой и последовательность состояний ведёт BattleService. Зависит от AssetService, CollectionService, Config,
 -- World/MapLayout, Util/Log.
 
@@ -18,6 +20,7 @@ local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local Server = ServerScriptService.Server
 local Log = require(Server.Util.Log)
+local Looks = Server.Looks
 local MapLayout = require(Server.World.MapLayout)
 
 export type Boss = {
@@ -43,7 +46,7 @@ local function now(): number
 end
 
 -- Часть скелета: меш из импорта с картами D39 или блок-заготовка того же размера и цвета.
-local function makePart(cfg: BossModels.BossModel, name: string, info: any): BasePart
+local function makePart(zone: number, cfg: BossModels.BossModel, name: string, info: any): BasePart
 	local meshId = cfg.meshes[name]
 	local part: BasePart
 	if meshId then
@@ -54,12 +57,12 @@ local function makePart(cfg: BossModels.BossModel, name: string, info: any): Bas
 			local mesh = result :: MeshPart
 			mesh.Size = info.size
 			mesh.Material = Enum.Material.SmoothPlastic
-			local maps = cfg.maps[info.map]
-			local look = Instance.new("SurfaceAppearance")
-			look.ColorMap = maps.color
-			look.NormalMap = maps.normal
-			look.RoughnessMap = BossModels.Roughness
-			look.Parent = mesh
+			local look = Looks:FindFirstChild(("Boss%d_%s"):format(zone, info.map))
+			if look then
+				look:Clone().Parent = mesh
+			else
+				Log.Warn("BossService", ("Нет шаблона карт Looks/Boss%d_%s"):format(zone, info.map))
+			end
 			part = mesh
 		else
 			Log.Warn("BossService", ("Меш части %s не загрузился: %s"):format(name, tostring(result)))
@@ -107,7 +110,7 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 	local pending = #rig.Order
 	for _, name in rig.Order do
 		task.spawn(function()
-			parts[name] = makePart(cfg, name, rig.Parts[name])
+			parts[name] = makePart(zone, cfg, name, rig.Parts[name])
 			pending -= 1
 		end)
 	end

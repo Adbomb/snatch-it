@@ -1,29 +1,33 @@
 # Загруженные карты SurfaceAppearance (босс 1, D40)
 
 Загружены через Studio MCP `upload_image` из этой папки. Шероховатость у всех общая: 120633114716941 (константа 0.5).
-Меши ещё не загружены: FBX — `assets/models/art/<id>.fbx`, сводный — `assets/models/Art_Boss1_MuseumOfWonders.fbx`.
+Меши загружены импортом FBX владельцем 2026-11-02 (`assets/models/Art_Boss1_MuseumOfWonders.fbx`, `Boss1_Dog.fbx`;
+MeshId — `assets/models/Boss1_meshids.json`, в игре — `Config/ItemModels`, `Config/BossModels`). Карты в игре —
+шаблоны `src/server/Looks` (`scripts/make_looks.py`).
 
-| Предмет (id) | Редкость | color | normal |
-|---|---|---|---|
-| Moai | Common | 105253304964317 | 120032926441846 |
-| EgyptianCat | Common | 94947747747723 | 95772578879363 |
-| AnubisStatue | Common | 137440016885164 | 121294058519368 |
-| TerracottaWarrior | Common | 114796888736421 | 122260531476182 |
-| MiniStonehenge | Common | 80149207675845 | 73650756357876 |
-| TriceratopsSkull | Common | 133225519991661 | 127260356018558 |
-| EgyptianSarcophagus | Common | 128131075096087 | 77861039156361 |
-| GladiatorHelmet | Common | 88385745895259 | 73391772408638 |
-| Sunflowers | Rare | 131105502255082 | 92755479414938 |
-| GreatWave | Rare | 80731527570741 | 126741554085708 |
-| PearlEarring | Rare | 136037848067182 | 114861412054144 |
-| TheScream | Rare | 80503607696065 | 117083610159219 |
-| GreatSphinx | Rare | 134797811982324 | 84154981701716 |
-| NefertitiBust | Rare | 95805399568175 | 84332980255120 |
-| GizaPyramids | Rare | 133525199780651 | 133504341060199 |
-| Colosseum | Rare | 76009389052440 | 90605462607478 |
-| StarryNight | Epic | 73838980548932 | 101463536355680 |
-| StatueOfLiberty | Epic | 112148975514927 | 93478835262330 |
-| TRexSkeleton | Epic | 99458752211442 | 134574151071110 |
-| TutMask | Epic | 85785727862394 | 132482211480983 |
+| Предмет (id) | Редкость | color | normal | mesh |
+|---|---|---|---|---|
+| Moai | Common | 105253304964317 | 120032926441846 | 103135057319657 |
+| EgyptianCat | Common | 94947747747723 | 95772578879363 | 77547660556391 |
+| AnubisStatue | Common | 137440016885164 | 121294058519368 | 72471382385582 |
+| TerracottaWarrior | Common | 114796888736421 | 122260531476182 | 77073529408916 |
+| MiniStonehenge | Common | 80149207675845 | 73650756357876 | 99952358954292 |
+| TriceratopsSkull | Common | 133225519991661 | 127260356018558 | 81000202521326 |
+| EgyptianSarcophagus | Common | 128131075096087 | 77861039156361 | 72167735231107 |
+| GladiatorHelmet | Common | 88385745895259 | 73391772408638 | 116895933236713 |
+| Sunflowers | Rare | 131105502255082 | 92755479414938 | 128458988572967 |
+| GreatWave | Rare | 80731527570741 | 126741554085708 | 101238889976695 |
+| PearlEarring | Rare | 136037848067182 | 114861412054144 | 140488510279558 |
+| TheScream | Rare | 80503607696065 | 117083610159219 | 94029497308524 |
+| GreatSphinx | Rare | 134797811982324 | 84154981701716 | 94641147537472 |
+| NefertitiBust | Rare | 95805399568175 | 84332980255120 | 114408460945483 |
+| GizaPyramids | Rare | 133525199780651 | 133504341060199 | 121300305001766 |
+| Colosseum | Rare | 76009389052440 | 90605462607478 | 130691704356145 |
+| StarryNight | Epic | 73838980548932 | 101463536355680 | 108672604205460 |
+| StatueOfLiberty | Epic | 112148975514927 | 93478835262330 | 89914358189856 |
+| TRexSkeleton | Epic | 99458752211442 | 134574151071110 | 118278022347551 |
+| TutMask | Epic | 85785727862394 | 132482211480983 | 76920497781136 |
 | Boss1_Dog: голова (Head, Jaw, Eyelid, Ear) | босс | 114075578064919 | 72281207474806 |
 | Boss1_Dog: тело (Torso, Tail, лапы) | босс | 94835517459826 | 94675390063511 |
+
+Меши частей пса: BLowerL 137250136190249, BLowerR 124331422196767, BUpperL 104633290669632, BUpperR 125922436330102, EarL 106455314556039, EarR 139039230448770, EyelidL 90682315510664, EyelidR 102060066850738, FLowerL 119589483306303, FLowerR 103144601510934, FUpperL 89740211608879, FUpperR 76645415165349, Head 132977355807397, Jaw 85791501528323, Tail 106766032217885, Torso 103252526545154.
