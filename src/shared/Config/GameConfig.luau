@@ -87,8 +87,8 @@ local function pattern(kind: string, color: string, tile: number, alpha: number)
 	return { kind = kind, color = color, tile = tile, alpha = alpha }
 end
 GameConfig.Zones = {
-	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "A1887F", accent = "8D6E63", mood = "😊",
-		pattern = pattern("tiles", "6D4C41", 24, 0.4) },
+	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "8C7A60", accent = "8D6E63", mood = "😊",
+		pattern = pattern("gravel", "4A3A2A", 11, 0.65) },
 	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E", mood = "🙂",
 		pattern = pattern("diamonds", "E0A84E", 16, 0.4) },
 	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0", mood = "😐",

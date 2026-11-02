@@ -4,7 +4,8 @@
 - tiles — шахматка крупных плит (2 × 2 клетки на плитку);
 - grid — тонкая сетка швов (плиточный пол);
 - waves — волнистые полосы (песок, лава);
-- diamonds — ромбы (ковёр, лёд).
+- diamonds — ромбы (ковёр, лёд);
+- gravel — утоптанная земля с камешками и трещинами (свалка): пятна разного размера, плитка бесшовная.
 Пишет assets/textures/zone_<узор>.png. Только стандартная библиотека Python (zlib, struct).
 Запуск из корня репозитория: python scripts/textures/zone_patterns.py
 """
@@ -75,6 +76,35 @@ def diamonds(x, y):
     return smooth_edge((0.36 - d) * SIZE, 2.0)
 
 
+import random as _random
+
+_rng = _random.Random(41)
+# Камешки: (x, y, радиус, непрозрачность); бесшовно — расстояние считается с переносом через край плитки.
+STONES = [(_rng.uniform(0, SIZE), _rng.uniform(0, SIZE), _rng.uniform(3, 11), _rng.uniform(0.55, 1.0)) for _ in range(70)]
+# Тёмные пятна утоптанной земли — крупные и полупрозрачные.
+BLOTCHES = [(_rng.uniform(0, SIZE), _rng.uniform(0, SIZE), _rng.uniform(28, 55), _rng.uniform(0.18, 0.3)) for _ in range(9)]
+
+
+def _wrap(d):
+    d = abs(d) % SIZE
+    return min(d, SIZE - d)
+
+
+def gravel(x, y):
+    a = 0.0
+    for sx, sy, r, alpha in BLOTCHES:
+        d = math.hypot(_wrap(x - sx), _wrap(y - sy))
+        if d < r:
+            a = max(a, alpha * (1 - (d / r) ** 2))
+    for sx, sy, r, alpha in STONES:
+        dx, dy = _wrap(x - sx), _wrap(y - sy)
+        if dx < r + 2 and dy < r + 2:
+            # камешек чуть сплюснут — не идеальный круг
+            d = math.hypot(dx * 1.15, dy)
+            a = max(a, alpha * smooth_edge(r - d, 1.6))
+    return a
+
+
 if __name__ == "__main__":
-    for name, fn in (("tiles", tiles), ("grid", grid), ("waves", waves), ("diamonds", diamonds)):
+    for name, fn in (("tiles", tiles), ("grid", grid), ("waves", waves), ("diamonds", diamonds), ("gravel", gravel)):
         save(name, fn)

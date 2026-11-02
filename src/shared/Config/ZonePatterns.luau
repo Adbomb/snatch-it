@@ -7,4 +7,5 @@ return table.freeze({
 	grid = "rbxassetid://107756944121378", -- сетка швов
 	waves = "rbxassetid://77695667904177", -- волны
 	diamonds = "rbxassetid://101254285806460", -- ромбы
+	gravel = "rbxassetid://125623146041474", -- утоптанная земля с камешками (свалка)
 })
