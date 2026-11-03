@@ -83,6 +83,10 @@
   abort → Victory или Defeat → Return → FallAsleep (подсказки открыты) → Sleep. Полоски HP — BillboardGui над боссом
   и бойцом. Клиент: `Shared/BossAnim` (Transform суставов по состоянию и времени — смешение поз, циклы дыхания,
   шагов, выпады и попадания поверх) + `Controllers/BossAnimController` (Stepped, у всех клиентов одинаково, «Z z z»).
+- Босс 2 (D42, D43): `Config/Boss2TraderRig` (12 частей, 13 поз с теми же именами — `boss2_trader.py -- . <превью>
+  rig`), `BossModels[2]` (карты Head/Body/Limbs, `TRADER_MESHES` пусто до импорта). Скелеты по номеру зоны — `RIGS`
+  в BossService и BossAnimController (боссов без скелета нет на карте, их предметы без боя только в Studio).
+  `BossService.Height` — рост по скелету (полоска HP над макушкой), сообщения боя — с `GameConfig.Zones[i].boss`.
 - Доход (D40): `Config/Items.income` у каждого предмета; `Services/IncomeService` — раз в секунду монеты владельцу за
   экспонаты Displayed, атрибуты Coins и Income, надпись «+X/сек» над экспонатом (MuseumService.PlaceExhibit);
   клиент — плашка «+X/сек» над монетами (GymController).
@@ -91,10 +95,11 @@
   заготовка из Items. `Server/Looks/*.model.json` — шаблоны карт (Rojo; `scripts/make_looks.py` из ItemModels и
   BossModels): свойства карт SurfaceAppearance скрипт игры задать не может. MeshId после импорта —
   `scripts/bind_meshes.py <json>` (json — имена MeshPart импорта → MeshId).
-- Предметы у боссов (D37, D38): `Config/Items` — коллекция босса 1 «Музей чудес» (20, D40, `wonder`) и черновые
-  коллекции 2–10 (вид — заготовка), прежние предметы босса 1 — `legacy` (только для старых сохранений);
-  `Progression.BossLoot` — шансы по группам боссов. `Services/BossLootService` — слоты `MapLayout.ArtSlots` вокруг
-  `MapLayout.BossSpot` в каждой зоне, заполнение при старте и на каждом рассвете (`TimeService`), состояние реестра
+- Предметы у боссов (D37, D38): `Config/Items` — коллекции босса 1 «Музей чудес» (20, D40, `wonder`) и босса 2
+  «Музей безумных находок» (30, D42, `find`; до импорта — заготовки), черновые 3–10 (вид — заготовка), прежние
+  предметы боссов 1–2 — `legacy` (только для старых сохранений);
+  `Progression.BossLoot` — шансы по группам боссов. `Services/BossLootService` — слоты `MapLayout.ArtSlotPoints()`
+  вокруг `MapLayout.BossSpot` в каждой зоне (верх постаментов или площадка `MapLayout.Arenas[i]` с поворотами), заполнение при старте и на каждом рассвете (`TimeService`), состояние реестра
   `AtBoss` (`ItemRegistry.CreateAtBoss`, у записи `boss`), подсказка «Забрать» — без боя только в Studio+DevMode
   (`GameConfig.Bosses.FreeTakeInStudio`), D10 для брошенных. В профиле у экспоната `boss` и `source = "boss"`.
 - Util: `ItemFactory` (вид предмета: корень-Part; если есть меш в `Config/ItemModels` — корень невидимый хитбокс,
@@ -142,7 +147,12 @@
   невидимая деталь с SurfaceGui, Brightness, тег Hologram, атрибут Night — гаснуть ночью; размеры и высота —
   `MapLayout.Hologram*`), столбики `Pylon_<зона>` у обрывов (`MapLayout.PylonX`). Уровень 1 — `Models/Junkyard`
   (вещи-функции кирпичей + `Junkyard.Zone()`; пол — `Junkyard.Ground()`: дорога из плит, бугры `MOUNDS`, мусор по
-  `Random.new(41)` вне `KEEP_OUT`, высота мусора на бугре — `groundHeight`). Лавки — `Models/Shops` (`Sell`, `Aura`), `MapLayout.Shops`,
+  `Random.new(41)` вне `KEEP_OUT`, высота мусора на бугре — `groundHeight`). Уровень 2 — `Models/FleaMarket` (D43):
+  `Ground()` — плитка 8 × 8 шахматкой до |x| 44.5, бордюры `CURB` 46.5, площадка босса (обод, круг верхом
+  `Arenas[2].top` = 0.15, звезда, медальон); `Zone()` → (кирпичи, надписи) — ряды `FRONT` 56 / `BACK` 80, стены
+  `TradeWall` на `WALL_X` 89, вещи-функции (Counter, TrophyShelf, GoldChest, CapsuleMachine, Suitcases, BigScales,
+  NeonCrates, Showcase, CoinSacks, RarityPole), прожекторы на босса (`light.angle` → SpotLight). Надписи пишет
+  WorldBuilder (`World/Signs`) по именам табличек `Sign_<n>`. Без Random; у зоны с `Arenas` постаментов нет. Лавки — `Models/Shops` (`Sell`, `Aura`), `MapLayout.Shops`,
   `ShopScale`; детали с именами Spin/Bob получают теги, клиент (ZoneController) вращает и покачивает их.
   У входа в коридор — `Map/SafeLine` (красная линия и «БЕЗОПАСНАЯ ЗОНА» на грани Top, холст идёт вдоль оси Z детали).
   Ночной барьер — `NightService.BuildBarrier` (невидимая стена + занавес-градиент SurfaceGui с обеих сторон + соты
@@ -166,4 +176,12 @@
   `local W = game.ServerScriptService.Server.World; require(W.FreshRequire)(W.Preview).Build()`.
 
 ## Проверки без Studio
-`python scripts/check_project.py` — запрещённые ассеты и файлы (бан 2026-11-02), все `require` по путям Rojo, согласованность `Config/ItemModels` ↔ `server/Looks` ↔ MeshId ↔ FBX, файлы коллекции босса 2 и совпадения id. Код выхода 1 — есть ошибки. `rojo build default.project.json -o <файл>.rbxl` — локальное место из репозитория.
+`python scripts/check_project.py` — запрещённые ассеты и файлы (бан 2026-11-02), все `require` по путям Rojo, согласованность `Config/ItemModels` ↔ `server/Looks` ↔ MeshId ↔ FBX, шаблоны карт боссов, коллекция босса 2 в `Config/Items`, подключение босса 2 и «Барахолки». Код выхода 1 — есть ошибки. `rojo build default.project.json -o <файл>.rbxl` — локальное место из репозитория.
+Lune (`~/.aftman/bin/lune`, из корня репозитория): `scripts/lune/env.luau` исполняет модули `src/` как после Rojo
+(пути `game:GetService(…)`, `script.Parent`, типы из `@lune/roblox`, службы — заглушки);
+`check_config.luau` — коллекции, скелеты, позы, анимации всех состояний (`Shared/BossAnim`), сила боя;
+`check_world.luau` — `World/FaceCheck` декора зон 1–2 на плитах пола, бюджет частей и света «Барахолки», пустая
+площадка, таблички надписей, слоты; `export_zone.luau <зона> <json>` + `scripts/blender/preview_zone.py` — рендер
+зоны (вход, сверху, ряды, площадка) в Blender Workbench без Studio (без пупырышков, надписей и стекла).
+Карты и меши после загрузки: `scripts/bind_maps.py` (карты → ItemModels), `scripts/bind_meshes.py` (MeshId,
+дописывает), `scripts/make_looks.py` (шаблоны Looks всех предметов и боссов); порядок — `docs/IMPORT_LEVEL2.md`.

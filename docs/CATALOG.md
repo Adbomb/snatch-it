@@ -73,7 +73,9 @@
 Модели — `scripts/blender/art_flea.py`, FBX — `assets/models/art/<id>.fbx` и сводный
 `assets/models/Art_Boss2_MadFinds.fbx`, карты — `assets/textures/art/IDS.md`, права на картины —
 `assets/art_sources/SOURCES.md`. Босс — `scripts/blender/boss2_trader.py` → `assets/models/Boss2_Trader.fbx`.
-Интеграция в игру (импорт, `Config/Items`, `ItemModels`, бой) — следующий шаг.
+В игре (2026-11-03, D43): коллекция — `Config/Items` (`find`), бой с торговцем на уровне 2, предметы стоят на
+площадке у босса без постаментов. До загрузки карт и импорта мешей (`docs/IMPORT_LEVEL2.md`) предметы и босс —
+заготовки цвета и размера модели.
 
 **Доход — предварительный баланс, не утверждён.** Примерно в 2.8 раза выше босса 1: средний случайный слот —
 около 82/сек (0.7 × 37.6 + 0.25 × 126.8 + 0.05 × 488.8) против 29/сек у пса.
