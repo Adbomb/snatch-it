@@ -17,7 +17,10 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ITEMS = os.path.join(ROOT, "src", "shared", "Config", "Items.luau")
 MODELS = os.path.join(ROOT, "src", "shared", "Config", "ItemModels.luau")
-FORBIDDEN_IDS = {"115188607358965", "91016959329136"}
+# Запрещённые ID — единственный список в check_project.py (там же проверка, что их нет нигде в проекте).
+_check = open(os.path.join(ROOT, "scripts", "check_project.py"), encoding="utf-8").read()
+FORBIDDEN_IDS = set(re.findall(r'"(\d+)":', re.search(r"FORBIDDEN_IDS = \{([^}]*)\}", _check).group(1)))
+assert FORBIDDEN_IDS, "не найден список запрещённых ID в check_project.py"
 
 
 def asset(value):
