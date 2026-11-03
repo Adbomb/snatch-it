@@ -314,6 +314,8 @@ POSES["hit"] = _pose("combat", Torso=((-10, 0, 0), (0, 0.22, -0.04)), Head=((-16
                      **arms((-20, -38, 0), (-30, 0, 0)))
 POSES["taunt"] = _pose("stand", Head=((-12, 0, 0), Z3), Jaw=((22, 0, 0), Z3),
                        **arms((0, -6, 0), (-8, 0, 0), (-172, 0, 0), (-14, 0, 0)))  # победа: кулак вверх, хохочет
+POSES["taunt2"] = _pose("stand", Head=((-6, 0, 0), Z3), Jaw=((6, 0, 0), Z3),
+                        **arms((0, -6, 0), (-8, 0, 0), (-150, 0, 0), (-42, 0, 0)))  # победа: кулак качается
 POSES["dizzy"] = _pose("sleep", Torso=((-16, 14, 0), (0, 0.1, -1.2)), Head=((10, 0, 22), Z3), Jaw=((20, 0, 0), Z3),
                        **arms((-10, -30, 0), (-20, 0, 0)))  # поражение: сел, голова набок
 POSES["walkA"] = _pose("stand", Torso=((4, 0, 0), (0, 0, 0.04)), **arms((20, -6, 0), (-14, 0, 0), (-20, 6, 0), (-24, 0, 0)),
@@ -366,7 +368,14 @@ if MODE == "check":
     sys.exit(0)
 
 AX = Matrix(((1, 0, 0), (0, 0, 1), (0, -1, 0)))  # оси Roblox: (x, y, z) Blender → (x, z, −y) Roblox
-PART_COLOR = {"Head": "F0B088", "Jaw": "D49572", "Torso": "2CB5A8", "Sack": "C9A06A"}  # заготовка до импорта
+# Цвет заготовки части до импорта мешей: кожа, небритый подбородок, рубашка, мешок, рукава, штаны.
+PART_COLOR = {"Head": "F0B088", "Jaw": "D49572", "Torso": "2CB5A8", "Sack": "C9A06A", "ArmUpperL": "2CB5A8",
+              "ArmUpperR": "2CB5A8", "LegUpperL": "3C5BA8", "LegUpperR": "3C5BA8", "LegLowerL": "3C5BA8",
+              "LegLowerR": "3C5BA8"}
+# Позы в модуле игры называются, как у пса (Shared/BossAnim): выпады bite и swipe, победа bark и bark2.
+EXPORT = {"sleep": "sleep", "alert": "alert", "stand": "stand", "combat": "combat", "combat2": "combat2",
+          "walkA": "walkA", "walkB": "walkB", "hit": "hit", "dizzy": "dizzy", "bite": "punch", "swipe": "slam2",
+          "bark": "taunt", "bark2": "taunt2"}
 
 
 def write_rig_module(path):
@@ -387,7 +396,8 @@ def write_rig_module(path):
              "-- Сгенерировано scripts/blender/boss2_trader.py (режим rig) — руками не править. Оси Roblox, стады; лицо",
              "-- смотрит в +Z модели. pivot — точка вращения части в покое (низ подошв на y = 0), center и size — габариты",
              "-- меша относительно точки вращения. Позы: часть → {x, y, z, r00…r22} — Transform сустава относительно покоя",
-             "-- (у Torso — вместе с подъёмом к земле). Ни от чего не зависит.", "", "return {",
+             "-- (у Torso — вместе с подъёмом к земле). Имена поз — как у пса (Shared/BossAnim): bite — прямой удар,",
+             "-- swipe — удар по земле, bark и bark2 — победа с поднятым кулаком. Ни от чего не зависит.", "", "return {",
              "\tScale = %s," % SCALE, "\tOrder = { %s }," % ", ".join('"%s"' % n for n in RIG), "\tParts = {"]
     for n, (parent, pivot) in RIG.items():
         co = [AX @ v.co for v in parts[n].data.vertices]
@@ -397,7 +407,8 @@ def write_rig_module(path):
             n, '"%s"' % parent if parent else "nil", v3(AX @ (Vector(pivot) * SCALE)), v3((lo + hi) / 2),
             v3(hi - lo), MAP_OF[n], PART_COLOR.get(n, "F0B088")))
     lines += ["\t},", "\tPoses = {"]
-    for name, pose in POSES.items():
+    for name, source in EXPORT.items():
+        pose = POSES[source]
         mats = pose_matrices(pose)
         low = min((mats[n] @ v.co).z for n, o in parts.items() for v in o.data.vertices)
         lines.append("\t\t%s = {" % name)

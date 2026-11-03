@@ -1,6 +1,7 @@
--- Процедурные анимации босса (D18, D40): по состоянию босса и времени с его начала — Transform каждого сустава
--- (Motor6D) между ключевыми позами скелета (Config/Boss1DogRig). Считается на каждом клиенте одинаково (состояние
--- и время приходят атрибутами модели), поэтому все игроки видят одно и то же, а по сети идут только атрибуты.
+-- Процедурные анимации босса (D18, D40, D42): по состоянию босса и времени с его начала — Transform каждого сустава
+-- (Motor6D) между ключевыми позами скелета (Config/Boss<N>…Rig, имена поз у всех боссов одни). Считается на каждом
+-- клиенте одинаково (состояние и время приходят атрибутами модели), поэтому все игроки видят одно и то же, а по сети
+-- идут только атрибуты.
 -- Состояния (как в BossService): Sleep, Wake, StandUp, ToCombat, Combat, Victory, Defeat, Return, FallAsleep.
 -- Удары и попадания — короткие наложения поверх Combat (номера AttackSeq / HitSeq и время их начала).
 -- Длительности — Config/Battle.Timeline. Ни от чего не зависит, кроме Config/Battle.
@@ -78,14 +79,14 @@ local function cycle(rig: Rig, a: string, b: string, clock: number, period: numb
 	return blend(rig, BossAnim.Pose(rig, a), BossAnim.Pose(rig, b), phase)
 end
 
--- Сон: лежит, дышит (корпус поднимается и опускается), изредка дёргает ухом.
+-- Сон: лежит, дышит (корпус поднимается и опускается), изредка дёргает ухом (если у скелета есть уши).
 local function sleeping(rig: Rig, clock: number): { [string]: CFrame }
 	local pose = table.clone(BossAnim.Pose(rig, "sleep"))
 	local breath = math.sin(clock / BREATH_PERIOD * 2 * math.pi)
 	pose.Torso = pose.Torso * CFrame.new(0, 0.06 * breath, 0)
 	pose.Head = pose.Head * CFrame.Angles(math.rad(1.5 * breath), 0, 0)
 	local twitch = clock % 5.3
-	if twitch < 0.25 then
+	if twitch < 0.25 and pose.EarL then
 		pose.EarL = pose.EarL * CFrame.Angles(0, 0, math.rad(12 * math.sin(twitch / 0.25 * math.pi)))
 	end
 	return pose

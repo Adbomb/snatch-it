@@ -2,7 +2,7 @@
 
 Свойства карт SurfaceAppearance (ColorMap, NormalMap, RoughnessMap) игровой скрипт менять не может (нужны права
 плагина), поэтому шаблоны создаёт Rojo, а игра только клонирует их на MeshPart. Источник ID — Config/ItemModels
-(предметы) и Config/BossModels (карты частей босса: Boss<N>_<группа>). Запуск после изменения карт:
+(предметы) и Config/BossModels (карты частей каждого босса: Boss<N>_<группа>). Запуск после изменения карт:
 python scripts/make_looks.py
 """
 
@@ -24,10 +24,10 @@ def main():
     looks = {}
     for name, color, normal in re.findall(r"^\t(\w+) = model\((\d+), (\d+),", items, re.M):
         looks[name] = (f"rbxassetid://{color}", f"rbxassetid://{normal}")
-    boss = re.search(r"\[(\d+)\] = \{.*?maps = \{(.*?)\n\t\t\},", bosses, re.S)
-    for group, color, normal in re.findall(r'(\w+) = \{ color = "(rbxassetid://\d+)", normal = "(rbxassetid://\d+)" \}',
-                                           boss.group(2)):
-        looks[f"Boss{boss.group(1)}_{group}"] = (color, normal)
+    for boss in re.finditer(r"\[(\d+)\] = \{.*?maps = \{(.*?)\n\t\t\},", bosses, re.S):
+        for group, color, normal in re.findall(
+                r'(\w+) = \{ color = "(rbxassetid://\d+)", normal = "(rbxassetid://\d+)" \}', boss.group(2)):
+            looks[f"Boss{boss.group(1)}_{group}"] = (color, normal)
     os.makedirs(OUT, exist_ok=True)
     for name, (color, normal) in looks.items():
         data = {"ClassName": "SurfaceAppearance",

@@ -1,11 +1,11 @@
--- Боссы на карте (D40): модель из частей на Motor6D (скелет Config/Boss1DogRig, меши и карты Config/BossModels) на
+-- Боссы на карте (D40, D42): модель из частей на Motor6D (скелет Config/Boss<N>…Rig, меши и карты Config/BossModels) на
 -- своём месте в центре зоны (MapLayout.BossSpot), лицом ко входу. Движение — физикой: невидимый корень с
 -- AlignPosition и AlignOrientation, владелец — сервер, поэтому все клиенты видят плавное движение. Состояние для
 -- анимаций — атрибуты модели: State и StateAt (время сервера начала), Moving, AttackSeq/AttackKind/AttackAt,
 -- HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
 -- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета. Карты — копии шаблонов Server/Looks
--- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модель есть только
--- у босса 1.
+-- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модели есть у
+-- боссов 1 (пёс) и 2 (торговец); у остальных зон боя нет.
 -- Бой и последовательность состояний ведёт BattleService. Зависит от AssetService, CollectionService, Config,
 -- World/MapLayout, Util/Log.
 
@@ -17,6 +17,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
 local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
+local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local Server = ServerScriptService.Server
 local Log = require(Server.Util.Log)
@@ -35,7 +36,7 @@ export type Boss = {
 }
 
 local TAG = "Boss"
-local RIGS = { [1] = Boss1DogRig }
+local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig }
 
 local bosses: { [number]: Boss } = {}
 
@@ -176,6 +177,15 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 		target = home.Position,
 		state = "Sleep",
 	}
+end
+
+-- Рост босса стоя (от земли до макушки по габаритам частей скелета), стадов: над ним — полоска HP.
+function BossService.Height(boss: Boss): number
+	local top = 0
+	for _, info in RIGS[boss.zone].Parts do
+		top = math.max(top, info.pivot.Y + info.center.Y + info.size.Y / 2)
+	end
+	return top
 end
 
 -- Место босса зоны: центр зоны, лицом ко входу (лицо модели +Z → мировая +Z).

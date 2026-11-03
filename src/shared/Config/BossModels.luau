@@ -1,7 +1,7 @@
 -- Модели боссов из Blender (D40): у каждой части свой меш (импорт FBX в Studio даёт MeshId), карты SurfaceAppearance
 -- общие на группу частей (голова и тело, assets/textures/art/IDS.md). turn — поворот меша частей вокруг вертикали
 -- после импорта, чтобы он совпал со скелетом. Нет меша у части — часть показывается заготовкой (блок цвета из
--- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig. Ни от чего не зависит.
+-- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig (1 — пёс, 2 — торговец). Ни от чего не зависит.
 
 export type BossModel = {
 	name: string,
@@ -33,6 +33,10 @@ local DOG_MESHES: { [string]: number } = {
 	Torso = 103252526545154,
 }
 
+-- MeshId частей торговца — после импорта Boss2_Trader.fbx (scripts/bind_meshes.py). Пока пусто — части-заготовки
+-- цвета из скелета (Config/Boss2TraderRig).
+local TRADER_MESHES: { [string]: number } = {}
+
 local function ids(list: { [string]: number }): { [string]: string }
 	local out = {}
 	for part, id in list do
@@ -50,6 +54,17 @@ return table.freeze({
 			Body = { color = "rbxassetid://94835517459826", normal = "rbxassetid://94675390063511" },
 		},
 		meshes = ids(DOG_MESHES),
+		turn = 180,
+	} :: BossModel,
+	-- Карты торговца загружены до бана аккаунта (2026-11-02, assets/textures/art/IDS.md).
+	[2] = {
+		name = "Торговец-громила",
+		maps = {
+			Head = { color = "rbxassetid://111835541987471", normal = "rbxassetid://95234991557771" },
+			Body = { color = "rbxassetid://88982407819751", normal = "rbxassetid://111891368383392" },
+			Limbs = { color = "rbxassetid://126025887496516", normal = "rbxassetid://71574604601669" },
+		},
+		meshes = ids(TRADER_MESHES),
 		turn = 180,
 	} :: BossModel,
 })

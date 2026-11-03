@@ -1,9 +1,9 @@
--- Автоматический бой с боссом (D22, D40). «Забрать» у предмета возле спящего босса начинает бой: сервер проверяет
+-- Автоматический бой с боссом (D22, D40, D42). «Забрать» у предмета возле спящего босса начинает бой: сервер проверяет
 -- босса и предмет, закрепляет предмет за бойцом (другие его не заберут, подсказки у босса выключены), босс
 -- просыпается, встаёт и становится в стойку, дальше игрок и босс бьют сами по своим интервалам, пока HP одного не
 -- станет 0. Таймера и заранее решённого исхода нет: каждый удар считается в момент удара (Config/Battle, сила
 -- игрока — урон и HP). Победа: предмет — в руки бойцу, босс повален, встаёт, идёт на место и засыпает. Поражение:
--- игрока отбрасывает (без телепорта), предмет остаётся на постаменте, босс лает, идёт на место и засыпает — после
+-- игрока отбрасывает (без телепорта), предмет остаётся на месте, босс торжествует, идёт на место и засыпает — после
 -- этого бой можно начать сразу снова. Игрок отошёл дальше Leash от места босса — сбежал (как поражение, но без
 -- отброса). Ночь, выход игрока, гибель персонажа — бой прерывается. С одним боссом бьётся один игрок, помочь ему
 -- нельзя; остальные видят бой (анимации и HP — у всех). HP видны полосками над боссом и над бойцом.
@@ -52,8 +52,14 @@ local fights: { [number]: Fight } = {} -- по зоне
 local byPlayer: { [any]: Fight } = {}
 local returning: { [number]: boolean } = {} -- босс ещё идёт на место после боя
 local random = Random.new()
+local BAR_ABOVE_BOSS = 3.2 -- полоска HP над макушкой босса, стадов
 
 local BattleService = {}
+
+-- Имя босса зоны для сообщений («Сторожевой пёс победил!»).
+local function bossName(zone: number): string
+	return GameConfig.Zones[zone].boss
+end
 
 -- Множитель силы: HP и урон × (1 + сила) ^ Growth.
 local function power(strength: number): number
@@ -251,7 +257,7 @@ local function finish(fight: Fight, result: string)
 	elseif result == "lose" then
 		knockback(fight.player, BossService.Position(boss))
 		BossLootService.Release(fight.zone, fight.slot)
-		Notify.Send(fight.player, "Пёс победил! Набери силы и попробуй снова", "Stop")
+		Notify.Send(fight.player, ("%s победил! Набери силы и попробуй снова"):format(bossName(fight.zone)), "Stop")
 		task.spawn(goHome, boss, "Victory", tl.Victory)
 	else
 		BossLootService.Release(fight.zone, fight.slot)
@@ -404,13 +410,13 @@ function BattleService.Begin(player: any, zone: number, slot: number): Fight?
 	player:SetAttribute("BattleMaxHP", maxHp)
 	boss.model:SetAttribute("MaxHP", bossMax)
 	boss.model:SetAttribute("TargetUserId", player.UserId)
-	makeBar(boss.root, "BattleBar", 13, Color3.fromHex("E5484D"))
+	makeBar(boss.root, "BattleBar", BossService.Height(boss) + BAR_ABOVE_BOSS, Color3.fromHex("E5484D"))
 	local root = Validate.GetLiveRoot(player)
 	if root then
 		makeBar(root, "BattleBar", 4.5, Color3.fromHex("43C22E"))
 	end
 	refreshBars(fight)
-	Notify.Send(player, "Пёс проснулся! Бой начался", "Go")
+	Notify.Send(player, ("%s проснулся! Бой начался"):format(bossName(zone)), "Go")
 	Log.Debug("BattleService", ("%s будит босса %d (слот %d): HP %.0f, урон %.1f против HP %.0f, урон %.1f"):format(
 		player.Name, zone, slot, maxHp, damage, bossMax, bossDamage))
 

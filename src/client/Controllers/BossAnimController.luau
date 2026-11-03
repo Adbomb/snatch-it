@@ -1,7 +1,7 @@
 -- Анимации боссов на клиенте (D18, D40): у каждой модели с тегом Boss каждый кадр ставит Transform суставов
 -- (Motor6D) по состоянию с сервера — атрибуты State/StateAt, Moving, AttackSeq/AttackKind/AttackAt, HitAt — через
 -- Shared/BossAnim. Все клиенты считают одинаково, поэтому анимации видны всем игрокам, а по сети идут только
--- атрибуты. Спящий пёс выпускает «Z z z». Зависит от Shared/BossAnim, Config/Boss1DogRig.
+-- атрибуты. Спящий босс выпускает «Z z z». Зависит от Shared/BossAnim, Config/Boss1DogRig, Config/Boss2TraderRig.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,8 +10,9 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local BossAnim = require(Shared:WaitForChild("BossAnim"))
 local Boss1DogRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss1DogRig"))
+local Boss2TraderRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss2TraderRig"))
 
-local RIGS = { [1] = Boss1DogRig }
+local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig }
 local TAG = "Boss"
 local MAX_DISTANCE = 220 -- дальше анимации не считаются (экономия на телефонах)
 
