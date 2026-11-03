@@ -117,8 +117,8 @@ MapLayout.PedestalHeight = 2.5
 -- Площадку строит декор зоны (World/Models/FleaMarket). Зоны без записи — постаменты D37.
 MapLayout.Arenas = {
 	[2] = {
-		top = 0.15,
-		radius = 22,
+		top = 0.3,
+		radius = 24,
 		turns = { 28, -40, 115, -150 },
 	},
 }

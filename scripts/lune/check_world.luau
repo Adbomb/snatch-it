@@ -1,7 +1,8 @@
 --!nocheck
 -- Проверка мира без Roblox Studio (Lune): декор зон 1 «Свалка» и 2 «Барахолка» на плитах пола зон — нет видимых пар
--- совпадающих граней (World/FaceCheck, D36); у «Барахолки» — части в бюджете, света мало, круг площадки босса
--- свободен (только плоский пол), у каждой надписи есть табличка. Декор не зависит от Random, поэтому здесь он тот же,
+-- совпадающих граней (World/FaceCheck, D36); у «Барахолки» (D44) — части в бюджете, света мало, круг площадки
+-- босса свободен (только плоский пол), в круге, куда босс заходит в бою, нет ничего выше LOW, у каждой надписи есть
+-- табличка. Декор не зависит от Random, поэтому здесь он тот же,
 -- что в игре. Запуск из корня репозитория: lune run scripts/lune/check_world.luau. Ошибка — код возврата 1.
 
 local process = require("@lune/process")
@@ -16,9 +17,12 @@ local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
 
-local FLEA_PARTS = 1200 -- бюджет декора одной зоны (карта целиком ≤ 12 000)
-local FLEA_LIGHTS = 6 -- 2 прожектора + 4 точечных (у столбиков границы зоны — свои)
-local FLAT = 0.45 -- выше этого над полом — уже не пол (бордюр 0.4)
+local Battle = Env.Require("ReplicatedStorage.Shared.Config.Battle")
+
+local FLEA_PARTS = 1300 -- бюджет декора одной зоны (карта целиком ≤ 12 000; было 802 до D44)
+local FLEA_LIGHTS = 10 -- по одному на павильон и сундук, 2 прожектора (у столбиков границы зоны — свои)
+local LOW = 2 -- в круге боя выше этого нет ничего: босс без столкновений прошёл бы сквозь декор
+local FLAT = 0.6 -- выше этого над полом — уже не пол (ромб под боссом 0.5, бордюр 0.55)
 
 local failed = 0
 local function check(ok: boolean, message: string)
@@ -95,6 +99,33 @@ check(
 	#blocking == 0,
 	"на площадке босса нет декора выше пола"
 		.. (if #blocking > 0 then ": " .. table.concat(blocking, "; ", 1, math.min(#blocking, 5)) else "")
+)
+
+-- Круг, куда босс заходит в бою: игрок не дальше Leash от места босса, босс останавливается в AttackRange − 1.5 от
+-- игрока, плюс полкорпуса. Расстояние — от места босса до прямоугольника детали на полу.
+local bossCfg = Battle.Bosses[2]
+local roam = bossCfg.Leash - (bossCfg.AttackRange - 1.5) + 2
+local tall = {}
+for _, brick in flea do
+	local p = frame:PointToObjectSpace(brick.cframe.Position)
+	local cf, size = brick.cframe, brick.size
+	local function half(axis: string): number
+		return (
+			math.abs(cf.RightVector[axis]) * size.X
+			+ math.abs(cf.UpVector[axis]) * size.Y
+			+ math.abs(cf.LookVector[axis]) * size.Z
+		) / 2
+	end
+	local dx = math.max(math.abs(p.X - spot.X) - half("X"), 0)
+	local dz = math.max(math.abs(p.Z - spot.Y) - half("Z"), 0)
+	if math.sqrt(dx * dx + dz * dz) < roam and p.Y + half("Y") > LOW then
+		table.insert(tall, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+	end
+end
+check(
+	#tall == 0,
+	("в круге боя (r %.0f) нет декора выше %d"):format(roam, LOW)
+		.. (if #tall > 0 then ": " .. table.concat(tall, "; ", 1, math.min(#tall, 5)) else "")
 )
 
 local names = {}

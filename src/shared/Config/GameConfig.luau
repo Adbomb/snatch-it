@@ -89,8 +89,8 @@ end
 GameConfig.Zones = {
 	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "8C7A60", accent = "8D6E63", mood = "😊",
 		pattern = pattern("gravel", "4A3A2A", 11, 0.65) },
-	-- Барахолка (D43): пол зоны — графитовые швы, плитку и площадку босса кладёт декор (World/Models/FleaMarket), узора
-	-- нет.
+	-- Барахолка (D43, D44): пол зоны виден между павильонами, мощение и площадку босса кладёт декор
+	-- (World/Models/FleaMarket), узора нет.
 	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "565D6D", accent = "2CB5A8", mood = "🙂" },
 	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0", mood = "😐",
 		pattern = pattern("grid", "455A64", 12, 0.55) },
