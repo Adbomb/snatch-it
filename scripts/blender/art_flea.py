@@ -3,7 +3,8 @@
 Барахолка: странные, смешные, мемные и редкие находки — понятные детям, яркие, с крупным силуэтом. 30 предметов:
 12 Common, 10 Rare (4 картины), 8 Epic. «Сотворение Адама» и «Рождение Венеры» исключены
 (2026-11-03): обнажённые фигуры — Roblox заблокировал аккаунт владельца за их карты (docs/RECOVERY_STATUS.md);
-вместо них нужны две новые картины без наготы. Перед загрузкой в Roblox — каждую картинку проверять на наготу. Общие инструменты (блоки, кольца D39, изображение на холсте, запекание,
+вместо них — золотой микрофон и золотой геймпад (выбор владельца). Новых картин не добавлять; перед загрузкой в
+Roblox каждую картинку смотреть на наготу и сомнительное. Общие инструменты (блоки, кольца D39, изображение на холсте, запекание,
 рендеры) — art_style.py. Стекло (банка, бутылка, купол автомата) — без прозрачности: голубые рёбра-грани с бликами,
 содержимое видно (у предмета один меш и одна SurfaceAppearance). Изображения картин — файлы Wikimedia Commons из
 общественного достояния (assets/art_sources/SOURCES.md).
@@ -986,7 +987,7 @@ def world_in_bottle():
     return a
 
 
-# ── 19, 21. Картины Rare в своих рамах (20 и 22 исключены — см. ниже) ─────────────────────────────────────────────────────────────────────────
+# ── 19, 21. Картины Rare в своих рамах ─────────────────────────────────────────────────────────────────────────
 
 
 def painting(name, image, cw, ch, colors, border=0.44, z=0.34, boost=3.0):
@@ -1088,6 +1089,113 @@ def van_gogh_self_portrait():
         d = (p1 - p0).normalized()
         bar(a, "ferrule", p1 - d * 0.02, p1 + d * 0.16, 0.1)
         bar(a, key, p1 + d * 0.14, p1 + d * 0.34, 0.12)
+    return a
+
+
+# ── 20. Золотой микрофон: микрофон звезды на стойке, камни, цепь, светящийся подиум, ноты ─────────────────────
+
+NOTE = [".###",
+        ".#.#",
+        ".#.#",
+        "##.#",
+        "##.."]
+
+
+def golden_mic():
+    a = S.Art("Art_GoldenMic", ring_z0=0.15)
+    a.paint("stage", "2B2B33", rings=True)
+    a.paint("gold", "F2C230", rings=True)
+    for key, code in (("gold2", "C9921A"), ("light", "A06BFF"), ("bulb", "FFE14A"), ("grille", "FFF1C8"),
+                      ("grille2", "B8860B"), ("gem", "BFF4FF"), ("ruby", "E53935"), ("note", "FF6FD8"),
+                      ("note2", "4FE3F0"), ("shine", "FFFFFF")):
+        a.paint(key, code)
+    # подиум: тёмные ступени, светящееся кольцо с лампочками
+    disc(a, "stage", 0, 0, 1.0, 0.0, 0.24)
+    disc(a, "light", 0, 0, 0.9, 0.22, 0.3)
+    for x, y in ngon(0, 0, 0.9, 8):
+        a.box("bulb", x - 0.06, x + 0.06, y - 0.06, y + 0.06, 0.28, 0.34, bevel=0)
+    disc(a, "stage", 0, 0, 0.74, 0.28, 0.42)
+    # стойка: основание, штанга, зажим
+    disc(a, "gold", 0, 0, 0.44, 0.4, 0.5)
+    disc(a, "gold2", 0, 0, 0.1, 0.48, 2.32)
+    a.box("gold2", -0.13, 0.13, -0.13, 0.13, 2.26, 2.42)
+    # золотая цепь вьётся вокруг штанги
+    pts = [(0.14 * math.cos(t * 1.4), 0.14 * math.sin(t * 1.4) - 0.0, 0.7 + t * 0.13) for t in range(12)]
+    chain(a, ["gold", "gold2"], pts, 0.07, grow=0.02)
+    # микрофон наклонён к зрителю: ручка с камнями, пояс с рубинами, головка-решётка
+    a.transform = tilt((0, 0, 2.34), "X", 16)
+    a.prism("gold", ngon(0, 0, 0.13, 8), 2.3, 2.5)
+    a.prism("gold", ngon(0, 0, 0.17, 8), 2.48, 3.08)
+    for z in (2.62, 2.82):
+        for x, y in ngon(0, 0, 0.18, 4, math.pi / 4):
+            a.box("gem", x - 0.04, x + 0.04, y - 0.04, y + 0.04, z - 0.04, z + 0.04, bevel=0)
+    disc(a, "gold2", 0, 0, 0.24, 3.06, 3.16)
+    for x, y in ngon(0, 0, 0.245, 6):
+        a.box("ruby", x - 0.04, x + 0.04, y - 0.04, y + 0.04, 3.08, 3.14, bevel=0)
+    for r, z0, z1 in ((0.28, 3.14, 3.24), (0.36, 3.22, 3.36), (0.39, 3.34, 3.56), (0.36, 3.54, 3.68), (0.28, 3.66, 3.78)):
+        disc(a, "grille", 0, 0, r, z0, z1)
+    disc(a, "grille2", 0, 0, 0.395, 3.43, 3.47, bevel=0)  # металлический обод решётки
+    disc(a, "gold", 0, 0, 0.18, 3.76, 3.84)
+    a.box("shine", -0.22, -0.16, -0.4, -0.37, 3.4, 3.62, bevel=0)
+    a.transform = None
+    # ноты и искры вокруг
+    a.pixels(NOTE, {"#": ("note", 0.04)}, 0.09, -1.05, 3.45, "xz", 0.02)
+    a.pixels(NOTE, {"#": ("note2", 0.04)}, 0.07, 0.7, 2.75, "xz", 0.02)
+    sparkle(a, "shine", (0.85, -0.3, 3.85), 0.3)
+    sparkle(a, "shine", (-0.8, -0.3, 2.55), 0.24)
+    return a
+
+
+# ── 22. Золотой геймпад: огромный контроллер на подставке-витрине, неоновые кнопки, стики, подсветка, провод ────
+
+
+def golden_gamepad():
+    a = S.Art("Art_GoldenGamepad", ring_z0=1.2)
+    a.paint("gold", "F2C230", rings=True)
+    a.paint("stand", "2B2B33", rings=True)
+    for key, code in (("gold2", "C9921A"), ("dark", "1E1E24"), ("stick", "8A96A6"), ("pink", "FF4FA8"),
+                      ("cyan", "3FE0F0"), ("lime", "9CF03A"), ("orange", "FF9A1F"), ("glow", "6FF2FF"),
+                      ("gem", "A06BFF"), ("plate", "F2C230"), ("shine", "FFFFFF"), ("cable", "2B2B33")):
+        a.paint(key, code)
+    # подставка с табличкой и два упора под ручки
+    a.box("stand", -1.5, 1.5, -0.8, 0.8, 0.0, 0.3)
+    a.box("gold2", -1.54, 1.54, -0.84, -0.72, 0.01, 0.32)
+    a.box("plate", -0.5, 0.5, -0.88, -0.83, 0.08, 0.24, bevel=0)
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.95, s * 1.25))
+        a.box("gold2", x0, x1, -0.2, 0.2, 0.28, 0.6)
+    # контроллер стоит лицом к зрителю, чуть откинут назад
+    a.transform = tilt((0, 0, 0.5), "X", -10)
+    outline = [(-1.0, 1.95), (1.0, 1.95), (1.18, 1.86), (1.3, 1.62), (1.48, 0.86), (1.4, 0.56), (1.12, 0.48),
+               (0.86, 0.74), (0.58, 1.0), (-0.58, 1.0), (-0.86, 0.74), (-1.12, 0.48), (-1.4, 0.56), (-1.48, 0.86),
+               (-1.3, 1.62), (-1.18, 1.86)]
+    a.extrude("gold", outline, -0.25, 0.25, axis="y")
+    # плечевые кнопки
+    for s in (1, -1):
+        x0, x1 = sorted((s * 0.42, s * 0.98))
+        a.box("dark", x0, x1, -0.18, 0.18, 1.9, 2.06)
+    # крестовина
+    a.box("dark", -1.0, -0.5, -0.3, -0.22, 1.38, 1.52)
+    a.box("dark", -0.82, -0.68, -0.32, -0.22, 1.2, 1.7)
+    # четыре неоновые кнопки ромбом
+    for (x, z, key) in ((0.75, 1.66, "pink"), (0.95, 1.45, "cyan"), (0.75, 1.24, "lime"), (0.55, 1.45, "orange")):
+        disc(a, key, x, z, 0.1, -0.33, -0.22, axis="y")
+    # стики
+    for x in (-0.36, 0.36):
+        disc(a, "dark", x, 1.12, 0.17, -0.3, -0.22, axis="y")
+        disc(a, "stick", x, 1.12, 0.12, -0.42, -0.29, axis="y")
+    # центр: светящаяся полоса, кнопки меню, камень «домой»
+    a.box("glow", -0.32, 0.32, -0.29, -0.22, 1.74, 1.82, bevel=0)
+    for x in (-0.16, 0.16):
+        a.box("dark", x - 0.07, x + 0.07, -0.28, -0.22, 1.55, 1.61, bevel=0)
+    disc(a, "gem", 0, 1.36, 0.1, -0.31, -0.22, axis="y")
+    a.box("shine", -1.2, -1.05, -0.27, -0.24, 1.55, 1.8, bevel=0)
+    # провод от верхнего края к подставке
+    chain(a, ["cable"], [(0.0, 0.1, 1.93), (0.15, 0.35, 2.25), (0.55, 0.5, 2.3), (1.0, 0.55, 1.95), (1.35, 0.6, 1.2),
+                         (1.38, 0.62, 0.3)], 0.08, grow=0.03)
+    a.transform = None
+    sparkle(a, "shine", (-1.35, -0.4, 2.3), 0.3)
+    sparkle(a, "shine", (1.4, -0.4, 2.45), 0.24)
     return a
 
 
@@ -1541,7 +1649,8 @@ COMMON = [("GoldenBanana", golden_banana), ("CursedTV", cursed_tv), ("UfoJar", u
           ("MonsterRadio", monster_radio), ("PocketSafe", pocket_safe)]
 RARE = [("MimicChest", mimic_chest), ("PortalMirror", portal_mirror), ("AllSeeingEye", all_seeing_eye),
         ("RoyalDuck", royal_duck), ("MonsterFlower", monster_flower), ("WorldInBottle", world_in_bottle),
-        ("MonaLisa", mona_lisa), ("VanGoghSelfPortrait", van_gogh_self_portrait)]
+        ("MonaLisa", mona_lisa), ("GoldenMic", golden_mic), ("VanGoghSelfPortrait", van_gogh_self_portrait),
+        ("GoldenGamepad", golden_gamepad)]
 EPIC = [("GoldenThrone", golden_throne), ("BlackCatIdol", black_cat_idol), ("CrystalDino", crystal_dino),
         ("PrizeMachine", prize_machine), ("PocketDragon", pocket_dragon), ("NeonHeart", neon_heart),
         ("SpaceHelmet", space_helmet), ("ChaosCrown", chaos_crown)]
