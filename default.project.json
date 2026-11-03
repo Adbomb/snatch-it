@@ -32,6 +32,48 @@
 					"Decay": [0.4, 0.62, 0.95]
 				}
 			},
+			"Bloom": {
+				"$className": "BloomEffect",
+				"$properties": {
+					"Intensity": 1,
+					"Size": 24,
+					"Threshold": 2
+				}
+			},
+			"SunRays": {
+				"$className": "SunRaysEffect",
+				"$properties": {
+					"Intensity": 0.01,
+					"Spread": 0.1
+				}
+			},
+			"DepthOfField": {
+				"$className": "DepthOfFieldEffect",
+				"$properties": {
+					"Enabled": false,
+					"FarIntensity": 0.1,
+					"FocusDistance": 0.05,
+					"InFocusRadius": 30,
+					"NearIntensity": 0.75
+				}
+			},
+			"Sky": {
+				"$className": "Sky",
+				"$properties": {
+					"SkyboxBk": "rbxassetid://6444884337",
+					"SkyboxDn": "rbxassetid://6444884785",
+					"SkyboxFt": "rbxassetid://6444884337",
+					"SkyboxLf": "rbxassetid://6444884337",
+					"SkyboxRt": "rbxassetid://6444884337",
+					"SkyboxUp": "rbxassetid://6412503613",
+					"SunTextureId": "rbxassetid://6196665106",
+					"MoonTextureId": "rbxassetid://6444320592",
+					"SunAngularSize": 11,
+					"MoonAngularSize": 11,
+					"StarCount": 3000,
+					"CelestialBodiesShown": true
+				}
+			},
 			"ColorCorrection": {
 				"$className": "ColorCorrectionEffect",
 				"$properties": {

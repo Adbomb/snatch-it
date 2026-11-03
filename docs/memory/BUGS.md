@@ -11,6 +11,11 @@
   Из реестра иконок не грузятся 7: Nature/Banana/Banana_1st, Social/Discord/Gamepad_* (5), Social/Twitter/Bird_White.
   Решение D32: плашки и заголовки — Frame + UIGradient + UIStroke, пупырышки — LegoStuds, монета Robux — иконка реестра.
 
+## Модерация Roblox (бан аккаунта 2026-11-02 — `docs/RECOVERY_STATUS.md`)
+- Любая обнажённая фигура на загруженной картинке — «sexual content» и бан аккаунта, даже классика из общественного достояния (карты «Сотворения Адама» и «Рождения Венеры»: бан на 7 дней). Каждую картинку и каждую запечённую карту смотреть до `upload_image`; пачками без просмотра не загружать.
+- ID 115188607358965 и 91016959329136 запрещены; `scripts/check_project.py` следит, чтобы их и файлов этих картин в проекте не было.
+- Автокопия облачного места Studio: `%LOCALAPPDATA%\Roblox\RobloxStudio\AutoSaves\<placeId>_AutoRecovery_0.rbxl`. Чанки сжаты zstd — разбирать Python-ом Blender (в нём есть `zstandard`).
+
 ## Перед релизом (загрузить в Roblox / проверить)
 - Всё, что подключено через `rbxasset://` (локальные файлы Studio), у игроков не загрузится — заменить загруженными ID.
   Сейчас таких нет: LegoStuds (3 карты), палитра предметов и меш уточки уже загружены (`Config/Textures`, `Config/ItemModels`).
