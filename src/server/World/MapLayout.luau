@@ -64,7 +64,8 @@ MapLayout.ZoneSize = 95
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
 -- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
 MapLayout.HologramSize = Vector2.new(40, 11) -- надпись уровня, стадов
-MapLayout.HologramHeight = 22 -- центр надписи над полом: низ на 16.5 — выше головы, выше босса (9.6), не мешает обзору
+-- Центр надписи над полом: низ на 16.5 — выше головы и выше боссов (пёс 9.8, торговец 14.9), не мешает обзору.
+MapLayout.HologramHeight = 22
 MapLayout.HologramInset = 10 -- от входа в зону вглубь
 MapLayout.PylonX = 86 -- светящиеся столбики на границах зон, у обрывов
 MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНАЯ ЗОНА» на траве у входа в коридор
@@ -110,6 +111,18 @@ MapLayout.ArtSlots = {
 }
 MapLayout.PedestalHeight = 2.5
 
+-- Площадка босса (D43): у зоны с записью предметы стоят прямо на площадке вокруг босса, без постаментов, каждый со
+-- своим поворотом (turn, градусы вокруг вертикали; 0 — как на постаменте). Места те же, что у постаментов (ArtSlots),
+-- top — высота площадки над полом зоны под предметами, radius — край площадки от места босса (декор — за ним).
+-- Площадку строит декор зоны (World/Models/FleaMarket). Зоны без записи — постаменты D37.
+MapLayout.Arenas = {
+	[2] = {
+		top = 0.15,
+		radius = 22,
+		turns = { 28, -40, 115, -150 },
+	},
+}
+
 -- Границы острова (трава и плато за обрывами) — для земли и воды вокруг.
 local cliff = MapLayout.Cliff
 local OUTER_X = MapLayout.SafeZone.halfX + cliff.terrace + cliff.outer
@@ -120,15 +133,19 @@ MapLayout.Island = {
 	maxZ = MapLayout.SafeZone.back + cliff.terrace + cliff.outer,
 }
 
--- Точки предметов у боссов: верх постаментов (D37), лицом ко входу в зону.
+-- Точки предметов у боссов: верх постаментов (D37), лицом ко входу в зону; у зоны с площадкой (Arenas) — на
+-- площадке, со своим поворотом.
 export type ArtSlotPoint = { name: string, cframe: CFrame, zone: number, slot: number }
 
 function MapLayout.ArtSlotPoints(): { ArtSlotPoint }
 	local points: { ArtSlotPoint } = {}
 	for zone = 1, ZONE_COUNT do
 		local frame = MapLayout.ZoneCFrame(zone)
+		local arena = MapLayout.Arenas[zone]
 		for slot, spot in MapLayout.ArtSlots do
-			local top = frame * CFrame.new(spot.X, MapLayout.PedestalHeight, spot.Y)
+			local top = if arena
+				then frame * CFrame.new(spot.X, arena.top, spot.Y) * CFrame.Angles(0, math.rad(arena.turns[slot]), 0)
+				else frame * CFrame.new(spot.X, MapLayout.PedestalHeight, spot.Y)
 			local name = ("Boss%d_Slot%d"):format(zone, slot)
 			table.insert(points, { name = name, cframe = top, zone = zone, slot = slot })
 		end

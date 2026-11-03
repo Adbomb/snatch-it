@@ -19,7 +19,8 @@ export type Brick = {
 	shadow: boolean?, -- по умолчанию из опций модели
 	transparency: number?,
 	name: string?,
-	light: { range: number, brightness: number, color: Color3 }?, -- PointLight внутри кирпича
+	-- PointLight внутри кирпича; с angle — SpotLight, светит из грани −Z (Front) конусом angle градусов.
+	light: { range: number, brightness: number, color: Color3, angle: number? }?,
 }
 
 -- collide/shadow — значения по умолчанию для всех кирпичей модели. Мелкий декор: оба false.
@@ -78,7 +79,11 @@ local function makePart(brick: Brick, opts: Options): BasePart
 	end
 	Studs.Apply(part)
 	if brick.light then
-		local light = Instance.new("PointLight")
+		local light = if brick.light.angle then Instance.new("SpotLight") else Instance.new("PointLight")
+		if light:IsA("SpotLight") then
+			light.Face = Enum.NormalId.Front
+			light.Angle = brick.light.angle
+		end
 		light.Range = brick.light.range
 		light.Brightness = brick.light.brightness
 		light.Color = brick.light.color

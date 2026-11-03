@@ -89,8 +89,9 @@ end
 GameConfig.Zones = {
 	{ id = "Junk", name = "Свалка", boss = "Сторожевой пёс", floor = "8C7A60", accent = "8D6E63", mood = "😊",
 		pattern = pattern("gravel", "4A3A2A", 11, 0.65) },
-	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "F3D9A4", accent = "43C22E", mood = "🙂",
-		pattern = pattern("diamonds", "E0A84E", 16, 0.4) },
+	-- Барахолка (D43): пол зоны — графитовые швы, плитку и площадку босса кладёт декор (World/Models/FleaMarket), узора
+	-- нет.
+	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "565D6D", accent = "2CB5A8", mood = "🙂" },
 	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0", mood = "😐",
 		pattern = pattern("grid", "455A64", 12, 0.55) },
 	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E", mood = "😬",
@@ -109,8 +110,9 @@ GameConfig.Zones = {
 		pattern = pattern("tiles", "6E6E6E", 8, 0.4) },
 }
 
--- Боссы (D37, D40): 4 предмета у каждого. Забрать предмет — победой в автобое (BattleService, Config/Battle); у боссов,
--- у которых боя ещё нет (2–10), без боя — только в тестовом режиме Studio (DevMode), в опубликованной игре нельзя.
+-- Боссы (D37, D40, D42): 4 предмета у каждого. Забрать предмет — победой в автобое (BattleService, Config/Battle); у
+-- боссов, у которых боя ещё нет (3–10), без боя — только в тестовом режиме Studio (DevMode), в опубликованной игре —
+-- нельзя.
 GameConfig.Bosses = {
 	FreeTakeInStudio = true,
 	TakeDistance = 10, -- радиус подсказки «Забрать» у предмета

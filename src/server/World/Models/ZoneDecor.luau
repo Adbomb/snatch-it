@@ -29,23 +29,7 @@ end
 
 -- Свалка (уровень 1) — World/Models/Junkyard (D41).
 
--- Барахолка: цветные коврики под постаментами (ларьки и ящики ставит WorldBuilder).
-function ZoneDecor.Flea(pedestals: { Vector2 }): { ModelBuilder.Brick }
-	local bricks: { ModelBuilder.Brick } = {}
-	local rugs = { hex("E53935"), hex("8E24AA"), hex("1E88E5"), hex("FB8C00"), hex("43A047") }
-	for i, spot in pedestals do
-		table.insert(bricks, B(Vector3.new(8, 0.1, 8), Vector3.new(spot.X, 0.05, spot.Y), rugs[(i - 1) % #rugs + 1], DECOR))
-		table.insert(bricks, B(Vector3.new(6.4, 0.12, 6.4), Vector3.new(spot.X, 0.06, spot.Y), Palette.White, DECOR))
-	end
-	-- Столы с мелочью вдоль боковых заборов.
-	for _, x in { -26, 26 } do
-		table.insert(bricks, B(Vector3.new(4, 2.6, 12), Vector3.new(x, 1.3, 8), Palette.Wood))
-		for i = 1, 4 do
-			table.insert(bricks, B(Vector3.new(1.4, 1, 1.4), Vector3.new(x, 3.1, 8 - 6 + i * 2.4), rugs[i], DECOR))
-		end
-	end
-	return bricks
-end
+-- Барахолка (уровень 2) — World/Models/FleaMarket (D43).
 
 -- Склад: жёлтая разметка и стеллажи с коробками (ящики ставит WorldBuilder).
 function ZoneDecor.Warehouse(): { ModelBuilder.Brick }

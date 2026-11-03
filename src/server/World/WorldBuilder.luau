@@ -1,10 +1,11 @@
 -- Строит карту (D36, D22) по MapLayout: остров травы, земляные обрывы с травой поверху вокруг безопасной зоны
 -- (сзади и по бокам — уступом с травяной террасой) и коридора уровней, деревья на террасах и плато, лавки
 -- «Аура» и «Продажа», точку появления и 10 зон одним коридором без рамок (D41) — пол с узором зоны, полоса-граница
--- цвета зоны, голографическое название, постаменты, декор; у входа в коридор — разметка «Безопасная зона».
+-- цвета зоны, голографическое название, постаменты (у зоны с площадкой босса — без них, D43), декор; у входа в
+-- коридор — разметка «Безопасная зона».
 -- Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с полем качалки строит PlotService.
 -- Совпадающих граней у разных деталей нет (D36): трава обрывов, свесы и «натёки» лежат встык или с выступом.
--- Зависит от MapLayout, ModelBuilder, Palette, Studs, Hologram, World/Models/*, GameConfig, ZonePatterns.
+-- Зависит от MapLayout, ModelBuilder, Palette, Studs, Hologram, Signs, World/Models/*, GameConfig, ZonePatterns.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,9 +18,10 @@ local Hologram = require(World.Hologram)
 local MapLayout = require(World.MapLayout)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
+local Signs = require(World.Signs)
 local Studs = require(World.Studs)
+local FleaMarket = require(World.Models.FleaMarket)
 local Junkyard = require(World.Models.Junkyard)
-local Plaza = require(World.Models.Plaza)
 local Shops = require(World.Models.Shops)
 local Props = require(World.Models.Props)
 local Tree = require(World.Models.Tree)
@@ -437,25 +439,22 @@ local function buildZone(index: number, parent: Instance)
 		end
 	end
 
-	-- Постаменты под 4 предмета босса (D37).
-	for i, spot in MapLayout.ArtSlots do
-		place("Pedestal_" .. zone.id, function()
-			return ZoneDecor.Pedestal(accent)
-		end, frame * CFrame.new(spot.X, 0, spot.Y), f).Name = "Pedestal_" .. i
+	-- Постаменты под 4 предмета босса (D37); у зоны с площадкой босса предметы стоят на площадке (D43).
+	if not MapLayout.Arenas[index] then
+		for i, spot in MapLayout.ArtSlots do
+			place("Pedestal_" .. zone.id, function()
+				return ZoneDecor.Pedestal(accent)
+			end, frame * CFrame.new(spot.X, 0, spot.Y), f).Name = "Pedestal_" .. i
+		end
 	end
 
 	-- Декор по теме зоны.
 	local decor: { ModelBuilder.Brick } = {}
+	local signs: { FleaMarket.Sign } = {}
 	if zone.id == "Junk" then
 		decor = Junkyard.Zone() -- уровень 1 «Свалка» (D41)
 	elseif zone.id == "Flea" then
-		decor = ZoneDecor.Flea(MapLayout.ArtSlots)
-		for i, spot in { Vector2.new(-20, 26), Vector2.new(20, 26) } do
-			local stripes = Palette.Awnings[i + 1]
-			place("Stall_Flea_" .. i, function()
-				return Plaza.Stall(stripes[1], stripes[2])
-			end, frame * CFrame.new(spot.X, 0, spot.Y), f) -- прилавок (сторона -Z) смотрит ко входу
-		end
+		decor, signs = FleaMarket.Zone() -- уровень 2 «Барахолка» (D43)
 	elseif zone.id == "Warehouse" then
 		decor = ZoneDecor.Warehouse()
 		for i, spot in { Vector3.new(-24, 0, -16), Vector3.new(24, 0, -16), Vector3.new(24, 4, -16), Vector3.new(-24, 0, -11) } do
@@ -473,7 +472,15 @@ local function buildZone(index: number, parent: Instance)
 	elseif ZoneDecor[zone.id] then
 		decor = ZoneDecor[zone.id]()
 	end
-	ModelBuilder.Place(ModelBuilder.Build("Decor", decor), frame, f)
+	local model = ModelBuilder.Place(ModelBuilder.Build("Decor", decor), frame, f)
+	for _, sign in signs do
+		local part = model:FindFirstChild(sign.name)
+		if part and part:IsA("BasePart") then
+			for _, face in sign.faces do
+				Signs.Write(part, face, { { text = sign.text, scale = 0.8 } }, part.Color)
+			end
+		end
+	end
 end
 
 

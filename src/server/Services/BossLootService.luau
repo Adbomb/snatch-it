@@ -1,10 +1,11 @@
--- Предметы у боссов (D37): у каждого из 10 боссов 4 слота на постаментах вокруг него (MapLayout.ArtSlots). Каждый
--- слот независимо выбирает редкость по шансам группы босса (Progression.BossLoot), затем предмет этой редкости из
--- коллекции босса (Config/Items). После каждой ночи (на рассвете) все 4 слота заполняются заново — нетронутые
--- тоже, новые uid. Забранный предмет освобождает слот до следующего рассвета. Забрать предмет — только победой
--- над боссом: «Забрать» у предмета начинает бой (BattleService через OnTakeRequest), на время боя предмет закреплён
--- за бойцом, подсказки у занятого босса выключены. У боссов без боя (пока 2–10) забрать без боя можно только в
--- тестовом режиме Studio (GameConfig.Bosses.FreeTakeInStudio), в опубликованной игре — нельзя.
+-- Предметы у боссов (D37): у каждого из 10 боссов 4 слота вокруг него — на постаментах (MapLayout.ArtSlots) или прямо
+-- на площадке босса (MapLayout.Arenas, D43). Каждый слот независимо выбирает редкость по шансам группы босса
+-- (Progression.BossLoot), затем предмет этой редкости из коллекции босса (Config/Items). После каждой ночи (на
+-- рассвете) все 4 слота заполняются заново — нетронутые тоже, новые uid. Забранный предмет освобождает слот до
+-- следующего рассвета. Забрать предмет — только победой над боссом: «Забрать» у предмета начинает бой (BattleService
+-- через OnTakeRequest), на время боя предмет закреплён за бойцом, подсказки у занятого босса выключены. У боссов без
+-- боя (пока 3–10) забрать без боя можно только в тестовом режиме Studio (GameConfig.Bosses.FreeTakeInStudio), в
+-- опубликованной игре — нельзя.
 -- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
 -- Зависит от ItemRegistry, CarryService, TimeService, Util/ItemFactory, Util/Validate, Util/Notify, Util/Log,
 -- World/MapLayout, Shared/GameTime, Config.
@@ -114,7 +115,7 @@ local function fill(entry: Slot)
 	entry.reservedBy = nil
 	local rarity = BossLootService.RollRarity(entry.boss)
 	local itemId = BossLootService.ChooseItem(entry.boss, rarity)
-	-- Черновые коллекции боссов 2–10 неполные: нет нужной редкости — ближайшая ниже.
+	-- Черновые коллекции боссов 3–10 неполные: нет нужной редкости — ближайшая ниже.
 	local rank = Rarities.Rank(rarity)
 	while not itemId and rank > 1 do
 		rank -= 1
@@ -234,7 +235,7 @@ function BossLootService.Reserve(boss: number, slot: number, player: any): boole
 	return true
 end
 
--- Бой закончился без победы: предмет снова свободен (он не покидал постамент).
+-- Бой закончился без победы: предмет снова свободен (он не покидал своё место).
 function BossLootService.Release(boss: number, slot: number)
 	local entry = slots[boss] and slots[boss][slot]
 	if entry then
