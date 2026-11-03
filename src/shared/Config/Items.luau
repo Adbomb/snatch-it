@@ -1,8 +1,10 @@
--- Каталог произведений искусства (D37, D40): у каждого из 10 боссов своя коллекция. Коллекция босса 1 «Музей чудес»
--- (D40, docs/CATALOG.md) — 20 предметов с моделями из Blender (Config/ItemModels) и своим доходом в секунду
--- (income, предварительный баланс D40, без множителей редкости). Коллекции боссов 2–10 — черновик (вид — заготовка,
--- дохода нет), до их очереди. legacy — прежние предметы босса 1 (народные промыслы D38): у босса не появляются, но
--- описание остаётся, чтобы старые сохранения загружались. Шансы редкостей у боссов — Progression.BossLoot.
+-- Каталог произведений искусства (D37, D40, D42): у каждого из 10 боссов своя коллекция. Босс 1 «Музей чудес» (D40)
+-- — 20 предметов, босс 2 «Музей безумных находок» (D42) — 30 (docs/CATALOG.md): модели из Blender (Config/ItemModels,
+-- пока меш не загружен — заготовка цвета и размера модели) и свой доход в секунду (income, предварительный баланс, без
+-- множителей редкости). Коллекции боссов 3–10 — черновик (вид — заготовка, дохода нет), до их очереди. legacy —
+-- прежние предметы (народные промыслы босса 1 D38, антиквариат-черновик босса 2): у босса не появляются, но описание
+-- остаётся, чтобы старые сохранения загружались. id не повторяются и не переиспользуются для другого произведения.
+-- Шансы редкостей у боссов — Progression.BossLoot.
 -- Читается сервером и клиентом. Ни от чего не зависит.
 
 export type ItemDef = {
@@ -51,9 +53,10 @@ local function art(
 	}
 end
 
--- Предмет коллекции босса 1 (D40): модель из Blender, свой доход в секунду. Форма, цвет и размер — запасной вид, пока
--- меш не загружен; размер равен размеру модели.
-local function wonder(
+-- Предмет коллекции с моделью из Blender и своим доходом в секунду (D40 — босс 1, D42 — босс 2). Форма, цвет и
+-- размер — запасной вид, пока меш не загружен; размер равен размеру модели.
+local function collectible(
+	boss: number,
 	id: string,
 	rarity: string,
 	displayName: string,
@@ -64,8 +67,16 @@ local function wonder(
 	size: Vector3,
 	source: string
 )
-	art(id, 1, rarity, displayName, kind, weight, "Block", color, size, source)
+	art(id, boss, rarity, displayName, kind, weight, "Block", color, size, source)
 	Items[id].income = income
+end
+
+local function wonder(...)
+	collectible(1, ...)
+end
+
+local function find(...)
+	collectible(2, ...)
 end
 
 local V = Vector3.new
@@ -124,11 +135,77 @@ for _, entry in {
 	Items[entry[1]].legacy = true
 end
 
--- 2. Барахолка — «Торговец-громила»: антиквариат.
+-- 2. Барахолка — «Торговец-громила»: «Музей безумных находок» (D42), 12 Common, 10 Rare, 8 Epic. Доход —
+-- предварительный баланс, не утверждён. №20 и №22 — золотой микрофон и золотой геймпад вместо исключённых картин.
+-- Common
+find("GoldenBanana", "Common", "Золотой банан", "Artifact", "Light", 34, "F7C531", V(3.11, 2.39, 1.94),
+	"находка Барахолки")
+find("CursedTV", "Common", "Проклятый телевизор", "Artifact", "Medium", 38, "E0782C", V(2.2, 3.46, 2),
+	"находка Барахолки")
+find("UfoJar", "Common", "НЛО в банке", "Artifact", "Light", 42, "A8E6F0", V(1.88, 3.1, 2.01), "находка Барахолки")
+find("AstroCat", "Common", "Кот в шлеме", "Sculpture", "Medium", 40, "EEF0F3", V(2.24, 3.14, 2), "находка Барахолки")
+find("MagicMushroom", "Common", "Магический гриб", "Sculpture", "Light", 36, "8E44D9", V(2.55, 2.87, 2.69),
+	"находка Барахолки")
+find("LivingCassette", "Common", "Живая кассета", "Artifact", "Light", 33, "26272E", V(2.8, 2.06, 1.51),
+	"находка Барахолки")
+find("TrophyBurger", "Common", "Трофейный бургер", "Artifact", "Medium", 35, "E39A43", V(2.92, 2.73, 2.2),
+	"находка Барахолки")
+find("CrystalHotDog", "Common", "Кристальный хот-дог", "Jewel", "Light", 39, "FF4F7B", V(3.32, 2.01, 1.7),
+	"находка Барахолки")
+find("RoboDuck", "Common", "Робо-утёнок", "Sculpture", "Light", 41, "FFD12E", V(1.6, 2.64, 2.5), "находка Барахолки")
+find("MagicSoda", "Common", "Магическая газировка", "Artifact", "Light", 32, "E040A0", V(2.12, 3.72, 1.89),
+	"находка Барахолки")
+find("MonsterRadio", "Common", "Монстр-радио", "Instrument", "Medium", 37, "D8352A", V(2.84, 3.42, 1.4),
+	"находка Барахолки")
+find("PocketSafe", "Common", "Карманный сейф", "Artifact", "Heavy", 44, "3E6B9E", V(2.6, 2.6, 1.97),
+	"находка Барахолки")
+-- Rare
+find("MimicChest", "Rare", "Живой сундук-мимик", "Artifact", "Heavy", 120, "8A4E2B", V(2.91, 2.55, 2.94),
+	"находка Барахолки")
+find("PortalMirror", "Rare", "Зеркало-портал", "Artifact", "Medium", 128, "7A3FD8", V(3.26, 4.85, 1.2),
+	"находка Барахолки")
+find("AllSeeingEye", "Rare", "Всевидящее око", "Artifact", "Medium", 115, "F2C230", V(2.97, 3.8, 1.75),
+	"находка Барахолки")
+find("RoyalDuck", "Rare", "Королевская утка", "Sculpture", "Medium", 110, "FFD12E", V(2.36, 3.26, 2.2),
+	"находка Барахолки")
+find("MonsterFlower", "Rare", "Цветок-монстр", "Sculpture", "Medium", 112, "E040A0", V(2.46, 4.17, 1.56),
+	"находка Барахолки")
+find("WorldInBottle", "Rare", "Мир в бутылке", "Artifact", "Medium", 125, "A8E6F0", V(3.34, 1.78, 1.52),
+	"находка Барахолки")
+find("MonaLisa", "Rare", "Мона Лиза", "Painting", "Medium", 150, "E8B530", V(3.18, 4.73, 1.28),
+	"Леонардо да Винчи, 1503–1506")
+find("GoldenMic", "Rare", "Золотой микрофон", "Instrument", "Light", 140, "F2C230", V(2.05, 4, 1.85),
+	"находка Барахолки")
+find("VanGoghSelfPortrait", "Rare", "Автопортрет ван Гога", "Painting", "Medium", 132, "2F5BD8", V(3.28, 3.53,
+	1.8), "Винсент ван Гог, 1887")
+find("GoldenGamepad", "Rare", "Золотой геймпад", "Artifact", "Medium", 136, "F2C230", V(3.08, 2.57, 1.74),
+	"находка Барахолки")
+-- Epic
+find("GoldenThrone", "Epic", "Золотой трон", "Artifact", "Heavy", 480, "F2C230", V(3.16, 4.66, 2.44),
+	"находка Барахолки")
+find("BlackCatIdol", "Epic", "Чёрная кошка-идол", "Sculpture", "Medium", 440, "26232E", V(2, 2.82, 1.7),
+	"находка Барахолки")
+find("CrystalDino", "Epic", "Кристальный динозавр", "Sculpture", "Heavy", 520, "4FD8F0", V(4.33, 4.37, 1.74),
+	"находка Барахолки")
+find("PrizeMachine", "Epic", "Легендарный автомат с призами", "Artifact", "Heavy", 460, "D8352A", V(1.72, 4.2,
+	1.79), "находка Барахолки")
+find("PocketDragon", "Epic", "Портативный дракон", "Sculpture", "Medium", 540, "3FBF5A", V(2.84, 2.42, 1.79),
+	"находка Барахолки")
+find("NeonHeart", "Epic", "Сердце из неона", "Artifact", "Medium", 420, "FF2E7E", V(2.78, 3.05, 1.4),
+	"находка Барахолки")
+find("SpaceHelmet", "Epic", "Гигантский космический шлем", "Artifact", "Medium", 450, "EEF0F3", V(2.52, 3.44,
+	2.34), "находка Барахолки")
+find("ChaosCrown", "Epic", "Тёмная корона хаоса", "Jewel", "Medium", 600, "2A1F3D", V(2.89, 2.64, 2.16),
+	"находка Барахолки")
+
+-- Черновик-антиквариат босса 2 до D42: только для старых сохранений.
 art("PorcelainDog", 2, "Common", "Фарфоровая собачка", "Sculpture", "Light", "Block", "F5F0E6", V(1.4, 1.8, 1.8))
 art("MantelClock", 2, "Common", "Каминные часы", "Artifact", "Light", "Block", "8A5A2B", V(2, 2, 1))
 art("Gramophone", 2, "Rare", "Граммофон", "Instrument", "Medium", "Wedge", "C9A227", V(2, 2.6, 2.4))
 art("MusicBox", 2, "Rare", "Музыкальная шкатулка", "Artifact", "Light", "Block", "6B2E5F", V(2, 1.4, 1.4))
+for _, id in { "PorcelainDog", "MantelClock", "Gramophone", "MusicBox" } do
+	Items[id].legacy = true
+end
 
 -- 3. Склад — «Робот-охранник»: запасники музея.
 art("CratedVase", 3, "Common", "Ваза в ящике", "Vase", "Medium", "Block", "B98B5B", V(2.2, 2.2, 2.2))
@@ -202,7 +279,6 @@ art("LadyUnicorn", 10, "Epic", "Дама с единорогом", "Textile", "M
 	"Гобелен, Франция, ок. 1500")
 art("MonomakhCap", 10, "Legendary", "Шапка Мономаха", "Jewel", "Medium", "Cylinder", "D4A23A", V(2.2, 2, 2),
 	"Русь, XIII–XIV века")
-art("MonaLisa", 10, "Secret", "Мона Лиза", "Painting", "Medium", "Block", "6B5B3A", V(2.2, 3, 0.4),
-	"Леонардо да Винчи, 1503–1519")
+-- «Мона Лиза» черновика босса 10 убрана (D42): это произведение — в коллекции босса 2, id MonaLisa теперь его.
 
 return Items
