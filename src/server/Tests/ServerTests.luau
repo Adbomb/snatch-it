@@ -18,6 +18,7 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
+local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
 local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
@@ -453,27 +454,34 @@ local function ensureDay(): boolean
 	return false
 end
 
-test("Коллекции: у босса 1 ровно 8 Common, 8 Rare, 4 Epic с доходом; у черновых нет недоступных редкостей", function()
+test("Коллекции: босс 1 — 8/8/4, босс 2 — 12/10/8 (Common/Rare/Epic) с доходом; у черновых нет лишних редкостей", function()
 	for id, def in Items do
 		check(table.find(Rarities.Order, def.rarity), id .. ": редкость " .. tostring(def.rarity))
 		check(def.boss >= 1 and def.boss <= #GameConfig.Zones, id .. ": босс " .. tostring(def.boss))
 	end
-	local want = { Common = 8, Rare = 8, Epic = 4, Legendary = 0, Secret = 0 }
+	-- D40 и D42; у босса 2 модели появятся после импорта мешей (до него — заготовки цвета и размера модели).
+	local wants = {
+		[1] = { Common = 8, Rare = 8, Epic = 4, Legendary = 0, Secret = 0 },
+		[2] = { Common = 12, Rare = 10, Epic = 8, Legendary = 0, Secret = 0 },
+	}
 	for boss = 1, #GameConfig.Zones do
+		local want = wants[boss]
 		local chances = BossLootService.Chances(boss)
 		for _, rarity in Rarities.Order do
 			local count = 0
 			for id, def in Items do
 				if def.boss == boss and def.rarity == rarity and not def.legacy then
 					count += 1
+					if want then
+						check((def.income or 0) > 0, id .. ": нет дохода")
+					end
 					if boss == 1 then
-						check(def.income > 0, id .. ": нет дохода")
 						check(ItemModels.Models[id], id .. ": нет модели в ItemModels")
 					end
 				end
 			end
-			if boss == 1 then
-				check(count == want[rarity], ("босс 1: %s %d, по D40 %d"):format(rarity, count, want[rarity]))
+			if want then
+				check(count == want[rarity], ("босс %d: %s %d, нужно %d"):format(boss, rarity, count, want[rarity]))
 			elseif (chances[rarity] or 0) == 0 then
 				check(count == 0, ("босс %d: %s ему недоступна"):format(boss, rarity))
 			end
@@ -547,44 +555,44 @@ test("Рассвет: все 40 предметов заменяются новы
 	end
 end)
 
-test("Без боя (босс 2, тестовый режим): слот пуст до рассвета, «Поднять» не берёт, экспонат помнит босса", function(A, B)
+test("Без боя (босс 3, тестовый режим): слот пуст до рассвета, «Поднять» не берёт, экспонат помнит босса", function(A, B)
 	local shifted = ensureDay()
 	BossLootService.Handlers.Refresh()
-	local entry = bossSlots()[2][1]
+	local entry = bossSlots()[3][1]
 	local uid = entry.uid :: string
 	local part = (ItemRegistry.Get(uid) :: any).part
 	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
 	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
 	CarryService.Handlers.Pickup(A, uid)
 	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
-	BossLootService.Handlers.Take(A, 2, 1)
+	BossLootService.Handlers.Take(A, 3, 1)
 	local taken = ItemRegistry.GetCarriedBy(A) == uid
 	local emptied = entry.uid == nil
-	BossLootService.Handlers.Take(B, 2, 1)
+	BossLootService.Handlers.Take(B, 3, 1)
 	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil
 	if shifted then
 		TimeService.ResetClock()
 	end
 	check(stillThere, "предмет у босса подняли обычным «Поднять»")
-	check(taken and ItemRegistry.Get(uid).boss == 2, "A не забрал предмет в тестовом режиме")
+	check(taken and ItemRegistry.Get(uid).boss == 3, "A не забрал предмет в тестовом режиме")
 	check(emptied and bEmpty, "слот не опустел или B что-то получил")
 	local plotA = plotOf(A)
 	near(A, plotA.showcases[1])
 	MuseumService.Handlers.Display(A, plotA, 1)
 	local record = DataService.GetData(A).items[uid]
-	check(record and record.boss == 2 and record.source == "boss", "в профиле нет босса-источника")
+	check(record and record.boss == 3 and record.source == "boss", "в профиле нет босса-источника")
 	BossLootService.Handlers.Refresh()
 	check(entry.uid ~= nil, "слот не заполнен на рассвете")
 	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
 end)
 
-test("Без боя забрать нельзя вне тестового режима Studio", function(A)
+test("Без боя забрать нельзя вне тестового режима Studio (босс 3)", function(A)
 	BossLootService.Handlers.Refresh()
-	local uid = bossSlots()[2][1].uid :: string
+	local uid = bossSlots()[3][1].uid :: string
 	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
 	local saved = GameConfig.Bosses.FreeTakeInStudio
 	GameConfig.Bosses.FreeTakeInStudio = false
-	local ok, err = pcall(BossLootService.Handlers.Take, A, 2, 1)
+	local ok, err = pcall(BossLootService.Handlers.Take, A, 3, 1)
 	GameConfig.Bosses.FreeTakeInStudio = saved
 	check(ok, tostring(err))
 	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
@@ -604,22 +612,27 @@ local function waitUntil(condition: () -> boolean, timeout: number): boolean
 	return true
 end
 
--- Пёс дома, спит или засыпает, подсказки открыты (после прошлого боя).
-local function waitDogHome(): boolean
-	local boss = BossService.Get(1) :: BossService.Boss
+-- Босс зоны zone дома, спит или засыпает, подсказки открыты (после прошлого боя).
+local function waitBossHome(zone: number): boolean
+	local boss = BossService.Get(zone) :: BossService.Boss
 	return waitUntil(function()
-		return BossLootService.IsOpen(1)
-			and not BattleService.Handlers.IsReturning(1)
+		return BossLootService.IsOpen(zone)
+			and not BattleService.Handlers.IsReturning(zone)
 			and (boss.state == "Sleep" or boss.state == "FallAsleep")
 	end, 45)
 end
 
--- Начало боя за слот slot: день, пёс дома, свежие предметы; игрок у предмета.
-local function prepareFight(player: any, slot: number): (string, BasePart)
+local function waitDogHome(): boolean
+	return waitBossHome(1)
+end
+
+-- Начало боя за слот slot босса zone (по умолчанию пса): день, босс дома, свежие предметы; игрок у предмета.
+local function prepareFight(player: any, slot: number, zone: number?): (string, BasePart)
+	local boss = zone or 1
 	ensureDay()
-	check(waitDogHome(), "пёс не вернулся на место после прошлого боя")
+	check(waitBossHome(boss), ("босс %d не вернулся на место после прошлого боя"):format(boss))
 	BossLootService.Handlers.Refresh()
-	local uid, part = BossLootService.SlotItem(1, slot)
+	local uid, part = BossLootService.SlotItem(boss, slot)
 	check(uid and part, "слот пуст")
 	player:MoveTo((part :: BasePart).Position + Vector3.new(0, 0, 4))
 	return uid :: string, part :: BasePart
@@ -781,6 +794,81 @@ test("Ночь прерывает бой (предмет у пса, на рас�
 	A:MoveTo(home + Vector3.new(0, 3, Battle.Bosses[1].Leash + 6))
 	check(fightTo(escape, 5) and escape.result == "escape", "побег не засчитан: " .. tostring(escape.result))
 	check(waitDogHome(), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+-- ── Босс 2 «Торговец-громила»: площадка и бой (D42, D43) ─────────────────────────────────────────────────────
+
+test("Торговец: модель из 12 частей на Motor6D; предметы на площадке без постаментов, у каждого свой поворот", function()
+	local boss = BossService.Get(2)
+	check(boss, "у зоны 2 нет босса")
+	local trader = boss :: BossService.Boss
+	check(trader.model:GetAttribute("BossName") == GameConfig.Zones[2].boss, "имя босса не совпадает с зоной")
+	local joints = 0
+	for _, name in Boss2TraderRig.Order do
+		local part = trader.model:FindFirstChild(name)
+		local joint = part and part:FindFirstChild(name)
+		if joint and joint:IsA("Motor6D") then
+			joints += 1
+		end
+	end
+	check(joints == #Boss2TraderRig.Order, ("суставов %d из %d"):format(joints, #Boss2TraderRig.Order))
+	check((trader.home.Position - BossService.HomeOf(2).Position).Magnitude < 0.01, "торговец не на своём месте")
+
+	BossLootService.Handlers.Refresh()
+	local arena = MapLayout.Arenas[2]
+	local floorY = MapLayout.ZoneCFrame(2).Position.Y + arena.top
+	local looks = {}
+	for slot = 1, 4 do
+		local uid, part = BossLootService.SlotItem(2, slot)
+		check(uid and part, ("слот %d пуст"):format(slot))
+		local item = part :: BasePart
+		local bottom = item.Position.Y - item.Size.Y / 2
+		local message = ("слот %d: низ предмета %.2f, площадка %.2f"):format(slot, bottom, floorY)
+		check(math.abs(bottom - floorY) < 0.05, message)
+		for _, other in looks do
+			check(item.CFrame.LookVector:Dot(other) < 0.99, ("слот %d повёрнут как другой"):format(slot))
+		end
+		table.insert(looks, item.CFrame.LookVector)
+	end
+	local zones = { workspace:FindFirstChild("Zone1_Junk", true), workspace:FindFirstChild("Zone2_Flea", true) }
+	check(zones[1] and zones[2], "нет папок зон 1 и 2")
+	local pedestals = { 0, 0 }
+	for zone, folder in zones do
+		for _, child in (folder :: Instance):GetChildren() do
+			if child.Name:sub(1, 9) == "Pedestal_" then
+				pedestals[zone] += 1
+			end
+		end
+	end
+	local counted = ("постаментов: у пса %d, у торговца %d"):format(pedestals[1], pedestals[2])
+	check(pedestals[1] == 4 and pedestals[2] == 0, counted)
+end)
+
+test("Бой с торговцем: при силе 0 — поражение, при силе 1000 — победа; имя в сообщениях, полоска HP над головой", function(A)
+	local uid = prepareFight(A, 1, 2)
+	local boss = BossService.Get(2) :: BossService.Boss
+	local name = GameConfig.Zones[2].boss
+	A:ClearSent()
+	local fight = BattleService.Handlers.Begin(A, 2, 1)
+	check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+	check(A:WasNotified(name .. " проснулся"), "нет сообщения с именем торговца")
+	local bar = boss.root:FindFirstChild("BattleBar") :: BillboardGui?
+	check(bar and bar.StudsOffsetWorldSpace.Y > BossService.Height(boss), "полоска HP не над головой торговца")
+	check(fightTo(fight, 60), "бой не закончился за минуту")
+	check(fight.result == "lose", "при силе 0 торговец должен победить: " .. tostring(fight.result))
+	check(A:WasNotified(name .. " победил"), "нет сообщения о победе торговца")
+	check(BossLootService.SlotItem(2, 1) == uid and ItemRegistry.GetCarriedBy(A) == nil, "предмет ушёл с площадки")
+	check(waitBossHome(2), "торговец не вернулся и не лёг")
+	DataService.AddStrength(A, 1000)
+	prepareFight(A, 2, 2)
+	local win = BattleService.Handlers.Begin(A, 2, 2)
+	check(win and fightTo(win, 60), "второй бой не начался или не закончился")
+	check(win.result == "win", "при силе 1000 бой не выигран: " .. tostring(win.result))
+	local carried = ItemRegistry.GetCarriedBy(A)
+	check(carried and ItemRegistry.Get(carried).boss == 2, "добыча торговца не в руках")
+	CarryService.LoseCarried(A, "уборка после теста")
+	check(waitBossHome(2), "торговец не вернулся после поражения")
 	TimeService.ResetClock()
 end)
 

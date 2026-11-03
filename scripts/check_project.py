@@ -5,9 +5,12 @@
 2. Каждый require в src указывает на существующий модуль (пути Rojo из default.project.json, алиасы
    local X = game:GetService(…) / X:WaitForChild(…); динамические require — в списке «не проверено»).
 3. Карты предметов: у каждого предмета Config/ItemModels есть шаблон Server/Looks с теми же ColorMap и NormalMap,
-   есть MeshId и исходник assets/models/art/<id>.fbx.
-4. id предметов не повторяются: Config/Items и коллекция босса 2 (docs/CATALOG.md).
-5. Модели босса 2: FBX и карты есть у всех предметов коллекции, кроме исключённых.
+   есть MeshId и исходник assets/models/art/<id>.fbx. У босса — шаблоны Looks/Boss<N>_<группа> для карт BossModels.
+4. Коллекция босса 2 (docs/CATALOG.md) подключена: каждый id — в Config/Items у босса 2 (find), id не повторяются,
+   у каждого есть FBX и карты в assets. Предметы без записи в ItemModels показываются заготовкой до импорта — это
+   перечисляется как «ожидает импорта», не ошибка.
+5. Босс 2 подключён (D42, D43): Battle.Bosses[2] с силой Progression.Bosses[2], BossModels[2], скелет
+   Boss2TraderRig в BossService и BossAnimController, площадка MapLayout.Arenas[2], декор FleaMarket в WorldBuilder.
 
 Запуск: python scripts/check_project.py (код выхода 1 — есть ошибки). Ни от чего не зависит, кроме стандартной
 библиотеки Python.
@@ -16,6 +19,8 @@
 import os
 import re
 import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FORBIDDEN_IDS = {"115188607358965": "«Сотворение Адама»", "91016959329136": "«Рождение Венеры»"}
@@ -172,24 +177,71 @@ for item, (color, normal) in models.items():
     if not os.path.isfile(os.path.join(ROOT, "assets/models/art", f"{item}.fbx")):
         errors.append(f"{item}: нет исходника assets/models/art/{item}.fbx")
 
-# ── 4–5. id предметов и коллекция босса 2 ────────────────────────────────────────────────────────────────────
+bm = open(os.path.join(ROOT, "src/shared/Config/BossModels.luau"), encoding="utf-8").read()
+for boss, body in re.findall(r"^\t\[(\d+)\] = \{(.*?)^\t\} :: BossModel", bm, re.M | re.S):
+    for group, color, normal in re.findall(r'(\w+) = \{ color = "rbxassetid://(\d+)", normal = "rbxassetid://(\d+)" \}', body):
+        look = os.path.join(ROOT, "src/server/Looks", f"Boss{boss}_{group}.model.json")
+        if not os.path.isfile(look):
+            errors.append(f"нет шаблона Looks/Boss{boss}_{group}.model.json")
+        elif color not in open(look, encoding="utf-8").read() or normal not in open(look, encoding="utf-8").read():
+            errors.append(f"Looks/Boss{boss}_{group}: карты не совпадают с BossModels")
+
+# ── 4. Коллекция босса 2 ─────────────────────────────────────────────────────────────────────────────────────
 
 items_src = open(os.path.join(ROOT, "src/shared/Config/Items.luau"), encoding="utf-8").read()
-game_ids = set(re.findall(r'^\s*\w*\(\s*"([A-Z]\w+)",\s*\d+,', items_src, re.M)) | set(models)
+declared = re.findall(r'^\s*(\w+)\(\s*"([A-Z]\w+)",', items_src, re.M)  # (функция, id): art(…), wonder(…), find(…)
+seen = {}
+for fn, i in declared:
+    if i in seen:
+        errors.append(f"id «{i}» объявлен в Config/Items дважды")
+    seen[i] = fn
 catalog = open(os.path.join(ROOT, "docs/CATALOG.md"), encoding="utf-8").read()
 boss2 = catalog.split("## Босс 2")[1].split("\n## ")[0] if "## Босс 2" in catalog else ""
 rows = re.findall(r"^\| (\d+) \| (\w+) \| ([^|]+) \| ([^|]+) \|", boss2, re.M)
 boss2_ids = [r[3].strip() for r in rows if r[3].strip() not in ("—", "id")]
 excluded = [r[2].strip() for r in rows if r[3].strip() == "—"]
+if len(boss2_ids) != 30:
+    errors.append(f"в каталоге босса 2 {len(boss2_ids)} предметов, нужно 30")
+waiting = []
 for i in boss2_ids:
-    if i in game_ids:
-        notes.append(f"id «{i}» коллекции босса 2 уже занят в Config/Items (черновик) — переименовать при интеграции")
+    if seen.get(i) != "find":
+        errors.append(f"босс 2: «{i}» не подключён в Config/Items (find)")
     for path in (f"assets/models/art/{i}.fbx", f"assets/textures/art/{i}_color.png", f"assets/textures/art/{i}_normal.png"):
         if not os.path.isfile(os.path.join(ROOT, path)):
             errors.append(f"босс 2: нет {path}")
+    if i not in models:
+        waiting.append(i)
+extra = sorted(i for i, fn in seen.items() if fn == "find" and i not in boss2_ids)
+if extra:
+    errors.append("в Config/Items у босса 2 лишние предметы: " + ", ".join(extra))
+if waiting:
+    notes.append(f"ожидают импорта мешей и карт (показываются заготовкой): {len(waiting)} предметов босса 2")
 
-print(f"require проверено: {checked}; предметов босса 1 с моделями: {len(models)}; предметов босса 2: "
-      f"{len(boss2_ids)} готово, исключено {len(excluded)}")
+# ── 5. Подключение босса 2 ───────────────────────────────────────────────────────────────────────────────────
+
+
+def src(path):
+    return open(os.path.join(ROOT, path), encoding="utf-8").read()
+
+
+battle, progression = src("src/shared/Config/Battle.luau"), src("src/shared/Config/Progression.luau")
+strength = re.search(r"\[2\] = \{[^}]*?Strength = (\d+)", battle)
+bosses = re.search(r"Bosses = \{([^}]*)\}", progression)
+want = bosses.group(1).split(",")[1].strip() if bosses else None
+if not strength or strength.group(1) != want:
+    errors.append(f"Battle.Bosses[2].Strength ({strength and strength.group(1)}) ≠ Progression.Bosses[2] ({want})")
+if "[2] = {" not in bm or "Торговец-громила" not in bm:
+    errors.append("нет BossModels[2] «Торговец-громила»")
+for path in ("src/server/Services/BossService.luau", "src/client/Controllers/BossAnimController.luau"):
+    if not re.search(r"\[2\] = Boss2TraderRig", src(path)):
+        errors.append(f"{path}: скелет босса 2 не подключён")
+if not re.search(r"Arenas = \{\s*\[2\] = \{", src("src/server/World/MapLayout.luau")):
+    errors.append("нет площадки босса 2 (MapLayout.Arenas[2])")
+if "FleaMarket.Zone()" not in src("src/server/World/WorldBuilder.luau"):
+    errors.append("декор «Барахолки» (FleaMarket) не подключён в WorldBuilder")
+
+print(f"require проверено: {checked}; предметов с моделями (ItemModels): {len(models)}; коллекция босса 2: "
+      f"{len(boss2_ids)} в игре, исключено из каталога {len(excluded)}")
 for n in notes:
     print("· " + n)
 for e in errors:
