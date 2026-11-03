@@ -1,7 +1,7 @@
 --!nocheck
 -- Выгрузка зоны для предпросмотра без Roblox Studio (Lune → JSON → scripts/blender/preview_zone.py): плита пола
 -- зоны, декор, босс в стойке (части скелета блоками цвета, как до импорта мешей) и заготовки 4 предметов на местах
--- слотов. Координаты — мировые, Roblox (Y вверх). Пока сделано для зон 1 и 2.
+-- слотов; у деталей со светом — его параметры. Координаты — мировые, Roblox (Y вверх). Пока сделано для зон 1 и 2.
 -- Запуск из корня репозитория: lune run scripts/lune/export_zone.luau <зона> <файл.json>
 
 local fs = require("@lune/fs")
@@ -23,10 +23,19 @@ local RIGS = {
 	[1] = Env.Require("ReplicatedStorage.Shared.Config.Boss1DogRig"),
 	[2] = Env.Require("ReplicatedStorage.Shared.Config.Boss2TraderRig"),
 }
+local signs = {}
 local DECOR = {
 	[1] = Junkyard.Zone,
 	[2] = function()
-		return (FleaMarket.Zone())
+		local bricks, list = FleaMarket.Zone()
+		for _, sign in list do
+			local faces = {}
+			for _, face in sign.faces do
+				table.insert(faces, face.Name)
+			end
+			table.insert(signs, { name = sign.name, text = sign.text, faces = faces })
+		end
+		return bricks
 	end,
 }
 
@@ -36,14 +45,32 @@ assert(DECOR[zone], "Выгрузка есть только для зон 1 и 2
 
 local out = {}
 
-local function add(size, cframe, color, shape: string?, material: string?, transparency: number?)
+local function add(
+	size,
+	cframe,
+	color,
+	shape: string?,
+	material: string?,
+	transparency: number?,
+	light: any?,
+	name: string?
+)
 	table.insert(out, {
+		name = name,
 		s = { size.X, size.Y, size.Z },
 		cf = { cframe:GetComponents() },
 		c = { color.R, color.G, color.B },
 		shape = shape or "Block",
 		mat = material or "Plastic",
 		t = transparency or 0,
+		light = if light
+			then {
+				range = light.range,
+				brightness = light.brightness,
+				color = { light.color.R, light.color.G, light.color.B },
+				angle = light.angle,
+			}
+			else nil,
 	})
 end
 
@@ -58,6 +85,53 @@ add(
 	Color3.fromHex(cfg.floor)
 )
 
+-- Окружение для глаз (как WorldBuilder): полы соседних зон, обрывы по краям коридора (земля и трава), столбики на
+-- границе зоны, голограмма названия (полупрозрачная панель её размера).
+local half = MapLayout.ZoneSize / 2
+for _, other in { zone - 1, zone + 1 } do
+	if GameConfig.Zones[other] then
+		local c = MapLayout.ZoneCFrame(other).Position
+		add(
+			Vector3.new(MapLayout.ZoneHalfWidth * 2, 0.4, MapLayout.ZoneSize),
+			CFrame.new(c.X, MapLayout.Heights.Path - 0.2, c.Z),
+			Color3.fromHex(GameConfig.Zones[other].floor)
+		)
+	end
+end
+local cliff = MapLayout.Cliff
+for _, s in { -1, 1 } do
+	local x = s * (MapLayout.CorridorHalf + 30)
+	add(
+		Vector3.new(60, cliff.height, half * 6),
+		CFrame.new(center.X + x, cliff.height / 2, center.Z),
+		Color3.fromHex("D4B07E")
+	)
+	add(
+		Vector3.new(60, cliff.grass, half * 6),
+		CFrame.new(center.X + x, cliff.height + cliff.grass / 2, center.Z),
+		Color3.fromHex("6CB84C")
+	)
+	local pylon = frame * CFrame.new(s * MapLayout.PylonX, 0, -half)
+	add(
+		Vector3.new(1.6, 8, 1.6),
+		pylon * CFrame.new(0, 5, 0),
+		Color3.fromHex(cfg.accent):Lerp(Color3.new(1, 1, 1), 0.35)
+	)
+	add(Vector3.new(2.2, 2.2, 2.2), pylon * CFrame.new(0, 10.3, 0), Color3.fromHex(cfg.accent), "Block", "Neon")
+end
+-- Голограмма: только контур (в игре — светящийся текст без фона).
+local holo = frame * CFrame.new(0, MapLayout.HologramHeight, -half + MapLayout.HologramInset)
+local hw, hh = MapLayout.HologramSize.X / 2, MapLayout.HologramSize.Y / 2
+for _, bar in { { 0, hh, hw * 2, 0.3 }, { 0, -hh, hw * 2, 0.3 }, { -hw, 0, 0.3, hh * 2 }, { hw, 0, 0.3, hh * 2 } } do
+	add(
+		Vector3.new(bar[3], bar[4], 0.2),
+		holo * CFrame.new(bar[1], bar[2], 0),
+		Color3.fromHex(cfg.accent),
+		"Block",
+		"Neon"
+	)
+end
+
 for _, brick in DECOR[zone]() do
 	add(
 		brick.size,
@@ -65,7 +139,9 @@ for _, brick in DECOR[zone]() do
 		brick.color,
 		brick.shape,
 		brick.material and brick.material.Name,
-		brick.transparency
+		brick.transparency,
+		brick.light,
+		brick.name
 	)
 end
 
@@ -108,5 +184,8 @@ for _, point in MapLayout.ArtSlotPoints() do
 	end
 end
 
-fs.writeFile(target, serde.encode("json", { zone = zone, center = { center.X, center.Y, center.Z }, bricks = out }))
+fs.writeFile(
+	target,
+	serde.encode("json", { zone = zone, center = { center.X, center.Y, center.Z }, bricks = out, signs = signs })
+)
 print(("Зона %d: %d деталей → %s"):format(zone, #out, target))
