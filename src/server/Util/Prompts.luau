@@ -47,6 +47,13 @@ Prompts.Actions = {
 	},
 	-- Судная ночь (D46): удержание (GameConfig.Theft.HoldSeconds ставит TheftService); на телефоне — экранная кнопка
 	-- подсказки с тем же удержанием.
+	-- Взлом усиленной двери (D37): удержание GameConfig.Defense.HackSeconds ставит DefenseService.
+	Hack = {
+		text = "Взломать",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 	Steal = {
 		text = "Украсть",
 		key = Enum.KeyCode.E,

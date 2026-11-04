@@ -59,6 +59,7 @@ function PlotService.Init(world: Folder)
 			signBoard = parts.signBoard,
 		}
 		parts.model:SetAttribute("OwnerName", "")
+		parts.model:SetAttribute("FloorOrigin", parts.floorOrigin) -- оси участка для расстановки защиты (D46)
 		parts.model:SetAttribute("DumbbellLevel", 0)
 	end
 end

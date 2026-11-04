@@ -56,6 +56,17 @@
   проверяет цикл раз в `CheckSeconds`; ушедший владелец — кража отменена, экспонат у него (`OnPlayerLeaving`).
   Реестр: Displayed → Lifting → Stolen → Stored(вор) или обратно Displayed; владелец и постамент за экспонатом
   сохраняются, пока его крадут.
+- Защита музея и взлом (D37, D46): `Services/DefenseService` — RemoteEvent DefenseAction (BuyDefense — только в
+  подготовку, цена — `Shared/DefenseRules.Price`: доля цены взлома уровня своего музея, капкан без цены не продаётся;
+  BuyHack — днём, по уровню музея-цели; Install / Remove — в подготовку: свободно по `CheckFreeSpot` для ловушки, робота,
+  капкана, дверь — «Entrance», лазер — места `GameConfig.Defense.Lasers`), событие DefenseChanged; купленное — в профиле
+  `data.defense` (owned, hacks L1…L10), установленное — нет. Модели — `World/Models/Defense` (ModelBuilder) в папке
+  Defense участка. Такт `Defense.Tick` в Судную ночь: дверь выставляет чужих из зала, ловушка (урон и вариант
+  эффекта), капкан (10 с, одноразовый), лазер (урон и тревога владельцу), робот (бьёт воров в радиусе, его ломают
+  ударами — `PvpService.AddTargetProvider`). Взлом — подсказка «Взломать» на двери (удержание 5 с, устройство уровня ≥
+  уровня музея, расходуется, дверь открыта до конца ночи). После ночи установленное списывается (`DefenseRules.Consume`).
+  Клиент `DefenseController`: окно «Защита» (вкладки «Защита» / «Взлом»), расстановка по образцу (зелёный/красный,
+  те же правила), кнопка в HUD под «Инвентарём»; участок отдаёт оси атрибутом `FloorOrigin`. Числа — `UITokens.Defense`.
 - PvP (D46, D37): `Services/PvpService` — RemoteEvent PvpAttack без аргументов, цель и урон решает сервер
   (`Util/PvpRules`: фаза — только Судная ночь, Safe Zone у места появления `GameConfig.Pvp.SpawnSafeRadius`,
   оглушение, перезарядка `Battle.Player.AttackInterval`, ближайший соперник впереди в `Range`, урон и HP — формула
@@ -215,7 +226,7 @@
 `python scripts/check_project.py` — запрещённые ассеты и файлы (бан 2026-11-02), все `require` по путям Rojo, согласованность `Config/ItemModels` ↔ `server/Looks` ↔ MeshId ↔ FBX, шаблоны карт боссов, коллекция босса 2 в `Config/Items`, подключение босса 2 и «Барахолки». Код выхода 1 — есть ошибки. `rojo build default.project.json -o <файл>.rbxl` — локальное место из репозитория.
 Lune (`~/.aftman/bin/lune`, из корня репозитория): `scripts/lune/env.luau` исполняет модули `src/` как после Rojo
 (пути `game:GetService(…)`, `script.Parent`, типы из `@lune/roblox`, службы — заглушки);
-`check_inventory.luau` — миграция профиля v2 → v3 на копиях данных и правило фаз (D46); `check_pvp.luau` — урон и HP от силы, частота, цель, запреты, нокаут; `check_theft.luau` —
+`check_inventory.luau` — миграция профиля v2 → v3 на копиях данных и правило фаз (D46); `check_defense.luau` — цены, фазы, лимиты, места на полу, взлом, списание; `check_pvp.luau` — урон и HP от силы, частота, цель, запреты, нокаут; `check_theft.luau` —
 правила и лимиты краж, гонки воров, номер события, 360 сценариев падения сервера при передаче (ни дублей, ни потерь);
 `check_config.luau` — коллекции, скелеты, позы, анимации всех состояний (`Shared/BossAnim`), сила боя;
 `check_world.luau` — `World/FaceCheck` декора зон 1–2 на плитах пола, бюджет частей и света «Барахолки», пустая

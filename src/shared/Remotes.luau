@@ -16,6 +16,8 @@ Remotes.Names = {
 	ExhibitPlaced = "ExhibitPlaced", -- сервер → владельцу и игрокам рядом: { itemId, slot, plot }
 	GymUpgrade = "GymUpgrade", -- клиент → сервер: «улучши мою гантель» (без аргументов)
 	GymGain = "GymGain", -- сервер → владельцу: прибавка силы за такт качания (число)
+	DefenseAction = "DefenseAction", -- клиент → сервер: ("BuyDefense", вид) | ("BuyHack", уровень) | ("Install", вид, место) | ("Remove", вид)
+	DefenseChanged = "DefenseChanged", -- сервер → владельцу: { owned, hacks, installed, level, max, coins }
 	PvpAttack = "PvpAttack", -- клиент → сервер: «ударь» (без аргументов, цель выбирает сервер), D46
 	PvpEffect = "PvpEffect", -- сервер → игрокам рядом: { kind = "Swing" | "Hit" | "Knock", attacker, target?, damage }
 }

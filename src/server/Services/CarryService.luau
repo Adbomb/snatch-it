@@ -171,8 +171,8 @@ function CarryService.RefreshSpeed(player: Player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		if player:GetAttribute("Knocked") == true then
-			humanoid.WalkSpeed = 0 -- нокаут PvP (D37): лежит 15 с
+		if player:GetAttribute("Knocked") == true or player:GetAttribute("Snared") == true then
+			humanoid.WalkSpeed = 0 -- нокаут PvP или капкан (D37)
 			return
 		end
 		local hold = holds[player]

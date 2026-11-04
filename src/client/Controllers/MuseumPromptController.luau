@@ -24,6 +24,20 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	local holder = prompt.Parent
 	local plot = holder and holder:FindFirstAncestorWhichIsA("Model")
 	local action = prompt:GetAttribute("Action")
+	if action == "Hack" then
+		-- Взлом усиленной двери (D37): чужая дверь, Судная ночь, есть устройство взлома. Уровень проверяет сервер.
+		local owner = nil
+		local node = holder
+		while node and owner == nil do
+			owner = node:GetAttribute("OwnerUserId")
+			node = node.Parent
+		end
+		return owner ~= nil
+			and owner ~= player.UserId
+			and ReplicatedStorage:GetAttribute("Phase") == "DoomNight"
+			and (player:GetAttribute("HackDevices") or 0) > 0
+			and player:GetAttribute("Knocked") ~= true
+	end
 	if action == "Steal" then
 		-- Судная ночь (D46): чужой выставленный экспонат, руки свободны, вор не оглушён. Остальное решает сервер.
 		local owner = plot and plot:GetAttribute("OwnerUserId")
@@ -157,6 +171,7 @@ function MuseumPromptController.Init()
 	player:GetAttributeChangedSignal("MoveSlot"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("DumbbellLevel"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("Knocked"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("HackDevices"):Connect(refreshAll)
 	ReplicatedStorage:GetAttributeChangedSignal("Phase"):Connect(refreshAll)
 end
 

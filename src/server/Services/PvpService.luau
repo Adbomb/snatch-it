@@ -35,6 +35,8 @@ local cfg = GameConfig.Pvp
 local STARS_TAG = "KnockStars"
 
 local fighters: { [any]: PvpRules.Fighter } = {}
+-- Дополнительные цели удара (роботы-охранники, D37): provider(attacker) → { { position, onHit(damage) } }.
+local targetProviders: { (any) -> { any } } = {}
 local limiter = RateLimiter.new(GameConfig.RateLimits.PvpAttack)
 local random = Random.new()
 
@@ -177,6 +179,12 @@ local function setFrozen(player: any, frozen: boolean)
 	end
 end
 
+local function release(player: any)
+	if player:GetAttribute("Snared") then
+		player:SetAttribute("Snared", nil)
+	end
+end
+
 local function recover(player: any)
 	local f = fighters[player]
 	if f then
@@ -185,18 +193,20 @@ local function recover(player: any)
 		publish(player, f)
 	end
 	player:SetAttribute("Knocked", nil)
+	release(player)
 	stars(player, false)
 	setFrozen(player, false)
 end
 
 -- HP 0: нокаут (D37).
-local function knockOut(target: any, from: Vector3, attacker: any)
+local function knockOut(target: any, from: Vector3, attacker: any?)
+	release(target) -- капкан снимается, начинается обычное оглушение (таймеры не складываются, D37)
 	target:SetAttribute("Knocked", true)
 	TheftService.OnDefeated(target) -- добыча вора — сразу владельцу
 	knockback(target, from)
 	setFrozen(target, true)
 	stars(target, true)
-	effect("Knock", attacker, target, 0)
+	effect("Knock", attacker or target, target, 0)
 	local f = fighters[target]
 	local untilAt = f and f.knockedUntil or 0
 	task.delay(cfg.KnockSeconds, function()
@@ -206,7 +216,10 @@ local function knockOut(target: any, from: Vector3, attacker: any)
 			recover(target)
 		end
 	end)
-	Log.Debug("PvpService", ("%s нокаутировал %s"):format(attacker.Name, target.Name))
+	Log.Debug(
+		"PvpService",
+		("%s нокаутирован (%s)"):format(target.Name, if attacker then attacker.Name else "защита")
+	)
 end
 
 -- Запрос удара от клиента (без аргументов: цель выбирает сервер).
@@ -222,6 +235,9 @@ local function tryAttack(player: any)
 	local f = fighter(player)
 	if PvpRules.CanSwing(f, now, isOpen(), inSafe(root.Position), Battle.Player.AttackInterval) then
 		return
+	end
+	if player:GetAttribute("Snared") then
+		return -- в капкане не бьют (D37)
 	end
 	f.lastAttack = now
 	local candidates = {}
@@ -241,13 +257,31 @@ local function tryAttack(player: any)
 	end
 	local targetId = PvpRules.PickTarget(root.Position, root.CFrame.LookVector, candidates, cfg.Range, cfg.FrontDot)
 	local target = targetId and byUserId(targetId)
+	local damageOut = PvpRules.Damage(Battle.Player, strengthOf(player), Battle.DamageSpread, random:NextNumber(-1, 1))
 	if not target then
+		-- робот-охранник ближе любого игрока? (вор может его сломать, D37)
+		local flatLook = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+		local best, bestDistance = nil, cfg.Range
+		for _, provider in targetProviders do
+			for _, extra in provider(player) do
+				local offset = extra.position - root.Position
+				local flat = Vector3.new(offset.X, 0, offset.Z)
+				local dot = if flat.Magnitude > 1e-3 and flatLook.Magnitude > 1e-3
+					then flat.Unit:Dot(flatLook.Unit)
+					else 1
+				if offset.Magnitude <= bestDistance and dot >= cfg.FrontDot then
+					best, bestDistance = extra, offset.Magnitude
+				end
+			end
+		end
 		effect("Swing", player, nil, 0)
+		if best then
+			best.onHit(damageOut)
+		end
 		return
 	end
 	local tf = fighter(target)
-	local damage = PvpRules.Damage(Battle.Player, strengthOf(player), Battle.DamageSpread, random:NextNumber(-1, 1))
-	local dealt, ko = PvpRules.Hit(tf, damage, now, cfg.KnockSeconds)
+	local dealt, ko = PvpRules.Hit(tf, damageOut, now, cfg.KnockSeconds)
 	publish(target, tf)
 	effect("Hit", player, target, dealt)
 	if ko then
@@ -267,6 +301,64 @@ local function reset()
 	end
 end
 
+-- Урон от защиты музея (D37): ловушка, лазер, робот. amount — HP; HP 0 — нокаут, как от удара.
+function PvpService.DamagePlayer(target: any, amount: number, from: Vector3)
+	if not isOpen() then
+		return
+	end
+	local tf = fighter(target)
+	local now = os.clock()
+	local dealt, ko = PvpRules.Hit(tf, amount, now, cfg.KnockSeconds)
+	if dealt <= 0 then
+		return
+	end
+	publish(target, tf)
+	effect("Hit", target, target, dealt)
+	if ko then
+		knockOut(target, from, nil)
+	end
+end
+
+-- Максимальный HP игрока в PvP (для урона долей HP).
+function PvpService.MaxHP(player: any): number
+	return fighter(player).maxHp
+end
+
+-- Капкан (D37): seconds обездвижен и не бьёт, по нему можно бить; нокаут снимает капкан.
+function PvpService.Snare(target: any, seconds: number)
+	if target:GetAttribute("Knocked") or target:GetAttribute("Snared") then
+		return
+	end
+	target:SetAttribute("Snared", true)
+	setFrozen(target, true)
+	task.delay(seconds, function()
+		if target:GetAttribute("Snared") and not target:GetAttribute("Knocked") then
+			release(target)
+			setFrozen(target, false)
+		end
+	end)
+end
+
+-- Ловушка (вариант Slow): скорость × factor на seconds.
+function PvpService.Slow(target: any, factor: number, seconds: number)
+	local character = target.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not humanoid or target:GetAttribute("Knocked") or target:GetAttribute("Snared") then
+		return
+	end
+	humanoid.WalkSpeed *= factor
+	task.delay(seconds, function()
+		if not target:GetAttribute("Knocked") and not target:GetAttribute("Snared") then
+			CarryService.RefreshSpeed(target)
+		end
+	end)
+end
+
+-- Дополнительные цели удара (роботы-охранники).
+function PvpService.AddTargetProvider(provider: (any) -> { any })
+	table.insert(targetProviders, provider)
+end
+
 function PvpService.Init()
 	Remotes.Get(Remotes.Names.PvpAttack).OnServerEvent:Connect(tryAttack)
 	TimeService.OnPhaseChanged(function(state, previous)
@@ -284,6 +376,7 @@ PvpService.Handlers = {
 	Attack = tryAttack,
 	Fighter = fighter,
 	Recover = recover,
+	Snare = PvpService.Snare,
 	Reset = reset,
 }
 

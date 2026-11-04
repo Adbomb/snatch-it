@@ -263,6 +263,26 @@ UITokens.Inventory = {
 	Turn = 25, -- поворот превью вокруг вертикали, градусов
 }
 
+-- Окно «Защита» и расстановка (D46, Stud-UI): пиксели опорного экрана 1050 × 620.
+UITokens.Defense = {
+	Window = Vector2.new(940, 580),
+	Header = "purple",
+	Row = Vector2.new(880, 92), -- строка устройства
+	TextWidth = 380, -- колонка названия и подробностей; правее — кнопки (до 3 × 150 + промежутки)
+	RowGap = 10,
+	NameText = 26,
+	InfoText = 20,
+	Button = Vector2.new(150, 52),
+	Hud = Vector2.new(196, 64), -- кнопка «Защита» под «Инвентарём»
+	HudPosition = UDim2.new(0, 16, 0.5, 76),
+	Bar = Vector2.new(560, 120), -- панель расстановки внизу экрана
+	Ghost = { Trap = Vector3.new(2.4, 0.6, 2.4), Robot = Vector3.new(2.4, 5.8, 1.8), Snare = Vector3.new(1.9, 0.6, 1.9) },
+	GhostOk = Color3.fromHex("5BEA72"),
+	GhostBad = Color3.fromHex("FF5A5A"),
+	GhostTransparency = 0.45,
+	SpotNames = { Entrance = "вход", Middle = "середина" },
+}
+
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)

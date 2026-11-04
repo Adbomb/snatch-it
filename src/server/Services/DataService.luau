@@ -432,6 +432,30 @@ function DataService.SaveAndWait(player: Player, timeout: number): boolean
 	return saved
 end
 
+-- Списать монеты (покупки защиты и взлома, D37). false — не хватает или профиль не загружен.
+function DataService.Spend(player: Player, amount: number): boolean
+	local data = DataService.GetData(player)
+	if not data or amount ~= amount or amount < 0 or data.coins < amount then
+		return false
+	end
+	data.coins -= amount
+	return true
+end
+
+-- Защита музея в профиле (D37): { owned = { вид → n }, hacks = { L<уровень> → n } }.
+function DataService.Defense(player: Player): any
+	local data = DataService.GetData(player)
+	if not data then
+		return nil
+	end
+	if type(data.defense) ~= "table" then
+		data.defense = { owned = {}, hacks = {} }
+	end
+	data.defense.owned = if type(data.defense.owned) == "table" then data.defense.owned else {}
+	data.defense.hacks = if type(data.defense.hacks) == "table" then data.defense.hacks else {}
+	return data.defense
+end
+
 -- Числовое поле статистики (номер события кражи и т. п.).
 function DataService.SetStat(player: Player, statName: string, value: number)
 	local data = DataService.GetData(player)

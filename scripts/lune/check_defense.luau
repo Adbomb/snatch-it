@@ -1,0 +1,169 @@
+--!nocheck
+-- Проверка защиты музея и взлома без Roblox Studio (D37, D46, Shared/DefenseRules): цены по уровню (доля цены взлома),
+-- капкан без цены не продаётся, когда покупать и ставить, лимит min(уровень, 5) и по одному виду, места на полу зала
+-- (постаменты, вход, сундук, стены, расстояние между устройствами) — на настоящих координатах постаментов и сундука
+-- (Util/PartBuilder), фиксированные места, годность взлома, списание после Судной ночи.
+-- Запуск из корня репозитория: lune run scripts/lune/check_defense.luau.
+
+local process = require("@lune/process")
+
+local Env = require("./env")
+
+local Vector3 = Env.roblox.Vector3
+local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
+local DefenseRules = Env.Require("ReplicatedStorage.Shared.DefenseRules")
+
+local failed, passed = 0, 0
+local function check(ok: boolean, message: string)
+	print((if ok then "  ок   " else "  ОШИБКА ") .. message)
+	if ok then
+		passed += 1
+	else
+		failed += 1
+	end
+end
+
+local cfg = GameConfig.Defense
+
+print("Цены (D37):")
+do
+	check(DefenseRules.HackPrice(cfg, 1) == 1e3 and DefenseRules.HackPrice(cfg, 10) == 1e12, "взлом: 1K … 1T")
+	check(DefenseRules.Price(cfg, "Trap", 1) == 100, "ловушка ур. 1 — 10 % от 1K")
+	check(DefenseRules.Price(cfg, "Laser", 2) == 1500, "лазер ур. 2 — 15 % от 10K")
+	check(DefenseRules.Price(cfg, "Door", 3) == 20000, "дверь ур. 3 — 20 % от 100K")
+	check(DefenseRules.Price(cfg, "Robot", 10) == 3e11, "робот ур. 10 — 30 % от 1T")
+	check(
+		DefenseRules.Price(cfg, "Snare", 1) == nil,
+		"капкан без утверждённой цены не продаётся"
+	)
+	check(
+		DefenseRules.CanBuyDefense(cfg, "Snare", "Preparation", 1e15, 1) ~= nil,
+		"капкан купить нельзя"
+	)
+end
+
+print("Когда покупать и ставить:")
+do
+	check(
+		DefenseRules.CanBuyDefense(cfg, "Trap", "Preparation", 100, 1) == nil,
+		"ловушка в подготовку — можно"
+	)
+	check(DefenseRules.CanBuyDefense(cfg, "Trap", "Day", 1e9, 1) ~= nil, "ловушка днём — нельзя")
+	check(
+		DefenseRules.CanBuyDefense(cfg, "Trap", "DoomNight", 1e9, 1) ~= nil,
+		"ловушка в Судную ночь — нельзя"
+	)
+	check(DefenseRules.CanBuyDefense(cfg, "Trap", "Preparation", 99, 1) ~= nil, "не хватает монет")
+	check(
+		DefenseRules.CanBuyDefense(cfg, "Bomb", "Preparation", 1e9, 1) ~= nil,
+		"неизвестное устройство"
+	)
+	check(DefenseRules.CanBuyHack(cfg, 3, "Day", 1e5) == nil, "взлом днём — можно")
+	check(
+		DefenseRules.CanBuyHack(cfg, 3, "Preparation", 1e9) ~= nil,
+		"взлом в подготовку — нельзя (заранее, днём)"
+	)
+	check(
+		DefenseRules.CanBuyHack(cfg, 11, "Day", 1e15) ~= nil and DefenseRules.CanBuyHack(cfg, 1.5, "Day", 1e15) ~= nil,
+		"уровни только 1…10"
+	)
+	check(
+		DefenseRules.CanInstall(cfg, "Trap", "Preparation", 1, {}, 1) == nil,
+		"поставить в подготовку"
+	)
+	check(
+		DefenseRules.CanInstall(cfg, "Trap", "DoomNight", 1, {}, 1) ~= nil,
+		"в Судную ночь не ставят"
+	)
+	check(
+		DefenseRules.CanInstall(cfg, "Trap", "Preparation", 1, {}, 0) ~= nil,
+		"не купил — не поставить"
+	)
+	check(
+		DefenseRules.CanInstall(cfg, "Trap", "Preparation", 5, { Trap = true }, 2) ~= nil,
+		"второй ловушки нет"
+	)
+end
+
+print("Сколько устройств (min(уровень, 5)):")
+do
+	for level = 1, 10 do
+		check(
+			DefenseRules.MaxDevices(cfg, level) == math.min(level, 5),
+			("уровень %d — %d"):format(level, math.min(level, 5))
+		)
+	end
+	check(
+		DefenseRules.CanInstall(cfg, "Laser", "Preparation", 1, { Trap = true }, 1) ~= nil,
+		"музей ур. 1: второе устройство нельзя"
+	)
+	local five = { Trap = true, Laser = true, Door = true, Robot = true }
+	check(DefenseRules.CanInstall(cfg, "Snare", "Preparation", 7, five, 1) == nil, "ур. 7: пятое — можно")
+	five.Snare = true
+	check(
+		DefenseRules.CanInstall(cfg, "Trap", "Preparation", 10, five, 1) ~= nil,
+		"шестого нет даже на ур. 10"
+	)
+end
+
+print(
+	"Где ставить (оси участка, постаменты и сундук — как в Util/PartBuilder):"
+)
+do
+	local showcases = {}
+	local step = GameConfig.Museum.ShowcaseStep
+	for slot = 1, GameConfig.Museum.SlotsByLevel[1] do
+		local column, row = (slot - 1) % 3, (slot - 1) // 3
+		table.insert(showcases, Vector3.new((column - 1) * step.X, 0, -2 + row * step.Y))
+	end
+	local chest = Vector3.new(-12, 0, -12.7 + 1.4 + GameConfig.Museum.ChestSize.Z / 2 + 0.1)
+	local function spot(x, z, others)
+		return DefenseRules.CheckFreeSpot(cfg, Vector3.new(x, 0, z), showcases, chest, others or {})
+	end
+	check(spot(5, 5) == nil, "проход между рядами — можно")
+	check(spot(-14, 18) == nil, "угол зала — можно")
+	check(spot(0, -2) ~= nil and spot(9, 11) ~= nil, "на постаменте — нельзя")
+	check(spot(0, -9) ~= nil, "во входном коридоре — нельзя")
+	check(spot(-12, -9) ~= nil, "у сундука — нельзя")
+	check(
+		spot(17, 5) ~= nil and spot(0, 25) ~= nil and spot(0, -14) ~= nil,
+		"за стенами и снаружи — нельзя"
+	)
+	check(
+		spot(5, 5, { Vector3.new(7, 0, 5) }) ~= nil,
+		"вплотную к другому устройству — нельзя"
+	)
+	check(spot(0 / 0, 5) ~= nil, "NaN — нельзя")
+	check(
+		spot(-5, 5) == nil and spot(5, 18) == nil,
+		"свободные места есть и между рядами, и у задней стены"
+	)
+end
+
+print("Фиксированные места, взлом, списание:")
+do
+	check(DefenseRules.FixedSpots(cfg, "Door")[1] == "Entrance", "дверь — на входе")
+	local lasers = DefenseRules.FixedSpots(cfg, "Laser")
+	check(#lasers == 2, "лазер — 2 размеченных места прохода")
+	check(DefenseRules.FixedSpots(cfg, "Trap") == nil, "ловушка — свободно")
+	local laser = cfg.Lasers.Middle
+	check(DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 0.3)), "вор в луче")
+	check(not DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 2)), "мимо луча")
+	check(
+		DefenseRules.HackFits(3, 3) and DefenseRules.HackFits(5, 2) and not DefenseRules.HackFits(2, 3),
+		"взлом: уровень устройства ≥ уровня музея"
+	)
+	local owned = { Trap = 2, Laser = 1, Robot = 1 }
+	DefenseRules.Consume(owned, { Trap = true, Laser = true })
+	check(
+		owned.Trap == 1 and owned.Laser == 0 and owned.Robot == 1,
+		"после Судной ночи списано установленное, купленное осталось"
+	)
+	check(cfg.Snare.Seconds == 10 and cfg.HackSeconds == 5, "капкан 10 с, взлом 5 с — D37")
+end
+
+print(("Проверок: %d, не прошло: %d"):format(passed + failed, failed))
+if failed > 0 then
+	process.exit(1)
+end
+print("Все проверки защиты прошли")
