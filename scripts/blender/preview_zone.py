@@ -46,6 +46,7 @@ DEFAULT_VIEWS = {
     "lane_r": {"eye": [30, 9, -52], "at": [38, 6, 10], "fov": 70},
 }
 PLAYERS = [(6, -40), (-34, -30), (36, 6)]  # фигурки игрока для масштаба (x, z зоны)
+SUN, AMBIENT, EXPOSURE = 6.5, 2.0, 0.7  # солнце, рассеянный свет, экспозиция: по снимку Studio (PREVIEW_* — свои)
 
 
 def linear(c):
@@ -195,7 +196,9 @@ def simple_material(name, roughness=0.5, emission=0.0, alpha=1.0):
         t.links.new(info.outputs["Color"], bsdf.inputs["Emission Color"])
         bsdf.inputs["Emission Strength"].default_value = emission
     if alpha < 1:
+        # Непрозрачность — из альфы цвета объекта (1 − Transparency детали), alpha — если её нет.
         bsdf.inputs["Alpha"].default_value = alpha
+        t.links.new(info.outputs["Alpha"], bsdf.inputs["Alpha"])
         for attr, value in (("surface_render_method", "BLENDED"), ("blend_method", "BLEND")):
             try:
                 setattr(mat, attr, value)
@@ -235,7 +238,7 @@ def build(data):
         obj.matrix_world = Matrix.Translation(to_blender(cf[0:3])) @ basis.to_4x4()
         bright = 1.25 if (FAST and b["mat"] == "Neon") else 1.0
         color = [linear(min(1.0, ch * bright)) for ch in b["c"]]
-        obj.color = (color[0], color[1], color[2], 1.0)
+        obj.color = (color[0], color[1], color[2], 1.0 - b["t"] if glass else 1.0)
         if not FAST:
             kind = "Glass" if glass else (b["mat"] if b["mat"] in mats else "Plastic")
             set_material(obj, mats[kind])
@@ -385,13 +388,26 @@ def setup_render(scene):
             setattr(eevee, attr, value)
         except AttributeError:
             pass
-    scene.view_settings.exposure = -0.2
+    # Свет подогнан по снимку Studio 2026-11-04 (Lighting: Brightness 3, ClockTime 13.5): плита D9C8A5 там почти белая.
+    # Камера видит голубое небо, освещает же нейтральный рассеянный свет (как OutdoorAmbient) — без синевы на полу.
+    scene.view_settings.exposure = float(os.environ.get("PREVIEW_EXPOSURE", EXPOSURE))
     scene.world.use_nodes = True
-    bg = next(n for n in scene.world.node_tree.nodes if n.type == "BACKGROUND")
+    tree = scene.world.node_tree
+    bg = next(n for n in tree.nodes if n.type == "BACKGROUND")
     bg.inputs["Color"].default_value = (0.42, 0.62, 0.92, 1)
     bg.inputs["Strength"].default_value = 0.9
+    ambient = tree.nodes.new("ShaderNodeBackground")
+    ambient.inputs["Color"].default_value = (0.62, 0.62, 0.66, 1)
+    ambient.inputs["Strength"].default_value = float(os.environ.get("PREVIEW_AMBIENT", AMBIENT))
+    path = tree.nodes.new("ShaderNodeLightPath")
+    mix = tree.nodes.new("ShaderNodeMixShader")
+    out = next(n for n in tree.nodes if n.type == "OUTPUT_WORLD")
+    tree.links.new(path.outputs["Is Camera Ray"], mix.inputs[0])
+    tree.links.new(ambient.outputs[0], mix.inputs[1])
+    tree.links.new(bg.outputs[0], mix.inputs[2])
+    tree.links.new(mix.outputs[0], out.inputs["Surface"])
     sun = bpy.data.lights.new("sun", "SUN")
-    sun.energy = 3.6
+    sun.energy = float(os.environ.get("PREVIEW_SUN", SUN))
     sun.angle = math.radians(6)
     sun.color = (1.0, 0.97, 0.9)
     obj = bpy.data.objects.new("sun", sun)
@@ -438,10 +454,118 @@ def main():
     setup_render(scene)
     os.makedirs(OUT, exist_ok=True)
     for name, view in views.items():
-        camera(scene, name, local(*view["eye"]), local(*view["at"]), view.get("fov", 70), view.get("ortho"))
+        cam = camera(scene, name, local(*view["eye"]), local(*view["at"]), view.get("fov", 70), view.get("ortho"))
+        overlay = draw_labels(scene, cam, data.get("labels") or [], view.get("labels"))
         scene.render.filepath = os.path.join(OUT, f"zone{data['zone']}_{name}.png")
         bpy.ops.render.render(write_still=True)
         print("written", scene.render.filepath)
+        for obj in overlay:
+            bpy.data.objects.remove(obj)
+
+
+# Подписи над предметами (BillboardGui): постоянный размер на экране. mode "old" — прежние 200 × 36 px с одним
+# названием, без раскладки; "new" — D45 (UITokens.ItemLabel): ширина по названию, две строки, масштаб по высоте
+# экрана и подъём дальних над ближними. Числа и расчёт — как в UITokens.ItemLabel и Shared/LabelLayout.
+LABEL = {"height": 46, "gap": 4, "stack": 4, "screen": 720, "scale": (0.6, 1.1), "share": 0.62, "distance": 60}
+
+
+def label_layout(entries, gap, max_lift):
+    """Тот же расчёт, что Shared/LabelLayout.Place: подъём каждой подписи (px вверх)."""
+    order = sorted(range(len(entries)), key=lambda i: entries[i]["depth"])
+    placed, lifts = [], [0.0] * len(entries)
+    for i in order:
+        e = entries[i]
+        lift = 0.0
+        for _ in range(len(placed) + 1):
+            moved = False
+            for p in placed:
+                top, bottom = e["y"] - e["h"] / 2 - lift, e["y"] + e["h"] / 2 - lift
+                apart = abs(e["x"] - p["x"]) >= (e["w"] + p["w"]) / 2 + gap
+                if not apart and bottom > p["top"] - gap and top < p["bottom"] + gap:
+                    lift = e["y"] + e["h"] / 2 - (p["top"] - gap)
+                    moved = True
+            if not moved:
+                break
+        lift = min(lift, max_lift)
+        lifts[i] = lift
+        placed.append({"x": e["x"], "w": e["w"], "top": e["y"] - e["h"] / 2 - lift, "bottom": e["y"] + e["h"] / 2 - lift})
+    return lifts
+
+
+LABEL_MATS = {}
+
+
+def overlay_text(cam, text, color, x, y, w, h, objects):
+    """Текст с тёмной обводкой, вписанный в прямоугольник экрана (центр x, y, размер w × h, px), перед камерой."""
+    scene = bpy.context.scene
+    width_px, height_px = scene.render.resolution_x, scene.render.resolution_y
+    depth = 1.0
+    visible = 2 * depth * math.tan(cam.data.angle_y / 2)
+    per_px = visible / height_px
+    if not LABEL_MATS:
+        LABEL_MATS["fill"] = simple_material("LabelFill", 0.5, emission=1.0)
+        LABEL_MATS["stroke"] = simple_material("LabelStroke", 0.6)
+    mats = LABEL_MATS
+    scale = None
+    for kind, offset, push, tint in (("stroke", 0.09, 0.0, (0.1, 0.08, 0.19)), ("fill", 0, 0.001, color)):
+        curve = bpy.data.curves.new("label", "FONT")
+        curve.body = text
+        for path in FONTS:
+            if os.path.exists(path):
+                curve.font = bpy.data.fonts.load(path, check_existing=True)
+                break
+        curve.align_x = "CENTER"
+        curve.align_y = "CENTER"
+        curve.offset = offset
+        obj = bpy.data.objects.new("label", curve)
+        bpy.context.scene.collection.objects.link(obj)
+        if scale is None:
+            bpy.context.view_layer.update()
+            dims = obj.dimensions
+            scale = min(0.94 * w * per_px / max(dims.x, 1e-4), 0.8 * h * per_px / max(dims.y, 1e-4))
+        obj.parent = cam
+        obj.location = ((x - width_px / 2) * per_px, -(y - height_px / 2) * per_px, -depth + push)
+        obj.scale = (scale, scale, scale)
+        obj.color = (*[linear(c) for c in tint], 1.0)
+        obj.data.materials.append(mats[kind])
+        objects.append(obj)
+
+
+def draw_labels(scene, cam, labels, mode):
+    if not mode or not labels:
+        return []
+    from bpy_extras.object_utils import world_to_camera_view
+
+    bpy.context.view_layer.update()
+    width_px, height_px = scene.render.resolution_x, scene.render.resolution_y
+    scale = min(max(height_px / LABEL["screen"], LABEL["scale"][0]), LABEL["scale"][1])
+    entries = []
+    for lab in labels:
+        co = world_to_camera_view(scene, cam, to_blender(lab["anchor"]))
+        if co.z <= 0 or co.z > LABEL["distance"] or not (0 < co.x < 1 and 0 < co.y < 1):
+            continue
+        if mode == "old":
+            w, h = 200, 36
+        else:
+            w, h = lab["width"] * scale, LABEL["height"] * scale
+        entries.append({"x": co.x * width_px, "y": (1 - co.y) * height_px, "w": w, "h": h, "depth": co.z, "lab": lab})
+    if mode == "new":
+        lifts = label_layout(entries, LABEL["gap"] * scale, LABEL["stack"] * LABEL["height"] * scale)
+    else:
+        lifts = [0] * len(entries)
+    objects = []
+    for e, lift in zip(entries, lifts):
+        y = e["y"] - lift
+        if mode == "old":
+            overlay_text(cam, e["lab"]["name"], e["lab"]["color"], e["x"], y, e["w"], e["h"], objects)
+        else:
+            share = LABEL["share"]
+            name_h, info_h = e["h"] * share, e["h"] * (1 - share)
+            top = y - e["h"] / 2
+            overlay_text(cam, e["lab"]["name"], e["lab"]["color"], e["x"], top + name_h / 2, e["w"], name_h, objects)
+            info_y = top + name_h + info_h / 2
+            overlay_text(cam, e["lab"]["info"], (1, 1, 1), e["x"], info_y, e["w"], info_h, objects)
+    return objects
 
 
 main()

@@ -147,12 +147,13 @@
   невидимая деталь с SurfaceGui, Brightness, тег Hologram, атрибут Night — гаснуть ночью; размеры и высота —
   `MapLayout.Hologram*`), столбики `Pylon_<зона>` у обрывов (`MapLayout.PylonX`). Уровень 1 — `Models/Junkyard`
   (вещи-функции кирпичей + `Junkyard.Zone()`; пол — `Junkyard.Ground()`: дорога из плит, бугры `MOUNDS`, мусор по
-  `Random.new(41)` вне `KEEP_OUT`, высота мусора на бугре — `groundHeight`). Уровень 2 — D44, три модуля:
+  `Random.new(41)` вне `KEEP_OUT`, высота мусора на бугре — `groundHeight`). Уровень 2 — D44 (полировка D45), три модуля:
   `Models/FleaKit` — цвета `C`, помощники (`Box`, `Disc`, `Round`, `Neon`, `Board`, `Gem`, `Gable` — двускатная
   крыша из клиньев, высокая сторона клина на +Z), список надписей (`Reset`/`Label`/`Signs`, таблички `Sign_<n>`) и
-  мелкий товар (`CoinSacks`, `GoldChest`, `CapsuleMachine`, `Suitcases`, `NeonCrates`, `GiftBoxes`, `GoldBars`,
-  `Lamp`, `RarityPole`); `Models/FleaStalls` — павильоны (`Pagoda`, `Rotunda`, `Tent`, `Containers`, `Vault`,
-  `PrizeMachine`: начало — середина переднего края, ширина вдоль X, лицо −Z) и большие вещи (`TreasureHoard`,
+  мелкий товар (`CoinSacks`, `GoldChest`, `Suitcases`, `NeonCrates`, `GiftBoxes`, `GoldBars`, `Lamp`,
+  `RarityPole` — детали столба названы «RarityPole» для проверки вывесок); `Models/FleaStalls` — павильоны
+  (`Pagoda`, `Rotunda`, `Tent`, `Containers`, `Vault`, `PrizeTerminal`: начало — середина переднего края, ширина
+  вдоль X, лицо −Z) и большие вещи (`TreasureHoard`,
   `PocketWatch`, `CoinStack`, `SymbolMast`, `UmbrellaCart`, `LightTower` — SpotLight на цель, `Bunting`,
   `ContainerStack`, `Billboard`); `Models/FleaMarket` — `Ground()` (слои пола `TOP` с шагом 0.05: мощение до |x| 30,
   променады до бордюра `CURB` 41.5, дорожка, площадка-монета r `Arenas[2].radius` 24, поле верхом `Arenas[2].top`
@@ -164,6 +165,11 @@
   Ночной барьер — `NightService.BuildBarrier` (невидимая стена + занавес-градиент SurfaceGui с обеих сторон + соты
   ForceField + неоновая полоса + надпись), `MapLayout.Barrier`. Постаменты — `MapLayout.ArtSlots`, место босса
   `BossSpot`, точки `ZoneEntrance(i)` и `NightReturn` (D21).
+- Подписи предметов (D45): `Util/ItemFactory` — BillboardGui «Label» (Name цветом редкости, Info «Редкость ·
+  +доход/сек», ширина по названию, атрибуты BaseWidth/BaseHeight/BaseLift); клиент `Controllers/ItemLabelController`
+  раз в 0.1 с масштабирует подписи (Label и IncomeLabel) по высоте экрана и поднимает дальние над ближними
+  (`Shared/LabelLayout.Place`, плавно); Enabled не трогает (им управляет PresentationController). Числа —
+  `UITokens.ItemLabel`.
 - Клиент (D41): `Controllers/ZoneController` — плашка входа в уровень (CanvasGroup + StudPanel, `UITokens.LevelBanner`,
   смайлик `GameConfig.Zones[i].mood`; зона — по габаритам пола `World/Map/Zones/*/Floor`), покачивание голограмм, ночью
   они гаснут; `Controllers/OwnerTagController` — круглое фото (rbxthumb AvatarHeadShot) и ник над входом в музей
@@ -187,10 +193,13 @@ Lune (`~/.aftman/bin/lune`, из корня репозитория): `scripts/lu
 (пути `game:GetService(…)`, `script.Parent`, типы из `@lune/roblox`, службы — заглушки);
 `check_config.luau` — коллекции, скелеты, позы, анимации всех состояний (`Shared/BossAnim`), сила боя;
 `check_world.luau` — `World/FaceCheck` декора зон 1–2 на плитах пола, бюджет частей и света «Барахолки», пустая
-площадка, круг боя (r 34 от места босса) без декора выше 2, таблички надписей, слоты; `export_zone.luau <зона>
-<json>` (детали, свет, надписи, окружение: соседние полы, обрывы, столбики, контур голограммы) +
-`scripts/blender/preview_zone.py <json> <папка> [виды.json]` — рендер EEVEE как днём в игре (пупырышки картой
-LegoSquares, неон, стекло, свет деталей, надписи вывесок, фигурки игрока 5 стадов); виды — в координатах зоны,
-`--fast` — Workbench.
+площадка, круг боя (r 34 от места босса) без декора выше 2, таблички надписей, столбы редкостей не закрывают
+надписи (лучи из 120 точек камеры игрока), слоты; `check_config.luau` — ещё раскладка подписей (`LabelLayout`) и
+сцена «Свалки» без наложений на ПК и телефоне; `export_zone.luau <зона> <json> [id,…]` (детали, свет, надписи,
+подписи предметов, окружение: соседние полы, обрывы, столбики, контур голограммы) +
+`scripts/blender/preview_zone.py <json> <папка> [виды.json]` — рендер EEVEE, свет подогнан по снимку Studio
+(`SUN`, `AMBIENT`, `EXPOSURE`; пупырышки картой LegoSquares, неон, стекло с прозрачностью детали, свет деталей,
+надписи вывесок, фигурки игрока 5 стадов); у вида `"labels": "old" | "new"` — подписи предметов прежние или D45;
+виды — в координатах зоны, `--fast` — Workbench.
 Карты и меши после загрузки: `scripts/bind_maps.py` (карты → ItemModels), `scripts/bind_meshes.py` (MeshId,
 дописывает), `scripts/make_looks.py` (шаблоны Looks всех предметов и боссов); порядок — `docs/IMPORT_LEVEL2.md`.

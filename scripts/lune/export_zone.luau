@@ -2,7 +2,7 @@
 -- Выгрузка зоны для предпросмотра без Roblox Studio (Lune → JSON → scripts/blender/preview_zone.py): плита пола
 -- зоны, декор, босс в стойке (части скелета блоками цвета, как до импорта мешей) и заготовки 4 предметов на местах
 -- слотов; у деталей со светом — его параметры. Координаты — мировые, Roblox (Y вверх). Пока сделано для зон 1 и 2.
--- Запуск из корня репозитория: lune run scripts/lune/export_zone.luau <зона> <файл.json>
+-- Запуск из корня репозитория: lune run scripts/lune/export_zone.luau <зона> <файл.json> [id предметов через запятую]
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
@@ -15,6 +15,9 @@ local Vector3, CFrame, Color3 = roblox.Vector3, roblox.CFrame, roblox.Color3
 
 local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
 local Items = Env.Require("ReplicatedStorage.Shared.Config.Items")
+local NumberFormat = Env.Require("ReplicatedStorage.Shared.NumberFormat")
+local Rarities = Env.Require("ReplicatedStorage.Shared.Config.Rarities")
+local UITokens = Env.Require("ReplicatedStorage.Shared.Config.UITokens")
 local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
@@ -166,14 +169,24 @@ for _, name in rig.Order do
 	add(info.size, joint * CFrame.new(info.center), Color3.fromHex(info.color))
 end
 
--- Заготовки предметов на слотах: первые по алфавиту предметы босса этой зоны (как ItemFactory до импорта).
+-- Заготовки предметов на слотах: id из третьего аргумента через запятую или первые по алфавиту предметы босса
+-- (как ItemFactory до импорта). Для каждого — подпись, как у ItemFactory (D45): точка над предметом, название,
+-- цвет редкости, строка «Редкость · +доход/сек», ширина по длине названия.
 local ids = {}
-for id, def in Items do
-	if type(def) == "table" and def.boss == zone and not def.legacy then
+if process.args[3] then
+	for id in process.args[3]:gmatch("[^,]+") do
 		table.insert(ids, id)
 	end
+else
+	for id, def in Items do
+		if type(def) == "table" and def.boss == zone and not def.legacy then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids)
 end
-table.sort(ids)
+local labelCfg = UITokens.ItemLabel
+local labels = {}
 local slot = 0
 for _, point in MapLayout.ArtSlotPoints() do
 	if point.zone == zone then
@@ -181,11 +194,24 @@ for _, point in MapLayout.ArtSlotPoints() do
 		local def = Items[ids[slot]]
 		local color = if typeof(def.color) == "Color3" then def.color else Color3.fromHex(def.color)
 		add(def.size, point.cframe * CFrame.new(0, def.size.Y / 2, 0), color)
+		local anchor = point.cframe.Position + Vector3.new(0, def.size.Y + labelCfg.Gap, 0)
+		local rarity = UITokens.RarityColor(def.rarity)
+		local width = utf8.len(def.displayName) * labelCfg.CharWidth + labelCfg.Padding
+		table.insert(labels, {
+			anchor = { anchor.X, anchor.Y, anchor.Z },
+			name = def.displayName,
+			info = ("%s · +%s/сек"):format(Rarities.Names[def.rarity], NumberFormat.Short(def.income or 0)),
+			color = { rarity.R, rarity.G, rarity.B },
+			width = math.clamp(width, labelCfg.MinWidth, labelCfg.MaxWidth),
+		})
 	end
 end
 
 fs.writeFile(
 	target,
-	serde.encode("json", { zone = zone, center = { center.X, center.Y, center.Z }, bricks = out, signs = signs })
+	serde.encode(
+		"json",
+		{ zone = zone, center = { center.X, center.Y, center.Z }, bricks = out, signs = signs, labels = labels }
+	)
 )
 print(("Зона %d: %d деталей → %s"):format(zone, #out, target))
