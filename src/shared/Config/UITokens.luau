@@ -263,6 +263,25 @@ UITokens.Inventory = {
 	Turn = 25, -- поворот превью вокруг вертикали, градусов
 }
 
+-- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
+UITokens.Pvp = {
+	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
+	ButtonPosition = UDim2.new(1, -16, 0.42, 0), -- справа над «Бросить» и прыжком
+	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
+	StarsLift = 2.6,
+	StarColor = Color3.fromHex("FFD23F"),
+	StarSpin = 120, -- градусов в секунду
+	Damage = Vector2.new(4, 1.6), -- всплывающее «-12», стадов
+	DamageColor = Color3.fromHex("FF7A7A"),
+	KnockColor = Color3.fromHex("FFD23F"),
+	DamageRise = 2.5,
+	DamageTime = 0.7,
+	Flash = 0.15, -- вспышка цели, секунд
+	Swing = 0.22, -- замах руки, секунд
+	SwingAngle = 110, -- градусов
+	Shake = 0.35, -- тряска камеры у того, по кому попали (стадов)
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common

@@ -42,6 +42,7 @@ local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
 local TestPlayer = require(Server.Tests.TestPlayer)
 local TheftService = require(Server.Services.TheftService)
+local PvpService = require(Server.Services.PvpService)
 
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
@@ -495,6 +496,63 @@ test("Кража: два вора на один экспонат, Stored и св
 	near(C, plotA.showcases[1])
 	TheftService.Handlers.Begin(C, plotA, 1)
 	check(ItemRegistry.Get(uid).state == "Displayed", "кража в окне доставки началась")
+end)
+
+-- PvP Судной ночи (D37, D46) ─────────────────────────────────────────────────────────────────────────────────
+
+-- B стоит в point, A — в 3 стадах позади по +Z и смотрит на него (−Z).
+local function face(A: any, B: any, point: Vector3)
+	B:MoveTo(point)
+	A:MoveTo(point + Vector3.new(0, 0, 3))
+	task.wait(0.2)
+end
+
+test("PvP: урон, перезарядка, нокаут 15 с, лежачего не добить, добыча вора — владельцу", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	steal(B, A, 1)
+	check(ItemRegistry.Get(uid).state == "Stolen", "B не унёс экспонат")
+	face(A, B, plotOf(A).showcases[2].Position + Vector3.new(0, 0, -12))
+	local fb = PvpService.Handlers.Fighter(B)
+	local before = fb.hp
+	PvpService.Handlers.Attack(A)
+	check(fb.hp < before, "удар не снял HP")
+	local hp1 = fb.hp
+	PvpService.Handlers.Attack(A)
+	check(fb.hp == hp1, "второй удар без перезарядки прошёл")
+	for _ = 1, 60 do
+		if fb.knockedUntil > 0 then
+			break
+		end
+		task.wait(Battle.Player.AttackInterval + 0.05)
+		PvpService.Handlers.Attack(A)
+	end
+	check(B:GetAttribute("Knocked") == true, "нокаута нет")
+	local back = ItemRegistry.Get(uid)
+	check(back.state == "Displayed" and back.slot == 1 and back.owner == A.UserId, "добыча не вернулась владельцу")
+	check(ItemRegistry.GetCarriedBy(B) == nil, "добыча осталась у B")
+	check(math.abs(fb.knockedUntil - os.clock() - GameConfig.Pvp.KnockSeconds) < 2, "лежит не 15 с")
+	task.wait(Battle.Player.AttackInterval + 0.05)
+	PvpService.Handlers.Attack(A)
+	check(fb.hp == 0, "лежачего добили")
+	steal(B, A, 1, 0.1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "оглушённый начал кражу")
+	PvpService.Handlers.Recover(B)
+	check(B:GetAttribute("Knocked") == nil and fb.hp == fb.maxHp, "не встал с полным HP")
+end)
+
+test("PvP: у места появления и вне Судной ночи урона нет", function(A, B)
+	doomNight()
+	PvpService.Handlers.Reset()
+	face(A, B, MapLayout.Spawn.position + Vector3.new(0, 3, 0))
+	local fb = PvpService.Handlers.Fighter(B)
+	PvpService.Handlers.Attack(A)
+	check(fb.hp == fb.maxHp, "урон у места появления")
+	TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
+	face(A, B, plotOf(A).showcases[2].Position + Vector3.new(0, 0, -12))
+	task.wait(Battle.Player.AttackInterval + 0.05)
+	PvpService.Handlers.Attack(A)
+	check(fb.hp == fb.maxHp, "урон днём")
 end)
 
 test("Улучшить можно только свою гантель", function(A, B)
