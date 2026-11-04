@@ -23,6 +23,10 @@
 - Звуки `GameConfig.Sounds` — ID выбирает дизайнер.
 
 ## Studio и инструменты
+- Studio MCP в Play: `ContentProvider:PreloadAsync` из `execute_luau` даёт Failure даже на рабочие ассеты и
+  пишет в Output «Asset type does not match» — для проверки ассетов не годится (смотреть снимками или
+  `MarketplaceService:GetProductInfo`). Камеру клиента из `execute_luau` Studio сбрасывает в Custom — ставить камеру
+  параметрами `screen_capture` (работает и в Play). Снимки — строго по одному: параллельные обрывают связь MCP.
 - MeshPart из `CreateMeshPartAsync(EditableMesh)` не центрирует меш: точка CFrame — начало координат меша
   (у моделей D39 — середина низа), а не центр рамки (проверено лучом 2026-11-01).
 - `screen_capture` с позицией камеры иногда отвечает «Request timed out» — повторить тот же вызов. Камера Studio
