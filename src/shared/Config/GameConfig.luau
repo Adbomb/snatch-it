@@ -24,7 +24,6 @@ GameConfig.Museum = {
 	ShowcaseSize = Vector3.new(5, 3, 5),
 	ShowcaseStep = Vector2.new(10, 14), -- шаг сетки витрин по X и Z (влезает в самый узкий зал)
 	DisplayDistance = 6.5, -- радиус подсказок на витринах: у канатов ≈ 5; от сундука до витрины 1 — 8.5 (не перехватит)
-	StorageCapacity = 10, -- мест в хранилище
 	ChestSize = Vector3.new(4, 3, 3),
 	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
 	RotateStep = 45, -- градусов за одно «Повернуть»

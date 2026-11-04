@@ -213,6 +213,21 @@ function DataService.SwapItemSlots(player: Player, uidA: string, uidB: string): 
 	return true
 end
 
+-- Замена экспоната (D46): newUid из инвентаря встаёт на постамент oldUid, oldUid уходит в инвентарь.
+-- Откат — тот же вызов с переставленными uid в том же кадре.
+function DataService.ReplaceInSlot(player: Player, oldUid: string, newUid: string): boolean
+	local data = DataService.GetData(player)
+	local old = data and data.items[oldUid]
+	local new = data and data.items[newUid]
+	if not old or not new or old.place ~= "slot" or new.place ~= "storage" or oldUid == newUid then
+		Log.Warn("DataService", ("%s: замена %s → %s невозможна"):format(player.Name, oldUid, newUid))
+		return false
+	end
+	new.place, new.slot = "slot", old.slot
+	old.place, old.slot = "storage", nil
+	return true
+end
+
 function DataService.SetItemRotation(player: Player, uid: string, rot: number): boolean
 	local data = DataService.GetData(player)
 	local record = data and data.items[uid]

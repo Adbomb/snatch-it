@@ -35,7 +35,7 @@ local MuseumService = require(Server.Services.MuseumService)
 local PlayerSession = require(Server.Services.PlayerSession)
 local PlotService = require(Server.Services.PlotService)
 local NightService = require(Server.Services.NightService)
-local StorageService = require(Server.Services.StorageService)
+local InventoryService = require(Server.Services.InventoryService)
 local TimeService = require(Server.Services.TimeService)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local MapLayout = require(Server.World.MapLayout)
@@ -174,7 +174,7 @@ test("Нельзя переставить, повернуть, убрать ил
 	MuseumService.Handlers.Move(B, plotA, 1)
 	check(B:GetAttribute("MoveSlot") == nil, "B выбрал чужой экспонат")
 	MuseumService.Handlers.Rotate(B, plotA, 1)
-	StorageService.Handlers.StoreDisplayed(B, plotA, 1)
+	InventoryService.Handlers.StoreDisplayed(B, plotA, 1)
 	local record = DataService.GetData(A).items[uid]
 	check(record.place == "slot" and record.slot == 1 and record.rot == 0, "запись экспоната A изменилась")
 	check(ItemRegistry.Get(uid).state == "Displayed" and ItemRegistry.CountStored(B.UserId) == 0, "реестр изменился")
@@ -195,7 +195,7 @@ test("Нельзя убрать предмет в чужой сундук", func
 	local plotA = plotOf(A)
 	near(B, plotA.chest)
 	local uid = carry(ctx, B)
-	StorageService.Handlers.StoreCarried(B, plotA)
+	InventoryService.Handlers.StoreCarried(B, plotA)
 	check(ItemRegistry.GetCarriedBy(B) == uid, "предмет ушёл из рук B")
 	check(ItemRegistry.CountStored(A.UserId) == 0 and ItemRegistry.CountStored(B.UserId) == 0, "предмет в хранилище")
 	check(B:WasNotified("Это чужой музей"), "нет сообщения «Это чужой музей»")
@@ -205,16 +205,169 @@ test("Нельзя выставить предмет из чужого хран�
 	local uid = displayOwn(ctx, A, 1)
 	local plotA, plotB = plotOf(A), plotOf(B)
 	near(A, plotA.showcases[1])
-	StorageService.Handlers.StoreDisplayed(A, plotA, 1)
+	InventoryService.Handlers.StoreDisplayed(A, plotA, 1)
 	check(ItemRegistry.Get(uid).state == "Stored", "A не убрал экспонат в хранилище")
 	near(B, plotB.showcases[1])
 	for _, forged in { uid, "не-uid", 42 :: any, string.rep("x", 100) } do
-		StorageService.Handlers.DisplayFromStorage(B, forged, 1)
+		InventoryService.Handlers.DisplayFromStorage(B, forged, 1)
 	end
 	local entry = ItemRegistry.Get(uid)
 	check(entry.state == "Stored" and entry.owner == A.UserId, "предмет A сдвинулся")
 	check(ItemRegistry.GetSlotItem(B.UserId, 1) == nil and next(DataService.GetData(B).items) == nil, "у B экспонат")
 	check(DataService.GetData(A).items[uid].place == "storage", "запись A изменилась")
+end)
+
+-- Единый инвентарь (D46) ───────────────────────────────────────────────────────────────────────────────────
+
+-- Пауза между вызовами одного входа: ограничитель частоты (GameConfig.RateLimits) режет лишние.
+local function settle()
+	task.wait(0.3)
+end
+
+-- Несёт новый предмет и сдаёт его в сундук своего музея (Carried → Stored).
+local function toInventory(ctx: Context, player: any, itemId: string?): string
+	local plot = plotOf(player)
+	near(player, plot.chest)
+	local uid = carry(ctx, player, itemId)
+	InventoryService.Handlers.StoreCarried(player, plot)
+	local entry = ItemRegistry.Get(uid)
+	check(entry and entry.state == "Stored" and entry.owner == player.UserId, player.Name .. ": предмет не в инвентаре")
+	settle()
+	return uid
+end
+
+local function farAway(player: any)
+	player:MoveTo(Vector3.new(0, 5, 60)) -- место появления: далеко от музеев
+end
+
+test("Инвентарь: выставить, снять и заменить из окна откуда угодно, доход пересчитывается", function(A, _B, ctx)
+	local first = toInventory(ctx, A, "Moai")
+	local second = toInventory(ctx, A, "Sunflowers")
+	farAway(A)
+	InventoryService.Handlers.Action(A, "Display", first, 2)
+	local e1 = ItemRegistry.Get(first)
+	check(e1.state == "Displayed" and e1.slot == 2, "предмет не выставлен из окна издалека")
+	check(DataService.GetData(A).items[first].place == "slot", "профиль: не на постаменте")
+	IncomeService.Handlers.Refresh(A)
+	check(A:GetAttribute("Income") == IncomeService.Of("Moai"), "доход не равен доходу выставленного")
+	settle()
+	InventoryService.Handlers.Action(A, "Replace", second, 2)
+	local old, new = ItemRegistry.Get(first), ItemRegistry.Get(second)
+	check(old.state == "Stored" and new.state == "Displayed" and new.slot == 2, "замена не прошла")
+	local data = DataService.GetData(A)
+	check(data.items[first].place == "storage" and data.items[second].slot == 2, "профиль после замены")
+	check(countUid(first) == 0 and countUid(second) == 1, "дубли деталей после замены")
+	IncomeService.Handlers.Refresh(A)
+	check(A:GetAttribute("Income") == IncomeService.Of("Sunflowers"), "доход после замены")
+	settle()
+	InventoryService.Handlers.Action(A, "Remove", second)
+	check(ItemRegistry.Get(second).state == "Stored", "снять не получилось")
+	check(not plotOf(A).showcases[2]:GetAttribute("Occupied"), "постамент остался занят")
+	IncomeService.Handlers.Refresh(A)
+	check((A:GetAttribute("Income") or 0) == 0, "доход остался после снятия")
+	local total, displayed = 0, 0
+	for _, record in DataService.GetData(A).items do
+		total += 1
+		displayed += if record.place == "slot" then 1 else 0
+	end
+	check(total == 2 and displayed == 0, "в инвентаре не 2 предмета")
+end)
+
+test("Инвентарь: в подготовку, Судную ночь и 10 с доставки экспонаты не меняются (сервер)", function(A, _B, ctx)
+	local shown = displayOwn(ctx, A, 1)
+	local kept = toInventory(ctx, A)
+	local plotA = plotOf(A)
+	local function locked(label: string)
+		near(A, plotA.showcases[1])
+		InventoryService.Handlers.StoreDisplayed(A, plotA, 1)
+		settle()
+		InventoryService.Handlers.Action(A, "Remove", shown)
+		settle()
+		InventoryService.Handlers.Action(A, "Display", kept, 3)
+		settle()
+		InventoryService.Handlers.Action(A, "Replace", kept, 1)
+		settle()
+		MuseumService.Handlers.Move(A, plotA, 1)
+		check(ItemRegistry.Get(shown).state == "Displayed" and ItemRegistry.Get(shown).slot == 1, label .. ": экспонат снят")
+		check(ItemRegistry.Get(kept).state == "Stored", label .. ": предмет выставлен")
+		check(A:GetAttribute("MoveSlot") == nil, label .. ": перестановка началась")
+		local record = DataService.GetData(A).items[shown]
+		check(record.place == "slot" and record.slot == 1, label .. ": профиль изменился")
+	end
+	TimeService.SkipTo("Preparation", -5)
+	check(GameTime.Current().phase == "Preparation", "не подготовка")
+	locked("подготовка")
+	check(A:WasNotified("Подготовка к Судной ночи"), "нет причины в сообщении")
+	local delivered = toInventory(ctx, A) -- сундук принимает добычу в любую фазу
+	check(ItemRegistry.Get(delivered).state == "Stored", "сундук не принял предмет в подготовку")
+	TimeService.SkipTo("DoomNight", -5)
+	locked("Судная ночь")
+	TimeService.SkipTo("Day", -3)
+	check(GameTime.DeliveryWindowEnd(GameTime.Now()) ~= nil, "не окно доставки")
+	locked("10 с доставки")
+	TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
+	InventoryService.Handlers.Action(A, "Remove", shown)
+	check(ItemRegistry.Get(shown).state == "Stored", "днём снять нельзя")
+end)
+
+test("Инвентарь: повторные и чужие вызовы InventoryAction не дублируют и не трогают чужое", function(A, B, ctx)
+	local mine = toInventory(ctx, A)
+	local shown = displayOwn(ctx, A, 1)
+	-- Одна и та же вещь на два постамента подряд: встаёт один раз.
+	InventoryService.Handlers.Action(A, "Display", mine, 2)
+	InventoryService.Handlers.Action(A, "Display", mine, 3)
+	local entry = ItemRegistry.Get(mine)
+	check(entry.state == "Displayed" and entry.slot == 2 and countUid(mine) == 1, "предмет на двух постаментах")
+	check(ItemRegistry.GetSlotItem(A.UserId, 3) == nil, "постамент 3 занят")
+	settle()
+	-- B: снять, заменить и выставить чужое, неверные аргументы, неизвестное действие.
+	for _, args in {
+		{ "Remove", shown },
+		{ "Replace", mine, 1 },
+		{ "Display", shown, 1 },
+		{ "Display", mine, 99 },
+		{ "Steal", shown, 1 },
+		{ "Remove", 42 :: any },
+		{ "Display", string.rep("y", 200), 1 },
+	} do
+		InventoryService.Handlers.Action(B, table.unpack(args))
+		settle()
+	end
+	check(ItemRegistry.Get(shown).state == "Displayed" and ItemRegistry.Get(shown).owner == A.UserId, "чужой экспонат сдвинут")
+	check(next(DataService.GetData(B).items) == nil, "у B появились предметы")
+	-- Лишние вызовы режет ограничитель: 20 подряд — не больше, чем позволяет частота.
+	for _ = 1, 20 do
+		InventoryService.Handlers.Action(A, "Remove", mine)
+		InventoryService.Handlers.Action(A, "Display", mine, 2)
+	end
+	local after = ItemRegistry.Get(mine)
+	check(after and (after.state == "Stored" or after.state == "Displayed") and countUid(mine) <= 1, "дубль после спама")
+	local recordOk = DataService.GetData(A).items[mine]
+	check(recordOk and ((recordOk.place == "slot") == (after.state == "Displayed")), "профиль и реестр разошлись")
+end)
+
+test("Инвентарь без предела: 12 предметов (больше прежних 10), повторный вход без дублей", function(A, _B, ctx)
+	local uids = {}
+	for i = 1, 12 do
+		uids[i] = toInventory(ctx, A, if i % 2 == 0 then "Moai" else "Sunflowers")
+	end
+	InventoryService.Handlers.Action(A, "Display", uids[1], 1)
+	check(A:GetAttribute("StorageCount") == 11, "StorageCount не 11")
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл повторно")
+	local total = 0
+	for _ in DataService.GetData(again).items do
+		total += 1
+	end
+	check(total == 12, ("после входа предметов %d, а не 12"):format(total))
+	check(ItemRegistry.Get(uids[1]).state == "Displayed" and countUid(uids[1]) == 1, "экспонат не восстановлен")
+	for i = 2, 12 do
+		check(ItemRegistry.Get(uids[i]).state == "Stored" and countUid(uids[i]) == 0, "предмет " .. i .. " не в инвентаре")
+	end
 end)
 
 test("Улучшить можно только свою гантель", function(A, B)
@@ -273,7 +426,7 @@ test("Повторный вход A при B: экспонаты, хранили
 	local stored = displayOwn(ctx, A, 3)
 	local plotA = plotOf(A)
 	near(A, plotA.showcases[3])
-	StorageService.Handlers.StoreDisplayed(A, plotA, 3)
+	InventoryService.Handlers.StoreDisplayed(A, plotA, 3)
 	check(ItemRegistry.Get(stored).state == "Stored", "A не убрал экспонат в хранилище")
 	DataService.AddCoins(A, 777)
 	local ownB = displayOwn(ctx, B, 1)
@@ -886,7 +1039,7 @@ test("Доход: свой у каждого экспоната на витри�
 	local plotA = plotOf(A)
 	CarryService.LoseCarried(A, "тест")
 	near(A, plotA.showcases[2])
-	StorageService.Handlers.StoreDisplayed(A, plotA, 2)
+	InventoryService.Handlers.StoreDisplayed(A, plotA, 2)
 	check(ItemRegistry.Get(starry).state == "Stored", "экспонат не убран в хранилище")
 	coins = DataService.GetData(A).coins
 	IncomeService.Handlers.Tick({ A })
@@ -941,6 +1094,10 @@ function ServerTests.Run(filter: string?): string
 		return "Серверные тесты запускаются только в Studio"
 	end
 	local lines, passed, total = {}, 0, 0
+	-- D46: в подготовку, Судную ночь и 10 с доставки экспонаты не меняются — тесты музея идут днём.
+	if GameTime.ExhibitLock(GameTime.Now()) then
+		TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
+	end
 	for _, case in tests do
 		if filter and not string.find(case.name, filter, 1, true) then
 			continue

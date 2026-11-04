@@ -1,6 +1,6 @@
 -- Вход и выход игрока: участок, профиль, гантель, музей, хранилище — в одном порядке для игры и серверных тестов
 -- (Main вызывает Join/Leave на PlayerAdded/PlayerRemoving, Server/Tests — для тестовых игроков с профилем в памяти).
--- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, StorageService, Util/Notify.
+-- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, InventoryService, Util/Notify.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -10,7 +10,7 @@ local DataService = require(Server.Services.DataService)
 local GymService = require(Server.Services.GymService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
-local StorageService = require(Server.Services.StorageService)
+local InventoryService = require(Server.Services.InventoryService)
 local Notify = require(Server.Util.Notify)
 
 export type JoinOptions = {
@@ -35,7 +35,7 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	PlotService.ShowLevel(plot, DataService.GetData(player).museumLevel)
 	GymService.OnPlayerLoaded(player, plot)
 	MuseumService.LoadMuseum(player)
-	StorageService.Sync(player)
+	InventoryService.Sync(player)
 	Notify.Send(
 		player,
 		("Ваш музей — участок %d (ищите табличку со своим именем)"):format(

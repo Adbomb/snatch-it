@@ -1,14 +1,16 @@
 -- Музей игрока: подсказка «Выставить» на витринах, запись экспоната в профиль, восстановление при входе.
 -- Свои экспонаты с витрины в руки не берутся (D2). Подсказки в чужом музее прячет клиент,
 -- но каждый обработчик на сервере сам проверяет владельца, состояние и расстояние.
--- Над экспонатом — его доход «+X/сек» (IncomeService.Label).
--- Зависит от ItemRegistry, CarryService, DataService, IncomeService, PlotService, Util/*, Config.
+-- Над экспонатом — его доход «+X/сек» (IncomeService.Label). Правило фаз D46 (ExhibitsUnlocked): в подготовку, Судную
+-- ночь и 10 с доставки выставлять и переставлять нельзя, поворот — можно.
+-- Зависит от ItemRegistry, CarryService, DataService, IncomeService, PlotService, Shared/GameTime, Util/*, Config.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local CarryService = require(ServerScriptService.Server.Services.CarryService)
 local DataService = require(ServerScriptService.Server.Services.DataService)
@@ -97,8 +99,22 @@ function MuseumService.ClearShowcase(plot: PlotService.Plot, slot: number, part:
 	plot.showcases[slot]:SetAttribute("Occupied", false)
 end
 
+-- Правило фаз (D46): в подготовку, Судную ночь и 10 с доставки экспонаты не меняются. true — можно; иначе игрок
+-- получает причину. Проверяет каждый обработчик выставления, снятия, замены и перестановки.
+function MuseumService.ExhibitsUnlocked(player: Player): boolean
+	local reason = GameTime.ExhibitLock(GameTime.Now())
+	if reason then
+		Notify.Send(player, reason, "Stop")
+		return false
+	end
+	return true
+end
+
 local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	if not displayLimiter:Allow(player) then
+		return
+	end
+	if not MuseumService.ExhibitsUnlocked(player) then
 		return
 	end
 	if plot.owner ~= player then
@@ -205,6 +221,9 @@ local function tryMove(player: Player, plot: PlotService.Plot, slot: number)
 	if not moveLimiter:Allow(player) then
 		return
 	end
+	if not MuseumService.ExhibitsUnlocked(player) then
+		return
+	end
 	local uid = ownExhibit(player, plot, slot)
 	if not uid then
 		return
@@ -236,6 +255,10 @@ local function tryPlaceHere(player: Player, plot: PlotService.Plot, slot: number
 	end
 	local selection = selections[player]
 	if not selection or selection.slot == slot then
+		return
+	end
+	if not MuseumService.ExhibitsUnlocked(player) then
+		MuseumService.CancelMove(player)
 		return
 	end
 	if plot.owner ~= player then

@@ -1,6 +1,6 @@
 -- Показывает подсказки музея только там, где действие имеет смысл: в своём музее, по состоянию витрины,
 -- рукам, хранилищу и выбору «Переставить». Только внешний вид: каждое действие всё равно проверяет сервер.
--- «Выставить из хранилища» открывает окно хранилища; выбранный для перестановки экспонат подсвечивается.
+-- «Выставить из инвентаря» открывает окно выбора предмета; выбранный для перестановки экспонат подсвечивается.
 -- Зависит от тега MuseumPrompt, атрибутов, StorageController, UITokens.
 
 local CollectionService = game:GetService("CollectionService")
@@ -19,19 +19,6 @@ local watched: { [Instance]: true } = {}
 local highlight: Highlight?
 
 local MuseumPromptController = {}
-
-local function allShowcasesOccupied(plot: Model): boolean
-	local folder = plot:FindFirstChild("Showcases")
-	if not folder then
-		return false
-	end
-	for _, showcase in folder:GetChildren() do
-		if showcase:GetAttribute("Occupied") ~= true then
-			return false
-		end
-	end
-	return true
-end
 
 local function shouldShow(prompt: ProximityPrompt): boolean
 	local holder = prompt.Parent
@@ -61,9 +48,9 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	elseif action == "Rotate" then
 		return occupied
 	elseif action == "Store" then
-		return occupied and stored < GameConfig.Museum.StorageCapacity
+		return occupied
 	elseif action == "ChestStore" then
-		return carrying and allShowcasesOccupied(plot)
+		return carrying -- D46: несомое — в инвентарь в любой момент
 	elseif action == "Upgrade" then
 		-- Табличка «Улучшение» своего двора (D34): пока гантель не максимальная и руки пустые.
 		return not carrying and (player:GetAttribute("DumbbellLevel") or 1) < #GameConfig.Progression.Dumbbell.Power

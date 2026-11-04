@@ -1,6 +1,6 @@
 -- Подсказки музея (ProximityPrompt) с атрибутом Action и тегом MuseumPrompt.
 -- Клиент по тегу и Action решает, какие показать; сервер в каждом Triggered сам проверяет всё заново.
--- Клавиши: E — основное действие, R — «Повернуть», F — «В хранилище». Зависит от CollectionService.
+-- Клавиши: E — основное действие, R — «Повернуть», F — «В инвентарь». Зависит от CollectionService.
 
 local CollectionService = game:GetService("CollectionService")
 
@@ -14,7 +14,7 @@ type ActionSpec = { text: string, key: Enum.KeyCode, gamepadKey: Enum.KeyCode, o
 Prompts.Actions = {
 	Display = { text = "Выставить", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
 	FromStorage = {
-		text = "Выставить из хранилища",
+		text = "Выставить из инвентаря",
 		key = Enum.KeyCode.E,
 		gamepadKey = Enum.KeyCode.ButtonX,
 		offset = Vector2.zero,
@@ -28,7 +28,7 @@ Prompts.Actions = {
 		offset = Vector2.new(0, 80),
 	},
 	Store = {
-		text = "В хранилище",
+		text = "В инвентарь",
 		key = Enum.KeyCode.F,
 		gamepadKey = Enum.KeyCode.ButtonB,
 		offset = Vector2.new(0, 160),
@@ -40,7 +40,7 @@ Prompts.Actions = {
 		offset = Vector2.zero,
 	},
 	ChestStore = {
-		text = "В хранилище",
+		text = "В инвентарь",
 		key = Enum.KeyCode.E,
 		gamepadKey = Enum.KeyCode.ButtonX,
 		offset = Vector2.zero,

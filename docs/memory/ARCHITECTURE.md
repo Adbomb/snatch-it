@@ -59,7 +59,7 @@
 - `Main.server` — RemoteEvent'ы, LEGO-материал, постройка мира, запуск сервисов; вход/выход — `Services/PlayerSession`.
 - Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
   (подбор/перенос/бросок, `AttachCarried`), `BossLootService` (4 предмета у каждого босса, D37, D10 исчезновение), `MuseumService`
-  (выставить, переставить, повернуть, презентация), `StorageService` (сундук и хранилище), `GymService` (D34:
+  (выставить, переставить, повернуть, презентация), `InventoryService` (D46: единый инвентарь — сундук «В инвентарь», постамент «В инвентарь», окно: InventoryAction Display / Remove / Replace откуда угодно, правило фаз `MuseumService.ExhibitsUnlocked`, событие InventoryChanged — весь инвентарь), `GymService` (D34:
   такт качания — владелец в поле своего двора, сила = Power[уровень] × (1 + сила музея D31); гостю подсказка;
   «Улучшить» — подсказка на табло и запрос GymUpgrade, все проверки на сервере; атрибуты игрока Strength,
   Coins, DumbbellLevel). Скорость от силы — `Shared/Speed` + `CarryService.RefreshSpeed`.
@@ -67,7 +67,7 @@
   один путь для игры и тестов (`Join(player, { mock = true })` — профиль в памяти, ProfileStore.Mock).
 - Тесты (`Server/Tests`, только Studio, в Play): `ServerTests.Run()` через `ServerStorage.DevTools.RunServerTests`
   — 23 сценария (двое тестовых игроков, время и ночь, предметы у боссов) (`TestPlayer`: таблица с полями Player и персонаж-манекен, UserId < 0).
-  Действия — теми же обработчиками, что подсказки (`MuseumService/StorageService/GymService/CarryService.Handlers`).
+  Действия — теми же обработчиками, что подсказки (`MuseumService/InventoryService/GymService/CarryService.Handlers`).
   События клиенту — `Remotes.FireClient` (тестовому игроку пишет в журнал `Sent`). Это серверная симуляция:
   подсказки, интерфейс и сеть проверяются только на настоящих клиентах.
 - Время (D37): `Shared/GameTime` — фаза, день и границы фазы как функция общего времени
@@ -125,7 +125,7 @@
 ## Клиент (`src/client`)
 - `Main.client` — LEGO-материал на клиенте, запуск контроллеров.
 - Controllers: `NotifyController` (тосты), `CarryController` («Бросить», «Ты несёшь…»),
-  `StorageController` (окно хранилища), `MuseumPromptController` (какие подсказки показывать, подсветка
+  `StorageController` (окно выбора предмета из инвентаря для пустого постамента; заменит окно «Инвентарь»), `MuseumPromptController` (какие подсказки показывать, подсветка
   перестановки, «Улучшить гантель» на своей табличке), `PresentationController` (прожектор и название при
   выставлении), `GymController` (табличка «Улучшение» — SurfaceGui в PlayerGui на UpgradeBoard каждого участка,
   текст владельцу/гостю свой; «+N» над головой; временные надписи силы и монет внизу слева).

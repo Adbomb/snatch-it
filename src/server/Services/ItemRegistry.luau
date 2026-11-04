@@ -290,6 +290,43 @@ function ItemRegistry.SwapSlots(owner: number, slotA: number, slotB: number): (b
 	return true, nil
 end
 
+-- Замена экспоната (D46): на постамент slot владельца owner встаёт newUid из его инвентаря (Stored → Displayed),
+-- прежний экспонат уходит в инвентарь (Displayed → Stored). Обе записи меняются за один вызов без yield.
+-- part — Part нового экспоната; возвращает Part прежнего (его удаляет вызывающий сервис).
+function ItemRegistry.ReplaceSlot(
+	owner: number,
+	slot: number,
+	newUid: string,
+	part: BasePart
+): (boolean, string?, BasePart?)
+	local label = ("ReplaceSlot %d"):format(slot)
+	local oldUid = ItemRegistry.GetSlotItem(owner, slot)
+	local old = oldUid and entries[oldUid]
+	local new = entries[newUid]
+	if not oldUid or not old or old.state ~= "Displayed" or old.owner ~= owner then
+		return refuse(newUid, "Stored", label, "на постаменте нет своего экспоната")
+	end
+	if not new or new.state ~= "Stored" or new.owner ~= owner then
+		return refuse(newUid, if new then new.state else "?", label, "предмета нет в инвентаре владельца")
+	end
+	if typeof(part) ~= "Instance" or not part:IsA("BasePart") then
+		return refuse(newUid, "Stored", label, "для постамента нужен Part")
+	end
+	local oldPart = old.part
+	slotIndex[owner][slot] = newUid
+	old.state = "Stored"
+	old.slot = nil
+	old.part = nil
+	new.state = "Displayed"
+	new.slot = slot
+	new.part = part
+	part:SetAttribute("ItemUid", newUid)
+	Log.Debug("ItemRegistry", ("постамент %d: %s → %s"):format(slot, oldUid, newUid))
+	notify(oldUid, "Displayed", "Stored", old)
+	notify(newUid, "Stored", "Displayed", new)
+	return true, nil, oldPart
+end
+
 -- D3: предмет с карты, из рук или у босса (обновление слотов, D37) пропадает без следа. Сохранённые
 -- экспонаты так удалить нельзя.
 function ItemRegistry.Discard(uid: string, reason: string): boolean

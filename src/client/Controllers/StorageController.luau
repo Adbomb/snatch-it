@@ -1,11 +1,11 @@
--- Окно хранилища (UI_KIT.md): карточки предметов, по нажатию «Выставить» отправляет серверу (uid, витрина).
--- Список приходит с сервера (StorageChanged); клиент ничего не решает сам.
--- Зависит от Remotes, Items, GameConfig, UIKit, UITokens.
+-- Окно выбора предмета из инвентаря для пустого постамента (UI_KIT.md): карточки предметов Stored, по нажатию
+-- «Выставить» отправляет серверу InventoryAction ("Display", uid, постамент). Инвентарь приходит с сервера
+-- (InventoryChanged, D46); клиент ничего не решает сам.
+-- Зависит от Remotes, Items, UIKit, UITokens.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig"))
 local Items = require(Shared:WaitForChild("Config"):WaitForChild("Items"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
@@ -59,7 +59,7 @@ local function buildCard(item: StoredItem, parent: Instance, order: number)
 	button:OnClick(function()
 		local slot = targetSlot
 		if slot then
-			Remotes.Get(Remotes.Names.DisplayFromStorage):FireServer(item.uid, slot)
+			Remotes.Get(Remotes.Names.InventoryAction):FireServer("Display", item.uid, slot)
 		end
 		close()
 	end)
@@ -69,7 +69,7 @@ local function build(slot: number)
 	close()
 	targetSlot = slot
 	local cfg = UITokens.Layout.StorageWindow
-	local title = ("Хранилище (%d/%d) → витрина %d"):format(#stored, GameConfig.Museum.StorageCapacity, slot)
+	local title = ("Инвентарь (%d) → постамент %d"):format(#stored, slot)
 	local panel, body = UIKit.Panel({
 		title = title,
 		headerHeight = cfg.headerHeight,
@@ -100,7 +100,7 @@ local function build(slot: number)
 	UIKit.Padding(list, UITokens.Spacing.Small)
 
 	if #stored == 0 then
-		UIKit.Text({ text = "Хранилище пусто", onLight = true, parent = list })
+		UIKit.Text({ text = "В инвентаре пусто", onLight = true, parent = list })
 	end
 	for order, item in stored do
 		buildCard(item, list, order)
@@ -125,8 +125,13 @@ end
 
 function StorageController.Init()
 	gui = UIKit.ScreenGui("Storage", 5)
-	Remotes.Get(Remotes.Names.StorageChanged).OnClientEvent:Connect(function(list: { StoredItem })
-		stored = list
+	Remotes.Get(Remotes.Names.InventoryChanged).OnClientEvent:Connect(function(list: { any })
+		stored = {}
+		for _, item in list do
+			if item.slot == nil then
+				table.insert(stored, item)
+			end
+		end
 		if window and targetSlot then
 			build(targetSlot)
 		end
