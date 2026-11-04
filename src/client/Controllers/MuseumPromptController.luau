@@ -1,7 +1,7 @@
 -- Показывает подсказки музея только там, где действие имеет смысл: в своём музее, по состоянию витрины,
 -- рукам, хранилищу и выбору «Переставить». Только внешний вид: каждое действие всё равно проверяет сервер.
 -- «Выставить из инвентаря» открывает окно выбора предмета; выбранный для перестановки экспонат подсвечивается.
--- Зависит от тега MuseumPrompt, атрибутов, StorageController, UITokens.
+-- Зависит от тега MuseumPrompt, атрибутов, InventoryController, UITokens.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -9,7 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("GameConfig"))
 local UITokens = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("UITokens"))
-local StorageController = require(script.Parent:WaitForChild("StorageController"))
+local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
 
 local PROMPT_TAG = "MuseumPrompt"
 
@@ -126,7 +126,7 @@ local function track(prompt: Instance)
 		prompt.Triggered:Connect(function()
 			local slot = holder and holder:GetAttribute("Slot")
 			if type(slot) == "number" then
-				StorageController.Open(slot)
+				InventoryController.OpenForSlot(slot)
 			end
 		end)
 	end

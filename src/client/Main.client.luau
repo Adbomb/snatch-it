@@ -10,7 +10,7 @@ task.spawn(require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("LegoMa
 
 require(Controllers:WaitForChild("NotifyController")).Init()
 require(Controllers:WaitForChild("CarryController")).Init()
-require(Controllers:WaitForChild("StorageController")).Init()
+require(Controllers:WaitForChild("InventoryController")).Init()
 require(Controllers:WaitForChild("MuseumPromptController")).Init()
 require(Controllers:WaitForChild("PresentationController")).Init()
 require(Controllers:WaitForChild("GymController")).Init()

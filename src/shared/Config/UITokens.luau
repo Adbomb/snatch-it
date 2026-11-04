@@ -241,6 +241,28 @@ UITokens.ItemLabel = {
 	Follow = 12, -- скорость, с которой подпись догоняет своё место (1/с)
 }
 
+-- Окно «Инвентарь» (D46, Stud-UI): пиксели опорного экрана 1050 × 620, весь корень масштабирует WindowScale
+-- (StudMotion: телефон 844 × 390 → × 0.63, поэтому текст не меньше 19 px).
+UITokens.Inventory = {
+	Window = Vector2.new(980, 600),
+	Header = "blue", -- шапка окна: синяя — навигация (Stud-UI)
+	Card = Vector2.new(218, 336), -- карточка предмета: 4 в ряд; название в 2 строки, локация и статус — по строке
+	Gap = 14,
+	Preview = 110, -- высота 3D-превью в карточке
+	Pedestal = Vector2.new(214, 150), -- плитка постамента в выборе места
+	BarHeight = 50, -- строка счётчиков и поиска, строка сортировки и фильтров
+	SearchWidth = 300,
+	NameText = 26,
+	IncomeText = 24,
+	InfoText = 20,
+	ButtonHeight = 48,
+	Hud = Vector2.new(196, 64), -- кнопка «Инвентарь» в HUD (слева, выше столбика монет — не под джойстиком)
+	HudPosition = UDim2.new(0, 16, 0.5, 0),
+	HotKey = Enum.KeyCode.B, -- ПК: открыть / закрыть (I и O — зум камеры Roblox)
+	Refresh = 0.5, -- секунд между проверками фазы, пока окно открыто
+	Turn = 25, -- поворот превью вокруг вертикали, градусов
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common

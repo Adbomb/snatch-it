@@ -6,7 +6,8 @@
 --   Replace (uid, постамент) — замена атомарна.
 -- Выставлять, снимать и заменять нельзя в подготовку, Судную ночь и 10 с доставки (MuseumService.ExhibitsUnlocked).
 -- Порядок как в правке 1.1: все проверки → в одном блоке без yield запись профиля и переход в ItemRegistry; реестр
--- отказал — запись профиля откатывается. Владельцу шлётся весь инвентарь (InventoryChanged).
+-- отказал — запись профиля откатывается. Владельцу шлётся весь инвентарь (InventoryChanged), а для превью в окне
+-- сервер держит в ReplicatedStorage.ItemPreviews по одной копии каждого предмета из инвентарей (без подписей и логики).
 -- Зависит от ItemRegistry, CarryService, DataService, MuseumService, PlotService, Util/*, Remotes, Config.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -32,6 +33,37 @@ local MAX_UID_LENGTH = 64
 local limiter = RateLimiter.new(GameConfig.RateLimits.Storage)
 
 local InventoryService = {}
+
+local PREVIEW_FOLDER = "ItemPreviews"
+local previewRequested: { [string]: boolean } = {}
+
+-- Копия предмета для превью в окне «Инвентарь» (та же модель, что на постаменте, D39): одна на itemId, создаётся по
+-- первому запросу. Подписи и сварка убираются — в ViewportFrame нужен только внешний вид.
+local function ensurePreview(itemId: string)
+	if previewRequested[itemId] or not Items[itemId] then
+		return
+	end
+	previewRequested[itemId] = true
+	task.spawn(function()
+		local folder = ReplicatedStorage:FindFirstChild(PREVIEW_FOLDER)
+		if not folder then
+			folder = Instance.new("Folder")
+			folder.Name = PREVIEW_FOLDER
+			folder.Parent = ReplicatedStorage
+		end
+		local part = ItemFactory.Create(itemId)
+		for _, d in part:GetDescendants() do
+			if d:IsA("BillboardGui") or d:IsA("JointInstance") then
+				d:Destroy()
+			end
+		end
+		local model = Instance.new("Model")
+		model.Name = itemId
+		part.Parent = model
+		model.PrimaryPart = part
+		model.Parent = folder
+	end)
+end
 
 local function nameOf(itemId: string): string
 	local def = Items[itemId]
@@ -59,6 +91,7 @@ function InventoryService.Sync(player: Player)
 		local entry = ItemRegistry.Get(uid)
 		if entry and (entry.state == "Stored" or entry.state == "Displayed") then
 			table.insert(list, { uid = uid, itemId = entry.itemId, slot = entry.slot })
+			ensurePreview(entry.itemId)
 			if entry.state == "Stored" then
 				stored += 1
 			end
