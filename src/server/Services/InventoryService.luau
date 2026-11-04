@@ -31,6 +31,7 @@ local Validate = require(ServerScriptService.Server.Util.Validate)
 local MAX_UID_LENGTH = 64
 
 local limiter = RateLimiter.new(GameConfig.RateLimits.Storage)
+local stolenDelivery: ((player: Player, plot: PlotService.Plot) -> ())? = nil
 
 local InventoryService = {}
 
@@ -83,14 +84,23 @@ local function ownPlotData(player: Player, plot: PlotService.Plot): any
 	return data
 end
 
--- Отправляет владельцу весь инвентарь: { uid, itemId, slot? } (slot — постамент, если выставлен) и атрибуты для
--- подсказок и интерфейса: StorageCount (в инвентаре), MuseumSlots (постаментов в музее).
+-- Сдача краденого в сундук (D46): TheftService передаёт свою функцию, сундук зовёт её для добычи.
+function InventoryService.SetStolenDelivery(handler: (player: Player, plot: PlotService.Plot) -> ())
+	stolenDelivery = handler
+end
+
+-- Отправляет владельцу весь инвентарь: { uid, itemId, slot?, pending? } (slot — постамент, если выставлен; pending —
+-- украденное ещё передаётся по журналу, выставить нельзя) и атрибуты для подсказок и интерфейса: StorageCount
+-- (в инвентаре), MuseumSlots (постаментов в музее).
 function InventoryService.Sync(player: Player)
 	local list, stored = {}, 0
+	local data = DataService.GetData(player)
 	for _, uid in ItemRegistry.GetOwnedBy(player.UserId) do
 		local entry = ItemRegistry.Get(uid)
 		if entry and (entry.state == "Stored" or entry.state == "Displayed") then
-			table.insert(list, { uid = uid, itemId = entry.itemId, slot = entry.slot })
+			local record = data and data.items[uid]
+			local pending = record ~= nil and record.pending ~= nil
+			table.insert(list, { uid = uid, itemId = entry.itemId, slot = entry.slot, pending = pending or nil })
 			ensurePreview(entry.itemId)
 			if entry.state == "Stored" then
 				stored += 1
@@ -132,6 +142,12 @@ local function tryStoreCarried(player: Player, plot: PlotService.Plot)
 		return
 	end
 	local entry = ItemRegistry.Get(uid)
+	if entry and entry.state == "Stolen" then
+		if stolenDelivery then
+			stolenDelivery(player, plot) -- добыча Судной ночи: передача владения (TheftService)
+		end
+		return
+	end
 	if not entry or entry.state ~= "Carried" then
 		return
 	end
@@ -236,6 +252,14 @@ local function storedItem(player: Player, data: any, uid: any): any
 	end
 	local entry = ItemRegistry.Get(uid)
 	local record = data.items[uid]
+	if record and record.pending ~= nil then
+		Notify.Send(
+			player,
+			"Украденное ещё передаётся — выставить можно чуть позже",
+			"Stop"
+		)
+		return nil
+	end
 	if
 		not entry
 		or entry.state ~= "Stored"

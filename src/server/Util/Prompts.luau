@@ -8,7 +8,7 @@ local Prompts = {}
 
 Prompts.Tag = "MuseumPrompt"
 
-type ActionSpec = { text: string, key: Enum.KeyCode, gamepadKey: Enum.KeyCode, offset: Vector2 }
+type ActionSpec = { text: string, key: Enum.KeyCode, gamepadKey: Enum.KeyCode, offset: Vector2, hold: number? }
 
 -- Подсказки на одной витрине разнесены по вертикали (UIOffset, px), чтобы не перекрывать друг друга.
 Prompts.Actions = {
@@ -45,6 +45,14 @@ Prompts.Actions = {
 		gamepadKey = Enum.KeyCode.ButtonX,
 		offset = Vector2.zero,
 	},
+	-- Судная ночь (D46): удержание (GameConfig.Theft.HoldSeconds ставит TheftService); на телефоне — экранная кнопка
+	-- подсказки с тем же удержанием.
+	Steal = {
+		text = "Украсть",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 } :: { [string]: ActionSpec }
 
 function Prompts.Create(parent: BasePart, action: string, objectText: string, distance: number): ProximityPrompt
@@ -57,7 +65,7 @@ function Prompts.Create(parent: BasePart, action: string, objectText: string, di
 	prompt.KeyboardKeyCode = spec.key
 	prompt.GamepadKeyCode = spec.gamepadKey
 	prompt.UIOffset = spec.offset
-	prompt.HoldDuration = 0
+	prompt.HoldDuration = spec.hold or 0
 	prompt.MaxActivationDistance = distance
 	prompt.RequiresLineOfSight = false
 	prompt:SetAttribute("Action", action)

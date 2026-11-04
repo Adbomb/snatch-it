@@ -1,6 +1,6 @@
 -- Вход и выход игрока: участок, профиль, гантель, музей, хранилище — в одном порядке для игры и серверных тестов
 -- (Main вызывает Join/Leave на PlayerAdded/PlayerRemoving, Server/Tests — для тестовых игроков с профилем в памяти).
--- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, InventoryService, Util/Notify.
+-- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, InventoryService, TheftService, Util/Notify.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -11,6 +11,7 @@ local GymService = require(Server.Services.GymService)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local InventoryService = require(Server.Services.InventoryService)
+local TheftService = require(Server.Services.TheftService)
 local Notify = require(Server.Util.Notify)
 
 export type JoinOptions = {
@@ -47,6 +48,7 @@ end
 
 -- Игрок вышел: предмет из рук исчезает (D3), экспонаты выгружаются, участок свободен, профиль сохраняется.
 function PlayerSession.Leave(player: Player)
+	TheftService.OnPlayerLeaving(player) -- кража: вор провалил, у ушедшего владельца — отменена (D46)
 	CarryService.OnPlayerRemoving(player)
 	MuseumService.UnloadMuseum(player)
 	PlotService.Release(player)

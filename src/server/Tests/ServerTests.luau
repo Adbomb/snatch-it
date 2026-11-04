@@ -41,6 +41,7 @@ local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
 local TestPlayer = require(Server.Tests.TestPlayer)
+local TheftService = require(Server.Services.TheftService)
 
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
@@ -368,6 +369,132 @@ test("Инвентарь без предела: 12 предметов (боль�
 	for i = 2, 12 do
 		check(ItemRegistry.Get(uids[i]).state == "Stored" and countUid(uids[i]) == 0, "предмет " .. i .. " не в инвентаре")
 	end
+end)
+
+-- Кража в Судную ночь (D37, D46) ───────────────────────────────────────────────────────────────────────────
+
+local function doomNight()
+	TimeService.SkipTo("DoomNight", -5)
+	check(GameTime.TheftPhase(GameTime.Now()) == "Open", "не Судная ночь")
+end
+
+-- Вор держит «Украсть» у постамента slot музея владельца: начало, ожидание hold, завершение.
+local function steal(thief: any, owner: any, slot: number, hold: number?)
+	local plot = plotOf(owner)
+	near(thief, plot.showcases[slot])
+	TheftService.Handlers.Begin(thief, plot, slot)
+	task.wait(hold or (GameConfig.Theft.HoldSeconds + 0.1))
+	TheftService.Handlers.Complete(thief, plot, slot)
+end
+
+local function deliverHome(thief: any)
+	local plot = plotOf(thief)
+	near(thief, plot.chest)
+	InventoryService.Handlers.StoreCarried(thief, plot)
+end
+
+test("Кража: удержание 3 с, доставка в инвентарь вора, у владельца удалено, лимиты D37", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local other = displayOwn(ctx, A, 2)
+	doomNight()
+	steal(B, A, 1)
+	local entry = ItemRegistry.Get(uid)
+	check(entry.state == "Stolen" and entry.carrier == B and ItemRegistry.GetCarriedBy(B) == uid, "B не унёс экспонат")
+	check(not plotOf(A).showcases[1]:GetAttribute("Occupied"), "постамент не опустел")
+	check(DataService.GetData(A).items[uid] ~= nil, "до доставки экспонат уже ушёл из профиля A")
+	check(A:WasNotified("Вор унёс"), "владельцу нет уведомления")
+	deliverHome(B)
+	local after = ItemRegistry.Get(uid)
+	check(after and after.state == "Stored" and after.owner == B.UserId, "после доставки не в инвентаре B")
+	check(DataService.GetData(A).items[uid] == nil, "у A осталась запись — дубль")
+	local record = DataService.GetData(B).items[uid]
+	check(record and record.place == "storage" and record.source == "raid" and record.from == A.UserId, "запись B")
+	check(countUid(uid) == 0, "в мире осталась деталь украденного")
+	-- подтверждение журнала (сохранения профилей) снимает pending
+	local started = os.clock()
+	while DataService.GetData(B).items[uid].pending ~= nil and os.clock() - started < GameConfig.Theft.SaveTimeout + 2 do
+		task.wait(0.2)
+	end
+	check(DataService.GetData(B).items[uid].pending == nil, "передача не подтверждена журналом")
+	-- лимиты: второй кражи у B нет, музей A больше не теряет
+	steal(B, A, 2, 0.1)
+	check(ItemRegistry.Get(other).state == "Displayed", "вторая кража B прошла")
+	check(B:WasNotified("уже украли"), "нет причины отказа второй кражи")
+	local C = TestPlayer.new("Тест_C")
+	ctx.track(C)
+	check(join(C), "C не вошёл")
+	steal(C, A, 2, 0.1)
+	check(ItemRegistry.Get(other).state == "Displayed", "музей A потерял второй предмет")
+	check(C:WasNotified("уже потерял"), "нет причины отказа C")
+end)
+
+test("Кража: провалы возвращают экспонат на постамент, лимиты не тратятся", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA = plotOf(A)
+	-- отпустил E раньше времени
+	near(B, plotA.showcases[1])
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Lifting", "удержание не началось")
+	TheftService.Handlers.Cancel(B)
+	check(ItemRegistry.Get(uid).state == "Displayed" and ItemRegistry.Get(uid).slot == 1, "после отпускания не на месте")
+	-- поддельное завершение через 1 с
+	steal(B, A, 1, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "кража за 1 с прошла")
+	-- Triggered без начала удержания
+	TheftService.Handlers.Complete(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "кража без удержания прошла")
+	-- поражение вора с добычей
+	task.wait(0.3)
+	steal(B, A, 1)
+	check(ItemRegistry.Get(uid).state == "Stolen", "вторая попытка не удалась")
+	TheftService.OnDefeated(B)
+	local back = ItemRegistry.Get(uid)
+	check(back.state == "Displayed" and back.slot == 1 and back.owner == A.UserId, "после поражения не вернулся")
+	check(ItemRegistry.GetCarriedBy(B) == nil and countUid(uid) == 1, "добыча осталась у B или дубль")
+	check(plotA.showcases[1]:GetAttribute("Occupied") == true, "постамент не занят после возврата")
+	-- бросил добычу (G)
+	task.wait(0.3)
+	steal(B, A, 1)
+	CarryService.Drop(B)
+	check(ItemRegistry.Get(uid).state == "Displayed", "брошенная добыча не вернулась")
+	-- время доставки вышло
+	task.wait(0.3)
+	steal(B, A, 1)
+	check(ItemRegistry.Get(uid).state == "Stolen", "третья попытка не удалась")
+	TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 1))
+	TheftService.Handlers.Sweep()
+	check(ItemRegistry.Get(uid).state == "Displayed", "после 10 с доставки не вернулся")
+	check(DataService.GetData(A).items[uid] ~= nil and next(DataService.GetData(B).items) == nil, "профили изменились")
+	check(DataService.GetStat(B, "theftEvent") == nil and DataService.GetStat(A, "lossEvent") == nil, "лимиты потрачены")
+end)
+
+test("Кража: два вора на один экспонат, Stored и свои — нельзя, в 10 с доставки новая не начинается", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local stored = toInventory(ctx, A)
+	local own = displayOwn(ctx, B, 1)
+	local C = TestPlayer.new("Тест_C")
+	ctx.track(C)
+	check(join(C), "C не вошёл")
+	doomNight()
+	local plotA = plotOf(A)
+	near(B, plotA.showcases[1])
+	near(C, plotA.showcases[1])
+	TheftService.Handlers.Begin(B, plotA, 1)
+	TheftService.Handlers.Begin(C, plotA, 1)
+	check(ItemRegistry.Get(uid).thief == B, "экспонат снимают двое")
+	check(C:WasNotified("уже крадут"), "C не получил причину")
+	TheftService.Handlers.Cancel(B)
+	-- свой экспонат и предмет из инвентаря
+	steal(B, B, 1, 0.1)
+	check(ItemRegistry.Get(own).state == "Displayed", "B украл свой экспонат")
+	check(ItemRegistry.Get(stored).state == "Stored", "предмет из инвентаря A сдвинулся")
+	-- окно доставки: новая кража не начинается
+	TimeService.SkipTo("Day", -3)
+	check(GameTime.TheftPhase(GameTime.Now()) == "Delivery", "не окно доставки")
+	near(C, plotA.showcases[1])
+	TheftService.Handlers.Begin(C, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "кража в окне доставки началась")
 end)
 
 test("Улучшить можно только свою гантель", function(A, B)
@@ -1094,11 +1221,12 @@ function ServerTests.Run(filter: string?): string
 		return "Серверные тесты запускаются только в Studio"
 	end
 	local lines, passed, total = {}, 0, 0
-	-- D46: в подготовку, Судную ночь и 10 с доставки экспонаты не меняются — тесты музея идут днём.
-	if GameTime.ExhibitLock(GameTime.Now()) then
-		TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
-	end
 	for _, case in tests do
+		-- D46: в подготовку, Судную ночь и 10 с доставки экспонаты не меняются — каждый тест начинается днём
+		-- (тест краж мог упасть посреди Судной ночи).
+		if GameTime.ExhibitLock(GameTime.Now()) then
+			TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
+		end
 		if filter and not string.find(case.name, filter, 1, true) then
 			continue
 		end

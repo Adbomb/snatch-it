@@ -29,8 +29,8 @@ local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local T = UITokens.Inventory
 local player = Players.LocalPlayer
 
-type Owned = { uid: string, itemId: string, slot: number? }
-type Card = { itemId: string, uids: { string }, slot: number?, count: number }
+type Owned = { uid: string, itemId: string, slot: number?, pending: boolean? }
+type Card = { itemId: string, uids: { string }, slot: number?, count: number, pending: boolean? }
 
 local InventoryController = {}
 
@@ -92,6 +92,12 @@ local function buildCards(): { Card }
 			table.insert(
 				cards,
 				{ itemId = item.itemId, uids = { item.uid }, slot = item.slot, count = total[item.itemId] }
+			)
+		elseif item.pending then
+			-- украденное ещё передаётся по журналу (D46): отдельная карточка без кнопки
+			table.insert(
+				cards,
+				{ itemId = item.itemId, uids = { item.uid }, count = total[item.itemId], pending = true }
 			)
 		else
 			local stack = stacks[item.itemId]
@@ -319,7 +325,11 @@ local function itemCard(card: Card, order: number)
 		Thickness = 2,
 		ZIndex = 6,
 	})
-	UI.Text(frame, if card.slot then ("В музее, место %d"):format(card.slot) else "В инвентаре", {
+	local status = if card.slot
+		then ("В музее, место %d"):format(card.slot)
+		elseif card.pending then "Передаётся…"
+		else "В инвентаре"
+	UI.Text(frame, status, {
 		Name = "Statut",
 		Font = "Bold",
 		Size = UDim2.new(1, -16, 0, 22),
@@ -331,7 +341,9 @@ local function itemCard(card: Card, order: number)
 		Thickness = 2,
 		ZIndex = 6,
 	})
-	if card.slot then
+	if card.pending then
+		return
+	elseif card.slot then
 		actionButton(frame, "Снять", "red", w - 40, function()
 			send("Remove", card.uids[1])
 		end)

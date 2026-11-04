@@ -16,7 +16,8 @@ export type Entry = {
 	uid: string,
 	itemId: string,
 	state: State,
-	carrier: Player?, -- кто несёт (Carried)
+	carrier: Player?, -- кто несёт (Carried, Stolen)
+	thief: Player?, -- кто снимает экспонат с постамента (Lifting) и несёт его (Stolen), D46
 	owner: number?, -- UserId владельца (Displayed / Stored)
 	slot: number?, -- номер витрины (Displayed)
 	part: BasePart?, -- видимый предмет в мире (у Stored его нет)
@@ -26,7 +27,9 @@ export type Entry = {
 
 type Listener = (uid: string, fromState: State, toState: State?, entry: Entry) -> ()
 
--- Полный граф переходов из DESIGN.md §1 (+ AtBoss, D37). Реализованы AtBoss, OnMap, Carried, Displayed, Stored.
+-- Полный граф переходов из DESIGN.md §1 (+ AtBoss, D37). Реализованы все, кроме Dropped (D37: добыча вора не
+-- падает — при провале экспонат сразу возвращается на свой постамент). Пока экспонат крадут (Lifting, Stolen), его
+-- владелец и постамент в записи сохраняются (owner, slot), постамент остаётся за ним: возврат — на то же место.
 local ALLOWED: { [State]: { [State]: boolean } } = {
 	AtBoss = { Carried = true }, -- забрать у босса (после победы, этап 4; пока — тестовый режим Studio)
 	OnMap = { Carried = true },
@@ -75,6 +78,7 @@ local function detach(entry: Entry)
 		carrierIndex[entry.carrier] = nil
 		entry.carrier = nil
 	end
+	entry.thief = nil
 	if entry.owner and entry.slot then
 		local slots = slotIndex[entry.owner]
 		if slots and slots[entry.slot] == entry.uid then
@@ -180,7 +184,51 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		return refuse(uid, fromState, toState, "переход запрещён")
 	end
 
-	if toState == "Carried" then
+	if toState == "Lifting" then
+		local thief = params.thief
+		if not isCarrier(thief) then
+			return refuse(uid, fromState, toState, "не указан вор")
+		end
+		if entry.owner == (thief :: Player).UserId then
+			return refuse(uid, fromState, toState, "свой экспонат не крадут")
+		end
+		if carrierIndex[thief] then
+			return refuse(uid, fromState, toState, thief.Name .. " уже несёт предмет")
+		end
+		entry.thief = thief
+	elseif toState == "Stolen" then
+		local thief = params.carrier
+		if not isCarrier(thief) or entry.thief ~= thief then
+			return refuse(uid, fromState, toState, "несёт не тот, кто снимал")
+		end
+		if carrierIndex[thief] then
+			return refuse(uid, fromState, toState, thief.Name .. " уже несёт предмет")
+		end
+		entry.carrier = thief
+		carrierIndex[thief] = uid
+	elseif toState == "Displayed" and (fromState == "Lifting" or fromState == "Stolen") then
+		-- Кража сорвалась: экспонат на свой постамент (owner и slot не менялись, постамент остался за ним).
+		if params.owner ~= entry.owner or params.slot ~= entry.slot then
+			return refuse(uid, fromState, toState, "вернуть можно только на свой постамент")
+		end
+		if entry.carrier then
+			carrierIndex[entry.carrier] = nil
+			entry.carrier = nil
+		end
+		entry.thief = nil
+		if params.part then
+			entry.part = params.part
+		end
+	elseif toState == "Stored" and fromState == "Stolen" then
+		-- Доставлено (журнал §6): экспонат прежнего владельца — в инвентарь вора.
+		local owner = params.owner
+		if type(owner) ~= "number" or not entry.carrier or (entry.carrier :: Player).UserId ~= owner then
+			return refuse(uid, fromState, toState, "сдать добычу может только вор, который её несёт")
+		end
+		detach(entry)
+		entry.owner = owner
+		entry.part = nil
+	elseif toState == "Carried" then
 		local carrier = params.carrier
 		if not isCarrier(carrier) then
 			return refuse(uid, fromState, toState, "не указан игрок")
@@ -346,13 +394,19 @@ function ItemRegistry.Discard(uid: string, reason: string): boolean
 	return true
 end
 
--- Владелец вышел: экспонат выгружается из памяти сервера (в профиле он остаётся).
+-- Владелец вышел: экспонат выгружается из памяти сервера (в профиле он остаётся). Крадущийся экспонат (Lifting,
+-- Stolen) тоже: кража отменяется, у владельца в профиле он на месте.
 function ItemRegistry.Unload(uid: string): boolean
 	local entry = entries[uid]
 	if not entry then
 		return false
 	end
-	if entry.state ~= "Displayed" and entry.state ~= "Stored" then
+	if
+		entry.state ~= "Displayed"
+		and entry.state ~= "Stored"
+		and entry.state ~= "Lifting"
+		and entry.state ~= "Stolen"
+	then
 		refuse(uid, entry.state, "Unload", "выгружать можно только экспонаты")
 		return false
 	end
@@ -371,6 +425,17 @@ end
 
 function ItemRegistry.GetCarriedBy(player: Player): string?
 	return carrierIndex[player]
+end
+
+-- Экспонаты владельца, которые сейчас крадут (Lifting, Stolen).
+function ItemRegistry.GetBeingStolenFrom(owner: number): { string }
+	local result = {}
+	for uid, entry in entries do
+		if entry.owner == owner and (entry.state == "Lifting" or entry.state == "Stolen") then
+			table.insert(result, uid)
+		end
+	end
+	return result
 end
 
 function ItemRegistry.GetSlotItem(owner: number, slot: number): string?

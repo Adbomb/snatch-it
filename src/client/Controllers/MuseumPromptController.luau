@@ -23,10 +23,21 @@ local MuseumPromptController = {}
 local function shouldShow(prompt: ProximityPrompt): boolean
 	local holder = prompt.Parent
 	local plot = holder and holder:FindFirstAncestorWhichIsA("Model")
+	local action = prompt:GetAttribute("Action")
+	if action == "Steal" then
+		-- Судная ночь (D46): чужой выставленный экспонат, руки свободны, вор не оглушён. Остальное решает сервер.
+		local owner = plot and plot:GetAttribute("OwnerUserId")
+		return holder ~= nil
+			and owner ~= nil
+			and owner ~= player.UserId
+			and holder:GetAttribute("Occupied") == true
+			and ReplicatedStorage:GetAttribute("Phase") == "DoomNight"
+			and player:GetAttribute("CarryingItemId") == nil
+			and player:GetAttribute("Knocked") ~= true
+	end
 	if not holder or not plot or plot:GetAttribute("OwnerUserId") ~= player.UserId then
 		return false
 	end
-	local action = prompt:GetAttribute("Action")
 	local carrying = player:GetAttribute("CarryingItemId") ~= nil
 	local stored = player:GetAttribute("StorageCount") or 0
 	local occupied = holder:GetAttribute("Occupied") == true
@@ -145,6 +156,8 @@ function MuseumPromptController.Init()
 	player:GetAttributeChangedSignal("StorageCount"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("MoveSlot"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("DumbbellLevel"):Connect(refreshAll)
+	player:GetAttributeChangedSignal("Knocked"):Connect(refreshAll)
+	ReplicatedStorage:GetAttributeChangedSignal("Phase"):Connect(refreshAll)
 end
 
 return MuseumPromptController

@@ -45,6 +45,17 @@
 ## Данные
 - Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 3; миграции в
   `DataService.LoadAsync`: v1 → v2 — strength, dumbbellLevel; v2 → v3 — единый инвентарь D46).
+- Кража (D46, D37): `Services/TheftService` — подсказка «Украсть» на каждом постаменте (удержание
+  `GameConfig.Theft.HoldSeconds`; клиент показывает её чужим в Судную ночь), начало удержания резервирует экспонат,
+  музей и вора (`Util/TheftLedger` — чистые правила: фаза, свой/чужой, Displayed, руки, лимиты события по профилю
+  `stats.theftEvent` / `stats.lossEvent`, проверка времени удержания), отпускание или уход отменяет, завершение — Stolen
+  у вора (`CarryService` несёт так же; бросок, смерть, выход, ночной вынос — возврат через `SetStolenHandler`).
+  Сдача — в свой сундук (`InventoryService` зовёт TheftService): журнал DESIGN §6 (`Util/TransferJournal`,
+  `DataService.JournalUpdate/TransferItem/SaveAndWait/ResolveTransfers`, DataStore «Transfers» или память) — запись вора
+  с `pending` до подтверждения (выставить нельзя, в окне «Передаётся…»). Провал — экспонат на свой постамент; время
+  проверяет цикл раз в `CheckSeconds`; ушедший владелец — кража отменена, экспонат у него (`OnPlayerLeaving`).
+  Реестр: Displayed → Lifting → Stolen → Stored(вор) или обратно Displayed; владелец и постамент за экспонатом
+  сохраняются, пока его крадут.
 - Единый инвентарь (D46): все предметы игрока — `items[uid]`, place `slot` (Displayed) или `storage` (Stored), без
   ограничения количества. `Shared/Inventory` — чистые функции: `Normalize` (миграция и проверка при каждой загрузке:
   экспонаты на несуществующих или занятых постаментах — в инвентарь, ничего не удаляется, повтор не меняет данные),
@@ -197,7 +208,8 @@
 `python scripts/check_project.py` — запрещённые ассеты и файлы (бан 2026-11-02), все `require` по путям Rojo, согласованность `Config/ItemModels` ↔ `server/Looks` ↔ MeshId ↔ FBX, шаблоны карт боссов, коллекция босса 2 в `Config/Items`, подключение босса 2 и «Барахолки». Код выхода 1 — есть ошибки. `rojo build default.project.json -o <файл>.rbxl` — локальное место из репозитория.
 Lune (`~/.aftman/bin/lune`, из корня репозитория): `scripts/lune/env.luau` исполняет модули `src/` как после Rojo
 (пути `game:GetService(…)`, `script.Parent`, типы из `@lune/roblox`, службы — заглушки);
-`check_inventory.luau` — миграция профиля v2 → v3 на копиях данных и правило фаз (D46);
+`check_inventory.luau` — миграция профиля v2 → v3 на копиях данных и правило фаз (D46); `check_theft.luau` —
+правила и лимиты краж, гонки воров, номер события, 360 сценариев падения сервера при передаче (ни дублей, ни потерь);
 `check_config.luau` — коллекции, скелеты, позы, анимации всех состояний (`Shared/BossAnim`), сила боя;
 `check_world.luau` — `World/FaceCheck` декора зон 1–2 на плитах пола, бюджет частей и света «Барахолки», пустая
 площадка, круг боя (r 34 от места босса) без декора выше 2, таблички надписей, столбы редкостей не закрывают

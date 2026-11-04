@@ -1,5 +1,7 @@
 -- Подбор («Поднять»), перенос над головой и бросок предметов карты; скорость от силы и груза (D24).
--- Смерть с предметом → предмет падает рядом; выход с предметом → исчезает (D3).
+-- Смерть с предметом → предмет падает рядом; выход с предметом → исчезает (D3). Краденый экспонат (Stolen, D46)
+-- несётся так же, но не падает и не исчезает: бросок, смерть, выход и ночной вынос вызывают обработчик краж
+-- (SetStolenHandler — TheftService), и экспонат возвращается владельцу.
 -- Зависит от ItemRegistry, Util/Validate, Util/RateLimiter, Util/Notify, Remotes, Speed, Config.
 
 local Players = game:GetService("Players")
@@ -22,6 +24,7 @@ local dropLimiter = RateLimiter.new(GameConfig.RateLimits.Drop)
 
 local holds: { [Player]: { uid: string, weld: WeldConstraint, weight: string } } = {}
 local prompts: { [string]: ProximityPrompt } = {}
+local stolenHandler: ((player: Player, uid: string, reason: string) -> ())? = nil
 
 local CarryService = {}
 
@@ -97,12 +100,13 @@ local function tryPickup(player: Player, uid: string)
 	CarryService.AttachCarried(player, uid)
 end
 
--- После перехода в Carried (подбор с карты или предмет у босса, D37): предмет над головой, скорость от груза,
--- атрибут CarryingItemId. false — предмет не в руках этого игрока или нет персонажа.
+-- После перехода в Carried (подбор с карты или предмет у босса, D37) или Stolen (кража, D46): предмет над головой,
+-- скорость от груза, атрибут CarryingItemId. false — предмет не в руках этого игрока или нет персонажа.
 function CarryService.AttachCarried(player: Player, uid: string): boolean
 	local entry = ItemRegistry.Get(uid)
 	local root = Validate.GetLiveRoot(player)
-	if not entry or entry.state ~= "Carried" or entry.carrier ~= player or not entry.part or not root then
+	local carried = entry and (entry.state == "Carried" or entry.state == "Stolen")
+	if not entry or not carried or entry.carrier ~= player or not entry.part or not root then
 		return false
 	end
 	local part = entry.part
@@ -202,10 +206,44 @@ function CarryService.RegisterMapItem(uid: string, part: BasePart)
 	end)
 end
 
+-- Обработчик краденого (TheftService): что делать, если вор бросил, погиб, вышел или его вынесло ночью.
+function CarryService.SetStolenHandler(handler: (player: Player, uid: string, reason: string) -> ())
+	stolenHandler = handler
+end
+
+-- Краденое снимается с вора (возврат владельцу или сдача в сундук): сварка, скорость, атрибут. Возвращает Part.
+function CarryService.ReleaseStolen(player: Player, uid: string): BasePart?
+	local hold = holds[player]
+	if not hold or hold.uid ~= uid then
+		return nil
+	end
+	local part = hold.weld.Part1
+	releaseHold(player)
+	if part then
+		part.Anchored = true
+		setCarryPhysics(part, false)
+	end
+	return part
+end
+
+local function stolenLost(player: Player, uid: string, reason: string): boolean
+	local entry = ItemRegistry.Get(uid)
+	if entry and entry.state == "Stolen" then
+		if stolenHandler then
+			stolenHandler(player, uid, reason)
+		end
+		return true
+	end
+	return false
+end
+
 -- Бросить то, что игрок несёт: предмет ложится на землю перед ним и снова доступен всем.
 function CarryService.Drop(player: Player)
 	local uid = ItemRegistry.GetCarriedBy(player)
 	if not uid then
+		return
+	end
+	if stolenLost(player, uid, "вор бросил добычу") then
 		return
 	end
 	local entry = ItemRegistry.Get(uid)
@@ -260,6 +298,9 @@ end
 -- true — предмет был.
 function CarryService.LoseCarried(player: Player, reason: string): boolean
 	local uid = ItemRegistry.GetCarriedBy(player)
+	if uid and stolenLost(player, uid, reason) then
+		return true
+	end
 	if uid then
 		local entry = ItemRegistry.Get(uid)
 		ItemRegistry.Discard(uid, reason)

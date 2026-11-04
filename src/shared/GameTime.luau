@@ -114,6 +114,17 @@ function GameTime.TheftPhase(t: number): "Open" | "Delivery" | nil
 	return nil
 end
 
+-- Номер Судной ночи для лимитов краж (D37): во время неё и в окно доставки после неё — номер её круга; иначе nil.
+function GameTime.DoomEventId(t: number): number?
+	local phase = GameTime.TheftPhase(t)
+	if phase == "Open" then
+		return GameTime.At(t).cycle
+	elseif phase == "Delivery" then
+		return GameTime.At(t).cycle - 1
+	end
+	return nil
+end
+
 -- Общее время сейчас (с ускорением Studio, если оно включено).
 function GameTime.Now(): number
 	local real = workspace:GetServerTimeNow()
