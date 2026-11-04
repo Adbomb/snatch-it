@@ -129,7 +129,11 @@ local function tryBegin(thief: any, plot: PlotService.Plot, slot: number)
 		owner = owner.UserId,
 		uid = uid or "",
 		slot = slot,
-		displayedBy = if entry and entry.state == "Displayed" then entry.owner else nil,
+		-- экспонат, который уже снимают или несут (Lifting, Stolen), числится за постаментом: отказ «уже крадут»
+		displayedBy = if entry
+				and (entry.state == "Displayed" or entry.state == "Lifting" or entry.state == "Stolen")
+			then entry.owner
+			else nil,
 		carrying = ItemRegistry.GetCarriedBy(thief) ~= nil,
 		thiefDone = event ~= nil and DataService.GetStat(thief, "theftEvent") == event,
 		ownerLost = event ~= nil and DataService.GetStat(owner, "lossEvent") == event,

@@ -543,6 +543,7 @@ render = function()
 			itemCard(card, order)
 		end
 		if #cards == 0 then
+			layout.CellSize = UDim2.fromOffset(T.Window.X - 80, 90) -- пустое состояние — во всю ширину
 			UI.Text(
 				grid,
 				if #owned == 0

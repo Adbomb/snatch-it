@@ -423,6 +423,12 @@ local function tryAction(player: Player, action: any, uid: any, slot: any)
 end
 
 function InventoryService.Init()
+	-- Папка превью есть всегда (клиент ждёт её, даже если у игрока ещё нет предметов).
+	if not ReplicatedStorage:FindFirstChild(PREVIEW_FOLDER) then
+		local folder = Instance.new("Folder")
+		folder.Name = PREVIEW_FOLDER
+		folder.Parent = ReplicatedStorage
+	end
 	for _, plot in PlotService.GetPlots() do
 		Prompts.Create(plot.chest, "ChestStore", "Сундук", GameConfig.Museum.ChestDistance).Triggered
 			:Connect(function(player)

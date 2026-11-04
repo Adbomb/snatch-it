@@ -280,7 +280,8 @@ UITokens.Defense = {
 	GhostOk = Color3.fromHex("5BEA72"),
 	GhostBad = Color3.fromHex("FF5A5A"),
 	GhostTransparency = 0.45,
-	SpotNames = { Entrance = "вход", Middle = "середина" },
+	SpotNames = { Entrance = "вход", Middle = "середина" }, -- в строке «стоит: …»
+	SpotButtons = { Entrance = "Вход", Middle = "Середина" }, -- на кнопках мест лазера
 }
 
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.

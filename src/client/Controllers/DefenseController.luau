@@ -158,7 +158,7 @@ local function renderDefense()
 		elseif kind == "Laser" then
 			local spots = DefenseRules.FixedSpots(cfg, kind) or {}
 			for i, spot in spots do
-				button(frame, T.SpotNames[spot] or spot, "green", -95 - (i - 1) * 160, prep and owned > 0, function()
+				button(frame, T.SpotButtons[spot] or spot, "green", -95 - (i - 1) * 160, prep and owned > 0, function()
 					send("Install", kind, spot)
 				end)
 			end
