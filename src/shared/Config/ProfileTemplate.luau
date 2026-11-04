@@ -1,8 +1,9 @@
--- Шаблон профиля игрока строго по DESIGN.md §2 (schema = 2: + сила и уровень гантели, D30).
+-- Шаблон профиля игрока строго по DESIGN.md §2 (schema = 2: + сила и уровень гантели, D30; schema = 3: единый
+-- инвентарь D46 — проверка записей items, Shared/Inventory).
 -- Используется DataService: новые профили и Reconcile. Ни от чего не зависит.
 
 return {
-	schema = 2,
+	schema = 3,
 	coins = 0,
 	museumLevel = 1,
 	strength = 0,

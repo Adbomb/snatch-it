@@ -80,6 +80,40 @@ function GameTime.DaysToDoom(state: State): number
 	return cfg.DoomEvery - state.day
 end
 
+-- Окно доставки (D37, D46): первые DeliveryGrace секунд после Судной ночи — вор с добычей ещё может её донести,
+-- новые кражи не начинаются. Возвращает конец окна или nil, если t не в нём.
+function GameTime.DeliveryWindowEnd(t: number): number?
+	local state = GameTime.At(t)
+	if state.phase == "Day" and state.day == 1 and t < state.startsAt + cfg.DeliveryGrace then
+		return state.startsAt + cfg.DeliveryGrace
+	end
+	return nil
+end
+
+-- Можно ли менять экспонаты (выставить, снять, заменить, переставить) в момент t (D46): днём и обычной ночью —
+-- да; в подготовку, Судную ночь и окно доставки — нет. nil — можно, иначе причина для игрока.
+function GameTime.ExhibitLock(t: number): string?
+	local phase = GameTime.At(t).phase
+	if phase == "Preparation" then
+		return "Подготовка к Судной ночи: экспонаты менять нельзя"
+	elseif phase == "DoomNight" then
+		return "Судная ночь: экспонаты менять нельзя"
+	elseif GameTime.DeliveryWindowEnd(t) then
+		return "Воры доносят добычу: экспонаты менять нельзя ещё несколько секунд"
+	end
+	return nil
+end
+
+-- Идёт ли кража (D37): Судная ночь — можно начинать; окно доставки — только донести начатое.
+function GameTime.TheftPhase(t: number): "Open" | "Delivery" | nil
+	if GameTime.At(t).phase == "DoomNight" then
+		return "Open"
+	elseif GameTime.DeliveryWindowEnd(t) then
+		return "Delivery"
+	end
+	return nil
+end
+
 -- Общее время сейчас (с ускорением Studio, если оно включено).
 function GameTime.Now(): number
 	local real = workspace:GetServerTimeNow()

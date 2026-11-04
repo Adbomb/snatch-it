@@ -1,12 +1,16 @@
 -- Профили игроков через ProfileStore (с блокировкой сессии): загрузка, Reconcile, запись, сохранение.
--- Схема профиля — Config/ProfileTemplate (DESIGN.md §2). Повторы и pcall делает сам ProfileStore.
--- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Util/Log.
+-- Схема профиля — Config/ProfileTemplate (DESIGN.md §2). Повторы и pcall делает сам ProfileStore. При каждой загрузке
+-- записи предметов проверяет Shared/Inventory.Normalize (миграция v2 → v3, D46): ничего не удаляется, экспонаты на
+-- несуществующих или занятых постаментах уходят в инвентарь.
+-- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Util/Log.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local Items = require(ReplicatedStorage.Shared.Config.Items)
+local Inventory = require(ReplicatedStorage.Shared.Inventory)
 local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
 local ProfileStore = require(ServerScriptService.Server.Vendor.ProfileStore)
 local Log = require(ServerScriptService.Server.Util.Log)
@@ -16,6 +20,12 @@ local profiles: { [Player]: any } = {}
 local saveState: { [Player]: { last: number, pending: boolean } } = {}
 
 local DataService = {}
+
+-- Постаментов в музее уровня level (действующие правила, GameConfig.Museum.SlotsByLevel).
+function DataService.SlotCountFor(level: number?): number
+	local slots = GameConfig.Museum.SlotsByLevel
+	return slots[level or 1] or slots[1]
+end
 
 local function getActiveProfile(player: Player): any
 	local profile = profiles[player]
@@ -48,6 +58,18 @@ function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 	-- Миграция: schema 1 → 2 — новые поля (strength, dumbbellLevel) уже добавил Reconcile.
 	if profile.Data.schema == 1 then
 		profile.Data.schema = 2
+	end
+	-- schema 2 → 3 (D46) и проверка записей при каждой загрузке.
+	local report = Inventory.Normalize(profile.Data, DataService.SlotCountFor(profile.Data.museumLevel), Items)
+	if #report.moved > 0 or #report.unknown > 0 then
+		Log.Warn(
+			"DataService",
+			("%s: в инвентарь с постаментов %d, неизвестных предметов %d"):format(
+				player.Name,
+				#report.moved,
+				#report.unknown
+			)
+		)
 	end
 	if profile.Data.schema ~= ProfileTemplate.schema then
 		Log.Warn(

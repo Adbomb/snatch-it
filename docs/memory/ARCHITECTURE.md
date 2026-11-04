@@ -43,8 +43,14 @@
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
 ## Данные
-- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 2: + strength, dumbbellLevel;
-  миграция v1 → v2 в `DataService.LoadAsync`, DESIGN.md §2).
+- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 3; миграции в
+  `DataService.LoadAsync`: v1 → v2 — strength, dumbbellLevel; v2 → v3 — единый инвентарь D46).
+- Единый инвентарь (D46): все предметы игрока — `items[uid]`, place `slot` (Displayed) или `storage` (Stored), без
+  ограничения количества. `Shared/Inventory` — чистые функции: `Normalize` (миграция и проверка при каждой загрузке:
+  экспонаты на несуществующих или занятых постаментах — в инвентарь, ничего не удаляется, повтор не меняет данные),
+  `Summary` (всего, выставлено, доход), `CountOnSlot`. Правило фаз — `Shared/GameTime`: `ExhibitLock(t)` (менять
+  экспонаты нельзя в подготовку, Судную ночь и 10 с доставки), `TheftPhase(t)` (Open / Delivery),
+  `DeliveryWindowEnd(t)`; `GameConfig.Time.DeliveryGrace` = 10.
   В профиль попадают только экспонаты (`Displayed`) и хранилище (`Stored`).
 - Состояния экземпляра предмета — `ItemRegistry` (uid → state), граф в DESIGN.md §1:
   OnMap → Carried → Displayed ⇄ Stored, MoveSlot / SwapSlots на витринах.
@@ -191,6 +197,7 @@
 `python scripts/check_project.py` — запрещённые ассеты и файлы (бан 2026-11-02), все `require` по путям Rojo, согласованность `Config/ItemModels` ↔ `server/Looks` ↔ MeshId ↔ FBX, шаблоны карт боссов, коллекция босса 2 в `Config/Items`, подключение босса 2 и «Барахолки». Код выхода 1 — есть ошибки. `rojo build default.project.json -o <файл>.rbxl` — локальное место из репозитория.
 Lune (`~/.aftman/bin/lune`, из корня репозитория): `scripts/lune/env.luau` исполняет модули `src/` как после Rojo
 (пути `game:GetService(…)`, `script.Parent`, типы из `@lune/roblox`, службы — заглушки);
+`check_inventory.luau` — миграция профиля v2 → v3 на копиях данных и правило фаз (D46);
 `check_config.luau` — коллекции, скелеты, позы, анимации всех состояний (`Shared/BossAnim`), сила боя;
 `check_world.luau` — `World/FaceCheck` декора зон 1–2 на плитах пола, бюджет частей и света «Барахолки», пустая
 площадка, круг боя (r 34 от места босса) без декора выше 2, таблички надписей, столбы редкостей не закрывают
