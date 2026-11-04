@@ -148,6 +148,146 @@ check(
 	)
 )
 
+-- Надписи читаются с камеры игрока (D45): из точек камеры в проходе (x ±30, высота 8–16, по всей длине зоны) надписи
+-- не закрывают столбы редкостей (то, что стоит у прохода перед павильонами). Для каждой грани с надписью: из точек,
+-- откуда она видна и читается (спереди, ближе 70, под углом не круче 70° к грани), доля точек, где столбы закрывают
+-- больше SIGN_HIDDEN, — не больше SIGN_BAD_SHARE, и нигде не больше SIGN_WORST. Закрытость — доля из 15 точек грани,
+-- луч к которым пересекает столб. Таблички редкостей стоят в ряд, как уличные указатели: друг другу не помеха.
+-- Перекрытия вывесок друг другом под острым углом (подвесная вывеска пагоды, ценник перед щитом) — свойство
+-- композиции: печатаются для сведения, проверку не валят.
+local SIGN_HIDDEN, SIGN_BAD_SHARE, SIGN_WORST = 0.25, 0.1, 0.6
+local SIGN_GRAZING = math.cos(math.rad(70))
+local FACES = {
+	Front = { Vector3.new(0, 0, -1), Vector3.new(-1, 0, 0) },
+	Back = { Vector3.new(0, 0, 1), Vector3.new(1, 0, 0) },
+	Left = { Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1) },
+	Right = { Vector3.new(1, 0, 0), Vector3.new(0, 0, -1) },
+}
+-- Отрезок from→to (без последних 2 %) пересекает повёрнутый брусок?
+local function crosses(brick, from, to): boolean
+	local o = brick.cframe:PointToObjectSpace(from)
+	local d = brick.cframe:VectorToObjectSpace(to - from)
+	local half = brick.size / 2
+	local t0, t1 = 0, 0.98
+	for _, axis in { "X", "Y", "Z" } do
+		local oa, da, h = o[axis], d[axis], half[axis]
+		if math.abs(da) < 1e-9 then
+			if oa < -h or oa > h then
+				return false
+			end
+		else
+			local a, b = (-h - oa) / da, (h - oa) / da
+			if a > b then
+				a, b = b, a
+			end
+			t0, t1 = math.max(t0, a), math.min(t1, b)
+			if t0 > t1 then
+				return false
+			end
+		end
+	end
+	return true
+end
+local byName, poles, boards = {}, {}, {}
+for _, brick in flea do
+	if brick.name then
+		byName[brick.name] = brick
+		if brick.name == "RarityPole" then
+			table.insert(poles, brick)
+		elseif brick.name:sub(1, 5) == "Sign_" then
+			table.insert(boards, brick)
+		end
+	end
+end
+local textOf = {}
+for _, sign in signs do
+	textOf[sign.name] = sign.text
+end
+local rarityText = {}
+for _, name in Env.Require("ReplicatedStorage.Shared.Config.Rarities").Names do
+	rarityText[name] = true
+end
+local cameras = {}
+for x = -30, 30, 15 do
+	for z = -60, 45, 15 do
+		for y = 8, 16, 4 do
+			table.insert(cameras, frame * Vector3.new(x, y, z))
+		end
+	end
+end
+-- Доля из 15 точек грани, закрытых деталями list (кроме самой таблички), и кто закрыл.
+local function hiddenShare(board, camera, center, n, r, up, width, list, who)
+	local blocked = 0
+	for i = -2, 2 do
+		for j = -1, 1 do
+			local point = center + r * (i * width * 0.2) + up * (j * board.size.Y * 0.3)
+			for _, other in list do
+				if other ~= board and crosses(other, camera, point) then
+					blocked += 1
+					who[textOf[other.name] or other.name] = true
+					break
+				end
+			end
+		end
+	end
+	return blocked / 15
+end
+local hiddenSigns, overlaps = {}, {}
+for _, sign in signs do
+	local board = byName[sign.name]
+	for _, face in sign.faces do
+		local axes = FACES[face.Name]
+		local n, r = board.cframe:VectorToWorldSpace(axes[1]), board.cframe:VectorToWorldSpace(axes[2])
+		local up = board.cframe.UpVector
+		local center = board.cframe.Position + n * (math.abs(axes[1]:Dot(board.size)) / 2 + 0.01)
+		local width = math.abs(axes[2]:Dot(board.size))
+		local seen, bad, worst, byBoards = 0, 0, 0, 0
+		local who = {}
+		for _, camera in cameras do
+			local away = camera - center
+			if away.Unit:Dot(n) > SIGN_GRAZING and away.Magnitude < 70 then
+				seen += 1
+				local share = if rarityText[sign.text]
+					then 0
+					else hiddenShare(board, camera, center, n, r, up, width, poles, who)
+				worst = math.max(worst, share)
+				if share > SIGN_HIDDEN then
+					bad += 1
+				end
+				if hiddenShare(board, camera, center, n, r, up, width, boards, {}) > SIGN_HIDDEN then
+					byBoards += 1
+				end
+			end
+		end
+		if seen > 0 and (bad / seen > SIGN_BAD_SHARE or worst > SIGN_WORST) then
+			table.insert(
+				hiddenSigns,
+				("«%s» %s: закрыта у %d из %d, до %.0f%%"):format(
+					sign.text,
+					face.Name,
+					bad,
+					seen,
+					worst * 100
+				)
+			)
+		end
+		if byBoards > 0 then
+			table.insert(overlaps, ("«%s» %d/%d"):format(sign.text, byBoards, seen))
+		end
+	end
+end
+check(
+	#hiddenSigns == 0,
+	"столбы редкостей не закрывают надписи с камеры игрока"
+		.. (if #hiddenSigns > 0 then ": " .. table.concat(hiddenSigns, "; ") else "")
+)
+if #overlaps > 0 then
+	print(
+		"    для сведения — вывеска за вывеской (точек камеры): "
+			.. table.concat(overlaps, ", ")
+	)
+end
+
 -- Предметы босса 2 стоят на площадке, без постаментов, у каждого свой поворот.
 local points = {}
 for _, point in MapLayout.ArtSlotPoints() do

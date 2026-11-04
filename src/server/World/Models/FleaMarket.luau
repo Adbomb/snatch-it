@@ -1,4 +1,4 @@
--- Уровень 2 «Барахолка» (D43, редизайн D44): безумный рынок сокровищ. Проход мощён крупными плитами тёплого камня
+-- Уровень 2 «Барахолка» (D43, редизайн D44, полировка D45): безумный рынок сокровищ. Проход мощён крупными плитами тёплого камня
 -- со сдвигом рядов (без шахматки), от входа к боссу ведёт бирюзовая дорожка с золотой кромкой и ромбами, вдоль
 -- павильонов — графитовые променады с золотыми вставками и неоновыми точками, бордюры с золотым кантом. В центре —
 -- площадка босса в виде огромной монеты: графитовое кольцо с огоньками, золотой обод с насечкой, бирюзовое поле
@@ -200,7 +200,7 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 	Put(out, FleaStalls.Tent(), left(32, FRONT))
 	Put(out, FleaStalls.Containers(), right(-31, FRONT))
 	Put(out, FleaStalls.Rotunda(), right(-6, FRONT))
-	Put(out, FleaStalls.PrizeMachine(), right(32, FRONT))
+	Put(out, FleaStalls.PrizeTerminal(), right(32, FRONT))
 
 	-- Площадки перед павильонами на променаде: у каждого свой узор (полосы, кант, клетка, «осторожно»).
 	local function porch(side: number, z: number, width: number, base: Color3, accent: Color3, kind: string)
@@ -213,7 +213,7 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 				local a = z0 + i * width / count
 				table.insert(
 					out,
-					Box(x0 + 0.4, x1 - 0.4, 0, TOP.pattern, a + 0.3, a + width / count - 0.3, accent, DECOR)
+					Box(x0 + 0.4, x1 - 0.6, 0, TOP.pattern, a + 0.3, a + width / count - 0.3, accent, DECOR)
 				)
 			end
 		elseif kind == "frame" then
@@ -271,6 +271,9 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 		Put(out, FleaKit.RarityPole(rarity), right(poles[i], CURB - 1.8))
 	end
 	local function bunting(side: number, z0: number, z1: number, colors: { Color3 })
+		if z1 - z0 < 6 then
+			return -- слишком короткий пролёт
+		end
 		local at = CFrame.new(side * (CURB - 1.8), 0, z0) * CFrame.Angles(0, -math.pi / 2, 0)
 		Put(out, FleaStalls.Bunting(z1 - z0, 10.1, 1.6, 2.4, colors), at)
 	end
@@ -288,7 +291,7 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 	local boss = MapLayout.BossSpot
 	Put(out, FleaStalls.PocketWatch(), facing(-25, 38, boss))
 	Put(out, FleaStalls.CoinStack(), facing(25, 37, boss))
-	local target = V(boss.X, 7, boss.Y)
+	local target = V(boss.X, 5, boss.Y) -- середина корпуса торговца, не макушка
 	for _, tower in { { -28, 22, C.orange }, { 28, 22, C.purple } } do
 		local at = V(tower[1], 0, tower[2])
 		Put(out, FleaStalls.LightTower(target - at, tower[3]), CFrame.new(at))

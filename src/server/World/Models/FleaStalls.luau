@@ -1,4 +1,4 @@
--- Павильоны и большие вещи «Барахолки» (D44): шесть разных торговых павильонов с крышами, вывесками, витринами,
+-- Павильоны и большие вещи «Барахолки» (D44, полировка D45): шесть разных торговых павильонов с крышами, вывесками, витринами,
 -- товаром и подсветкой и гигантские декорации — гора сокровищ с огромным сундуком (фон для босса), карманные часы,
 -- стопка монет, мачты с ценником и монетой, рекламные щиты на обрывах. Это декорации: настоящие предметы босса
 -- стоят только на площадке (MapLayout.ArtSlots). Павильон — функция кирпичей в своих координатах: начало — середина
@@ -397,89 +397,84 @@ function FleaStalls.Vault(): { Brick }
 	return out
 end
 
--- «Призы» — огромный автомат с клешнёй (24 × 16): тумба с пультом, джойстиком, кнопками и лотком, стеклянный куб с
--- горой призов и клешнёй, световой короб с лампочками и вывеской, звезда наверху; рядом уголок автоматов с капсулами
--- под полосатым навесом и вывеской.
-function FleaStalls.PrizeMachine(): { Brick }
+-- Подарочная коробка с лентами крест-накрест (без банта): начало — центр низа.
+local function gift(size: Vector3, color: Color3, ribbon: Color3): { Brick }
+	local at = V(0, size.Y / 2, 0)
+	return {
+		B(size, at, color, DECOR),
+		B(V(size.X * 0.22, size.Y + 0.1, size.Z + 0.1), at, ribbon, DECOR),
+		B(V(size.X + 0.1, size.Y + 0.2, size.Z * 0.22), at, ribbon, DECOR),
+	}
+end
+
+-- «Призы» — призовой терминал (24 × 16): здание-лавка, а не отдельный автомат. Большая открытая витрина — полки с
+-- призами на тёмном фоне, стойка выдачи с люком и призом, экран и вывеска «ВЫДАЧА», полосатый
+-- навес, световой короб с лампочками (средняя — свет павильона) и вывеской «ПРИЗЫ», звезда наверху, золотые колонны по углам. Куполов с
+-- капсулами и рычагов, как у предмета «Легендарный автомат с призами», здесь нет.
+function FleaStalls.PrizeTerminal(): { Brick }
 	local out = {
 		Box(-12, 12, 0, 0.4, 0, 16, C.purpleDark),
-		Box(-10, 4, 0.4, 5.4, 3, 15, C.teal),
-		Box(-10.2, 4.2, 4.6, 5.2, 2.8, 15.2, C.gold, DECOR),
-		Box(-8, 2, 3.6, 5, 1.8, 3.2, C.graphite),
-		Disc(0.4, 5, 6.2, -5.5, 2.5, C.metal),
-		B(V(1, 1, 1), V(-5.5, 6.4, 2.5), C.red, BALL),
-		B(V(0.8, 0.8, 0.8), V(-2.6, 5.05, 2.5), C.goldLight, FleaKit.With(BALL, { material = Enum.Material.Neon })),
-		B(V(0.8, 0.8, 0.8), V(-1, 5.05, 2.5), C.tealLight, FleaKit.With(BALL, { material = Enum.Material.Neon })),
-		Box(0.4, 3.4, 1.2, 3.4, 2.75, 3.1, C.graphiteDark, DECOR),
-		Box(-9.4, -8.4, 2.4, 3.4, 2.85, 3.05, C.gold, DECOR),
-		Box(-9.6, 3.6, 5.4, 15.4, 3.4, 14.6, C.glass, GLASS),
-		Box(-10.4, 4.4, 15.4, 19.4, 2.6, 15.4, C.purple),
-		Neon(V(14.4, 0.3, 0.25), V(-3, 19.15, 2.475), C.orange),
-		Board(V(11, 2.4, 0.3), V(-3, 17.3, 2.45), C.orange, Label("ПРИЗЫ")),
-		Box(-3.3, -2.7, 19.4, 20.4, 7.7, 8.3, C.gold, DECOR),
-		B(V(3.4, 3.4, 0.5), V(-3, 22, 8), C.gold, DECOR),
-		B(V(3.4, 3.4, 0.6), CFrame.new(-3, 22, 8) * CFrame.Angles(0, 0, math.rad(45)), C.goldLight, DECOR),
+		Box(-11, 11, 0.4, 15, 5, 16, C.purple),
+		Box(-12, 12, 15, 18.6, 3.6, 16.4, C.graphiteDark),
+		Neon(V(23.6, 0.3, 0.3), V(0, 18.35, 3.45), C.orange),
+		Board(V(14, 2.6, 0.3), V(0, 16.7, 3.45), C.orange, Label("ПРИЗЫ")),
+		Box(-0.3, 0.3, 18.6, 19.6, 9.7, 10.3, C.gold, DECOR),
+		B(V(3.4, 3.4, 0.5), V(0, 21.2, 10), C.gold, DECOR),
+		B(V(3.4, 3.4, 0.6), CFrame.new(0, 21.2, 10) * CFrame.Angles(0, 0, math.rad(45)), C.goldLight, DECOR),
 	}
-	for _, x in { -9.65, 3.65 } do
-		for _, z in { 3.35, 14.65 } do
-			table.insert(out, Box(x - 0.35, x + 0.35, 5.4, 15.4, z - 0.35, z + 0.35, C.gold, DECOR))
+	-- Лампочки по низу светового короба; средняя — свет павильона: ровно освещает витрину и стойку снаружи.
+	for i = 0, 8 do
+		local color = if i % 2 == 0 then C.goldLight else C.orange
+		local bulb = FleaKit.With(BALL, { material = Enum.Material.Neon })
+		table.insert(out, B(V(0.7, 0.7, 0.7), V(-10.4 + i * 2.6, 15.15, 3.4), color, bulb))
+		if i == 4 then
+			out[#out].light = lamp(20, C.purpleLight)
 		end
 	end
-	-- Лампочки по низу светового короба; средняя — свет павильона.
-	for i = 0, 6 do
-		table.insert(
-			out,
-			B(
-				V(0.7, 0.7, 0.7),
-				V(-9.5 + i * 2.15, 15.6, 2.5),
-				if i % 2 == 0 then C.goldLight else C.orange,
-				FleaKit.With(BALL, { material = Enum.Material.Neon })
-			)
-		)
+	for _, x in { -11.6, 11.6 } do
+		table.insert(out, Box(x - 0.6, x + 0.6, 0.4, 15, 4.4, 5.6, C.gold))
 	end
-	out[#out - 3].light = lamp(18, C.purpleLight)
-	-- Гора призов внутри и клешня.
-	local prizes = {
-		{ -7.6, 6.6, 2.6, C.red },
-		{ -5, 6.4, 2.4, C.gold },
-		{ -2.4, 9, 2.8, C.teal },
-		{ 0.6, 6.5, 2.6, C.purpleLight },
-		{ -7, 10.2, 2.6, C.orange },
-		{ -4.4, 11.4, 2.2, C.blue },
-		{ 1.2, 11.6, 2.6, C.goldLight },
-		{ -1.8, 12.6, 2, C.red },
-		{ -6.6, 13, 2.4, C.tealLight },
-	}
-	for _, prize in prizes do
-		local d = prize[3]
-		local lift = if prize[2] > 11 then 0.9 else 0
-		table.insert(out, B(V(d, d, d), V(prize[1], 5.4 + d / 2 + lift, prize[2]), prize[4], BALL))
+	-- Витрина: рама, тёмный фон, две полки, призы.
+	table.insert(out, Box(-10, 2, 0.4, 3.2, 3.4, 5.2, C.purpleDark))
+	table.insert(out, Box(-10, 2, 12.6, 14, 3.4, 5.2, C.purpleDark))
+	table.insert(out, Box(-10, -9, 3.2, 12.6, 3.4, 5.2, C.purpleDark))
+	table.insert(out, Box(1, 2, 3.2, 12.6, 3.4, 5.2, C.purpleDark))
+	-- Витрина открытая (стекло отражало небо и прятало призы), фон тёмный, как у ювелирной витрины.
+	local backdrop = { material = Enum.Material.SmoothPlastic, collide = false }
+	table.insert(out, B(V(10, 9.4, 0.3), V(-4, 7.9, 4.95), C.purpleDark, backdrop))
+	for _, y in { 6.2, 9.4 } do
+		table.insert(out, Box(-9, 1, y, y + 0.3, 3.8, 4.8, C.metal, DECOR))
 	end
-	Put(out, FleaKit.Trophy(C.gold, 1.6, true), CFrame.new(-3.6, 7.2, 8))
-	table.insert(out, Box(-3.1, -2.9, 11.6, 15.4, 8.9, 9.1, C.metal, DECOR))
-	table.insert(out, Disc(1.6, 10.8, 11.6, -3, 9, C.silver))
-	for k = 0, 2 do
-		local at = CFrame.new(-3, 10.8, 9) * CFrame.Angles(0, math.rad(k * 120), 0) * CFrame.new(0, -0.8, -0.6)
-		table.insert(out, B(V(0.25, 2, 0.25), at * CFrame.Angles(math.rad(-25), 0, 0), C.metal, DECOR))
-	end
-	-- Уголок капсул: два автомата, полосатый навес на столбах, задняя стенка с вывеской.
-	Put(out, FleaKit.CapsuleMachine(C.teal), CFrame.new(7, 0.4, 6))
-	Put(out, FleaKit.CapsuleMachine(C.orange), CFrame.new(10.2, 0.4, 6.4) * CFrame.Angles(0, -0.15, 0))
-	table.insert(out, Box(5, 12, 0.4, 10.4, 10, 10.6, C.purple))
-	table.insert(out, Board(V(6, 1.6, 0.3), V(8.5, 8.6, 9.85), C.teal, Label("КАПСУЛЫ")))
-	for _, x in { 5.4, 11.6 } do
-		table.insert(out, Box(x - 0.25, x + 0.25, 0.4, 8.6, 2.15, 2.65, C.graphiteDark))
-	end
+	Put(out, gift(V(1.8, 1.5, 1.2), C.teal, C.goldLight), CFrame.new(-6.8, 3.2, 4.2))
+	table.insert(out, B(V(1.6, 1.6, 1.6), V(-4, 4, 4.2), C.orange, BALL))
+	Put(out, FleaKit.Trophy(C.gold, 1.2, true), CFrame.new(-1.2, 3.2, 4.2))
+	table.insert(out, Gem(1.2, V(-7.4, 7.3, 4.2), C.purpleLight))
+	Put(out, gift(V(1.6, 1.3, 1.1), C.red, C.cream), CFrame.new(-4.3, 6.5, 4.2) * CFrame.Angles(0, 0.3, 0))
+	table.insert(out, B(V(1.4, 1.4, 1.4), V(-1.4, 7.2, 4.2), C.blue, BALL))
+	Put(out, FleaKit.Trophy(C.silver, 0.9, true), CFrame.new(-7.2, 9.7, 4.2))
+	table.insert(out, B(V(1.5, 1.5, 1.5), V(-4.4, 10.45, 4.2), C.teal, BALL))
+	Put(out, gift(V(1.5, 1.2, 1.1), C.goldLight, C.purple), CFrame.new(-1.5, 9.7, 4.2) * CFrame.Angles(0, -0.25, 0))
+	-- Стойка выдачи: прилавок, люк в золотой раме, приз на прилавке, экран, вывеска, звонок, навес.
+	table.insert(out, Box(3.4, 11, 0.4, 4, 2.6, 5, C.teal))
+	table.insert(out, Box(3.2, 11.2, 4, 4.3, 2.4, 5.1, C.cream))
+	table.insert(out, Box(5, 9.6, 4.3, 8.9, 4.7, 5.1, C.gold))
+	table.insert(out, Box(5.5, 9.1, 4.5, 8.5, 4.6, 4.9, C.graphiteDark, DECOR))
+	Put(out, gift(V(1.8, 1.4, 1.4), C.purple, C.goldLight), CFrame.new(7.3, 4.3, 3.6) * CFrame.Angles(0, 0.2, 0))
+	table.insert(out, Neon(V(5.8, 2.2, 0.2), V(7.3, 10.5, 4.85), C.teal))
+	table.insert(out, Board(V(5.8, 1.1, 0.2), V(7.3, 12.45, 4.85), C.graphiteDark, Label("ВЫДАЧА")))
+	table.insert(out, Disc(0.9, 4.3, 4.55, 4.2, 3.2, C.gold))
+	table.insert(out, B(V(0.8, 0.8, 0.8), V(4.2, 4.6, 3.2), C.gold, BALL))
 	for i, color in { C.teal, C.cream, C.teal } do
-		local w = 7.2 / 3
-		table.insert(out, B(V(w, 2, 8.4), V(5 + (i - 0.5) * w, 9.6, 6.2), color, WEDGE))
+		local w = 8.4 / 3
+		table.insert(out, B(V(w, 1.6, 3), V(3.2 + (i - 0.5) * w, 14, 3.5), color, WEDGE))
 	end
 	return out
 end
 
 -- Гора сокровищ с огромным сундуком — фон для босса (34 × 17, высота с крышкой ~22): широкая невысокая груда
--- золота из перекрывающихся «холмов» в два яруса с самородками, монетами и самоцветами, на ней окованный сундук с
--- откинутой крышкой, полный золота (тёплый свет), корона и самоцветы сверху, мешки у подножия. Лицо — к −Z (к
+-- золота из перекрывающихся «холмов» в два яруса с самородками, монетами и самоцветами, на ней обычный открытый
+-- бирюзовый сундук, полный золота (тёплый свет), монеты, слитки и корона сверху, мешки у подножия; на предмет
+-- «Живой сундук-мимик» (коричневый, с замком, глазами и зубами) не похож. Лицо — к −Z (к
 -- боссу). Нижний ярус — без столкновений (на него можно зайти), спереди на нём только плоские монеты.
 function FleaStalls.TreasureHoard(): { Brick }
 	local LOWER, UPPER = 1.4, 4.6 -- верх ярусов (у среднего холма; боковые на 0.1 ниже — верх не совпадает, D36)
@@ -531,50 +526,69 @@ function FleaStalls.TreasureHoard(): { Brick }
 	for _, g in gems do
 		table.insert(out, Gem(1.6, V(g[1], g[2], g[3]), g[4]))
 	end
-	-- Сундук (в своих координатах низ — 0, ставится на верхний ярус): корпус, золотые оковки, нижняя кромка, замок,
-	-- золото внутри (свет), крышка с оковками.
+	-- Сундук (в своих координатах низ — 0, ставится на верхний ярус) — обычный сундук сокровищ, не мимик: бирюзовый
+	-- корпус с золотой оковкой и светлыми филёнками, вместо замка — монета-эмблема с самоцветом, ступенчатая крышка,
+	-- внутри золото (тёплый свет), стопки монет, слитки и самоцветы; без шаров-«глаз», зубов и красного.
 	local chest = {
-		Box(-10, 10, 0.2, 8.7, -0.5, 8.5, C.wood),
+		Box(-10, 10, 0.2, 8.7, -0.5, 8.5, C.tealDeep),
 		Box(-10.4, -8.8, -0.05, 8.8, -0.9, 8.9, C.gold),
 		Box(8.8, 10.4, -0.05, 8.8, -0.9, 8.9, C.gold),
-		Box(-3.6, -2.6, 0.15, 8.8, -0.8, 8.8, C.goldDark),
-		Box(2.6, 3.6, 0.15, 8.8, -0.8, 8.8, C.goldDark),
 		Box(-10.3, 10.3, 0, 1.1, -0.75, 8.75, C.goldDark),
-		Box(-1.8, 1.8, 5.9, 9.4, -1.05, -0.7, C.gold),
-		Box(-0.3, 0.3, 6.7, 8.1, -1.15, -1, C.graphiteDark, DECOR),
+		Box(-10.3, 10.3, 7.3, 8.3, -0.75, 8.75, C.goldDark),
+		Box(-8.2, -1.6, 2, 6.6, -0.65, -0.45, C.teal),
+		Box(1.6, 8.2, 2, 6.6, -0.65, -0.45, C.teal),
+		Round(3.8, 0.5, CFrame.new(0, 4.4, -0.6), C.gold),
+		Round(2.6, 0.3, CFrame.new(0, 4.4, -0.95), C.goldLight),
+		Gem(1.1, V(0, 4.4, -1.25), C.purple),
 		Box(-9.2, 9.2, 8.7, 9.9, 0.1, 7.9, C.goldLight),
 	}
 	chest[#chest].light = { range = 30, brightness = 1.6, color = C.goldLight }
-	local lid = CFrame.new(0, 8.7, 8.5) * CFrame.Angles(math.rad(100), 0, 0) * CFrame.new(0, 0.9, -4.5)
-	table.insert(chest, B(V(20.4, 1.8, 9), lid, C.woodDark))
-	table.insert(chest, B(V(20.8, 2, 1.2), lid * CFrame.new(0, 0, -3.9), C.gold, DECOR))
+	for i, x in { -4.9, 4.9 } do
+		for j, y in { 3.2, 5.6 } do
+			local color = if (i + j) % 2 == 0 then C.purpleLight else C.tealLight
+			table.insert(chest, Gem(0.8, V(x + (j - 1.5) * 2.4, y, -0.75), color))
+		end
+	end
+	-- Крышка: плита, ступень сверху, золотые кромки.
+	local lid = CFrame.new(0, 8.7, 8.5) * CFrame.Angles(math.rad(100), 0, 0) * CFrame.new(0, 0.7, -4.5)
+	table.insert(chest, B(V(20.4, 1.4, 9), lid, C.tealDeep))
+	table.insert(chest, B(V(17.6, 1.2, 6.6), lid * CFrame.new(0, 1.2, 0), C.teal))
+	table.insert(chest, B(V(20.8, 1.6, 1.2), lid * CFrame.new(0, 0, -3.9), C.gold, DECOR))
 	for _, x in { -9.6, 9.6 } do
-		table.insert(chest, B(V(1.6, 2, 9.2), lid * CFrame.new(x, 0, 0), C.gold, DECOR))
+		table.insert(chest, B(V(1.6, 1.6, 9.2), lid * CFrame.new(x, 0, 0), C.gold, DECOR))
 	end
-	table.insert(chest, B(V(4, 2.2, 2.2), lid * CFrame.new(0, -0.2, -4), C.goldLight, DECOR))
-	-- Сверху: самородки, самоцветы, корона.
-	local heap = {
-		{ -5.8, 3.2, C.gold },
-		{ -1.6, 3.8, C.goldLight },
-		{ 6, 3, C.gold },
-		{ 3, 2.6, C.goldLight },
-		{ -7.8, 2.2, C.goldLight },
-	}
-	for i, n in heap do
-		table.insert(chest, B(V(n[2], n[2], n[2]), V(n[1], 9.9 + n[2] * 0.25, 2 + (i % 2) * 3), n[3], BALL))
+	-- Сверху: стопки монет, монеты на ребре, слитки, самоцветы, корона.
+	for _, stack in { { -6.2, 2.4, 1.2 }, { 5.6, 2.2, 1 }, { -2, 5.6, 0.8 }, { 6.6, 5.8, 0.7 } } do
+		table.insert(chest, Disc(2.2, 9.9, 9.9 + stack[3], stack[1], stack[2], C.gold))
 	end
-	table.insert(chest, Gem(2, V(-7.6, 11.3, 6), C.purple))
-	table.insert(chest, Gem(1.8, V(7.8, 11.1, 2.2), C.teal))
-	table.insert(chest, Gem(1.5, V(0.8, 11.3, 6.6), C.red))
-	table.insert(chest, Disc(3.6, 9.7, 12.5, 2.2, 3.4, C.gold))
-	for k = 0, 4 do
-		local a = math.rad(18 + k * 72)
+	for i, c in { { -8, 1.2, 25 }, { -3.6, 1.6, -30 }, { 2.6, 1.4, 35 }, { 8.2, 4.6, -20 }, { -6.8, 6.4, 15 } } do
+		local at = CFrame.new(c[1], 11, c[2] + 0.6) * CFrame.Angles(math.rad(c[3]), math.rad(i * 40), 0)
 		table.insert(
 			chest,
-			B(V(0.9, 0.9, 0.9), V(2.2 + 1.6 * math.cos(a), 12.85, 3.4 + 1.6 * math.sin(a)), C.goldLight, BALL)
+			B(V(0.35, 2.4, 2.4), at * FleaKit.UPRIGHT, if i % 2 == 0 then C.gold else C.goldDark, FleaKit.ROUND)
 		)
 	end
-	table.insert(chest, Gem(1, V(2.2, 12.3, 1.55), C.red))
+	for i, bar in { { -3.2, 3.2, 0.3 }, { 1.6, 4.6, -0.4 }, { 3.6, 1.8, 0.9 } } do
+		local at = CFrame.new(bar[1], 10.2, bar[2]) * CFrame.Angles(0, bar[3], 0)
+		table.insert(chest, B(V(2.2, 0.7, 1.1), at, if i % 2 == 0 then C.goldLight else C.gold, DECOR))
+	end
+	table.insert(chest, Gem(2, V(-7.4, 11.1, 6), C.purple))
+	table.insert(chest, Gem(1.8, V(7.8, 10.9, 2.6), C.teal))
+	table.insert(chest, Gem(1.5, V(0.8, 11, 6.8), C.blue))
+	table.insert(chest, Disc(3.6, 9.7, 12.5, 2.2, 3.4, C.gold))
+	for k = 0, 4 do
+		local ang = math.rad(18 + k * 72)
+		table.insert(
+			chest,
+			B(V(0.9, 0.9, 0.9), V(2.2 + 1.6 * math.cos(ang), 12.85, 3.4 + 1.6 * math.sin(ang)), C.goldLight, BALL)
+		)
+	end
+	table.insert(chest, Gem(1, V(2.2, 12.3, 1.55), C.purpleLight))
+	-- Монеты, свисающие через передний край.
+	for i, x in { -5.4, 0.6, 6.2 } do
+		local at = CFrame.new(x, 8.6, -0.9) * CFrame.Angles(math.rad(70 + i * 5), 0, math.rad(i * 12))
+		table.insert(chest, B(V(0.3, 2, 2), at * FleaKit.UPRIGHT, C.gold, FleaKit.ROUND))
+	end
 	Put(out, chest, CFrame.new(0, UPPER - 0.1, 0))
 	FleaKit.Sack(out, CFrame.new(-16.6, 0, -1.6) * CFrame.Angles(0, 0.4, 0), 1.2)
 	FleaKit.Sack(out, CFrame.new(16.8, 0, -1) * CFrame.Angles(0, -0.5, 0), 1.05)
@@ -725,8 +739,8 @@ function FleaStalls.UmbrellaCart(color: Color3, stripe: Color3): { Brick }
 end
 
 -- Золотая башня-прожектор (4 × 25): тумба, бирюзовая колонна с золотыми кольцами, фонарь на макушке (неон в золотых
--- стойках, крыша ступенями, шар), знамя цвета banner и прожектор на кронштейне — светит на target (в координатах
--- башни).
+-- стойках, крыша ступенями, шар), знамя цвета banner и прожектор на высоте 13.5 — мягко светит на target (в
+-- координатах башни).
 function FleaStalls.LightTower(target: Vector3, banner: Color3): { Brick }
 	local out = {
 		Box(-1.8, 1.8, 0, 1, -1.8, 1.8, C.graphite),
@@ -749,14 +763,16 @@ function FleaStalls.LightTower(target: Vector3, banner: Color3): { Brick }
 			table.insert(out, Box(x - 0.2, x + 0.2, 20, 22.4, z - 0.2, z + 0.2, C.gold, DECOR))
 		end
 	end
-	local from = V(0, 18, 0)
+	-- Прожектор на высоте 13.5 под знаменем: свет ложится на корпус босса, а не только на макушку; яркость 1 —
+	-- в Studio при 3 верх босса засвечивался до белого (2026-11-04).
+	local from = V(0, 13.5, 0)
 	local head = CFrame.lookAt(from + (target - from).Unit * 1.8, target)
 	table.insert(
 		out,
 		B(V(2, 1.6, 2.4), head, C.graphiteDark, {
 			collide = false,
 			shadow = false,
-			light = { range = 52, brightness = 3, color = C.spot, angle = 45 },
+			light = { range = 46, brightness = 1, color = C.spot, angle = 60 },
 		})
 	)
 	table.insert(out, Neon(V(1.6, 1.2, 0.2), head * CFrame.new(0, 0, -1.25), C.goldLight))

@@ -42,9 +42,11 @@ FleaKit.DIAMOND = CFrame.Angles(math.rad(45), 0, math.rad(45)) -- куб на в
 FleaKit.TURN = CFrame.Angles(0, math.pi, 0) -- разворот на 180° вокруг вертикали
 
 FleaKit.C = {
-	stone = hex("D9C8A5"), -- мощение прохода: тёплый светлый камень
-	stoneDark = hex("BFA67F"),
-	grout = hex("8F7A5E"), -- швы мощения: тёплые, мягче графита
+	-- Мощение: тёплый песчаный камень средней светлоты — дневной свет Roblox (Brightness 3, Bloom) светлит его на
+	-- ~20 %; прежние D9C8A5/BFA67F в Studio были почти белыми (D45).
+	stone = hex("AE9878"),
+	stoneDark = hex("947F62"),
+	grout = hex("5F4F3D"), -- швы мощения: тёплые, мягче графита
 	graphite = hex("3A3F4B"),
 	graphiteDark = hex("2A2E38"),
 	graphiteLight = hex("555C6B"),
@@ -262,37 +264,6 @@ function FleaKit.GoldChest(): { Brick }
 	}
 end
 
--- Автомат с капсулами: тумба цвета color, монетоприёмник с ручкой, стеклянный купол с капсулами.
-function FleaKit.CapsuleMachine(color: Color3): { Brick }
-	local out = {
-		B(V(2.4, 3, 2.4), V(0, 1.5, 0), color),
-		B(V(1.4, 1.2, 0.2), V(0, 2.1, -1.3), C.graphite, DECOR),
-		FleaKit.Neon(V(0.6, 0.15, 0.1), V(0, 2.45, -1.45), C.goldLight),
-		B(V(0.3, 0.9, 0.9), CFrame.new(0, 1.9, -1.55) * ALONG_Z, C.metal, ROUND),
-		B(V(1, 0.6, 0.2), V(0, 0.7, -1.3), C.graphiteDark, DECOR),
-		B(V(0.3, 2.7, 2.7), CFrame.new(0, 3.15, 0) * UPRIGHT, C.graphite, ROUND),
-		B(V(2.6, 2.6, 2.6), V(0, 4.5, 0), C.glass, {
-			shape = "Ball",
-			material = Enum.Material.Glass,
-			transparency = 0.5,
-			collide = false,
-			shadow = false,
-		}),
-		B(V(0.4, 1.2, 1.2), CFrame.new(0, 5.85, 0) * UPRIGHT, color, ROUND),
-	}
-	local capsules = {
-		{ V(-0.5, 3.9, -0.3), C.red },
-		{ V(0.5, 3.9, 0.2), C.gold },
-		{ V(0, 3.95, 0.6), C.teal },
-		{ V(-0.3, 4.5, 0.3), C.purpleLight },
-		{ V(0.4, 4.4, -0.4), C.orange },
-	}
-	for _, capsule in capsules do
-		table.insert(out, B(V(0.7, 0.7, 0.7), capsule[1], capsule[2], BALL))
-	end
-	return out
-end
-
 -- Стопка из четырёх чемоданов: каждый чуть повёрнут, с ремнём и ручкой спереди.
 function FleaKit.Suitcases(): { Brick }
 	local out = {}
@@ -399,27 +370,32 @@ function FleaKit.Lamp(color: Color3): { Brick }
 end
 
 -- Столб с подвесной вывеской редкости rarity: на кронштейне табличка цвета редкости (Stud-UI, UITokens) с названием
--- редкости с обеих сторон и самоцветами по старшинству (1 — обычный, 3 — эпический).
+-- редкости с обеих сторон, на кронштейне самоцветы по старшинству (1 — обычный, 3 — эпический). Весь столб ниже
+-- полосы вывесок павильонов (они начинаются с 9.4): с камеры игрока он их не закрывает (D45); низ таблички выше
+-- головы игрока.
 function FleaKit.RarityPole(rarity: string): { Brick }
 	local color = UITokens.RarityColor(rarity)
 	local out = {
 		B(V(1.6, 0.4, 1.6), V(0, 0.2, 0), C.graphite),
-		B(V(0.6, 11, 0.6), V(0, 5.9, 0), C.metal),
-		B(V(0.5, 0.5, 5.2), V(0, 11.35, -2.15), C.graphite, DECOR), -- выступает за столб сзади (D36)
+		B(V(0.6, 8.6, 0.6), V(0, 4.7, 0), C.metal),
+		B(V(0.5, 0.4, 4.4), V(0, 8.75, -1.85), C.graphite, DECOR), -- выступает за столб сзади (D36)
 		FleaKit.Board(
-			V(0.3, 3, 3.6),
-			V(0, 8.2, -2.6),
+			V(0.3, 2.3, 3.2),
+			V(0, 6.95, -2.4),
 			color,
 			FleaKit.Label(Rarities.Names[rarity], { Enum.NormalId.Left, Enum.NormalId.Right })
 		),
-		B(V(0.2, 3.3, 3.9), V(0, 8.2, -2.6), C.goldDark, DECOR),
+		B(V(0.2, 2.6, 3.5), V(0, 6.95, -2.4), C.goldDark, DECOR),
 	}
-	for _, z in { -1.2, -4 } do
-		table.insert(out, B(V(0.12, 1.4, 0.12), V(0, 10.4, z), C.metal, DECOR))
+	for _, z in { -1, -3.8 } do
+		table.insert(out, B(V(0.12, 0.5, 0.12), V(0, 8.35, z), C.metal, DECOR))
 	end
 	local rank = Rarities.Rank(rarity)
 	for k = 1, rank do
-		table.insert(out, FleaKit.Gem(0.7, V(0, 10.3, -2.6 + (k - (rank + 1) / 2)), color))
+		table.insert(out, FleaKit.Gem(0.55, V(0, 9.2, -2.4 + (k - (rank + 1) / 2) * 0.8), color))
+	end
+	for _, brick in out do
+		brick.name = brick.name or "RarityPole" -- по имени проверка находит столб среди декора (check_world)
 	end
 	return out
 end
