@@ -218,6 +218,29 @@ UITokens.OwnerTag = {
 	MaxDistance = 260,
 }
 
+-- Подпись над предметом (D45): две строки — название цветом редкости и «Редкость · +доход/сек». Ширина — по длине
+-- названия, пиксели — при масштабе 1 (экран высотой ScreenHeight); на экране подписи не накладываются: дальние
+-- поднимаются над ближними (Controllers/ItemLabelController, Shared/LabelLayout).
+UITokens.ItemLabel = {
+	Height = 46, -- px
+	CharWidth = 13, -- px на букву названия
+	Padding = 30, -- px по бокам вместе
+	MinWidth = 130,
+	MaxWidth = 320,
+	NameShare = 0.62, -- доля высоты под название
+	NameTextSize = Vector2.new(12, 30), -- мин. и макс. размер текста названия
+	InfoTextSize = Vector2.new(10, 19),
+	Income = Color3.fromHex("5BEA72"), -- доход — как надпись «+X/сек» над экспонатом
+	MaxDistance = 60, -- стадов: дальше подпись не рисуется
+	Gap = 1.2, -- стадов между верхом предмета и подписью
+	StackGap = 4, -- px между подписями, поднятыми друг над другом
+	MaxStack = 4, -- подъём не выше 4 высот подписи: по одной на каждый из 4 слотов босса
+	ScreenHeight = 720, -- высота экрана (px), при которой масштаб 1
+	Scale = Vector2.new(0.6, 1.1), -- пределы масштаба по высоте экрана: телефон — 0.6
+	Update = 0.1, -- секунд между раскладками
+	Follow = 12, -- скорость, с которой подпись догоняет своё место (1/с)
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common

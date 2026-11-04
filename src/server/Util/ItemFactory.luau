@@ -1,10 +1,13 @@
--- Создаёт видимый предмет с подписью над ним (BillboardGui, цвет редкости из UI_KIT.md).
+-- Создаёт видимый предмет с подписью над ним (BillboardGui, D45): название цветом редкости и строка «Редкость ·
+-- +доход/сек», ширина — по длине названия (UITokens.ItemLabel); раскладку на экране делает клиент
+-- (ItemLabelController).
 -- Корень предмета — всегда один Part: с ним работают реестр, перенос, витрины и сохранение.
 -- Если для предмета загружен меш (Config/ItemModels), корень — невидимый хитбокс по габаритам модели, а модель из
 -- Blender («Visual», MeshPart с SurfaceAppearance D39) приварена к нему внутри. Иначе корень — сам цветной Part
 -- нужной формы (заготовка до импорта). Карты SurfaceAppearance игровой скрипт задать не может (права плагина) —
 -- копируется шаблон из Server/Looks (его создаёт Rojo, scripts/make_looks.py). Только внешний вид, без логики.
--- Зависит от AssetService, Config/Items, Config/ItemModels, Config/UITokens, Server/Looks.
+-- Зависит от AssetService, Config/Items, Config/ItemModels, Config/Rarities, Config/UITokens, Shared/NumberFormat,
+-- Server/Looks.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,12 +15,11 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
+local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
+local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
 local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local Looks = ServerScriptService.Server.Looks
 
-local LABEL_SIZE = UDim2.fromOffset(200, 36)
-local LABEL_GAP = 1.2 -- стадов между верхом предмета и подписью
-local LABEL_MAX_DISTANCE = 60
 local VISUAL_NAME = "Visual"
 
 local templates: { [string]: MeshPart } = {}
@@ -77,36 +79,66 @@ function ItemFactory.HasModel(itemId: string): boolean
 	return templates[itemId] ~= nil
 end
 
-local function addLabel(part: BasePart, def: Items.ItemDef)
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "Label"
-	billboard.Size = LABEL_SIZE
-	billboard.StudsOffset = Vector3.new(0, part.Size.Y / 2 + LABEL_GAP, 0)
-	billboard.MaxDistance = LABEL_MAX_DISTANCE
-	billboard.Parent = part
-
+-- Строка подписи: размер текста в пределах limits (мин., макс.), белая обводка цвета Ink.
+local function labelText(name: string, size: UDim2, position: UDim2, limits: Vector2, parent: Instance): TextLabel
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Name = name
+	label.Size = size
+	label.Position = position
 	label.BackgroundTransparency = 1
-	label.TextColor3 = UITokens.RarityColor(def.rarity)
 	label.TextScaled = true
 	label.FontFace = UITokens.BodyFont()
-	label.Text = def.displayName
-	label.Parent = billboard
-
+	label.Parent = parent
+	local constraint = Instance.new("UITextSizeConstraint")
+	constraint.MinTextSize = limits.X
+	constraint.MaxTextSize = limits.Y
+	constraint.Parent = label
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = UITokens.Colors.Ink
 	stroke.Thickness = UITokens.Stroke.Text
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 	stroke.Parent = label
+	return label
+end
 
+-- Подпись над предметом: название (Name) и «Редкость · +доход/сек» (Info). Атрибуты BaseWidth, BaseHeight и BaseLift —
+-- исходные размер и подъём: от них клиент считает масштаб под экран и подъём над соседними подписями.
+local function addLabel(part: BasePart, def: Items.ItemDef)
+	local cfg = UITokens.ItemLabel
+	local width = math.clamp((utf8.len(def.displayName) or 0) * cfg.CharWidth + cfg.Padding, cfg.MinWidth, cfg.MaxWidth)
+	local lift = part.Size.Y / 2 + cfg.Gap
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "Label"
+	billboard.Size = UDim2.fromOffset(width, cfg.Height)
+	billboard.StudsOffset = Vector3.new(0, lift, 0)
+	billboard.MaxDistance = cfg.MaxDistance
+	billboard:SetAttribute("BaseWidth", width)
+	billboard:SetAttribute("BaseHeight", cfg.Height)
+	billboard:SetAttribute("BaseLift", lift)
+	billboard.Parent = part
+
+	local color = UITokens.RarityColor(def.rarity)
+	local name = labelText("Name", UDim2.fromScale(1, cfg.NameShare), UDim2.new(), cfg.NameTextSize, billboard)
+	name.TextColor3 = color
+	name.Text = def.displayName
 	if def.rarity == "Secret" then
 		-- У Secret цвет — градиент: текст белый, цвет даёт UIGradient.
-		label.TextColor3 = UITokens.Colors.TextOnColor
+		name.TextColor3 = UITokens.Colors.TextOnColor
 		local gradient = Instance.new("UIGradient")
 		gradient.Color = UITokens.ToColorSequence(UITokens.Rarity.Secret)
-		gradient.Parent = label
+		gradient.Parent = name
 	end
+
+	local share = cfg.NameShare
+	local infoSize, infoPosition = UDim2.fromScale(1, 1 - share), UDim2.fromScale(0, share)
+	local info = labelText("Info", infoSize, infoPosition, cfg.InfoTextSize, billboard)
+	info.TextColor3 = UITokens.Colors.TextOnColor
+	info.RichText = true
+	local rarity = ('<font color="#%s">%s</font>'):format(color:ToHex(), Rarities.Names[def.rarity] or def.rarity)
+	local income = def.income or 0
+	info.Text = if income > 0
+		then ('%s · <font color="#%s">+%s/сек</font>'):format(rarity, cfg.Income:ToHex(), NumberFormat.Short(income))
+		else rarity
 end
 
 function ItemFactory.Create(itemId: string): Part
