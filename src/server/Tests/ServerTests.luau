@@ -613,11 +613,11 @@ test("Защита: дверь не пускает вора, взлом 5 с, л
 	local inside = plotA.floorOrigin:PointToObjectSpace(B.Character.PrimaryPart.Position)
 	check(inside.Z < GameConfig.Defense.Door.At.Z, "закрытая дверь пустила вора в зал")
 	B:MoveTo(plotA.floorOrigin * Vector3.new(0, 3, -15))
-	DefenseService.Handlers.HackBegin(B, A)
+	DefenseService.Handlers.HackBegin(B, A, plotA)
 	task.wait(1)
 	DefenseService.Handlers.HackComplete(B, A, plotA)
 	check(not museum.hacked, "взлом за 1 с прошёл")
-	DefenseService.Handlers.HackBegin(B, A)
+	DefenseService.Handlers.HackBegin(B, A, plotA)
 	task.wait(GameConfig.Defense.HackSeconds + 0.1)
 	DefenseService.Handlers.HackComplete(B, A, plotA)
 	check(museum.hacked and (DataService.Defense(B).hacks.L2 or 0) == 0, "взлом не открыл дверь или устройство не списано")
@@ -627,6 +627,124 @@ test("Защита: дверь не пускает вора, взлом 5 с, л
 	check(fb.hp < fb.maxHp, "ловушка не ударила вора")
 	local inHall = plotA.floorOrigin:PointToObjectSpace(B.Character.PrimaryPart.Position)
 	check(inHall.Z > 0, "после взлома вора всё равно выставило")
+end)
+
+-- Проверки по ревью D46 (2026-11-05) ─────────────────────────────────────────────────────────────────────────
+
+test("Ревью: миграция через настоящую загрузку — двойной постамент, вне музея, нечитаемые записи", function(A, _B, ctx)
+	local keep = displayOwn(ctx, A, 1)
+	local data = DataService.GetData(A)
+	data.schema = 2
+	data.items["dup-late"] = { id = "Moai", mods = {}, place = "slot", slot = 1, rot = 0, acquiredAt = 9e9 }
+	data.items["far"] = { id = "Moai", mods = {}, place = "slot", slot = 99, rot = 0 }
+	data.items["num"] = 5
+	data.items["flag"] = true
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл после миграции")
+	local items = DataService.GetData(again).items
+	check(DataService.GetData(again).schema == 3, "схема не 3")
+	check(ItemRegistry.Get(keep).state == "Displayed" and ItemRegistry.Get(keep).slot == 1, "старший экспонат не на месте")
+	check(items["dup-late"].place == "storage" and ItemRegistry.Get("dup-late").state == "Stored", "второй на постаменте 1")
+	check(items["far"].place == "storage", "экспонат вне музея не в инвентаре")
+	check(items["num"] == 5 and items["flag"] == true, "нечитаемые записи потеряны")
+	check(not DataService.IsSlotFree(again, 1) and DataService.IsSlotFree(again, 2), "IsSlotFree споткнулся о запись")
+	check(countUid(keep) == 1, "дубль экспоната")
+end)
+
+test("Ревью: предмет «передаётся» нельзя выставить; поворот и перестановка во время кражи — нет", function(A, B, ctx)
+	local mine = toInventory(ctx, A)
+	DataService.GetData(A).items[mine].pending = "test-transfer"
+	InventoryService.Handlers.Action(A, "Display", mine, 2)
+	check(ItemRegistry.Get(mine).state == "Stored", "выставили предмет, который ещё передаётся")
+	DataService.GetData(A).items[mine].pending = nil
+	local shown = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA = plotOf(A)
+	near(B, plotA.showcases[1])
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(shown).state == "Lifting", "кража не началась")
+	near(A, plotA.showcases[1])
+	MuseumService.Handlers.Rotate(A, plotA, 1)
+	check(DataService.GetData(A).items[shown].rot == 0, "повернули экспонат, который снимает вор")
+	TheftService.Handlers.Cancel(B)
+	check(ItemRegistry.Get(shown).state == "Displayed", "после отмены не на месте")
+end)
+
+test("Ревью: залипшее удержание и уход владельца во время кражи", function(A, B, ctx)
+	local first = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA = plotOf(A)
+	near(B, plotA.showcases[1])
+	TheftService.Handlers.Begin(B, plotA, 1)
+	local cfg = GameConfig.Theft
+	task.wait(cfg.HoldSeconds + cfg.HoldTolerance + cfg.LiftGrace + 0.3)
+	TheftService.Handlers.Sweep()
+	check(ItemRegistry.Get(first).state == "Displayed", "залипшее удержание держит резерв")
+	task.wait(0.3)
+	steal(B, A, 1)
+	check(ItemRegistry.Get(first).state == "Stolen", "B не унёс экспонат")
+	local userId = A.UserId
+	leave(A)
+	check(ItemRegistry.Get(first) == nil and ItemRegistry.GetCarriedBy(B) == nil, "после ухода владельца добыча осталась")
+	check(countUid(first) == 0, "деталь добычи осталась в мире")
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл")
+	check(DataService.GetData(again).items[first] ~= nil, "экспонат пропал у владельца")
+	check(next(DataService.GetData(B).items) == nil, "у B появился предмет")
+end)
+
+test("Ревью: капкан — 10 с не ходит и не бьёт, по нему бьют, нокаут снимает капкан", function(A, B)
+	doomNight()
+	PvpService.Handlers.Reset()
+	face(A, B, plotOf(A).showcases[2].Position + Vector3.new(0, 0, -12))
+	check(PvpService.Handlers.Snare(B, GameConfig.Defense.Snare.Seconds) == true, "капкан не сработал")
+	check(not PvpService.Handlers.Snare(B, 1), "второй капкан сработал на пойманного")
+	check(B:GetAttribute("Snared") == true, "нет атрибута Snared")
+	local fb = PvpService.Handlers.Fighter(B)
+	PvpService.Handlers.Attack(A)
+	check(fb.hp < fb.maxHp, "по пойманному не бьётся")
+	-- пойманный B не бьёт A
+	face(B, A, plotOf(A).showcases[2].Position + Vector3.new(0, 0, -12))
+	local fa = PvpService.Handlers.Fighter(A)
+	PvpService.Handlers.Attack(B)
+	check(fa.hp == fa.maxHp, "пойманный ударил")
+	face(A, B, plotOf(A).showcases[2].Position + Vector3.new(0, 0, -12))
+	for _ = 1, 60 do
+		if B:GetAttribute("Knocked") then
+			break
+		end
+		task.wait(Battle.Player.AttackInterval + 0.05)
+		PvpService.Handlers.Attack(A)
+	end
+	check(B:GetAttribute("Knocked") == true and B:GetAttribute("Snared") == nil, "нокаут не снял капкан")
+	PvpService.Handlers.Recover(B)
+end)
+
+test("Ревью: защита списывается при установке, возвращается до ночи; взлом вне ночи не начинается", function(A, B)
+	DataService.AddCoins(A, 1e6)
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
+	local defense = DataService.Defense(A)
+	check((defense.owned.Trap or 0) == 0 and type(defense.installed.Trap) == "number", "установка не списала ловушку")
+	settle()
+	DefenseService.Handlers.Action(A, "Remove", "Trap")
+	check(defense.owned.Trap == 1 and defense.installed.Trap == nil, "снятие не вернуло ловушку")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
+	DefenseService.OnPlayerLeaving(A) -- вышел в подготовку
+	check(defense.owned.Trap == 1, "выход до ночи не вернул ловушку")
+	DataService.AddCoins(B, 1e6)
+	DefenseService.Handlers.HackBegin(B, A, plotOf(A))
+	check(DefenseService.Handlers.Museum(A.UserId).hackBegan[B] == nil, "взлом начался в подготовку")
 end)
 
 test("Улучшить можно только свою гантель", function(A, B)

@@ -33,6 +33,9 @@
   (`ItemLabelController`, раз в 0.1 с и плавно) не успевают — подписи на снимке стоят как для прежней камеры и могут
   наезжать. Для проверки подписей ставить персонажа (`HumanoidRootPart.CFrame` на клиенте), ждать ~1.5 с и снимать
   без параметров камеры.
+- Studio MCP (2026-11-05): поток `execute_luau` больше не может вызвать BindableFunction игры («cannot invoke
+  'RunServerTests' … Capabilities: Network»). Серверные тесты — атрибутом: `ServerStorage.DevTools:SetAttribute("RunTests",
+  "")` (или часть имени теста), отчёт — атрибут `TestReport` («идёт» → текст).
 - Studio MCP: клик `user_mouse_input` — в координатах экрана игры (ViewportSize), не снимка: брать
   `AbsolutePosition + AbsoluteSize / 2` кнопки на клиенте. Клавиша E не срабатывает, если камера Custom застряла
   в декоре (подсказка не на экране) — отойти и поставить камеру клиента перед нажатием.

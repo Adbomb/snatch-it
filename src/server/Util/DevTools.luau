@@ -4,7 +4,7 @@
 --   Info(userId) → { coins, strength, dumbbellLevel, museumLevel }
 --   GiveCoins(userId, amount) → новые монеты (пока нет экономики шага 7)
 --   RunServerTests(filter?) → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests); filter —
---   часть имени теста
+--   часть имени теста. Из MCP — атрибутом RunTests ("" — все), отчёт — атрибут TestReport
 --   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37)
 --   Battle(userId, slot) → бой настоящим персонажем с псом за предмет слота (показ анимаций)
 --   BossState(state) → состояние пса для показа анимаций
@@ -132,6 +132,23 @@ function DevTools.Init()
 		return require(ServerScriptService.Server.Tests.ServerTests).Run(filter)
 	end
 	runTests.Parent = folder
+	-- Запуск тестов атрибутом (MCP): folder.RunTests = "" (все) или часть имени. Тесты идут в потоке этого скрипта —
+	-- Studio не даёт потоку MCP вызывать BindableFunction с правами игры (Capabilities: Network, 2026-11-05).
+	-- Отчёт — атрибут TestReport («идёт» → текст отчёта).
+	folder:GetAttributeChangedSignal("RunTests"):Connect(function()
+		local filter = folder:GetAttribute("RunTests")
+		if type(filter) ~= "string" then
+			return
+		end
+		folder:SetAttribute("RunTests", nil)
+		folder:SetAttribute("TestReport", "идёт")
+		task.spawn(function()
+			local ok, report = pcall(function()
+				return require(ServerScriptService.Server.Tests.ServerTests).Run(if filter == "" then nil else filter)
+			end)
+			folder:SetAttribute("TestReport", if ok then report else "ошибка: " .. tostring(report))
+		end)
+	end)
 	local TimeService = require(ServerScriptService.Server.Services.TimeService)
 	for name, handler in {
 		TimeScale = TimeService.SetScale,
