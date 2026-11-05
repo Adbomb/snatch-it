@@ -93,7 +93,10 @@ end
 -- Отправляет владельцу весь инвентарь: { uid, itemId, slot?, pending? } (slot — постамент, если выставлен; pending —
 -- украденное ещё передаётся по журналу, выставить нельзя) и атрибуты для подсказок и интерфейса: StorageCount
 -- (в инвентаре), MuseumSlots (постаментов в музее).
+local syncCount: { [Player]: number } = {} -- сколько раз слали инвентарь (отложенный Sync не повторяет прямой)
+
 function InventoryService.Sync(player: Player)
+	syncCount[player] = (syncCount[player] or 0) + 1
 	local list, stored = {}, 0
 	local data = DataService.GetData(player)
 	for _, uid in ItemRegistry.GetOwnedBy(player.UserId) do
@@ -127,16 +130,18 @@ function InventoryService.Sync(player: Player)
 	Remotes.FireClient(Remotes.Names.InventoryChanged, player, list)
 end
 
--- Sync в конце кадра, один раз на игрока, сколько бы изменений ни было.
+-- Sync в конце кадра, один раз на игрока, сколько бы изменений ни было; если действие уже само прислало инвентарь
+-- после изменения — второй раз не шлётся (окно не пересобирает карточки дважды).
 local syncQueued: { [Player]: boolean } = {}
 local function queueSync(player: Player)
 	if syncQueued[player] then
 		return
 	end
 	syncQueued[player] = true
+	local sent = syncCount[player] or 0
 	task.defer(function()
 		syncQueued[player] = nil
-		if player.Parent then
+		if player.Parent and (syncCount[player] or 0) == sent then
 			InventoryService.Sync(player)
 		end
 	end)
@@ -479,6 +484,9 @@ function InventoryService.Init()
 		end
 	end
 	Remotes.Get(Remotes.Names.InventoryAction).OnServerEvent:Connect(tryAction)
+	Players.PlayerRemoving:Connect(function(player)
+		syncCount[player] = nil
+	end)
 	-- Экспонат встаёт на постамент и уходит с него не только через окно: из рук на витрину, перестановка, кража.
 	-- Окно владельца видит любое изменение Stored/Displayed (проверка тремя клиентами, 2026-11-05).
 	ItemRegistry.OnChanged(function(_uid, fromState, toState, entry)
