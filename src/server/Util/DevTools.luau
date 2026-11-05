@@ -5,7 +5,8 @@
 --   GiveCoins(userId, amount) → новые монеты (пока нет экономики шага 7)
 --   RunServerTests(filter?) → отчёт серверных тестов на двух тестовых игроков (Server/Tests/ServerTests); filter —
 --   часть имени теста. Из MCP — атрибутом RunTests ("" — все), отчёт — атрибут TestReport
---   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37)
+--   TimeScale(scale) / TimeSkip(phase, secondsBefore) / TimeReset() → ускорение и переход к фазе (D37); из MCP —
+--   атрибутом Command («TimeSkip DoomNight 5», «GiveCoins <userId> <сумма>»…), ответ — атрибут CommandResult
 --   Battle(userId, slot) → бой настоящим персонажем с псом за предмет слота (показ анимаций)
 --   BossState(state) → состояние пса для показа анимаций
 --   Showroom(boss?, origin?) → все предметы коллекции босса в ряд (папка __Showroom, только показ)
@@ -163,6 +164,40 @@ function DevTools.Init()
 		end
 		fn.Parent = folder
 	end
+	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
+	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>". Выполняются в потоке этого скрипта (как RunTests),
+	-- ответ — атрибут CommandResult.
+	folder:GetAttributeChangedSignal("Command"):Connect(function()
+		local line = folder:GetAttribute("Command")
+		if type(line) ~= "string" then
+			return
+		end
+		folder:SetAttribute("Command", nil)
+		local words = string.split(line, " ")
+		local ok, result = pcall(function(): any
+			local command = words[1]
+			if command == "TimeSkip" then
+				local state = TimeService.SkipTo(words[2] :: any, tonumber(words[3]))
+				return state and ("%s, день %d"):format(state.phase, state.day)
+			elseif command == "TimeScale" then
+				TimeService.SetScale(tonumber(words[2]) or 1)
+				return "ок"
+			elseif command == "TimeReset" then
+				TimeService.ResetClock()
+				return "ок"
+			elseif command == "GiveCoins" then
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				if not player then
+					return "нет игрока"
+				end
+				local coins = DataService.AddCoins(player, tonumber(words[3]) or 0)
+				GymService.SyncAttributes(player)
+				return coins
+			end
+			return "неизвестная команда"
+		end)
+		folder:SetAttribute("CommandResult", (if ok then "" else "ошибка: ") .. tostring(result))
+	end)
 	folder.Parent = ServerStorage
 end
 
