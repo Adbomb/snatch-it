@@ -39,6 +39,7 @@ local fighters: { [any]: PvpRules.Fighter } = {}
 local targetProviders: { (any) -> { any } } = {}
 local limiter = RateLimiter.new(GameConfig.RateLimits.PvpAttack)
 local random = Random.new()
+local snareCount = 0 -- номер последнего капкана (атрибут SnareToken)
 
 local PvpService = {}
 
@@ -334,10 +335,18 @@ function PvpService.Snare(target: any, seconds: number): boolean
 	if target:GetAttribute("Knocked") or target:GetAttribute("Snared") then
 		return false -- уже лежит или пойман: капкан не тратится
 	end
+	snareCount += 1
+	local token = snareCount
 	target:SetAttribute("Snared", true)
+	target:SetAttribute("SnareToken", token)
 	setFrozen(target, true)
 	task.delay(seconds, function()
-		if target:GetAttribute("Snared") and not target:GetAttribute("Knocked") then
+		-- снимает только свой капкан: после нокаута и нового капкана старый таймер не освобождает раньше срока
+		if
+			target:GetAttribute("SnareToken") == token
+			and target:GetAttribute("Snared")
+			and not target:GetAttribute("Knocked")
+		then
 			release(target)
 			setFrozen(target, false)
 		end
