@@ -1,0 +1,1026 @@
+{
+ "units": "studs, Roblox axes (y up, entrance −Z)",
+ "counts": {
+  "snare_idle": 17,
+  "snare_active": 18
+ },
+ "total": 35,
+ "lights": [],
+ "bricks": [
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Rim",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    3.4,
+    3.4
+   ],
+   "cframe": [
+    0.0,
+    0.08,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Base",
+   "shape": "Cylinder",
+   "size": [
+    0.24,
+    3.0,
+    3.0
+   ],
+   "cframe": [
+    0.0,
+    0.28,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Pad",
+   "shape": "Cylinder",
+   "size": [
+    0.12,
+    1.1,
+    1.1
+   ],
+   "cframe": [
+    0.0,
+    0.45,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Spring",
+   "shape": "Cylinder",
+   "size": [
+    0.42,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    -1.38,
+    0.55,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Spring",
+   "shape": "Cylinder",
+   "size": [
+    0.42,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    1.38,
+    0.55,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw-10",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -1.047,
+    0.484,
+    -0.615,
+    0.5,
+    -0.866,
+    0.0,
+    0.0905,
+    0.0523,
+    0.9945,
+    -0.8613,
+    -0.4973,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw-11",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    0.0,
+    0.547,
+    -1.216,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1045,
+    0.9945,
+    0.0,
+    -0.9945,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw-12",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    1.047,
+    0.484,
+    -0.615,
+    0.5,
+    0.866,
+    0.0,
+    -0.0905,
+    0.0523,
+    0.9945,
+    0.8613,
+    -0.4973,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Tooth-10",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -0.698,
+    0.463,
+    -0.414,
+    -0.5,
+    0.866,
+    0.0,
+    -0.0905,
+    -0.0523,
+    0.9945,
+    0.8613,
+    0.4973,
+    0.1045
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Tooth-11",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    0.0,
+    0.505,
+    -0.815,
+    -1.0,
+    -0.0,
+    0.0,
+    0.0,
+    -0.1045,
+    0.9945,
+    -0.0,
+    0.9945,
+    0.1045
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Tooth-12",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    0.698,
+    0.463,
+    -0.414,
+    -0.5,
+    -0.866,
+    0.0,
+    0.0905,
+    -0.0523,
+    0.9945,
+    -0.8613,
+    0.4973,
+    0.1045
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw10",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -1.047,
+    0.484,
+    0.615,
+    0.5,
+    -0.866,
+    0.0,
+    0.0905,
+    0.0523,
+    -0.9945,
+    0.8613,
+    0.4973,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw11",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    0.0,
+    0.547,
+    1.216,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1045,
+    -0.9945,
+    0.0,
+    0.9945,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Jaw12",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    1.047,
+    0.484,
+    0.615,
+    0.5,
+    0.866,
+    0.0,
+    -0.0905,
+    0.0523,
+    -0.9945,
+    -0.8613,
+    0.4973,
+    0.1045
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Tooth10",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -0.403,
+    0.494,
+    0.708,
+    -0.866,
+    0.5,
+    0.0,
+    -0.0523,
+    -0.0905,
+    -0.9945,
+    -0.4973,
+    -0.8613,
+    0.1045
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Tooth11",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    0.403,
+    0.494,
+    0.708,
+    -0.866,
+    -0.5,
+    0.0,
+    0.0523,
+    -0.0905,
+    -0.9945,
+    0.4973,
+    -0.8613,
+    0.1045
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_idle",
+   "name": "snare_idle_Status",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    0.2
+   ],
+   "cframe": [
+    0.0,
+    0.46,
+    -1.4,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Rim",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    3.4,
+    3.4
+   ],
+   "cframe": [
+    -4.8,
+    0.08,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Base",
+   "shape": "Cylinder",
+   "size": [
+    0.24,
+    3.0,
+    3.0
+   ],
+   "cframe": [
+    -4.8,
+    0.28,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Pad",
+   "shape": "Cylinder",
+   "size": [
+    0.12,
+    1.1,
+    1.1
+   ],
+   "cframe": [
+    -4.8,
+    0.45,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Spring",
+   "shape": "Cylinder",
+   "size": [
+    0.42,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    -6.18,
+    0.55,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Spring",
+   "shape": "Cylinder",
+   "size": [
+    0.42,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    -3.42,
+    0.55,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw-10",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -5.847,
+    1.155,
+    -0.13,
+    0.5,
+    -0.866,
+    0.0,
+    0.866,
+    0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw-11",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -4.8,
+    1.759,
+    -0.13,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw-12",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -3.753,
+    1.155,
+    -0.13,
+    0.5,
+    0.866,
+    0.0,
+    -0.866,
+    0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Tooth-10",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -5.498,
+    0.953,
+    -0.13,
+    -0.5,
+    0.866,
+    0.0,
+    -0.866,
+    -0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Tooth-11",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -4.8,
+    1.356,
+    -0.13,
+    -1.0,
+    -0.0,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Tooth-12",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -4.102,
+    0.953,
+    -0.13,
+    -0.5,
+    -0.866,
+    0.0,
+    0.866,
+    -0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw10",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -5.847,
+    1.155,
+    0.13,
+    0.5,
+    -0.866,
+    0.0,
+    0.866,
+    0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw11",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -4.8,
+    1.759,
+    0.13,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Jaw12",
+   "shape": "Block",
+   "size": [
+    1.378,
+    0.28,
+    0.26
+   ],
+   "cframe": [
+    -3.753,
+    1.155,
+    0.13,
+    0.5,
+    0.866,
+    0.0,
+    -0.866,
+    0.5,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Tooth10",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -5.203,
+    1.248,
+    0.13,
+    -0.866,
+    0.5,
+    0.0,
+    -0.5,
+    -0.866,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Tooth11",
+   "shape": "Wedge",
+   "size": [
+    0.24,
+    0.42,
+    0.2
+   ],
+   "cframe": [
+    -4.397,
+    1.248,
+    0.13,
+    -0.866,
+    -0.5,
+    0.0,
+    0.5,
+    -0.866,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Status",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    0.2
+   ],
+   "cframe": [
+    -4.8,
+    0.46,
+    -1.4,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "snare_active",
+   "name": "snare_active_Glow",
+   "shape": "Cylinder",
+   "size": [
+    0.04,
+    4.0,
+    4.0
+   ],
+   "cframe": [
+    -4.8,
+    0.02,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  }
+ ]
+}

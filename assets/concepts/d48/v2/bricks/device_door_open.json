@@ -1,0 +1,764 @@
+{
+ "units": "studs, Roblox axes (y up, entrance −Z)",
+ "counts": {
+  "door_open": 26
+ },
+ "total": 26,
+ "lights": [],
+ "bricks": [
+  {
+   "group": "door_open",
+   "name": "door_open_Leaf-1",
+   "shape": "Block",
+   "size": [
+    5.85,
+    9.85,
+    0.8
+   ],
+   "cframe": [
+    -9.025,
+    4.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Panel-1",
+   "shape": "Block",
+   "size": [
+    4.85,
+    7.1,
+    0.14
+   ],
+   "cframe": [
+    -9.025,
+    5.55,
+    -0.45,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Bar-1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    -9.025,
+    3.45,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Bar-1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    -9.025,
+    7.85,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Hazard-1",
+   "shape": "Block",
+   "size": [
+    5.65,
+    1.4,
+    0.12
+   ],
+   "cframe": [
+    -9.025,
+    0.95,
+    -0.44,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe-10",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -11.05,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe-11",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -9.025,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe-12",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -7.0,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -11.4,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -11.4,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -6.65,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -6.65,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Leaf1",
+   "shape": "Block",
+   "size": [
+    5.85,
+    9.85,
+    0.8
+   ],
+   "cframe": [
+    9.025,
+    4.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Panel1",
+   "shape": "Block",
+   "size": [
+    4.85,
+    7.1,
+    0.14
+   ],
+   "cframe": [
+    9.025,
+    5.55,
+    -0.45,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Bar1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    9.025,
+    3.45,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Bar1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    9.025,
+    7.85,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Hazard1",
+   "shape": "Block",
+   "size": [
+    5.65,
+    1.4,
+    0.12
+   ],
+   "cframe": [
+    9.025,
+    0.95,
+    -0.44,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe10",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    7.0,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe11",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    9.025,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Stripe12",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    11.05,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    6.65,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    6.65,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    11.4,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    11.4,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_LampBase",
+   "shape": "Block",
+   "size": [
+    1.8,
+    0.4,
+    0.6
+   ],
+   "cframe": [
+    0.0,
+    10.25,
+    -0.3,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_open",
+   "name": "door_open_Lamp",
+   "shape": "Block",
+   "size": [
+    1.3,
+    0.4,
+    0.4
+   ],
+   "cframe": [
+    0.0,
+    10.65,
+    -0.3,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "4CE07A",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  }
+ ]
+}

@@ -1,4 +1,5 @@
-"""D48, этап A — лист иконок и макеты нового HUD (ПК и телефон) поверх настоящего кадра игры из Studio.
+"""D48 v2 — лист иконок, сравнение трёх иконок силы, макеты нового HUD (ПК и телефон) поверх кадра игры из Studio
+и схема зон экрана.
 
 Только картинки для утверждения: в игру ничего не попадает, в Roblox ничего не загружается.
 Иконки — рендеры Blender (scripts/blender/d48_icons.py): здесь им добавляется одинаковый тёмный контур и мягкая тень.
@@ -17,10 +18,12 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D48 = os.path.join(ROOT, "assets", "concepts", "d48")
-ICONS = os.path.join(D48, "icons")
-HUD = os.path.join(D48, "hud")
+ICONS = os.path.join(D48, "v2", "icons")
+HUD = os.path.join(D48, "v2", "hud")
 os.makedirs(HUD, exist_ok=True)
-NAMES = ["backpack", "shield", "arm", "coin", "income"]
+NAMES = ["briefcase", "shield", "coin", "income", "fist", "dumbbell", "bicep"]
+MAIN = ["briefcase", "shield", "fist", "coin", "income"]  # пять иконок HUD (сила — кулак, D48 v2)
+POWER = "fist"
 OUTLINE = (24, 20, 46, 255)
 
 
@@ -98,7 +101,8 @@ def paste(img, im, x, y):
 
 
 # ── Лист иконок ─────────────────────────────────────────────────────────────────────────────────────────────────
-LABELS = {"backpack": "Инвентарь", "shield": "Защита", "arm": "Сила", "coin": "Монеты", "income": "Доход/сек"}
+LABELS = {"briefcase": "Инвентарь", "shield": "Защита", "fist": "Сила", "coin": "Монеты", "income": "Доход/сек",
+          "dumbbell": "Рука с гантелью", "bicep": "Бицепс"}
 
 
 def icon_sheet():
@@ -109,10 +113,10 @@ def icon_sheet():
     for y in range(H):
         t = y / H
         d.line([(0, y), (W, y)], fill=tuple(int(top[i] * (1 - t) + bot[i] * t) for i in range(3)) + (255,))
-    text(img, (W // 2, 70), "D48 — эталонные иконки HUD", 54, anchor="mm")
+    text(img, (W // 2, 70), "D48 — иконки HUD (вариант 2)", 54, anchor="mm")
     text(img, (W // 2, 128), "Blender, стиль D39: блоки, ступенчатый силуэт, одна камера и один свет; контур одной "
                              "толщины", 24, fill=(200, 214, 255), weight="Bold", anchor="mm", sw=2)
-    for i, n in enumerate(NAMES):
+    for i, n in enumerate(MAIN):
         cx = 200 + i * 350
         paste(img, icon(n, 290), cx - 145, 190)
         text(img, (cx, 505), LABELS[n], 34, anchor="mm")
@@ -122,13 +126,48 @@ def icon_sheet():
     for row, y in ((0, 600), (1, 800)):
         x = 150
         for px in (100, 64, 44):
-            for n in NAMES:
+            for n in MAIN:
                 paste(img, icon(n, px), x, y + (150 - px) // 2)
                 x += px + 14
             x += 40
     text(img, (W - 130, 605), "100 · 64 · 44 px", 22, fill=(60, 70, 110), stroke=(238, 244, 255), anchor="ra",
          weight="Bold", shadow=False, sw=0)
     img.convert("RGB").save(os.path.join(ICONS, "icons_sheet.png"))
+
+
+def power_compare():
+    W, H = 1800, 1180
+    img = Image.new("RGBA", (W, H))
+    top, bot = (43, 58, 103), (22, 28, 54)
+    d = ImageDraw.Draw(img)
+    for y in range(H):
+        t = y / H
+        d.line([(0, y), (W, y)], fill=tuple(int(top[i] * (1 - t) + bot[i] * t) for i in range(3)) + (255,))
+    text(img, (W // 2, 66), "Иконка силы — три варианта", 54, anchor="mm")
+    text(img, (W // 2, 122), "одна камера, один свет, один контур; проверка в 100 · 64 · 44 px на светлом и тёмном",
+         24, fill=(200, 214, 255), weight="Bold", anchor="mm", sw=2)
+    cards = (("fist", "1. Кулак", "читается сразу: удар, сила", True),
+             ("dumbbell", "2. Рука с гантелью", "прокачка; в 44 px гантель сливается", False),
+             ("bicep", "3. Бицепс", "мощь; в 44 px похож на «Г»", False))
+    for i, (n, title, note, best) in enumerate(cards):
+        cx = 300 + i * 600
+        x0 = cx - 270
+        rounded(img, (x0, 170, x0 + 540, 1120), 34, (255, 214, 90, 255) if best else (70, 84, 130, 255))
+        rounded(img, (x0 + 6, 176, x0 + 534, 1114), 30, (30, 38, 72, 255))
+        paste(img, icon(n, 330), cx - 165, 200)
+        text(img, (cx, 570), title, 38, anchor="mm", fill=(255, 214, 90) if best else (255, 255, 255))
+        text(img, (cx, 616), note, 22, anchor="mm", weight="Bold", fill=(205, 216, 245), sw=2)
+        for row, (y, bg) in enumerate(((660, (238, 244, 255, 255)), (880, (16, 20, 40, 255)))):
+            rounded(img, (x0 + 30, y, x0 + 510, y + 200), 22, bg)
+            x = x0 + 60
+            for px in (100, 64, 44):
+                paste(img, icon(n, px), x, y + (200 - px) // 2)
+                x += px + 50
+        if best:
+            rounded(img, (cx - 120, 1080, cx + 120, 1126), 23, (255, 214, 90, 255))
+            text(img, (cx, 1103), "ВЫБОР", 26, anchor="mm", fill=(40, 28, 6), stroke=(255, 214, 90), shadow=False,
+                 sw=0)
+    img.convert("RGB").save(os.path.join(ICONS, "power_compare.png"))
 
 
 # ── Фон кадра ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -250,20 +289,23 @@ def timer(img, cx, top, kind, scale=1.0, progress=0.45):
 
 def stats(img, x, y, scale=1.0):
     s = scale
-    soft_blob(img, (x - 30, y - 30, x + int(300 * s), y + int(220 * s)), 85, 36)
+    soft_blob(img, (x - 30, y - 30, x + int(300 * s), y + int(220 * s)), 70, 36)
     rows = (("coin", "$12.5M", int(42 * s), (255, 255, 255), int(64 * s)),
             ("income", "+1.2K/сек", int(30 * s), (124, 255, 107), int(52 * s)),
-            ("arm", "1 250", int(32 * s), (255, 255, 255), int(52 * s)))
+            (POWER, "1 250", int(32 * s), (255, 255, 255), int(52 * s)))
     yy = y
     for name, val, size, color, px in rows:
         paste(img, icon(name, px), x, yy)
-        text(img, (x + px + int(10 * s), yy + px // 2), val, size, fill=color, anchor="lm")
+        box = text(img, (x + px + int(10 * s), yy + px // 2), val, size, fill=color, anchor="lm")
+        if name == POWER:  # у силы — короткая подпись, чтобы число не путали с деньгами
+            text(img, (box[2] + int(8 * s), yy + px // 2 + int(3 * s)), "сила", int(18 * s), fill=(214, 222, 245),
+                 anchor="lm", weight="Bold", sw=2)
         yy += px + int(12 * s)
 
 
 def menu_column(img, right, cy, scale=1.0, pc=True, active=None, hover=None):
     s = scale
-    items = (("backpack", "Инвентарь", "B"), ("shield", "Защита", None))
+    items = (("briefcase", "Инвентарь", "B"), ("shield", "Защита", None))
     px, gap = int(100 * s), int(24 * s)
     total = len(items) * (px + int(26 * s)) + (len(items) - 1) * gap
     y = cy - total // 2
@@ -319,7 +361,7 @@ def attack_button(img, cx, cy, r):
     d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(240, 71, 60, 255), outline=(120, 18, 26, 255), width=5)
     d.ellipse((cx - r + 22, cy - r + 12, cx + r - 22, cy - r * 0.35), fill=(255, 140, 128, 70))
     img.alpha_composite(layer)
-    paste(img, icon("arm", int(r * 1.15)), cx - int(r * 0.575), cy - int(r * 0.66))
+    paste(img, icon(POWER, int(r * 1.05)), cx - int(r * 0.525), cy - int(r * 0.68))
     text(img, (cx, cy + int(r * 0.6)), "УДАР", int(r * 0.3), anchor="mm", stroke=(110, 16, 22))
 
 
@@ -343,7 +385,8 @@ def pc(kind="day", context=False, name="hud_pc_day"):
     roblox_pc(img)
     timer(img, W // 2, 70, kind)
     stats(img, 34, 400)
-    menu_column(img, W - 34, H // 2 + 10, hover="shield" if not context else None, active="backpack" if context else None)
+    menu_column(img, W - 34, H // 2 + 10, hover="shield" if not context else None,
+                active="briefcase" if context else None)
     if context:
         carry_chip(img, W // 2 - 80, H - 120)
         hint_chip(img, W // 2, H - 182, "ЛКМ — удар  ·  держите E у постамента — украсть")
@@ -364,6 +407,54 @@ def phone(kind="doom", name="hud_phone_doom"):
     out = roblox_phone(img, notch)
     out.convert("RGB").save(os.path.join(HUD, name + ".png"))
     return out
+
+
+ZONES = {  # имя, цвет
+    "roblox": ("Roblox (не занимать)", (150, 150, 160)),
+    "stats": ("Статистика", (255, 196, 44)),
+    "menu": ("Меню", (90, 170, 255)),
+    "timer": ("Таймер", (255, 120, 90)),
+    "context": ("Действия", (110, 230, 120)),
+}
+
+
+def zone(img, box, kind):
+    name, col = ZONES[kind]
+    rounded(img, box, 16, col + (70,), outline=col + (255,), width=4)
+    text(img, (box[0] + 14, box[1] + 10), name, 22, anchor="la", weight="Black", sw=3)
+
+
+def zones_pc():
+    W, H = 1920, 1080
+    img = pc("day", True, "_tmp")
+    os.remove(os.path.join(HUD, "_tmp.png"))
+    for box in ((8, 6, 112, 62), (W - 266, 6, W - 8, 62)):
+        zone(img, box, "roblox")
+    zone(img, (14, 360, 420, 640), "stats")
+    zone(img, (W - 220, 300, W - 14, 760), "menu")
+    zone(img, (W // 2 - 260, 56, W // 2 + 260, 230), "timer")
+    zone(img, (W // 2 - 520, H - 200, W // 2 + 520, H - 40), "context")
+    img.convert("RGB").save(os.path.join(HUD, "hud_zones_pc.png"))
+
+
+def zones_phone():
+    W, H, notch = 2340, 1080, 110
+    img = background(W, H)
+    timer(img, W // 2, 64, "doom", 1.1)
+    stats(img, notch + 40, 170, 1.15)
+    menu_column(img, W - notch - 40, 410, 1.15, pc=False)
+    attack_button(img, W - notch - 390, H - 250, 105)
+    carry_chip(img, W // 2 - 40, H - 140, 1.1, pc=False)
+    img = roblox_phone(img, notch)
+    for box in ((notch + 4, 8, notch + 134, 74), (notch + 60, H - 390, notch + 380, H - 70),
+                (W - notch - 260, H - 300, W - notch - 50, H - 90)):
+        zone(img, box, "roblox")
+    zone(img, (notch + 20, 150, notch + 520, 500), "stats")
+    zone(img, (W - notch - 190, 260, W - notch - 14, 640), "menu")
+    zone(img, (W // 2 - 300, 50, W // 2 + 300, 250), "timer")
+    zone(img, (W // 2 - 520, H - 160, W // 2 + 440, H - 60), "context")
+    zone(img, (W - notch - 510, H - 370, W - notch - 270, H - 120), "context")
+    img.convert("RGB").save(os.path.join(HUD, "hud_zones_phone.png"))
 
 
 def timer_states():
@@ -392,10 +483,13 @@ def before_after(after):
 
 
 icon_sheet()
+power_compare()
 timer_states()
 day = pc("day", False, "hud_pc_day")
 pc("doom", True, "hud_pc_doom")
 phone("doom", "hud_phone_doom")
 phone("day", "hud_phone_day")
 before_after(day)
+zones_pc()
+zones_phone()
 print("ok")

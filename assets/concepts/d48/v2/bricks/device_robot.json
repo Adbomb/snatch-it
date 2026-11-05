@@ -1,0 +1,1519 @@
+{
+ "units": "studs, Roblox axes (y up, entrance −Z)",
+ "counts": {
+  "robot_idle": 24,
+  "robot_active": 28
+ },
+ "total": 52,
+ "lights": [],
+ "bricks": [
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Base",
+   "shape": "Cylinder",
+   "size": [
+    0.5,
+    2.9,
+    2.9
+   ],
+   "cframe": [
+    0.0,
+    0.25,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_BaseRing",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    3.1,
+    3.1
+   ],
+   "cframe": [
+    0.0,
+    0.58,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Turret",
+   "shape": "Cylinder",
+   "size": [
+    0.4,
+    2.2,
+    2.2
+   ],
+   "cframe": [
+    0.0,
+    0.86,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Waist",
+   "shape": "Cylinder",
+   "size": [
+    0.6,
+    1.4,
+    1.4
+   ],
+   "cframe": [
+    0.0,
+    1.35,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Body",
+   "shape": "Block",
+   "size": [
+    2.4,
+    2.2,
+    1.8
+   ],
+   "cframe": [
+    0.0,
+    2.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Chest",
+   "shape": "Block",
+   "size": [
+    1.7,
+    1.4,
+    0.22
+   ],
+   "cframe": [
+    0.0,
+    2.75,
+    -0.91,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Badge",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    0.7,
+    0.7
+   ],
+   "cframe": [
+    0.0,
+    2.95,
+    -1.1,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_ChestLight",
+   "shape": "Block",
+   "size": [
+    1.1,
+    0.15,
+    0.12
+   ],
+   "cframe": [
+    0.0,
+    2.375,
+    -1.04,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Shoulder-1",
+   "shape": "Ball",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "cframe": [
+    -1.5,
+    3.45,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Upper-1",
+   "shape": "Block",
+   "size": [
+    0.7,
+    0.9,
+    0.7
+   ],
+   "cframe": [
+    -1.5,
+    2.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Fore-1",
+   "shape": "Block",
+   "size": [
+    0.84,
+    1.1,
+    0.84
+   ],
+   "cframe": [
+    -1.5,
+    1.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Shoulder1",
+   "shape": "Ball",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "cframe": [
+    1.5,
+    3.45,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Upper1",
+   "shape": "Block",
+   "size": [
+    0.7,
+    0.9,
+    0.7
+   ],
+   "cframe": [
+    1.5,
+    2.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Fore1",
+   "shape": "Block",
+   "size": [
+    0.84,
+    1.1,
+    0.84
+   ],
+   "cframe": [
+    1.5,
+    1.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Fist",
+   "shape": "Block",
+   "size": [
+    0.8,
+    0.5,
+    0.84
+   ],
+   "cframe": [
+    1.5,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Baton",
+   "shape": "Cylinder",
+   "size": [
+    1.9,
+    0.34,
+    0.34
+   ],
+   "cframe": [
+    1.5,
+    1.0,
+    -1.2,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_BatonTip",
+   "shape": "Cylinder",
+   "size": [
+    0.55,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    1.5,
+    1.0,
+    -2.4,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Neck",
+   "shape": "Block",
+   "size": [
+    0.8,
+    0.25,
+    0.8
+   ],
+   "cframe": [
+    0.0,
+    3.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Head",
+   "shape": "Block",
+   "size": [
+    1.9,
+    1.25,
+    1.6
+   ],
+   "cframe": [
+    0.0,
+    4.725,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Visor",
+   "shape": "Block",
+   "size": [
+    1.5,
+    0.45,
+    0.14
+   ],
+   "cframe": [
+    0.0,
+    4.725,
+    -0.83,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Ear-1",
+   "shape": "Cylinder",
+   "size": [
+    0.3,
+    0.75,
+    0.75
+   ],
+   "cframe": [
+    -1.05,
+    4.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Ear1",
+   "shape": "Cylinder",
+   "size": [
+    0.3,
+    0.75,
+    0.75
+   ],
+   "cframe": [
+    1.05,
+    4.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_Antenna",
+   "shape": "Cylinder",
+   "size": [
+    0.8,
+    0.14,
+    0.14
+   ],
+   "cframe": [
+    0.0,
+    5.75,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_idle",
+   "name": "robot_idle_AntennaTip",
+   "shape": "Ball",
+   "size": [
+    0.38,
+    0.38,
+    0.38
+   ],
+   "cframe": [
+    0.0,
+    6.25,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Base",
+   "shape": "Cylinder",
+   "size": [
+    0.5,
+    2.9,
+    2.9
+   ],
+   "cframe": [
+    -5.6,
+    0.25,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_BaseRing",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    3.1,
+    3.1
+   ],
+   "cframe": [
+    -5.6,
+    0.58,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Turret",
+   "shape": "Cylinder",
+   "size": [
+    0.4,
+    2.2,
+    2.2
+   ],
+   "cframe": [
+    -5.6,
+    0.86,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Waist",
+   "shape": "Cylinder",
+   "size": [
+    0.6,
+    1.4,
+    1.4
+   ],
+   "cframe": [
+    -5.6,
+    1.35,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Body",
+   "shape": "Block",
+   "size": [
+    2.4,
+    2.2,
+    1.8
+   ],
+   "cframe": [
+    -5.6,
+    2.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Chest",
+   "shape": "Block",
+   "size": [
+    1.7,
+    1.4,
+    0.22
+   ],
+   "cframe": [
+    -5.6,
+    2.75,
+    -0.91,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Badge",
+   "shape": "Cylinder",
+   "size": [
+    0.16,
+    0.7,
+    0.7
+   ],
+   "cframe": [
+    -5.6,
+    2.95,
+    -1.1,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_ChestLight",
+   "shape": "Block",
+   "size": [
+    1.1,
+    0.15,
+    0.12
+   ],
+   "cframe": [
+    -5.6,
+    2.375,
+    -1.04,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Shoulder-1",
+   "shape": "Ball",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "cframe": [
+    -7.1,
+    3.45,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Upper-1",
+   "shape": "Block",
+   "size": [
+    0.7,
+    0.9,
+    0.7
+   ],
+   "cframe": [
+    -7.1,
+    2.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Fore-1",
+   "shape": "Block",
+   "size": [
+    0.84,
+    1.1,
+    0.84
+   ],
+   "cframe": [
+    -7.1,
+    1.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Shoulder1",
+   "shape": "Ball",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "cframe": [
+    -4.1,
+    3.45,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Upper1",
+   "shape": "Block",
+   "size": [
+    0.7,
+    0.9,
+    0.7
+   ],
+   "cframe": [
+    -4.1,
+    3.269,
+    -0.676,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.2588,
+    -0.9659,
+    0.0,
+    0.9659,
+    0.2588
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Fore1",
+   "shape": "Block",
+   "size": [
+    0.84,
+    1.1,
+    0.84
+   ],
+   "cframe": [
+    -4.1,
+    3.01,
+    -1.642,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.2588,
+    -0.9659,
+    0.0,
+    0.9659,
+    0.2588
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Fist",
+   "shape": "Block",
+   "size": [
+    0.8,
+    0.5,
+    0.84
+   ],
+   "cframe": [
+    -4.1,
+    2.816,
+    -2.367,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.2588,
+    -0.9659,
+    0.0,
+    0.9659,
+    0.2588
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Baton",
+   "shape": "Cylinder",
+   "size": [
+    1.9,
+    0.34,
+    0.34
+   ],
+   "cframe": [
+    -4.1,
+    3.975,
+    -2.677,
+    0.0,
+    0.0,
+    -1.0,
+    -0.9659,
+    0.2588,
+    -0.0,
+    0.2588,
+    0.9659,
+    0.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_BatonTip",
+   "shape": "Cylinder",
+   "size": [
+    0.55,
+    0.5,
+    0.5
+   ],
+   "cframe": [
+    -4.1,
+    5.134,
+    -2.988,
+    0.0,
+    0.0,
+    -1.0,
+    -0.9659,
+    0.2588,
+    -0.0,
+    0.2588,
+    0.9659,
+    0.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Neck",
+   "shape": "Block",
+   "size": [
+    0.8,
+    0.25,
+    0.8
+   ],
+   "cframe": [
+    -5.6,
+    3.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Head",
+   "shape": "Block",
+   "size": [
+    1.9,
+    1.25,
+    1.6
+   ],
+   "cframe": [
+    -5.6,
+    4.725,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Visor",
+   "shape": "Block",
+   "size": [
+    1.5,
+    0.45,
+    0.14
+   ],
+   "cframe": [
+    -5.6,
+    4.725,
+    -0.83,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Ear-1",
+   "shape": "Cylinder",
+   "size": [
+    0.3,
+    0.75,
+    0.75
+   ],
+   "cframe": [
+    -6.65,
+    4.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Ear1",
+   "shape": "Cylinder",
+   "size": [
+    0.3,
+    0.75,
+    0.75
+   ],
+   "cframe": [
+    -4.55,
+    4.75,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Antenna",
+   "shape": "Cylinder",
+   "size": [
+    0.8,
+    0.14,
+    0.14
+   ],
+   "cframe": [
+    -5.6,
+    5.75,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "5E7186",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_AntennaTip",
+   "shape": "Ball",
+   "size": [
+    0.38,
+    0.38,
+    0.38
+   ],
+   "cframe": [
+    -5.6,
+    6.25,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Zap0",
+   "shape": "Block",
+   "size": [
+    0.12,
+    0.6,
+    0.12
+   ],
+   "cframe": [
+    -4.45,
+    5.572,
+    -3.078,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "BDEBFF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Zap1",
+   "shape": "Block",
+   "size": [
+    0.12,
+    0.6,
+    0.12
+   ],
+   "cframe": [
+    -3.75,
+    5.722,
+    -3.078,
+    0.866,
+    0.5,
+    0.0,
+    -0.5,
+    0.866,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "BDEBFF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Zap2",
+   "shape": "Block",
+   "size": [
+    0.12,
+    0.6,
+    0.12
+   ],
+   "cframe": [
+    -4.1,
+    6.022,
+    -3.078,
+    0.9659,
+    -0.2588,
+    0.0,
+    0.2588,
+    0.9659,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "BDEBFF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  },
+  {
+   "group": "robot_active",
+   "name": "robot_active_Alarm",
+   "shape": "Cylinder",
+   "size": [
+    0.06,
+    4.4,
+    4.4
+   ],
+   "cframe": [
+    -5.6,
+    0.04,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  }
+ ]
+}

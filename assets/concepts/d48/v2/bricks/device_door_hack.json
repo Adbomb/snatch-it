@@ -1,0 +1,1025 @@
+{
+ "units": "studs, Roblox axes (y up, entrance −Z)",
+ "counts": {
+  "door_hack": 35
+ },
+ "total": 35,
+ "lights": [],
+ "bricks": [
+  {
+   "group": "door_hack",
+   "name": "door_hack_Leaf-1",
+   "shape": "Block",
+   "size": [
+    5.85,
+    9.85,
+    0.8
+   ],
+   "cframe": [
+    -2.975,
+    4.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Panel-1",
+   "shape": "Block",
+   "size": [
+    4.85,
+    7.1,
+    0.14
+   ],
+   "cframe": [
+    -2.975,
+    5.55,
+    -0.45,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Bar-1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    -2.975,
+    3.45,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Bar-1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    -2.975,
+    7.85,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Hazard-1",
+   "shape": "Block",
+   "size": [
+    5.65,
+    1.4,
+    0.12
+   ],
+   "cframe": [
+    -2.975,
+    0.95,
+    -0.44,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe-10",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -5.0,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe-11",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -2.975,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe-12",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    -0.95,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -5.35,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -5.35,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -0.6,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet-1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    -0.6,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Leaf1",
+   "shape": "Block",
+   "size": [
+    5.85,
+    9.85,
+    0.8
+   ],
+   "cframe": [
+    2.975,
+    4.975,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "26345E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Panel1",
+   "shape": "Block",
+   "size": [
+    4.85,
+    7.1,
+    0.14
+   ],
+   "cframe": [
+    2.975,
+    5.55,
+    -0.45,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Bar1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    2.975,
+    3.45,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Bar1",
+   "shape": "Block",
+   "size": [
+    5.25,
+    0.5,
+    0.12
+   ],
+   "cframe": [
+    2.975,
+    7.85,
+    -0.56,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Hazard1",
+   "shape": "Block",
+   "size": [
+    5.65,
+    1.4,
+    0.12
+   ],
+   "cframe": [
+    2.975,
+    0.95,
+    -0.44,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe10",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    0.95,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe11",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    2.975,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Stripe12",
+   "shape": "Block",
+   "size": [
+    0.44,
+    1.3,
+    0.08
+   ],
+   "cframe": [
+    5.0,
+    0.95,
+    -0.52,
+    0.8192,
+    -0.5736,
+    0.0,
+    0.5736,
+    0.8192,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    0.6,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    0.6,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    5.35,
+    2.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Rivet1",
+   "shape": "Cylinder",
+   "size": [
+    0.14,
+    0.32,
+    0.32
+   ],
+   "cframe": [
+    5.35,
+    9.0,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_LockRing",
+   "shape": "Cylinder",
+   "size": [
+    0.3,
+    3.4,
+    3.4
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.5,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_LockDisk",
+   "shape": "Cylinder",
+   "size": [
+    0.25,
+    2.8,
+    2.8
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.68,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_LockGlow",
+   "shape": "Cylinder",
+   "size": [
+    0.12,
+    1.5,
+    1.5
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.84,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "FF7A1A",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_LockHub",
+   "shape": "Cylinder",
+   "size": [
+    0.2,
+    0.9,
+    0.9
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.96,
+    0.0,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Spoke0",
+   "shape": "Block",
+   "size": [
+    2.5,
+    0.24,
+    0.14
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.93,
+    0.7071,
+    -0.7071,
+    0.0,
+    0.7071,
+    0.7071,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Spoke1",
+   "shape": "Block",
+   "size": [
+    2.5,
+    0.24,
+    0.14
+   ],
+   "cframe": [
+    0.0,
+    5.2,
+    -0.93,
+    -0.7071,
+    -0.7071,
+    0.0,
+    0.7071,
+    -0.7071,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "C98E1E",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_LampBase",
+   "shape": "Block",
+   "size": [
+    1.8,
+    0.4,
+    0.6
+   ],
+   "cframe": [
+    0.0,
+    10.25,
+    -0.3,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_Lamp",
+   "shape": "Block",
+   "size": [
+    1.3,
+    0.4,
+    0.4
+   ],
+   "cframe": [
+    0.0,
+    10.65,
+    -0.3,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF7A1A",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_HackBody",
+   "shape": "Block",
+   "size": [
+    1.6,
+    0.8,
+    0.6
+   ],
+   "cframe": [
+    0.0,
+    3.85,
+    -1.05,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_HackScreen",
+   "shape": "Block",
+   "size": [
+    1.2,
+    0.5,
+    0.06
+   ],
+   "cframe": [
+    0.0,
+    3.85,
+    -1.37,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "door_hack",
+   "name": "door_hack_HackBar",
+   "shape": "Block",
+   "size": [
+    0.7,
+    0.2,
+    0.04
+   ],
+   "cframe": [
+    -0.2,
+    3.85,
+    -1.41,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF7A1A",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  }
+ ]
+}

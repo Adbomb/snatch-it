@@ -1,0 +1,1258 @@
+{
+ "units": "studs, Roblox axes (y up, entrance −Z)",
+ "counts": {
+  "trap_idle": 16,
+  "trap_active": 27
+ },
+ "total": 43,
+ "lights": [],
+ "bricks": [
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Base",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.3,
+    4.2
+   ],
+   "cframe": [
+    0.0,
+    0.15,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_RimN",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.12,
+    0.4
+   ],
+   "cframe": [
+    0.0,
+    0.36,
+    -1.9,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_RimS",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.12,
+    0.4
+   ],
+   "cframe": [
+    0.0,
+    0.36,
+    1.9,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_RimW",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    3.4
+   ],
+   "cframe": [
+    -1.9,
+    0.36,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_RimE",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    3.4
+   ],
+   "cframe": [
+    1.9,
+    0.36,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -2.15,
+    0.38,
+    -2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    2.15,
+    0.38,
+    -2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -2.15,
+    0.38,
+    2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    2.15,
+    0.38,
+    2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Pad",
+   "shape": "Block",
+   "size": [
+    3.1,
+    0.15,
+    3.1
+   ],
+   "cframe": [
+    0.0,
+    0.375,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Hole0",
+   "shape": "Block",
+   "size": [
+    0.6,
+    0.02,
+    0.6
+   ],
+   "cframe": [
+    0.0,
+    0.46,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Hole1",
+   "shape": "Block",
+   "size": [
+    0.6,
+    0.02,
+    0.6
+   ],
+   "cframe": [
+    -0.85,
+    0.46,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Hole2",
+   "shape": "Block",
+   "size": [
+    0.6,
+    0.02,
+    0.6
+   ],
+   "cframe": [
+    0.85,
+    0.46,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Hole3",
+   "shape": "Block",
+   "size": [
+    0.6,
+    0.02,
+    0.6
+   ],
+   "cframe": [
+    -0.85,
+    0.46,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Hole4",
+   "shape": "Block",
+   "size": [
+    0.6,
+    0.02,
+    0.6
+   ],
+   "cframe": [
+    0.85,
+    0.46,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_idle",
+   "name": "trap_idle_Status",
+   "shape": "Cylinder",
+   "size": [
+    0.12,
+    0.42,
+    0.42
+   ],
+   "cframe": [
+    0.0,
+    0.42,
+    -1.9,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "39E1FF",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Base",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.3,
+    4.2
+   ],
+   "cframe": [
+    -6.0,
+    0.15,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "1A2440",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_RimN",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.12,
+    0.4
+   ],
+   "cframe": [
+    -6.0,
+    0.36,
+    -1.9,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_RimS",
+   "shape": "Block",
+   "size": [
+    4.2,
+    0.12,
+    0.4
+   ],
+   "cframe": [
+    -6.0,
+    0.36,
+    1.9,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_RimW",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    3.4
+   ],
+   "cframe": [
+    -7.9,
+    0.36,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_RimE",
+   "shape": "Block",
+   "size": [
+    0.4,
+    0.12,
+    3.4
+   ],
+   "cframe": [
+    -4.1,
+    0.36,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FFC93C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -8.15,
+    0.38,
+    -2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -3.85,
+    0.38,
+    -2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -8.15,
+    0.38,
+    2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Corner",
+   "shape": "Block",
+   "size": [
+    0.9,
+    0.16,
+    0.9
+   ],
+   "cframe": [
+    -3.85,
+    0.38,
+    2.15,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "2A2A33",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Pad",
+   "shape": "Block",
+   "size": [
+    3.1,
+    0.15,
+    3.1
+   ],
+   "cframe": [
+    -6.0,
+    0.375,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Spike0",
+   "shape": "Block",
+   "size": [
+    0.68,
+    0.5,
+    0.68
+   ],
+   "cframe": [
+    -6.0,
+    0.7,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Mid0",
+   "shape": "Block",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "cframe": [
+    -6.0,
+    1.175,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Tip0",
+   "shape": "Block",
+   "size": [
+    0.2,
+    0.4,
+    0.2
+   ],
+   "cframe": [
+    -6.0,
+    1.6,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Spike1",
+   "shape": "Block",
+   "size": [
+    0.68,
+    0.5,
+    0.68
+   ],
+   "cframe": [
+    -6.85,
+    0.7,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Mid1",
+   "shape": "Block",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "cframe": [
+    -6.85,
+    1.175,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Tip1",
+   "shape": "Block",
+   "size": [
+    0.2,
+    0.4,
+    0.2
+   ],
+   "cframe": [
+    -6.85,
+    1.6,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Spike2",
+   "shape": "Block",
+   "size": [
+    0.68,
+    0.5,
+    0.68
+   ],
+   "cframe": [
+    -5.15,
+    0.7,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Mid2",
+   "shape": "Block",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "cframe": [
+    -5.15,
+    1.175,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Tip2",
+   "shape": "Block",
+   "size": [
+    0.2,
+    0.4,
+    0.2
+   ],
+   "cframe": [
+    -5.15,
+    1.6,
+    -0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Spike3",
+   "shape": "Block",
+   "size": [
+    0.68,
+    0.5,
+    0.68
+   ],
+   "cframe": [
+    -6.85,
+    0.7,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Mid3",
+   "shape": "Block",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "cframe": [
+    -6.85,
+    1.175,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Tip3",
+   "shape": "Block",
+   "size": [
+    0.2,
+    0.4,
+    0.2
+   ],
+   "cframe": [
+    -6.85,
+    1.6,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Spike4",
+   "shape": "Block",
+   "size": [
+    0.68,
+    0.5,
+    0.68
+   ],
+   "cframe": [
+    -5.15,
+    0.7,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "E9B43C",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Mid4",
+   "shape": "Block",
+   "size": [
+    0.44,
+    0.45,
+    0.44
+   ],
+   "cframe": [
+    -5.15,
+    1.175,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "A7B6C8",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Tip4",
+   "shape": "Block",
+   "size": [
+    0.2,
+    0.4,
+    0.2
+   ],
+   "cframe": [
+    -5.15,
+    1.6,
+    0.85,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "F4F7FB",
+   "material": "Plastic",
+   "variant": "LegoSquaresSoft",
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Status",
+   "shape": "Cylinder",
+   "size": [
+    0.12,
+    0.42,
+    0.42
+   ],
+   "cframe": [
+    -6.0,
+    0.42,
+    -1.9,
+    0.0,
+    -1.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": true
+  },
+  {
+   "group": "trap_active",
+   "name": "trap_active_Flash",
+   "shape": "Block",
+   "size": [
+    4.7,
+    0.07,
+    4.7
+   ],
+   "cframe": [
+    -6.0,
+    0.085,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "color": "FF3B3B",
+   "material": "Neon",
+   "variant": null,
+   "transparency": 0,
+   "collide": false
+  }
+ ]
+}

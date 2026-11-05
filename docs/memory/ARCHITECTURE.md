@@ -35,6 +35,7 @@
   Музей: фасад z = −12, портик с колоннами z ≈ −19.4, вход 12×10, вывеска y = 11.5; высоты стен и ламп — в layout.
   Гантели (D34, `pack1_dumbbells.py`, диски — `Model.voxel_plate`): центр рукояти в начале, ось x; у светящихся в
   layout `lights` (PointLight без теней). Превью — Blender с текстурой пупырышков и ореолом неона.
+- Концепты D48 v2 (не в игре): `scripts/blender/d48_kit.py` — Blender-детали ровно тех форм, что в Roblox (Block, Cylinder с осью X, Ball, Wedge скосом к −Z), координаты участка, повороты как у CFrame; выгрузка `assets/concepts/d48/v2/bricks/*.json` (shape, size, cframe, color, material, variant, group) — для сборки кодом через ModelBuilder без мешей (план — `docs/D48_INTEGRATION.md`).
 - После импорта: модели → `ServerStorage.ImportedModels` (Rojo его не трогает), ID мешей →
   `assets/models/PackN.meshids.json`, затем `python scripts/models_to_luau.py` пишет `World/MeshModels.luau`.
   `World/MeshBuilder` грузит меши при старте (`CreateMeshPartAsync`) и собирает модель: деталь в центр из layout
