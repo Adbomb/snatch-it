@@ -630,6 +630,46 @@ test("Защита: дверь не пускает вора, взлом 5 с, л
 	check(inHall.Z > 0, "после взлома вора всё равно выставило")
 end)
 
+-- D47: робот на трёх клиентах бил вора и терял HP, но за ночь его не успели доломать (300 HP) — поломка здесь.
+test("Защита: робот бьёт вора в радиусе, не трогает владельца, сломанный молчит", function(A, B)
+	DataService.AddCoins(A, 1e6)
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Robot")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Robot", Vector3.new(-14, 0, 18))
+	local robot = DefenseService.Handlers.Museum(A.UserId).installed.Robot
+	check(robot ~= nil, "робот не встал")
+	TimeService.SkipTo("DoomNight", -5)
+	PvpService.Handlers.Reset()
+	local origin = plotOf(A).floorOrigin
+	local robotAt = origin * Vector3.new(-14, 0, 18)
+	local function stand(player: any, spot: Vector3)
+		local at = origin * spot
+		player.Character.PrimaryPart.CFrame = CFrame.lookAt(at, Vector3.new(robotAt.X, at.Y, robotAt.Z))
+	end
+	stand(A, Vector3.new(-14, 3, 14))
+	local fa = PvpService.Handlers.Fighter(A)
+	DefenseService.Handlers.Tick()
+	check(fa.hp == fa.maxHp, "робот ударил владельца")
+	stand(A, Vector3.new(10, 3, -8))
+	stand(B, Vector3.new(10, 3, 0)) -- в зале, но дальше радиуса
+	local fb = PvpService.Handlers.Fighter(B)
+	DefenseService.Handlers.Tick()
+	check(fb.hp == fb.maxHp, "робот ударил вора вне радиуса")
+	stand(B, Vector3.new(-14, 3, 14))
+	DefenseService.Handlers.Tick()
+	check(fb.hp < fb.maxHp, "робот не ударил вора в радиусе")
+	robot.hp = 1 -- проверяется поломка, а не запас HP
+	PvpService.Handlers.Attack(B)
+	check(robot.broken == true and robot.model.Parent == nil, "робот не сломался от удара вора")
+	local hp = fb.hp
+	robot.lastAttack = nil
+	DefenseService.Handlers.Tick()
+	check(fb.hp == hp, "сломанный робот бьёт")
+	check(A:WasNotified("Вашего робота-охранника сломали"), "владельцу не сообщили о поломке")
+end)
+
 -- Проверки по ревью D46 (2026-11-05) ─────────────────────────────────────────────────────────────────────────
 
 test("Ревью: миграция через настоящую загрузку — двойной постамент, вне музея, нечитаемые записи", function(A, _B, ctx)
