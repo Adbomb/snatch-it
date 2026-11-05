@@ -2,7 +2,8 @@
 -- Удар — ЛКМ на ПК или кнопка «Удар» (Stud-UI, справа над «Бросить»; видна только в Судную ночь); клиент не чаще
 -- AttackInterval шлёт PvpAttack. Эффекты по PvpEffect: замах руки ударившего (плечевой Motor6D, локально у каждого),
 -- вспышка цели, всплывающее «-N», «НОКАУТ!», лёгкая тряска камеры у того, по кому попали. Свой нокаут — лечь
--- (PlatformStand) на 15 с; звёзды над головой (BillboardGui от сервера, тег KnockStars) крутятся у всех.
+-- (PlatformStand) на 15 с, камера смотрит на точку над телом (knockCamera); звёзды над головой (BillboardGui от
+-- сервера, тег KnockStars) крутятся у всех.
 -- Без загруженных ассетов: только Motor6D, Highlight, BillboardGui и Stud-UI.
 -- Зависит от Remotes, Shared/StudUI, Config/Battle, Config/UITokens.
 
@@ -157,16 +158,71 @@ local function onEffect(payload: any)
 	end
 end
 
+-- Камера лежащего: у стандартной камеры фокус — корень плюс смещение «вверх» в осях корня; лёжа это смещение
+-- горизонтально, фокус на уровне тела, и стена позади притягивает камеру внутрь персонажа (проверено тремя
+-- клиентами). На время нокаута камера следит за невидимой точкой над телом в мировых осях и не подходит ближе
+-- MinZoom; после подъёма — снова за Humanoid, прежний предел приближения возвращается.
+local focusPart: BasePart? = nil
+local savedMinZoom: number? = nil
+
+local function knockCamera(on: boolean)
+	local camera = workspace.CurrentCamera
+	RunService:UnbindFromRenderStep("PvpNokautCamera")
+	if focusPart then
+		focusPart:Destroy()
+		focusPart = nil
+	end
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not on then
+		if savedMinZoom then
+			player.CameraMinZoomDistance = savedMinZoom
+			savedMinZoom = nil
+		end
+		if humanoid and camera.CameraSubject ~= humanoid then
+			camera.CameraSubject = humanoid
+		end
+		return
+	end
+	if not humanoid or not root then
+		return
+	end
+	local lift = Vector3.new(0, T.KnockCamera.Height, 0)
+	local part = Instance.new("Part")
+	part.Name = "PointDeVue"
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.Transparency = 1
+	part.Size = Vector3.one * 0.2
+	part.CFrame = CFrame.new(root.Position + lift)
+	part.Parent = camera -- только у этого клиента
+	focusPart = part
+	savedMinZoom = savedMinZoom or player.CameraMinZoomDistance
+	player.CameraMinZoomDistance = math.max(savedMinZoom :: number, T.KnockCamera.MinZoom)
+	camera.CameraSubject = part
+	RunService:BindToRenderStep("PvpNokautCamera", Enum.RenderPriority.Camera.Value - 1, function()
+		if root.Parent then
+			part.CFrame = CFrame.new(root.Position + lift)
+		end
+	end)
+end
+
 -- Свой нокаут: лечь на 15 с (сервер держит скорость 0 и не даёт бить).
 local function onKnocked()
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
+		knockCamera(false)
 		return
 	end
 	if player:GetAttribute("Knocked") == true then
 		humanoid.PlatformStand = true
+		knockCamera(true)
 	else
+		knockCamera(false)
 		humanoid.PlatformStand = false
 		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
@@ -220,6 +276,10 @@ function PvpController.Init()
 	player:GetAttributeChangedSignal("Knocked"):Connect(function()
 		refreshButton()
 		onKnocked()
+	end)
+	-- новый персонаж (смерть, выход из нокаута через возрождение): камера снова за Humanoid, предел — прежний
+	player.CharacterAdded:Connect(function()
+		knockCamera(false)
 	end)
 	player:GetAttributeChangedSignal("Snared"):Connect(refreshButton)
 	UserInputService.InputBegan:Connect(function(input, processed)
