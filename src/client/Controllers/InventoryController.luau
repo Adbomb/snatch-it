@@ -22,9 +22,11 @@ local Items = require(Config:WaitForChild("Items"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local Rarities = require(Config:WaitForChild("Rarities"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
+local TextCase = require(Shared:WaitForChild("TextCase"))
 local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
+local MenuHud = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("MenuHud"))
 
 local T = UITokens.Inventory
 local player = Players.LocalPlayer
@@ -47,7 +49,7 @@ local menu: any
 local corps: Frame
 local statsText: TextLabel
 local searchBox: TextBox
-local sortBar: Frame
+local sortBar: ScrollingFrame
 local grid: ScrollingFrame
 local lockPill: Frame
 local lockText: TextLabel
@@ -109,12 +111,12 @@ local function buildCards(): { Card }
 			table.insert(stack.uids, item.uid)
 		end
 	end
-	local q = string.lower(query)
+	local q = TextCase.Lower(query, true) -- кириллица: string.lower её не меняет
 	local out = {}
 	for _, card in cards do
 		local d = def(card.itemId)
 		local fits = (origin == nil or d.boss == origin)
-			and (q == "" or string.find(string.lower(d.displayName), q, 1, true) ~= nil)
+			and (q == "" or string.find(TextCase.Lower(d.displayName, true), q, 1, true) ~= nil)
 			and (forSlot == nil or card.slot == nil)
 		if fits then
 			table.insert(out, card)
@@ -297,7 +299,7 @@ local function itemCard(card: Card, order: number)
 		Size = UDim2.new(1, -16, 0, 50),
 		Position = UDim2.fromOffset(w / 2, y + 26),
 		Max = T.NameText,
-		Min = 16,
+		Min = T.MinText,
 		Stroke = UI.Colors.StrokeSlot,
 		Thickness = 2.6,
 		ZIndex = 6,
@@ -319,7 +321,7 @@ local function itemCard(card: Card, order: number)
 		Size = UDim2.new(1, -16, 0, 22),
 		Position = UDim2.fromOffset(w / 2, y + 88),
 		Max = T.InfoText,
-		Min = 14,
+		Min = T.MinText,
 		Color = UI.Colors.Secondary,
 		Stroke = UI.Colors.StrokeSlot,
 		Thickness = 2,
@@ -335,7 +337,7 @@ local function itemCard(card: Card, order: number)
 		Size = UDim2.new(1, -16, 0, 22),
 		Position = UDim2.fromOffset(w / 2, y + 110),
 		Max = T.InfoText,
-		Min = 14,
+		Min = T.MinText,
 		Color = if card.slot then UI.Colors.Positive else UI.Colors.TagGold,
 		Stroke = UI.Colors.StrokeSlot,
 		Thickness = 2,
@@ -385,14 +387,15 @@ local function pedestalCard(slot: number, order: number)
 		UI.Text(frame, ("%s · +%s/сек"):format(d.displayName, NumberFormat.Short(d.income or 0)), {
 			Name = "Occupant",
 			Font = "Bold",
-			Size = UDim2.new(1, -16, 0, 24),
-			Position = UDim2.fromOffset(w / 2, 60),
+			Size = UDim2.new(1, -16, 0, 46), -- две строки: длинное название не мельчает
+			Position = UDim2.fromOffset(w / 2, 66),
 			Max = T.InfoText,
-			Min = 12,
+			Min = T.MinText,
 			Color = UI.Colors.Secondary,
 			Stroke = UI.Colors.StrokeSlot,
 			ZIndex = 6,
-		})
+		}).TextWrapped =
+			true
 		actionButton(frame, "Заменить", "orange", w - 40, function()
 			send("Replace", card.uids[1], slot)
 			picking = nil
@@ -463,8 +466,8 @@ local function buildBar()
 			Name = "Filtre",
 			Style = "Chunky",
 			Theme = if active then "blue" else "gray",
-			Size = Vector2.new(width, 42),
-			Position = UDim2.fromOffset(x + width / 2, 25),
+			Size = Vector2.new(width, T.ChipBar),
+			Position = UDim2.fromOffset(x + width / 2, T.ChipBar / 2 + 4),
 			Text = text,
 			TextSize = 20,
 			ZIndex = 4,
@@ -509,13 +512,14 @@ local function buildBar()
 		render()
 	end)
 	for boss, zone in GameConfig.Zones do
-		if present[boss] and x < T.Window.X - 180 then
+		if present[boss] then
 			chip(zone.name, origin == boss, 150, function()
 				origin = if origin == boss then nil else boss
 				render()
 			end)
 		end
 	end
+	sortBar.CanvasSize = UDim2.fromOffset(x, 0) -- больше локаций, чем помещается, — полоса прокручивается
 end
 
 render = function()
@@ -606,16 +610,28 @@ local function build()
 	searchBox.Text = ""
 	searchBox.ZIndex = 6
 	searchBox.Parent = searchFrame
+	local typed = 0
 	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-		query = searchBox.Text
-		if not picking then
-			render()
-		end
+		typed += 1
+		local mark = typed
+		task.delay(T.SearchDelay, function()
+			if mark == typed then -- перерисовать один раз после паузы в наборе
+				query = searchBox.Text
+				if not picking then
+					render()
+				end
+			end
+		end)
 	end)
 
-	sortBar = Instance.new("Frame")
+	sortBar = Instance.new("ScrollingFrame")
 	sortBar.Name = "Tri"
 	sortBar.BackgroundTransparency = 1
+	sortBar.BorderSizePixel = 0
+	sortBar.ScrollingDirection = Enum.ScrollingDirection.X
+	sortBar.ScrollBarThickness = 4
+	sortBar.ScrollBarImageColor3 = Color3.new(1, 1, 1)
+	sortBar.CanvasSize = UDim2.new()
 	sortBar.Size = UDim2.fromOffset(W - 36, bar)
 	sortBar.Position = UDim2.fromOffset(18, 14 + bar + 8)
 	sortBar.ZIndex = 4
@@ -653,6 +669,9 @@ local function build()
 end
 
 local function open(slot: number?)
+	if player:GetAttribute("PlacingDefense") then
+		return -- идёт расстановка защиты: сначала поставить или отменить
+	end
 	forSlot = slot
 	picking = nil
 	render()
@@ -669,30 +688,9 @@ function InventoryController.OpenForSlot(slot: number)
 	open(slot)
 end
 
--- Кнопка «Инвентарь» в HUD: слева посередине (выше столбика монет, не под джойстиком телефона).
+-- Кнопка «Инвентарь» в общей колонке HUD (UI/MenuHud: слева, над столбиком надписей силы и монет).
 local function buildHud()
-	local hud = UI.ScreenGui("InventaireHud", 4, { Menu = false })
-	hud.Parent = player:WaitForChild("PlayerGui")
-	local holder = Instance.new("Frame")
-	holder.Name = "Racine"
-	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(T.Hud.X, T.Hud.Y)
-	holder.Position = T.HudPosition
-	holder.AnchorPoint = Vector2.new(0, 0.5)
-	holder.Parent = hud
-	local scale = Instance.new("UIScale")
-	scale.Name = "WindowScale"
-	scale.Parent = holder
-	Motion.BindResponsive(scale)
-	local button = UI.Button(holder, {
-		Name = "Inventaire",
-		Theme = "blue",
-		Size = T.Hud,
-		Position = UDim2.fromScale(0.5, 0.5),
-		Text = "Инвентарь",
-		TextSize = 26,
-	})
-	Motion.BindButton(button, 1.04, nil, function()
+	MenuHud.Add("Inventaire", "Инвентарь", "blue", 1, function()
 		if menu.IsOpen then
 			menu.Close()
 		else
@@ -755,9 +753,15 @@ function InventoryController.Init()
 	-- Превью появляются по мере того, как сервер создаёт копии (первый предмет в инвентаре): перерисовать окно.
 	task.spawn(function()
 		local folder = ReplicatedStorage:WaitForChild("ItemPreviews")
-		folder.ChildAdded:Connect(function()
-			if menu.IsOpen and not picking then
-				render()
+		folder.ChildAdded:Connect(function(child)
+			if not menu.IsOpen or picking then
+				return
+			end
+			for _, item in owned do
+				if item.itemId == child.Name then
+					render() -- пришло превью своего предмета (чужие не перерисовывают окно)
+					return
+				end
 			end
 		end)
 	end)

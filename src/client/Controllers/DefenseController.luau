@@ -7,6 +7,7 @@
 -- Кнопка «Защита» в HUD под «Инвентарём». Зависит от Shared/StudUI, Shared/DefenseRules, Shared/GameTime,
 -- Shared/NumberFormat, Remotes, Config/GameConfig, Config/UITokens.
 
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -22,6 +23,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
+local MenuHud = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("MenuHud"))
 
 local T = UITokens.Defense
 local cfg = GameConfig.Defense
@@ -46,7 +48,9 @@ local ghostReason: string? = "Наведите на пол своего зала
 local bar: Frame
 local barText: TextLabel
 local placeButton: GuiButton
-local pointer: Vector2? = nil
+local pointer: Vector2? = nil -- касание (экранные координаты без вставки GUI), за которым идёт образец
+local pointerTouch: InputObject? = nil
+local counter: TextLabel
 
 local function currentPhase(): string
 	return GameTime.At(GameTime.Now()).phase
@@ -205,8 +209,8 @@ local function render()
 			else "Сейчас не день: купить взлом нельзя")
 		elseif phase == "Preparation" then "Подготовка: покупайте и ставьте защиту"
 		else "Защиту покупают и ставят только в подготовку к Судной ночи"
-	info.Text = ('%s   Устройств: <font color="%s">%d/%d</font>'):format(
-		hint,
+	info.Text = hint
+	counter.Text = ('Устройств: <font color="%s">%d/%d</font>'):format(
 		UI.Colors.HighlightHex,
 		count,
 		state.max
@@ -223,14 +227,41 @@ end
 
 -- ── Свободная расстановка ─────────────────────────────────────────────────────────────────────────────────────
 
+local function resetBar(text: string)
+	ghostSpot = nil
+	ghostReason = text
+	barText.Text = text
+	barText.TextColor3 = UI.Colors.Danger
+	UI.SetDisabled(placeButton, true)
+end
+
 local function stopPlacing()
 	placing = nil
-	ghostSpot = nil
+	pointer = nil
+	pointerTouch = nil
 	if ghost then
 		ghost:Destroy()
 		ghost = nil
 	end
+	resetBar("Наведите на пол своего зала")
 	bar.Visible = false
+	player:SetAttribute("PlacingDefense", nil)
+end
+
+-- Указатель мыши над панелью расстановки: образец не двигается, ЛКМ не ставит. at — координаты мыши во вьюпорте
+-- (GetMouseLocation, со вставкой GUI сверху); GetGuiObjectsAtPosition ждёт координаты без вставки.
+local function overInterface(at: Vector2): boolean
+	at -= GuiService:GetGuiInset()
+	local playerGui = player:FindFirstChildOfClass("PlayerGui")
+	if not playerGui then
+		return false
+	end
+	for _, object in playerGui:GetGuiObjectsAtPosition(at.X, at.Y) do
+		if object:IsDescendantOf(bar) then
+			return true
+		end
+	end
+	return false
 end
 
 local function localLists(plot: Model, origin: CFrame): ({ Vector3 }, Vector3, { Vector3 })
@@ -264,14 +295,23 @@ local function updateGhost()
 	if typeof(origin) ~= "CFrame" then
 		return
 	end
-	local at = pointer or UserInputService:GetMouseLocation()
 	local camera = workspace.CurrentCamera
-	local ray = camera:ViewportPointToRay(at.X, at.Y)
+	local ray
+	if pointer then
+		ray = camera:ScreenPointToRay(pointer.X, pointer.Y) -- касание: координаты без вставки GUI
+	else
+		local mouse = UserInputService:GetMouseLocation() -- мышь: координаты вьюпорта (со вставкой)
+		if overInterface(mouse) then
+			return
+		end
+		ray = camera:ViewportPointToRay(mouse.X, mouse.Y)
+	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { ghost, player.Character :: Instance }
 	local hit = workspace:Raycast(ray.Origin, ray.Direction * 300, params)
 	if not hit then
+		resetBar("Наведите на пол своего зала")
 		return
 	end
 	local spot = origin:PointToObjectSpace(hit.Position)
@@ -307,10 +347,12 @@ startPlacing = function(kind: string)
 	part.CastShadow = false
 	part.Material = Enum.Material.SmoothPlastic
 	part.Transparency = T.GhostTransparency
-	part.Size = T.Ghost[kind] or Vector3.new(2, 1, 2)
+	part.Size = T.Ghost[kind]
 	part.Parent = workspace
 	ghost = part
+	resetBar("Наведите на пол своего зала")
 	bar.Visible = true
+	player:SetAttribute("PlacingDefense", true)
 	updateGhost()
 end
 
@@ -336,7 +378,7 @@ local function buildBar()
 		Size = UDim2.new(1, -24, 0, 34),
 		Position = UDim2.new(0.5, 0, 0, 26),
 		Max = 24,
-		Min = 12,
+		Min = UITokens.Inventory.MinText,
 		ZIndex = 6,
 	})
 	placeButton = UI.Button(box, {
@@ -371,12 +413,22 @@ local function build()
 	info = UI.Text(corps, "", {
 		Name = "Etat",
 		Font = "Bold",
-		Size = UDim2.fromOffset(W - 380, 40),
-		Position = UDim2.fromOffset(18, 34),
+		Size = UDim2.fromOffset(W - 380, 26),
+		Position = UDim2.fromOffset(18, 22),
 		AnchorPoint = Vector2.new(0, 0.5),
 		AlignX = Enum.TextXAlignment.Left,
-		Max = 22,
-		Min = 12,
+		TextSize = T.InfoText,
+		ZIndex = 4,
+	})
+	info.TextWrapped = true
+	counter = UI.Text(corps, "", {
+		Name = "Compteur",
+		Font = "Bold",
+		Size = UDim2.fromOffset(W - 380, 26),
+		Position = UDim2.fromOffset(18, 48),
+		AnchorPoint = Vector2.new(0, 0.5),
+		AlignX = Enum.TextXAlignment.Left,
+		TextSize = T.InfoText,
 		Rich = true,
 		ZIndex = 4,
 	})
@@ -412,29 +464,9 @@ local function build()
 	end)
 end
 
+-- Кнопка «Защита» в общей колонке HUD (UI/MenuHud), под «Инвентарём».
 local function buildHud()
-	local hud = UI.ScreenGui("DefenseHud", 4, { Menu = false })
-	hud.Parent = player:WaitForChild("PlayerGui")
-	local holder = Instance.new("Frame")
-	holder.Name = "Racine"
-	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(T.Hud.X, T.Hud.Y)
-	holder.Position = T.HudPosition
-	holder.AnchorPoint = Vector2.new(0, 0.5)
-	holder.Parent = hud
-	local scale = Instance.new("UIScale")
-	scale.Name = "WindowScale"
-	scale.Parent = holder
-	Motion.BindResponsive(scale)
-	local b = UI.Button(holder, {
-		Name = "Defense",
-		Theme = "purple",
-		Size = T.Hud,
-		Position = UDim2.fromScale(0.5, 0.5),
-		Text = "Защита",
-		TextSize = 26,
-	})
-	Motion.BindButton(b, 1.04, nil, function()
+	MenuHud.Add("Defense", "Защита", "purple", 2, function()
 		if menu.IsOpen then
 			menu.Close()
 		else
@@ -470,14 +502,23 @@ function DefenseController.Init()
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			confirmPlacing()
-		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if not overInterface(UserInputService:GetMouseLocation()) then
+				confirmPlacing()
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch and pointerTouch == nil then
+			-- касание по миру (не по кнопкам и джойстику): образец идёт за этим пальцем
+			pointerTouch = input
 			pointer = Vector2.new(input.Position.X, input.Position.Y)
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(input)
-		if placing and input.UserInputType == Enum.UserInputType.Touch then
+		if placing and input == pointerTouch then
 			pointer = Vector2.new(input.Position.X, input.Position.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input == pointerTouch then
+			pointerTouch = nil -- образец остаётся, где отпустили; «Поставить» — на панели
 		end
 	end)
 	RunService.RenderStepped:Connect(function()

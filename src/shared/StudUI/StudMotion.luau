@@ -192,6 +192,10 @@ end
 	       sound "Fermeture" at 0.82 pitch. X button, Escape and gamepad B close. Only one menu open at a time.
 	opts: Keep = { ScreenGui names never hidden }, Group = shared table to enforce one-menu-at-a-time ]]
 local openMenu = nil
+-- Snatch It (2026-11-05): список спрятанных GUI и исходное FOV — общие для всех окон. Раньше у каждого окна были свои,
+-- и при переключении окна (одно открыто, открываем другое) спрятанное первым не возвращалось, а FOV рос на +8.
+local sharedHidden, sharedCore = {}, {}
+local sharedFov: number? = nil
 function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 	opts = opts or {}
 	local player = Players.LocalPlayer
@@ -209,8 +213,8 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 
 	local menu = { Gui = gui, Fenetre = fenetre, IsOpen = false }
 	local HOME = fenetre.Position
-	local running, token, fov0 = {}, 0, nil
-	local hidden, coreHidden = {}, {}
+	local running, token = {}, 0
+	local hidden, coreHidden = sharedHidden, sharedCore
 	local CORE = { Enum.CoreGuiType.PlayerList, Enum.CoreGuiType.Chat, Enum.CoreGuiType.Backpack, Enum.CoreGuiType.EmotesMenu, Enum.CoreGuiType.Health }
 
 	local function tween(o, info, goal) local t = TweenService:Create(o, info, goal); table.insert(running, t); t:Play() end
@@ -237,14 +241,14 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 		play(sounds, "Ouverture", 1)
 		hideOthers()
 		gui.Enabled = true
-		fov0 = fov0 or camera.FieldOfView
+		sharedFov = sharedFov or camera.FieldOfView
 		fenetre.Visible = true
 		anim.Value = 0.86
 		fenetre.Position = HOME + UDim2.fromOffset(0, 24)
 		tween(anim, TweenInfo.new(0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Value = 1 })
 		tween(fenetre, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = HOME })
 		tween(blur, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = M.BLUR })
-		tween(camera, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = fov0 + M.FOV_PLUS })
+		tween(camera, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = (sharedFov :: number) + M.FOV_PLUS })
 		openMenu = menu
 		if opts.OnOpen then task.spawn(opts.OnOpen) end
 	end
@@ -257,7 +261,7 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 		tween(anim, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.88 })
 		tween(fenetre, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = HOME + UDim2.fromOffset(0, 18) })
 		tween(blur, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = 0 })
-		tween(camera, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = fov0 or 70 })
+		tween(camera, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { FieldOfView = sharedFov or 70 })
 		if openMenu == menu then openMenu = nil end
 		task.delay(0.16, function()
 			if token ~= j then return end
@@ -265,7 +269,7 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 			fenetre.Position = HOME
 			if not openMenu then restore() end
 		end)
-		task.delay(0.42, function() if token == j then fov0 = nil end end)
+		task.delay(0.42, function() if token == j and not openMenu then sharedFov = nil end end)
 	end
 
 	function menu.Toggle(state: boolean?)

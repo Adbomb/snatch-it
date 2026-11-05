@@ -34,9 +34,21 @@ local function doomNight(): boolean
 	return ReplicatedStorage:GetAttribute("Phase") == "DoomNight"
 end
 
+-- Открыто окно меню или идёт расстановка защиты: клик — по интерфейсу, не удар.
+local function busy(): boolean
+	local playerGui = player:FindFirstChildOfClass("PlayerGui")
+	for _, name in { "Inventaire", "Defense" } do
+		local gui = playerGui and playerGui:FindFirstChild(name)
+		if gui and gui:IsA("ScreenGui") and gui.Enabled then
+			return true
+		end
+	end
+	return player:GetAttribute("PlacingDefense") == true
+end
+
 local function attack()
-	if not doomNight() or player:GetAttribute("Knocked") == true then
-		return
+	if not doomNight() or player:GetAttribute("Knocked") == true or player:GetAttribute("Snared") == true then
+		return -- лежит или в капкане: не бьёт (D37)
 	end
 	local now = os.clock()
 	if now - lastSent < Battle.Player.AttackInterval then
@@ -105,14 +117,20 @@ local function flash(character: Model)
 	end)
 end
 
+-- Тряска камеры у того, по кому попали: смещение после обновления камеры (иначе стандартная камера его перетрёт).
 local function shake()
-	local camera = workspace.CurrentCamera
-	for i = 1, 4 do
-		task.delay(i * 0.04, function()
-			local d = T.Shake * (5 - i) / 4
-			camera.CFrame *= CFrame.new(math.random(-10, 10) / 10 * d, math.random(-10, 10) / 10 * d, 0)
-		end)
-	end
+	local started = os.clock()
+	RunService:UnbindFromRenderStep("PvpTryaska")
+	RunService:BindToRenderStep("PvpTryaska", Enum.RenderPriority.Camera.Value + 1, function()
+		local t = os.clock() - started
+		if t > T.ShakeTime then
+			RunService:UnbindFromRenderStep("PvpTryaska")
+			return
+		end
+		local d = T.Shake * (1 - t / T.ShakeTime)
+		local camera = workspace.CurrentCamera
+		camera.CFrame *= CFrame.new(math.random(-10, 10) / 10 * d, math.random(-10, 10) / 10 * d, 0)
+	end)
 end
 
 local function onEffect(payload: any)
@@ -121,9 +139,9 @@ local function onEffect(payload: any)
 	end
 	local attacker = characterOf(payload.attacker)
 	local target = characterOf(payload.target)
-	if payload.kind == "Swing" or payload.kind == "Hit" then
+	if (payload.kind == "Swing" or payload.kind == "Hit") and payload.attacker ~= payload.target then
 		if attacker then
-			swing(attacker)
+			swing(attacker) -- урон от защиты (ударивший = цель) — без замаха
 		end
 	end
 	if payload.kind == "Hit" and target then
@@ -155,7 +173,7 @@ end
 local function refreshButton()
 	local holder = button.Parent :: GuiObject
 	holder.Visible = doomNight()
-	UI.SetDisabled(button, player:GetAttribute("Knocked") == true)
+	UI.SetDisabled(button, player:GetAttribute("Knocked") == true or player:GetAttribute("Snared") == true)
 end
 
 local function buildButton()
@@ -201,8 +219,9 @@ function PvpController.Init()
 		refreshButton()
 		onKnocked()
 	end)
+	player:GetAttributeChangedSignal("Snared"):Connect(refreshButton)
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 and not busy() then
 			attack()
 		end
 	end)
