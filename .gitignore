@@ -8,3 +8,6 @@ assets/models/*.fbm/
 
 # Кэш Python (скрипты Blender)
 __pycache__/
+
+# Резервные копии Blender (file.blend1) — исходник пересобирается скриптом
+*.blend1
