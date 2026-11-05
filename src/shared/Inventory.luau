@@ -8,7 +8,6 @@
 local Inventory = {}
 
 Inventory.Schema = 3
-Inventory.RotateStep = 45
 
 export type Record = {
 	id: string,
@@ -47,8 +46,10 @@ end
 
 -- Миграция v2 → v3 и проверка при каждой загрузке (повторный вызов ничего не меняет). Ничего не удаляет:
 -- экспонат на несуществующем постаменте (больше slotCount), на занятом или с неверным местом уходит в инвентарь;
--- неизвестный предмет (нет в itemDefs) остаётся в профиле, но с постамента уходит в инвентарь. Меняет data на месте.
-function Inventory.Normalize(data: any, slotCount: number, itemDefs: { [string]: any }): Report
+-- неизвестный предмет (нет в itemDefs) остаётся в профиле, но с постамента уходит в инвентарь; поворот, не кратный
+-- rotateStep (GameConfig.Museum.RotateStep), сбрасывается в 0. Меняет data на месте.
+function Inventory.Normalize(data: any, slotCount: number, itemDefs: { [string]: any }, rotateStep: number?): Report
+	local step = rotateStep or 45 -- GameConfig.Museum.RotateStep
 	local report: Report = { moved = {}, fixed = {}, unknown = {}, total = 0, displayed = 0, changed = false }
 	if type(data.items) ~= "table" then
 		data.items = {}
@@ -100,11 +101,7 @@ function Inventory.Normalize(data: any, slotCount: number, itemDefs: { [string]:
 			wasFixed = true
 		end
 		local rot = record.rot
-		local validRot = type(rot) == "number"
-			and rot == rot
-			and rot % Inventory.RotateStep == 0
-			and rot >= 0
-			and rot < 360
+		local validRot = type(rot) == "number" and rot == rot and rot % step == 0 and rot >= 0 and rot < 360
 		if not validRot then
 			record.rot = 0
 			wasFixed = true

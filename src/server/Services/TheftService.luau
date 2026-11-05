@@ -21,6 +21,7 @@ local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local InventoryService = require(Server.Services.InventoryService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
+local ItemFactory = require(Server.Util.ItemFactory)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local Log = require(Server.Util.Log)
@@ -36,6 +37,14 @@ local limiter = RateLimiter.new(GameConfig.RateLimits.Steal)
 local parts: { [string]: BasePart } = {} -- uid → Part экспоната, снятого с вора на время передачи
 
 local TheftService = {}
+
+-- Проверка доступа к экспонату (DefenseService.Init): закрытая усиленная дверь не даёт красть снаружи зала.
+-- access(вор, владелец, участок) → nil — можно, иначе причина.
+local access: ((any, any, PlotService.Plot) -> string?)? = nil
+
+function TheftService.SetAccessCheck(check: (any, any, PlotService.Plot) -> string?)
+	access = check
+end
 
 local function phase(): string?
 	return GameTime.TheftPhase(GameTime.Now())
@@ -79,6 +88,13 @@ local function returnToOwner(theft: TheftLedger.Theft, message: string?)
 		end
 		return
 	end
+	local alive = part ~= nil
+		and pcall(function()
+			(part :: BasePart).Parent = (part :: BasePart).Parent -- уничтоженной детали родителя не задать
+		end)
+	if not alive then
+		part = ItemFactory.Create(entry.itemId)
+	end
 	if not ItemRegistry.Transition(uid, "Displayed", { owner = theft.owner, slot = theft.slot, part = part }) then
 		Log.Warn("TheftService", ("%s не вернулся на постамент %d"):format(uid, theft.slot))
 		return
@@ -117,6 +133,11 @@ local function tryBegin(thief: any, plot: PlotService.Plot, slot: number)
 		return
 	end
 	if not Validate.IsNear(thief, plot.showcases[slot].Position, cfg.Distance + 1) then
+		return
+	end
+	local blocked = access and access(thief, owner, plot)
+	if blocked then
+		Notify.Send(thief, blocked, "Stop")
 		return
 	end
 	local uid = ItemRegistry.GetSlotItem(owner.UserId, slot)
@@ -168,6 +189,11 @@ local function tryComplete(thief: any, plot: PlotService.Plot, slot: number)
 		fail(thief, "Слишком далеко — кража сорвалась")
 		return
 	end
+	local blocked = access and access(thief, owner, plot)
+	if blocked then
+		fail(thief, blocked)
+		return
+	end
 	local ok, reason = ledger:Complete(thief.UserId, theft.uid, os.clock(), phase())
 	if not ok then
 		fail(thief, reason)
@@ -199,41 +225,41 @@ local function tryComplete(thief: any, plot: PlotService.Plot, slot: number)
 	)
 end
 
--- Шаги 3–4 журнала после передачи: сохранить жертву, отметить, сохранить вора, снять pending, удалить запись.
+-- Шаги 3–4 журнала после передачи: дождаться сохранения жертвы с меткой transfersOut[id], снять pending у вора,
+-- дождаться сохранения вора с меткой и записью без pending, удалить запись журнала. Не вышло — запись журнала остаётся,
+-- передачу решит TransferJournal при следующем входе вора (по меткам; без дублей и потерь).
 local function confirm(victim: any, thief: any, uid: string, id: string)
-	local victimSaved = DataService.SaveAndWait(victim, cfg.SaveTimeout)
-	if not victimSaved then
-		local items = DataService.ReadSavedItems(victim.UserId)
-		victimSaved = items ~= nil and items[uid] == nil
+	local victimSaved = false
+	local started = os.clock()
+	while not victimSaved and os.clock() - started < cfg.ConfirmSeconds do
+		victimSaved = DataService.SaveAndWait(victim, cfg.SaveTimeout, function(saved)
+			local marks = saved.transfersOut
+			return type(marks) == "table" and marks[id] ~= nil
+		end)
+		if not victimSaved and not DataService.GetData(victim) then
+			-- жертва вышла: её последнее сохранение — финальное; смотрим метку в нём
+			local data = DataService.ReadSaved(victim.UserId)
+			victimSaved = data ~= nil and type(data.transfersOut) == "table" and data.transfersOut[id] ~= nil
+			break
+		end
 	end
 	if not victimSaved then
 		Log.Warn(
 			"TheftService",
-			("передача %s: жертва не сохранилась — решит журнал при входе вора"):format(
+			("передача %s: сохранение жертвы не подтверждено — решит журнал"):format(
 				uid
 			)
 		)
 		return
 	end
-	DataService.JournalUpdate(thief.UserId, function(list)
-		for _, entry in list do
-			if entry.id == id then
-				entry.state = "victimSaved"
-			end
-		end
-		return list
-	end)
 	DataService.ClearPending(thief, uid, id)
-	if DataService.SaveAndWait(thief, cfg.SaveTimeout) then
-		DataService.JournalUpdate(thief.UserId, function(list)
-			local keep = {}
-			for _, entry in list do
-				if entry.id ~= id then
-					table.insert(keep, entry)
-				end
-			end
-			return keep
-		end)
+	local thiefSaved = DataService.SaveAndWait(thief, cfg.SaveTimeout, function(saved)
+		local marks = saved.transfersIn
+		local record = saved.items and saved.items[uid]
+		return type(marks) == "table" and marks[id] ~= nil and type(record) == "table" and record.pending == nil
+	end)
+	if thiefSaved then
+		DataService.JournalRemove(thief.UserId, { id })
 	end
 	if DataService.GetData(thief) then
 		InventoryService.Sync(thief)
@@ -244,20 +270,14 @@ end
 local function abortDelivery(thief: any, id: string?, message: string)
 	local theft = ledger:AbortDelivery(thief.UserId)
 	if id then
-		DataService.JournalUpdate(thief.UserId, function(list)
-			local keep = {}
-			for _, entry in list do
-				if entry.id ~= id then
-					table.insert(keep, entry)
-				end
-			end
-			return keep
-		end)
+		DataService.JournalRemove(thief.UserId, { id })
 	end
 	if theft then
 		returnToOwner(theft, message)
 	end
 end
+
+local transferBody: (any, TheftLedger.Theft, string) -> ()
 
 -- Вор у сундука своего музея (InventoryService.tryStoreCarried): сдача добычи.
 local function deliver(thief: any, plot: PlotService.Plot)
@@ -275,6 +295,20 @@ local function deliver(thief: any, plot: PlotService.Plot)
 		Notify.Send(thief, reason or "Сдать нельзя", "Stop")
 		return
 	end
+	local done, err = pcall(transferBody, thief, theft, uid)
+	if not done then
+		Log.Warn("TheftService", ("сдача %s сорвалась: %s"):format(uid, tostring(err)))
+		if ledger:ByThief(thief.UserId) == theft then
+			abortDelivery(
+				thief,
+				nil,
+				"Не удалось сдать добычу — она вернулась владельцу"
+			)
+		end
+	end
+end
+
+transferBody = function(thief: any, theft: TheftLedger.Theft, uid: string)
 	local victim = ownerOf(theft.owner)
 	local victimData = victim and DataService.GetData(victim)
 	local original = victimData and victimData.items[uid]
@@ -300,10 +334,7 @@ local function deliver(thief: any, plot: PlotService.Plot)
 	}
 	-- Шаг 1: журнал до любых изменений профилей (ждёт DataStore).
 	local journaled = DataService.JournalUpdate(thief.UserId, function(list)
-		table.insert(
-			list,
-			{ id = id, uid = uid, from = theft.owner, record = record, state = "pending", at = os.time() }
-		)
+		table.insert(list, { id = id, uid = uid, from = theft.owner, record = record, at = os.time() })
 		return list
 	end)
 	local now = ItemRegistry.Get(uid)
@@ -332,7 +363,7 @@ local function deliver(thief: any, plot: PlotService.Plot)
 		return
 	end
 	if not ItemRegistry.Transition(uid, "Stored", { owner = thief.UserId }) then
-		DataService.UndoTransfer(victim, thief, uid, original)
+		DataService.UndoTransfer(victim, thief, uid, original, id)
 		abortDelivery(
 			thief,
 			id,
@@ -367,9 +398,21 @@ end
 -- Время вышло: снятие — только в Судную ночь, донести — до конца 10 с доставки.
 local function sweep()
 	local current = phase()
+	local now = os.clock()
 	for _, theft in ledger:All() do
-		local thief = ownerOf(theft.thief)
-		if theft.stage == "Lifting" and current ~= "Open" then
+		local thief, _ = ownerOf(theft.thief)
+		local _, ownerPlot = ownerOf(theft.owner)
+		local showcase = ownerPlot and ownerPlot.showcases[theft.slot]
+		local overdue = now - theft.startedAt > cfg.HoldSeconds + cfg.HoldTolerance + cfg.LiftGrace
+		local away = thief ~= nil
+			and showcase ~= nil
+			and not Validate.IsNear(thief, showcase.Position, cfg.Distance + 2)
+		if theft.stage == "Lifting" and (overdue or away) then
+			local failed = ledger:Fail(theft.thief)
+			if failed then
+				returnToOwner(failed, if thief then "Кража сорвалась" else nil)
+			end
+		elseif theft.stage == "Lifting" and current ~= "Open" then
 			local failed = ledger:Fail(theft.thief)
 			if failed then
 				returnToOwner(

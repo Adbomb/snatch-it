@@ -5,8 +5,9 @@
 -- GameConfig.Defense.Tick сервер проверяет чужих (воров) у устройств: дверь не пускает в зал без взлома, ловушка —
 -- урон и замедление (вариант в конфиге), капкан — 10 с обездвижен (одноразовый), лазер — урон и тревога владельцу,
 -- робот — бьёт воров в радиусе, его можно сломать ударами. Взлом двери — удержание 5 с, уроном не прерывается,
--- устройство расходуется, дверь открыта для всех до конца ночи. После Судной ночи установленное исчезает (списывается),
--- купленное и не установленное остаётся. Купленное хранится в профиле (data.defense), установленное — нет.
+-- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
+-- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
+-- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
 -- Зависит от DataService, PlotService, PvpService, TimeService, Shared/DefenseRules, Shared/GameTime, World/Models/Defense,
 -- World/ModelBuilder, Util/*, Remotes, GameConfig.
 
@@ -17,10 +18,12 @@ local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local Server = ServerScriptService.Server
 local DataService = require(Server.Services.DataService)
 local PlotService = require(Server.Services.PlotService)
 local PvpService = require(Server.Services.PvpService)
+local TheftService = require(Server.Services.TheftService)
 local TimeService = require(Server.Services.TimeService)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
@@ -165,20 +168,21 @@ local function robotBar(device: Device)
 	end
 	local gui = device.model:FindFirstChild("HP", true) :: BillboardGui?
 	if not gui then
+		local bar = UITokens.Defense.RobotBar
 		local g = Instance.new("BillboardGui")
 		g.Name = "HP"
-		g.Size = UDim2.fromScale(3, 0.4)
-		g.StudsOffset = Vector3.new(0, 2.4, 0)
-		g.MaxDistance = 60
+		g.Size = UDim2.fromScale(bar.Size.X, bar.Size.Y)
+		g.StudsOffset = Vector3.new(0, bar.Lift, 0)
+		g.MaxDistance = bar.MaxDistance
 		local back = Instance.new("Frame")
 		back.Name = "Fond"
 		back.Size = UDim2.fromScale(1, 1)
-		back.BackgroundColor3 = Color3.fromHex("1E1E24")
+		back.BackgroundColor3 = bar.Back
 		back.Parent = g
 		local fill = Instance.new("Frame")
 		fill.Name = "Barre"
 		fill.Size = UDim2.fromScale(1, 1)
-		fill.BackgroundColor3 = Color3.fromHex("5BEA72")
+		fill.BackgroundColor3 = bar.Fill
 		fill.BorderSizePixel = 0
 		fill.Parent = back
 		g.Parent = head
@@ -219,9 +223,38 @@ local function removeDevice(m: Museum, kind: string)
 	end
 end
 
--- Взлом двери: удержание «Взломать».
-local function hackBegin(thief: any, owner: any)
-	museumOf(owner.UserId).hackBegan[thief] = os.clock()
+-- Точка в осях участка — внутри главного зала (за дверью).
+local function insideHall(at: Vector3): boolean
+	local hall = cfg.Hall
+	return at.X > hall.MinX - cfg.HallMargin
+		and at.X < hall.MaxX + cfg.HallMargin
+		and at.Z > cfg.Door.At.Z
+		and at.Z < hall.MaxZ + cfg.HallMargin
+		and at.Y > cfg.HallHeight.X
+		and at.Y < cfg.HallHeight.Y
+end
+
+local function nearDoor(thief: any, plot: PlotService.Plot): boolean
+	local root = Validate.GetLiveRoot(thief)
+	return root ~= nil and (root.Position - plot.floorOrigin * cfg.Door.At).Magnitude <= cfg.HackDistance
+end
+
+-- Взлом двери: удержание «Взломать». Начало засчитывается только по правилам: Судная ночь, чужая закрытая дверь,
+-- взломщик рядом и не оглушён (иначе «начать заранее и сразу завершить» обошло бы 5 с у двери).
+local function hackBegin(thief: any, owner: any, plot: PlotService.Plot)
+	local m = museumOf(owner.UserId)
+	m.hackBegan[thief] = nil
+	if
+		thief == owner
+		or not doomOpen()
+		or not m.installed.Door
+		or m.hacked
+		or thief:GetAttribute("Knocked")
+		or not nearDoor(thief, plot)
+	then
+		return
+	end
+	m.hackBegan[thief] = os.clock()
 end
 
 local function hackEnd(thief: any, owner: any)
@@ -239,9 +272,7 @@ local function hackComplete(thief: any, owner: any, plot: PlotService.Plot)
 	if not began or os.clock() - began < cfg.HackSeconds - GameConfig.Theft.HoldTolerance then
 		return -- без удержания (подделанный Triggered) взлом не засчитывается
 	end
-	local root = Validate.GetLiveRoot(thief)
-	local doorWorld = plot.floorOrigin * cfg.Door.At
-	if not root or (root.Position - doorWorld).Magnitude > GameConfig.Theft.Distance + 6 then
+	if not nearDoor(thief, plot) then
 		return
 	end
 	local defense = DataService.Defense(thief)
@@ -286,10 +317,10 @@ local function addDoorPrompt(device: Device, owner: any, plot: PlotService.Plot)
 	if not panel or not panel:IsA("BasePart") then
 		return
 	end
-	local prompt = Prompts.Create(panel, "Hack", "Усиленная дверь", GameConfig.Theft.Distance + 4)
+	local prompt = Prompts.Create(panel, "Hack", "Усиленная дверь", cfg.HackDistance - 2)
 	prompt.HoldDuration = cfg.HackSeconds
 	prompt.PromptButtonHoldBegan:Connect(function(player)
-		hackBegin(player, owner)
+		hackBegin(player, owner, plot)
 	end)
 	prompt.PromptButtonHoldEnded:Connect(function(player)
 		hackEnd(player, owner)
@@ -341,6 +372,10 @@ local function install(player: any, kind: any, spot: any)
 		addDoorPrompt(device, player, plot)
 	end
 	m.installed[kind] = device
+	defense.owned[kind] = math.max((defense.owned[kind] or 0) - 1, 0)
+	defense.installed = defense.installed or {}
+	defense.installed[kind] = GameTime.At(GameTime.Now()).cycle -- ночь этого круга (подготовка — его 10-й день)
+	DataService.RequestSave(player)
 	DefenseService.Sync(player)
 	Notify.Send(player, ("Установлено: %s"):format(DefenseRules.Names[kind]), "Go")
 end
@@ -395,20 +430,17 @@ local function tryAction(player: any, action: any, a: any, b: any)
 			Notify.Send(player, "Снимать защиту можно только в подготовку", "Stop")
 			return
 		end
-		removeDevice(museumOf(player.UserId), a)
+		local m = museumOf(player.UserId)
+		if m.installed[a] then
+			removeDevice(m, a)
+			defense.owned[a] = (defense.owned[a] or 0) + 1
+			if type(defense.installed) == "table" then
+				defense.installed[a] = nil
+			end
+			DataService.RequestSave(player)
+		end
 		DefenseService.Sync(player)
 	end
-end
-
--- Чужой в зале при закрытой двери — выставить за дверь.
-local function insideHall(at: Vector3): boolean
-	local hall = cfg.Hall
-	return at.X > hall.MinX - 1.2
-		and at.X < hall.MaxX + 1.2
-		and at.Z > cfg.Door.At.Z
-		and at.Z < hall.MaxZ + 1.2
-		and at.Y > -2
-		and at.Y < 14
 end
 
 local function ready(m: Museum, key: string, seconds: number): boolean
@@ -441,23 +473,31 @@ local function tick()
 				then
 					local at = toLocal(plot, root.Position)
 					local id = tostring(thief.UserId)
-					local world = root.Position
-					if m.installed.Door and not m.hacked and insideHall(at) then
+					local inside = insideHall(at)
+					-- отброс от устройства — к выходу (источник чуть глубже в зале)
+					local push = plot.floorOrigin * (at + Vector3.new(0, 0, cfg.PushDepth))
+					if m.installed.Door and not m.hacked and inside then
 						root.CFrame = plot.floorOrigin
-							* CFrame.new(0, 3, cfg.Door.At.Z - 5)
+							* CFrame.new(
+								cfg.Door.At.X + cfg.DoorEject.X,
+								cfg.DoorEject.Y,
+								cfg.Door.At.Z + cfg.DoorEject.Z
+							)
 							* CFrame.Angles(0, math.pi, 0)
-						if ready(m, "Door:" .. id, 3) then
+						if ready(m, "Door:" .. id, cfg.NoticeCooldown) then
 							Notify.Send(thief, "Усиленная дверь: нужен взлом", "Stop")
 						end
+						continue -- выставлен наружу: остальные устройства его уже не видят
 					end
 					local trap = m.installed.Trap
 					if
 						trap
+						and inside
 						and Vector3.new(at.X - trap.at.X, 0, at.Z - trap.at.Z).Magnitude <= cfg.Trap.Radius
-						and math.abs(at.Y) < 4
+						and math.abs(at.Y) < cfg.TrapHeight
 					then
 						if ready(m, "Trap:" .. id, cfg.Trap.Cooldown) then
-							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Trap.Damage, world)
+							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Trap.Damage, push)
 							if cfg.Trap.Effect == "Slow" then
 								PvpService.Slow(thief, cfg.Trap.Slow, cfg.Trap.SlowSeconds)
 							elseif cfg.Trap.Effect == "Stun" then
@@ -469,10 +509,12 @@ local function tick()
 					if
 						snare
 						and not snare.broken
+						and inside
+						and math.abs(at.Y) < cfg.TrapHeight
 						and Vector3.new(at.X - snare.at.X, 0, at.Z - snare.at.Z).Magnitude <= cfg.Snare.Radius
+						and PvpService.Snare(thief, cfg.Snare.Seconds) -- одноразовый: тратится, только если поймал
 					then
-						snare.broken = true -- капкан одноразовый: сработал и закрылся
-						PvpService.Snare(thief, cfg.Snare.Seconds)
+						snare.broken = true
 						for _, part in snare.model:GetDescendants() do
 							if part:IsA("BasePart") then
 								part.Transparency = 0.6
@@ -486,10 +528,10 @@ local function tick()
 						if
 							beam
 							and DefenseRules.InLaser(cfg, beam, at)
-							and at.Y < beam.y + 3
+							and at.Y < beam.y + cfg.LaserHeight
 							and ready(m, "Laser:" .. id, cfg.Laser.Cooldown)
 						then
-							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Laser.Damage, world)
+							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Laser.Damage, push)
 							Notify.Send(
 								owner,
 								("Тревога! Лазер: %s в вашем музее"):format(thief.Name),
@@ -501,6 +543,7 @@ local function tick()
 					if
 						robot
 						and not robot.broken
+						and inside
 						and Vector3.new(at.X - robot.at.X, 0, at.Z - robot.at.Z).Magnitude <= cfg.Robot.Radius
 					then
 						local now = os.clock()
@@ -508,7 +551,10 @@ local function tick()
 							robot.lastAttack = now
 							local pivot = robot.model:GetPivot()
 							robot.model:PivotTo(
-								CFrame.lookAt(pivot.Position, Vector3.new(world.X, pivot.Position.Y, world.Z))
+								CFrame.lookAt(
+									pivot.Position,
+									Vector3.new(root.Position.X, pivot.Position.Y, root.Position.Z)
+								)
 							)
 							PvpService.DamagePlayer(thief, cfg.Robot.Damage, pivot.Position)
 						end
@@ -519,7 +565,7 @@ local function tick()
 	end
 end
 
--- Судная ночь закончилась: установленное исчезает и списывается, купленное остаётся (D37).
+-- Судная ночь закончилась: установленное исчезает (списано при установке), купленное остаётся (D37).
 local function endNight()
 	for ownerId, m in museums do
 		local owner = nil
@@ -529,8 +575,8 @@ local function endNight()
 			end
 		end
 		local defense = owner and DataService.Defense(owner)
-		if defense and next(m.installed) then
-			DefenseRules.Consume(defense.owned, m.installed)
+		if defense and type(defense.installed) == "table" and next(defense.installed) then
+			defense.installed = {} -- отработали ночь (списаны при установке)
 			DataService.RequestSave(owner)
 		end
 		for kind in m.installed do
@@ -545,8 +591,26 @@ local function endNight()
 	end
 end
 
--- Игрок вышел: его установленная защита убирается (не списывается — установленное не сохраняется).
+-- Начало Судной ночи круга cycle (общее время).
+local function nightStart(cycle: number): number
+	local t = GameConfig.Time
+	return t.Epoch + (cycle + 1) * GameTime.CycleLength() - t.DoomNightLength
+end
+
+-- Вход: устройства, поставленные к ещё не прошедшей ночи (вышел или упал сервер до неё), — снова в запасе.
+function DefenseService.OnPlayerLoaded(player: any)
+	local defense = DataService.Defense(player)
+	if defense and DefenseRules.Settle(defense, GameTime.Now(), nightStart) > 0 then
+		DataService.RequestSave(player)
+	end
+end
+
+-- Игрок вышел: модели убираются; поставленное к ещё не прошедшей ночи — снова в запасе, в Судную ночь — отработало.
 function DefenseService.OnPlayerLeaving(player: any)
+	local defense = DataService.Defense(player)
+	if defense and not doomOpen() then
+		DefenseRules.Settle(defense, GameTime.Now(), nightStart)
+	end
 	local m = museums[player.UserId]
 	if m then
 		for kind in m.installed do
@@ -558,6 +622,15 @@ end
 
 function DefenseService.Init()
 	Remotes.Get(Remotes.Names.DefenseAction).OnServerEvent:Connect(tryAction)
+	-- Закрытая усиленная дверь: красть можно только изнутри зала (снаружи — через проём — нельзя).
+	TheftService.SetAccessCheck(function(thief, owner, plot)
+		local m = museums[owner.UserId]
+		local root = Validate.GetLiveRoot(thief)
+		if m and m.installed.Door and not m.hacked and root and not insideHall(toLocal(plot, root.Position)) then
+			return "Усиленная дверь: сначала взломайте её"
+		end
+		return nil
+	end)
 	TimeService.OnPhaseChanged(function(state, previous)
 		if previous and previous.phase == "DoomNight" and state.phase ~= "DoomNight" then
 			endNight()
@@ -572,7 +645,7 @@ function DefenseService.Init()
 			local robot = m and m.installed.Robot
 			if robot and owner ~= attacker and not robot.broken then
 				table.insert(list, {
-					position = robot.model:GetPivot().Position + Vector3.new(0, 2.3, 0),
+					position = robot.model:GetPivot().Position + Vector3.new(0, cfg.RobotAim, 0),
 					onHit = function(damage: number)
 						robot.hp = (robot.hp or 0) - damage
 						robotBar(robot)

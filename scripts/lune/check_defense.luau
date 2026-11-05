@@ -2,7 +2,7 @@
 -- Проверка защиты музея и взлома без Roblox Studio (D37, D46, Shared/DefenseRules): цены по уровню (доля цены взлома),
 -- капкан без цены не продаётся, когда покупать и ставить, лимит min(уровень, 5) и по одному виду, места на полу зала
 -- (постаменты, вход, сундук, стены, расстояние между устройствами) — на настоящих координатах постаментов и сундука
--- (Util/PartBuilder), фиксированные места, годность взлома, списание после Судной ночи.
+-- (Util/PartBuilder), фиксированные места, годность взлома, возврат установленного до ночи (Settle).
 -- Запуск из корня репозитория: lune run scripts/lune/check_defense.luau.
 
 local process = require("@lune/process")
@@ -153,11 +153,25 @@ do
 		DefenseRules.HackFits(3, 3) and DefenseRules.HackFits(5, 2) and not DefenseRules.HackFits(2, 3),
 		"взлом: уровень устройства ≥ уровня музея"
 	)
-	local owned = { Trap = 2, Laser = 1, Robot = 1 }
-	DefenseRules.Consume(owned, { Trap = true, Laser = true })
+	-- Списание при установке: вышел или упал сервер до ночи — вернётся; ночь началась — отработало.
+	local nightStart = function(cycle)
+		return cycle * 100 + 90
+	end
+	local before = { owned = { Trap = 0, Robot = 1 }, installed = { Trap = 3, Laser = 3 } }
 	check(
-		owned.Trap == 1 and owned.Laser == 0 and owned.Robot == 1,
-		"после Судной ночи списано установленное, купленное осталось"
+		DefenseRules.Settle(before, 3 * 100 + 50, nightStart) == 2
+			and before.owned.Trap == 1
+			and before.owned.Laser == 1,
+		"до Судной ночи — устройства вернулись в запас"
+	)
+	local during = { owned = { Trap = 0 }, installed = { Trap = 3 } }
+	check(
+		DefenseRules.Settle(during, 3 * 100 + 95, nightStart) == 0 and during.owned.Trap == 0,
+		"вышел посреди ночи и вернулся — запас не вернулся"
+	)
+	check(
+		next(during.installed) == nil and next(before.installed) == nil,
+		"отметки об установке очищены"
 	)
 	check(cfg.Snare.Seconds == 10 and cfg.HackSeconds == 5, "капкан 10 с, взлом 5 с — D37")
 end

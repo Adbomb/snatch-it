@@ -38,6 +38,7 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	GymService.OnPlayerLoaded(player, plot)
 	MuseumService.LoadMuseum(player)
 	InventoryService.Sync(player)
+	DefenseService.OnPlayerLoaded(player) -- поставленное к ещё не прошедшей ночи — снова в запасе
 	DefenseService.Sync(player)
 	Notify.Send(
 		player,

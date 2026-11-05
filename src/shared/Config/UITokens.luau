@@ -241,6 +241,14 @@ UITokens.ItemLabel = {
 	Follow = 12, -- скорость, с которой подпись догоняет своё место (1/с)
 }
 
+-- Колонка кнопок меню в HUD (D46): слева над столбиком надписей силы и монет (UI/MenuHud), одна WindowScale.
+UITokens.MenuHud = {
+	Button = Vector2.new(196, 64),
+	Gap = 10,
+	Margin = 16,
+	AbovePills = 12, -- отступ над столбиком надписей (Layout.GymHud)
+}
+
 -- Окно «Инвентарь» (D46, Stud-UI): пиксели опорного экрана 1050 × 620, весь корень масштабирует WindowScale
 -- (StudMotion: телефон 844 × 390 → × 0.63, поэтому текст не меньше 19 px).
 UITokens.Inventory = {
@@ -256,10 +264,11 @@ UITokens.Inventory = {
 	IncomeText = 24,
 	InfoText = 20,
 	ButtonHeight = 48,
-	Hud = Vector2.new(196, 64), -- кнопка «Инвентарь» в HUD (слева, выше столбика монет — не под джойстиком)
-	HudPosition = UDim2.new(0, 16, 0.5, 0),
 	HotKey = Enum.KeyCode.B, -- ПК: открыть / закрыть (I и O — зум камеры Roblox)
 	Refresh = 0.5, -- секунд между проверками фазы, пока окно открыто
+	SearchDelay = 0.2, -- поиск: перерисовать после паузы в наборе
+	ChipBar = 42, -- высота кнопок сортировки и фильтра (полоса прокручивается по горизонтали)
+	MinText = 19, -- нижний предел текста карточек (на телефоне × 0.63 ≈ 12 px)
 	Turn = 25, -- поворот превью вокруг вертикали, градусов
 }
 
@@ -273,8 +282,6 @@ UITokens.Defense = {
 	NameText = 26,
 	InfoText = 20,
 	Button = Vector2.new(150, 52),
-	Hud = Vector2.new(196, 64), -- кнопка «Защита» под «Инвентарём»
-	HudPosition = UDim2.new(0, 16, 0.5, 76),
 	Bar = Vector2.new(560, 120), -- панель расстановки внизу экрана
 	Ghost = { Trap = Vector3.new(2.4, 0.6, 2.4), Robot = Vector3.new(2.4, 5.8, 1.8), Snare = Vector3.new(1.9, 0.6, 1.9) },
 	GhostOk = Color3.fromHex("5BEA72"),
@@ -282,12 +289,19 @@ UITokens.Defense = {
 	GhostTransparency = 0.45,
 	SpotNames = { Entrance = "вход", Middle = "середина" }, -- в строке «стоит: …»
 	SpotButtons = { Entrance = "Вход", Middle = "Середина" }, -- на кнопках мест лазера
+	RobotBar = { -- полоска HP робота-охранника (BillboardGui, стады)
+		Size = Vector2.new(3, 0.4),
+		Lift = 2.4,
+		MaxDistance = 60,
+		Back = Color3.fromHex("1E1E24"),
+		Fill = Color3.fromHex("5BEA72"),
+	},
 }
 
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
-	ButtonPosition = UDim2.new(1, -16, 0.42, 0), -- справа над «Бросить» и прыжком
+	ButtonPosition = UDim2.new(1, -16, 0.25, 0), -- справа вверху: не на таймере фазы (на телефоне он поднят) и не на «Бросить»
 	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
 	StarsLift = 2.6,
 	StarColor = Color3.fromHex("FFD23F"),
@@ -301,6 +315,7 @@ UITokens.Pvp = {
 	Swing = 0.22, -- замах руки, секунд
 	SwingAngle = 110, -- градусов
 	Shake = 0.35, -- тряска камеры у того, по кому попали (стадов)
+	ShakeTime = 0.18, -- секунд
 }
 
 -- Основной цвет редкости (для подписи над предметом и т. п.).

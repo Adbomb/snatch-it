@@ -178,7 +178,9 @@ do
 	)
 end
 
-print("Передача владения: падение сервера на каждом шаге (DESIGN §6):")
+print(
+	"Передача владения: падение сервера, несвежие сохранения, повторный вход (DESIGN §6, метки передачи):"
+)
 do
 	local function copy(t)
 		if type(t) ~= "table" then
@@ -190,98 +192,126 @@ do
 		end
 		return out
 	end
-	local UID = "stolen"
+	local UID, ID, AT = "stolen", "t1", 1000
 	local RECORD =
 		{ id = "Moai", mods = {}, place = "slot", slot = 2, rot = 0, acquiredAt = 1, source = "boss", boss = 1 }
-	-- Шаги TheftService (TransferJournal, шапка): после шага k сервер может упасть; автосохранение любого из профилей
-	-- может случиться после любого шага.
+	local THIEF_RECORD =
+		{ id = "Moai", mods = {}, place = "storage", rot = 0, source = "raid", from = OWNER, acquiredAt = AT }
+
+	-- Профиль: живые данные, сохранённые данные и «снимок в очереди» (сохранение, начатое раньше, ещё не записано).
+	local function newProfile(items)
+		local live = { items = items, transfersIn = {}, transfersOut = {} }
+		return { live = live, saved = copy(live), queued = nil }
+	end
+	local function snapshot(p)
+		p.queued = copy(p.live) -- сохранение началось
+	end
+	local function land(p)
+		if p.queued then
+			p.saved = p.queued -- сохранение записано (может быть несвежим)
+			p.queued = nil
+		end
+	end
+	-- Шаги TheftService: 1 журнал; 2 передача в одном кадре; 3 сохранение жертвы с меткой; 4 снять pending, сохранить
+	-- вора с меткой, удалить журнал. Подтверждения засчитываются только по содержимому сохранений.
+	local function run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late)
+		local victim = newProfile({ [UID] = copy(RECORD) })
+		local thief = newProfile({})
+		local journal = {}
+		for k = 0, crashAfter do
+			if k == 1 then
+				table.insert(journal, { id = ID, uid = UID, from = OWNER, record = copy(THIEF_RECORD), at = AT })
+			elseif k == 2 then
+				victim.live.items[UID] = nil
+				victim.live.transfersOut[ID] = { uid = UID, at = AT }
+				local r = copy(THIEF_RECORD)
+				r.pending = ID
+				thief.live.items[UID] = r
+				thief.live.transfersIn[ID] = { uid = UID, at = AT }
+			elseif k == 3 then
+				snapshot(victim)
+				land(victim)
+				if not (victim.saved.transfersOut[ID] ~= nil) then
+					break -- подтверждение жертвы не получено: дальше не идём
+				end
+			elseif k == 4 then
+				thief.live.items[UID].pending = nil
+				snapshot(thief)
+				land(thief)
+				local r = thief.saved.items[UID]
+				if thief.saved.transfersIn[ID] ~= nil and r and r.pending == nil then
+					table.clear(journal)
+				end
+			end
+			-- несвежие автосохранения: снимок в момент victimSnapAt / thiefSnapAt, записывается позже (landOrder)
+			if victimSnapAt == k then
+				snapshot(victim)
+			end
+			if thiefSnapAt == k then
+				snapshot(thief)
+			end
+			if landOrder == k then
+				land(victim)
+				land(thief)
+			end
+		end
+		-- падение: незаписанные снимки пропадают; вор входит со своим сохранением
+		local loaded = copy(thief.saved)
+		local now = if late then AT + 10 * TransferJournal.SessionGrace else AT + 5
+		local victimOut = function(from, id, age)
+			assert(from == OWNER)
+			if victim.saved.transfersOut[id] ~= nil then
+				return true
+			end
+			-- после падения живой сессии жертвы нет; до SessionGrace считаем, что она могла быть
+			if not late and age < TransferJournal.SessionGrace then
+				return nil
+			end
+			return false
+		end
+		local actions = TransferJournal.Resolve(journal, loaded, now, victimOut)
+		local done, confirm = TransferJournal.Apply(actions, loaded, now)
+		local victimOwns = victim.saved.items[UID] ~= nil
+		local r = loaded.items[UID]
+		local thiefOwns = r ~= nil and r.pending == nil
+		local waiting = (r ~= nil and r.pending ~= nil)
+		for _, action in actions do
+			waiting = waiting or action.kind == "wait"
+		end
+		return victimOwns, thiefOwns, waiting, #done + #confirm
+	end
 	local scenarios, bad = 0, 0
 	for crashAfter = 0, 4 do
-		for victimAuto = -1, 4 do
-			for thiefAuto = -1, 4 do
-				for _, late in { false, true } do
-					scenarios += 1
-					local victim = { items = { [UID] = copy(RECORD) } }
-					local thief = { items = {} }
-					local victimSaved, thiefSaved = copy(victim), copy(thief)
-					local journal = {}
-					local at = 1000
-					local function steps(k)
-						if k == 1 then
-							table.insert(journal, {
-								id = "t1",
-								uid = UID,
-								from = OWNER,
-								record = {
-									id = "Moai",
-									mods = {},
-									place = "storage",
-									rot = 0,
-									source = "raid",
-									from = OWNER,
-								},
-								state = "pending",
-								at = at,
-							})
-						elseif k == 2 then
-							victim.items[UID] = nil
-							local record = copy(journal[1].record)
-							record.pending = "t1"
-							thief.items[UID] = record
-						elseif k == 3 then
-							victimSaved = copy(victim)
-							journal[1].state = "victimSaved"
-						elseif k == 4 then
-							thief.items[UID].pending = nil
-							thiefSaved = copy(thief)
-							table.clear(journal)
+		for victimSnapAt = -1, 4 do
+			for thiefSnapAt = -1, 4 do
+				for landOrder = -1, 4 do
+					for _, late in { false, true } do
+						scenarios += 1
+						local victimOwns, thiefOwns, waiting =
+							run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late)
+						local ok
+						if late then
+							ok = victimOwns ~= thiefOwns and not waiting
+						else
+							ok = not (victimOwns and thiefOwns) and (victimOwns or thiefOwns or waiting)
 						end
-					end
-					for k = 0, crashAfter do
-						if k > 0 then
-							steps(k)
+						if not ok then
+							bad += 1
+							if bad <= 5 then
+								print(
+									("    сбой: падение после %d, снимки жертвы %d, вора %d, запись %d, поздно %s — жертва %s, вор %s, ждёт %s"):format(
+										crashAfter,
+										victimSnapAt,
+										thiefSnapAt,
+										landOrder,
+										tostring(late),
+										tostring(victimOwns),
+										tostring(thiefOwns),
+										tostring(waiting)
+									)
+								)
+							end
 						end
-						if victimAuto == k then
-							victimSaved = copy(victim)
-						end
-						if thiefAuto == k then
-							thiefSaved = copy(thief)
-						end
-					end
-					-- После падения: вор загружается со своим сохранением, жертва — со своим.
-					local now = if late then at + TransferJournal.Grace + 1 else at + 5
-					local loaded = copy(thiefSaved)
-					local actions = TransferJournal.Resolve(journal, loaded.items, now, function(from, uid)
-						return from == OWNER and victimSaved.items[uid] ~= nil
-					end)
-					TransferJournal.Apply(actions, loaded.items)
-					local victimOwns = victimSaved.items[UID] ~= nil
-					local thiefRecord = loaded.items[UID]
-					local thiefOwns = thiefRecord ~= nil and thiefRecord.pending == nil
-					local journalWaits = false
-					for _, action in actions do
-						journalWaits = journalWaits or (action.uid == UID and action.kind == "wait")
-					end
-					local waiting = (thiefRecord ~= nil and thiefRecord.pending ~= nil) or journalWaits
-					local okCase
-					if late then
-						okCase = (victimOwns ~= thiefOwns) and not waiting
-					else
-						-- раньше Grace передача может ждать, но никогда не выдаёт вору то, что осталось у жертвы
-						okCase = not (victimOwns and thiefOwns) and (victimOwns or thiefOwns or waiting)
-					end
-					if not okCase then
-						bad += 1
-						print(
-							("    сбой: падение после %d, автосохранение жертвы %d, вора %d, поздно %s — жертва %s, вор %s"):format(
-								crashAfter,
-								victimAuto,
-								thiefAuto,
-								tostring(late),
-								tostring(victimOwns),
-								tostring(thiefOwns)
-							)
-						)
 					end
 				end
 			end
@@ -289,36 +319,50 @@ do
 	end
 	check(
 		bad == 0,
-		("%d сценариев падения и автосохранений: ни дублей, ни потерь"):format(
+		("%d сценариев падения и несвежих сохранений: ни дублей, ни потерь"):format(
 			scenarios
 		)
 	)
 
-	-- Жертва ещё не успела сохраниться на другом сервере: до Grace передачу не трогаем.
-	local items = { [UID] = { id = "Moai", pending = "t1", from = OWNER } }
+	-- Без падения: подтверждение вора не прошло, запись журнала осталась; предмет потом законно украли у вора (метка
+	-- получения сохранена, записи нет) — повторный вход не выдаёт его снова.
+	local data = { items = {}, transfersIn = { [ID] = { uid = UID, at = AT } }, transfersOut = {} }
 	local actions = TransferJournal.Resolve(
-		{ { id = "t1", uid = UID, from = OWNER, record = {}, state = "pending", at = 1000 } },
-		items,
-		1010,
+		{ { id = ID, uid = UID, from = OWNER, record = copy(THIEF_RECORD), at = AT } },
+		data,
+		AT + 99999,
 		function()
 			return true
 		end
 	)
 	check(
-		#actions == 1 and actions[1].kind == "wait",
-		"свежая передача ждёт, а не отбирается"
+		#actions == 1 and actions[1].kind == "done",
+		"предмет ушёл позже законно — повторной выдачи нет"
 	)
-	local unknown = TransferJournal.Resolve(
-		{ { id = "t1", uid = UID, from = OWNER, record = {}, state = "pending", at = 0 } },
-		items,
-		1000,
-		function()
-			return nil
-		end
+	TransferJournal.Apply(actions, data, AT + 99999)
+	check(data.items[UID] == nil, "запись не появилась заново")
+
+	-- Жертва ещё в живой сессии, которая могла не сохранить удаление: ждём, а не отбираем у вора.
+	local pendingData = {
+		items = { [UID] = { id = "Moai", pending = ID, from = OWNER, acquiredAt = AT } },
+		transfersIn = { [ID] = { uid = UID, at = AT } },
+	}
+	local wait = TransferJournal.Resolve({}, pendingData, AT + 10, function()
+		return nil
+	end)
+	check(
+		#wait == 1 and wait[1].kind == "wait",
+		"pending без журнала при неизвестной жертве — ждёт"
+	)
+	-- Подтверждение по содержимому сохранения, а не по любому OnAfterSave.
+	local grant = { kind = "grant", uid = UID, id = ID, journal = true }
+	check(
+		not TransferJournal.Confirmed(grant, { items = {}, transfersIn = {} }),
+		"несвежее сохранение без метки не подтверждает"
 	)
 	check(
-		unknown[1].kind == "wait",
-		"профиль жертвы не прочитан — решение откладывается"
+		TransferJournal.Confirmed(grant, { items = { [UID] = { id = "Moai" } }, transfersIn = { [ID] = {} } }),
+		"сохранение с меткой и записью подтверждает"
 	)
 end
 

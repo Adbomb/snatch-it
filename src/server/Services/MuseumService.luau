@@ -213,6 +213,10 @@ local function ownExhibit(player: Player, plot: PlotService.Plot, slot: number):
 	if not uid or not record or record.place ~= "slot" or record.slot ~= slot then
 		return nil, nil
 	end
+	local entry = ItemRegistry.Get(uid)
+	if not entry or entry.state ~= "Displayed" then
+		return nil, nil -- экспонат сейчас крадут (Lifting, Stolen): его деталь у вора
+	end
 	return uid, record
 end
 
@@ -381,12 +385,11 @@ function MuseumService.LoadMuseum(player: Player)
 		if type(record) ~= "table" or not Items[record.id] then
 			Log.Warn(
 				"MuseumService",
-				("%s: неизвестный предмет %s (uid %s) пропущен"):format(
-					player.Name,
-					tostring(record.id),
-					uid
-				)
+				("%s: неизвестный или нечитаемый предмет (uid %s) пропущен"):format(player.Name, tostring(uid))
 			)
+		elseif record.pending ~= nil then
+			-- украденное ещё передаётся по журналу (D46): в реестр не ставится, в окне — «Передаётся…»
+			continue
 		elseif record.place == "slot" then
 			local slot = record.slot
 			if type(slot) ~= "number" or slot < 1 or slot > maxSlot then

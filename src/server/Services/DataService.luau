@@ -26,27 +26,45 @@ local profiles: { [Player]: any } = {}
 local saveState: { [Player]: { last: number, pending: boolean } } = {}
 local mockUsers: { [number]: boolean } = {} -- тестовые профили (ProfileStore.Mock): журнал краж — в памяти
 
--- Журнал передач (DESIGN §6): DataStore «Transfers», ключ to_<вор> → список записей. Если DataStore недоступен
--- (Studio без доступа к API), журнал живёт в памяти сервера — как и профили ProfileStore в этом режиме.
+-- Журнал передач (DESIGN §6): DataStore «Transfers», ключ to_<вор> → список записей. Пока ProfileStore работает с
+-- DataStore (DataStoreState = "Access"), журнал — только там (с повторами при сбоях); без доступа к API (Studio) и у
+-- тестовых профилей — в памяти сервера, как и сами профили в этом режиме.
 local journalStore: DataStore? = nil
 local journalMemory: { [string]: { any } } = {}
-local journalChecked = false
+local JOURNAL_TRIES = 4
 
-local function journal(): DataStore?
-	if not journalChecked then
-		journalChecked = true
-		local ok, result = pcall(function()
-			local ds = DataStoreService:GetDataStore(GameConfig.Data.TransferStoreName)
-			ds:GetAsync("probe")
-			return ds
-		end)
+local function journalMode(user: number): string
+	if mockUsers[user] then
+		return "Memory"
+	end
+	local waited = 0
+	while ProfileStore.DataStoreState == "NotReady" and waited < 15 do
+		task.wait(0.25)
+		waited += 0.25
+	end
+	if ProfileStore.DataStoreState ~= "Access" then
+		return "Memory"
+	end
+	if not journalStore then
+		journalStore = DataStoreService:GetDataStore(GameConfig.Data.TransferStoreName)
+	end
+	return "DataStore"
+end
+
+local function withRetries<T>(label: string, fn: () -> T): (boolean, T?)
+	local delay = 0.5
+	for attempt = 1, JOURNAL_TRIES do
+		local ok, result = pcall(fn)
 		if ok then
-			journalStore = result
-		else
-			Log.Warn("DataService", "журнал передач — в памяти (DataStore недоступен): " .. tostring(result))
+			return true, result
+		end
+		Log.Warn("DataService", ("%s, попытка %d: %s"):format(label, attempt, tostring(result)))
+		if attempt < JOURNAL_TRIES then
+			task.wait(delay)
+			delay *= 2
 		end
 	end
-	return journalStore
+	return false, nil
 end
 
 local DataService = {}
@@ -90,10 +108,18 @@ function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 	if profile.Data.schema == 1 then
 		profile.Data.schema = 2
 	end
-	-- Незавершённые передачи украденного (DESIGN §6): до проверки записей.
-	DataService.ResolveTransfers(player, profile.Data)
+	if type(profile.Data.items) ~= "table" then
+		profile.Data.items = {} -- нечитаемое поле предметов (Inventory.Normalize сделал бы то же)
+	end
+	-- Незавершённые передачи украденного (DESIGN §6): до проверки записей; подтверждение — после загрузки.
+	local confirmLater = DataService.ResolveTransfers(player, profile.Data)
 	-- schema 2 → 3 (D46) и проверка записей при каждой загрузке.
-	local report = Inventory.Normalize(profile.Data, DataService.SlotCountFor(profile.Data.museumLevel), Items)
+	local report = Inventory.Normalize(
+		profile.Data,
+		DataService.SlotCountFor(profile.Data.museumLevel),
+		Items,
+		GameConfig.Museum.RotateStep
+	)
 	if #report.moved > 0 or #report.unknown > 0 then
 		Log.Warn(
 			"DataService",
@@ -128,6 +154,9 @@ function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 		return false
 	end
 	profiles[player] = profile
+	if confirmLater and #confirmLater > 0 then
+		task.spawn(DataService.ConfirmResolved, player, confirmLater)
+	end
 	Log.Debug(
 		"DataService",
 		("Профиль %s загружен, экспонатов: %d"):format(
@@ -177,7 +206,7 @@ function DataService.IsSlotFree(player: Player, slot: number): boolean
 		return false
 	end
 	for _, record in data.items do
-		if record.place == "slot" and record.slot == slot then
+		if type(record) == "table" and record.place == "slot" and record.slot == slot then
 			return false
 		end
 	end
@@ -285,93 +314,139 @@ end
 -- Журнал вора: изменить (fn получает список и возвращает новый). Ждёт DataStore. true — записано.
 function DataService.JournalUpdate(thief: number, fn: ({ any }) -> { any }): boolean
 	local key = TransferJournal.Key(thief)
-	local ds = if mockUsers[thief] then nil else journal()
-	if not ds then
+	if journalMode(thief) == "Memory" then
 		journalMemory[key] = fn(table.clone(journalMemory[key] or {}))
 		return true
 	end
-	local ok, err = pcall(function()
-		(ds :: DataStore):UpdateAsync(key, function(old)
+	local ok = withRetries("журнал " .. key .. " не записан", function()
+		(journalStore :: DataStore):UpdateAsync(key, function(old)
 			return fn(if type(old) == "table" then old else {})
 		end)
+		return true
 	end)
-	if not ok then
-		Log.Warn("DataService", ("журнал %s не записан: %s"):format(key, tostring(err)))
-	end
 	return ok
 end
 
+-- Журнал вора. nil — прочитать не удалось.
 function DataService.JournalRead(thief: number): { any }?
 	local key = TransferJournal.Key(thief)
-	local ds = if mockUsers[thief] then nil else journal()
-	if not ds then
+	if journalMode(thief) == "Memory" then
 		return table.clone(journalMemory[key] or {})
 	end
-	local ok, result = pcall(function()
-		return (ds :: DataStore):GetAsync(key)
+	local ok, result = withRetries("журнал " .. key .. " не прочитан", function()
+		return (journalStore :: DataStore):GetAsync(key)
 	end)
 	if not ok then
-		Log.Warn("DataService", ("журнал %s не прочитан: %s"):format(key, tostring(result)))
 		return nil
 	end
 	return if type(result) == "table" then result else {}
 end
 
--- Сохранённые (не живые) записи предметов игрока userId: для решения по журналу. nil — прочитать не удалось.
-function DataService.ReadSavedItems(userId: number): { [string]: any }?
+-- Удалить из журнала вора записи с этими id.
+function DataService.JournalRemove(thief: number, ids: { string }): boolean
+	if #ids == 0 then
+		return true
+	end
+	local drop = {}
+	for _, id in ids do
+		drop[id] = true
+	end
+	return DataService.JournalUpdate(thief, function(list)
+		local keep = {}
+		for _, entry in list do
+			if type(entry) ~= "table" or not drop[entry.id] then
+				table.insert(keep, entry)
+			end
+		end
+		return keep
+	end)
+end
+
+-- Сохранённые (не живые) данные игрока userId и есть ли у профиля живая сессия. nil — прочитать не удалось или
+-- ProfileStore закрывается (ничего не известно).
+function DataService.ReadSaved(userId: number): (any?, boolean)
 	local source = if mockUsers[userId] then store.Mock else store
 	local ok, result = pcall(function()
 		return source:GetAsync(GameConfig.Data.KeyPrefix .. userId)
 	end)
-	if not ok then
+	if not ok or result == nil then
+		return nil, false
+	end
+	return result.Data or {}, result.Session ~= nil
+end
+
+-- Сохранена ли у жертвы метка передачи id (TransferJournal.Resolve): true / false / nil — неизвестно.
+local function victimOut(from: number, id: string, age: number): boolean?
+	local data, active = DataService.ReadSaved(from)
+	if data == nil then
 		return nil
 	end
-	if result == nil then
-		return {}
+	local marks = data.transfersOut
+	if type(marks) == "table" and marks[id] ~= nil then
+		return true
 	end
-	return result.Data and result.Data.items or {}
+	if active and age < TransferJournal.SessionGrace then
+		return nil -- живая сессия могла ещё не сохранить удаление
+	end
+	return false
 end
 
--- При загрузке вора: незавершённые передачи по журналу (TransferJournal.Resolve). Меняет data до проверки записей.
-function DataService.ResolveTransfers(player: Player, data: any)
-	local hasPending = false
-	for _, record in data.items or {} do
-		if type(record) == "table" and record.pending ~= nil then
-			hasPending = true
-		end
-	end
+-- При загрузке вора: незавершённые передачи по журналу и меткам (TransferJournal). Меняет data до проверки записей.
+-- Возвращает действия, которые надо подтвердить сохранением (ConfirmResolved), или nil.
+function DataService.ResolveTransfers(player: Player, data: any): { any }?
 	local entries = DataService.JournalRead(player.UserId)
-	if not entries or (#entries == 0 and not hasPending) then
-		return
+	if entries == nil then
+		Log.Warn(
+			"DataService",
+			player.Name
+				.. ": журнал передач не прочитан — передачи решатся при следующем входе"
+		)
+		return nil
 	end
-	local actions = TransferJournal.Resolve(entries, data.items, os.time(), function(from, uid)
-		local items = DataService.ReadSavedItems(from)
-		if items == nil then
-			return nil
-		end
-		return items[uid] ~= nil
-	end)
-	local cleared = TransferJournal.Apply(actions, data.items)
-	if #cleared > 0 then
-		local done = {}
-		for _, id in cleared do
-			done[id] = true
-		end
-		DataService.JournalUpdate(player.UserId, function(list)
-			local keep = {}
-			for _, entry in list do
-				if not done[entry.id] then
-					table.insert(keep, entry)
-				end
+	local now = os.time()
+	local actions = TransferJournal.Resolve(entries, data, now, victimOut)
+	local done, confirm = TransferJournal.Apply(actions, data, now)
+	TransferJournal.Prune(data, entries, now)
+	if #done > 0 then
+		DataService.JournalRemove(player.UserId, done)
+	end
+	if #confirm > 0 or #done > 0 then
+		Log.Warn(
+			"DataService",
+			("%s: передач по журналу — решено %d, ждут сохранения %d"):format(
+				player.Name,
+				#done,
+				#confirm
+			)
+		)
+	end
+	return confirm
+end
+
+-- После загрузки: дождаться сохранения, в котором есть решения журнала, и только тогда удалить записи журнала.
+function DataService.ConfirmResolved(player: Player, actions: { any })
+	local ok = DataService.SaveAndWait(player, 30, function(saved)
+		for _, action in actions do
+			if not TransferJournal.Confirmed(action, saved) then
+				return false
 			end
-			return keep
-		end)
-		Log.Warn("DataService", ("%s: передач по журналу решено %d"):format(player.Name, #cleared))
+		end
+		return true
+	end)
+	if ok then
+		local ids = {}
+		for _, action in actions do
+			if action.journal then
+				table.insert(ids, action.id)
+			end
+		end
+		DataService.JournalRemove(player.UserId, ids)
 	end
 end
 
--- Передача владения (шаг 2 журнала): у жертвы запись удаляется, вору добавляется с pending = transferId. Один кадр,
--- без yield. false — записи нет у жертвы, uid уже у вора или профиль не загружен.
+-- Передача владения (шаг 2 журнала): у жертвы запись удаляется и ставится метка transfersOut[id], вору добавляется
+-- запись с pending = id и метка transfersIn[id]. Один кадр, без yield. false — записи нет у жертвы, uid уже у вора или
+-- профиль не загружен.
 function DataService.TransferItem(
 	victim: Player,
 	thief: Player,
@@ -382,25 +457,45 @@ function DataService.TransferItem(
 	local from = DataService.GetData(victim)
 	local to = DataService.GetData(thief)
 	if not from or not to or from.items[uid] == nil or to.items[uid] ~= nil then
-		Log.Warn("DataService", ("передача %s: %s → %s невозможна"):format(uid, victim.Name, thief.Name))
+		Log.Warn(
+			"DataService",
+			("передача %s: %s → %s невозможна"):format(uid, victim.Name, thief.Name)
+		)
 		return false
 	end
+	local now = os.time()
 	local copy = table.clone(record)
 	copy.pending = transferId
+	from.transfersOut = if type(from.transfersOut) == "table" then from.transfersOut else {}
+	to.transfersIn = if type(to.transfersIn) == "table" then to.transfersIn else {}
 	from.items[uid] = nil
+	from.transfersOut[transferId] = { uid = uid, at = now }
 	to.items[uid] = copy
+	to.transfersIn[transferId] = { uid = uid, at = now }
 	return true
 end
 
 -- Откат TransferItem в том же кадре (реестр отказал).
-function DataService.UndoTransfer(victim: Player, thief: Player, uid: string, original: { [string]: any })
+function DataService.UndoTransfer(
+	victim: Player,
+	thief: Player,
+	uid: string,
+	original: { [string]: any },
+	transferId: string
+)
 	local from = DataService.GetData(victim)
 	local to = DataService.GetData(thief)
 	if to then
 		to.items[uid] = nil
+		if type(to.transfersIn) == "table" then
+			to.transfersIn[transferId] = nil
+		end
 	end
 	if from then
 		from.items[uid] = original
+		if type(from.transfersOut) == "table" then
+			from.transfersOut[transferId] = nil
+		end
 	end
 end
 
@@ -413,20 +508,27 @@ function DataService.ClearPending(player: Player, uid: string, transferId: strin
 	end
 end
 
--- Сохранить профиль и дождаться записи (OnAfterSave) не дольше timeout секунд. true — записано.
-function DataService.SaveAndWait(player: Player, timeout: number): boolean
+-- Сохранить профиль и дождаться записи, в которой выполнено check(сохранённые данные), не дольше timeout секунд.
+-- Сохранение, начатое раньше (снимок до изменений), не засчитывается: проверяется содержимое. true — записано.
+function DataService.SaveAndWait(player: Player, timeout: number, check: ((any) -> boolean)?): boolean
 	local profile = getActiveProfile(player)
 	if not profile then
 		return false
 	end
 	local saved = false
-	local connection = profile.OnAfterSave:Connect(function()
-		saved = true
+	local connection = profile.OnAfterSave:Connect(function(lastSaved)
+		if check == nil or (type(lastSaved) == "table" and check(lastSaved)) then
+			saved = true
+		end
 	end)
 	profile:Save()
-	local started = os.clock()
+	local started, lastRequest = os.clock(), os.clock()
 	while not saved and os.clock() - started < timeout and profile:IsActive() do
 		task.wait(0.1)
+		if not saved and os.clock() - lastRequest > 3 then
+			lastRequest = os.clock()
+			profile:Save()
+		end
 	end
 	connection:Disconnect()
 	return saved

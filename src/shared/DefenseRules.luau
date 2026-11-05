@@ -173,11 +173,21 @@ function DefenseRules.InLaser(cfg: any, laser: any, at: Vector3): boolean
 	return math.abs(at.Z - laser.z) <= cfg.Laser.Width / 2 and at.X >= laser.x0 and at.X <= laser.x1
 end
 
--- После Судной ночи: установленное исчезает, купленное и не установленное остаётся (D37). Меняет owned на месте.
-function DefenseRules.Consume(owned: { [string]: number }, installed: { [string]: any })
-	for kind in installed do
-		owned[kind] = math.max((owned[kind] or 0) - 1, 0)
+-- Установленное устройство списано при установке и привязано к Судной ночи круга cycle (data.defense.installed).
+-- При загрузке и выходе: эта ночь ещё не началась (игрок вышел или сервер упал до неё) — вернуть в запас; началась —
+-- устройство отработало (выход посреди ночи и вход обратно запас не возвращают). nightStart(cycle) — начало Судной
+-- ночи круга.
+function DefenseRules.Settle(defense: any, now: number, nightStart: (number) -> number): number
+	local returned = 0
+	defense.owned = defense.owned or {}
+	for kind, cycle in defense.installed or {} do
+		if type(cycle) == "number" and now < nightStart(cycle) then
+			defense.owned[kind] = (defense.owned[kind] or 0) + 1
+			returned += 1
+		end
 	end
+	defense.installed = {}
+	return returned
 end
 
 return DefenseRules

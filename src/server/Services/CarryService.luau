@@ -176,7 +176,12 @@ function CarryService.RefreshSpeed(player: Player)
 			return
 		end
 		local hold = holds[player]
-		humanoid.WalkSpeed = Speed.Walk(player:GetAttribute("Strength") or 0, hold and hold.weight)
+		local speed = Speed.Walk(player:GetAttribute("Strength") or 0, hold and hold.weight)
+		local slowUntil = player:GetAttribute("SlowUntil")
+		if type(slowUntil) == "number" and workspace:GetServerTimeNow() < slowUntil then
+			speed *= player:GetAttribute("SlowFactor") or 1 -- ловушка (D37)
+		end
+		humanoid.WalkSpeed = speed
 	end
 end
 

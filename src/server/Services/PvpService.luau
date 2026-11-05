@@ -202,13 +202,9 @@ end
 local function knockOut(target: any, from: Vector3, attacker: any?)
 	release(target) -- капкан снимается, начинается обычное оглушение (таймеры не складываются, D37)
 	target:SetAttribute("Knocked", true)
-	TheftService.OnDefeated(target) -- добыча вора — сразу владельцу
-	knockback(target, from)
-	setFrozen(target, true)
-	stars(target, true)
-	effect("Knock", attacker or target, target, 0)
 	local f = fighters[target]
 	local untilAt = f and f.knockedUntil or 0
+	-- подъём назначается первым: что бы ни случилось дальше, игрок не останется лежать навсегда
 	task.delay(cfg.KnockSeconds, function()
 		-- встаёт, если за это время его не нокаутировали заново (неуязвим, поэтому не должны)
 		local now = fighters[target]
@@ -216,6 +212,14 @@ local function knockOut(target: any, from: Vector3, attacker: any?)
 			recover(target)
 		end
 	end)
+	local ok, err = pcall(TheftService.OnDefeated, target) -- добыча вора — сразу владельцу
+	if not ok then
+		Log.Warn("PvpService", "возврат добычи после нокаута: " .. tostring(err))
+	end
+	knockback(target, from)
+	setFrozen(target, true)
+	stars(target, true)
+	effect("Knock", attacker or target, target, 0)
 	Log.Debug(
 		"PvpService",
 		("%s нокаутирован (%s)"):format(target.Name, if attacker then attacker.Name else "защита")
@@ -233,7 +237,8 @@ local function tryAttack(player: any)
 	end
 	local now = os.clock()
 	local f = fighter(player)
-	if PvpRules.CanSwing(f, now, isOpen(), inSafe(root.Position), Battle.Player.AttackInterval) then
+	local interval = Battle.Player.AttackInterval - cfg.SwingTolerance -- клиент шлёт не чаще AttackInterval; запас на сеть
+	if PvpRules.CanSwing(f, now, isOpen(), inSafe(root.Position), interval) then
 		return
 	end
 	if player:GetAttribute("Snared") then
@@ -325,9 +330,9 @@ function PvpService.MaxHP(player: any): number
 end
 
 -- Капкан (D37): seconds обездвижен и не бьёт, по нему можно бить; нокаут снимает капкан.
-function PvpService.Snare(target: any, seconds: number)
+function PvpService.Snare(target: any, seconds: number): boolean
 	if target:GetAttribute("Knocked") or target:GetAttribute("Snared") then
-		return
+		return false -- уже лежит или пойман: капкан не тратится
 	end
 	target:SetAttribute("Snared", true)
 	setFrozen(target, true)
@@ -337,6 +342,7 @@ function PvpService.Snare(target: any, seconds: number)
 			setFrozen(target, false)
 		end
 	end)
+	return true
 end
 
 -- Ловушка (вариант Slow): скорость × factor на seconds.
@@ -346,9 +352,15 @@ function PvpService.Slow(target: any, factor: number, seconds: number)
 	if not humanoid or target:GetAttribute("Knocked") or target:GetAttribute("Snared") then
 		return
 	end
-	humanoid.WalkSpeed *= factor
+	-- замедление учитывает CarryService.RefreshSpeed, пока не истечёт (пересчёт скорости его не снимает)
+	local untilAt = workspace:GetServerTimeNow() + seconds
+	target:SetAttribute("SlowFactor", factor)
+	target:SetAttribute("SlowUntil", untilAt)
+	CarryService.RefreshSpeed(target)
 	task.delay(seconds, function()
-		if not target:GetAttribute("Knocked") and not target:GetAttribute("Snared") then
+		if target:GetAttribute("SlowUntil") == untilAt then
+			target:SetAttribute("SlowFactor", nil)
+			target:SetAttribute("SlowUntil", nil)
 			CarryService.RefreshSpeed(target)
 		end
 	end)
@@ -369,6 +381,18 @@ function PvpService.Init()
 	Players.PlayerRemoving:Connect(function(player)
 		fighters[player] = nil
 	end)
+	-- Новый персонаж (упал в пустоту и т. п.) — без нокаута и капкана: прыжок и скорость как обычно.
+	local function watch(player: Player)
+		player.CharacterAdded:Connect(function()
+			if player:GetAttribute("Knocked") or player:GetAttribute("Snared") then
+				recover(player)
+			end
+		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
 end
 
 -- Для серверных тестов: тот же обработчик, что у RemoteEvent, и доступ к состоянию.

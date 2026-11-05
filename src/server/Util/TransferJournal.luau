@@ -1,15 +1,17 @@
 --!strict
 -- Журнал передачи владения при краже (DESIGN.md §6, D46): худший случай при падении сервера — задержка выдачи или
--- отмена кражи, но не дубль и не потеря. Чистая часть без Instance (проверяется в Lune, check_theft.luau); запись в
--- DataStore делает TheftService через переданное хранилище.
+-- отмена кражи, но не дубль и не потеря. Решение «чей предмет» принимается по меткам самой передачи, а не по тому,
+-- есть ли uid в профиле (uid мог потом уйти законно — следующей кражей):
+--   у жертвы data.transfersOut[id] — «предмет ушёл по передаче id», у вора data.transfersIn[id] — «получен по id».
+-- Метки пишутся в одном кадре с переносом записи (DataService.TransferItem), поэтому сохранение профиля содержит
+-- либо и метку, и изменение предметов, либо ни то, ни другое.
 -- Порядок передачи (TheftService):
---   1) журнал to_<вор>: запись { id, uid, from, record, state = "pending", at } — до любых изменений профилей;
---   2) в одном кадре: у жертвы запись items[uid] удаляется, вору добавляется с pending = id (предмет «передаётся»:
---      его нельзя выставить);
---   3) сохранить жертву, дождаться записи → журнал state = "victimSaved";
---   4) сохранить вора → у записи вора pending снимается, запись журнала удаляется.
--- При загрузке вора Resolve решает по журналу (и, если нужно, по сохранённому профилю жертвы), что делать с каждой
--- передачей. Ни от чего не зависит.
+--   1) журнал to_<вор>: { id, uid, from, record, at } — до любых изменений профилей;
+--   2) один кадр: жертве — удалить запись + transfersOut[id]; вору — запись с pending = id + transfersIn[id];
+--   3) дождаться сохранения жертвы, в котором есть transfersOut[id];
+--   4) снять pending у вора, дождаться сохранения вора с transfersIn[id] и записью без pending, удалить запись журнала.
+-- При загрузке вора Resolve по каждой записи журнала (и по записям с pending без журнала) решает, что делать, глядя на
+-- сохранённые метки жертвы. Чистый модуль без Instance (проверяется в Lune, check_theft.luau). Ни от чего не зависит.
 
 local TransferJournal = {}
 
@@ -18,112 +20,158 @@ export type Entry = {
 	uid: string,
 	from: number, -- UserId жертвы
 	record: { [string]: any }, -- запись предмета для профиля вора
-	state: string, -- "pending" | "victimSaved"
 	at: number, -- время записи (os.time)
+	state: string?, -- прежний формат (не используется)
 }
 
 export type Action = {
-	kind: string, -- "keep" (снять pending), "grant" (выдать запись), "drop" (убрать запись вора), "wait" (решить позже)
+	kind: string, -- "grant" | "keep" | "drop" | "done" | "wait"
 	uid: string,
 	id: string,
 	record: { [string]: any }?,
+	journal: boolean, -- есть запись журнала (её удалить после подтверждения)
 }
 
--- Сколько секунд передача в state = "pending" ждёт, прежде чем её решат по профилю жертвы (жертва могла ещё не
--- успеть сохраниться на другом сервере).
-TransferJournal.Grace = 120
+-- Сколько секунд передача может ждать сохранения жертвы, если её сессия ещё активна (живая сессия ещё не сохранила
+-- удаление). Дольше — живой сессии без сохранения не бывает (автосохранение ProfileStore — раз в 300 с).
+TransferJournal.SessionGrace = 1800
 
--- Ключ журнала вора.
+-- Метки старше этого (секунд) удаляются при загрузке, если на них не ссылаются журнал и pending.
+TransferJournal.MarkerTtl = 30 * 24 * 3600
+
 function TransferJournal.Key(thief: number): string
 	return "to_" .. tostring(thief)
 end
 
--- Решение для каждой незавершённой передачи при загрузке профиля вора.
---   entries — записи журнала вора; items — items его профиля; now — os.time();
---   victimHas(from, uid) → true / false / nil (сохранённый профиль жертвы прочитать не удалось).
--- Возвращает список действий; записи журнала с kind ~= "wait" после применения удаляются.
-function TransferJournal.Resolve(
-	entries: { Entry },
-	items: { [string]: any },
-	now: number,
-	victimHas: (number, string) -> boolean?
-): { Action }
+-- victimOut(from, id, age) → true (в сохранённых данных жертвы есть transfersOut[id]), false (нет, и живой сессии,
+-- которая могла не успеть сохраниться, тоже нет), nil (неизвестно — подождать).
+type VictimOut = (number, string, number) -> boolean?
+
+local function decide(entry: Entry, data: any, now: number, victimOut: VictimOut, journal: boolean): Action
+	local items = data.items or {}
+	local marks = data.transfersIn or {}
+	local mine = items[entry.uid]
+	local base = { uid = entry.uid, id = entry.id, journal = journal }
+	if marks[entry.id] ~= nil then
+		-- получение уже сохранено у вора вместе с меткой
+		if type(mine) ~= "table" or mine.pending ~= entry.id then
+			base.kind = "done" -- подтверждено раньше или предмет потом законно ушёл — ничего не выдавать
+			return base :: Action
+		end
+		local out = victimOut(entry.from, entry.id, now - entry.at)
+		base.kind = if out == true then "keep" elseif out == false then "drop" else "wait"
+		return base :: Action
+	end
+	-- у вора получения нет
+	local out = victimOut(entry.from, entry.id, now - entry.at)
+	if out == true then
+		base.kind = "grant"
+		base.record = entry.record
+	elseif out == false then
+		base.kind = "drop" -- жертва не сохранила удаление: кража не состоялась
+	else
+		base.kind = "wait"
+	end
+	return base :: Action
+end
+
+-- Решение по каждой незавершённой передаче при загрузке вора: записи журнала и записи с pending без журнала.
+function TransferJournal.Resolve(entries: { Entry }, data: any, now: number, victimOut: VictimOut): { Action }
 	local actions: { Action } = {}
 	local seen: { [string]: boolean } = {}
 	for _, entry in entries do
-		seen[entry.uid] = true
-		local mine = items[entry.uid]
-		local ours = type(mine) == "table" and mine.pending == entry.id
-		if entry.state == "victimSaved" then
-			-- жертва уже сохранена без предмета: он принадлежит вору
-			table.insert(actions, {
-				kind = if mine then "keep" else "grant",
-				uid = entry.uid,
-				id = entry.id,
-				record = entry.record,
-			})
-		elseif now - entry.at < TransferJournal.Grace then
-			table.insert(actions, { kind = "wait", uid = entry.uid, id = entry.id })
-		else
-			local has = victimHas(entry.from, entry.uid)
-			if has == nil then
-				table.insert(actions, { kind = "wait", uid = entry.uid, id = entry.id })
-			elseif has then
-				-- жертва сохранилась с предметом: кража не состоялась
-				table.insert(actions, { kind = if ours then "drop" else "keep", uid = entry.uid, id = entry.id })
-			else
-				table.insert(actions, {
-					kind = if mine then "keep" else "grant",
-					uid = entry.uid,
-					id = entry.id,
-					record = entry.record,
-				})
-			end
+		if type(entry) == "table" and type(entry.id) == "string" and type(entry.uid) == "string" then
+			seen[entry.id] = true
+			table.insert(actions, decide(entry, data, now, victimOut, true))
 		end
 	end
-	-- Запись вора с pending без журнала: журнал пишется до записи профиля, так быть не должно — решаем по жертве.
-	for uid, record in items do
-		if type(record) == "table" and record.pending ~= nil and not seen[uid] then
-			local from = record.from
-			local has = if type(from) == "number" then victimHas(from, uid) else nil
-			if has == true then
-				table.insert(actions, { kind = "drop", uid = uid, id = tostring(record.pending) })
-			elseif has == false then
-				table.insert(actions, { kind = "keep", uid = uid, id = tostring(record.pending) })
-			else
-				table.insert(actions, { kind = "wait", uid = uid, id = tostring(record.pending) })
-			end
+	for uid, record in data.items or {} do
+		if type(record) == "table" and type(record.pending) == "string" and not seen[record.pending] then
+			local orphan: Entry = {
+				id = record.pending,
+				uid = uid,
+				from = if type(record.from) == "number" then record.from else 0,
+				record = record,
+				at = if type(record.acquiredAt) == "number" then record.acquiredAt else 0,
+			}
+			table.insert(actions, decide(orphan, data, now, victimOut, false))
 		end
 	end
 	return actions
 end
 
--- Применяет действия к items профиля вора. Возвращает id записей журнала, которые можно удалить.
-function TransferJournal.Apply(actions: { Action }, items: { [string]: any }): { string }
-	local cleared = {}
+-- Применяет действия к данным вора (в памяти). Возвращает ids записей журнала: done — удалить сразу; confirm —
+-- удалить только после сохранения, в котором есть результат (Confirmed).
+function TransferJournal.Apply(actions: { Action }, data: any, now: number): ({ string }, { Action })
+	data.items = data.items or {}
+	data.transfersIn = data.transfersIn or {}
+	local done, confirm = {}, {}
 	for _, action in actions do
 		if action.kind == "grant" then
-			if items[action.uid] == nil and action.record then
+			if data.items[action.uid] == nil and action.record then
 				local record = table.clone(action.record)
 				record.pending = nil
-				items[action.uid] = record
+				data.items[action.uid] = record
 			end
-			table.insert(cleared, action.id)
+			data.transfersIn[action.id] = { uid = action.uid, at = now }
+			table.insert(confirm, action)
 		elseif action.kind == "keep" then
-			local record = items[action.uid]
-			if type(record) == "table" then
+			local record = data.items[action.uid]
+			if type(record) == "table" and record.pending == action.id then
 				record.pending = nil
 			end
-			table.insert(cleared, action.id)
+			table.insert(confirm, action)
 		elseif action.kind == "drop" then
-			local record = items[action.uid]
-			if type(record) == "table" and record.pending ~= nil then
-				items[action.uid] = nil
+			local record = data.items[action.uid]
+			if type(record) == "table" and record.pending == action.id then
+				data.items[action.uid] = nil
 			end
-			table.insert(cleared, action.id)
+			data.transfersIn[action.id] = nil
+			table.insert(confirm, action)
+		elseif action.kind == "done" and action.journal then
+			table.insert(done, action.id)
 		end
 	end
-	return cleared
+	return done, confirm
+end
+
+-- Сохранённые данные вора уже содержат результат действия (можно удалять запись журнала).
+function TransferJournal.Confirmed(action: Action, saved: any): boolean
+	local items = saved and saved.items or {}
+	local marks = saved and saved.transfersIn or {}
+	local record = items[action.uid]
+	if action.kind == "grant" or action.kind == "keep" then
+		return marks[action.id] ~= nil and type(record) == "table" and record.pending == nil
+	elseif action.kind == "drop" then
+		return marks[action.id] == nil and (type(record) ~= "table" or record.pending ~= action.id)
+	end
+	return true
+end
+
+-- Старые метки (на которые не ссылаются журнал и pending) удаляются.
+function TransferJournal.Prune(data: any, entries: { Entry }, now: number)
+	local keep: { [string]: boolean } = {}
+	for _, entry in entries do
+		if type(entry) == "table" and type(entry.id) == "string" then
+			keep[entry.id] = true
+		end
+	end
+	for _, record in data.items or {} do
+		if type(record) == "table" and type(record.pending) == "string" then
+			keep[record.pending] = true
+		end
+	end
+	for _, field in { "transfersIn", "transfersOut" } do
+		local marks = data[field]
+		if type(marks) == "table" then
+			for id, mark in marks do
+				local at = if type(mark) == "table" and type(mark.at) == "number" then mark.at else 0
+				if not keep[id] and now - at > TransferJournal.MarkerTtl then
+					marks[id] = nil
+				end
+			end
+		end
+	end
 end
 
 return TransferJournal

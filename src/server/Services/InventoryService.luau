@@ -107,6 +107,14 @@ function InventoryService.Sync(player: Player)
 			end
 		end
 	end
+	-- Украденное, которое ещё передаётся по журналу и не стоит в реестре (решится при подтверждении): только показать.
+	if data then
+		for uid, record in data.items do
+			if type(record) == "table" and record.pending ~= nil and not ItemRegistry.Get(uid) then
+				table.insert(list, { uid = uid, itemId = record.id, pending = true })
+			end
+		end
+	end
 	table.sort(list, function(a, b)
 		if a.itemId ~= b.itemId then
 			return a.itemId < b.itemId
@@ -287,8 +295,14 @@ local function display(player: Player, plot: PlotService.Plot, data: any, uid: a
 		return
 	end
 	local entry = ItemRegistry.Get(uid) :: ItemRegistry.Entry
-	local part = ItemFactory.Create(entry.itemId) -- может ждать загрузки меша: после неё всё проверяется заново
-	if not storedItem(player, data, uid) or ItemRegistry.GetSlotItem(player.UserId, slot) then
+	-- Шаблоны мешей загружены при старте (ItemFactory.Preload), Create не ждёт; но если когда-нибудь начнёт ждать —
+	-- после него всё, включая фазу, проверяется заново.
+	local part = ItemFactory.Create(entry.itemId)
+	if
+		not storedItem(player, data, uid)
+		or ItemRegistry.GetSlotItem(player.UserId, slot)
+		or not MuseumService.ExhibitsUnlocked(player)
+	then
 		part:Destroy()
 		return
 	end
@@ -330,6 +344,10 @@ local function replace(player: Player, plot: PlotService.Plot, data: any, uid: a
 	end
 	local entry = ItemRegistry.Get(uid) :: ItemRegistry.Entry
 	local part = ItemFactory.Create(entry.itemId)
+	if not MuseumService.ExhibitsUnlocked(player) then
+		part:Destroy()
+		return
+	end
 	local old = ItemRegistry.Get(oldUid)
 	local oldRecord = data.items[oldUid]
 	if
