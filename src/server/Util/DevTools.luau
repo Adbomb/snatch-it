@@ -165,8 +165,9 @@ function DevTools.Init()
 		fn.Parent = folder
 	end
 	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
-	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>". Выполняются в потоке этого скрипта (как RunTests),
-	-- ответ — атрибут CommandResult.
+	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
+	-- "GiveDefense <userId> <вид> <сколько>". Выполняются в потоке этого скрипта (как RunTests), ответ — атрибут
+	-- CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
 		local line = folder:GetAttribute("Command")
 		if type(line) ~= "string" then
@@ -193,6 +194,24 @@ function DevTools.Init()
 				local coins = DataService.AddCoins(player, tonumber(words[3]) or 0)
 				GymService.SyncAttributes(player)
 				return coins
+			elseif command == "MuseumLevel" or command == "GiveDefense" then
+				-- проверка защиты (D47): уровень музея — сколько устройств можно поставить; устройство в запас —
+				-- в том числе капкан, у которого нет утверждённой цены. Только профиль в Studio, мир не меняется.
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				local data = player and DataService.GetData(player)
+				if not player or not data then
+					return "нет игрока"
+				end
+				local DefenseService = require(ServerScriptService.Server.Services.DefenseService)
+				if command == "MuseumLevel" then
+					data.museumLevel = math.clamp(math.floor(tonumber(words[3]) or 1), 1, 10)
+				else
+					local defense = DataService.Defense(player)
+					local kind = words[3]
+					defense.owned[kind] = (defense.owned[kind] or 0) + math.max(0, math.floor(tonumber(words[4]) or 1))
+				end
+				DefenseService.Sync(player)
+				return "ок"
 			end
 			return "неизвестная команда"
 		end)
