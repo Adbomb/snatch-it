@@ -15,7 +15,8 @@ local PROMPT_TAG = "MuseumPrompt"
 
 local player = Players.LocalPlayer
 local prompts: { [ProximityPrompt]: true } = {}
-local watched: { [Instance]: true } = {}
+-- слабые ключи: витрины и двери защиты уничтожаются (конец ночи, выход владельца) — таблица их не держит
+local watched: { [Instance]: true } = setmetatable({}, { __mode = "k" }) :: any
 local highlight: Highlight?
 
 local MuseumPromptController = {}

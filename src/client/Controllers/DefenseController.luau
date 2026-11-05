@@ -50,6 +50,9 @@ local barText: TextLabel
 local placeButton: GuiButton
 local pointer: Vector2? = nil -- касание (экранные координаты без вставки GUI), за которым идёт образец
 local pointerTouch: InputObject? = nil
+-- Постаменты и сундук для localLists не двигаются: на время расстановки считаются один раз (образец обновляется
+-- каждый кадр, а FindFirstChild с поиском по всему музею на слабом телефоне заметен).
+local fixedLists: { plot: Model, origin: CFrame, showcases: { Vector3 }, chest: Vector3 }? = nil
 local counter: TextLabel
 
 local function currentPhase(): string
@@ -237,6 +240,7 @@ end
 
 local function stopPlacing()
 	placing = nil
+	fixedLists = nil
 	pointer = nil
 	pointerTouch = nil
 	if ghost then
@@ -265,17 +269,22 @@ local function overInterface(at: Vector2): boolean
 end
 
 local function localLists(plot: Model, origin: CFrame): ({ Vector3 }, Vector3, { Vector3 })
-	local showcases = {}
-	local folder = plot:FindFirstChild("Showcases")
-	for _, showcase in if folder then folder:GetChildren() else {} do
-		if showcase:IsA("BasePart") then
-			table.insert(showcases, origin:PointToObjectSpace(showcase.Position))
+	if not fixedLists or fixedLists.plot ~= plot or fixedLists.origin ~= origin then
+		local showcases = {}
+		local folder = plot:FindFirstChild("Showcases")
+		for _, showcase in if folder then folder:GetChildren() else {} do
+			if showcase:IsA("BasePart") then
+				table.insert(showcases, origin:PointToObjectSpace(showcase.Position))
+			end
 		end
+		local chest = plot:FindFirstChild("Chest", true)
+		local chestLocal = if chest and chest:IsA("BasePart")
+			then origin:PointToObjectSpace(chest.Position)
+			else Vector3.zero
+		fixedLists = { plot = plot, origin = origin, showcases = showcases, chest = chestLocal }
 	end
-	local chest = plot:FindFirstChild("Chest", true)
-	local chestLocal = if chest and chest:IsA("BasePart")
-		then origin:PointToObjectSpace(chest.Position)
-		else Vector3.zero
+	local lists = fixedLists :: { plot: Model, origin: CFrame, showcases: { Vector3 }, chest: Vector3 }
+	local showcases, chestLocal = lists.showcases, lists.chest
 	local others = {}
 	for kind, device in state.installed do
 		if kind ~= placing and typeof(device.spot) == "Vector3" then
@@ -458,10 +467,8 @@ local function build()
 		PadLeft = 26,
 		ZIndex = 3,
 	})
+	-- крестик «Fermer» привязывает сам Motion.Window (второй BindButton давал двойные твины и Close)
 	menu = Motion.Window(gui, win.Fenetre, { Keep = { Toasts = true, Defense = true } })
-	Motion.BindButton(win.Fermer, 1.06, nil, function()
-		menu.Close()
-	end)
 end
 
 -- Кнопка «Защита» в общей колонке HUD (UI/MenuHud), под «Инвентарём».

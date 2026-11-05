@@ -662,10 +662,8 @@ local function build()
 	lockText.TextColor3 = UI.Colors.Danger
 	lockPill.Visible = false
 
+	-- крестик «Fermer» привязывает сам Motion.Window (второй BindButton давал двойные твины и Close)
 	menu = Motion.Window(gui, win.Fenetre, { Keep = { Toasts = true, Inventaire = true } })
-	Motion.BindButton(win.Fermer, 1.06, nil, function()
-		menu.Close()
-	end)
 end
 
 local function open(slot: number?)
