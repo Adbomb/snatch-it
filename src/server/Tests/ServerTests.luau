@@ -783,6 +783,9 @@ test("Удержание: конец удержания перед Triggered —
 	check(reverse == "begin,complete", "обратный порядок: " .. reverse)
 	local early = run({ began, ended }) -- отпустил раньше времени
 	check(early == "begin,cancel", "отпускание не отменило: " .. early)
+	-- отпустил и сразу нажал снова (ревью D47): прежнее удержание отменяется до нового начала
+	local again = run({ began, ended, began, triggered })
+	check(again == "begin,cancel,begin,complete", "повторное нажатие: " .. again)
 	for _, event in { began, ended, triggered } do
 		event:Destroy()
 	end

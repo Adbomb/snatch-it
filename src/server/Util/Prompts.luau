@@ -100,7 +100,12 @@ function Prompts.BindHold(
 	local count = 0
 	local grace = GameConfig.HoldRelease.ReleaseGrace
 	prompt.PromptButtonHoldBegan:Connect(function(player)
+		-- отпустил и сразу нажал снова: прежнее удержание отменяется сейчас, иначе оно держит бронь и новое не начнётся
+		local waiting = pending[player]
 		pending[player] = nil
+		if waiting and waiting ~= DONE then
+			onCancel(player)
+		end
 		onBegin(player)
 	end)
 	prompt.PromptButtonHoldEnded:Connect(function(player)

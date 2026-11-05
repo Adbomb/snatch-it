@@ -258,7 +258,10 @@ local function hackBegin(thief: any, owner: any, plot: PlotService.Plot)
 end
 
 local function hackEnd(thief: any, owner: any)
-	museumOf(owner.UserId).hackBegan[thief] = nil
+	local m = museums[owner.UserId] -- не создавать: владелец мог уже выйти (отмена приходит с задержкой)
+	if m then
+		m.hackBegan[thief] = nil
+	end
 end
 
 local function hackComplete(thief: any, owner: any, plot: PlotService.Plot)
