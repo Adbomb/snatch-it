@@ -10,6 +10,7 @@
 -- сервер держит в ReplicatedStorage.ItemPreviews по одной копии каждого предмета из инвентарей (без подписей и логики).
 -- Зависит от ItemRegistry, CarryService, DataService, MuseumService, PlotService, Util/*, Remotes, Config.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -124,6 +125,21 @@ function InventoryService.Sync(player: Player)
 	player:SetAttribute("StorageCount", stored)
 	player:SetAttribute("MuseumSlots", MuseumService.SlotCount(player))
 	Remotes.FireClient(Remotes.Names.InventoryChanged, player, list)
+end
+
+-- Sync в конце кадра, один раз на игрока, сколько бы изменений ни было.
+local syncQueued: { [Player]: boolean } = {}
+local function queueSync(player: Player)
+	if syncQueued[player] then
+		return
+	end
+	syncQueued[player] = true
+	task.defer(function()
+		syncQueued[player] = nil
+		if player.Parent then
+			InventoryService.Sync(player)
+		end
+	end)
 end
 
 -- Сундук: несомый предмет в инвентарь (Carried → Stored). В любую фазу и при свободных постаментах (D46).
@@ -463,6 +479,18 @@ function InventoryService.Init()
 		end
 	end
 	Remotes.Get(Remotes.Names.InventoryAction).OnServerEvent:Connect(tryAction)
+	-- Экспонат встаёт на постамент и уходит с него не только через окно: из рук на витрину, перестановка, кража.
+	-- Окно владельца видит любое изменение Stored/Displayed (проверка тремя клиентами, 2026-11-05).
+	ItemRegistry.OnChanged(function(_uid, fromState, toState, entry)
+		local inventory = fromState == "Stored"
+			or fromState == "Displayed"
+			or toState == "Stored"
+			or toState == "Displayed"
+		local player = inventory and entry.owner and Players:GetPlayerByUserId(entry.owner)
+		if player then
+			queueSync(player)
+		end
+	end)
 end
 
 -- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки и RemoteEvent.

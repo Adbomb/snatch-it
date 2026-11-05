@@ -40,6 +40,7 @@ local TimeService = require(Server.Services.TimeService)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local MapLayout = require(Server.World.MapLayout)
 local ItemFactory = require(Server.Util.ItemFactory)
+local Prompts = require(Server.Util.Prompts)
 local TestPlayer = require(Server.Tests.TestPlayer)
 local TheftService = require(Server.Services.TheftService)
 local PvpService = require(Server.Services.PvpService)
@@ -745,6 +746,47 @@ test("Ревью: защита списывается при установке,
 	DataService.AddCoins(B, 1e6)
 	DefenseService.Handlers.HackBegin(B, A, plotOf(A))
 	check(DefenseService.Handlers.Museum(A.UserId).hackBegan[B] == nil, "взлом начался в подготовку")
+end)
+
+-- Проверка тремя клиентами (2026-11-05): сервер получает конец удержания раньше Triggered в том же кадре.
+test("Удержание: конец удержания перед Triggered — завершение, а не отмена", function()
+	local began = Instance.new("BindableEvent")
+	local ended = Instance.new("BindableEvent")
+	local triggered = Instance.new("BindableEvent")
+	local fake = {
+		PromptButtonHoldBegan = began.Event,
+		PromptButtonHoldEnded = ended.Event,
+		Triggered = triggered.Event,
+	}
+	local log = {}
+	Prompts.BindHold(fake :: any, function()
+		table.insert(log, "begin")
+	end, function()
+		table.insert(log, "cancel")
+	end, function()
+		table.insert(log, "complete")
+	end)
+	-- игрок — экземпляр (BindableEvent копирует таблицы, у тестового игрока ключ был бы каждый раз другой)
+	local who = Instance.new("Folder")
+	local grace = GameConfig.HoldRelease.ReleaseGrace + 0.2
+	local function run(order: { BindableEvent }): string
+		table.clear(log)
+		for _, event in order do
+			event:Fire(who)
+		end
+		task.wait(grace)
+		return table.concat(log, ",")
+	end
+	local roblox = run({ began, ended, triggered })
+	check(roblox == "begin,complete", "порядок как в Roblox: " .. roblox)
+	local reverse = run({ began, triggered, ended })
+	check(reverse == "begin,complete", "обратный порядок: " .. reverse)
+	local early = run({ began, ended }) -- отпустил раньше времени
+	check(early == "begin,cancel", "отпускание не отменило: " .. early)
+	for _, event in { began, ended, triggered } do
+		event:Destroy()
+	end
+	who:Destroy()
 end)
 
 test("Улучшить можно только свою гантель", function(A, B)

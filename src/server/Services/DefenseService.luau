@@ -319,13 +319,11 @@ local function addDoorPrompt(device: Device, owner: any, plot: PlotService.Plot)
 	end
 	local prompt = Prompts.Create(panel, "Hack", "Усиленная дверь", cfg.HackDistance - 2)
 	prompt.HoldDuration = cfg.HackSeconds
-	prompt.PromptButtonHoldBegan:Connect(function(player)
+	Prompts.BindHold(prompt, function(player)
 		hackBegin(player, owner, plot)
-	end)
-	prompt.PromptButtonHoldEnded:Connect(function(player)
+	end, function(player)
 		hackEnd(player, owner)
-	end)
-	prompt.Triggered:Connect(function(player)
+	end, function(player)
 		hackComplete(player, owner, plot)
 	end)
 end

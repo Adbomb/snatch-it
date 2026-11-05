@@ -474,15 +474,16 @@ function TheftService.Init()
 		for slot, showcase in plot.showcases do
 			local prompt = Prompts.Create(showcase, "Steal", "Постамент " .. slot, cfg.Distance)
 			prompt.HoldDuration = cfg.HoldSeconds
-			prompt.PromptButtonHoldBegan:Connect(function(player)
-				tryBegin(player, plot, slot)
-			end)
-			prompt.PromptButtonHoldEnded:Connect(function(player)
-				tryCancel(player)
-			end)
-			prompt.Triggered:Connect(function(player)
-				tryComplete(player, plot, slot)
-			end)
+			Prompts.BindHold(
+				prompt,
+				function(player)
+					tryBegin(player, plot, slot)
+				end,
+				tryCancel,
+				function(player)
+					tryComplete(player, plot, slot)
+				end
+			)
 		end
 	end
 	InventoryService.SetStolenDelivery(deliver)

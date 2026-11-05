@@ -1,8 +1,12 @@
 -- Подсказки музея (ProximityPrompt) с атрибутом Action и тегом MuseumPrompt.
 -- Клиент по тегу и Action решает, какие показать; сервер в каждом Triggered сам проверяет всё заново.
--- Клавиши: E — основное действие, R — «Повернуть», F — «В инвентарь». Зависит от CollectionService.
+-- Клавиши: E — основное действие, R — «Повернуть», F — «В инвентарь». BindHold — удержание (кража, взлом).
+-- Зависит от CollectionService, Config/GameConfig.
 
 local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 
 local Prompts = {}
 
@@ -79,6 +83,50 @@ function Prompts.Create(parent: BasePart, action: string, objectText: string, di
 	prompt.Parent = parent
 	CollectionService:AddTag(prompt, Prompts.Tag)
 	return prompt
+end
+
+-- Удержание: начало, отмена (отпустил или ушёл) и завершение. Roblox на сервере шлёт PromptButtonHoldEnded раньше
+-- Triggered в том же кадре (проверено тремя клиентами 2026-11-05): немедленная отмена срывала каждую кражу и взлом.
+-- Поэтому отмена ждёт GameConfig.HoldRelease.ReleaseGrace: пришёл Triggered — это завершение, отмены нет. Конец
+-- удержания сразу после Triggered (обратный порядок) — тоже не отмена.
+function Prompts.BindHold(
+	prompt: ProximityPrompt,
+	onBegin: (Player) -> (),
+	onCancel: (Player) -> (),
+	onComplete: (Player) -> ()
+)
+	local DONE = 0 -- только что завершено
+	local pending: { [Player]: number } = {} -- номер отпускания, которое ждёт отмены, или DONE
+	local count = 0
+	local grace = GameConfig.HoldRelease.ReleaseGrace
+	prompt.PromptButtonHoldBegan:Connect(function(player)
+		pending[player] = nil
+		onBegin(player)
+	end)
+	prompt.PromptButtonHoldEnded:Connect(function(player)
+		if pending[player] == DONE then
+			pending[player] = nil
+			return
+		end
+		count += 1
+		local token = count
+		pending[player] = token
+		task.delay(grace, function()
+			if pending[player] == token then
+				pending[player] = nil
+				onCancel(player)
+			end
+		end)
+	end)
+	prompt.Triggered:Connect(function(player)
+		pending[player] = DONE
+		onComplete(player)
+		task.delay(grace, function()
+			if pending[player] == DONE then
+				pending[player] = nil
+			end
+		end)
+	end)
 end
 
 return Prompts

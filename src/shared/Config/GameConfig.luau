@@ -220,6 +220,12 @@ GameConfig.Sounds = {
 -- Запас к дистанции на сервере: позиция игрока на сервере слегка отстаёт от клиента.
 GameConfig.DistanceTolerance = 4
 
+-- Подсказка с удержанием («Украсть», «Взломать»): Roblox на сервере шлёт конец удержания раньше Triggered, поэтому
+-- отпускание считается отменой, только если за ReleaseGrace секунд не пришёл Triggered (Util/Prompts.BindHold).
+GameConfig.HoldRelease = {
+	ReleaseGrace = 0.3,
+}
+
 -- Не чаще N запросов в секунду на игрока.
 GameConfig.RateLimits = {
 	Pickup = 4,

@@ -34,12 +34,14 @@ local function doomNight(): boolean
 	return ReplicatedStorage:GetAttribute("Phase") == "DoomNight"
 end
 
--- Открыто окно меню или идёт расстановка защиты: клик — по интерфейсу, не удар.
+-- Открыто окно меню или идёт расстановка защиты: клик — по интерфейсу, не удар. Открыто = видна рамка окна
+-- (Fenetre): StudMotion при закрытии прячет только её, ScreenGui остаётся включённым.
 local function busy(): boolean
 	local playerGui = player:FindFirstChildOfClass("PlayerGui")
 	for _, name in { "Inventaire", "Defense" } do
 		local gui = playerGui and playerGui:FindFirstChild(name)
-		if gui and gui:IsA("ScreenGui") and gui.Enabled then
+		local window = gui and gui:FindFirstChild("Fenetre")
+		if gui and gui:IsA("ScreenGui") and gui.Enabled and window and window:IsA("GuiObject") and window.Visible then
 			return true
 		end
 	end
