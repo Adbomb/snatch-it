@@ -46,7 +46,7 @@ lego.PALETTE.update({
     "d48backdrop": "2E4377", "d48steel": "3A5A8C", "d48steellight": "A7B6C8", "d48steeldark": "5E7186",
     "d48roof": "D9705A", "d48step": "93A7C7", "d48disk": "AEBCD0", "d48vwall": "1F3A63", "d48vpanel": "2C5283",
     "d48vfloor": "17223D", "d48vceil": "131D33", "d48locker": "8EA2BD", "d48plant": "4FB45A", "d48plantdark": "3C8F47",
-    "d48stone": "D8D2C4", "d48chest": "3E7BE0", "d48chestlight": "5A93F0", "d48red": "F0473C", "d48cyan": "39E1FF",
+    "d48stone": "D8D2C4", "d48chest": "3E7BE0", "d48chestlight": "5A93F0", "d48red": "F0473C", "d48cyan": "2FB5CF",
     "d48warm": "FFD88A", "d48screen": "1D6FE0", "d48sky": "EAF7FF", "d48glass": "BDEBFF", "d48white": "FFFFFF",
     "d48rare": "4FA6EA", "d48epic": "B266F5", "d48legend": "F7B731",
 })
@@ -348,14 +348,14 @@ def build_gallery(sx):
     bx(m, "d48wall", *gx(IX, L.GAL_IN), 0, top, L.GAL_Z0, FZ, bevel=0.08)  # вдоль портика
     bx(m, "d48navy", *gx(L.GAL_IX - 0.2, L.GAL_IX), 0, 1.0, L.GAL_IZ0, L.GAL_IZ1, bevel=B2)
     bx(m, "d48gold", *gx(L.GAL_IX - 0.25, L.GAL_IX), 9.6, 9.9, L.GAL_IZ0, L.GAL_IZ1, bevel=B2)
-    bx(m, "d48navy", *gx(L.GAL_IN + 0.5, L.GAL_IN + 3.4), 0, 0.08, L.GAL_IZ0 + 0.6, L.GAL_IZ1 - 0.6, bevel=0.02)
+    bx(m, "d48navy", *gx(L.GAL_WALK - 1.45, L.GAL_WALK + 1.45), 0, 0.08, L.GAL_IZ0 + 0.6, L.GAL_IZ1 - 0.6, bevel=0.02)
     floor_model = m
     m = model(f"D48_GalleryRoof_{'R' if sx > 0 else 'L'}")
     bx(m, "d48pil", *gx(IX + 1.4, L.GAL_EAVE - 0.2), L.GAL_H + 1.0, L.GAL_H + 1.8, L.GAL_Z0 - 0.4, L.GAL_Z1 + 0.4,
        bevel=0.08)
     bx(m, "d48gold", *gx(IX + 1.4, L.GAL_EAVE), L.GAL_H + 1.8, L.GAL_H + 2.1, L.GAL_Z0 - 0.6, L.GAL_Z1 + 0.6,
        bevel=0.05)
-    glow(m, "d48sky", *gx(L.GAL_IN + 0.6, L.GAL_IN + 3.6), L.GAL_H + 0.98, L.GAL_H + 1.0, L.GAL_IZ0 + 1,
+    glow(m, "d48sky", *gx(L.GAL_WALK - 1.5, L.GAL_WALK + 1.5), L.GAL_H + 0.98, L.GAL_H + 1.0, L.GAL_IZ0 + 1,
          L.GAL_IZ1 - 1)
     m = floor_model
     # фасад галереи у портика: фриз, пилястры, медальон

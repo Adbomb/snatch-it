@@ -536,12 +536,12 @@
     },
     "d48navy": {
      "center": [
-      -24.05,
+      -24.575,
       0.5,
       0.85
      ],
      "size": [
-      11.1,
+      10.05,
       1.0,
       36.9
      ],
@@ -685,7 +685,7 @@
     },
     "Glow_d48sky": {
      "center": [
-      -20.1,
+      -21.0,
       11.39,
       0.85
      ],
@@ -972,12 +972,12 @@
     },
     "d48navy": {
      "center": [
-      24.05,
+      24.575,
       0.5,
       0.85
      ],
      "size": [
-      11.1,
+      10.05,
       1.0,
       36.9
      ],
@@ -1121,7 +1121,7 @@
     },
     "Glow_d48sky": {
      "center": [
-      20.1,
+      21.0,
       11.39,
       0.85
      ],
@@ -1289,7 +1289,7 @@
       6.3,
       6.21
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 168
@@ -1475,7 +1475,7 @@
       0.7,
       0.04
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 12
@@ -1597,7 +1597,7 @@
       0.1,
       0.06
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 12
@@ -1751,7 +1751,7 @@
       0.12,
       29.6
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 36
@@ -1820,7 +1820,7 @@
       7.26,
       0.16
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 224
@@ -2001,7 +2001,7 @@
       0.42,
       1.368
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 12
@@ -2203,7 +2203,7 @@
       6.75,
       9.15
      ],
-     "color": "39E1FF",
+     "color": "2FB5CF",
      "decor": false,
      "material": "Neon",
      "triangles": 128

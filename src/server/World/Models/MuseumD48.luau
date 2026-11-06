@@ -62,7 +62,7 @@ local C = {
 	chest = hex("3E7BE0"),
 	chestLight = hex("5A93F0"),
 	red = hex("F0473C"),
-	cyan = hex("39E1FF"),
+	cyan = hex("2FB5CF"), -- D50: мягче прежнего 39E1FF (неон у сундука, павильона, хранилища)
 	warm = hex("FFD88A"),
 	screen = hex("1D6FE0"),
 	sky = hex("EAF7FF"),
@@ -299,7 +299,7 @@ local function gallery(sx: number): { Brick }
 	x0, x1 = gx(sx, GAL.InnerX - 0.2, GAL.InnerX)
 	box(b, x0, x1, 0, 1, GAL.InnerZ0, GAL.InnerZ1, C.navy)
 	box(b, x0, x1, 9.6, 9.9, GAL.InnerZ0, GAL.InnerZ1, C.gold)
-	x0, x1 = gx(sx, GAL.In + 0.5, GAL.In + 3.4)
+	x0, x1 = gx(sx, GAL.Walk - 1.45, GAL.Walk + 1.45) -- дорожка по середине прохода (D50)
 	box(b, x0, x1, 0, 0.08, GAL.InnerZ0 + 0.6, GAL.InnerZ1 - 0.6, C.navy, { shadow = false })
 	-- ниши у наружной стены: тёмный фон
 	for _, z in GAL.Z do
@@ -351,7 +351,7 @@ local function galleryRoof(sx: number): { Brick }
 	local top = GAL.Height + 1
 	local x0, x1 = gx(sx, GAL.In, GAL.Eave - 0.2)
 	box(b, x0, x1, top, top + 0.8, GAL.Z0 - 0.4, GAL.Z1 + 0.4, C.pil, SHELL)
-	x0, x1 = gx(sx, GAL.In + 0.6, GAL.In + 3.6)
+	x0, x1 = gx(sx, GAL.Walk - 1.5, GAL.Walk + 1.5)
 	glow(b, x0, x1, top - 0.1, top, GAL.InnerZ0 + 1, GAL.InnerZ1 - 1, C.sky)
 	x0, x1 = gx(sx, GAL.In + 0.4, GAL.Eave - 0.4)
 	box(b, x0, x1, top + 0.8, top + 1.7, GAL.Z0 - 0.3, GAL.Z0 + 1.2, C.pil) -- аттик над фасадом

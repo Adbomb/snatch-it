@@ -32,16 +32,24 @@ PartBuilder.FloorTop = MapLayout.Heights.Floor
 local OWNER_TAG = Vector3.new(0, 19.5, -25)
 -- Высота ламп ниш над полом (там же прожектор презентации и подсветка занятого места).
 local LAMP_Y = 9.3
-local TOP =
-	{ size = Vector3.new(4.6, 0.06, 4.6), open = MuseumD48.Colors.cyan, taken = MuseumD48.Colors.gold, glass = 0.3 }
+-- Свободное место — бледно-бирюзовое стекло (D50: мягче прежнего 39E1FF), занятое — золото.
+local TOP = {
+	size = Vector3.new(4.6, 0.06, 4.6),
+	open = Color3.fromHex("6FD4E6"),
+	taken = MuseumD48.Colors.gold,
+	glass = 0.4,
+}
 local LOCKED = MuseumD48.Colors.steelDark
-local NICHE_LIGHT = { color = Color3.fromHex("FFE2B0"), range = 14, angle = 55, brightness = 2.2 }
+-- Свет музея слабый намеренно (D50): освещение Roblox «Realistic» накапливает отражённый свет в закрытом зале со
+-- светлыми стенами — при прежних 1.1 / 1.0 / 2.2 за 10–30 с белое выбивалось в сплошной белый (пересвет); 0.2 / 0.15 /
+-- 0.6 — темновато, 0.4 / 0.3 / 1.0 — проверено в Play после минуты накопления (D50).
+local NICHE_LIGHT = { color = Color3.fromHex("FFE2B0"), range = 14, angle = 55, brightness = 1.0 }
 -- Свет зала и галерей (на точке участка): позиция в осях участка, только для галерей — gallery.
 local HALL_LIGHTS = {
-	{ name = "HallLight_1", at = Vector3.new(0, 13.5, -3), range = 26, brightness = 1.1 },
-	{ name = "HallLight_2", at = Vector3.new(0, 13.5, 14), range = 26, brightness = 1.1 },
-	{ name = "GalleryLight_L", at = Vector3.new(-22.8, 8.5, 0), range = 24, brightness = 1, gallery = true },
-	{ name = "GalleryLight_R", at = Vector3.new(22.8, 8.5, 0), range = 24, brightness = 1, gallery = true },
+	{ name = "HallLight_1", at = Vector3.new(0, 13.5, -3), range = 22, brightness = 0.4 },
+	{ name = "HallLight_2", at = Vector3.new(0, 13.5, 14), range = 22, brightness = 0.4 },
+	{ name = "GalleryLight_L", at = Vector3.new(-23.8, 8.5, 0), range = 18, brightness = 0.3, gallery = true },
+	{ name = "GalleryLight_R", at = Vector3.new(23.8, 8.5, 0), range = 18, brightness = 0.3, gallery = true },
 }
 
 export type PlotParts = {
