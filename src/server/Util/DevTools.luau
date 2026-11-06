@@ -195,8 +195,9 @@ function DevTools.Init()
 				GymService.SyncAttributes(player)
 				return coins
 			elseif command == "MuseumLevel" or command == "GiveDefense" then
-				-- проверка защиты (D47): уровень музея — сколько устройств можно поставить; устройство в запас —
-				-- в том числе капкан, у которого нет утверждённой цены. Только профиль в Studio, мир не меняется.
+				-- проверка защиты (D47) и музея D48-C: уровень музея — сколько устройств можно поставить и сколько мест
+				-- открыто (здание и места перестраиваются); устройство в запас — в том числе капкан, у которого нет
+				-- утверждённой цены. Только в Studio. Ниже занятых мест уровень не опускается.
 				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
 				local data = player and DataService.GetData(player)
 				if not player or not data then
@@ -204,7 +205,21 @@ function DevTools.Init()
 				end
 				local DefenseService = require(ServerScriptService.Server.Services.DefenseService)
 				if command == "MuseumLevel" then
-					data.museumLevel = math.clamp(math.floor(tonumber(words[3]) or 1), 1, 10)
+					local level = math.clamp(math.floor(tonumber(words[3]) or 1), 1, 10)
+					local open = GameConfig.Museum.SlotsByLevel[level]
+					for _, record in data.items do
+						if type(record) == "table" and record.place == "slot" and (record.slot or 0) > open then
+							return ("на месте %d экспонат — уровень ниже не ставится"):format(record.slot)
+						end
+					end
+					data.museumLevel = level
+					local PlotService = require(ServerScriptService.Server.Services.PlotService)
+					local InventoryService = require(ServerScriptService.Server.Services.InventoryService)
+					local plot = PlotService.GetPlotOf(player)
+					if plot then
+						PlotService.ShowLevel(plot, level)
+					end
+					InventoryService.Sync(player)
 				else
 					local defense = DataService.Defense(player)
 					local kind = words[3]

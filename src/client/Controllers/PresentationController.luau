@@ -60,14 +60,12 @@ local function playSound(soundId: string)
 	task.delay(SOUND_LIFETIME, sound.Destroy, sound)
 end
 
--- Прожектор цветом редкости: SpotLight в лампе над витриной (Lamps/Lamp_<slot>/Bulb/PresentationLight).
--- Если лампы нет — временный прожектор над витриной. Возвращает функцию, которая всё возвращает как было.
-local function addSpotlight(plot: Model, showcase: BasePart, slot: number, rarity: string): () -> ()
+-- Прожектор цветом редкости: SpotLight в лампе ниши над постаментом (Showcase_<slot>/Lamp/PresentationLight, D48-C).
+-- Если лампы нет — временный прожектор над постаментом. Возвращает функцию, которая всё возвращает как было.
+local function addSpotlight(showcase: BasePart, rarity: string): () -> ()
 	local cfg = GameConfig.Presentation
-	local lamps = plot:FindFirstChild("Lamps")
-	local lamp = lamps and lamps:FindFirstChild("Lamp_" .. slot)
-	local bulb = lamp and lamp:FindFirstChild("Bulb")
-	local light = bulb and bulb:FindFirstChild("PresentationLight")
+	local lamp = showcase:FindFirstChild("Lamp")
+	local light = lamp and lamp:FindFirstChild("PresentationLight")
 	if light and light:IsA("SpotLight") then
 		light.Color = UITokens.RarityColor(rarity)
 		light.Range = cfg.LightRange
@@ -231,7 +229,7 @@ local function present(payload: Payload)
 	end
 
 	local cleanup: { () -> () } = {}
-	table.insert(cleanup, addSpotlight(plot, showcase, payload.slot, def.rarity))
+	table.insert(cleanup, addSpotlight(showcase, def.rarity))
 	local title = addTitle(exhibit, def)
 	table.insert(cleanup, function()
 		title:Destroy()

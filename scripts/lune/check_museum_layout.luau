@@ -181,6 +181,120 @@ check(
 	"на каждом уровне — зал, крыша, павильон, лестница, хранилище, сундук и нужное число постаментов"
 )
 
+-- ── Part-версия здания (World/Models/MuseumD48): у каждого модуля раскладки есть Part-версия, на каждом уровне
+-- нет видимых пар совпадающих граней (D36) и деталей не больше бюджета (ТЗ: ≤ 400 на музей, считая обстановку
+-- хранилища у владельца). Оси участка; вокруг — трава с проёмом под хранилищем, как в WorldBuilder.
+local roblox = Env.roblox
+local Vector3, CFrame = roblox.Vector3, roblox.CFrame
+local FaceCheck = Env.Require("ServerScriptService.Server.World.FaceCheck")
+local MuseumD48 = Env.Require("ServerScriptService.Server.World.Models.MuseumD48")
+local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
+
+local BUDGET = 400
+local SHOWCASE = GameConfig.Museum.ShowcaseSize
+
+print("Part-версия здания:")
+local missing = {}
+for _, m in L.Modules do
+	if not MuseumD48.Has(m.model) then
+		missing[m.model] = true
+	end
+end
+check(next(missing) == nil, "у каждого модуля раскладки есть Part-версия")
+
+local function boxBrick(x0, x1, y0, y1, z0, z1)
+	return {
+		size = Vector3.new(x1 - x0, y1 - y0, z1 - z0),
+		cframe = CFrame.new((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2),
+	}
+end
+
+-- Трава вокруг музея (верх — Hall.Ground) с проёмом по контуру зала.
+local G = hall.Ground
+local grass = {
+	boxBrick(-60, 60, G - 2, G, -60, hall.Front),
+	boxBrick(-60, 60, G - 2, G, hall.Back, 60),
+	boxBrick(-60, -hall.HalfWidth, G - 2, G, hall.Front, hall.Back),
+	boxBrick(hall.HalfWidth, 60, G - 2, G, hall.Front, hall.Back),
+}
+
+-- Кирпичи уровня level в осях участка: модули, тумбы мест с верхом, корпус сундука. server — без деталей вида
+-- хранилища (их строит клиент владельца), vault — только они.
+local function levelBricks(level: number): ({ any }, number, number)
+	local all, server, vault = {}, 0, 0
+	local plinthAt = {}
+	for _, m in L.Modules do
+		if level >= m.from and level <= m.to then
+			local at = CFrame.new(m.position) * CFrame.Angles(0, math.rad(m.yaw), 0)
+			for _, brick in MuseumD48.Module(m.model) do
+				brick.cframe = at * brick.cframe
+				table.insert(all, brick)
+				if MuseumD48.VaultModules[m.model] and not brick.shell then
+					vault += 1
+				else
+					server += 1
+				end
+			end
+			if m.model == "D48_Plinth" then
+				plinthAt[m.position] = true
+			end
+		end
+	end
+	for _, place in places do
+		local standing = false
+		for position in plinthAt do
+			standing = standing or (position - place.center).Magnitude < 0.01
+		end
+		if standing then
+			local center = place.center + Vector3.new(0, SHOWCASE.Y / 2, 0)
+			local frame = CFrame.lookAt(center, center + place.face)
+			table.insert(all, { name = "Showcase", size = SHOWCASE, cframe = frame })
+			table.insert(all, {
+				name = "Top",
+				size = Vector3.new(4.6, 0.06, 4.6),
+				cframe = frame * CFrame.new(0, SHOWCASE.Y / 2 + 0.03, 0),
+			})
+			server += 2
+		end
+	end
+	local chest = GameConfig.Museum.ChestSize
+	table.insert(
+		all,
+		{ name = "Chest", size = chest, cframe = CFrame.new(L.Chest.Center + Vector3.new(0, chest.Y / 2, 0)) }
+	)
+	server += 2 -- сундук и невидимая точка участка Floor
+	return all, server, vault
+end
+
+local worst = { level = 0, total = 0 }
+for level = 1, 10 do
+	local bricks, server, vault = levelBricks(level)
+	local count, found = FaceCheck.Scan(Env.FakeRoot({
+		{ name = "Museum", bricks = bricks },
+		{ name = "Grass", bricks = grass },
+	}))
+	if count > 0 then
+		for key, group in found do
+			print(("    ур. %d %s: %d (%s)"):format(level, key, group.n, group.example))
+		end
+	end
+	check(count == 0, ("ур. %d: видимых пар совпадающих граней %d"):format(level, count))
+	local total = server + vault
+	if total > worst.total then
+		worst = { level = level, total = total }
+	end
+	print(
+		("    ур. %d: деталей на сервере %d, обстановка хранилища у владельца %d, всего %d"):format(
+			level,
+			server,
+			vault,
+			total
+		)
+	)
+	check(total <= BUDGET, ("ур. %d: деталей %d из %d"):format(level, total, BUDGET))
+end
+print(("    больше всего — ур. %d: %d"):format(worst.level, worst.total))
+
 if failed > 0 then
 	print(("ИТОГ: ошибок %d"):format(failed))
 	process.exit(1)

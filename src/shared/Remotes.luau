@@ -20,6 +20,7 @@ Remotes.Names = {
 	DefenseChanged = "DefenseChanged", -- сервер → владельцу: { owned, hacks, installed, level, max, coins }
 	PvpAttack = "PvpAttack", -- клиент → сервер: «ударь» (без аргументов, цель выбирает сервер), D46
 	PvpEffect = "PvpEffect", -- сервер → игрокам рядом: { kind = "Swing" | "Hit" | "Knock", attacker, target?, damage }
+	OpenWindow = "OpenWindow", -- сервер → владельцу: открыть окно ("Inventory" | "Defense") — подсказки хранилища D48-C
 }
 
 function Remotes.CreateAll()

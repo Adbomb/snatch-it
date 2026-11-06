@@ -1,9 +1,9 @@
--- 8 участков-музеев по кругу: строит их при старте, выдаёт при входе, освобождает при выходе.
+-- Участки-музеи (5 в ряд, D35): строит их при старте, выдаёт при входе, освобождает при выходе.
 -- Хранит владельца участка на сервере; круглое фото и ник владельца над входом рисует клиент по атрибутам (D41).
--- Здание — модель уровня музея владельца (D33), у свободного участка — руины (уровень 1). Во дворе — огромная гантель уровня
--- владельца (D34), у свободного участка её нет. Атрибуты модели участка для клиента: OwnerUserId,
--- OwnerName, DumbbellLevel (0 — гантели нет).
--- Зависит от Util/PartBuilder, World/MapLayout, World/MeshBuilder, GameConfig, Util/Log.
+-- Музей D48-C уровня владельца (здание, галереи, открытые места; у свободного участка — уровень 1); шаблон обстановки
+-- хранилища для клиента владельца. Во дворе — огромная гантель уровня владельца (D34), у свободного участка её нет.
+-- Атрибуты модели участка для клиента: OwnerUserId, OwnerName, MuseumLevel, FloorOrigin, DumbbellLevel (0 — нет).
+-- Зависит от Util/PartBuilder, World/MapLayout, World/MeshBuilder, World/MuseumVisual, GameConfig, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -13,6 +13,7 @@ local Log = require(ServerScriptService.Server.Util.Log)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
+local MuseumVisual = require(ServerScriptService.Server.World.MuseumVisual)
 
 export type Plot = {
 	index: number,
@@ -30,7 +31,6 @@ export type Plot = {
 	dumbbell: Model?,
 }
 
-
 local plots: { Plot } = {}
 local plotByPlayer: { [Player]: Plot } = {}
 
@@ -40,10 +40,10 @@ function PlotService.Init(world: Folder)
 	local folder = Instance.new("Folder")
 	folder.Name = "Plots"
 	folder.Parent = world
+	MuseumVisual.PublishVaultDecor() -- обстановку хранилища видит только владелец (копия на его клиенте)
 	local count = GameConfig.World.PlotCount
-	local slotCount = GameConfig.Museum.SlotsByLevel[1]
 	for index = 1, count do
-		local parts = PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), slotCount, folder)
+		local parts = PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), folder)
 		plots[index] = {
 			index = index,
 			owner = nil,
@@ -91,13 +91,14 @@ function PlotService.Assign(player: Player): Plot?
 	return nil
 end
 
--- Показывает здание музея уровня level на участке (если уровень другой — модель меняется).
+-- Показывает музей уровня level на участке (D48-C): здание, галереи с уровня Gallery.Level, открытые места.
+-- Если уровень тот же — ничего не меняется.
 function PlotService.ShowLevel(plot: Plot, level: number)
 	if plot.level == level then
 		return
 	end
 	plot.level = level
-	PartBuilder.SetBuilding(plot.model, plot.floorOrigin, plot.accent, level)
+	PartBuilder.SetLevel(plot, level)
 end
 
 -- Огромная гантель уровня level во дворе участка (nil — убрать). Модель меняется сразу, видна всем.

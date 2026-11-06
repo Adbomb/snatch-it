@@ -99,7 +99,7 @@
 
 ## Сервер (`src/server`)
 - `Main.server` — RemoteEvent'ы, LEGO-материал, постройка мира, запуск сервисов; вход/выход — `Services/PlayerSession`.
-- Services: `DataService` (профиль), `PlotService` (8 участков), `ItemRegistry` (состояния), `CarryService`
+- Services: `DataService` (профиль), `PlotService` (5 участков, музей D48-C), `ItemRegistry` (состояния), `CarryService`
   (подбор/перенос/бросок, `AttachCarried`), `BossLootService` (4 предмета у каждого босса, D37, D10 исчезновение), `MuseumService`
   (выставить, переставить, повернуть, презентация), `InventoryService` (D46: единый инвентарь — сундук «В инвентарь», постамент «В инвентарь», окно: InventoryAction Display / Remove / Replace откуда угодно, правило фаз `MuseumService.ExhibitsUnlocked`, событие InventoryChanged — весь инвентарь; шлётся и по `ItemRegistry.OnChanged` (Stored/Displayed владельца, раз в кадр) — окно видит выставление из рук, перестановку и кражу), `GymService` (D34:
   такт качания — владелец в поле своего двора, сила = Power[уровень] × (1 + сила музея D31); гостю подсказка;
@@ -159,9 +159,25 @@
   `Notify`, `Log`, `DevTools` (только Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info, GiveCoins,
   RunServerTests и TimeScale/TimeSkip/TimeReset; из MCP — атрибуты `RunTests` → `TestReport` и `Command` →
   `CommandResult`).
-- Участок (D35): `PartBuilder.BuildPlot` — музей, витрины, сундук и двор: Yard, YardPath, GymField (поле с
-  неоновыми плитками цвета участка), SignPost и UpgradeBoard (табло; текст рисует клиент); `PlotService.ShowDumbbell`
-  ставит огромную гантель уровня владельца (`GiantDumbbell`), атрибуты модели OwnerUserId, OwnerName, DumbbellLevel.
+- Участок (D35, музей D48-C): `PartBuilder.BuildPlot` — постоянные части: невидимая точка `Floor` (OwnerTag, свет
+  зала и галерей), 20 мест `Showcase_n` (тумба 5 × 3 × 5 — она же столкновение постамента и опора экспоната, лицом в
+  проход; дочерние `Top` — верх-индикатор: стекло — свободно, золото — занято, серый — закрыто; `Lamp` — SpotLight
+  презентации и подсветки ниши; атрибуты Slot, Occupied, Open, Zone, UnlockLevel), `Chest` (x −9), двор: GymField,
+  SignPost, UpgradeBoard. `PartBuilder.SetLevel` (из `PlotService.ShowLevel`) — здание уровня (`World/MuseumVisual`),
+  места: без постамента на уровне — вне мира (Parent nil), открыты — `GameConfig.Museum.SlotsByLevel`
+  (max(6, 2 × уровень)); атрибут участка MuseumLevel. `PlotService.ShowDumbbell` — огромная гантель уровня владельца.
+- Музей D48-C: раскладка — `Config/MuseumLayout` (генерирует `scripts/d48_to_luau.py` из `d48c_layout.py` и
+  `mesh_placement.json`: места, зал, галереи, павильон, лестница, хранилище, лазеры, зоны защиты, модули по уровням).
+  `World/Models/MuseumD48` — временная Part-версия модулей с теми же именами и осями, что модули Blender; кирпич
+  `collide = true` — оболочка (пол, стены, ступени, тумбы), она строится всегда. `World/MuseumVisual` ставит модули:
+  `GameConfig.Museum.Visual` "Parts" — кирпичи; "Mesh" — меши (`MeshBuilder`) при наличии MeshId, оболочка тогда
+  невидима (столкновения те же), без MeshId — Part-версия с предупреждением. Детали вида модулей хранилища — шаблон
+  `ReplicatedStorage.MuseumVisual.VaultDecor` (оси участка), его копирует к себе только клиент владельца.
+- Хранилище (D48-C): `Services/VaultService` — барьер в портале павильона (группа VaultBarrier_<участок>), персонаж
+  владельца — VaultOwner_<участок> (с барьером своего участка не сталкивается); раз в 0.25 с чужого в объёме хранилища
+  или павильона переносит к порталу; подсказки терминала и центра безопасности → `Remotes.OpenWindow` после проверки
+  владельца и расстояния. В плите травы — проёмы под хранилищами, Terrain-вода вырезана по объёму хранилища на сетке
+  вокселей (`WorldBuilder.VaultVolume`).
 - World: `MapLayout` (раскладка аллеи, коридора зон и контур острова данными), `WorldBuilder` (строит карту;
   `BuildWater` — вода Terrain, только в Play), `ModelBuilder`
   (модель из списка кирпичей, шаблоны в `ServerStorage.Templates`), `Models/*` (кирпичные модели),
@@ -169,6 +185,8 @@
 
 ## Клиент (`src/client`)
 - `Main.client` — LEGO-материал на клиенте, запуск контроллеров.
+- `MuseumVisualController` (D48-C): у своего участка — копия обстановки хранилища, открытая решётка павильона
+  (LocalTransparencyModifier), зелёный сканер; окна по `Remotes.OpenWindow`.
 - Controllers: `NotifyController` (тосты), `CarryController` («Бросить», «Ты несёшь…»),
   `InventoryController` (D46, Stud-UI: окно «Инвентарь» — карточки с 3D-превью из `ReplicatedStorage.ItemPreviews` (копии моделей делает `InventoryService`), редкость, доход, локация, статус, «×N» повторы; выставленные — по одной с «Снять», в инвентаре — стопкой с «Выставить» → выбор постамента «Поставить» / «Заменить»; сортировка по доходу и редкости, фильтр по локации, поиск, счётчики; правило фаз — неактивные кнопки и причина; кнопка «Инвентарь» в HUD слева посередине, клавиша B; подсказка постамента открывает окно для него — `OpenForSlot`; размеры — `UITokens.Inventory`), `MuseumPromptController` (какие подсказки показывать, подсветка
   перестановки, «Улучшить гантель» на своей табличке), `PresentationController` (прожектор и название при

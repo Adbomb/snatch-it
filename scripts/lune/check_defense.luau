@@ -11,6 +11,7 @@ local Env = require("./env")
 
 local Vector3 = Env.roblox.Vector3
 local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
+local MuseumLayout = Env.Require("ReplicatedStorage.Shared.Config.MuseumLayout")
 local DefenseRules = Env.Require("ReplicatedStorage.Shared.DefenseRules")
 
 local failed, passed = 0, 0
@@ -107,22 +108,22 @@ do
 end
 
 print(
-	"Где ставить (оси участка, постаменты и сундук — как в Util/PartBuilder):"
+	"Где ставить (оси участка, постаменты и сундук — Config/MuseumLayout, D48-C):"
 )
 do
 	local showcases = {}
-	local step = GameConfig.Museum.ShowcaseStep
-	for slot = 1, GameConfig.Museum.SlotsByLevel[1] do
-		local column, row = (slot - 1) % 3, (slot - 1) // 3
-		table.insert(showcases, Vector3.new((column - 1) * step.X, 0, -2 + row * step.Y))
+	for _, place in MuseumLayout.Places do
+		if place.slot <= GameConfig.Museum.SlotsByLevel[1] then
+			table.insert(showcases, place.center)
+		end
 	end
-	local chest = Vector3.new(-12, 0, -12.7 + 1.4 + GameConfig.Museum.ChestSize.Z / 2 + 0.1)
+	local chest = MuseumLayout.Chest.Center
 	local function spot(x, z, others)
 		return DefenseRules.CheckFreeSpot(cfg, Vector3.new(x, 0, z), showcases, chest, others or {})
 	end
 	check(spot(5, 5) == nil, "проход между рядами — можно")
 	check(spot(-14, 18) == nil, "угол зала — можно")
-	check(spot(0, -2) ~= nil and spot(9, 11) ~= nil, "на постаменте — нельзя")
+	check(spot(13.4, -2) ~= nil and spot(-13.4, 10.2) ~= nil, "на постаменте — нельзя")
 	check(spot(0, -9) ~= nil, "во входном коридоре — нельзя")
 	check(spot(-12, -9) ~= nil, "у сундука — нельзя")
 	check(

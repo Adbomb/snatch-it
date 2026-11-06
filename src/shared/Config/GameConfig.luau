@@ -94,18 +94,40 @@ GameConfig.World = {
 	MaxParts = 12000, -- бюджет частей всей карты
 }
 
+-- Музей D48-C (утверждено владельцем 2026-11-06): до MaxSlots мест, на уровне L открыто
+-- max(SlotsMin, SlotsPerLevel × L) — 6, 6, 6, 8, 10 … 20; раскладка мест — Config/MuseumLayout.
+local MUSEUM_SLOTS = { Min = 6, PerLevel = 2, Max = 20, Levels = 10 }
+local slotsByLevel = {}
+for level = 1, MUSEUM_SLOTS.Levels do
+	slotsByLevel[level] = math.min(MUSEUM_SLOTS.Max, math.max(MUSEUM_SLOTS.Min, MUSEUM_SLOTS.PerLevel * level))
+end
+
 GameConfig.Museum = {
-	SlotsByLevel = { [1] = 6 }, -- DESIGN.md §2: museumLevel 1 → 6 витрин
+	SlotsByLevel = slotsByLevel,
+	MaxSlots = MUSEUM_SLOTS.Max,
 	ShowcaseSize = Vector3.new(5, 3, 5),
-	ShowcaseStep = Vector2.new(10, 14), -- шаг сетки витрин по X и Z (влезает в самый узкий зал)
-	DisplayDistance = 6.5, -- радиус подсказок на витринах: у канатов ≈ 5; от сундука до витрины 1 — 8.5 (не перехватит)
+	DisplayDistance = 6.5, -- радиус подсказок у постамента: соседний в нише — 7.0 от прохода (не перехватит)
 	ChestSize = Vector3.new(4, 3, 3),
-	ChestDistance = 10, -- радиус подсказки «В хранилище» на сундуке
+	ChestDistance = 10, -- радиус подсказки «В инвентарь» на сундуке
 	RotateStep = 45, -- градусов за одно «Повернуть»
 	MoveSelectTimeout = 15, -- секунд, через которые выбор «Переставить» отменяется
+	-- Графика здания (World/MuseumVisual): "Parts" — временная Part-версия; "Mesh" — модули Blender пачки Pack3_d48
+	-- по MeshId из World/MeshModels. У модуля без MeshId — Part-версия, стены и столкновения одинаковы.
+	Visual = "Parts",
+	-- Хранилище только владельцу (D48-C, Services/VaultService): проверка объёма, куда выставлять чужого (от портала
+	-- павильона наружу и над полом), высота барьера в портале, подсказки терминала и центра безопасности.
+	Vault = {
+		CheckSeconds = 0.25,
+		ExitDistance = 3,
+		ExitHeight = 3,
+		BarrierHeight = 7.2,
+		PromptDistance = 7,
+		OpensPerSecond = 2,
+		NoticeCooldown = 3,
+	},
 }
 
--- Модели из Blender (World/MeshBuilder): гантели (D34). Музеи строятся кодом (World/Models/MuseumHall, D36).
+-- Модели из Blender (World/MeshBuilder): гантели (D34) и, после импорта, модули музея D48 (World/MuseumVisual).
 GameConfig.Models = {
 	GlassTransparency = 0.35, -- стекло и кристаллы (то же число в scripts/blender/lego.py для превью)
 	AccentDarken = 0.45, -- тёмный оттенок цвета участка (роль AccentDark: крыша, купол)

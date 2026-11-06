@@ -471,15 +471,22 @@ local function build()
 	menu = Motion.Window(gui, win.Fenetre, { Keep = { Toasts = true, Defense = true } })
 end
 
+-- Открыть окно «Защита» (центр безопасности хранилища D48-C).
+function DefenseController.Open()
+	if not menu.IsOpen then
+		stopPlacing()
+		render()
+		menu.Open()
+	end
+end
+
 -- Кнопка «Защита» в общей колонке HUD (UI/MenuHud), под «Инвентарём».
 local function buildHud()
 	MenuHud.Add("Defense", "Защита", "purple", 2, function()
 		if menu.IsOpen then
 			menu.Close()
 		else
-			stopPlacing()
-			render()
-			menu.Open()
+			DefenseController.Open()
 		end
 	end)
 end

@@ -3,15 +3,18 @@
 -- «Аура» и «Продажа», точку появления и 10 зон одним коридором без рамок (D41) — пол с узором зоны, полоса-граница
 -- цвета зоны, голографическое название, постаменты (у зоны с площадкой босса — без них, D43), декор; у входа в
 -- коридор — разметка «Безопасная зона».
--- Воду вокруг острова строит BuildWater (Terrain; только в Play). Участки-музеи с полем качалки строит PlotService.
+-- Воду вокруг острова строит BuildWater (Terrain; только в Play), под музеями — без воды по объёму хранилищ (D48-C);
+-- в плите травы — проёмы под хранилищами. Участки-музеи с полем качалки строит PlotService.
 -- Совпадающих граней у разных деталей нет (D36): трава обрывов, свесы и «натёки» лежат встык или с выступом.
--- Зависит от MapLayout, ModelBuilder, Palette, Studs, Hologram, Signs, World/Models/*, GameConfig, ZonePatterns.
+-- Зависит от MapLayout, ModelBuilder, Palette, Studs, Hologram, Signs, World/Models/*, GameConfig, ZonePatterns,
+-- Config/MuseumLayout.
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local ZonePatterns = require(ReplicatedStorage.Shared.Config.ZonePatterns)
 local World = ServerScriptService.Server.World
 local Hologram = require(World.Hologram)
@@ -77,20 +80,42 @@ local function box(
 	return B(size, Vector3.new((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), color, extra)
 end
 
+-- Проём под хранилищем музея index (D48-C): контур зала по плану, мировые x0, x1, z0, z1.
+local function vaultHole(index: number): (number, number, number, number)
+	local c = MapLayout.PlotCFrame(index).Position
+	local hall = MuseumLayout.Hall
+	return c.X - hall.HalfWidth, c.X + hall.HalfWidth, c.Z + hall.Front, c.Z + hall.Back
+end
+
 local function buildGround(parent: Instance)
 	local island = MapLayout.Island
-	ModelBuilder.Build("Ground", {
-		-- Шире обрывов на 2: боковые грани земли и обрывов не совпадают (D36).
-		box(
-			island.minX - 2,
-			island.maxX + 2,
-			H.Ground - GROUND,
-			H.Ground,
-			island.minZ - 2,
-			island.maxZ + 2,
-			Palette.Field
-		),
-	}).Parent = parent
+	-- Шире обрывов на 2: боковые грани земли и обрывов не совпадают (D36). Плита травы — вокруг проёмов под
+	-- хранилищами пяти музеев (D48-C): полоса до проёмов, полоса за ними и куски между проёмами.
+	local x0, x1 = island.minX - 2, island.maxX + 2
+	local y0, y1 = H.Ground - GROUND, H.Ground
+	local holes = {}
+	for index = 1, GameConfig.World.PlotCount do
+		local a, b, c, d = vaultHole(index)
+		table.insert(holes, { a, b, c, d })
+	end
+	table.sort(holes, function(p, q)
+		return p[1] < q[1]
+	end)
+	local hz0, hz1 = holes[1][3], holes[1][4]
+	for _, hole in holes do
+		assert(hole[3] == hz0 and hole[4] == hz1, "WorldBuilder: проёмы хранилищ не в одном ряду")
+	end
+	local bricks = {
+		box(x0, x1, y0, y1, island.minZ - 2, hz0, Palette.Field),
+		box(x0, x1, y0, y1, hz1, island.maxZ + 2, Palette.Field),
+	}
+	local from = x0
+	for _, hole in holes do
+		table.insert(bricks, box(from, hole[1], y0, y1, hz0, hz1, Palette.Field))
+		from = hole[2]
+	end
+	table.insert(bricks, box(from, x1, y0, y1, hz0, hz1, Palette.Field))
+	ModelBuilder.Build("Ground", bricks).Parent = parent
 end
 
 -- «Натёки» травы на грани обрыва: бруски разной длины свисают с травы. Грань — along ("x" или "z") от a до b
@@ -515,6 +540,29 @@ function WorldBuilder.BuildWater()
 		Vector3.new(WATER_SIZE, 4, WATER_SIZE),
 		Enum.Material.Sand
 	)
+	-- Под каждым музеем — хранилище (D48-C): вода и песок вырезаются по его объёму (контур зала, от низа пола
+	-- хранилища до низа пола зала), выровненному на сетку вокселей Terrain (4 ст.). Ровно по объёму нельзя: вокселей
+	-- на границе вода остаётся целиком и заходит в комнату до 1.6 ст. (проверено в Play на участках 2–4). Сетка
+	-- добавляет не больше 4 ст. за наружными стенами — это под плитой травы, снаружи не видно. Только в Play —
+	-- исходное место не меняется.
+	for index = 1, GameConfig.World.PlotCount do
+		local volume = WorldBuilder.VaultVolume(index)
+		local half = volume.size / 2
+		local mid = volume.cframe.Position
+		terrain:FillRegion(Region3.new(mid - half, mid + half):ExpandToGrid(4), 4, Enum.Material.Air)
+	end
+end
+
+-- Объём хранилища участка index в мире: центр и размер (контур зала × от низа пола хранилища до низа пола зала).
+function WorldBuilder.VaultVolume(index: number): { cframe: CFrame, size: Vector3 }
+	local x0, x1, z0, z1 = vaultHole(index)
+	local floor = H.Floor
+	local bottom = floor + MuseumLayout.Vault.Floor - MuseumLayout.Hall.Slab
+	local top = floor - MuseumLayout.Hall.Slab
+	return {
+		cframe = CFrame.new((x0 + x1) / 2, (bottom + top) / 2, (z0 + z1) / 2),
+		size = Vector3.new(x1 - x0, top - bottom, z1 - z0),
+	}
 end
 
 return WorldBuilder

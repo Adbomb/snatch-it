@@ -191,6 +191,14 @@
   Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 ojo-serve.ps1`).
   Плагин: всплывающее «You synced project 'snatch-it'… Connect» → Connect → окно «Confirm sync» → Accept.
+- Terrain: `FillBlock(Air)` ровно по объёму помещения оставляет воду в пограничных вокселях (сетка 4 ст.): в
+  хранилище D48 вода заходила на 0.6–1.6 ст. (участки 2–4, проверено ReadVoxels в Play 2026-11-06). Вырезать
+  `FillRegion` по объёму, выровненному `ExpandToGrid(4)` (`WorldBuilder.BuildWater`).
+- Studio MCP отваливается («No Roblox Studio instances are connected», «Request timed out»), пока в Play идут
+  долгие серверные тесты или вызов ждёт > ~25 с: ждать в коротких вызовах (≤ 20 с) и переподключаться через ~40 с.
+  В Play 3D-кадр снимка чёрный, если Studio не на переднем плане (интерфейс виден); снимки Edit работают.
+- Studio `HttpService` из MCP к localhost не ходит («not in the Assistant HTTP allowlist»): прочитать файлы
+  Rojo-сервера из Studio нельзя. После `Invoke-CimMethod`-запуска `rojo-serve.ps1` плагин 2026-11-06 подключился сам.
 - Загрузить меш из Studio кодом нельзя: `AssetService:CreateAssetAsync` (EditableMesh → Mesh) в Studio отвечает
   «CreateAssetAsync and CreateAssetVersionAsync are not available yet» (проверено 2026-11-02). Меши — только
   File → Import 3D руками владельца; потом `scripts/bind_meshes.py` вписывает MeshId.

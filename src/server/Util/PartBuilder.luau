@@ -1,20 +1,25 @@
--- Строит участки-музеи: здание музея по уровню (World/Models/MuseumHall, D36), точка круглого фото владельца над
--- входом (D41), части с механикой витрин (окружение
--- витрин и сундука — кирпичи World/Models/Museum), поле качалки и табличку «Улучшение» перед музеем (D34, D36) и
--- место огромной гантели (её ставит GymService). Карту строит World/WorldBuilder. Только геометрия, без логики.
--- Зависит от GameConfig, World/MapLayout, World/ModelBuilder, World/Palette, World/Models/Museum,
--- World/Models/MuseumHall, World/Models/Gym, World/Signs.
+-- Строит участки-музеи D48-C: постоянные части с механикой и здание по уровню (World/MuseumVisual, D48). Постоянные:
+-- невидимая точка участка Floor (круглое фото владельца OwnerTag, D41, и свет зала и галерей), 20 мест Showcase_n
+-- (тумба 5 × 3 × 5 — она же столкновение постамента; табличка с номером, верх-индикатор состояния, точка лампы
+-- Lamp с прожектором презентации и подсветкой ниши), сундук Chest, поле качалки и табличка «Улучшение» (D34, D36).
+-- SetLevel меняет здание и решает, какие места стоят (постамент есть на этом уровне) и какие открыты
+-- (GameConfig.Museum.SlotsByLevel): места без постамента убраны из мира, закрытые — «ур. N» и серый верх.
+-- Только геометрия, без логики. Карту строит World/WorldBuilder.
+-- Зависит от GameConfig, Config/MuseumLayout, Config/Textures, World/MapLayout, World/ModelBuilder, World/MuseumVisual,
+-- World/Models/MuseumD48, World/Models/Museum, World/Models/Gym, World/Palette, World/Signs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Textures = require(ReplicatedStorage.Shared.Config.Textures)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
+local MuseumVisual = require(ServerScriptService.Server.World.MuseumVisual)
 local Gym = require(ServerScriptService.Server.World.Models.Gym)
 local Museum = require(ServerScriptService.Server.World.Models.Museum)
-local MuseumHall = require(ServerScriptService.Server.World.Models.MuseumHall)
+local MuseumD48 = require(ServerScriptService.Server.World.Models.MuseumD48)
 local Palette = require(ServerScriptService.Server.World.Palette)
 local Signs = require(ServerScriptService.Server.World.Signs)
 
@@ -23,6 +28,21 @@ local PartBuilder = {}
 -- Верх пола участков (выше травы и дорог, см. MapLayout.Heights).
 PartBuilder.FloorTop = MapLayout.Heights.Floor
 
+-- Над входом, перед портиком: круглое фото владельца (D41).
+local OWNER_TAG = Vector3.new(0, 19.5, -25)
+-- Высота ламп ниш над полом (там же прожектор презентации и подсветка занятого места).
+local LAMP_Y = 9.3
+local TOP =
+	{ size = Vector3.new(4.6, 0.06, 4.6), open = MuseumD48.Colors.cyan, taken = MuseumD48.Colors.gold, glass = 0.3 }
+local LOCKED = MuseumD48.Colors.steelDark
+local NICHE_LIGHT = { color = Color3.fromHex("FFE2B0"), range = 14, angle = 55, brightness = 2.2 }
+-- Свет зала и галерей (на точке участка): позиция в осях участка, только для галерей — gallery.
+local HALL_LIGHTS = {
+	{ name = "HallLight_1", at = Vector3.new(0, 13.5, -3), range = 26, brightness = 1.1 },
+	{ name = "HallLight_2", at = Vector3.new(0, 13.5, 14), range = 26, brightness = 1.1 },
+	{ name = "GalleryLight_L", at = Vector3.new(-22.8, 8.5, 0), range = 24, brightness = 1, gallery = true },
+	{ name = "GalleryLight_R", at = Vector3.new(22.8, 8.5, 0), range = 24, brightness = 1, gallery = true },
+}
 
 export type PlotParts = {
 	model: Model,
@@ -36,12 +56,20 @@ export type PlotParts = {
 	signBoard: BasePart, -- табло таблички «Улучшение» (лицо — сторона -Z, к полю)
 }
 
+-- То, что нужно SetLevel (PlotService.Plot тоже подходит).
+export type LevelTarget = {
+	model: Model,
+	showcases: { [number]: BasePart },
+	chest: BasePart,
+	floorOrigin: CFrame,
+}
+
 type PartProps = {
 	name: string,
 	size: Vector3,
 	cframe: CFrame,
 	color: Color3,
-	parent: Instance,
+	parent: Instance?,
 	material: Enum.Material?,
 	transparency: number?,
 	canCollide: boolean?,
@@ -57,6 +85,10 @@ function PartBuilder.MakePart(props: PartProps): Part
 	part.Material = props.material or Enum.Material.Plastic
 	part.Transparency = props.transparency or 0
 	part.CanCollide = if props.canCollide == nil then true else props.canCollide
+	if not part.CanCollide then
+		part.CanQuery = false
+		part.CanTouch = false
+	end
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	part.Parent = props.parent
@@ -70,10 +102,97 @@ function PartBuilder.CreateWorldFolder(): Folder
 	return world
 end
 
--- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на поле. Здание — World/Models/MuseumHall;
--- здесь части с механикой: Floor (с точкой OwnerTag), витрины Showcase_i (папка Showcases), Chest, лампы, Exhibits.
-function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number, parent: Instance): PlotParts
-	local cfg = GameConfig.World
+-- Номер места на лицевой грани тумбы; у закрытого места — ещё «ур. N».
+local function writeSign(showcase: BasePart)
+	local old = showcase:FindFirstChild("Sign")
+	if old then
+		old:Destroy()
+	end
+	local slot = showcase:GetAttribute("Slot")
+	local lines = { { text = tostring(slot), scale = 0.55 } }
+	if showcase:GetAttribute("Open") ~= true then
+		table.insert(lines, { text = ("ур. %d"):format(showcase:GetAttribute("UnlockLevel") or 1), scale = 0.3 })
+	end
+	Signs.Write(showcase, Enum.NormalId.Front, lines)
+end
+
+-- Состояние места: открыто и свободно — бирюзовый светящийся верх, занято — золотой верх и подсветка ниши,
+-- закрыто — серый верх.
+local function refreshPlace(showcase: BasePart)
+	local open = showcase:GetAttribute("Open") == true
+	local taken = open and showcase:GetAttribute("Occupied") == true
+	local top = showcase:FindFirstChild("Top") :: BasePart?
+	if top then
+		local free = open and not taken
+		top.Color = if not open then LOCKED elseif taken then TOP.taken else TOP.open
+		top.Material = if free then Enum.Material.Glass else Enum.Material.Plastic -- свободное — голубое стекло
+		top.Transparency = if free then TOP.glass else 0
+	end
+	local lamp = showcase:FindFirstChild("Lamp")
+	local light = lamp and lamp:FindFirstChild("NicheLight") :: SpotLight?
+	if light then
+		light.Enabled = taken
+	end
+end
+
+local function spot(name: string, parent: Instance, props: { [string]: any }): SpotLight
+	local light = Instance.new("SpotLight")
+	light.Name = name
+	light.Face = Enum.NormalId.Bottom
+	light.Shadows = false
+	light.Enabled = false
+	for key, value in props do
+		(light :: any)[key] = value
+	end
+	light.Parent = parent
+	return light
+end
+
+-- Тумба места place: столкновение и опора экспоната (верх — на высоте ShowcaseSize.Y), лицом в проход.
+local function makeShowcase(place: MuseumLayout.Place, floorOrigin: CFrame): BasePart
+	local size = GameConfig.Museum.ShowcaseSize
+	local center = place.center + Vector3.new(0, size.Y / 2, 0)
+	local cframe = floorOrigin * CFrame.lookAt(center, center + place.face)
+	local showcase = PartBuilder.MakePart({
+		name = "Showcase_" .. place.slot,
+		size = size,
+		cframe = cframe,
+		color = MuseumD48.Colors.pil,
+	})
+	showcase.MaterialVariant = Textures.SquaresSoft.name
+	showcase:SetAttribute("Slot", place.slot)
+	showcase:SetAttribute("Occupied", false)
+	showcase:SetAttribute("Open", false)
+	showcase:SetAttribute("Zone", place.zone)
+	showcase:SetAttribute("UnlockLevel", place.unlock)
+	local top = PartBuilder.MakePart({
+		name = "Top",
+		size = TOP.size,
+		cframe = cframe * CFrame.new(0, size.Y / 2 + TOP.size.Y / 2, 0),
+		color = LOCKED,
+		canCollide = false,
+		parent = showcase,
+	})
+	top.CastShadow = false
+	local lamp = Instance.new("Attachment")
+	lamp.Name = "Lamp"
+	lamp.Position = Vector3.new(0, LAMP_Y - size.Y / 2, 0)
+	lamp.Parent = showcase
+	spot("PresentationLight", lamp, {}) -- прожектор презентации: включает PresentationController у зрителей
+	spot("NicheLight", lamp, {
+		Color = NICHE_LIGHT.color,
+		Range = NICHE_LIGHT.range,
+		Angle = NICHE_LIGHT.angle,
+		Brightness = NICHE_LIGHT.brightness,
+	})
+	showcase:GetAttributeChangedSignal("Occupied"):Connect(function()
+		refreshPlace(showcase)
+	end)
+	return showcase
+end
+
+-- Участок index стоит по MapLayout и смотрит входом (сторона -Z) на поле. Здание уровня 1 — сразу (SetLevel).
+function PartBuilder.BuildPlot(index: number, origin: CFrame, parent: Instance): PlotParts
 	local top = PartBuilder.FloorTop
 	local accent = Museum.Accents[(index - 1) % #Museum.Accents + 1]
 	local floorOrigin = origin * CFrame.new(0, top, 0)
@@ -83,95 +202,54 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	model:SetAttribute("PlotIndex", index)
 	model:SetAttribute("OwnerUserId", 0)
 
-	-- Пол: толстая плита от земли до уровня пола музея (светлый, спокойный рельеф — как у здания).
-	local floorThickness = top + 0.2
+	-- Точка участка: невидимая, без столкновений; на ней фото владельца и свет зала и галерей.
 	local floor = PartBuilder.MakePart({
 		name = "Floor",
-		size = Vector3.new(cfg.PlotSize.X, floorThickness, cfg.PlotSize.Z),
-		cframe = origin * CFrame.new(0, top - floorThickness / 2, 0),
+		size = Vector3.new(1, 0.2, 1),
+		cframe = floorOrigin,
 		color = Palette.MuseumFloor,
+		transparency = 1,
+		canCollide = false,
 		parent = model,
 	})
-	floor.MaterialVariant = Textures.SquaresSoft.name
 	model.PrimaryPart = floor
-
-	local facadeZ = MuseumHall.FacadeZ
-	local lampHeight, ceiling = MuseumHall.LampHeight, MuseumHall.Ceiling
-	PartBuilder.SetBuilding(model, floorOrigin, accent, 1)
-
-	-- Владелец музея (D41): вместо вывески «МУЗЕЙ <имя>» над входом — круглое фото и ник; их рисует клиент
-	-- (Controllers/OwnerTagController) у этой точки.
 	local tag = Instance.new("Attachment")
 	tag.Name = "OwnerTag"
 	tag.Parent = floor
-	tag.WorldPosition = (floorOrigin * CFrame.new(MuseumHall.OwnerTag)).Position
+	tag.WorldPosition = (floorOrigin * CFrame.new(OWNER_TAG)).Position
+	for _, spec in HALL_LIGHTS do
+		local attachment = Instance.new("Attachment")
+		attachment.Name = spec.name
+		attachment.Parent = floor
+		attachment.WorldPosition = (floorOrigin * CFrame.new(spec.at)).Position
+		attachment:SetAttribute("Gallery", spec.gallery == true)
+		local light = Instance.new("PointLight")
+		light.Range = spec.range
+		light.Brightness = spec.brightness
+		light.Color = Color3.fromHex("FFE8B0")
+		light.Shadows = false
+		light.Parent = attachment
+	end
 
-	-- Витрины: два ряда по три, номер на передней грани; вокруг — колпак, канаты, лампа сверху.
+	-- 20 мест D48-C; в мире только те, у которых на этом уровне есть постамент (SetLevel).
 	local showcaseFolder = Instance.new("Folder")
 	showcaseFolder.Name = "Showcases"
 	showcaseFolder.Parent = model
-	local decorFolder = Instance.new("Folder")
-	decorFolder.Name = "ShowcaseDecor"
-	decorFolder.Parent = model
-	local lampFolder = Instance.new("Folder")
-	lampFolder.Name = "Lamps"
-	lampFolder.Parent = model
-	local showcaseSize = GameConfig.Museum.ShowcaseSize
-	local step = GameConfig.Museum.ShowcaseStep
 	local showcases = {}
-	for slot = 1, slotCount do
-		local column = (slot - 1) % 3
-		local row = (slot - 1) // 3
-		local base = floorOrigin * CFrame.new((column - 1) * step.X, 0, -2 + row * step.Y)
-		local showcase = PartBuilder.MakePart({
-			name = "Showcase_" .. slot,
-			size = showcaseSize,
-			cframe = base * CFrame.new(0, showcaseSize.Y / 2, 0),
-			color = Color3.fromHex("3C4A5C"),
-			parent = showcaseFolder,
-		})
-		showcase:SetAttribute("Slot", slot)
-		showcase:SetAttribute("Occupied", false)
-		Signs.Write(showcase, Enum.NormalId.Front, { { text = tostring(slot), scale = 0.7 } })
-		showcases[slot] = showcase
-
-		ModelBuilder.Place(ModelBuilder.Build("Decor_" .. slot, Museum.ShowcaseDecor(showcaseSize, accent)), base, decorFolder)
-		local lamp =
-			ModelBuilder.Place(ModelBuilder.Build("Lamp_" .. slot, Museum.Lamp(lampHeight, ceiling)), base, lampFolder)
-		local bulb = lamp:FindFirstChild("Bulb")
-		if bulb then
-			-- Прожектор презентации: выключен, включает PresentationController у зрителей.
-			local spot = Instance.new("SpotLight")
-			spot.Name = "PresentationLight"
-			spot.Face = Enum.NormalId.Bottom
-			spot.Enabled = false
-			spot.Parent = bulb
-			-- Мягкий свет зала: по одной лампе в центре каждого ряда.
-			if column == 1 then
-				local glow = Instance.new("PointLight")
-				glow.Range = 22
-				glow.Brightness = 1
-				glow.Color = Color3.fromHex("FFE8B0")
-				glow.Shadows = false
-				glow.Parent = bulb
-			end
-		end
+	for _, place in MuseumLayout.Places do
+		showcases[place.slot] = makeShowcase(place, floorOrigin)
 	end
 
-	-- Сундук-хранилище у входа, слева от прохода: корпус (Chest) + крышка, полосы, замок.
+	-- Сундук у входа слева (D48-C: x −9, освобождает подход к арке галереи), замок смотрит в зал.
 	local chestSize = GameConfig.Museum.ChestSize
-	-- Вплотную к фасаду (зазор 0.1), замком в зал: подсказки витрины 1 не перехватывают E у сундука.
-	local chestCFrame = floorOrigin
-		* CFrame.new(-12, chestSize.Y / 2, facadeZ + 1.4 + chestSize.Z / 2 + 0.1)
-		* CFrame.Angles(0, math.pi, 0)
 	local chest = PartBuilder.MakePart({
 		name = "Chest",
 		size = chestSize,
-		cframe = chestCFrame,
-		color = Color3.fromHex("8A5A2B"),
+		cframe = floorOrigin * CFrame.new(MuseumLayout.Chest.Center + Vector3.new(0, chestSize.Y / 2, 0)),
+		color = MuseumD48.Colors.chest,
 		parent = model,
 	})
-	ModelBuilder.Place(ModelBuilder.Build("ChestDecor", Museum.ChestDecor(chestSize)), chestCFrame, model)
+	chest.MaterialVariant = Textures.SquaresSoft.name
 
 	-- Поле качалки и табличка «Улучшение» перед музеем, спереди слева (D34, D36).
 	local yard = MapLayout.PlotYard
@@ -195,8 +273,7 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 	exhibits.Name = "Exhibits"
 	exhibits.Parent = model
 
-	model.Parent = parent
-	return {
+	local parts: PlotParts = {
 		model = model,
 		showcases = showcases,
 		exhibits = exhibits,
@@ -207,16 +284,60 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, slotCount: number,
 		dumbbellCFrame = fieldCFrame * CFrame.new(0, Gym.DumbbellHeight, 0) * CFrame.Angles(0, math.rad(90), 0),
 		signBoard = signBoard,
 	}
+	PartBuilder.SetLevel(parts, 1)
+	model.Parent = parent
+	return parts
 end
 
--- Здание музея уровня level (1–10, D36): стартовый зал, с уровнем — боковые залы, портик на 6 колонн, купол,
--- позолота; на чётных уровнях — оформление. Прежнее здание участка заменяется.
-function PartBuilder.SetBuilding(model: Model, floorOrigin: CFrame, accent: Color3, level: number)
+-- Места, у которых на уровне level стоит постамент (по модулям раскладки).
+local function placesWithPlinth(level: number): { [number]: boolean }
+	local out = {}
+	for _, m in MuseumVisual.Modules(level) do
+		if m.model == "D48_Plinth" then
+			for _, place in MuseumLayout.Places do
+				if (place.center - m.position).Magnitude < 0.01 then
+					out[place.slot] = true
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- Здание и места музея уровня level (1–10, D48-C): прежнее здание участка заменяется.
+function PartBuilder.SetLevel(plot: LevelTarget, level: number)
+	local model = plot.model
 	local old = model:FindFirstChild("Building")
 	if old then
 		old:Destroy()
 	end
-	ModelBuilder.Place(ModelBuilder.Build("Building", MuseumHall.Build(level, accent)), floorOrigin, model)
+	MuseumVisual.Build(level, plot.floorOrigin, model)
+	model:SetAttribute("MuseumLevel", level)
+
+	local slots = GameConfig.Museum.SlotsByLevel
+	local open = slots[level] or slots[1]
+	local standing = placesWithPlinth(level)
+	local folder = model:FindFirstChild("Showcases")
+	local meshPlinth = MuseumVisual.UsesMesh("D48_Plinth")
+	for slot, showcase in plot.showcases do
+		local isOpen = standing[slot] == true and slot <= open
+		showcase:SetAttribute("Open", isOpen)
+		showcase.Transparency = if meshPlinth then 1 else 0
+		showcase.Parent = if standing[slot] then folder else nil
+		writeSign(showcase)
+		refreshPlace(showcase)
+	end
+	plot.chest.Transparency = if MuseumVisual.UsesMesh("D48_Chest") then 1 else 0
+
+	local floor = model:FindFirstChild("Floor")
+	for _, attachment in if floor then floor:GetChildren() else {} do
+		if attachment:GetAttribute("Gallery") then
+			local light = attachment:FindFirstChildOfClass("PointLight")
+			if light then
+				light.Enabled = level >= MuseumLayout.Gallery.Level
+			end
+		end
+	end
 end
 
 return PartBuilder

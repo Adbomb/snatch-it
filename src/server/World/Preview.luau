@@ -43,7 +43,7 @@ function Preview.Build(): string
 	plots.Name = "Plots"
 	plots.Parent = root
 	for index = 1, GameConfig.World.PlotCount do
-		PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), GameConfig.Museum.SlotsByLevel[1], plots)
+		PartBuilder.BuildPlot(index, MapLayout.PlotCFrame(index), plots)
 	end
 	local points = Instance.new("Folder")
 	points.Name = "ArtSlots"

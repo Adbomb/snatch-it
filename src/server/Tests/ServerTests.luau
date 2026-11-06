@@ -2,7 +2,8 @@
 -- витринами, сундуком, хранилищем, гантелью и полем качалки, один носитель у предмета, повторный вход, перестройка
 -- музея; время и ночь (этап 2 D37); предметы у боссов (этап 3); босс 1 (D40): каталог из 20 предметов, модели,
 -- автобой (победа, поражение с отбросом, повтор без ожидания, один бой на босса, ночь, побег, сила), доход экспонатов
--- и полный путь «победа → витрина → доход → повторный вход». Игроки — Tests/TestPlayer с профилями в памяти
+-- и полный путь «победа → витрина → доход → повторный вход»; музей D48-C (места по уровням, хранилище только
+-- владельцу, лестница и оболочка в режимах Parts и Mesh, Terrain под хранилищем). Игроки — Tests/TestPlayer с профилями в памяти
 -- (ProfileStore.Mock): в DataStore ничего не пишется, участки берутся свободные (настоящий игрок не трогается).
 -- Вход и выход — тем же Services/PlayerSession, действия — теми же обработчиками, что вызывают подсказки
 -- (Handlers). Это серверная симуляция: подсказки на клиенте, интерфейс, сеть и физику персонажа она не
@@ -10,6 +11,7 @@
 -- Запуск через MCP в Play: game.ServerStorage.DevTools.RunServerTests:Invoke() → отчёт строкой.
 -- Зависит от Services/*, Util/ItemFactory, Tests/TestPlayer, GameConfig.
 
+local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -45,6 +47,9 @@ local TestPlayer = require(Server.Tests.TestPlayer)
 local TheftService = require(Server.Services.TheftService)
 local PvpService = require(Server.Services.PvpService)
 local DefenseService = require(Server.Services.DefenseService)
+local VaultService = require(Server.Services.VaultService)
+local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
@@ -575,7 +580,7 @@ test("Защита: покупка и установка только в под�
 	check(owned.Trap == 1 and owned.Laser == 1, "в подготовку не купилось")
 	check((owned.Snare or 0) == 0, "капкан без утверждённой цены продан")
 	settle()
-	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(0, 0, -2))
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(13.4, 0, -2)) -- место 1 (D48-C)
 	check(museum.installed.Trap == nil, "ловушку поставили на постамент")
 	settle()
 	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
@@ -637,13 +642,13 @@ test("Защита: робот бьёт вора в радиусе, не тро�
 	settle()
 	DefenseService.Handlers.Action(A, "BuyDefense", "Robot")
 	settle()
-	DefenseService.Handlers.Action(A, "Install", "Robot", Vector3.new(-14, 0, 18))
+	DefenseService.Handlers.Action(A, "Install", "Robot", Vector3.new(-7, 0, 14)) -- боковой проход (D48-C)
 	local robot = DefenseService.Handlers.Museum(A.UserId).installed.Robot
 	check(robot ~= nil, "робот не встал")
 	TimeService.SkipTo("DoomNight", -5)
 	PvpService.Handlers.Reset()
 	local origin = plotOf(A).floorOrigin
-	local robotAt = origin * Vector3.new(-14, 0, 18)
+	local robotAt = origin * Vector3.new(-7, 0, 14)
 	local function stand(player: any, spot: Vector3)
 		local at = origin * spot
 		player.Character.PrimaryPart.CFrame = CFrame.lookAt(at, Vector3.new(robotAt.X, at.Y, robotAt.Z))
@@ -657,7 +662,7 @@ test("Защита: робот бьёт вора в радиусе, не тро�
 	local fb = PvpService.Handlers.Fighter(B)
 	DefenseService.Handlers.Tick()
 	check(fb.hp == fb.maxHp, "робот ударил вора вне радиуса")
-	stand(B, Vector3.new(-14, 3, 14))
+	stand(B, Vector3.new(-10.5, 3, 14)) -- в радиусе робота и на расстоянии удара
 	DefenseService.Handlers.Tick()
 	check(fb.hp < fb.maxHp, "робот не ударил вора в радиусе")
 	robot.hp = 1 -- проверяется поломка, а не запас HP
@@ -1546,6 +1551,168 @@ test("Полный путь: победа → в руках → витрина �
 	TimeService.ResetClock()
 end)
 
+
+-- ── D48-C: музей на 20 мест, хранилище только владельцу, графика Parts/Mesh ───────────────────────────────────
+
+-- Уровень музея игрока: профиль и здание (как команда DevTools MuseumLevel).
+local function setMuseumLevel(player: any, level: number)
+	DataService.GetData(player).museumLevel = level
+	PlotService.ShowLevel(plotOf(player), level)
+end
+
+test("D48: места по уровням max(6, 2 × уровень), галереи с уровня 5", function(A, _B, ctx)
+	local plot = plotOf(A)
+	for level = 1, 10 do
+		setMuseumLevel(A, level)
+		local standing, open = 0, 0
+		for _, showcase in plot.showcases do
+			if showcase.Parent then
+				standing += 1
+			end
+			if showcase:GetAttribute("Open") then
+				open += 1
+			end
+		end
+		local expectedStanding = if level >= MuseumLayout.Gallery.Level then 20 elseif level >= 4 then 8 else 6
+		check(standing == expectedStanding, ("ур. %d: постаментов %d, ждали %d"):format(level, standing, expectedStanding))
+		check(open == GameConfig.Museum.SlotsByLevel[level], ("ур. %d: открыто %d мест"):format(level, open))
+		check(open == math.max(6, 2 * level), ("ур. %d: формула мест"):format(level))
+		check(MuseumService.SlotCount(A) == open, ("ур. %d: сервер считает %d мест"):format(level, MuseumService.SlotCount(A)))
+		local galleries = 0
+		for _, module in plot.model.Building:GetChildren() do
+			if module:GetAttribute("Module") == "D48_Gallery_L" or module:GetAttribute("Module") == "D48_Gallery_R" then
+				galleries += 1
+			end
+		end
+		check(galleries == (if level >= MuseumLayout.Gallery.Level then 2 else 0), ("ур. %d: галерей %d"):format(level, galleries))
+	end
+	-- на уровне 4 место 9 закрыто (галерей нет): выставить нельзя; на уровне 5 — можно
+	setMuseumLevel(A, 4)
+	near(A, plot.showcases[9])
+	local uid = carry(ctx, A)
+	MuseumService.Handlers.Display(A, plot, 9)
+	check(ItemRegistry.Get(uid).state == "Carried", "на закрытое место 9 выставилось")
+	setMuseumLevel(A, 5)
+	MuseumService.Handlers.Display(A, plot, 9)
+	local entry = ItemRegistry.Get(uid)
+	check(entry.state == "Displayed" and entry.slot == 9, "на открытое место 9 галереи не выставилось")
+	check(plot.showcases[9]:GetAttribute("Occupied") == true, "место 9 не занято")
+	check(DataService.GetData(A).items[uid].slot == 9, "профиль: не место 9")
+end)
+
+test("D48: хранилище — барьер только для своего владельца, чужого выставляет сервер", function(A, B, _ctx)
+	local plotA, plotB = plotOf(A), plotOf(B)
+	local ownA, barrierA = VaultService.Handlers.OwnerGroup(plotA.index), VaultService.Handlers.BarrierGroup(plotA.index)
+	local barrierB = VaultService.Handlers.BarrierGroup(plotB.index)
+	check(VaultService.Handlers.GroupOf(A) == ownA, "группа владельца A")
+	check(not PhysicsService:CollisionGroupsAreCollidable(ownA, barrierA), "A не проходит свой барьер")
+	check(PhysicsService:CollisionGroupsAreCollidable(ownA, barrierB), "A проходит барьер чужого хранилища B")
+	check(PhysicsService:CollisionGroupsAreCollidable("Default", barrierA), "посторонний проходит барьер A")
+	local wall = plotA.model:FindFirstChild("VaultBarrier") :: BasePart
+	check(wall and wall.CanCollide and wall.CollisionGroup == barrierA, "барьер в портале A")
+	VaultService.Handlers.ApplyGroup(A)
+	check(A.Character.HumanoidRootPart.CollisionGroup == ownA, "персонаж A не в своей группе")
+	-- чужой в хранилище A — к порталу павильона; владелец остаётся
+	local inside = plotA.floorOrigin * CFrame.new(-8, MuseumLayout.Vault.Floor + 3, 10)
+	B.Character.HumanoidRootPart.CFrame = inside
+	A.Character.HumanoidRootPart.CFrame = inside * CFrame.new(4, 0, 0)
+	check(VaultService.Handlers.Tick() >= 1, "чужого не выставили")
+	local bAt = plotA.floorOrigin:PointToObjectSpace(B.Character.HumanoidRootPart.Position)
+	check(bAt.Y > 0 and bAt.Z < MuseumLayout.Pavilion.Z0, "B не у портала павильона")
+	check(B:WasNotified("только для владельца"), "B не получил подсказку")
+	local aAt = plotA.floorOrigin:PointToObjectSpace(A.Character.HumanoidRootPart.Position)
+	check(aAt.Y < 0, "владельца A выставили из своего хранилища")
+	-- в павильоне за порталом — тоже
+	B.Character.HumanoidRootPart.CFrame = plotA.floorOrigin * CFrame.new(0, 3, MuseumLayout.Pavilion.Z0 + 2)
+	VaultService.Handlers.Tick()
+	bAt = plotA.floorOrigin:PointToObjectSpace(B.Character.HumanoidRootPart.Position)
+	check(bAt.Z < MuseumLayout.Pavilion.Z0, "B остался в павильоне A")
+	-- окна хранилища: только владельцу и рядом
+	local terminal = plotA.model:FindFirstChild("VaultTerminal") :: BasePart
+	B:MoveTo(terminal.Position)
+	B:ClearSent()
+	VaultService.Handlers.Open(B, plotA, terminal, "Inventory")
+	for _, sent in B.Sent do
+		check(sent.name ~= Remotes.Names.OpenWindow, "чужому открылось окно хранилища A")
+	end
+	A:MoveTo(terminal.Position)
+	A:ClearSent()
+	VaultService.Handlers.Open(A, plotA, terminal, "Inventory")
+	local opened = false
+	for _, sent in A.Sent do
+		opened = opened or (sent.name == Remotes.Names.OpenWindow and sent.args[1] == "Inventory")
+	end
+	check(opened, "владельцу не открылось окно «Инвентарь»")
+end)
+
+test("D48: лестница физическая, пол и стены хранилища — в обоих режимах графики", function(A, _B, _ctx)
+	local plot = plotOf(A)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	local function probe(): string?
+		params.FilterDescendantsInstances = { plot.model.Building }
+		for k = 1, MuseumLayout.Stair.Steps do
+			-- ступени за проёмом в полу (z > WellZ1) — под плитой пола зала: луч из-под потолка хранилища
+			local z = MuseumLayout.Stair.TopZ + k - 0.5
+			local from = plot.floorOrigin * Vector3.new(0, if z < MuseumLayout.Stair.WellZ1 then 4 else -2, z)
+			local hit = workspace:Raycast(from, Vector3.new(0, -30, 0), params)
+			local top = hit and plot.floorOrigin:PointToObjectSpace(hit.Position).Y
+			if not hit or not hit.Instance.CanCollide or math.abs(top + k) > 0.05 then
+				return ("ступень %d: %s"):format(k, if hit then ("%.2f"):format(top) else "нет")
+			end
+		end
+		local floorHit = workspace:Raycast(plot.floorOrigin * Vector3.new(8, -3, 8), Vector3.new(0, -30, 0), params)
+		local floorTop = floorHit and plot.floorOrigin:PointToObjectSpace(floorHit.Position).Y
+		if not floorHit or math.abs(floorTop - MuseumLayout.Vault.Floor) > 0.05 then
+			return "пол хранилища"
+		end
+		local wallHit = workspace:Raycast(plot.floorOrigin * Vector3.new(0, -6, 4), Vector3.new(40, 0, 0), params)
+		if not wallHit or not wallHit.Instance.CanCollide then
+			return "стена хранилища"
+		end
+		return nil
+	end
+	local reason = probe()
+	check(reason == nil, "Parts: " .. tostring(reason))
+	-- Mesh без MeshId: та же оболочка (столкновения), модуль показан Part-версией
+	local was = GameConfig.Museum.Visual
+	GameConfig.Museum.Visual = "Mesh"
+	local ok, err = pcall(function()
+		setMuseumLevel(A, 2)
+		local meshModules = 0
+		for _, module in plot.model.Building:GetChildren() do
+			if module:GetAttribute("Mesh") then
+				meshModules += 1
+			end
+		end
+		check(meshModules == 0, "Mesh без MeshId: модули без мешей помечены мешами")
+		local mreason = probe()
+		check(mreason == nil, "Mesh без MeshId: " .. tostring(mreason))
+		check(plot.showcases[1].Transparency == 0, "Mesh без MeshId: тумба места 1 стала невидимой")
+	end)
+	GameConfig.Museum.Visual = was
+	setMuseumLevel(A, 1)
+	check(ok, tostring(err))
+end)
+
+test("D48: под хранилищем нет воды и песка (Terrain вырезан)", function(A, _B, _ctx)
+	local plot = plotOf(A)
+	local center = plot.floorOrigin * Vector3.new(0, MuseumLayout.Vault.Floor + 5, 4)
+	local region = Region3.new(center - Vector3.new(14, 4, 12), center + Vector3.new(14, 4, 12)):ExpandToGrid(4)
+	local materials, occupancy = workspace.Terrain:ReadVoxels(region, 4)
+	local wet = 0
+	for x = 1, materials.Size.X do
+		for y = 1, materials.Size.Y do
+			for z = 1, materials.Size.Z do
+				local m = materials[x][y][z]
+				if (m == Enum.Material.Water or m == Enum.Material.Sand) and occupancy[x][y][z] > 0 then
+					wet += 1
+				end
+			end
+		end
+	end
+	check(wet == 0, ("в хранилище воды и песка: %d вокселей"):format(wet))
+end)
 
 local ServerTests = {}
 

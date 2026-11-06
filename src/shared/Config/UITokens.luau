@@ -299,6 +299,12 @@ UITokens.Defense = {
 }
 
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
+-- Вид музея D48-C у владельца (Controllers/MuseumVisualController): экран сканера у павильона хранилища.
+UITokens.Museum = {
+	ScannerOwner = Color3.fromHex("4CE07A"), -- свой музей: проход открыт
+	ScannerIdle = Color3.fromHex("39E1FF"), -- чужой: решётка закрыта
+}
+
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
 	ButtonPosition = UDim2.new(1, -16, 0.25, 0), -- справа вверху: не на таймере фазы (на телефоне он поднят) и не на «Бросить»

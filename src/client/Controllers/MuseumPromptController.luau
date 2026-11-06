@@ -25,6 +25,9 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	local holder = prompt.Parent
 	local plot = holder and holder:FindFirstAncestorWhichIsA("Model")
 	local action = prompt:GetAttribute("Action")
+	if holder and holder:GetAttribute("Open") == false then
+		return false -- место музея ещё закрыто (D48-C: откроется на уровне UnlockLevel)
+	end
 	if action == "Hack" then
 		-- Взлом усиленной двери (D37): чужая дверь, Судная ночь, есть устройство взлома. Уровень проверяет сервер.
 		local owner = nil
@@ -59,7 +62,9 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 	local moveSlot = player:GetAttribute("MoveSlot")
 	local slot = holder:GetAttribute("Slot")
 
-	if action == "Move" then
+	if action == "VaultInventory" or action == "VaultDefense" then
+		return true -- своё хранилище (D48-C); окно откроет сервер после проверки
+	elseif action == "Move" then
 		-- На выбранном экспонате та же клавиша отменяет выбор.
 		prompt.ActionText = if moveSlot == slot then "Отменить" else "Переставить"
 		return occupied and (moveSlot == nil or moveSlot == slot)

@@ -52,6 +52,19 @@ Prompts.Actions = {
 	-- Судная ночь (D46): удержание (GameConfig.Theft.HoldSeconds ставит TheftService); на телефоне — экранная кнопка
 	-- подсказки с тем же удержанием.
 	-- Взлом усиленной двери (D37): удержание GameConfig.Defense.HackSeconds ставит DefenseService.
+	-- Хранилище D48-C: терминал — окно «Инвентарь», центр безопасности — окно «Защита» (только владельцу).
+	VaultInventory = {
+		text = "Инвентарь",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
+	VaultDefense = {
+		text = "Защита",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 	Hack = {
 		text = "Взломать",
 		key = Enum.KeyCode.E,
