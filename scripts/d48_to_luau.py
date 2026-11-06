@@ -124,6 +124,7 @@ def build():
         f"\tInnerZ1 = {num(L.GAL_IZ1)},",
         f"\tEave = {num(gal['eave'])},",
         f"\tPlanter = {nums(gal['planter'])},",
+        f"\tPlanterBush = {num(L.PLANTER_BUSH)}, -- кусты — только на бортике не уже этого",
         f"\tArch = {{ Z0 = {num(L.ARCH_Z0)}, Z1 = {num(L.ARCH_Z1)}, Height = {num(L.ARCH_H)} }},",
         f"\tLevel = {gal['level']},",
         f"\tZ = {nums(L.GAL_Z)},",

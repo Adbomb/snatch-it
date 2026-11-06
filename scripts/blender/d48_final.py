@@ -386,11 +386,13 @@ def build_gallery(sx):
     # клумба снаружи: каменный бортик, земля, кусты шарами (у крайних участков закрывает щель до обрыва)
     p0, p1, ph = L.PLANTER
     bx(m, "d48stone", *gx(p0, p1), G, G + ph * 0.55, L.GAL_Z0, L.GAL_Z1, bevel=0.1)
-    bx(m, "d48plantdark", *gx(p0 + 0.25, p1 - 0.25), G + ph * 0.55, G + ph * 0.62, L.GAL_Z0 + 0.25, L.GAL_Z1 - 0.25,
-       bevel=0)
+    bushes = p1 - p0 >= L.PLANTER_BUSH  # D50: узкий бортик у обрыва — без земли и кустов
+    if bushes:
+        bx(m, "d48plantdark", *gx(p0 + 0.25, p1 - 0.25), G + ph * 0.55, G + ph * 0.62, L.GAL_Z0 + 0.25,
+           L.GAL_Z1 - 0.25, bevel=0)
     z = L.GAL_Z0 + 2.0
     k = 0
-    while z < L.GAL_Z1 - 1.5:
+    while bushes and z < L.GAL_Z1 - 1.5:
         y0 = G + ph * 0.62
         col = "d48plant" if k % 3 else "d48plantdark"
         bx(m, col, *gx((p0 + p1) / 2 - 0.95, (p0 + p1) / 2 + 0.95), y0, y0 + 1.3, z - 1.3, z + 1.3, bevel=0.2)
@@ -885,7 +887,7 @@ shot(10, "vault_main", (10.0, -6.5, 15.5), (-3.0, -8.8, -7.0), 76, hidden=("Gate
 shot(10, "vault_overview", (26, 30, -30), (0, -14, 3), 44,
      hidden=("Roof", "Hall", "SideL", "SideR", "Pavilion", "Gate", "PlacesL", "PlacesR", "Ground", "GroundNear",
              "VaultNear", "VaultFront", "Lights", "LightsGal", "People", "PeopleGal"))
-shot(10, "plinth_states", (20.4, 5.4, -1.0), (24.7, 3.2, -13.0), 46, (1100, 1100))
+shot(10, "plinth_states", (20.4, 5.4, -1.0), (L.GAL_IX - L.GAL_D, 3.2, -13.0), 46, (1100, 1100))
 shot(10, "plan", (0, 140, -0.6), (0, 0, -0.599), 0, (1300, 1300), ("Roof", "People", "PeopleGal"), 66, True)
 shot(1, "plan", (0, 140, -0.6), (0, 0, -0.599), 0, (1300, 1300), ("Roof", "People"), 66, True)
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(C2, "d48_final.blend"))

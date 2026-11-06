@@ -324,10 +324,14 @@ local function gallery(sx: number): { Brick }
 		x0, x1 = gx(sx, GAL.Out, GAL.Out + 0.35)
 		box(b, x0, x1, G + 0.88, top - 0.4, z - 0.45, z + 0.45, C.pil)
 	end
-	-- клумба: каменный бортик (оболочка — у крайних участков закрывает щель до обрыва), земля, кусты
+	-- клумба: каменный бортик (оболочка — у крайних участков закрывает щель до обрыва), земля, кусты; узкий бортик
+	-- (D50: галерея шире, до кромки обрыва 0.6 ст.) — без земли и кустов
 	local p0, p1, ph = GAL.Planter[1], GAL.Planter[2], GAL.Planter[3]
 	x0, x1 = gx(sx, p0, p1)
 	box(b, x0, x1, G, G + ph * 0.55, GAL.Z0, GAL.Z1, C.stone, SHELL)
+	if p1 - p0 < GAL.PlanterBush then
+		return b
+	end
 	x0, x1 = gx(sx, p0 + 0.25, p1 - 0.25)
 	box(b, x0, x1, G + ph * 0.55, G + ph * 0.62, GAL.Z0 + 0.25, GAL.Z1 - 0.25, C.plantDark, { shadow = false })
 	local y0 = G + ph * 0.62

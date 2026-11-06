@@ -23,6 +23,8 @@ C2 = os.path.join(ROOT, "assets", "concepts", "d48", "c2")
 SCAN = json.load(open(os.path.join(C2, "world_scan.json"), encoding="utf-8"))
 XS, PZ = (150, 75, 0, -75, -150), 100
 MIN_GAP = 3.0  # до объекта, у которого игрок может стоять (поле, гантель, дерево)
+FIELD = (-183.0, 183.0, 131.0)  # кромки поля (|x|, задняя z): за ними — террасы обрывов на 12 ст. выше, туда не пройти
+TERRACE_GAP = 0.5  # дерево на террасе: только без пересечения с галереей (D50 — галереи шире на 2 ст.)
 MIN_WALK = 8.0  # проход между музеями
 CLOSED = 0.5  # щель уже не щель: в неё не пролезть
 
@@ -49,6 +51,11 @@ def gap(a, b):
     if dx < 0 and dz < 0:
         return max(dx, dz)
     return max(dx, 0) if dz < 0 else (max(dz, 0) if dx < 0 else (dx * dx + dz * dz) ** 0.5)
+
+
+def on_terrace(box):
+    """Дерево целиком за кромкой поля — на террасе обрыва (недоступно игроку)."""
+    return box[0] >= FIELD[1] or box[1] <= FIELD[0] or box[2] >= FIELD[2]
 
 
 def local_box(i, box):
@@ -78,8 +85,13 @@ for i in range(5):
         for name, box in objs.items():
             g = gap(env, box)
             check(g >= MIN_GAP, f"участок {i + 1} {side}: до «{name}» {g:.1f} ст.")
-        tg = min(gap(env, t) for t in SCAN["trees"])
-        check(tg >= MIN_GAP, f"участок {i + 1} {side}: до ближайшего дерева {tg:.1f} ст.")
+        field_trees = [t for t in SCAN["trees"] if not on_terrace(t)]
+        terrace_trees = [t for t in SCAN["trees"] if on_terrace(t)]
+        if field_trees:  # сейчас все деревья карты — на террасах
+            tg = min(gap(env, t) for t in field_trees)
+            check(tg >= MIN_GAP, f"участок {i + 1} {side}: до ближайшего дерева на поле {tg:.1f} ст.")
+        tt = min(gap(env, t) for t in terrace_trees)
+        check(tt >= TERRACE_GAP, f"участок {i + 1} {side}: до дерева на террасе {tt:.1f} ст. (не пересекается)")
         for j in range(5):
             if j == i:
                 continue
@@ -157,8 +169,8 @@ d.rectangle((0, 0, W, 170), fill=(24, 28, 48))
 say((W // 2, 44), "Галереи D48-C на всех пяти участках (по снимку мира из Studio)", 36)
 say((W // 2, 92), "жёлтое — галереи, зелёное — клумбы, белая рамка — участок 44 × 44, синее — поле качалки, "
                   "коричневое — гантель и обрыв, тёмно-зелёное — деревья", 19, (205, 216, 245), weight="Bold")
-say((W // 2, 132), ("ошибок нет" if not failed else f"ошибок: {failed}") + " · между музеями проход 12,2 ст. · "
-    "до гантели 3,5 · до поля 6,4 · у обрыва щель закрыта клумбой", 21, (140, 255, 160) if not failed else
+say((W // 2, 132), ("ошибок нет" if not failed else f"ошибок: {failed}") + " · D50: галереи шире, между музеями 12,2 ст. · "
+    "до гантели 3,5 · до поля 6,4 · у обрыва щель закрыта бортиком", 21, (140, 255, 160) if not failed else
     (255, 150, 150), weight="Bold")
 img.save(os.path.join(C2, "site_check.png"))
 sys.exit(1 if failed else 0)
