@@ -142,12 +142,6 @@ UITokens.Layout = {
 		minSize = Vector2.new(260, 70),
 		maxSize = Vector2.new(560, 110),
 	},
-	-- Временные надписи силы и монет: внизу слева (до шага интерфейса Stud-UI).
-	GymHud = {
-		position = UDim2.fromScale(0.015, 0.97), -- нижний левый угол столбика
-		pill = Vector2.new(190, 44), -- надпись, px (кнопок нет — 52×52 не нужно)
-		gap = 8, -- между надписями, px
-	},
 }
 
 -- Табличка «Улучшение» во дворе (D34): SurfaceGui на табло участка и всплывающее «+N» при качании.
@@ -169,18 +163,33 @@ UITokens.GymGain = {
 	TextSize = 40,
 }
 
--- Таймер фазы (D37, место — D27: внизу справа; на телефоне — над кнопкой прыжка).
+-- Таймер фазы HUD v2 (D48 v2: сверху по центру, под кнопками Roblox — ScreenInsets CoreUISafeInsets): капсула с
+-- иконкой фазы, названием и отсчётом, полоса фазы и строка «до Судной ночи».
 UITokens.TimeHud = {
-	Size = Vector2.new(250, 84), -- пиксели при масштабе 1 (дальше — UIScale по экрану, StudMotion.BindResponsive)
-	Margin = 16,
-	TouchLift = 170, -- на сенсорном экране поднять над кнопкой прыжка
+	Size = Vector2.new(300, 54), -- капсула, px при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
+	Top = 6,
+	Icon = 40,
 	PhaseSize = 22,
-	TimeSize = 34,
-	InfoSize = 14,
+	TimeSize = 32,
+	InfoSize = 16,
+	Bar = Vector2.new(250, 8), -- полоса фазы под капсулой
 	Refresh = 0.2, -- секунды между обновлениями отсчёта
-	-- Градиенты панели по фазам (верх → низ); день и ночь — из тем Stud-UI.
-	Theme = { Day = "blue", Preparation = "amber", Night = "violet" },
-	DoomNight = { Color3.fromHex("FF5A5A"), Color3.fromHex("B3122E") },
+	Fill = Color3.fromHex("1C2440"), -- капсула
+	Stroke = {
+		Day = Color3.fromHex("E9B43C"),
+		Preparation = Color3.fromHex("FFB020"),
+		Night = Color3.fromHex("8E7CFF"),
+		DoomNight = Color3.fromHex("FF3B3B"),
+	},
+	PhaseColor = {
+		Day = Color3.fromHex("FFD23F"),
+		Preparation = Color3.fromHex("FFB020"),
+		Night = Color3.fromHex("B9AEFF"),
+		DoomNight = Color3.fromHex("FF7A7A"),
+	},
+	DoomFill = Color3.fromHex("4A0F1C"), -- капсула в Судную ночь
+	-- Названия в капсуле прописными (string.upper кириллицу не меняет); у дня добавляется номер.
+	Titles = { Day = "ДЕНЬ", Preparation = "ПОДГОТОВКА", Night = "НОЧЬ", DoomNight = "СУДНАЯ НОЧЬ" },
 	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
 }
 
@@ -241,12 +250,45 @@ UITokens.ItemLabel = {
 	Follow = 12, -- скорость, с которой подпись догоняет своё место (1/с)
 }
 
--- Колонка кнопок меню в HUD (D46): слева над столбиком надписей силы и монет (UI/MenuHud), одна WindowScale.
+-- Иконки HUD v2 (D48 v2, утверждено 2026-11-06): путь CheckUIIcons «Категория/Подкатегория/Имя» (проверенные иконки
+-- Stud-UI) или готовый "rbxassetid://<id>". Новые иконки D48 (assets/concepts/d48/v2/icons: портфель, щит, монета,
+-- доход, кулак силы) ещё не загружены — после разрешённой загрузки вписать их ID сюда, больше ничего менять не нужно.
+UITokens.HudIcons = {
+	Coins = "Currency/Coin/Golden Coin 1st Outline",
+	Income = "Main/Upgrade/Green Upgrade 1st Outline",
+	Strength = "Player/Arm/Arm 1st Outline", -- до загрузки кулака (icon_fist.png)
+	Inventory = "Item/Backpack/Backpack 1st Outline", -- до загрузки портфеля (icon_briefcase.png)
+	Defense = "Item/Shield/Shield 1st Outline",
+	Day = "Main/Star/Golden Star 1st Outline",
+	Preparation = "UI/Warning/Warning 1st Outline",
+	Night = "Nature/Cloud/Cloud 1st Outline",
+	DoomNight = "Player/Skull/Skull 1st Outline",
+}
+
+-- Колонка меню HUD v2 (D48 v2): справа посередине — иконка, подпись под ней, на ПК клавиша (B — «Инвентарь»).
 UITokens.MenuHud = {
-	Button = Vector2.new(196, 64),
-	Gap = 10,
-	Margin = 16,
-	AbovePills = 12, -- отступ над столбиком надписей (Layout.GymHud)
+	Icon = 92, -- px при масштабе 1 (WindowScale, StudMotion.BindResponsive)
+	Label = 22, -- размер подписи
+	LabelGap = 2,
+	Gap = 14, -- между кнопками
+	Margin = 18, -- от правого края
+	Tilt = -8, -- наклон иконки (Stud-UI)
+	KeySize = 28, -- значок клавиши
+	Hover = 1.08,
+}
+
+-- Статистика HUD v2 (D48 v2): слева посередине — иконка + число, без рамок; доход зелёный, сила с подписью.
+UITokens.StatsHud = {
+	Margin = 18,
+	Y = 0.42, -- середина столбика по высоте экрана
+	Rows = {
+		Coins = { icon = 56, text = 40 },
+		Income = { icon = 44, text = 30, color = Color3.fromHex("8BF06B") },
+		Strength = { icon = 44, text = 32, note = 18 },
+	},
+	Gap = 8,
+	TextGap = 8,
+	Tilt = -8,
 }
 
 -- Окно «Инвентарь» (D46, Stud-UI): пиксели опорного экрана 1050 × 620, весь корень масштабирует WindowScale

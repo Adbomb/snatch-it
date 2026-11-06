@@ -481,7 +481,7 @@ function DefenseController.Open()
 	end
 end
 
--- Кнопка «Защита» в общей колонке HUD (UI/MenuHud), под «Инвентарём».
+-- Кнопка «Защита» в колонке меню HUD v2 (UI/MenuHud: справа, щит), под «Инвентарём».
 local function buildHud()
 	MenuHud.Add("Defense", "Защита", "purple", 2, function()
 		if menu.IsOpen then
@@ -489,7 +489,7 @@ local function buildHud()
 		else
 			DefenseController.Open()
 		end
-	end)
+	end, { icon = "Defense" })
 end
 
 function DefenseController.Init()

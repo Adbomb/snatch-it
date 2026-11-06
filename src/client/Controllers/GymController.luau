@@ -1,9 +1,9 @@
 -- Качалка на клиенте (D34, D35): табличка «Улучшение» во дворе каждого музея — SurfaceGui в PlayerGui на табло
 -- участка, текст каждому свой: владельцу — «Уровень N > Уровень N+1», цена и кнопки (Robux — заглушка «Скоро»),
 -- гостю — «Гантель игрока <имя>: уровень N», у свободного участка — «Свободный участок». При качании над головой
--- всплывает «+N», внизу слева — временные надписи силы и монет (до шага интерфейса Stud-UI).
--- Только показывает и просит: улучшение проверяет сервер. Зависит от Remotes, GameConfig, NumberFormat, UITokens,
--- UI/UIKit.
+-- всплывает «+N». Слева посередине — статистика HUD v2 (D48 v2): иконка + число без рамок — монеты, доход в секунду,
+-- сила (иконки — UI/HudIcons). Только показывает и просит: улучшение проверяет сервер. Зависит от Remotes,
+-- GameConfig, NumberFormat, UITokens, UI/UIKit, Shared/StudUI, UI/HudIcons.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,13 +15,16 @@ local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local UIKit = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("UIKit"))
+local HudIcons = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudIcons"))
+local StudUI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
+local StudMotion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 
 local player = Players.LocalPlayer
 local Dumbbell = GameConfig.Progression.Dumbbell
 local MAX_LEVEL = #Dumbbell.Power
 local SIGN = UITokens.GymSign
+local BICEPS = "💪" -- всплывающая прибавка силы над головой
 local GAIN = UITokens.GymGain
-local BICEPS = "💪"
 
 type Sign = {
 	plot: Model,
@@ -161,29 +164,67 @@ local function showGain(amount: number)
 	end)
 end
 
--- Временные надписи силы и монет внизу слева.
+-- Статистика HUD v2 слева посередине: строка — иконка (наклон Stud-UI) и число с объёмной тенью, без рамок.
 local function buildHud()
-	local layout = UITokens.Layout.GymHud
-	local gui = UIKit.ScreenGui("GymHud")
-	-- Столбик снизу вверх: сила, над ней монеты.
-	local function pill(row: number, gradient: UITokens.Gradient?): TextLabel
-		local frame = UIKit.Pill({
-			text = "",
-			gradient = gradient,
-			size = UDim2.fromOffset(layout.pill.X, layout.pill.Y),
-			position = layout.position + UDim2.fromOffset(0, -row * (layout.pill.Y + layout.gap)),
-			anchorPoint = Vector2.new(0, 1),
-			parent = gui,
+	local cfg = UITokens.StatsHud
+	local gui = StudUI.ScreenGui("GymHud", 3, { Menu = false })
+	gui.Parent = player:WaitForChild("PlayerGui")
+	local column = Instance.new("Frame")
+	column.Name = "Stats"
+	column.BackgroundTransparency = 1
+	column.AnchorPoint = Vector2.new(0, 0.5)
+	column.Position = UDim2.new(0, cfg.Margin, cfg.Y, 0)
+	column.Size = UDim2.fromOffset(320, 0)
+	column.AutomaticSize = Enum.AutomaticSize.Y
+	column.Parent = gui
+	local list = Instance.new("UIListLayout")
+	list.Padding = UDim.new(0, cfg.Gap)
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Parent = column
+	local scale = Instance.new("UIScale")
+	scale.Name = "WindowScale"
+	scale.Parent = column
+	StudMotion.BindResponsive(scale)
+	-- строка: иконка, число (rich — с мелкой подписью после числа, у силы)
+	local function row(key: string, order: number, rich: boolean?): (TextLabel, TextLabel)
+		local spec = cfg.Rows[key]
+		local frame = Instance.new("Frame")
+		frame.Name = key
+		frame.BackgroundTransparency = 1
+		frame.Size = UDim2.fromOffset(320, spec.icon)
+		frame.LayoutOrder = order
+		frame.Parent = column
+		StudUI.Image(frame, HudIcons.Get(key), {
+			Size = UDim2.fromOffset(spec.icon, spec.icon),
+			Position = UDim2.fromOffset(spec.icon / 2, spec.icon / 2),
+			Rotation = cfg.Tilt,
 		})
-		return frame:FindFirstChild("Text", true) :: TextLabel
+		local text, shadow = StudUI.ShadowText(frame, "", {
+			Name = "Valeur",
+			ShadowName = "ValeurOmbre",
+			Size = UDim2.fromOffset(0, spec.text + 4),
+			Position = UDim2.new(0, spec.icon + cfg.TextGap, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			AlignX = Enum.TextXAlignment.Left,
+			TextSize = spec.text,
+			AutoX = true,
+			Color = spec.color,
+			Rich = rich,
+		})
+		return text, shadow
 	end
-	local strength = pill(0, nil)
-	local coins = pill(1, UITokens.Gradients.Coin)
-	local income = pill(2, UITokens.Gradients.Go) -- общий доход экспонатов на витринах (IncomeService)
+	local coins, coinsShadow = row("Coins", 1)
+	local income, incomeShadow = row("Income", 2) -- общий доход экспонатов на постаментах (IncomeService)
+	local strength, strengthShadow = row("Strength", 3, true)
+	local note = ('  <font size="%d">сила</font>'):format(cfg.Rows.Strength.note)
+	local function set(label: TextLabel, shadow: TextLabel, text: string)
+		label.Text = text
+		shadow.Text = text
+	end
 	local function update()
-		strength.Text = ("%s %s"):format(BICEPS, NumberFormat.Short(player:GetAttribute("Strength") or 0))
-		coins.Text = "$" .. NumberFormat.Short(player:GetAttribute("Coins") or 0)
-		income.Text = ("+%s/сек"):format(NumberFormat.Short(player:GetAttribute("Income") or 0))
+		set(coins, coinsShadow, "$" .. NumberFormat.Short(player:GetAttribute("Coins") or 0))
+		set(income, incomeShadow, ("+%s/сек"):format(NumberFormat.Short(player:GetAttribute("Income") or 0)))
+		set(strength, strengthShadow, NumberFormat.Short(player:GetAttribute("Strength") or 0) .. note)
 	end
 	player:GetAttributeChangedSignal("Strength"):Connect(update)
 	player:GetAttributeChangedSignal("Coins"):Connect(update)

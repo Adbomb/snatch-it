@@ -686,7 +686,7 @@ function InventoryController.OpenForSlot(slot: number)
 	open(slot)
 end
 
--- Кнопка «Инвентарь» в общей колонке HUD (UI/MenuHud: слева, над столбиком надписей силы и монет).
+-- Кнопка «Инвентарь» в колонке меню HUD v2 (UI/MenuHud: справа, портфель, клавиша B на ПК).
 local function buildHud()
 	MenuHud.Add("Inventaire", "Инвентарь", "blue", 1, function()
 		if menu.IsOpen then
@@ -694,7 +694,7 @@ local function buildHud()
 		else
 			InventoryController.Open()
 		end
-	end)
+	end, { icon = "Inventory", key = Enum.KeyCode.B })
 end
 
 function InventoryController.Init()
