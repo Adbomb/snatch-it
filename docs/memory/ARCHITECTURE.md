@@ -82,7 +82,8 @@
   `Defense.Galleries.Level`) галереи; робот бьёт, только если видит вора (луч до него не задевает Building и
   Showcases участка). Модели устройств — Part-версия в палитре D48, детали Glow — цвет состояния (`Defense.States`).
 - HUD v2 (D48 v2): иконки — `client/UI/HudIcons` по `UITokens.HudIcons` (путь CheckUIIcons или rbxassetid); колонка
-  меню `UI/MenuHud` справа (иконка + подпись, клавиша B у «Инвентаря»), статистика слева (`GymController`), таймер —
+  меню `UI/MenuHud` справа (иконка + подпись, значок клавиши B у «Инвентаря» — саму клавишу привязывает
+  `InventoryController` через ContextActionService, колонка её не слушает), статистика слева (`GymController`), таймер —
   капсула сверху (`TimeController`, CoreUISafeInsets). Ниже — описание до D48 (колонка была слева).
 - Колонка кнопок меню в HUD (`client/UI/MenuHud`): «Инвентарь», «Защита» — слева над столбиком надписей силы и монет,
   одна WindowScale (`UITokens.MenuHud`). StudMotion: список спрятанных GUI и базовое FOV общие для всех окон

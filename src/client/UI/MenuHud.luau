@@ -18,7 +18,7 @@ local MenuHud = {}
 
 export type Options = {
 	icon: string?, -- ключ UITokens.HudIcons
-	key: Enum.KeyCode?, -- клавиша на ПК (значок у иконки)
+	key: Enum.KeyCode?, -- значок клавиши на ПК (саму клавишу привязывает контроллер окна, здесь — только значок)
 }
 
 local column: Frame? = nil
@@ -101,11 +101,6 @@ function MenuHud.Add(
 		UI.Corner(badge, 6)
 		UI.Stroke(badge, UI.Colors.StrokeDark, 2.5)
 		UI.Text(badge, o.key.Name, { Name = "Texte", TextSize = T.KeySize - 8, ZIndex = 13 })
-		UserInputService.InputBegan:Connect(function(input, processed)
-			if not processed and input.KeyCode == o.key then
-				onClick()
-			end
-		end)
 	end
 	Motion.BindButton(button, T.Hover, nil, onClick)
 	return button
