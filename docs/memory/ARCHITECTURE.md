@@ -83,6 +83,11 @@
   боковые проходы вдоль павильона и за ним), лазеры «Вход» и «Галерея» поперёк дорожки; «в музее» — зал и (с уровня
   `Defense.Galleries.Level`) галереи; робот бьёт, только если видит вора (луч до него не задевает Building и
   Showcases участка). Модели устройств — Part-версия в палитре D48, детали Glow — цвет состояния (`Defense.States`).
+- Табличка места (D50): `World/Plaque` — плашка на лицевой грани постамента (`Plaque.Parts` — размеры и смещения,
+  их же считает `check_museum_layout`) и у свободного места голограмма-куб (теги Spin и Bob, анимирует
+  `ZoneController`). Пишет `PartBuilder.refreshPlace` при смене Open / Occupied и при появлении или уходе экспоната
+  в папке Exhibits (замена на том же месте). Название экспоната — на табличке, плавающую подпись `Label` снимает
+  `MuseumService.PlaceExhibit`; «+X/сек» над экспонатом — `IncomeService.Label` (D37), видна до 30 ст.
 - Камера в музее (D50): `Controllers/MuseumCameraController` — пока персонаж в музее (оси участка из атрибута
   `FloorOrigin`, галереи — с `MuseumLevel` ≥ `Gallery.Level`), отрезок от фокуса камеры до места на выбранном игроком
   расстоянии (`PlayerModule:GetCameras().activeCameraController:GetCameraToSubjectDistance()`) и 4 соседних луча

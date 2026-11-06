@@ -54,7 +54,7 @@ function IncomeService.Label(part: BasePart, itemId: string)
 		local gui = Instance.new("BillboardGui")
 		gui.Name = LABEL_NAME
 		gui.Size = UDim2.fromOffset(170, 34)
-		gui.MaxDistance = 60
+		gui.MaxDistance = 30 -- D50: дальние надписи не видны сквозь арки и проёмы соседних залов
 		gui.StudsOffset = Vector3.new(0, part.Size.Y / 2 + LABEL_GAP, 0)
 		local text = Instance.new("TextLabel")
 		text.Name = "Text"

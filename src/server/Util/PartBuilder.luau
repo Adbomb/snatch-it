@@ -1,12 +1,13 @@
 -- Строит участки-музеи D48-C: постоянные части с механикой и здание по уровню (World/MuseumVisual, D48). Постоянные:
 -- невидимая точка участка Floor (круглое фото владельца OwnerTag, D41, и свет зала и галерей), 20 мест Showcase_n
--- (тумба 5 × 3 × 5 — она же столкновение постамента; табличка с номером, верх-индикатор состояния, точка лампы
--- Lamp с прожектором презентации и подсветкой ниши), сундук Chest, поле качалки и табличка «Улучшение» (D34, D36).
+-- (тумба 5 × 3 × 5 — она же столкновение постамента; табличка World/Plaque — «СВОБОДНО» с голограммой, название и
+-- доход экспоната или «откроется на ур. N», D50; верх-индикатор состояния, точка лампы Lamp с прожектором презентации
+-- и подсветкой ниши), сундук Chest, поле качалки и табличка «Улучшение» (D34, D36).
 -- SetLevel меняет здание и решает, какие места стоят (постамент есть на этом уровне) и какие открыты
--- (GameConfig.Museum.SlotsByLevel): места без постамента убраны из мира, закрытые — «ур. N» и серый верх.
+-- (GameConfig.Museum.SlotsByLevel): места без постамента убраны из мира, закрытые — табличка уровня и серый верх.
 -- Только геометрия, без логики. Карту строит World/WorldBuilder.
 -- Зависит от GameConfig, Config/MuseumLayout, Config/Textures, World/MapLayout, World/ModelBuilder, World/MuseumVisual,
--- World/Models/MuseumD48, World/Models/Museum, World/Models/Gym, World/Palette, World/Signs.
+-- World/Models/MuseumD48, World/Models/Museum, World/Models/Gym, World/Palette, World/Plaque.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -21,7 +22,7 @@ local Gym = require(ServerScriptService.Server.World.Models.Gym)
 local Museum = require(ServerScriptService.Server.World.Models.Museum)
 local MuseumD48 = require(ServerScriptService.Server.World.Models.MuseumD48)
 local Palette = require(ServerScriptService.Server.World.Palette)
-local Signs = require(ServerScriptService.Server.World.Signs)
+local Plaque = require(ServerScriptService.Server.World.Plaque)
 
 local PartBuilder = {}
 
@@ -32,12 +33,12 @@ PartBuilder.FloorTop = MapLayout.Heights.Floor
 local OWNER_TAG = Vector3.new(0, 19.5, -25)
 -- Высота ламп ниш над полом (там же прожектор презентации и подсветка занятого места).
 local LAMP_Y = 9.3
--- Свободное место — бледно-бирюзовое стекло (D50: мягче прежнего 39E1FF), занятое — золото.
+-- Свободное место — бледная бирюза гладким пластиком (D50: стекло отражало зал и серело, прежний 39E1FF был
+-- кислотным), занятое — золото.
 local TOP = {
 	size = Vector3.new(4.6, 0.06, 4.6),
-	open = Color3.fromHex("6FD4E6"),
+	open = Color3.fromHex("9FE6F2"),
 	taken = MuseumD48.Colors.gold,
-	glass = 0.4,
 }
 local LOCKED = MuseumD48.Colors.steelDark
 -- Свет музея слабый намеренно (D50): освещение Roblox «Realistic» накапливает отражённый свет в закрытом зале со
@@ -110,21 +111,20 @@ function PartBuilder.CreateWorldFolder(): Folder
 	return world
 end
 
--- Номер места на лицевой грани тумбы; у закрытого места — ещё «ур. N».
-local function writeSign(showcase: BasePart)
-	local old = showcase:FindFirstChild("Sign")
-	if old then
-		old:Destroy()
-	end
+-- Экспонат на месте (папка Exhibits участка, атрибут Slot) — для таблички с названием.
+local function exhibitAt(showcase: BasePart): BasePart?
+	local folders = showcase.Parent and showcase.Parent.Parent
+	local exhibits = folders and folders:FindFirstChild("Exhibits")
 	local slot = showcase:GetAttribute("Slot")
-	local lines = { { text = tostring(slot), scale = 0.55 } }
-	if showcase:GetAttribute("Open") ~= true then
-		table.insert(lines, { text = ("ур. %d"):format(showcase:GetAttribute("UnlockLevel") or 1), scale = 0.3 })
+	for _, part in if exhibits then exhibits:GetChildren() else {} do
+		if part:IsA("BasePart") and part:GetAttribute("Slot") == slot then
+			return part
+		end
 	end
-	Signs.Write(showcase, Enum.NormalId.Front, lines)
+	return nil
 end
 
--- Состояние места: открыто и свободно — бирюзовый светящийся верх, занято — золотой верх и подсветка ниши,
+-- Состояние места: открыто и свободно — бирюзовый верх и голограмма, занято — золотой верх и подсветка ниши,
 -- закрыто — серый верх.
 local function refreshPlace(showcase: BasePart)
 	local open = showcase:GetAttribute("Open") == true
@@ -133,14 +133,20 @@ local function refreshPlace(showcase: BasePart)
 	if top then
 		local free = open and not taken
 		top.Color = if not open then LOCKED elseif taken then TOP.taken else TOP.open
-		top.Material = if free then Enum.Material.Glass else Enum.Material.Plastic -- свободное — голубое стекло
-		top.Transparency = if free then TOP.glass else 0
+		top.Material = if free then Enum.Material.SmoothPlastic else Enum.Material.Plastic -- свободное — гладкое
 	end
 	local lamp = showcase:FindFirstChild("Lamp")
 	local light = lamp and lamp:FindFirstChild("NicheLight") :: SpotLight?
 	if light then
 		light.Enabled = taken
 	end
+	local exhibit = if taken then exhibitAt(showcase) else nil
+	Plaque.Write(showcase, {
+		kind = if not open then "locked" elseif taken then "taken" else "free",
+		slot = showcase:GetAttribute("Slot"),
+		itemId = exhibit and exhibit:GetAttribute("ItemId"),
+		unlock = showcase:GetAttribute("UnlockLevel"),
+	})
 end
 
 local function spot(name: string, parent: Instance, props: { [string]: any }): SpotLight
@@ -280,6 +286,17 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, parent: Instance):
 	local exhibits = Instance.new("Folder")
 	exhibits.Name = "Exhibits"
 	exhibits.Parent = model
+	-- замена экспоната на том же месте не меняет Occupied: табличку обновляет и сам экспонат (пришёл, ушёл)
+	local function refreshSlot(part: Instance)
+		local showcase = showcases[part:GetAttribute("Slot")]
+		if showcase then
+			refreshPlace(showcase)
+		end
+	end
+	exhibits.ChildAdded:Connect(function(part)
+		task.defer(refreshSlot, part)
+	end)
+	exhibits.ChildRemoved:Connect(refreshSlot)
 
 	local parts: PlotParts = {
 		model = model,
@@ -332,7 +349,6 @@ function PartBuilder.SetLevel(plot: LevelTarget, level: number)
 		showcase:SetAttribute("Open", isOpen)
 		showcase.Transparency = if meshPlinth then 1 else 0
 		showcase.Parent = if standing[slot] then folder else nil
-		writeSign(showcase)
 		refreshPlace(showcase)
 	end
 	plot.chest.Transparency = if MuseumVisual.UsesMesh("D48_Chest") then 1 else 0

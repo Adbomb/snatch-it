@@ -68,6 +68,11 @@ function MuseumService.PlaceExhibit(part: BasePart, plot: PlotService.Plot, slot
 		* CFrame.new(0, showcase.Size.Y / 2 + part.Size.Y / 2, 0)
 		* CFrame.Angles(0, math.rad(rot), 0)
 	part:SetAttribute("Slot", slot)
+	-- название — на табличке постамента (D50, World/Plaque): плавающая подпись над экспонатом в музее не нужна
+	local label = part:FindFirstChild("Label")
+	if label then
+		label:Destroy()
+	end
 	part.Parent = plot.exhibits
 	showcase:SetAttribute("Occupied", true)
 	IncomeService.Label(part, part:GetAttribute("ItemId")) -- «+X/сек» над экспонатом (D40)

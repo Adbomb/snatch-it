@@ -9,6 +9,7 @@ local process = require("@lune/process")
 local Env = require("./env")
 
 local MuseumLayout = Env.Require("ReplicatedStorage.Shared.Config.MuseumLayout")
+local Plaque = Env.Require("ServerScriptService.Server.World.Plaque")
 
 local failed = 0
 local function check(ok: boolean, message: string)
@@ -254,7 +255,11 @@ local function levelBricks(level: number): ({ any }, number, number)
 				size = Vector3.new(4.6, 0.06, 4.6),
 				cframe = frame * CFrame.new(0, SHOWCASE.Y / 2 + 0.03, 0),
 			})
-			server += 2
+			-- D50: табличка и (у свободного места, худший случай) голограмма
+			local plaque = Plaque.Parts(SHOWCASE)
+			table.insert(all, { name = "Plaque", size = plaque.plate.size, cframe = frame * plaque.plate.offset })
+			table.insert(all, { name = "FreeCube", size = plaque.cube.size, cframe = frame * plaque.cube.offset })
+			server += 4
 		end
 	end
 	local chest = GameConfig.Museum.ChestSize
