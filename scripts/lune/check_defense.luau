@@ -118,11 +118,15 @@ do
 		end
 	end
 	local chest = MuseumLayout.Chest.Center
-	local function spot(x, z, others)
-		return DefenseRules.CheckFreeSpot(cfg, Vector3.new(x, 0, z), showcases, chest, others or {})
+	local function spot(x, z, others, galleries)
+		return DefenseRules.CheckFreeSpot(cfg, Vector3.new(x, 0, z), showcases, chest, others or {}, galleries)
 	end
-	check(spot(5, 5) == nil, "проход между рядами — можно")
-	check(spot(-14, 18) == nil, "угол зала — можно")
+	check(spot(7, 5) == nil, "боковой проход у павильона — можно")
+	check(spot(0, 15) == nil, "за павильоном — можно")
+	check(spot(0, 0) ~= nil and spot(0, 7) ~= nil, "на дорожке и в павильоне — нельзя")
+	check(spot(5, -1) ~= nil, "у открытой двери сейфа — нельзя")
+	check(spot(-14, 18) ~= nil, "угол у ниши — нельзя (постамент или урна)")
+	check(spot(13, -8, nil, true) ~= nil and spot(22, 0, nil, true) ~= nil, "у арки и в галерее — нельзя")
 	check(spot(13.4, -2) ~= nil and spot(-13.4, 10.2) ~= nil, "на постаменте — нельзя")
 	check(spot(0, -9) ~= nil, "во входном коридоре — нельзя")
 	check(spot(-12, -9) ~= nil, "у сундука — нельзя")
@@ -131,13 +135,13 @@ do
 		"за стенами и снаружи — нельзя"
 	)
 	check(
-		spot(5, 5, { Vector3.new(7, 0, 5) }) ~= nil,
+		spot(7, 5, { Vector3.new(9, 0, 5) }) ~= nil,
 		"вплотную к другому устройству — нельзя"
 	)
 	check(spot(0 / 0, 5) ~= nil, "NaN — нельзя")
 	check(
-		spot(-5, 5) == nil and spot(5, 18) == nil,
-		"свободные места есть и между рядами, и у задней стены"
+		spot(-7, 5) == nil and spot(3, 16) == nil,
+		"свободные места есть и в проходах, и за павильоном"
 	)
 end
 
@@ -147,7 +151,7 @@ do
 	local lasers = DefenseRules.FixedSpots(cfg, "Laser")
 	check(#lasers == 2, "лазер — 2 размеченных места прохода")
 	check(DefenseRules.FixedSpots(cfg, "Trap") == nil, "ловушка — свободно")
-	local laser = cfg.Lasers.Middle
+	local laser = cfg.Lasers.Gallery
 	check(DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 0.3)), "вор в луче")
 	check(not DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 2)), "мимо луча")
 	check(

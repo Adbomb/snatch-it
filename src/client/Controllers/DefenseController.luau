@@ -326,7 +326,8 @@ local function updateGhost()
 	local spot = origin:PointToObjectSpace(hit.Position)
 	spot = Vector3.new(spot.X, 0, spot.Z)
 	local showcases, chest, others = localLists(plot, origin)
-	ghostReason = DefenseRules.CheckFreeSpot(cfg, spot, showcases, chest, others)
+	local galleries = (plot:GetAttribute("MuseumLevel") or 1) >= cfg.Galleries.Level -- D48-C: подходы к аркам
+	ghostReason = DefenseRules.CheckFreeSpot(cfg, spot, showcases, chest, others, galleries)
 	ghostSpot = spot
 	local size = ghost.Size
 	ghost.CFrame = origin * CFrame.new(spot + Vector3.new(0, size.Y / 2, 0))

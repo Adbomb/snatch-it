@@ -1,5 +1,7 @@
 -- Общие настройки игры: числа баланса, размеры мира, лимиты запросов.
--- Читается и сервером, и клиентом. Зависит от Config/Progression (числа D29–D31).
+-- Читается и сервером, и клиентом. Зависит от Config/Progression (числа D29–D31), Config/MuseumLayout (D48-C).
+
+local MuseumLayout = require(script.Parent.MuseumLayout) -- раскладка музея D48-C (места, зоны защиты, лазеры)
 
 local GameConfig = {}
 
@@ -27,30 +29,52 @@ GameConfig.Theft = {
 -- Защита музея и взлом (D37, D46). Утверждено: устройств min(уровень музея, MaxDevices), каждого вида по одному;
 -- покупка и установка — только в подготовку, установленное исчезает после Судной ночи, купленное остаётся; цена
 -- устройства — доля цены взлома того же уровня; взлом — одноразовое устройство, купленное днём, 5 с, уроном не
--- прерывается, дверь открыта до конца ночи; капкан — 10 с. Расстановка D46: ловушка, робот и капкан — свободно на
--- полу зала, дверь — на входе, лазер — в размеченных местах прохода. Координаты — в осях участка (центр, пол зала,
--- вход −Z; World/Models/MuseumHall, Util/PartBuilder). ПРЕДВАРИТЕЛЬНО (D37 не утвердил): эффекты ловушки, HP и урон
--- робота, урон лазера; цена капкана не утверждена — капкан не продаётся.
+-- прерывается, дверь открыта до конца ночи; капкан — 10 с. Расстановка D46 в музее D48-C (зоны утверждены с фазой 1):
+-- ловушка, робот и капкан — в боковых проходах вдоль павильона и за ним (Hall.Allowed), не на дорожке, у павильона,
+-- открытой двери сейфа, во входной группе, у постаментов, у арок и в галереях (Hall.Forbidden, GalleryForbidden);
+-- дверь — на входе, лазер — «Вход» и «Галерея» поперёк дорожки. «В музее» (для двери и устройств) — главный зал и, с
+-- уровня Galleries.Level, галереи. Координаты — в осях участка (центр, пол зала, вход −Z; Config/MuseumLayout).
+-- ПРЕДВАРИТЕЛЬНО (D37 не утвердил): эффекты ловушки, HP и урон робота, урон лазера; цена капкана не утверждена —
+-- капкан не продаётся.
 GameConfig.Defense = {
 	MaxDevices = 5,
 	HackPrices = { 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12 }, -- взлом музея уровня 1…10 (D37)
 	Share = { Trap = 0.10, Laser = 0.15, Door = 0.20, Robot = 0.30 }, -- доля цены взлома (D37); Snare — нет цены
 	HackSeconds = 5,
 	Hall = {
-		MinX = -15.4, -- внутренний пол главного зала с запасом от стен
-		MaxX = 15.4,
-		MinZ = -10.1,
-		MaxZ = 18.1,
+		MinX = -MuseumLayout.Hall.InnerX, -- внутренний пол главного зала (до стен)
+		MaxX = MuseumLayout.Hall.InnerX,
+		MinZ = MuseumLayout.Hall.InnerZ0,
+		MaxZ = MuseumLayout.Hall.InnerZ1,
+		Allowed = MuseumLayout.Defense.Allowed, -- куда можно (x0, x1, z0, z1)
+		Forbidden = MuseumLayout.Defense.Forbidden, -- куда нельзя
+		GalleryForbidden = MuseumLayout.Defense.GalleryForbidden, -- ещё нельзя, когда есть галереи
 		ShowcaseClear = 4.6, -- от центра постамента (5 × 5) до устройства по каждой оси
-		PassageHalfWidth = 3.5, -- входной коридор: |x| < 3.5 при z < PassageZ свободен
-		PassageZ = -5,
 		ChestClear = 3.6, -- от центра сундука
 		DeviceGap = 4, -- между устройствами
 	},
-	Door = { Size = Vector3.new(12, 10, 0.6), At = Vector3.new(0, 5, -12.0) }, -- проём входа (MuseumHall: DOOR 6, DOORH 10)
-	Lasers = { -- лучи поперёк проходов на высоте y
-		Entrance = { z = -8.6, x0 = -6, x1 = 6, y = 2.4 },
-		Middle = { z = 5, x0 = -15.4, x1 = 15.4, y = 2.4 },
+	-- Галереи (с уровня Level) — тоже «в музее»: от стены зала до наружной стены галереи (|x|), по z — внутри.
+	Galleries = {
+		Level = MuseumLayout.Gallery.Level,
+		MinX = MuseumLayout.Hall.InnerX,
+		MaxX = MuseumLayout.Gallery.InnerX,
+		MinZ = MuseumLayout.Gallery.InnerZ0,
+		MaxZ = MuseumLayout.Gallery.InnerZ1,
+	},
+	Door = { Size = Vector3.new(12, 10, 0.6), At = Vector3.new(0, 5, -12.0) }, -- проём входа (Hall: DoorHalf 6, DoorHeight 10)
+	Lasers = { -- лучи поперёк дорожки на высоте y (MuseumLayout.Lasers)
+		Entrance = {
+			z = MuseumLayout.Lasers.Entrance.z,
+			x0 = -MuseumLayout.Lasers.Entrance.length / 2,
+			x1 = MuseumLayout.Lasers.Entrance.length / 2,
+			y = MuseumLayout.Lasers.Entrance.y,
+		},
+		Gallery = {
+			z = MuseumLayout.Lasers.Gallery.z,
+			x0 = -MuseumLayout.Lasers.Gallery.length / 2,
+			x1 = MuseumLayout.Lasers.Gallery.length / 2,
+			y = MuseumLayout.Lasers.Gallery.y,
+		},
 	},
 	Trap = {
 		Radius = 2,
@@ -68,7 +92,7 @@ GameConfig.Defense = {
 	HackDistance = 13, -- от середины двери до взломщика (стадов)
 	DoorEject = Vector3.new(0, 3, -5), -- куда выставить чужого из зала: от двери наружу (оси участка)
 	NoticeCooldown = 3, -- секунд между одинаковыми подсказками вору
-	HallMargin = 1.2, -- «в зале»: пол зала + запас к стенам
+	HallMargin = 1.2, -- «в зале»: пол зала + запас к стенам (у галерей — тоже)
 	HallHeight = Vector2.new(-2, 14), -- «в зале»: высота от пола зала
 	TrapHeight = 4, -- ловушка срабатывает, если вор не выше этого над полом
 	LaserHeight = 3, -- лазер — если вор не выше луча на столько

@@ -586,7 +586,7 @@ test("Защита: покупка и установка только в под�
 	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
 	check(museum.installed.Trap ~= nil, "ловушка не встала в проход между рядами")
 	settle()
-	DefenseService.Handlers.Action(A, "Install", "Laser", "Middle")
+	DefenseService.Handlers.Action(A, "Install", "Laser", "Gallery")
 	check(museum.installed.Laser == nil and A:WasNotified("Больше устройств"), "музей ур. 1 принял второе устройство")
 	TimeService.SkipTo("DoomNight", -2)
 	DefenseService.Handlers.EndNight()
@@ -1712,6 +1712,61 @@ test("D48: под хранилищем нет воды и песка (Terrain в
 		end
 	end
 	check(wet == 0, ("в хранилище воды и песка: %d вокселей"):format(wet))
+end)
+
+test("D48: защита — зоны, галереи, лазер «Галерея», робот не бьёт через стену, дверь и галереи", function(A, B)
+	DataService.AddCoins(A, 1e9)
+	setMuseumLevel(A, 5) -- галереи и 5 устройств
+	TimeService.SkipTo("Preparation", -5)
+	for _, kind in { "Trap", "Laser", "Door", "Robot" } do
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", kind)
+	end
+	local museum = DefenseService.Handlers.Museum(A.UserId)
+	-- в галерее, у арки, на дорожке, у павильона — нельзя; в боковом проходе — можно
+	for _, spot in { Vector3.new(22, 0, 0), Vector3.new(-13, 0, -8), Vector3.new(0, 0, 0), Vector3.new(0, 0, 7) } do
+		settle()
+		DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+		check(museum.installed.Trap == nil, ("ловушку поставили в запретное место %s"):format(tostring(spot)))
+	end
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(-7, 0, 5))
+	check(museum.installed.Trap ~= nil, "ловушка не встала в боковой проход")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Laser", "Gallery")
+	check(museum.installed.Laser ~= nil, "лазер «Галерея» не встал")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Robot", Vector3.new(8.7, 0, 1))
+	check(museum.installed.Robot ~= nil, "робот не встал в боковой проход")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Door", "Entrance")
+	check(museum.installed.Door ~= nil, "дверь не встала")
+	TimeService.SkipTo("DoomNight", -5)
+	PvpService.Handlers.Reset()
+	local origin = plotOf(A).floorOrigin
+	-- закрытая дверь выставляет вора и из галереи
+	B.Character.PrimaryPart.CFrame = origin * CFrame.new(22, 3, 4)
+	DefenseService.Handlers.Tick()
+	check(origin:PointToObjectSpace(B.Character.PrimaryPart.Position).Z < GameConfig.Defense.Door.At.Z, "дверь не выставила вора из галереи")
+	museum.hacked = true -- дверь взломана: дальше — устройства
+	local fb = PvpService.Handlers.Fighter(B)
+	-- в галерее за стеной от робота (9.5 ст. — в радиусе): не бьёт
+	B.Character.PrimaryPart.CFrame = origin * CFrame.new(18.2, 3, 1)
+	museum.installed.Robot.lastAttack = nil
+	DefenseService.Handlers.Tick()
+	check(fb.hp == fb.maxHp, "робот ударил вора через стену галереи")
+	-- в зале на виду: бьёт
+	B.Character.PrimaryPart.CFrame = origin * CFrame.new(7, 3, -4)
+	museum.installed.Robot.lastAttack = nil
+	DefenseService.Handlers.Tick()
+	check(fb.hp < fb.maxHp, "робот не ударил вора в зале")
+	-- лазер «Галерея» поперёк дорожки
+	local hp = fb.hp
+	B.Character.PrimaryPart.CFrame = origin * CFrame.new(0, 3, GameConfig.Defense.Lasers.Gallery.z)
+	museum.installed.Robot.broken = true -- только лазер
+	DefenseService.Handlers.Tick()
+	check(fb.hp < hp, "лазер «Галерея» не ударил вора на дорожке")
+	TimeService.ResetClock()
 end)
 
 local ServerTests = {}

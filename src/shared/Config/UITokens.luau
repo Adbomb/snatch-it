@@ -287,8 +287,8 @@ UITokens.Defense = {
 	GhostOk = Color3.fromHex("5BEA72"),
 	GhostBad = Color3.fromHex("FF5A5A"),
 	GhostTransparency = 0.45,
-	SpotNames = { Entrance = "вход", Middle = "середина" }, -- в строке «стоит: …»
-	SpotButtons = { Entrance = "Вход", Middle = "Середина" }, -- на кнопках мест лазера
+	SpotNames = { Entrance = "вход", Gallery = "галерея" }, -- в строке «стоит: …»
+	SpotButtons = { Entrance = "Вход", Gallery = "Галерея" }, -- на кнопках мест лазера
 	RobotBar = { -- полоска HP робота-охранника (BillboardGui, стады)
 		Size = Vector2.new(3, 0.4),
 		Lift = 2.4,

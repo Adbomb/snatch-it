@@ -1,10 +1,11 @@
 -- Защита музея и взлом (D37, D46). Покупка защиты — только в подготовку, по цене уровня своего музея (доля цены
 -- взлома); устройство взлома — заранее, днём, по уровню музея-цели. Установка и снятие — только в подготовку:
--- ловушка, робот и капкан — свободно на полу своего зала (Shared/DefenseRules.CheckFreeSpot), усиленная дверь — на
--- входе, лазер — в размеченных местах прохода; не больше min(уровень, 5), каждого вида по одному. В Судную ночь раз в
--- GameConfig.Defense.Tick сервер проверяет чужих (воров) у устройств: дверь не пускает в зал без взлома, ловушка —
--- урон и замедление (вариант в конфиге), капкан — 10 с обездвижен (одноразовый), лазер — урон и тревога владельцу,
--- робот — бьёт воров в радиусе, его можно сломать ударами. Взлом двери — удержание 5 с, уроном не прерывается,
+-- ловушка, робот и капкан — в разрешённых зонах пола своего зала (D48-C, Shared/DefenseRules.CheckFreeSpot),
+-- усиленная дверь — на входе, лазер — «Вход» или «Галерея» поперёк дорожки; не больше min(уровень, 5), каждого вида по
+-- одному. В Судную ночь раз в GameConfig.Defense.Tick сервер проверяет чужих (воров) у устройств: дверь не пускает в
+-- музей (зал и галереи) без взлома, ловушка — урон и замедление (вариант в конфиге), капкан — 10 с обездвижен
+-- (одноразовый), лазер — урон и тревога владельцу, робот — бьёт воров в радиусе, если видит их (стены здания
+-- закрывают), его можно сломать ударами. Подсветка устройства: дежурит — бирюзовая, сработало — красная. Взлом двери — удержание 5 с, уроном не прерывается,
 -- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
 -- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
 -- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
@@ -84,12 +85,41 @@ local function toLocal(plot: PlotService.Plot, world: Vector3): Vector3
 	return plot.floorOrigin:PointToObjectSpace(world)
 end
 
+-- Постаменты, которые стоят на этом уровне музея (места без постамента убраны из мира).
 local function showcasesLocal(plot: PlotService.Plot): { Vector3 }
 	local list = {}
 	for _, showcase in plot.showcases do
-		table.insert(list, toLocal(plot, showcase.Position))
+		if showcase.Parent then
+			table.insert(list, toLocal(plot, showcase.Position))
+		end
 	end
 	return list
+end
+
+local function hasGalleries(plot: PlotService.Plot): boolean
+	return (plot.level or 1) >= cfg.Galleries.Level
+end
+
+-- Подсветка устройства (детали Glow): цвет состояния; seconds — вернуть дежурный цвет через столько секунд.
+local function glow(device: any, state: string, seconds: number?)
+	local color = DefenseModels.States[state]
+	if not color or not device.model then
+		return
+	end
+	for _, part in device.model:GetDescendants() do
+		if part:IsA("BasePart") and part.Name == "Glow" then
+			part.Color = color
+		end
+	end
+	if seconds then
+		device.glowToken = (device.glowToken or 0) + 1
+		local token = device.glowToken
+		task.delay(seconds, function()
+			if device.glowToken == token and not device.broken then
+				glow(device, "idle")
+			end
+		end)
+	end
 end
 
 local function freeDevices(m: Museum, except: string?): { Vector3 }
@@ -212,6 +242,7 @@ local function buildDevice(plot: PlotService.Plot, kind: string, spot: any): (Mo
 	end
 	local model = ModelBuilder.Build("Defense_" .. kind, bricks, { collide = false, shadow = false })
 	ModelBuilder.Place(model, plot.floorOrigin * localCFrame, folderOf(plot))
+	glow({ model = model }, "idle")
 	return model, center
 end
 
@@ -223,15 +254,43 @@ local function removeDevice(m: Museum, kind: string)
 	end
 end
 
--- Точка в осях участка — внутри главного зала (за дверью).
-local function insideHall(at: Vector3): boolean
+-- Точка в осях участка — внутри музея (за дверью): главный зал, а при galleries — и галереи (вход в них только из
+-- зала, D48-C).
+local function insideHall(at: Vector3, galleries: boolean?): boolean
+	if at.Y <= cfg.HallHeight.X or at.Y >= cfg.HallHeight.Y then
+		return false
+	end
 	local hall = cfg.Hall
-	return at.X > hall.MinX - cfg.HallMargin
+	if
+		at.X > hall.MinX - cfg.HallMargin
 		and at.X < hall.MaxX + cfg.HallMargin
 		and at.Z > cfg.Door.At.Z
 		and at.Z < hall.MaxZ + cfg.HallMargin
-		and at.Y > cfg.HallHeight.X
-		and at.Y < cfg.HallHeight.Y
+	then
+		return true
+	end
+	local g = cfg.Galleries
+	local x = math.abs(at.X)
+	return galleries == true
+		and x > g.MinX
+		and x < g.MaxX + cfg.HallMargin
+		and at.Z > g.MinZ - cfg.HallMargin
+		and at.Z < g.MaxZ + cfg.HallMargin
+end
+
+-- Робот видит вора: между корпусом и вором нет стен и тумб здания своего участка.
+local function robotSees(plot: PlotService.Plot, from: Vector3, root: BasePart): boolean
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	local list: { Instance } = {}
+	for _, name in { "Building", "Showcases" } do
+		local folder = plot.model:FindFirstChild(name)
+		if folder then
+			table.insert(list, folder)
+		end
+	end
+	params.FilterDescendantsInstances = list
+	return workspace:Raycast(from, root.Position - from, params) == nil
 end
 
 local function nearDoor(thief: any, plot: PlotService.Plot): boolean
@@ -349,7 +408,8 @@ local function install(player: any, kind: any, spot: any)
 					spot,
 					showcasesLocal(plot),
 					toLocal(plot, plot.chest.Position),
-					freeDevices(m, kind)
+					freeDevices(m, kind),
+					hasGalleries(plot)
 				)
 			end
 		else
@@ -474,7 +534,7 @@ local function tick()
 				then
 					local at = toLocal(plot, root.Position)
 					local id = tostring(thief.UserId)
-					local inside = insideHall(at)
+					local inside = insideHall(at, hasGalleries(plot))
 					-- отброс от устройства — к выходу (источник чуть глубже в зале)
 					local push = plot.floorOrigin * (at + Vector3.new(0, 0, cfg.PushDepth))
 					if m.installed.Door and not m.hacked and inside then
@@ -498,6 +558,7 @@ local function tick()
 						and math.abs(at.Y) < cfg.TrapHeight
 					then
 						if ready(m, "Trap:" .. id, cfg.Trap.Cooldown) then
+							glow(trap, "active", 1)
 							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Trap.Damage, push)
 							if cfg.Trap.Effect == "Slow" then
 								PvpService.Slow(thief, cfg.Trap.Slow, cfg.Trap.SlowSeconds)
@@ -516,6 +577,7 @@ local function tick()
 						and PvpService.Snare(thief, cfg.Snare.Seconds) -- одноразовый: тратится, только если поймал
 					then
 						snare.broken = true
+						glow(snare, "broken")
 						for _, part in snare.model:GetDescendants() do
 							if part:IsA("BasePart") then
 								part.Transparency = 0.6
@@ -532,6 +594,7 @@ local function tick()
 							and at.Y < beam.y + cfg.LaserHeight
 							and ready(m, "Laser:" .. id, cfg.Laser.Cooldown)
 						then
+							glow(laser, "active", 1)
 							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Laser.Damage, push)
 							Notify.Send(
 								owner,
@@ -546,6 +609,7 @@ local function tick()
 						and not robot.broken
 						and inside
 						and Vector3.new(at.X - robot.at.X, 0, at.Z - robot.at.Z).Magnitude <= cfg.Robot.Radius
+						and robotSees(plot, robot.model:GetPivot().Position + Vector3.new(0, cfg.RobotAim, 0), root)
 					then
 						local now = os.clock()
 						if now - (robot.lastAttack or 0) >= cfg.Robot.Interval then
@@ -557,6 +621,7 @@ local function tick()
 									Vector3.new(root.Position.X, pivot.Position.Y, root.Position.Z)
 								)
 							)
+							glow(robot, "attack", cfg.Robot.Interval * 0.6)
 							PvpService.DamagePlayer(thief, cfg.Robot.Damage, pivot.Position)
 						end
 					end
@@ -627,7 +692,8 @@ function DefenseService.Init()
 	TheftService.SetAccessCheck(function(thief, owner, plot)
 		local m = museums[owner.UserId]
 		local root = Validate.GetLiveRoot(thief)
-		if m and m.installed.Door and not m.hacked and root and not insideHall(toLocal(plot, root.Position)) then
+		local inside = root and insideHall(toLocal(plot, root.Position), hasGalleries(plot))
+		if m and m.installed.Door and not m.hacked and root and not inside then
 			return "Усиленная дверь: сначала взломайте её"
 		end
 		return nil

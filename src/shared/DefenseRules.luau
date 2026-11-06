@@ -113,14 +113,23 @@ function DefenseRules.CanInstall(
 	return nil
 end
 
--- Свободное место на полу зала для ловушки, робота или капкана. showcases и others — точки (оси участка).
--- nil — можно.
+local function inRect(at: Vector3, r: { number }, strict: boolean): boolean
+	if strict then
+		return at.X > r[1] and at.X < r[2] and at.Z > r[3] and at.Z < r[4]
+	end
+	return at.X >= r[1] and at.X <= r[2] and at.Z >= r[3] and at.Z <= r[4]
+end
+
+-- Свободное место на полу зала для ловушки, робота или капкана (D46, зоны D48-C): только в разрешённых прямоугольниках
+-- (боковые проходы, за павильоном) и не в запрещённых; galleries — у музея есть галереи (запрет подходов к аркам).
+-- showcases и others — точки (оси участка). nil — можно.
 function DefenseRules.CheckFreeSpot(
 	cfg: any,
 	at: Vector3,
 	showcases: { Vector3 },
 	chest: Vector3,
-	others: { Vector3 }
+	others: { Vector3 },
+	galleries: boolean?
 ): string?
 	local hall = cfg.Hall
 	if at.X ~= at.X or at.Z ~= at.Z then
@@ -134,8 +143,25 @@ function DefenseRules.CheckFreeSpot(
 			return "Нельзя загораживать постаменты"
 		end
 	end
-	if math.abs(at.X) < hall.PassageHalfWidth and at.Z < hall.PassageZ then
-		return "Нельзя загораживать вход"
+	local forbidden = hall.Forbidden or {}
+	for _, r in forbidden do
+		if inRect(at, r, true) then
+			return "Нельзя загораживать вход, дорожку и павильон хранилища"
+		end
+	end
+	if galleries then
+		for _, r in hall.GalleryForbidden or {} do
+			if inRect(at, r, true) then
+				return "Нельзя загораживать арки галерей"
+			end
+		end
+	end
+	local allowed = false
+	for _, r in hall.Allowed or {} do
+		allowed = allowed or inRect(at, r, false)
+	end
+	if hall.Allowed and not allowed then
+		return "Ставьте в боковые проходы вдоль павильона или за ним"
 	end
 	if math.abs(at.X - chest.X) < hall.ChestClear and math.abs(at.Z - chest.Z) < hall.ChestClear then
 		return "Нельзя загораживать сундук"
