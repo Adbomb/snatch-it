@@ -269,6 +269,16 @@ UITokens.HudIcons = {
 	DoomNight = "Player/Skull/Skull 1st Outline",
 }
 
+-- Камера в музее (D50, Controllers/MuseumCameraController): детали здания между персонажем и камерой гаснут у этого
+-- игрока — камера не прижимается к голове в узких галереях.
+UITokens.MuseumCamera = {
+	Fade = 0.75, -- LocalTransparencyModifier закрывающей детали (≥ 0.25 — камера Roblox её не считает преградой)
+	ReturnSpeed = 10, -- как быстро деталь возвращается, когда перестала закрывать (доля в секунду)
+	Probe = 0.6, -- соседние лучи у краёв кадра (стадов от центра)
+	FallbackDistance = 12, -- расстояние камеры, если модуль камеры Roblox не отдал выбранное игроком
+	Margin = 1, -- запас к объёму музея (стадов)
+}
+
 -- Колонка меню HUD v2 (D48 v2): справа посередине — иконка, подпись под ней, на ПК клавиша (B — «Инвентарь»).
 UITokens.MenuHud = {
 	Icon = 92, -- px при масштабе 1 (WindowScale, StudMotion.BindResponsive)

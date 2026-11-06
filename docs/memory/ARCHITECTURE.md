@@ -83,6 +83,13 @@
   боковые проходы вдоль павильона и за ним), лазеры «Вход» и «Галерея» поперёк дорожки; «в музее» — зал и (с уровня
   `Defense.Galleries.Level`) галереи; робот бьёт, только если видит вора (луч до него не задевает Building и
   Showcases участка). Модели устройств — Part-версия в палитре D48, детали Glow — цвет состояния (`Defense.States`).
+- Камера в музее (D50): `Controllers/MuseumCameraController` — пока персонаж в музее (оси участка из атрибута
+  `FloorOrigin`, галереи — с `MuseumLevel` ≥ `Gallery.Level`), отрезок от фокуса камеры до места на выбранном игроком
+  расстоянии (`PlayerModule:GetCameras().activeCameraController:GetCameraToSubjectDistance()`) и 4 соседних луча
+  проверяются против коробок деталей `Building` этого участка своими силами (у декора без столкновений CanQuery
+  выключен). Найденные детали — `LocalTransparencyModifier` 0.75 сразу (до камеры Roblox, `BindToRenderStep`
+  Camera − 2), остальные плавно возвращаются; выход, новый персонаж — сразу. Чужую локальную прозрачность (створки
+  решётки у владельца) не трогает. Числа — `UITokens.MuseumCamera`.
 - HUD v2 (D48 v2): иконки — `client/UI/HudIcons` по `UITokens.HudIcons` (путь CheckUIIcons или rbxassetid); колонка
   меню `UI/MenuHud` справа (иконка + подпись, значок клавиши B у «Инвентаря» — саму клавишу привязывает
   `InventoryController` через ContextActionService, колонка её не слушает), статистика слева (`GymController`), таймер —
