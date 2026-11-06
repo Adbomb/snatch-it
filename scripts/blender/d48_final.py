@@ -54,11 +54,11 @@ lego.PALETTE.update({
 HW, FZ, BZ, T = L.HW, L.FZ, L.BZ, L.T
 IX, IZ0, IZ1 = L.IX, L.IZ0, L.IZ1
 CEIL, DOOR, DOORH = L.CEIL, L.DOOR, L.DOORH
-G, VF, SLAB, VCEIL = -1.3, -13.0, 1.4, -1.8
+G, VF, SLAB, VCEIL = L.G, L.VF, L.SLAB, L.VCEIL  # числа — в d48c_layout.py (их же читает игра)
 ST0, STW = L.ST0, L.STW
-WELL_X, WELL_Z1 = 2.8, 11.0
-PV_X, PV_Z0, PV_Z1, PV_H = L.PV_X, L.PV_Z0, L.PV_Z1, 9.0
-PORTICO_Z = -23.0
+WELL_X, WELL_Z1 = L.WELL_X, L.WELL_Z1
+PV_X, PV_Z0, PV_Z1, PV_H = L.PV_X, L.PV_Z0, L.PV_Z1, L.PV_H
+PORTICO_Z = L.PORTICO_Z
 B1 = 0.12  # фаска крупных деталей
 B2 = 0.06  # фаска мелких деталей
 

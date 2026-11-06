@@ -19,8 +19,12 @@ import sys
 HW, FZ, BZ, T = 18.0, -12.7, 20.7, 1.4
 IX, IZ0, IZ1 = HW - T, FZ + T, BZ - T  # −16.6…16.6, −11.3…19.3
 CEIL, DOOR, DOORH = 16.0, 6.0, 10.0
-PV_X, PV_Z0, PV_Z1 = 4.4, 2.4, 11.6  # павильон над лестницей
-ST0, STW = 3.0, 2.6
+PV_X, PV_Z0, PV_Z1, PV_H = 4.4, 2.4, 11.6, 9.0  # павильон над лестницей
+ST0, STW, STEPS = 3.0, 2.6, 12  # лестница: верх у z 3, полуширина, ступеней по 1 × 1 вниз к +z
+G, SLAB = -1.3, 1.4  # трава от пола зала; толщина плиты пола зала (она же потолок хранилища)
+VF, VCEIL = -13.0, -1.8  # пол хранилища; низ потолка хранилища
+WELL_X, WELL_Z1 = 2.8, 11.0  # проём лестницы в полу зала: |x| < 2.8, z ST0…11
+PORTICO_Z = -23.0  # передний край портика (нижняя ступень)
 
 # ── Места ───────────────────────────────────────────────────────────────────────────────────────────────────────
 TOP = 5.0  # верх постамента 5 × 5 на высоте 3 (GameConfig.Museum.ShowcaseSize не меняется)
@@ -102,8 +106,11 @@ def defense_zones(level):
 def layout():
     return {
         "units": "studs, plot axes (y up, entrance −Z)",
-        "hall": {"half_width": HW, "front": FZ, "back": BZ, "ceiling": CEIL, "door": [2 * DOOR, DOORH]},
-        "pavilion": {"half_x": PV_X, "z0": PV_Z0, "z1": PV_Z1}, "stair": {"top_z": ST0, "half_width": STW},
+        "hall": {"half_width": HW, "front": FZ, "back": BZ, "ceiling": CEIL, "door": [2 * DOOR, DOORH],
+                 "wall": T, "ground": G, "slab": SLAB, "portico": PORTICO_Z},
+        "pavilion": {"half_x": PV_X, "z0": PV_Z0, "z1": PV_Z1, "height": PV_H},
+        "stair": {"top_z": ST0, "half_width": STW, "steps": STEPS, "well_x": WELL_X, "well_z1": WELL_Z1},
+        "vault": {"floor": VF, "ceiling": VCEIL},
         "gallery": {"x_in": GAL_IN, "x_out": GAL_OUT, "z0": GAL_Z0, "z1": GAL_Z1, "height": GAL_H,
                     "eave": GAL_EAVE, "planter": list(PLANTER), "arch": [ARCH_Z0, ARCH_Z1, ARCH_H],
                     "level": GALLERY_LEVEL},
@@ -118,7 +125,7 @@ def layout():
 if __name__ == "__main__":
     data = layout()
     if len(sys.argv) > 1:
-        with open(sys.argv[1], "w", encoding="utf-8") as f:
+        with open(sys.argv[1], "w", encoding="utf-8", newline="\n") as f:
             json.dump(data, f, ensure_ascii=False, indent=1)
     for p in data["places"]:
         print(p["slot"], p["zone"], p["center"], "D37 ур.", p["unlock_d37"], "совм. ур.", p["unlock_compat"])
