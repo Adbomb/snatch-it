@@ -166,8 +166,9 @@ function DevTools.Init()
 	end
 	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
 	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
-	-- "GiveDefense <userId> <вид> <сколько>". Выполняются в потоке этого скрипта (как RunTests), ответ — атрибут
-	-- CommandResult.
+	-- "GiveDefense <userId> <вид> <сколько>" | "Exhibit <userId> <место> [предмет]" |
+	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>". Выполняются в потоке этого скрипта (как RunTests),
+	-- ответ — атрибут CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
 		local line = folder:GetAttribute("Command")
 		if type(line) ~= "string" then
@@ -227,6 +228,57 @@ function DevTools.Init()
 				end
 				DefenseService.Sync(player)
 				return "ок"
+			elseif command == "Exhibit" then
+				-- подготовка проверки краж (D48-C, ТЗ «D49 — финальное тестирование»): экспонат на место slot тем же
+				-- путём, что в игре — предмет на карте у игрока → «Поднять» → «Выставить» (обработчики подсказок, все
+				-- проверки сервера: владелец, открытое место, фаза дня, расстояние). Игрока переносит к постаменту.
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				local slot = tonumber(words[3])
+				local Server = ServerScriptService.Server
+				local PlotService = require(Server.Services.PlotService)
+				local plot = player and PlotService.GetPlotOf(player)
+				local showcase = plot and slot and plot.showcases[slot]
+				local root = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				if not plot or not showcase or not root then
+					return "нет игрока, участка или места"
+				end
+				local CarryService = require(Server.Services.CarryService)
+				local ItemRegistry = require(Server.Services.ItemRegistry)
+				local MuseumService = require(Server.Services.MuseumService)
+				local ItemFactory = require(Server.Util.ItemFactory)
+				local stand = showcase.CFrame * CFrame.new(0, 0, -5)
+				root.CFrame = CFrame.lookAt(stand.Position, showcase.Position)
+				local items = workspace:FindFirstChild("__DevItems") or Instance.new("Folder")
+				items.Name = "__DevItems"
+				items.Archivable = false
+				items.Parent = workspace
+				local itemId = words[4] or "Moai"
+				local part = ItemFactory.Create(itemId)
+				part.Anchored = true
+				part.CFrame = root.CFrame * CFrame.new(0, 0, -2)
+				part.Parent = items
+				local uid = ItemRegistry.CreateOnMap(itemId, part)
+				CarryService.RegisterMapItem(uid, part)
+				CarryService.Handlers.Pickup(player, uid)
+				MuseumService.Handlers.Display(player, plot, slot)
+				local entry = ItemRegistry.Get(uid)
+				return if entry and entry.state == "Displayed"
+					then ("%s на месте %d"):format(itemId, slot)
+					else "не выставлено: " .. tostring(entry and entry.state)
+			elseif command == "InstallDefense" then
+				-- подготовка проверки защиты: установка тем же обработчиком, что окно «Защита» (подготовка, лимит,
+				-- зоны D48-C). Место — "x,z" в осях участка или имя места (Entrance, Gallery).
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				if not player then
+					return "нет игрока"
+				end
+				local DefenseService = require(ServerScriptService.Server.Services.DefenseService)
+				local kind = words[3]
+				local x, z = string.match(words[4] or "", "^(%-?[%d%.]+),(%-?[%d%.]+)$")
+				local spot: any = if x then Vector3.new(tonumber(x) :: number, 0, tonumber(z) :: number) else words[4]
+				DefenseService.Handlers.Action(player, "Install", kind, spot)
+				local installed = DefenseService.Handlers.Museum(player.UserId).installed[kind]
+				return if installed then "установлено" else "отказ (см. уведомление игроку)"
 			end
 			return "неизвестная команда"
 		end)
