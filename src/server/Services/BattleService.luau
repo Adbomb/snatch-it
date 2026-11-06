@@ -4,12 +4,16 @@
 -- станет 0. Таймера и заранее решённого исхода нет: каждый удар считается в момент удара (Config/Battle, сила
 -- игрока — урон и HP). Победа: предмет — в руки бойцу, босс повален, встаёт, идёт на место и засыпает. Поражение:
 -- игрока отбрасывает (без телепорта), предмет остаётся на месте, босс торжествует, идёт на место и засыпает — после
--- этого бой можно начать сразу снова. Игрок отошёл дальше Leash от места босса — сбежал (как поражение, но без
--- отброса). Ночь, выход игрока, гибель персонажа — бой прерывается. С одним боссом бьётся один игрок, помочь ему
--- нельзя; остальные видят бой (анимации и HP — у всех). HP видны полосками над боссом и над бойцом.
+-- этого бой можно начать сразу снова. Ночь, выход игрока, гибель персонажа — бой прерывается. С одним боссом бьётся
+-- один игрок, помочь ему нельзя; остальные видят бой (анимации и HP — у всех). D49: полоска HP — только над боссом;
+-- HP бойца — в стандартной полосе здоровья Roblox (урон боя переносится в здоровье персонажа, до нуля не доходит,
+-- после боя здоровье прежнее). Боец заперт в зоне босса до конца боя: невидимые стены на границах зон (группа
+-- ZoneLock) сталкиваются только с бойцами (Util/CharacterGroups), сервер возвращает бойца в зону, если тот оказался
+-- снаружи. Побега по расстоянию нет; босс не уходит дальше Leash от своего места (площадка без декора, D43).
 -- Зависит от BossService, BossLootService, CarryService, DataService, TimeService, Config/Battle, Shared/GameTime,
--- Util/Notify, Util/Validate, Util/Log.
+-- World/MapLayout, Util/CharacterGroups, Util/Notify, Util/Validate, Util/Log.
 
+local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -24,6 +28,8 @@ local BossService = require(Server.Services.BossService)
 local DataService = require(Server.Services.DataService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local TimeService = require(Server.Services.TimeService)
+local MapLayout = require(Server.World.MapLayout)
+local CharacterGroups = require(Server.Util.CharacterGroups)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 local Validate = require(Server.Util.Validate)
@@ -46,6 +52,7 @@ export type Fight = {
 	attacks: number,
 	result: string?,
 	log: { string },
+	health: { max: number, value: number }?, -- здоровье персонажа до боя (вернуть после)
 }
 
 local fights: { [number]: Fight } = {} -- по зоне
@@ -92,7 +99,7 @@ local function flat(v: Vector3): Vector3
 	return Vector3.new(v.X, 0, v.Z)
 end
 
--- Полоска HP (видна всем): над боссом и над бойцом.
+-- Полоска HP над боссом (видна всем).
 local function makeBar(adornee: BasePart, name: string, offset: number, color: Color3): BillboardGui
 	local gui = Instance.new("BillboardGui")
 	gui.Name = name
@@ -142,35 +149,57 @@ local function setBar(gui: BillboardGui?, title: string, hp: number, maxHp: numb
 	label.Text = ("%s  %s / %s"):format(title, NumberFormat.Short(math.max(math.ceil(hp), 0)), NumberFormat.Short(math.ceil(maxHp)))
 end
 
-local function bars(fight: Fight): (BillboardGui?, BillboardGui?)
-	local bossBar = fight.boss.root:FindFirstChild("BattleBar") :: BillboardGui?
-	local root = Validate.GetLiveRoot(fight.player)
-	local playerBar = root and root:FindFirstChild("BattleBar") :: BillboardGui?
-	return bossBar, playerBar
+-- HP бойца — в здоровье персонажа (стандартная полоса Roblox): не меньше 1, чтобы персонаж не погиб.
+local function mirrorHealth(fight: Fight)
+	local _, humanoid = Validate.GetLiveRoot(fight.player)
+	if humanoid then
+		humanoid.MaxHealth = fight.maxHp
+		humanoid.Health = math.clamp(fight.hp, 1, fight.maxHp)
+	end
 end
 
 local function refreshBars(fight: Fight)
-	local bossBar, playerBar = bars(fight)
+	local bossBar = fight.boss.root:FindFirstChild("BattleBar") :: BillboardGui?
 	setBar(bossBar, fight.boss.model:GetAttribute("BossName") or "Босс", fight.bossHp, fight.bossMax)
-	setBar(playerBar, fight.player.Name, fight.hp, fight.maxHp)
 	fight.boss.model:SetAttribute("HP", math.max(fight.bossHp, 0))
 	fight.player:SetAttribute("BattleHP", math.max(fight.hp, 0))
+	mirrorHealth(fight)
 end
 
 local function clearBars(fight: Fight)
-	local bossBar, playerBar = bars(fight)
+	local bossBar = fight.boss.root:FindFirstChild("BattleBar")
 	if bossBar then
 		bossBar:Destroy()
 	end
-	if playerBar then
-		playerBar:Destroy()
-	end
+	-- здоровье персонажа — как до боя
+	local saved = fight.health
 	local character = fight.player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	local leftover = root and root:FindFirstChild("BattleBar")
-	if leftover then
-		leftover:Destroy()
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if saved and humanoid and humanoid.Health > 0 then
+		humanoid.MaxHealth = saved.max
+		humanoid.Health = saved.value
 	end
+end
+
+-- Границы зоны zone по z (мир): вход (ближе к безопасной зоне) и выход.
+local function zoneBounds(zone: number): (number, number)
+	local start = MapLayout.ZoneStartZ(zone)
+	return start - MapLayout.ZoneSize, start
+end
+
+-- Боец снаружи своей зоны (телепорт, сбой физики) — назад, на Battle.ZoneLock.Margin внутрь от границы.
+local function keepInZone(fight: Fight, root: BasePart)
+	local z0, z1 = zoneBounds(fight.zone)
+	local margin = Battle.ZoneLock.Margin
+	local z = root.Position.Z
+	if z > z0 and z < z1 then
+		return
+	end
+	local inside = math.clamp(z, z0 + margin, z1 - margin)
+	local p = root.Position
+	root.CFrame = CFrame.new(p.X, p.Y, inside) * root.CFrame.Rotation
+	root.AssemblyLinearVelocity = Vector3.zero
+	table.insert(fight.log, "вернули в зону")
 end
 
 -- Отброс проигравшего: толчок от босса вверх и назад, без телепорта (D40).
@@ -240,6 +269,7 @@ local function finish(fight: Fight, result: string)
 	byPlayer[fight.player] = nil
 	clearBars(fight)
 	fight.player:SetAttribute("InBattle", nil)
+	CharacterGroups.Apply(fight.player) -- стены зон снова пропускают
 	fight.player:SetAttribute("BattleHP", nil)
 	fight.player:SetAttribute("BattleMaxHP", nil)
 	fight.boss.model:SetAttribute("TargetUserId", nil)
@@ -261,9 +291,7 @@ local function finish(fight: Fight, result: string)
 		task.spawn(goHome, boss, "Victory", tl.Victory)
 	else
 		BossLootService.Release(fight.zone, fight.slot)
-		if result == "escape" then
-			Notify.Send(fight.player, "Вы сбежали от босса — предмет остался на месте", "Stop")
-		elseif result == "night" then
+		if result == "night" then
 			Notify.Send(fight.player, "Ночь: бой прерван", "Stop")
 		end
 		task.spawn(goHome, boss, nil, nil)
@@ -316,10 +344,8 @@ local function step(fight: Fight)
 	local bossPos = BossService.Position(boss)
 	local toPlayer = flat(root.Position - bossPos)
 	local dist = toPlayer.Magnitude
-	if flat(root.Position - boss.home.Position).Magnitude > bossCfg.Leash then
-		finish(fight, "escape")
-		return
-	end
+	keepInZone(fight, root) -- D49: из зоны босса до конца боя не выйти
+	mirrorHealth(fight) -- стандартная полоса не «отрастает» между ударами
 	BossService.Face(boss, root.Position)
 	if fight.phase ~= "Fight" then
 		return
@@ -327,6 +353,11 @@ local function step(fight: Fight)
 	-- Босс держит дистанцию атаки: далеко — бежит к игроку.
 	if dist > bossCfg.AttackRange - 0.5 then
 		local stopAt = root.Position - toPlayer.Unit * (bossCfg.AttackRange - 1.5)
+		-- дальше Leash от своего места босс не идёт (его площадка свободна от декора, D43): ждёт на краю
+		local fromHome = flat(stopAt - boss.home.Position)
+		if fromHome.Magnitude > bossCfg.Leash then
+			stopAt = boss.home.Position + fromHome.Unit * bossCfg.Leash
+		end
 		BossService.MoveTo(boss, stopAt, bossCfg.Speed)
 	else
 		BossService.Stop(boss)
@@ -408,12 +439,13 @@ function BattleService.Begin(player: any, zone: number, slot: number): Fight?
 	byPlayer[player] = fight
 	player:SetAttribute("InBattle", zone)
 	player:SetAttribute("BattleMaxHP", maxHp)
+	CharacterGroups.Apply(player) -- D49: стены зоны теперь держат бойца
 	boss.model:SetAttribute("MaxHP", bossMax)
 	boss.model:SetAttribute("TargetUserId", player.UserId)
 	makeBar(boss.root, "BattleBar", BossService.Height(boss) + BAR_ABOVE_BOSS, Color3.fromHex("E5484D"))
-	local root = Validate.GetLiveRoot(player)
-	if root then
-		makeBar(root, "BattleBar", 4.5, Color3.fromHex("43C22E"))
+	local _, humanoid = Validate.GetLiveRoot(player)
+	if humanoid then
+		fight.health = { max = humanoid.MaxHealth, value = humanoid.Health }
 	end
 	refreshBars(fight)
 	Notify.Send(player, ("%s проснулся! Бой начался"):format(bossName(zone)), "Go")
@@ -447,7 +479,39 @@ function BattleService.Begin(player: any, zone: number, slot: number): Fight?
 	return fight
 end
 
+-- Невидимые стены на всех границах зон коридора (вход в зону 1 … конец последней): только для бойцов.
+local function buildZoneWalls()
+	CharacterGroups.Register(CharacterGroups.ZoneLock)
+	CharacterGroups.Register(CharacterGroups.Fighter)
+	for _, group in PhysicsService:GetRegisteredCollisionGroups() do
+		local collides = group.name == CharacterGroups.Fighter
+		PhysicsService:CollisionGroupSetCollidable(group.name, CharacterGroups.ZoneLock, collides)
+	end
+	local cfg = Battle.ZoneLock
+	local world = workspace:FindFirstChild("World") or workspace
+	local folder = Instance.new("Folder")
+	folder.Name = "BattleWalls"
+	local width = (MapLayout.CorridorHalf + cfg.Overlap) * 2
+	for index = 1, #GameConfig.Zones + 1 do
+		local z = if index <= #GameConfig.Zones then MapLayout.ZoneStartZ(index) else MapLayout.ZonesEnd
+		local wall = Instance.new("Part")
+		wall.Name = "ZoneWall_" .. index
+		wall.Anchored = true
+		wall.CanCollide = true
+		wall.CanQuery = false
+		wall.CanTouch = false
+		wall.CastShadow = false
+		wall.Transparency = 1
+		wall.Size = Vector3.new(width, cfg.Height, cfg.Thickness)
+		wall.CFrame = CFrame.new(0, MapLayout.Heights.Path + cfg.Height / 2, z)
+		wall.CollisionGroup = CharacterGroups.ZoneLock
+		wall.Parent = folder
+	end
+	folder.Parent = world
+end
+
 function BattleService.Init()
+	buildZoneWalls()
 	BossLootService.OnTakeRequest = function(player: Player, zone: number, slot: number): boolean
 		if not BossService.Get(zone) then
 			return false -- у босса пока нет боя
@@ -483,6 +547,8 @@ BattleService.Handlers = {
 	IsReturning = function(zone: number): boolean
 		return returning[zone] == true
 	end,
+	Step = step,
+	ZoneBounds = zoneBounds,
 }
 
 return BattleService

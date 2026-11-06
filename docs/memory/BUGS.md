@@ -89,7 +89,8 @@
 - Сервер видит телепорт персонажа с задержкой: после `root.CFrame = …` подождать ~1 с перед действием.
 - `screen_capture` даёт чёрный кадр, если Studio не на переднем плане. Выводить вперёд самому: `AppActivate`
   из WScript.Shell возвращает False (Windows не даёт), работает user32 `SetForegroundWindow` с нажатием Alt
-  (`keybd_event 0x12`) по `MainWindowHandle` процесса RobloxStudioBeta. Снимки — по одному: пачка из нескольких
+  (`keybd_event 0x12`) по `MainWindowHandle` процесса RobloxStudioBeta. `ShowWindow(…, 9)` не вызывать: снимает
+  разворот окна (кадр становится 841 × 407); если окно свернуто — `ShowWindow(…, 3)` (развернуть). Снимки — по одному: пачка из нескольких
   `screen_capture` подряд даёт таймауты и MCP отключается на ~10 с — `list_roblox_studios` и повторить.
 - Для снимков в Edit вода (Terrain) и песок не видны: воду строит только Play, песок закрыт Baseplate.
   Временно: Baseplate в ServerStorage, `WorldBuilder.BuildWater()`, после снимков `Terrain:Clear()` и вернуть.

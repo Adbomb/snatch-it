@@ -48,6 +48,7 @@ local TheftService = require(Server.Services.TheftService)
 local PvpService = require(Server.Services.PvpService)
 local DefenseService = require(Server.Services.DefenseService)
 local VaultService = require(Server.Services.VaultService)
+local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
@@ -1394,7 +1395,7 @@ test("Один бой на босса: второй игрок не начнёт
 	TimeService.ResetClock()
 end)
 
-test("Ночь прерывает бой (предмет у пса, на рассвете — новый), побег за поводок — тоже", function(A)
+test("Ночь прерывает бой (предмет у пса, на рассвете — новый); отойти от пса — не побег (D49)", function(A)
 	local uid = prepareFight(A, 4)
 	local fight = BattleService.Handlers.Begin(A, 1, 4)
 	check(fight, "бой не начался")
@@ -1408,11 +1409,54 @@ test("Ночь прерывает бой (предмет у пса, на рас�
 	check(keptAtNight, "ночью предмет ушёл от пса")
 	check(refreshed and refreshed ~= uid, "на рассвете слот не обновился")
 	prepareFight(A, 4)
-	local escape = BattleService.Handlers.Begin(A, 1, 4)
-	check(escape, "второй бой не начался")
+	local stay = BattleService.Handlers.Begin(A, 1, 4)
+	check(stay, "второй бой не начался")
 	local home = (BossService.Get(1) :: BossService.Boss).home.Position
-	A:MoveTo(home + Vector3.new(0, 3, Battle.Bosses[1].Leash + 6))
-	check(fightTo(escape, 5) and escape.result == "escape", "побег не засчитан: " .. tostring(escape.result))
+	A:MoveTo(home + Vector3.new(0, 3, -(Battle.Bosses[1].Leash + 6)))
+	local stopped = fightTo(stay, 2)
+	BattleService.Handlers.Finish(stay, "abort")
+	check(not stopped, "бой закончился, когда боец отошёл от пса: " .. tostring(stay.result))
+	check(waitDogHome(), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+-- D49: боец заперт в зоне босса до конца боя (стены только для него), HP бойца — в здоровье персонажа ─────────────
+
+test("D49: боец заперт в зоне босса, стены только для него; HP — в здоровье персонажа, полоска только у босса", function(A, B)
+	prepareFight(A, 2)
+	local humanoid = A.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	local savedMax = humanoid.MaxHealth
+	local fight = BattleService.Handlers.Begin(A, 1, 2)
+	check(fight, "бой не начался")
+	local ok, err = pcall(function()
+		local Fighter, Lock = CharacterGroups.Fighter, CharacterGroups.ZoneLock
+		check(CharacterGroups.GroupOf(A) == Fighter, "боец не в группе стен зоны")
+		check(A.Character.HumanoidRootPart.CollisionGroup == Fighter, "детали бойца не в группе стен")
+		check(CharacterGroups.GroupOf(B) ~= Fighter, "посторонний в группе стен")
+		check(PhysicsService:CollisionGroupsAreCollidable(Fighter, Lock), "стены не держат бойца")
+		check(not PhysicsService:CollisionGroupsAreCollidable("Default", Lock), "стены держат всех")
+		check(
+			not PhysicsService:CollisionGroupsAreCollidable(CharacterGroups.VaultOwner(plotOf(B).index), Lock),
+			"стены держат владельцев музеев"
+		)
+		local walls = workspace:FindFirstChild("World") and workspace.World:FindFirstChild("BattleWalls")
+		check(walls and walls:FindFirstChild("ZoneWall_1") and walls:FindFirstChild("ZoneWall_2"), "нет стен зоны 1")
+		check(A.Character.HumanoidRootPart:FindFirstChild("BattleBar") == nil, "полоска HP над бойцом")
+		check((BossService.Get(1) :: BossService.Boss).root:FindFirstChild("BattleBar") ~= nil, "нет полоски над боссом")
+		check(math.abs(humanoid.MaxHealth - fight.maxHp) < 0.01, "здоровье персонажа — не HP боя")
+		-- вышел из зоны (телепорт в безопасную зону) — назад в зону, бой идёт
+		local z0, z1 = BattleService.Handlers.ZoneBounds(1)
+		A.Character.HumanoidRootPart.CFrame = CFrame.new(0, 5, z1 + 20)
+		BattleService.Handlers.Step(fight)
+		local z = A.Character.HumanoidRootPart.Position.Z
+		check(z > z0 and z < z1, ("бойца не вернули в зону: z %.1f"):format(z))
+		check(fight.active, "бой закончился после выхода из зоны")
+	end)
+	BattleService.Handlers.Finish(fight, "abort")
+	check(ok, tostring(err))
+	check(CharacterGroups.GroupOf(A) ~= CharacterGroups.Fighter, "после боя боец всё ещё в группе стен")
+	check(A.Character.HumanoidRootPart.CollisionGroup == CharacterGroups.GroupOf(A), "после боя группа деталей прежняя")
+	check(math.abs(humanoid.MaxHealth - savedMax) < 0.01 and humanoid.Health > 0, "здоровье после боя не вернулось")
 	check(waitDogHome(), "пёс не вернулся")
 	TimeService.ResetClock()
 end)

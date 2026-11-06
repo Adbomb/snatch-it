@@ -134,9 +134,12 @@
   StateAt, Moving, AttackSeq/Kind/At, HitSeq/At, HP/MaxHP); пока меша нет — блок цвета части. `Services/BattleService`
   — автобой: «Забрать» у предмета (BossLootService.OnTakeRequest) → Reserve предмета, подсказки босса выключены
   (SetOpen) → Wake → StandUp → ToCombat → Combat (удары по интервалам в цикле 0.1 с, урон в момент удара, промах если
-  отошёл) → win (Award: предмет в руки) / lose (отброс LinearVelocity, без телепорта) / escape (дальше Leash) / night /
-  abort → Victory или Defeat → Return → FallAsleep (подсказки открыты) → Sleep. Полоски HP — BillboardGui над боссом
-  и бойцом. Клиент: `Shared/BossAnim` (Transform суставов по состоянию и времени — смешение поз, циклы дыхания,
+  отошёл) → win (Award: предмет в руки) / lose (отброс LinearVelocity, без телепорта) / night / abort → Victory или
+  Defeat → Return → FallAsleep (подсказки открыты) → Sleep. D49: побега нет — босс не уходит дальше Leash от места,
+  боец заперт в зоне: стены `World/BattleWalls/ZoneWall_<n>` на границах зон (группа ZoneLock) сталкиваются только с
+  группой ZoneFighter (атрибут InBattle → `Util/CharacterGroups`), сервер возвращает вышедшего в зону. Полоска HP
+  (BillboardGui) — только над боссом; HP бойца — в Humanoid (MaxHealth = HP боя, Health ≥ 1, после боя прежнее) —
+  стандартная полоса Roblox. Клиент: `Shared/BossAnim` (Transform суставов по состоянию и времени — смешение поз, циклы дыхания,
   шагов, выпады и попадания поверх) + `Controllers/BossAnimController` (Stepped, у всех клиентов одинаково, «Z z z»).
 - Босс 2 (D42, D43): `Config/Boss2TraderRig` (12 частей, 13 поз с теми же именами — `boss2_trader.py -- . <превью>
   rig`), `BossModels[2]` (карты Head/Body/Limbs, `TRADER_MESHES` пусто до импорта). Скелеты по номеру зоны — `RIGS`

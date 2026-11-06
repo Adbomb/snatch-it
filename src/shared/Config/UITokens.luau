@@ -112,7 +112,8 @@ UITokens.Layout = {
 	},
 	-- «Бросить»: внизу по центру над плашкой «Ты несёшь…» (контекст HUD v2, D48 v2; справа — колонка меню, D49).
 	DropButton = {
-		position = UDim2.fromScale(0.5, 0.775), -- низ кнопки над плашкой CarryPill
+		-- низ кнопки — над верхом плашки CarryPill при любой высоте экрана: плашка не выше 60 px + зазор 8 px
+		position = UDim2.new(0.5, 0, 0.86, -68),
 		size = UDim2.fromScale(0.15, 0.1),
 		aspect = 2.6,
 		minSize = Vector2.new(52 * 2.6, 52),

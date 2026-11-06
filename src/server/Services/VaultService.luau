@@ -7,8 +7,9 @@
 --   застревание, смена владельца) переносится к порталу павильона.
 -- • Терминал (окно «Инвентарь») и центр безопасности (окно «Защита») — подсказки; сервер проверяет владельца и
 --   расстояние и только тогда просит клиент открыть окно (Remotes.OpenWindow).
--- Зависит от GameConfig, Config/MuseumLayout, PlotService, Util/Prompts, Util/Notify, Util/Validate, Util/RateLimiter,
--- Util/Log, Remotes.
+-- Группы персонажей — Util/CharacterGroups (общие с боем: стены зон боссов, D49).
+-- Зависит от GameConfig, Config/MuseumLayout, PlotService, Util/CharacterGroups, Util/Prompts, Util/Notify,
+-- Util/Validate, Util/RateLimiter, Util/Log, Remotes.
 
 local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
@@ -19,6 +20,7 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local PlotService = require(ServerScriptService.Server.Services.PlotService)
+local CharacterGroups = require(ServerScriptService.Server.Util.CharacterGroups)
 local Log = require(ServerScriptService.Server.Util.Log)
 local Notify = require(ServerScriptService.Server.Util.Notify)
 local Prompts = require(ServerScriptService.Server.Util.Prompts)
@@ -27,20 +29,14 @@ local Validate = require(ServerScriptService.Server.Util.Validate)
 
 local cfg = GameConfig.Museum.Vault
 local L = MuseumLayout
-local DEFAULT_GROUP = "Default"
 
 local openLimiter = RateLimiter.new(cfg.OpensPerSecond)
 local noticeAt: { [any]: number } = {}
 
 local VaultService = {}
 
-local function barrierGroup(index: number): string
-	return "VaultBarrier_" .. index
-end
-
-local function ownerGroup(index: number): string
-	return "VaultOwner_" .. index
-end
+local barrierGroup = CharacterGroups.VaultBarrier
+local ownerGroup = CharacterGroups.VaultOwner
 
 -- Объёмы «только для владельца» в осях участка: хранилище под залом и павильон за порталом (x0, x1, y0, y1, z0, z1).
 local function volumes(): { { number } }
@@ -68,36 +64,9 @@ local function exitCFrame(plot: PlotService.Plot): CFrame
 	return plot.floorOrigin * CFrame.new(at) * CFrame.Angles(0, math.pi, 0)
 end
 
--- Группа столкновений всех деталей персонажа.
-local function setGroup(character: Instance?, group: string)
-	if not character then
-		return
-	end
-	for _, part in character:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.CollisionGroup = group
-		end
-	end
-end
-
--- Группа персонажа игрока: владелец участка — свой VaultOwner_<участок>, остальные — Default.
-local function groupOf(player: any): string
-	local plot = PlotService.GetPlotOf(player)
-	return if plot then ownerGroup(plot.index) else DEFAULT_GROUP
-end
-
-local function applyGroup(player: any)
-	setGroup(player.Character, groupOf(player))
-end
-
-local function watchCharacter(player: Player, character: Model)
-	setGroup(character, groupOf(player))
-	character.DescendantAdded:Connect(function(part)
-		if part:IsA("BasePart") then
-			part.CollisionGroup = groupOf(player)
-		end
-	end)
-end
+local groupOf = CharacterGroups.GroupOf
+local applyGroup = CharacterGroups.Apply
+local watchCharacter = CharacterGroups.Watch
 
 -- Владелец участка сменился (вход, выход): группа персонажа нового владельца. Вызывает PlayerSession после
 -- выдачи участка; при выходе персонаж уходит вместе с игроком.
@@ -181,11 +150,8 @@ end
 function VaultService.Init()
 	for _, plot in PlotService.GetPlots() do
 		local barrier, owner = barrierGroup(plot.index), ownerGroup(plot.index)
-		for _, group in { barrier, owner } do
-			if not PhysicsService:IsCollisionGroupRegistered(group) then
-				PhysicsService:RegisterCollisionGroup(group)
-			end
-		end
+		CharacterGroups.Register(barrier)
+		CharacterGroups.Register(owner)
 		PhysicsService:CollisionGroupSetCollidable(owner, barrier, false)
 
 		-- Барьер в портале павильона (решётку видно; проходит только владелец).
