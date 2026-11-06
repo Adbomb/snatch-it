@@ -1,0 +1,361 @@
+{
+ "pack": "Pack4_d48_defense",
+ "units": "studs; at — от начала устройства (центр на полу, лицо −Z); rotX/rotZ/yaw — градусы вокруг x / z / y; follows — часть едет вместе с другой",
+ "rigs": {
+  "Trap": {
+   "parts": {
+    "D48T_TrapBase": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_TrapSpikes": {
+     "at": [
+      0,
+      -1.35,
+      0
+     ]
+    },
+    "D48T_TrapFlash": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "states": {
+    "idle": {
+     "glow": "39E1FF",
+     "D48T_TrapSpikes": {
+      "at": [
+       0,
+       -1.35,
+       0
+      ]
+     },
+     "hide": [
+      "D48T_TrapFlash"
+     ]
+    },
+    "active": {
+     "glow": "FF3B3B",
+     "D48T_TrapSpikes": {
+      "at": [
+       0,
+       0,
+       0
+      ],
+      "tween": 0.12
+     }
+    }
+   }
+  },
+  "Snare": {
+   "parts": {
+    "D48T_SnareBase": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_SnareJaw#front": {
+     "model": "D48T_SnareJaw",
+     "at": [
+      0,
+      0.55,
+      0
+     ],
+     "yaw": 0
+    },
+    "D48T_SnareJaw#back": {
+     "model": "D48T_SnareJaw",
+     "at": [
+      0,
+      0.55,
+      0
+     ],
+     "yaw": 180
+    },
+    "D48T_SnareGlow": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "states": {
+    "idle": {
+     "glow": "39E1FF",
+     "D48T_SnareJaw#front": {
+      "rotX": -84
+     },
+     "D48T_SnareJaw#back": {
+      "rotX": -84
+     },
+     "hide": [
+      "D48T_SnareGlow"
+     ]
+    },
+    "active": {
+     "glow": "FF3B3B",
+     "D48T_SnareJaw#front": {
+      "rotX": 0,
+      "tween": 0.08
+     },
+     "D48T_SnareJaw#back": {
+      "rotX": 0,
+      "tween": 0.08
+     }
+    }
+   }
+  },
+  "Laser": {
+   "parts": {
+    "D48T_LaserPost#a": {
+     "model": "D48T_LaserPost",
+     "at": [
+      "-half",
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    "D48T_LaserPost#b": {
+     "model": "D48T_LaserPost",
+     "at": [
+      "half",
+      0,
+      0
+     ],
+     "yaw": 180
+    },
+    "Beam": {
+     "code": "Neon FF3B3B, y 2.4, толщина 0.1 (тревога 0.2 + ореол Glass 0.44)"
+    }
+   },
+   "states": {
+    "idle": {
+     "glow": "39E1FF",
+     "beam": 0.1
+    },
+    "active": {
+     "glow": "FF3B3B",
+     "beam": 0.2
+    }
+   }
+  },
+  "Door": {
+   "parts": {
+    "D48T_DoorLeafL": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_DoorLeafR": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_DoorLock": {
+     "at": [
+      0,
+      5.15,
+      -0.5
+     ],
+     "follows": "D48T_DoorLeafL"
+    },
+    "D48T_DoorLamp": {
+     "at": [
+      0,
+      10.05,
+      0
+     ]
+    },
+    "D48T_HackDevice": {
+     "at": [
+      0,
+      3.8,
+      -1.0
+     ]
+    }
+   },
+   "states": {
+    "idle": {
+     "glow": "39E1FF",
+     "hide": [
+      "D48T_HackDevice"
+     ]
+    },
+    "hack": {
+     "glow": "FF7A1A",
+     "D48T_DoorLock": {
+      "spin": 90,
+      "time": 5
+     }
+    },
+    "open": {
+     "glow": "4CE07A",
+     "D48T_DoorLeafL": {
+      "at": [
+       -6.05,
+       0,
+       0
+      ],
+      "tween": 0.8
+     },
+     "D48T_DoorLeafR": {
+      "at": [
+       6.05,
+       0,
+       0
+      ],
+      "tween": 0.8
+     },
+     "hide": [
+      "D48T_HackDevice",
+      "D48T_DoorLock"
+     ]
+    }
+   }
+  },
+  "Robot": {
+   "parts": {
+    "D48T_RobotBase": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_RobotBody": {
+     "at": [
+      0,
+      0.66,
+      0
+     ]
+    },
+    "D48T_RobotHead": {
+     "at": [
+      0,
+      3.85,
+      0
+     ],
+     "follows": "D48T_RobotBody"
+    },
+    "D48T_RobotArmL": {
+     "at": [
+      -1.5,
+      3.45,
+      0
+     ],
+     "follows": "D48T_RobotBody"
+    },
+    "D48T_RobotArmR": {
+     "at": [
+      1.5,
+      3.45,
+      0
+     ],
+     "follows": "D48T_RobotBody"
+    },
+    "D48T_RobotZap": {
+     "at": [
+      1.5,
+      1.0,
+      -2.75
+     ],
+     "follows": "D48T_RobotArmR"
+    },
+    "D48T_RobotAlarm": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    },
+    "D48T_RobotSparks": {
+     "at": [
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "states": {
+    "idle": {
+     "glow": "39E1FF",
+     "hide": [
+      "D48T_RobotZap",
+      "D48T_RobotAlarm",
+      "D48T_RobotSparks"
+     ]
+    },
+    "detect": {
+     "glow": "FFB020",
+     "D48T_RobotBody": {
+      "yaw": 25
+     },
+     "alarm": "FFB020",
+     "hide": [
+      "D48T_RobotZap",
+      "D48T_RobotSparks"
+     ]
+    },
+    "attack": {
+     "glow": "FF3B3B",
+     "D48T_RobotArmR": {
+      "rotX": 75
+     },
+     "alarm": "FF3B3B",
+     "hide": [
+      "D48T_RobotSparks"
+     ]
+    },
+    "hit": {
+     "glow": "F4F7FB",
+     "D48T_RobotBody": {
+      "rotX": -10
+     },
+     "hide": [
+      "D48T_RobotZap",
+      "D48T_RobotAlarm",
+      "D48T_RobotSparks"
+     ]
+    },
+    "broken": {
+     "glow": "3A3D46",
+     "D48T_RobotHead": {
+      "rotZ": 18,
+      "rotX": -15
+     },
+     "D48T_RobotArmL": {
+      "rotX": 12
+     },
+     "D48T_RobotArmR": {
+      "rotX": 12
+     },
+     "hide": [
+      "D48T_RobotZap",
+      "D48T_RobotAlarm"
+     ]
+    }
+   }
+  }
+ },
+ "triangles": {
+  "Trap": 916,
+  "Snare": 1104,
+  "Laser": 840,
+  "Door": 1188,
+  "Robot": 1956
+ }
+}

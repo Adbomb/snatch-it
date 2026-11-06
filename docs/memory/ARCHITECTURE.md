@@ -36,6 +36,7 @@
   Гантели (D34, `pack1_dumbbells.py`, диски — `Model.voxel_plate`): центр рукояти в начале, ось x; у светящихся в
   layout `lights` (PointLight без теней). Превью — Blender с текстурой пупырышков и ореолом неона.
 - Концепты D48 v2 (не в игре): `scripts/blender/d48_kit.py` — Blender-детали ровно тех форм, что в Roblox (Block, Cylinder с осью X, Ball, Wedge скосом к −Z), координаты участка, повороты как у CFrame; выгрузка `assets/concepts/d48/v2/bricks/*.json` (shape, size, cframe, color, material, variant, group) — для сборки кодом через ModelBuilder без мешей (план — `docs/D48_INTEGRATION.md`).
+- Финальные модули D48-C (не в игре, ждут фазы 3 и разрешения загрузок): `scripts/blender/d48_final.py` → `assets/models/Pack3_d48.*` (музей) и `d48_final_devices.py` → `Pack4_d48_defense.*` (защита), формат пачки как выше; где какой модуль на уровнях 1–10 — `assets/concepts/d48/c2/mesh_placement.json`, состояния устройств — `c2/defense_rigs.json` (начало подвижной части = точка вращения). Проверка — `scripts/blender/d48_check_fbx.py`. План внедрения — `docs/D48_INTEGRATION.md` §10.
 - После импорта: модели → `ServerStorage.ImportedModels` (Rojo его не трогает), ID мешей →
   `assets/models/PackN.meshids.json`, затем `python scripts/models_to_luau.py` пишет `World/MeshModels.luau`.
   `World/MeshBuilder` грузит меши при старте (`CreateMeshPartAsync`) и собирает модель: деталь в центр из layout

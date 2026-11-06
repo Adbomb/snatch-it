@@ -1,0 +1,3370 @@
+{
+ "pack": "Pack3_d48",
+ "note": "позиции — оси участка (центр на полу зала, вход −Z); yaw — градусы вокруг y; решётка: створки уезжают в стену на 2.6 по x",
+ "levels": {
+  "1": {
+   "open": 6,
+   "triangles": 18100,
+   "meshparts": 127,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "2": {
+   "open": 6,
+   "triangles": 18100,
+   "meshparts": 127,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "3": {
+   "open": 6,
+   "triangles": 18100,
+   "meshparts": 127,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Urn",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "4": {
+   "open": 8,
+   "triangles": 16604,
+   "meshparts": 127,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideClosed_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "5": {
+   "open": 10,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "6": {
+   "open": 12,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "7": {
+   "open": 14,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "8": {
+   "open": 16,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "9": {
+   "open": 18,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  },
+  "10": {
+   "open": 20,
+   "triangles": 22444,
+   "meshparts": 191,
+   "items": [
+    {
+     "model": "D48_Hall",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Roof",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Pavilion",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stair",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_VaultShell",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Safe",
+     "position": [
+      0,
+      -8.0,
+      19.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Terminal",
+     "position": [
+      0,
+      -13.0,
+      3.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Security",
+     "position": [
+      0,
+      -13.0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      -6.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Archive",
+     "position": [
+      -16.35,
+      -13.0,
+      9.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      -11.9,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Lockers",
+     "position": [
+      4.0,
+      -13.0,
+      -11.299999999999999
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Chest",
+     "position": [
+      -9.0,
+      0,
+      -9.7
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Stand",
+     "position": [
+      9.0,
+      0,
+      -9.6
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      -2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GateLeaf",
+     "position": [
+      2.58,
+      0,
+      2.6999999999999997
+     ],
+     "yaw": 180
+    },
+    {
+     "model": "D48_Scanner",
+     "position": [
+      -3.45,
+      2.6,
+      2.25
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_L",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_SideArch_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Gallery_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_GalleryRoof_R",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      -2.0
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      4.1
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      10.2
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -13.400000000000002,
+      0,
+      16.3
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -8.45
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -2.35
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      -14.55
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      3.75
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      9.85
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    },
+    {
+     "model": "D48_Plinth",
+     "position": [
+      -24.700000000000003,
+      0,
+      15.95
+     ],
+     "yaw": 0
+    }
+   ]
+  }
+ }
+}

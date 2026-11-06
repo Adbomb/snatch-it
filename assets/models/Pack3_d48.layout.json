@@ -1,0 +1,2364 @@
+{
+ "d48": {
+  "D48_Hall": {
+   "roles": {
+    "d48floor": {
+     "center": [
+      0.0,
+      -0.7,
+      -1.15
+     ],
+     "size": [
+      36.0,
+      1.4,
+      43.7
+     ],
+     "color": "EFE6D3",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 320
+    },
+    "d48wall": {
+     "center": [
+      0.0,
+      8.05,
+      0.675
+     ],
+     "size": [
+      38.0,
+      18.7,
+      42.05
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 396
+    },
+    "d48navy": {
+     "center": [
+      0.0,
+      6.9,
+      4.0
+     ],
+     "size": [
+      33.2,
+      13.8,
+      30.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 316
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      10.15,
+      -1.9
+     ],
+     "size": [
+      33.2,
+      20.3,
+      42.4
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 1396
+    },
+    "d48pil": {
+     "center": [
+      0.0,
+      11.0,
+      -1.65
+     ],
+     "size": [
+      33.2,
+      22.0,
+      41.9
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 576
+    },
+    "d48backdrop": {
+     "center": [
+      0.0,
+      9.0,
+      19.025
+     ],
+     "size": [
+      19.2,
+      7.6,
+      0.15
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 40
+    },
+    "d48runner": {
+     "center": [
+      0.0,
+      0.04,
+      -4.6
+     ],
+     "size": [
+      6.4,
+      0.08,
+      13.4
+     ],
+     "color": "B8283A",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "d48steeldark": {
+     "center": [
+      0.0,
+      0.03,
+      -7.5
+     ],
+     "size": [
+      12.9,
+      0.06,
+      3.1
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 496
+    },
+    "d48red": {
+     "center": [
+      0.0,
+      0.02,
+      -7.5
+     ],
+     "size": [
+      11.1,
+      0.04,
+      2.28
+     ],
+     "color": "F0473C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 24
+    },
+    "Glow_d48warm": {
+     "center": [
+      0.0,
+      11.85,
+      -18.125
+     ],
+     "size": [
+      19.4,
+      15.7,
+      10.45
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 116
+    }
+   },
+   "triangles": 3692
+  },
+  "D48_Roof": {
+   "roles": {
+    "d48ceiling": {
+     "center": [
+      0.0,
+      17.4,
+      4.0
+     ],
+     "size": [
+      36.0,
+      2.0,
+      33.4
+     ],
+     "color": "D3E3F2",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 56
+    },
+    "d48beam": {
+     "center": [
+      0.0,
+      16.0,
+      4.0
+     ],
+     "size": [
+      33.2,
+      0.8,
+      30.6
+     ],
+     "color": "F7F2E8",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 352
+    },
+    "Glow_d48sky": {
+     "center": [
+      0.0,
+      16.395,
+      -0.25
+     ],
+     "size": [
+      10.0,
+      0.01,
+      20.5
+     ],
+     "color": "EAF7FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      15.55,
+      -0.25
+     ],
+     "size": [
+      11.0,
+      0.3,
+      21.5
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    },
+    "d48roof": {
+     "center": [
+      0.0,
+      21.7,
+      4.1
+     ],
+     "size": [
+      39.0,
+      6.6,
+      34.4
+     ],
+     "color": "D9705A",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 264
+    },
+    "Glass_d48glass": {
+     "center": [
+      0.0,
+      25.7,
+      -0.25
+     ],
+     "size": [
+      9.0,
+      1.4,
+      18.5
+     ],
+     "color": "BDEBFF",
+     "decor": false,
+     "material": "Glass",
+     "triangles": 12
+    }
+   },
+   "triangles": 744
+  },
+  "D48_SideClosed_L": {
+   "roles": {
+    "d48wall": {
+     "center": [
+      -17.8,
+      8.05,
+      4.5
+     ],
+     "size": [
+      2.4,
+      18.7,
+      34.4
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 88
+    },
+    "d48navy": {
+     "center": [
+      -15.825,
+      0.5,
+      4.0
+     ],
+     "size": [
+      1.55,
+      1.0,
+      30.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    },
+    "d48gold": {
+     "center": [
+      -14.9,
+      10.65,
+      4.0
+     ],
+     "size": [
+      3.4,
+      4.1,
+      30.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 284
+    },
+    "d48pil": {
+     "center": [
+      -15.95,
+      8.45,
+      4.0
+     ],
+     "size": [
+      1.3,
+      15.1,
+      30.6
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 396
+    },
+    "Glow_d48warm": {
+     "center": [
+      -14.77,
+      11.025,
+      4.0
+     ],
+     "size": [
+      3.26,
+      3.75,
+      30.2
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 92
+    },
+    "d48backdrop": {
+     "center": [
+      -16.45,
+      5.05,
+      7.325
+     ],
+     "size": [
+      0.3,
+      8.3,
+      23.85
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    },
+    "d48navydark": {
+     "center": [
+      -13.4,
+      9.5,
+      7.15
+     ],
+     "size": [
+      0.779,
+      0.6,
+      19.2
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 80
+    }
+   },
+   "triangles": 1176
+  },
+  "D48_SideArch_L": {
+   "roles": {
+    "d48wall": {
+     "center": [
+      -17.3,
+      8.7,
+      4.0
+     ],
+     "size": [
+      1.4,
+      17.4,
+      33.4
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 132
+    },
+    "d48gold": {
+     "center": [
+      -14.9,
+      6.35,
+      4.0
+     ],
+     "size": [
+      3.4,
+      12.7,
+      30.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 476
+    },
+    "d48navydark": {
+     "center": [
+      -14.68,
+      9.6,
+      2.975
+     ],
+     "size": [
+      3.34,
+      1.0,
+      27.55
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 92
+    },
+    "d48navy": {
+     "center": [
+      -15.825,
+      0.5,
+      4.0
+     ],
+     "size": [
+      1.55,
+      1.0,
+      30.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 200
+    },
+    "d48pil": {
+     "center": [
+      -15.95,
+      8.45,
+      4.0
+     ],
+     "size": [
+      1.3,
+      15.1,
+      30.6
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 396
+    },
+    "Glow_d48warm": {
+     "center": [
+      -14.77,
+      11.025,
+      4.0
+     ],
+     "size": [
+      3.26,
+      3.75,
+      30.2
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 92
+    },
+    "d48backdrop": {
+     "center": [
+      -16.45,
+      5.05,
+      7.325
+     ],
+     "size": [
+      0.3,
+      8.3,
+      23.85
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    }
+   },
+   "triangles": 1436
+  },
+  "D48_Gallery_L": {
+   "roles": {
+    "d48floor": {
+     "center": [
+      -23.5,
+      -0.65,
+      0.85
+     ],
+     "size": [
+      11.0,
+      1.3,
+      39.7
+     ],
+     "color": "EFE6D3",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48wall": {
+     "center": [
+      -22.8,
+      5.7,
+      0.85
+     ],
+     "size": [
+      12.4,
+      11.4,
+      39.7
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 176
+    },
+    "d48navy": {
+     "center": [
+      -23.05,
+      0.5,
+      0.85
+     ],
+     "size": [
+      9.1,
+      1.0,
+      36.9
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 24
+    },
+    "d48gold": {
+     "center": [
+      -23.675,
+      5.5,
+      -0.13
+     ],
+     "size": [
+      11.45,
+      11.0,
+      38.86
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 332
+    },
+    "d48pil": {
+     "center": [
+      -23.725,
+      7.05,
+      -0.225
+     ],
+     "size": [
+      11.25,
+      14.1,
+      38.35
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 436
+    },
+    "d48backdrop": {
+     "center": [
+      -24.5,
+      4.5,
+      -0.375
+     ],
+     "size": [
+      6.2,
+      8.2,
+      38.15
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 84
+    },
+    "d48navydark": {
+     "center": [
+      -24.7,
+      9.55,
+      0.7
+     ],
+     "size": [
+      0.779,
+      0.5,
+      31.4
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 120
+    },
+    "Glow_d48warm": {
+     "center": [
+      -24.7,
+      9.27,
+      0.7
+     ],
+     "size": [
+      0.52,
+      0.06,
+      31.1
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 120
+    },
+    "d48stone": {
+     "center": [
+      -30.2,
+      -0.86,
+      0.85
+     ],
+     "size": [
+      2.4,
+      0.88,
+      39.7
+     ],
+     "color": "D8D2C4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48plantdark": {
+     "center": [
+      -30.2,
+      0.636,
+      0.85
+     ],
+     "size": [
+      1.9,
+      2.112,
+      39.2
+     ],
+     "color": "3C8F47",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    },
+    "d48plant": {
+     "center": [
+      -30.2,
+      0.692,
+      2.5
+     ],
+     "size": [
+      1.9,
+      2.0,
+      28.6
+     ],
+     "color": "4FB45A",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 352
+    }
+   },
+   "triangles": 1920
+  },
+  "D48_GalleryRoof_L": {
+   "roles": {
+    "d48pil": {
+     "center": [
+      -23.6,
+      11.8,
+      0.85
+     ],
+     "size": [
+      11.2,
+      0.8,
+      40.5
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      -23.7,
+      12.35,
+      0.85
+     ],
+     "size": [
+      11.4,
+      0.3,
+      40.9
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "Glow_d48sky": {
+     "center": [
+      -20.1,
+      11.39,
+      0.85
+     ],
+     "size": [
+      3.0,
+      0.02,
+      34.9
+     ],
+     "color": "EAF7FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 68
+  },
+  "D48_SideClosed_R": {
+   "roles": {
+    "d48wall": {
+     "center": [
+      17.8,
+      8.05,
+      4.5
+     ],
+     "size": [
+      2.4,
+      18.7,
+      34.4
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 88
+    },
+    "d48navy": {
+     "center": [
+      15.825,
+      0.5,
+      4.0
+     ],
+     "size": [
+      1.55,
+      1.0,
+      30.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    },
+    "d48gold": {
+     "center": [
+      14.9,
+      10.65,
+      4.0
+     ],
+     "size": [
+      3.4,
+      4.1,
+      30.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 284
+    },
+    "d48pil": {
+     "center": [
+      15.95,
+      8.45,
+      4.0
+     ],
+     "size": [
+      1.3,
+      15.1,
+      30.6
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 396
+    },
+    "Glow_d48warm": {
+     "center": [
+      14.77,
+      11.025,
+      4.0
+     ],
+     "size": [
+      3.26,
+      3.75,
+      30.2
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 92
+    },
+    "d48backdrop": {
+     "center": [
+      16.45,
+      5.05,
+      7.325
+     ],
+     "size": [
+      0.3,
+      8.3,
+      23.85
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    },
+    "d48navydark": {
+     "center": [
+      13.4,
+      9.5,
+      7.15
+     ],
+     "size": [
+      0.779,
+      0.6,
+      19.2
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 80
+    }
+   },
+   "triangles": 1176
+  },
+  "D48_SideArch_R": {
+   "roles": {
+    "d48wall": {
+     "center": [
+      17.3,
+      8.7,
+      4.0
+     ],
+     "size": [
+      1.4,
+      17.4,
+      33.4
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 132
+    },
+    "d48gold": {
+     "center": [
+      14.9,
+      6.35,
+      4.0
+     ],
+     "size": [
+      3.4,
+      12.7,
+      30.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 476
+    },
+    "d48navydark": {
+     "center": [
+      14.68,
+      9.6,
+      2.975
+     ],
+     "size": [
+      3.34,
+      1.0,
+      27.55
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 92
+    },
+    "d48navy": {
+     "center": [
+      15.825,
+      0.5,
+      4.0
+     ],
+     "size": [
+      1.55,
+      1.0,
+      30.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 200
+    },
+    "d48pil": {
+     "center": [
+      15.95,
+      8.45,
+      4.0
+     ],
+     "size": [
+      1.3,
+      15.1,
+      30.6
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 396
+    },
+    "Glow_d48warm": {
+     "center": [
+      14.77,
+      11.025,
+      4.0
+     ],
+     "size": [
+      3.26,
+      3.75,
+      30.2
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 92
+    },
+    "d48backdrop": {
+     "center": [
+      16.45,
+      5.05,
+      7.325
+     ],
+     "size": [
+      0.3,
+      8.3,
+      23.85
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    }
+   },
+   "triangles": 1436
+  },
+  "D48_Gallery_R": {
+   "roles": {
+    "d48floor": {
+     "center": [
+      23.5,
+      -0.65,
+      0.85
+     ],
+     "size": [
+      11.0,
+      1.3,
+      39.7
+     ],
+     "color": "EFE6D3",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48wall": {
+     "center": [
+      22.8,
+      5.7,
+      0.85
+     ],
+     "size": [
+      12.4,
+      11.4,
+      39.7
+     ],
+     "color": "F4EFE4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 176
+    },
+    "d48navy": {
+     "center": [
+      23.05,
+      0.5,
+      0.85
+     ],
+     "size": [
+      9.1,
+      1.0,
+      36.9
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 24
+    },
+    "d48gold": {
+     "center": [
+      23.675,
+      5.5,
+      -0.13
+     ],
+     "size": [
+      11.45,
+      11.0,
+      38.86
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 332
+    },
+    "d48pil": {
+     "center": [
+      23.725,
+      7.05,
+      -0.225
+     ],
+     "size": [
+      11.25,
+      14.1,
+      38.35
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 436
+    },
+    "d48backdrop": {
+     "center": [
+      24.5,
+      4.5,
+      -0.375
+     ],
+     "size": [
+      6.2,
+      8.2,
+      38.15
+     ],
+     "color": "2E4377",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 84
+    },
+    "d48navydark": {
+     "center": [
+      24.7,
+      9.55,
+      0.7
+     ],
+     "size": [
+      0.779,
+      0.5,
+      31.4
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 120
+    },
+    "Glow_d48warm": {
+     "center": [
+      24.7,
+      9.27,
+      0.7
+     ],
+     "size": [
+      0.52,
+      0.06,
+      31.1
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 120
+    },
+    "d48stone": {
+     "center": [
+      30.2,
+      -0.86,
+      0.85
+     ],
+     "size": [
+      2.4,
+      0.88,
+      39.7
+     ],
+     "color": "D8D2C4",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48plantdark": {
+     "center": [
+      30.2,
+      0.636,
+      0.85
+     ],
+     "size": [
+      1.9,
+      2.112,
+      39.2
+     ],
+     "color": "3C8F47",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    },
+    "d48plant": {
+     "center": [
+      30.2,
+      0.692,
+      2.5
+     ],
+     "size": [
+      1.9,
+      2.0,
+      28.6
+     ],
+     "color": "4FB45A",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 352
+    }
+   },
+   "triangles": 1920
+  },
+  "D48_GalleryRoof_R": {
+   "roles": {
+    "d48pil": {
+     "center": [
+      23.6,
+      11.8,
+      0.85
+     ],
+     "size": [
+      11.2,
+      0.8,
+      40.5
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      23.7,
+      12.35,
+      0.85
+     ],
+     "size": [
+      11.4,
+      0.3,
+      40.9
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "Glow_d48sky": {
+     "center": [
+      20.1,
+      11.39,
+      0.85
+     ],
+     "size": [
+      3.0,
+      0.02,
+      34.9
+     ],
+     "color": "EAF7FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 68
+  },
+  "D48_Plinth": {
+   "roles": {
+    "d48navy": {
+     "center": [
+      0.0,
+      0.25,
+      -0.0
+     ],
+     "size": [
+      5.4,
+      0.5,
+      5.4
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48pil": {
+     "center": [
+      0.0,
+      1.75,
+      -0.0
+     ],
+     "size": [
+      5.0,
+      2.5,
+      5.0
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 56
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      2.725,
+      -0.0
+     ],
+     "size": [
+      5.1,
+      0.25,
+      5.1
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    }
+   },
+   "triangles": 112
+  },
+  "D48_Urn": {
+   "roles": {
+    "d48navy": {
+     "center": [
+      0.0,
+      0.6,
+      -0.0
+     ],
+     "size": [
+      3.2,
+      1.2,
+      3.2
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      2.668,
+      -0.0
+     ],
+     "size": [
+      2.6,
+      2.935,
+      2.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 324
+    },
+    "d48golddeep": {
+     "center": [
+      0.0,
+      3.798,
+      -0.0
+     ],
+     "size": [
+      2.74,
+      1.804,
+      2.74
+     ],
+     "color": "C98E1E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 492
+    }
+   },
+   "triangles": 860
+  },
+  "D48_Pavilion": {
+   "roles": {
+    "d48steel": {
+     "center": [
+      0.0,
+      4.5,
+      7.0
+     ],
+     "size": [
+      8.8,
+      9.0,
+      9.2
+     ],
+     "color": "3A5A8C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 264
+    },
+    "d48gold": {
+     "center": [
+      0.14,
+      4.95,
+      3.585
+     ],
+     "size": [
+      10.279,
+      9.9,
+      17.23
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 740
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.541,
+      3.65,
+      -0.705
+     ],
+     "size": [
+      7.882,
+      6.3,
+      6.21
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 168
+    },
+    "d48navydark": {
+     "center": [
+      0.0,
+      8.25,
+      2.325
+     ],
+     "size": [
+      6.6,
+      1.0,
+      0.15
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "d48navy": {
+     "center": [
+      0.0,
+      5.35,
+      7.3
+     ],
+     "size": [
+      9.2,
+      10.7,
+      8.6
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 92
+    },
+    "d48pil": {
+     "center": [
+      0.0,
+      9.3,
+      7.0
+     ],
+     "size": [
+      9.6,
+      0.6,
+      10.0
+     ],
+     "color": "FBF8F1",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48disk": {
+     "center": [
+      4.75,
+      3.85,
+      -1.2
+     ],
+     "size": [
+      0.6,
+      6.6,
+      6.6
+     ],
+     "color": "AEBCD0",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    },
+    "d48steeldark": {
+     "center": [
+      4.425,
+      3.9,
+      0.375
+     ],
+     "size": [
+      1.05,
+      5.2,
+      4.15
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 404
+    },
+    "d48golddeep": {
+     "center": [
+      3.9,
+      3.85,
+      -1.2
+     ],
+     "size": [
+      0.24,
+      3.6,
+      3.218
+     ],
+     "color": "C98E1E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 132
+    }
+   },
+   "triangles": 2044
+  },
+  "D48_GateLeaf": {
+   "roles": {
+    "d48steeldark": {
+     "center": [
+      1.275,
+      3.55,
+      -0.0
+     ],
+     "size": [
+      2.55,
+      7.1,
+      0.2
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    },
+    "d48gold": {
+     "center": [
+      1.475,
+      3.55,
+      -0.05
+     ],
+     "size": [
+      2.45,
+      6.5,
+      0.26
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 280
+    }
+   },
+   "triangles": 328
+  },
+  "D48_Scanner": {
+   "roles": {
+    "d48navydark": {
+     "center": [
+      0.0,
+      0.7,
+      -0.0
+     ],
+     "size": [
+      1.0,
+      1.4,
+      0.24
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      0.0,
+      -0.0
+     ],
+     "size": [
+      1.12,
+      0.12,
+      0.3
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.0,
+      0.85,
+      -0.13
+     ],
+     "size": [
+      0.7,
+      0.7,
+      0.04
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 36
+  },
+  "D48_Stair": {
+   "roles": {
+    "d48step": {
+     "center": [
+      0.0,
+      -7.0,
+      9.0
+     ],
+     "size": [
+      5.2,
+      12.0,
+      12.0
+     ],
+     "color": "93A7C7",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 528
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      -5.043,
+      8.5
+     ],
+     "size": [
+      5.7,
+      13.953,
+      12.167
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 232
+    },
+    "Glass_d48glass": {
+     "center": [
+      0.0,
+      -5.3,
+      8.5
+     ],
+     "size": [
+      5.52,
+      13.546,
+      13.546
+     ],
+     "color": "BDEBFF",
+     "decor": false,
+     "material": "Glass",
+     "triangles": 24
+    }
+   },
+   "triangles": 784
+  },
+  "D48_Chest": {
+   "roles": {
+    "d48chest": {
+     "center": [
+      0.0,
+      1.867,
+      -0.0
+     ],
+     "size": [
+      4.0,
+      3.734,
+      3.0
+     ],
+     "color": "3E7BE0",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 184
+    },
+    "d48chestlight": {
+     "center": [
+      0.0,
+      2.2,
+      -0.0
+     ],
+     "size": [
+      4.2,
+      0.6,
+      3.2
+     ],
+     "color": "5A93F0",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      1.3,
+      0.04
+     ],
+     "size": [
+      4.16,
+      2.6,
+      3.32
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 84
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.0,
+      2.35,
+      1.63
+     ],
+     "size": [
+      2.4,
+      0.1,
+      0.06
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 324
+  },
+  "D48_Stand": {
+   "roles": {
+    "d48navy": {
+     "center": [
+      0.0,
+      0.3,
+      -0.0
+     ],
+     "size": [
+      1.8,
+      0.6,
+      1.4
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      1.8,
+      -0.0
+     ],
+     "size": [
+      0.6,
+      2.4,
+      0.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 124
+    },
+    "d48navydark": {
+     "center": [
+      0.0,
+      3.8,
+      0.1
+     ],
+     "size": [
+      3.2,
+      1.924,
+      0.878
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "Glow_d48screen": {
+     "center": [
+      0.0,
+      3.85,
+      0.27
+     ],
+     "size": [
+      2.9,
+      1.615,
+      0.628
+     ],
+     "color": "1D6FE0",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 224
+  },
+  "D48_VaultShell": {
+   "roles": {
+    "d48vfloor": {
+     "center": [
+      0.0,
+      -13.7,
+      4.0
+     ],
+     "size": [
+      36.0,
+      1.4,
+      33.4
+     ],
+     "color": "17223D",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48vwall": {
+     "center": [
+      0.0,
+      -7.2,
+      4.0
+     ],
+     "size": [
+      36.0,
+      11.6,
+      33.4
+     ],
+     "color": "1F3A63",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 176
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      -8.2,
+      4.0
+     ],
+     "size": [
+      33.2,
+      9.6,
+      30.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 248
+    },
+    "d48vceil": {
+     "center": [
+      0.0,
+      -1.6,
+      4.0
+     ],
+     "size": [
+      33.2,
+      0.4,
+      30.6
+     ],
+     "color": "131D33",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 48
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.0,
+      -1.86,
+      4.0
+     ],
+     "size": [
+      32.2,
+      0.12,
+      29.6
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 36
+    },
+    "d48navy": {
+     "center": [
+      0.0,
+      -5.2,
+      -10.8
+     ],
+     "size": [
+      2.6,
+      2.6,
+      0.2
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 188
+    }
+   },
+   "triangles": 740
+  },
+  "D48_Safe": {
+   "roles": {
+    "d48navydark": {
+     "center": [
+      0.0,
+      0.1,
+      -0.2
+     ],
+     "size": [
+      10.4,
+      10.2,
+      0.4
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      0.0,
+      -0.984
+     ],
+     "size": [
+      8.6,
+      8.6,
+      1.433
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 548
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.0,
+      0.0,
+      -0.85
+     ],
+     "size": [
+      7.26,
+      7.26,
+      0.16
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 224
+    },
+    "d48disk": {
+     "center": [
+      0.0,
+      0.0,
+      -1.1
+     ],
+     "size": [
+      7.2,
+      7.2,
+      0.6
+     ],
+     "color": "AEBCD0",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 220
+    },
+    "d48steeldark": {
+     "center": [
+      0.0,
+      0.0,
+      -1.85
+     ],
+     "size": [
+      1.0,
+      1.0,
+      0.3
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 156
+    },
+    "d48golddeep": {
+     "center": [
+      0.0,
+      0.0,
+      -1.95
+     ],
+     "size": [
+      3.86,
+      3.86,
+      0.25
+     ],
+     "color": "C98E1E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 420
+    },
+    "Glow_d48warm": {
+     "center": [
+      0.0,
+      -0.2,
+      -0.15
+     ],
+     "size": [
+      11.6,
+      9.6,
+      0.3
+     ],
+     "color": "FFD88A",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 24
+    },
+    "d48navy": {
+     "center": [
+      0.0,
+      4.65,
+      -0.475
+     ],
+     "size": [
+      7.2,
+      0.7,
+      0.15
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    }
+   },
+   "triangles": 1616
+  },
+  "D48_Terminal": {
+   "roles": {
+    "d48navydark": {
+     "center": [
+      0.0,
+      6.6,
+      -0.15
+     ],
+     "size": [
+      4.9,
+      6.0,
+      0.3
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "Glow_d48screen": {
+     "center": [
+      0.0,
+      6.6,
+      -0.33
+     ],
+     "size": [
+      4.3,
+      5.4,
+      0.06
+     ],
+     "color": "1D6FE0",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    },
+    "Glow_d48white": {
+     "center": [
+      0.0,
+      6.3,
+      -0.39
+     ],
+     "size": [
+      2.0,
+      2.0,
+      0.06
+     ],
+     "color": "FFFFFF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 24
+    },
+    "d48navy": {
+     "center": [
+      0.0,
+      1.25,
+      -1.7
+     ],
+     "size": [
+      4.4,
+      2.5,
+      1.4
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "d48gold": {
+     "center": [
+      0.0,
+      2.75,
+      -1.7
+     ],
+     "size": [
+      4.6,
+      0.681,
+      1.777
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 44
+    },
+    "Glow_d48cyan": {
+     "center": [
+      0.0,
+      2.92,
+      -1.72
+     ],
+     "size": [
+      4.0,
+      0.42,
+      1.368
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    }
+   },
+   "triangles": 148
+  },
+  "D48_Archive": {
+   "roles": {
+    "d48steeldark": {
+     "center": [
+      0.15,
+      4.3,
+      -0.0
+     ],
+     "size": [
+      0.3,
+      8.6,
+      6.8
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 12
+    },
+    "d48gold": {
+     "center": [
+      1.175,
+      4.3,
+      -0.0
+     ],
+     "size": [
+      2.35,
+      8.6,
+      6.8
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 288
+    },
+    "d48steellight": {
+     "center": [
+      1.175,
+      3.25,
+      -0.0
+     ],
+     "size": [
+      2.35,
+      5.7,
+      6.2
+     ],
+     "color": "A7B6C8",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 36
+    },
+    "Glass_d48rare": {
+     "center": [
+      1.2,
+      4.3,
+      -0.0
+     ],
+     "size": [
+      1.5,
+      7.4,
+      4.5
+     ],
+     "color": "4FA6EA",
+     "decor": false,
+     "material": "Glass",
+     "triangles": 88
+    },
+    "Glass_d48epic": {
+     "center": [
+      1.2,
+      2.925,
+      -0.0
+     ],
+     "size": [
+      1.5,
+      4.65,
+      4.5
+     ],
+     "color": "B266F5",
+     "decor": false,
+     "material": "Glass",
+     "triangles": 88
+    },
+    "Glass_d48legend": {
+     "center": [
+      1.2,
+      5.675,
+      -0.0
+     ],
+     "size": [
+      1.5,
+      4.65,
+      4.5
+     ],
+     "color": "F7B731",
+     "decor": false,
+     "material": "Glass",
+     "triangles": 88
+    }
+   },
+   "triangles": 600
+  },
+  "D48_Security": {
+   "roles": {
+    "d48navy": {
+     "center": [
+      11.45,
+      1.4,
+      -5.05
+     ],
+     "size": [
+      8.3,
+      2.8,
+      10.1
+     ],
+     "color": "26345E",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 168
+    },
+    "d48gold": {
+     "center": [
+      11.3,
+      3.3,
+      -4.7
+     ],
+     "size": [
+      8.8,
+      2.2,
+      9.6
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 200
+    },
+    "d48navydark": {
+     "center": [
+      15.0,
+      5.1,
+      -4.0
+     ],
+     "size": [
+      3.2,
+      10.2,
+      10.0
+     ],
+     "color": "1A2440",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 92
+    },
+    "Glow_d48screen": {
+     "center": [
+      14.9,
+      6.625,
+      -4.0
+     ],
+     "size": [
+      2.8,
+      6.55,
+      9.4
+     ],
+     "color": "1D6FE0",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 36
+    },
+    "d48steeldark": {
+     "center": [
+      12.377,
+      1.562,
+      -4.0
+     ],
+     "size": [
+      3.03,
+      3.125,
+      4.7
+     ],
+     "color": "5E7186",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 144
+    },
+    "Glow_d48cyan": {
+     "center": [
+      11.72,
+      5.875,
+      -4.975
+     ],
+     "size": [
+      9.04,
+      6.75,
+      9.15
+     ],
+     "color": "39E1FF",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 128
+    },
+    "Glow_d48red": {
+     "center": [
+      16.21,
+      7.75,
+      -2.75
+     ],
+     "size": [
+      0.06,
+      0.5,
+      0.5
+     ],
+     "color": "F0473C",
+     "decor": false,
+     "material": "Neon",
+     "triangles": 12
+    },
+    "d48red": {
+     "center": [
+      11.1,
+      1.8,
+      -4.0
+     ],
+     "size": [
+      1.4,
+      3.6,
+      1.6
+     ],
+     "color": "F0473C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 56
+    }
+   },
+   "triangles": 836
+  },
+  "D48_Lockers": {
+   "roles": {
+    "d48gold": {
+     "center": [
+      3.95,
+      3.25,
+      0.375
+     ],
+     "size": [
+      7.9,
+      6.5,
+      0.75
+     ],
+     "color": "E9B43C",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 84
+    },
+    "d48locker": {
+     "center": [
+      3.93,
+      3.3,
+      0.475
+     ],
+     "size": [
+      7.46,
+      5.9,
+      0.25
+     ],
+     "color": "8EA2BD",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 36
+    },
+    "d48vpanel": {
+     "center": [
+      3.93,
+      3.3,
+      0.475
+     ],
+     "size": [
+      7.46,
+      5.9,
+      0.25
+     ],
+     "color": "2C5283",
+     "decor": false,
+     "material": "Plastic",
+     "triangles": 36
+    }
+   },
+   "triangles": 156
+  }
+ }
+}
