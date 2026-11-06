@@ -102,13 +102,16 @@ UITokens.Layout = {
 	MinTouchButton = Vector2.new(52, 52),
 	-- Уведомления: колонка справа, ниже верхней панели Roblox.
 	Toasts = {
-		position = UDim2.fromScale(0.985, 0.18),
+		-- справа, левее колонки меню HUD v2 и ниже таймера (D49: не перекрываются; Client/UI/HudLayout): зазоры до
+		-- колонки меню и до низа таймера
+		menuGap = 12,
+		timerGap = 10,
 		size = UDim2.fromScale(0.26, 0.5),
-		minWidth = 220,
+		minWidth = 180, -- на телефоне шире не помещается: справа колонка меню, по центру плашка «Бросить»
 		maxWidth = 360,
 		itemHeight = 56,
 		lifetime = 4, -- секунды
-		maxCount = 4,
+		maxCount = 4, -- не больше, чем помещается в высоту колонки (на телефоне — 2)
 	},
 	-- «Бросить»: внизу по центру над плашкой «Ты несёшь…» (контекст HUD v2, D48 v2; справа — колонка меню, D49).
 	DropButton = {
@@ -169,6 +172,7 @@ UITokens.GymGain = {
 UITokens.TimeHud = {
 	Size = Vector2.new(300, 54), -- капсула, px при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
 	Top = 6,
+	InfoGap = 18, -- отступы полосы и подписи под капсулой (высота блока — Client/UI/HudLayout.TimerHeight)
 	Icon = 40,
 	PhaseSize = 22,
 	TimeSize = 32,
@@ -197,7 +201,7 @@ UITokens.TimeHud = {
 -- Плашка входа в уровень (D41): сверху по центру, 1.5 с, цвет — от спокойного зелёного к тревожному (по номеру зоны).
 UITokens.LevelBanner = {
 	Size = Vector2.new(380, 96), -- пиксели при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
-	Top = 132, -- отступ сверху: под таймером-капсулой HUD v2 (он до ~120 px при наибольшем масштабе)
+	Gap = 12, -- зазор под таймером-капсулой HUD v2 (Client/UI/HudLayout: низ таймера при текущем масштабе)
 	Hold = 1.5, -- секунд на экране после появления
 	In = 0.35,
 	Out = 0.3,
@@ -349,7 +353,8 @@ UITokens.Museum = {
 
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
-	ButtonPosition = UDim2.new(1, -16, 0.2, 0), -- справа вверху: над колонкой меню HUD v2 и на телефоне (D49)
+	-- справа вверху сразу под кнопками Roblox (CoreUISafeInsets), над колонкой меню HUD v2 (D49); только телефон
+	ButtonPosition = UDim2.new(1, -16, 0, 4),
 	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
 	StarsLift = 2.6,
 	StarColor = Color3.fromHex("FFD23F"),

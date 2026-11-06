@@ -14,6 +14,7 @@ local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local HudIcons = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudIcons"))
+local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
 
 local TimeController = {}
 
@@ -46,7 +47,7 @@ function TimeController.Build(gui: ScreenGui, _touch: boolean): (GameTime.State,
 	holder.Name = "Holder"
 	holder.BackgroundTransparency = 1
 	holder.AnchorPoint = Vector2.new(0.5, 0)
-	holder.Size = UDim2.fromOffset(cfg.Size.X, cfg.Size.Y + cfg.Bar.Y + cfg.InfoSize + 18)
+	holder.Size = UDim2.fromOffset(cfg.Size.X, HudLayout.TimerHeight())
 	holder.Position = UDim2.new(0.5, 0, 0, cfg.Top)
 	holder.Parent = gui
 	local scale = Instance.new("UIScale")

@@ -1,5 +1,6 @@
 -- PvP Судной ночи на клиенте (D46): только ввод и эффекты, всё решает сервер (PvpService).
--- Удар — ЛКМ на ПК или кнопка «Удар» (Stud-UI, справа над «Бросить»; видна только в Судную ночь); клиент не чаще
+-- Удар — ЛКМ на ПК или кнопка «Удар» (Stud-UI, справа над колонкой меню; только на телефоне и в Судную ночь — D48 v2,
+-- docs/D48_INTEGRATION.md); клиент не чаще
 -- AttackInterval шлёт PvpAttack. Эффекты по PvpEffect: замах руки ударившего (плечевой Motor6D, локально у каждого),
 -- вспышка цели, всплывающее «-N», «НОКАУТ!», лёгкая тряска камеры у того, по кому попали. Свой нокаут — лечь
 -- (PlatformStand) на 15 с, камера смотрит на точку над телом (knockCamera); звёзды над головой (BillboardGui от
@@ -228,21 +229,26 @@ local function onKnocked()
 	end
 end
 
+-- Сенсорный экран без клавиатуры (телефон, планшет): на ПК бьют ЛКМ, кнопка не нужна (D48 v2).
+local function touchOnly(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
 local function refreshButton()
 	local holder = button.Parent :: GuiObject
-	holder.Visible = doomNight()
+	holder.Visible = doomNight() and touchOnly()
 	UI.SetDisabled(button, player:GetAttribute("Knocked") == true or player:GetAttribute("Snared") == true)
 end
 
 local function buildButton()
-	local gui = UI.ScreenGui("PvpHud", 6, { Menu = false })
+	local gui = UI.ScreenGui("PvpHud", 6, { Menu = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets })
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local holder = Instance.new("Frame")
 	holder.Name = "Racine"
 	holder.BackgroundTransparency = 1
 	holder.Size = UDim2.fromOffset(T.Button.X, T.Button.Y)
 	holder.Position = T.ButtonPosition
-	holder.AnchorPoint = Vector2.new(1, 0.5)
+	holder.AnchorPoint = Vector2.new(1, 0)
 	holder.Parent = gui
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
@@ -282,6 +288,7 @@ function PvpController.Init()
 		knockCamera(false)
 	end)
 	player:GetAttributeChangedSignal("Snared"):Connect(refreshButton)
+	UserInputService.LastInputTypeChanged:Connect(refreshButton) -- подключили клавиатуру к планшету и наоборот
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 and not busy() then
 			attack()

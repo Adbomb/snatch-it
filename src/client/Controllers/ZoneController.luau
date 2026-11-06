@@ -18,6 +18,7 @@ local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 local TextCase = require(Shared:WaitForChild("TextCase"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
+local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
 
 local player = Players.LocalPlayer
 local CFG = UITokens.LevelBanner
@@ -45,7 +46,7 @@ local function buildBanner(gui: ScreenGui)
 	group.BackgroundTransparency = 1
 	group.AnchorPoint = Vector2.new(0.5, 0)
 	group.Size = UDim2.fromOffset(CFG.Size.X + 16, CFG.Size.Y + 16)
-	group.Position = UDim2.new(0.5, 0, 0, CFG.Top)
+	group.Position = UDim2.new(0.5, 0, 0, HudLayout.BelowTimer(CFG.Gap))
 	group.GroupTransparency = 1
 	group.Visible = false
 	group.Parent = gui
@@ -114,7 +115,7 @@ function ZoneController.Show(index: number)
 	parts.title.Text = name
 	parts.shadow.Text = name
 
-	local home = UDim2.new(0.5, 0, 0, CFG.Top)
+	local home = UDim2.new(0.5, 0, 0, HudLayout.BelowTimer(CFG.Gap)) -- под таймером при текущем масштабе экрана
 	banner.Visible = true
 	banner.GroupTransparency = 1
 	banner.Position = home - UDim2.fromOffset(0, 24)
