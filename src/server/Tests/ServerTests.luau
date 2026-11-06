@@ -636,6 +636,35 @@ test("Защита: дверь не пускает вора, взлом 5 с, л
 	check(inHall.Z > 0, "после взлома вора всё равно выставило")
 end)
 
+-- D49 (проверка на трёх клиентах): вор бежит 14 стадов/с, такт 0.2 с — за такт 2.8 стада, луч 1.2: лазер срабатывал
+-- случайно. Теперь смотрит путь вора за такт; перенос (скачок дальше TrackStep) лазер не задевает.
+test("Защита: лазер ловит вора, пробежавшего луч за такт (D49)", function(A, B)
+	DataService.AddCoins(A, 1e6)
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Laser")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Laser", "Entrance")
+	check(DefenseService.Handlers.Museum(A.UserId).installed.Laser ~= nil, "лазер не встал")
+	TimeService.SkipTo("DoomNight", -5)
+	PvpService.Handlers.Reset()
+	local origin = plotOf(A).floorOrigin
+	local beam = GameConfig.Defense.Lasers.Entrance
+	local function stand(z: number)
+		B.Character.PrimaryPart.CFrame = CFrame.new(origin * Vector3.new(0, 3, z))
+	end
+	local fb = PvpService.Handlers.Fighter(B)
+	stand(beam.z - 30)
+	DefenseService.Handlers.Tick()
+	stand(beam.z + 1.5) -- перенос через луч (дальше TrackStep)
+	DefenseService.Handlers.Tick()
+	check(fb.hp == fb.maxHp, "перенос через луч засчитан как пробег")
+	stand(beam.z - 1.5) -- пробежал луч за такт: ни одна из двух точек не в луче
+	DefenseService.Handlers.Tick()
+	check(fb.hp < fb.maxHp, "лазер не поймал пробежавшего вора")
+	check(A:WasNotified("Тревога! Лазер"), "владельцу не пришла тревога")
+end)
+
 -- D47: робот на трёх клиентах бил вора и терял HP, но за ночь его не успели доломать (300 HP) — поломка здесь.
 test("Защита: робот бьёт вора в радиусе, не трогает владельца, сломанный молчит", function(A, B)
 	DataService.AddCoins(A, 1e6)

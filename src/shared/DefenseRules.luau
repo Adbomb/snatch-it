@@ -199,6 +199,50 @@ function DefenseRules.InLaser(cfg: any, laser: any, at: Vector3): boolean
 	return math.abs(at.Z - laser.z) <= cfg.Laser.Width / 2 and at.X >= laser.x0 and at.X <= laser.x1
 end
 
+-- Путь вора за такт проверки (from → to, оси участка) прошёл через луч. Такт сервера длиннее, чем бегущий вор
+-- пересекает полосу луча, поэтому проверяется весь отрезок, а не только точка to. from = nil — только точка to
+-- (первый такт, перенос).
+function DefenseRules.CrossedLaser(cfg: any, laser: any, from: Vector3?, to: Vector3): boolean
+	if DefenseRules.InLaser(cfg, laser, to) then
+		return true
+	end
+	if not from then
+		return false
+	end
+	local half = cfg.Laser.Width / 2
+	local dz = to.Z - from.Z
+	local t0, t1 = 0, 1
+	if math.abs(dz) < 1e-6 then
+		if math.abs(from.Z - laser.z) > half then
+			return false
+		end
+	else
+		local a = (laser.z - half - from.Z) / dz
+		local b = (laser.z + half - from.Z) / dz
+		t0, t1 = math.max(0, math.min(a, b)), math.min(1, math.max(a, b))
+		if t0 > t1 then
+			return false
+		end
+	end
+	local xa = from.X + (to.X - from.X) * t0
+	local xb = from.X + (to.X - from.X) * t1
+	return math.max(xa, xb) >= laser.x0 and math.min(xa, xb) <= laser.x1
+end
+
+-- Ближайшее расстояние по полу от устройства center до пути вора за такт (from → to); from = nil — до точки to.
+-- Ловушка и капкан ловят того, кто пробежал через них между проверками.
+function DefenseRules.PathDistance(center: Vector3, from: Vector3?, to: Vector3): number
+	local cx, cz = center.X, center.Z
+	if not from then
+		return math.sqrt((to.X - cx) ^ 2 + (to.Z - cz) ^ 2)
+	end
+	local ax, az = from.X, from.Z
+	local dx, dz = to.X - ax, to.Z - az
+	local len2 = dx * dx + dz * dz
+	local t = if len2 > 1e-9 then math.clamp(((cx - ax) * dx + (cz - az) * dz) / len2, 0, 1) else 0
+	return math.sqrt((ax + dx * t - cx) ^ 2 + (az + dz * t - cz) ^ 2)
+end
+
 -- Установленное устройство списано при установке и привязано к Судной ночи круга cycle (data.defense.installed).
 -- При загрузке и выходе: эта ночь ещё не началась (игрок вышел или сервер упал до неё) — вернуть в запас; началась —
 -- устройство отработало (выход посреди ночи и вход обратно запас не возвращают). nightStart(cycle) — начало Судной

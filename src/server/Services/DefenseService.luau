@@ -5,7 +5,8 @@
 -- одному. В Судную ночь раз в GameConfig.Defense.Tick сервер проверяет чужих (воров) у устройств: дверь не пускает в
 -- музей (зал и галереи) без взлома, ловушка — урон и замедление (вариант в конфиге), капкан — 10 с обездвижен
 -- (одноразовый), лазер — урон и тревога владельцу, робот — бьёт воров в радиусе, если видит их (стены здания
--- закрывают), его можно сломать ударами. Подсветка устройства: дежурит — бирюзовая, сработало — красная. Взлом двери — удержание 5 с, уроном не прерывается,
+-- закрывают), его можно сломать ударами. Лазер, ловушка и капкан смотрят путь вора за такт (DefenseRules.CrossedLaser,
+-- PathDistance): бегущий вор не проскакивает их между проверками. Подсветка устройства: дежурит — бирюзовая, сработало — красная. Взлом двери — удержание 5 с, уроном не прерывается,
 -- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
 -- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
 -- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
@@ -52,6 +53,7 @@ type Museum = {
 	hacked: boolean,
 	cooldowns: { [string]: number }, -- "<вид>:<UserId>" → os.clock следующего срабатывания
 	hackBegan: { [any]: number },
+	last: { [any]: Vector3 }, -- где был вор на прошлом такте (оси участка): лазер, ловушка и капкан смотрят весь путь
 }
 
 local museums: { [number]: Museum } = {}
@@ -62,7 +64,7 @@ local DefenseService = {}
 local function museumOf(ownerId: number): Museum
 	local m = museums[ownerId]
 	if not m then
-		m = { installed = {}, hacked = false, cooldowns = {}, hackBegan = {} }
+		m = { installed = {}, hacked = false, cooldowns = {}, hackBegan = {}, last = {} }
 		museums[ownerId] = m
 	end
 	return m
@@ -535,6 +537,12 @@ local function tick()
 					local at = toLocal(plot, root.Position)
 					local id = tostring(thief.UserId)
 					local inside = insideHall(at, hasGalleries(plot))
+					-- путь за такт: бегущий вор проходит луч и ловушку между проверками; дальний скачок — перенос
+					local from = m.last[thief]
+					if from and (at - from).Magnitude > cfg.TrackStep then
+						from = nil
+					end
+					m.last[thief] = at
 					-- отброс от устройства — к выходу (источник чуть глубже в зале)
 					local push = plot.floorOrigin * (at + Vector3.new(0, 0, cfg.PushDepth))
 					if m.installed.Door and not m.hacked and inside then
@@ -548,13 +556,14 @@ local function tick()
 						if ready(m, "Door:" .. id, cfg.NoticeCooldown) then
 							Notify.Send(thief, "Усиленная дверь: нужен взлом", "Stop")
 						end
+						m.last[thief] = nil -- перенос: путь от зала до улицы — не бег через лазер
 						continue -- выставлен наружу: остальные устройства его уже не видят
 					end
 					local trap = m.installed.Trap
 					if
 						trap
 						and inside
-						and Vector3.new(at.X - trap.at.X, 0, at.Z - trap.at.Z).Magnitude <= cfg.Trap.Radius
+						and DefenseRules.PathDistance(trap.at, from, at) <= cfg.Trap.Radius
 						and math.abs(at.Y) < cfg.TrapHeight
 					then
 						if ready(m, "Trap:" .. id, cfg.Trap.Cooldown) then
@@ -573,7 +582,7 @@ local function tick()
 						and not snare.broken
 						and inside
 						and math.abs(at.Y) < cfg.TrapHeight
-						and Vector3.new(at.X - snare.at.X, 0, at.Z - snare.at.Z).Magnitude <= cfg.Snare.Radius
+						and DefenseRules.PathDistance(snare.at, from, at) <= cfg.Snare.Radius
 						and PvpService.Snare(thief, cfg.Snare.Seconds) -- одноразовый: тратится, только если поймал
 					then
 						snare.broken = true
@@ -590,7 +599,7 @@ local function tick()
 						local beam = cfg.Lasers[laser.spot]
 						if
 							beam
-							and DefenseRules.InLaser(cfg, beam, at)
+							and DefenseRules.CrossedLaser(cfg, beam, from, at)
 							and at.Y < beam.y + cfg.LaserHeight
 							and ready(m, "Laser:" .. id, cfg.Laser.Cooldown)
 						then
@@ -651,6 +660,7 @@ local function endNight()
 		m.hacked = false
 		table.clear(m.cooldowns)
 		table.clear(m.hackBegan)
+		table.clear(m.last)
 		if owner then
 			DefenseService.Sync(owner)
 		end

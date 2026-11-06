@@ -154,6 +154,55 @@ do
 	local laser = cfg.Lasers.Gallery
 	check(DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 0.3)), "вор в луче")
 	check(not DefenseRules.InLaser(cfg, laser, Vector3.new(0, 0, laser.z + 2)), "мимо луча")
+	-- путь за такт (0.2 с): бегущий вор перешагивает луч шириной 1.2 между проверками — ловится по отрезку пути
+	local before, after = Vector3.new(0, 0, laser.z - 1.5), Vector3.new(0, 0, laser.z + 1.5)
+	check(
+		not DefenseRules.InLaser(cfg, laser, before)
+			and not DefenseRules.InLaser(cfg, laser, after)
+			and DefenseRules.CrossedLaser(cfg, laser, before, after),
+		"пробежал луч между тактами — лазер сработал"
+	)
+	check(
+		not DefenseRules.CrossedLaser(cfg, laser, nil, after)
+			and DefenseRules.CrossedLaser(cfg, laser, nil, Vector3.new(0, 0, laser.z)),
+		"первый такт (нет прошлой точки) — только точка"
+	)
+	local side = laser.x1 + 2
+	check(
+		not DefenseRules.CrossedLaser(
+			cfg,
+			laser,
+			Vector3.new(side, 0, laser.z - 1.5),
+			Vector3.new(side, 0, laser.z + 1.5)
+		),
+		"прошёл сбоку от луча — не сработал"
+	)
+	check(
+		DefenseRules.CrossedLaser(
+			cfg,
+			laser,
+			Vector3.new(laser.x1 + 1, 0, laser.z - 1.5),
+			Vector3.new(laser.x1 - 1, 0, laser.z + 1.5)
+		),
+		"наискосок через край луча — сработал"
+	)
+	check(
+		not DefenseRules.CrossedLaser(cfg, laser, Vector3.new(-3, 0, laser.z + 1), Vector3.new(3, 0, laser.z + 1)),
+		"вдоль луча рядом с ним — не сработал"
+	)
+	local center = Vector3.new(7, 0, -2)
+	check(
+		math.abs(DefenseRules.PathDistance(center, Vector3.new(7, 0, -5), Vector3.new(7, 0, 1)) - 0) < 1e-6,
+		"пробежал через ловушку между тактами — расстояние 0"
+	)
+	check(
+		math.abs(DefenseRules.PathDistance(center, nil, Vector3.new(10, 0, 2)) - 5) < 1e-6,
+		"без прошлой точки — расстояние до точки"
+	)
+	check(
+		math.abs(DefenseRules.PathDistance(center, Vector3.new(7, 0, -9), Vector3.new(7, 0, -6)) - 4) < 1e-6,
+		"путь не дошёл до ловушки — до ближнего конца"
+	)
 	check(
 		DefenseRules.HackFits(3, 3) and DefenseRules.HackFits(5, 2) and not DefenseRules.HackFits(2, 3),
 		"взлом: уровень устройства ≥ уровня музея"
