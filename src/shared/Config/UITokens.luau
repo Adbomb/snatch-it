@@ -112,6 +112,8 @@ UITokens.Layout = {
 		itemHeight = 56,
 		lifetime = 4, -- секунды
 		maxCount = 4, -- не больше, чем помещается в высоту колонки (на телефоне — 2)
+		displayOrder = 14, -- поверх окон «Инвентарь» и «Защита» (12) и расстановки защиты (13), под плашкой зоны (30)
+		windowCheck = 0.25, -- секунд между проверками, открыто ли окно меню (колонка — справа от окна)
 	},
 	-- «Бросить»: внизу по центру над плашкой «Ты несёшь…» (контекст HUD v2, D48 v2; справа — колонка меню, D49).
 	DropButton = {
@@ -172,11 +174,12 @@ UITokens.GymGain = {
 UITokens.TimeHud = {
 	Size = Vector2.new(300, 54), -- капсула, px при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
 	Top = 6,
-	InfoGap = 18, -- отступы полосы и подписи под капсулой (высота блока — Client/UI/HudLayout.TimerHeight)
+	InfoGap = 16, -- отступы полосы и капсулы подписи (высота блока — Client/UI/HudLayout.TimerHeight)
 	Icon = 40,
 	PhaseSize = 22,
 	TimeSize = 32,
-	InfoSize = 16,
+	InfoSize = 18,
+	InfoPill = { Transparency = 0.25, Pad = 8, Side = 12 }, -- тёмная капсула под подписью (D50: читается на любом фоне)
 	Bar = Vector2.new(250, 8), -- полоса фазы под капсулой
 	Refresh = 0.2, -- секунды между обновлениями отсчёта
 	Fill = Color3.fromHex("1C2440"), -- капсула
@@ -260,7 +263,7 @@ UITokens.ItemLabel = {
 UITokens.HudIcons = {
 	Coins = "Currency/Coin/Golden Coin 1st Outline",
 	Income = "Main/Upgrade/Green Upgrade 1st Outline",
-	Strength = "Player/Arm/Arm 1st Outline", -- до загрузки кулака (icon_fist.png)
+	Strength = "Player/Arm/Arm 1st Outline", -- до загрузки кулака (готов: assets/ui/hud/icon_fist_256.png)
 	Inventory = "Item/Backpack/Backpack 1st Outline", -- до загрузки портфеля (icon_briefcase.png)
 	Defense = "Item/Shield/Shield 1st Outline",
 	Day = "Main/Star/Golden Star 1st Outline",
@@ -294,11 +297,12 @@ UITokens.MenuHud = {
 -- Статистика HUD v2 (D48 v2): слева посередине — иконка + число, без рамок; доход зелёный, сила с подписью.
 UITokens.StatsHud = {
 	Margin = 18,
+	Width = 260, -- строка: иконка и число (D50: уже — плашка зоны на iPad не задевает)
 	Y = 0.42, -- середина столбика по высоте экрана
 	Rows = {
 		Coins = { icon = 56, text = 40 },
 		Income = { icon = 44, text = 30, color = Color3.fromHex("8BF06B") },
-		Strength = { icon = 44, text = 32, note = 18 },
+		Strength = { icon = 44, text = 30, note = 24 }, -- подпись «сила» крупнее (D50: на телефоне читается)
 	},
 	Gap = 8,
 	TextGap = 8,
@@ -397,8 +401,11 @@ UITokens.Museum = {
 
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
-	-- справа вверху сразу под кнопками Roblox (CoreUISafeInsets), над колонкой меню HUD v2 (D49); только телефон
-	ButtonPosition = UDim2.new(1, -16, 0, 4),
+	MinTouch = 52, -- px: на телефоне кнопка не ниже (D32) — масштаб не меньше MinTouch / Button.Y
+	-- справа вверху сразу под кнопками Roblox (CoreUISafeInsets), левее колонки меню HUD v2 (D50: кнопка 52 px над
+	-- колонкой задевала её на узких телефонах); только телефон. Отступы: сверху и до колонки меню
+	ButtonTop = 4,
+	MenuGap = 8,
 	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
 	StarsLift = 2.6,
 	StarColor = Color3.fromHex("FFD23F"),

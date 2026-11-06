@@ -1,12 +1,12 @@
 -- PvP Судной ночи на клиенте (D46): только ввод и эффекты, всё решает сервер (PvpService).
--- Удар — ЛКМ на ПК или кнопка «Удар» (Stud-UI, справа над колонкой меню; только на телефоне и в Судную ночь — D48 v2,
--- docs/D48_INTEGRATION.md); клиент не чаще
--- AttackInterval шлёт PvpAttack. Эффекты по PvpEffect: замах руки ударившего (плечевой Motor6D, локально у каждого),
+-- Удар — ЛКМ на ПК или кнопка «Удар» (Stud-UI, справа вверху левее колонки меню; только на телефоне и в Судную
+-- ночь — D48 v2, D50); клиент не чаще AttackInterval шлёт PvpAttack. Эффекты по PvpEffect: замах руки ударившего (плечевой Motor6D, локально у каждого),
 -- вспышка цели, всплывающее «-N», «НОКАУТ!», лёгкая тряска камеры у того, по кому попали. Свой нокаут — лечь
 -- (PlatformStand) на 15 с, камера смотрит на точку над телом (knockCamera); звёзды над головой (BillboardGui от
 -- сервера, тег KnockStars) крутятся у всех.
 -- Без загруженных ассетов: только Motor6D, Highlight, BillboardGui и Stud-UI.
--- Зависит от Remotes, Shared/StudUI, Config/Battle, Config/UITokens.
+-- Кнопка на телефоне не ниже 52 px (D32, D50). Зависит от Remotes, Shared/StudUI, Config/Battle, Config/UITokens,
+-- UI/HudLayout.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -22,6 +22,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
+local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
 
 local T = UITokens.Pvp
 local player = Players.LocalPlayer
@@ -247,13 +248,18 @@ local function buildButton()
 	holder.Name = "Racine"
 	holder.BackgroundTransparency = 1
 	holder.Size = UDim2.fromOffset(T.Button.X, T.Button.Y)
-	holder.Position = T.ButtonPosition
 	holder.AnchorPoint = Vector2.new(1, 0)
 	holder.Parent = gui
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
 	scale.Parent = holder
-	Motion.BindResponsive(scale)
+	-- кнопка только на телефоне: масштаб экрана, но не ниже MinTouch px (D32; на телефоне масштаб ~0.6 давал 43 px)
+	local floor = T.MinTouch / T.Button.Y
+	scale:SetAttribute("MinScale", floor) -- для моделирования телефона (scripts/studio/hud_phone_sim)
+	HudLayout.Track(function()
+		scale.Scale = math.max(Motion.ScreenScale(), floor)
+		holder.Position = UDim2.new(1, -HudLayout.LeftOfMenu(T.MenuGap), 0, T.ButtonTop) -- левее колонки меню
+	end)
 	button = UI.Button(holder, {
 		Name = "Frapper",
 		Theme = "red",

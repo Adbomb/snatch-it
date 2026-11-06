@@ -23,6 +23,12 @@ function HudLayout.BelowTimer(gap: number): number
 	return UITokens.TimeHud.Top + HudLayout.TimerHeight() * Motion.ScreenScale() + gap
 end
 
+-- Половина ширины плашки входа в зону (ZoneController, по центру под таймером), px (D50: на узком телефоне колонка
+-- уведомлений заходит под неё — на время плашки уведомления прячутся).
+function HudLayout.BannerHalfWidth(): number
+	return UITokens.LevelBanner.Size.X / 2 * Motion.ScreenScale()
+end
+
 -- Левый край колонки меню + gap, px от правого края экрана.
 function HudLayout.LeftOfMenu(gap: number): number
 	local m = UITokens.MenuHud

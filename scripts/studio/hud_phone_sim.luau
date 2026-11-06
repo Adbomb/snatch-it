@@ -6,6 +6,8 @@
 -- настоящих (например DefenseAction BuyHack ночью). Возвращает пересечения прямоугольников. Убрать — удалить
 -- PlayerGui.__PhoneSim. Ни от чего в репозитории не зависит (читает PlayerGui).
 local W, H, NOTCH, LABEL = 844, 390, 47, "iPhone 14" -- SE 667×375/0, Android 740×360/0, iPad 1024×768/0
+-- плашка зоны видна (худший случай: уведомления на это время ниже неё, D50); false — обычное состояние без плашки
+local BANNER = true
 local pg = game.Players.LocalPlayer.PlayerGui
 local old = pg:FindFirstChild("__PhoneSim")
 if old then
@@ -74,7 +76,7 @@ local function box(parent, name, x, y, w, h, color, zIndex, text)
 end
 
 local safeW = W - 2 * NOTCH
-for _, name in { "GymHud", "MenuHud", "TimeHud", "LevelBanner", "PvpHud", "CarryHud", "Toasts" } do
+for _, name in { "GymHud", "MenuHud", "TimeHud", if BANNER then "LevelBanner" else "", "PvpHud", "CarryHud", "Toasts" } do
 	local g = pg:FindFirstChild(name)
 	if g then
 		local core = g.ScreenInsets == Enum.ScreenInsets.CoreUISafeInsets
@@ -95,7 +97,11 @@ for _, name in { "GymHud", "MenuHud", "TimeHud", "LevelBanner", "PvpHud", "Carry
 				end
 				for _, d in c:GetDescendants() do
 					if d:IsA("UIScale") and (d.Name == "WindowScale" or d.Name == "UIScale") then
-						d.Scale = d.Scale * s / cur
+						-- MinScale — нижняя граница масштаба (кнопка «Удар» не ниже 52 px, D50)
+						d.Scale = math.max(
+							d.Scale / math.max(cur, d:GetAttribute("MinScale") or 0) * s,
+							d:GetAttribute("MinScale") or 0
+						)
 					end
 				end
 				if c:IsA("UIScale") then
@@ -105,11 +111,20 @@ for _, name in { "GymHud", "MenuHud", "TimeHud", "LevelBanner", "PvpHud", "Carry
 				if c:IsA("CanvasGroup") then
 					c.GroupTransparency = 0
 				end
+				-- как client/UI/HudLayout: таймер 96 px при масштабе 1, плашка зоны 380×96 под ним, колонка
+				-- уведомлений 26 % ширины (180…360 px) левее меню; заходит под видимую плашку — спрятана (D50)
+				local below = 6 + 96 * s
 				if name == "Toasts" then
-					c.Position = UDim2.new(1, -(18 + 110 * s + 12), 0, 6 + 96 * s + 10)
+					local right = 18 + 110 * s + 12
+					local left = safeW - right - math.clamp(0.26 * safeW, 180, 360)
+					c.Position = UDim2.new(1, -right, 0, below + 10)
+					c.Visible = not (BANNER and left < safeW / 2 + 190 * s)
+				end
+				if name == "PvpHud" then -- левее колонки меню (client/UI/HudLayout.LeftOfMenu, отступ 8)
+					c.Position = UDim2.new(1, -(18 + 110 * s + 8), 0, 4)
 				end
 				if name == "LevelBanner" then
-					c.Position = UDim2.new(0.5, 0, 0, 6 + 96 * s + 12)
+					c.Position = UDim2.new(0.5, 0, 0, below + 12)
 				end
 				c.Parent = holder
 			end
@@ -151,8 +166,28 @@ add("banner", find("LevelBanner", "LevelBanner"))
 add("punch", find("PvpHud", "Racine"))
 add("drop", find("CarryHud", "Button"))
 add("pill", find("CarryHud", "CarryPill"))
-for _, t in (find("Toasts", "Column") or Instance.new("Folder")):GetChildren() do
-	add("toast", t)
+-- уведомления: две последние; как NotifyController.capacity — если колонка по ширине заходит на «Бросить», только
+-- те, что выше кнопки
+local toasts = {}
+local toastColumn = find("Toasts", "Column")
+for _, t in if toastColumn and toastColumn.Visible then toastColumn:GetChildren() else {} do
+	if t:IsA("GuiObject") then
+		table.insert(toasts, t)
+	end
+end
+table.sort(toasts, function(a, b)
+	return a.LayoutOrder > b.LayoutOrder
+end)
+local drop = find("CarryHud", "Button")
+for i, t in toasts do
+	local blocked = drop
+		and t.AbsolutePosition.X < drop.AbsolutePosition.X + drop.AbsoluteSize.X
+		and t.AbsolutePosition.Y + t.AbsoluteSize.Y > drop.AbsolutePosition.Y
+	if i > 2 or blocked then
+		t:Destroy()
+	else
+		add("toast", t)
+	end
 end
 add("jump", phone.Jump)
 add("stick", phone.Stick)

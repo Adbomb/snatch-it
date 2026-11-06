@@ -21,6 +21,11 @@
   Сейчас таких нет: LegoStuds (3 карты), палитра предметов и меш уточки уже загружены (`Config/Textures`, `Config/ItemModels`).
 - `GameConfig.DevMode = false`.
 - Звуки `GameConfig.Sounds` — ID выбирает дизайнер.
+- Иконки HUD D48 v2 — только по разрешению владельца (D50: ничего не загружено). Кулак силы готов к импорту:
+  `assets/ui/hud/icon_fist_512.png` / `_256.png` (прозрачный фон, обрезка по рисунку; источник —
+  `assets/concepts/d48/v2/icons/icons.blend`, коллекция `fist`). После загрузки — ID в `UITokens.HudIcons.Strength`.
+- Телефон проверен только моделированием (`scripts/studio/hud_phone_sim.luau`, инвентарь — атрибуты `DevViewport` /
+  `DevTouch`): перед релизом — эмулятор Studio (Test → Device) или настоящее устройство.
 
 ## Studio и инструменты
 - Пересвет музея (D50): освещение «Realistic» (`LightingStyle`, `PrioritizeLightingQuality`) накапливает отражённый

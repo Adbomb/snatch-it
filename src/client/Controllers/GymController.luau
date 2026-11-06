@@ -174,7 +174,7 @@ local function buildHud()
 	column.BackgroundTransparency = 1
 	column.AnchorPoint = Vector2.new(0, 0.5)
 	column.Position = UDim2.new(0, cfg.Margin, cfg.Y, 0)
-	column.Size = UDim2.fromOffset(320, 0)
+	column.Size = UDim2.fromOffset(cfg.Width, 0)
 	column.AutomaticSize = Enum.AutomaticSize.Y
 	column.Parent = gui
 	local list = Instance.new("UIListLayout")
@@ -191,7 +191,7 @@ local function buildHud()
 		local frame = Instance.new("Frame")
 		frame.Name = key
 		frame.BackgroundTransparency = 1
-		frame.Size = UDim2.fromOffset(320, spec.icon)
+		frame.Size = UDim2.fromOffset(cfg.Width, spec.icon)
 		frame.LayoutOrder = order
 		frame.Parent = column
 		StudUI.Image(frame, HudIcons.Get(key), {
@@ -216,7 +216,7 @@ local function buildHud()
 	local coins, coinsShadow = row("Coins", 1)
 	local income, incomeShadow = row("Income", 2) -- общий доход экспонатов на постаментах (IncomeService)
 	local strength, strengthShadow = row("Strength", 3, true)
-	local note = ('  <font size="%d">сила</font>'):format(cfg.Rows.Strength.note)
+	local note = (' <font size="%d">сила</font>'):format(cfg.Rows.Strength.note)
 	local function set(label: TextLabel, shadow: TextLabel, text: string)
 		label.Text = text
 		shadow.Text = text

@@ -1,7 +1,8 @@
 -- Таймер фазы (D37) — HUD v2 (D48 v2): сверху по центру, под кнопками Roblox (CoreUISafeInsets) — капсула с иконкой
--- фазы, названием и обратным отсчётом, под ней полоса фазы и строка «до Судной ночи». Фазу клиент считает сам той же
--- функцией, что и сервер (Shared/GameTime от общего времени), поэтому таймер верен с первой секунды, даже при входе
--- посреди цикла. Зависит от Shared/GameTime, Shared/StudUI, Config/UITokens, UI/HudIcons.
+-- фазы, названием и обратным отсчётом, под ней полоса фазы и подпись на тёмной капсуле: «до Судной ночи: N дней»,
+-- в последние два дня — «Судная ночь — завтра / сегодня», в подготовку и Судную ночь — что делать (D50). Фазу клиент
+-- считает сам той же функцией, что и сервер (Shared/GameTime от общего времени), поэтому таймер верен с первой
+-- секунды, даже при входе посреди цикла. Зависит от Shared/GameTime, Shared/StudUI, Config/UITokens, UI/HudIcons.
 
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -29,14 +30,31 @@ local function clock(seconds: number): string
 	return ("%d:%02d"):format(s // 60, s % 60)
 end
 
-local function info(state: GameTime.State): string
+-- «1 день», «2 дня», «5 дней».
+local function days(n: number): string
+	local tail, tens = n % 10, n % 100
+	local word = if tail == 1 and tens ~= 11
+		then "день"
+		elseif tail >= 2 and tail <= 4 and (tens < 12 or tens > 14) then "дня"
+		else "дней"
+	return ("%d %s"):format(n, word)
+end
+
+-- Подпись под капсулой и её цвет: в последний день — предупреждение (D50: было «до Судной ночи: 0 дн.»).
+local function info(state: GameTime.State): (string, Color3)
+	local cfg = UITokens.TimeHud
 	if state.phase == "DoomNight" then
-		return "Кражи из музеев разрешены"
+		return "Кражи из музеев разрешены", cfg.PhaseColor.DoomNight
 	elseif state.phase == "Preparation" then
-		return "Расставьте защиту музея"
+		return "Расставьте защиту музея", cfg.PhaseColor.Preparation
 	end
 	local left = GameTime.DaysToDoom(state)
-	return ("до Судной ночи: %d дн."):format(left)
+	if left <= 0 then
+		return "Судная ночь — сегодня", cfg.PhaseColor.DoomNight
+	elseif left == 1 then
+		return "Судная ночь — завтра", cfg.PhaseColor.Preparation
+	end
+	return "до Судной ночи: " .. days(left), UI.Colors.White
 end
 
 -- Собирает таймер в gui и возвращает функцию отрисовки render(state, remaining). Отдельно от Init, чтобы таймер
@@ -107,13 +125,30 @@ function TimeController.Build(gui: ScreenGui, _touch: boolean): (GameTime.State,
 	fill.Size = UDim2.fromScale(0, 1)
 	fill.Parent = bar
 	UI.Corner(fill, math.floor(cfg.Bar.Y / 2))
-	local infoText = UI.Text(holder, "", {
+	-- подпись — на тёмной полупрозрачной капсуле по ширине текста: читается на любом фоне (D50)
+	local pill = Instance.new("Frame")
+	pill.Name = "InfoPill"
+	pill.BackgroundColor3 = cfg.Fill
+	pill.BackgroundTransparency = cfg.InfoPill.Transparency
+	pill.AutomaticSize = Enum.AutomaticSize.X
+	pill.Size = UDim2.fromOffset(0, cfg.InfoSize + cfg.InfoPill.Pad)
+	pill.AnchorPoint = Vector2.new(0.5, 0)
+	pill.Position = UDim2.new(0.5, 0, 0, cfg.Size.Y + cfg.Bar.Y + 8)
+	pill.Parent = holder
+	UI.Corner(pill, math.floor((cfg.InfoSize + cfg.InfoPill.Pad) / 2))
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, cfg.InfoPill.Side)
+	padding.PaddingRight = UDim.new(0, cfg.InfoPill.Side)
+	padding.Parent = pill
+	local infoText = UI.Text(pill, "", {
 		Name = "Info",
 		Font = "Bold",
-		Size = UDim2.new(1, 40, 0, cfg.InfoSize + 4),
-		Position = UDim2.new(0.5, 0, 0, cfg.Size.Y + cfg.Bar.Y + 10),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Size = UDim2.fromScale(0, 1),
+		Position = UDim2.new(),
+		AnchorPoint = Vector2.zero,
 		TextSize = cfg.InfoSize,
+		AutoX = true,
+		Thickness = 2,
 		ZIndex = 9,
 	})
 
@@ -130,7 +165,7 @@ function TimeController.Build(gui: ScreenGui, _touch: boolean): (GameTime.State,
 			fill.BackgroundColor3 = cfg.PhaseColor[state.phase]
 			capsule.BackgroundColor3 = if state.phase == "DoomNight" then cfg.DoomFill else cfg.Fill
 			icon.Image = HudIcons.Get(state.phase)
-			infoText.Text = info(state)
+			infoText.Text, infoText.TextColor3 = info(state)
 			Motion.PopIn(capsule)
 		end
 		local text = clock(remaining)
