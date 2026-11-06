@@ -58,6 +58,21 @@ function MeshBuilder.Get(name: string): MeshModels.MeshModel?
 	return MeshModels[name]
 end
 
+-- У модели name есть данные и загрузились все её меши (иначе её деталей не будет видно).
+function MeshBuilder.IsReady(name: string): boolean
+	local data = MeshModels[name]
+	if not data then
+		return false
+	end
+	MeshBuilder.Preload()
+	for _, part in data.parts do
+		if not templates[part.mesh] then
+			return false
+		end
+	end
+	return true
+end
+
 local function roleColor(code: string, accent: Color3): Color3
 	if code == "Accent" or code == "DecorAccent" then
 		return accent
@@ -71,6 +86,7 @@ export type BuildOptions = {
 	accent: Color3?, -- цвет участка для ролей Accent / AccentDark / DecorAccent
 	decor: boolean?, -- показывать детали декора (чётные уровни музея)
 	name: string?,
+	variant: string?, -- MaterialVariant для Plastic (музей D48: LegoSquaresSoft по UV меша)
 }
 
 -- Модель name в точке cframe (начало модели — центр у пола, лицо в -z). nil — такой модели нет.
@@ -97,6 +113,9 @@ function MeshBuilder.Build(name: string, cframe: CFrame, parent: Instance, optio
 		mesh.CFrame = cframe * CFrame.new(part.center) * FLIP
 		mesh.Color = roleColor(part.color, accent)
 		mesh.Material = (Enum.Material :: any)[part.material]
+		if opts.variant and part.material == "Plastic" then
+			mesh.MaterialVariant = opts.variant
+		end
 		mesh.Transparency = if part.material == "Glass" then GameConfig.Models.GlassTransparency else 0
 		mesh.CastShadow = part.material ~= "Neon"
 		mesh.Anchored = true

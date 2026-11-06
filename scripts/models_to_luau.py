@@ -11,7 +11,10 @@ import json
 import os
 import re
 
-PACKS = ["Pack1_dumbbells"]  # музеи (Pack1) строятся кодом — World/Models/MuseumHall (D36)
+# Музей D48-C (Pack3_d48) и защита (Pack4_d48_defense) — только когда владелец импортировал FBX и есть meshids
+# (docs/D48_INTEGRATION.md §10); до этого игра показывает Part-версию (World/MuseumVisual).
+PACKS = ["Pack1_dumbbells"]
+OPTIONAL_PACKS = ["Pack3_d48", "Pack4_d48_defense"]
 OUT = os.path.join("src", "server", "World", "MeshModels.luau")
 
 
@@ -73,10 +76,17 @@ def main():
         "return {",
     ]
     museum_extra = museum_constants() if "Pack1" in PACKS else {}
-    for pack in PACKS:
+    packs = PACKS + [p for p in OPTIONAL_PACKS if os.path.exists(os.path.join("assets", "models", p + ".meshids.json"))]
+    for pack in packs:
         layout = json.load(open(os.path.join("assets", "models", pack + ".layout.json"), encoding="utf-8"))
         ids = json.load(open(os.path.join("assets", "models", pack + ".meshids.json"), encoding="utf-8"))[pack]
         models = layout["museums"] if "museums" in layout else layout
+        if len(models) == 1 and "roles" not in next(iter(models.values())):
+            models = next(iter(models.values()))  # пачки D48: {"d48": {модель: …}}
+        missing = [f"{name}_{role}" for name, data in models.items() for role in data["roles"]
+                   if f"{name}_{role}" not in ids]
+        if missing:
+            raise SystemExit(f"{pack}: нет MeshId у {len(missing)} мешей (например {missing[0]}) — импорт неполный")
         for name, data in models.items():
             lines.append(f"\t{name} = {{")
             if "title" in data:

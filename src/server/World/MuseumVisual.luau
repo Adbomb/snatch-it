@@ -1,7 +1,7 @@
 -- Вид музея D48-C по уровню (ТЗ владельца 2026-11-06): ставит модули по Config/MuseumLayout.Modules и для каждого
 -- решает, чем его показать. GameConfig.Museum.Visual = "Parts" — временная Part-версия (World/Models/MuseumD48);
--- "Mesh" — меши пачки Pack3_d48 (World/MeshBuilder), если у модуля есть MeshId, иначе тот же модуль из Part-версии
--- (с предупреждением в Output). Оболочка модуля (пол, стены, ступени — кирпичи с collide) строится всегда; при мешах
+-- "Mesh" — меши пачки Pack3_d48 (World/MeshBuilder), если у модуля есть MeshId и все его меши загрузились, иначе тот же
+-- модуль из Part-версии (с предупреждением в Output). Оболочка модуля (пол, стены, ступени — кирпичи с collide) строится всегда; при мешах
 -- она невидима, поэтому столкновения и запросы одинаковы в обоих режимах и не пропадают без MeshId.
 -- Детали вида модулей хранилища в здание не входят: их шаблон (ReplicatedStorage.MuseumVisual.VaultDecor, оси
 -- участка) копирует к себе только клиент владельца (Controllers/MuseumVisualController).
@@ -19,6 +19,7 @@ local MuseumD48 = require(ServerScriptService.Server.World.Models.MuseumD48)
 
 local FOLDER = "MuseumVisual"
 local VAULT_DECOR = "VaultDecor"
+local SOFT = "LegoSquaresSoft" -- плитка D36 по UV мешей (1 единица UV = 8 ст.)
 
 local warned = false
 
@@ -29,15 +30,15 @@ function MuseumVisual.UsesMesh(model: string): boolean
 	if GameConfig.Museum.Visual ~= "Mesh" then
 		return false
 	end
-	if MeshBuilder.Get(model) then
+	if MeshBuilder.IsReady(model) then
 		return true
 	end
 	if not warned then
 		warned = true
 		Log.Warn(
 			"MuseumVisual",
-			"режим Mesh: у модулей музея D48 нет MeshId (World/MeshModels) — показана Part-версия, стены и "
-				.. "столкновения те же"
+			"режим Mesh: у модулей музея D48 нет MeshId или меши не загрузились (World/MeshModels) — такие модули "
+				.. "показаны Part-версией, стены и столкновения те же"
 		)
 	end
 	return false
@@ -91,7 +92,7 @@ function MuseumVisual.Build(level: number, origin: CFrame, parent: Instance): Mo
 		model:SetAttribute("Mesh", mesh)
 		ModelBuilder.Place(model, at, building)
 		if mesh and not MuseumD48.VaultModules[m.model] then
-			MeshBuilder.Build(m.model, at, model, { name = "Mesh" })
+			MeshBuilder.Build(m.model, at, model, { name = "Mesh", variant = SOFT })
 		end
 	end
 	building.WorldPivot = origin
@@ -121,7 +122,7 @@ function MuseumVisual.PublishVaultDecor()
 		if MuseumD48.VaultModules[m.model] then
 			local at = frame(CFrame.identity, m)
 			if MuseumVisual.UsesMesh(m.model) then
-				MeshBuilder.Build(m.model, at, decor, { name = m.model })
+				MeshBuilder.Build(m.model, at, decor, { name = m.model, variant = SOFT })
 			else
 				local bricks = {}
 				for _, brick in MuseumD48.Module(m.model) or {} do
