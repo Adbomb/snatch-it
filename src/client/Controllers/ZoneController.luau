@@ -1,6 +1,6 @@
 -- Уровни коридора на клиенте (D41): плашка входа в уровень и «живые» голограммы названий.
 -- Плашка — сверху по центру на 1.5 с: смайлик настроения уровня (GameConfig.Zones[i].mood, от доброго к страшному),
--- «УРОВЕНЬ N» и название; цвет панели — по номеру зоны (UITokens.LevelBanner). Показывается при каждом входе в
+-- название уровня (D49: без номера); цвет панели — по номеру зоны (UITokens.LevelBanner). Показывается при каждом входе в
 -- уровень (из Safe Zone или из соседнего уровня). В какой зоне игрок — по полу зон (workspace.World.Map.Zones,
 -- атрибут Zone у папки зоны). Голограммы (тег Hologram) слегка покачиваются и мерцают — только у этого клиента;
 -- ночью (на карте NightBarrier) надписи уровней гаснут. Теги Spin и Bob — вращение и покачивание украшений магазинов.
@@ -38,7 +38,7 @@ local function gradient(index: number): ColorSequence
 	return ColorSequence.new(Color3.fromHex(pair[1]), Color3.fromHex(pair[2]))
 end
 
--- Плашка: CanvasGroup (плавное появление всей плашки) → панель Stud-UI, круг со смайликом, номер, название.
+-- Плашка: CanvasGroup (плавное появление всей плашки) → панель Stud-UI, круг со смайликом, название.
 local function buildBanner(gui: ScreenGui)
 	local group = Instance.new("CanvasGroup")
 	group.Name = "LevelBanner"
@@ -84,27 +84,17 @@ local function buildBanner(gui: ScreenGui)
 	emoji.Parent = circle
 
 	local left = CFG.Emoji + 32
-	local number = UI.Text(panel, "", {
-		Name = "Number",
-		Font = "Bold",
-		TextSize = CFG.NumberSize,
-		AlignX = Enum.TextXAlignment.Left,
-		AnchorPoint = Vector2.zero,
-		Size = UDim2.new(1, -left - 12, 0, CFG.NumberSize + 4),
-		Position = UDim2.fromOffset(left, 14),
-		ZIndex = 9,
-	})
 	local title, shadow = UI.ShadowText(panel, "", {
 		Name = "Title",
 		ShadowName = "TitleShadow",
 		Max = CFG.TitleSize,
 		AlignX = Enum.TextXAlignment.Left,
-		AnchorPoint = Vector2.zero,
+		AnchorPoint = Vector2.new(0, 0.5),
 		Size = UDim2.new(1, -left - 12, 0, CFG.TitleSize + 6),
-		Position = UDim2.fromOffset(left, 36),
+		Position = UDim2.new(0, left, 0.5, 2),
 	})
 	banner = group
-	parts = { panel = panel, emoji = emoji, number = number, title = title, shadow = shadow, ring = ring, pop = pop }
+	parts = { panel = panel, emoji = emoji, title = title, shadow = shadow, ring = ring, pop = pop }
 end
 
 -- Показать плашку уровня index: появление, 1.5 с на экране, исчезновение (новый вход перебивает старый).
@@ -120,7 +110,6 @@ function ZoneController.Show(index: number)
 		degrade.Color = gradient(index)
 	end
 	parts.emoji.Text = zone.mood or "🙂"
-	parts.number.Text = ("УРОВЕНЬ %d"):format(index)
 	local name = TextCase.Upper(zone.name)
 	parts.title.Text = name
 	parts.shadow.Text = name

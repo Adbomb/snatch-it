@@ -1,4 +1,5 @@
--- Пока игрок что-то несёт: плашка «Ты несёшь…» внизу по центру и кнопка «Бросить» (UI_KIT.md), клавиша G.
+-- Пока игрок что-то несёт: плашка «Ты несёшь…» внизу по центру и над ней кнопка «Бросить» (UI_KIT.md, контекст HUD v2
+-- D48 v2: справа — колонка меню, D49), клавиша G.
 -- Отправляет серверу только намерение «брось», без аргументов. Зависит от Remotes, Items, UIKit, UITokens.
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -51,7 +52,7 @@ function CarryController.Init()
 		kind = "Stop",
 		text = "Бросить",
 		parent = gui,
-		anchorPoint = Vector2.new(1, 1),
+		anchorPoint = Vector2.new(0.5, 1),
 		position = cfg.position,
 		size = cfg.size,
 	})

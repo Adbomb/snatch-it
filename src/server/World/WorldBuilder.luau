@@ -433,12 +433,10 @@ local function buildZone(index: number, parent: Instance)
 		line.Parent = f
 	end
 
-	-- Голографическое название уровня высоко над входом, лицом к входящему (D41): номер, название, босс. Низ надписи —
-	-- выше головы игрока и выше босса: не закрывает обзор.
+	-- Голографическое название уровня высоко над входом, лицом к входящему (D41): только название (D49 — без номера
+	-- уровня и имени босса). Низ надписи — выше головы игрока и выше босса: не закрывает обзор.
 	Hologram.Build({
-		top = ("Уровень %d"):format(index),
 		title = zone.name,
-		subtitle = zone.boss,
 		accent = accent,
 		size = MapLayout.HologramSize,
 		hideAtNight = true,

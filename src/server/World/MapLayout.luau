@@ -63,9 +63,9 @@ MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), siz
 MapLayout.ZoneSize = 95
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
 -- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
-MapLayout.HologramSize = Vector2.new(40, 11) -- надпись уровня, стадов
+MapLayout.HologramSize = Vector2.new(40, 7) -- надпись уровня, стадов (D49: только название)
 -- Центр надписи над полом: низ на 16.5 — выше головы и выше боссов (пёс 9.8, торговец 14.9), не мешает обзору.
-MapLayout.HologramHeight = 22
+MapLayout.HologramHeight = 20
 MapLayout.HologramInset = 10 -- от входа в зону вглубь
 MapLayout.PylonX = 86 -- светящиеся столбики на границах зон, у обрывов
 MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНАЯ ЗОНА» на траве у входа в коридор
