@@ -32,6 +32,7 @@ GameConfig.Theft = {
 	-- D52: прямая видимость экспоната — луч от глаз вора (EyeHeight над корнем) к точке ExhibitLift над верхом тумбы
 	EyeHeight = 1.5,
 	ExhibitLift = 1,
+	ReachSlack = 1.5, -- запас к Distance на сеть при проверке кражи (свой, не общий DistanceTolerance)
 }
 
 -- Проверка невозможных перемещений (D52, Services/MoveGuard): смещение по горизонтали не больше

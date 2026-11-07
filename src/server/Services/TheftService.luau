@@ -3,14 +3,14 @@
 -- сам: начало удержания (PromptButtonHoldBegan) резервирует экспонат, музей и вора (Util/TheftLedger), отпускание или
 -- уход отменяет, завершение (Triggered) проверяет, что удержание длилось нужное время. И в начале, и в конце вор
 -- должен быть рядом, внутри музея (зал или открытая галерея) и видеть экспонат — не через стену (D52,
--- Util/MuseumSpace). После отменённой или сорванной попытки — пауза RetrySeconds (D52). Вор с добычей не может
+-- Shared/MuseumSpace). После отменённой или сорванной попытки — пауза RetrySeconds (D52). Вор с добычей не может
 -- перемещаться быстрее бега (Services/MoveGuard: при переноске и при сдаче), иначе добыча возвращается. Снятый экспонат
 -- (Stolen) вор несёт к сундуку своего музея; сдача — передача владения с журналом (DESIGN §6, Util/TransferJournal,
 -- DataService): запись — у вора в инвентаре (Stored, без дохода до выставления), у прежнего владельца удалена.
 -- Провал — вор отпустил, бросил, проиграл, вышел, его вынесло ночью или вышли 10 с доставки — экспонат сразу
 -- возвращается на свой постамент (не падает и не подбирается). Владелец вышел — кража отменяется, экспонат у него.
 -- Зависит от ItemRegistry, CarryService, DataService, InventoryService, MuseumService, PlotService, Shared/GameTime,
--- Util/TheftLedger, Util/MuseumSpace, Util/*, GameConfig, Config/Items.
+-- Util/TheftLedger, Shared/MuseumSpace, Util/*, GameConfig, Config/Items.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +18,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
+local MuseumSpace = require(ReplicatedStorage.Shared.MuseumSpace)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
@@ -29,7 +30,6 @@ local MoveGuard = require(Server.Services.MoveGuard)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local Log = require(Server.Util.Log)
-local MuseumSpace = require(Server.Util.MuseumSpace)
 local Notify = require(Server.Util.Notify)
 local Prompts = require(Server.Util.Prompts)
 local RateLimiter = require(Server.Util.RateLimiter)
@@ -141,7 +141,8 @@ local function reachable(thief: any, plot: PlotService.Plot, slot: number): stri
 	if not showcase or not root then
 		return "Кража сорвалась"
 	end
-	if not Validate.IsNear(thief, showcase.Position, cfg.Distance + 1) then
+	-- свой допуск (не общий DistanceTolerance +4): иначе подделанный клиент крал бы с 12 ст. через арку (D52)
+	if (root.Position - showcase.Position).Magnitude > cfg.Distance + cfg.ReachSlack then
 		return "Слишком далеко — подойдите к экспонату"
 	end
 	if not MuseumSpace.Inside(plot, root.Position) then
@@ -478,6 +479,7 @@ end
 -- отменяется, экспонат остаётся у него в профиле.
 function TheftService.OnPlayerLeaving(player: any)
 	fail(player, nil)
+	ledger.retryAt[player.UserId] = nil -- пауза ушедшего не нужна (таблица не копится)
 	for _, uid in ItemRegistry.GetBeingStolenFrom(player.UserId) do
 		local theft = ledger:ByUid(uid)
 		if theft and theft.stage ~= "Delivering" then
@@ -509,7 +511,6 @@ function TheftService.Init()
 		for slot, showcase in plot.showcases do
 			local prompt = Prompts.Create(showcase, "Steal", "Постамент " .. slot, cfg.Distance)
 			prompt.HoldDuration = cfg.HoldSeconds
-			prompt.RequiresLineOfSight = true -- через стену подсказки не видно (D52; сервер проверяет сам)
 			Prompts.BindHold(
 				prompt,
 				function(player)

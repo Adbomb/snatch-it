@@ -381,7 +381,8 @@ local function step(fight: Fight)
 			return
 		end
 	end
-	-- Выпад босса: попадание через HitDelay, если игрок ещё рядом.
+	-- Выпад босса: начатый в дальности — попадает через HitDelay (D52: отскок сразу после своего удара не спасает —
+	-- иначе «ударил и отошёл» бил бы босса без ответа; бой автоматический, уворотов нет).
 	if now >= fight.nextBoss and dist <= reach then
 		fight.nextBoss = now + bossCfg.AttackInterval
 		fight.attacks += 1
@@ -390,8 +391,7 @@ local function step(fight: Fight)
 			if not fight.active then
 				return
 			end
-			local r = Validate.GetLiveRoot(player)
-			if not r or flat(r.Position - BossService.Position(boss)).Magnitude > bossCfg.AttackRange + 2.5 then
+			if not Validate.GetLiveRoot(player) then
 				table.insert(fight.log, "босс промахнулся")
 				return
 			end

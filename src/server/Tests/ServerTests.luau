@@ -559,6 +559,19 @@ test("D52: красть только изнутри музея и при пря�
 	TheftService.Handlers.Complete(B, plotA, 1)
 	check(ItemRegistry.Get(uid).state == "Displayed", "завершили снаружи")
 	check(ItemRegistry.GetCarriedBy(B) == nil, "добыча у вора после провала")
+	-- срыв в конце удержания — тоже пауза
+	near(B, showcase)
+	B:ClearSent()
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "после срыва в конце удержания паузы нет")
+	check(B:WasNotified("новая попытка через"), "нет причины паузы после срыва")
+	-- внутри и видно, но дальше Distance + ReachSlack (свой допуск, не общий +4) — далеко
+	rested(B)
+	local far = GameConfig.Theft.Distance + GameConfig.Theft.ReachSlack + 1
+	B:MoveTo(showcase.Position + (root.Position - showcase.Position).Unit * far)
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "кража с " .. far .. " ст. началась")
+	check(B:WasNotified("Слишком далеко"), "нет причины «далеко»")
 end)
 
 test("D52: после сорванной попытки — пауза 5 с; музей не занят повторным удержанием", function(A, B, ctx)

@@ -1,7 +1,10 @@
 -- Показывает подсказки музея только там, где действие имеет смысл: в своём музее, по состоянию витрины,
 -- рукам, хранилищу и выбору «Переставить». Только внешний вид: каждое действие всё равно проверяет сервер.
 -- «Выставить из инвентаря» открывает окно выбора предмета; выбранный для перестановки экспонат подсвечивается.
--- Зависит от тега MuseumPrompt, атрибутов, InventoryController, UITokens.
+-- «Украсть» — только когда игрок внутри этого музея (зал или открытая галерея, Shared/MuseumSpace — то же правило, что
+-- на сервере, D52): снаружи сквозь стену подсказки нет; в Судную ночь проверяется 4 раза в секунду, во время удержания
+-- подсказка не прячется (иначе удержание сорвалось бы). Видимость экспоната проверяет сервер.
+-- Зависит от тега MuseumPrompt, атрибутов, InventoryController, UITokens, Shared/MuseumSpace.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -9,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("GameConfig"))
 local UITokens = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("UITokens"))
+local MuseumSpace = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MuseumSpace"))
 local InventoryController = require(script.Parent:WaitForChild("InventoryController"))
 
 local PROMPT_TAG = "MuseumPrompt"
@@ -18,8 +22,23 @@ local prompts: { [ProximityPrompt]: true } = {}
 -- слабые ключи: витрины и двери защиты уничтожаются (конец ночи, выход владельца) — таблица их не держит
 local watched: { [Instance]: true } = setmetatable({}, { __mode = "k" }) :: any
 local highlight: Highlight?
+local holding: { [ProximityPrompt]: boolean } = {} -- «Украсть», которую сейчас держат
 
 local MuseumPromptController = {}
+
+local STEAL_CHECK = 0.25 -- секунд между проверками «внутри музея» в Судную ночь
+
+-- Игрок внутри музея участка plot (зал или открытая галерея) — по тому же правилу, что сервер (D52).
+local function insideOf(plot: Model): boolean
+	local origin = plot:GetAttribute("FloorOrigin")
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if typeof(origin) ~= "CFrame" or not root or not root:IsA("BasePart") then
+		return false
+	end
+	local space = { model = plot, floorOrigin = origin, level = plot:GetAttribute("MuseumLevel") or 1 }
+	return MuseumSpace.Inside(space, root.Position)
+end
 
 local function shouldShow(prompt: ProximityPrompt): boolean
 	local holder = prompt.Parent
@@ -52,6 +71,7 @@ local function shouldShow(prompt: ProximityPrompt): boolean
 			and ReplicatedStorage:GetAttribute("Phase") == "DoomNight"
 			and player:GetAttribute("CarryingItemId") == nil
 			and player:GetAttribute("Knocked") ~= true
+			and (holding[prompt] or insideOf(plot :: Model))
 	end
 	if not holder or not plot or plot:GetAttribute("OwnerUserId") ~= player.UserId then
 		return false
@@ -153,6 +173,14 @@ local function track(prompt: Instance)
 	local holder = prompt.Parent
 	watch(holder, "Occupied")
 	watch(holder and holder:FindFirstAncestorWhichIsA("Model"), "OwnerUserId")
+	if prompt:GetAttribute("Action") == "Steal" then
+		prompt.PromptButtonHoldBegan:Connect(function()
+			holding[prompt] = true
+		end)
+		prompt.PromptButtonHoldEnded:Connect(function()
+			holding[prompt] = nil
+		end)
+	end
 	if prompt:GetAttribute("Action") == "FromStorage" then
 		prompt.Triggered:Connect(function()
 			local slot = holder and holder:GetAttribute("Slot")
@@ -168,6 +196,7 @@ function MuseumPromptController.Init()
 	CollectionService:GetInstanceAddedSignal(PROMPT_TAG):Connect(track)
 	CollectionService:GetInstanceRemovedSignal(PROMPT_TAG):Connect(function(prompt)
 		prompts[prompt :: ProximityPrompt] = nil
+		holding[prompt :: ProximityPrompt] = nil
 	end)
 	for _, prompt in CollectionService:GetTagged(PROMPT_TAG) do
 		track(prompt)
@@ -179,6 +208,19 @@ function MuseumPromptController.Init()
 	player:GetAttributeChangedSignal("Knocked"):Connect(refreshAll)
 	player:GetAttributeChangedSignal("HackDevices"):Connect(refreshAll)
 	ReplicatedStorage:GetAttributeChangedSignal("Phase"):Connect(refreshAll)
+	-- «Украсть» зависит от того, где стоит игрок: в Судную ночь — проверять по ходу
+	task.spawn(function()
+		while true do
+			task.wait(STEAL_CHECK)
+			if ReplicatedStorage:GetAttribute("Phase") == "DoomNight" then
+				for prompt in prompts do
+					if prompt:GetAttribute("Action") == "Steal" then
+						prompt.Enabled = shouldShow(prompt)
+					end
+				end
+			end
+		end
+	end)
 end
 
 return MuseumPromptController
