@@ -100,9 +100,7 @@ local function tick(): number
 			if player ~= plot.owner then
 				local root = Validate.GetLiveRoot(player)
 				if root and VaultService.IsInside(plot.floorOrigin:PointToObjectSpace(root.Position)) then
-					root.CFrame = exitCFrame(plot)
-					root.AssemblyLinearVelocity = Vector3.zero
-					MoveGuard.Mark(player) -- перенос сервером (D52)
+					MoveGuard.Teleport(player, exitCFrame(plot)) -- перенос сервером (D52)
 					moved += 1
 					local now = os.clock()
 					if now - (noticeAt[player] or 0) >= cfg.NoticeCooldown then

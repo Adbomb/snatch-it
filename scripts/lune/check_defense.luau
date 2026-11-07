@@ -203,6 +203,43 @@ do
 		math.abs(DefenseRules.PathDistance(center, Vector3.new(7, 0, -9), Vector3.new(7, 0, -6)) - 4) < 1e-6,
 		"путь не дошёл до ловушки — до ближнего конца"
 	)
+	-- D52: зона срабатывания с высотой (радиус 2, высота 4; Y — корень над полом, стоя ≈ 3)
+	local zone = function(from: Vector3?, to: Vector3): boolean
+		return DefenseRules.ZoneHit(center, 2, 4, from, to)
+	end
+	check(zone(Vector3.new(7, 3, -6), Vector3.new(7, 3, 2)), "пробежал по полу через ловушку — касание")
+	check(zone(nil, Vector3.new(7, 3, -1)) and not zone(nil, Vector3.new(7, 7, -1)), "точка: внутри низко — да, высоко — нет")
+	check(
+		not zone(Vector3.new(7, 3, -6), Vector3.new(7, 9, -2)) and not zone(Vector3.new(7, 9, -2), Vector3.new(7, 3, 2)),
+		"прыжок: проверка в воздухе над ловушкой — перелёт, не касание (ни на подъёме, ни на спуске)"
+	)
+	check(
+		not zone(Vector3.new(7, 3, -9), Vector3.new(7, 9, -5)) and zone(Vector3.new(7, 9, -5), Vector3.new(7, 3, -1)),
+		"приземлился прямо в ловушку — касание"
+	)
+	check(not zone(Vector3.new(10, 3, -6), Vector3.new(10, 3, 2)), "прошёл в 3 ст. сбоку — не касание")
+	check(zone(Vector3.new(7, 3, -2), Vector3.new(7, 3, -2)), "стоит в ловушке — касание")
+	check(not zone(Vector3.new(7, 6, -12), Vector3.new(7, 6, 12)), "телепорт высоко над ловушкой — не касание")
+	-- лазер: прыжок над лучом (на отрезке пересечения выше y + LaserHeight) — не касание
+	local top = laser.y + cfg.LaserHeight
+	check(
+		DefenseRules.CrossedLaser(cfg, laser, Vector3.new(0, 3, laser.z - 1.5), Vector3.new(0, 3, laser.z + 1.5), 99),
+		"лазер: пробежал понизу — касание"
+	)
+	check(
+		not DefenseRules.CrossedLaser(
+			cfg,
+			laser,
+			Vector3.new(0, top + 2, laser.z - 1.5),
+			Vector3.new(0, top + 2, laser.z + 1.5),
+			top
+		),
+		"лазер: перелетел выше луча — не касание"
+	)
+	check(
+		not DefenseRules.CrossedLaser(cfg, laser, nil, Vector3.new(0, top + 1, laser.z), top),
+		"лазер: стоит над лучом выше — не касание"
+	)
 	check(
 		DefenseRules.HackFits(3, 3) and DefenseRules.HackFits(5, 2) and not DefenseRules.HackFits(2, 3),
 		"взлом: уровень устройства ≥ уровня музея"

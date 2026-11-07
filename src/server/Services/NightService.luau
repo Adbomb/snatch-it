@@ -42,8 +42,7 @@ local function sweep(players: { Player }): number
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position) then
-			(character :: Model):PivotTo(safePoint())
-			MoveGuard.Mark(player) -- перенос сервером (D52)
+			MoveGuard.Teleport(player, safePoint()) -- перенос сервером (D52)
 			moved += 1
 			Notify.Send(player, "Ночь: коридор уровней закрыт — вы в безопасной зоне", "Stop")
 		end

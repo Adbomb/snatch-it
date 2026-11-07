@@ -5,8 +5,8 @@
 -- одному. В Судную ночь раз в GameConfig.Defense.Tick сервер проверяет чужих (воров) у устройств: дверь не пускает в
 -- музей (зал и галереи) без взлома, ловушка — урон и замедление (вариант в конфиге), капкан — 10 с обездвижен
 -- (одноразовый), лазер — урон и тревога владельцу, робот — бьёт воров в радиусе, если видит их (стены здания
--- закрывают), его можно сломать ударами. Лазер, ловушка и капкан смотрят путь вора за такт (DefenseRules.CrossedLaser,
--- PathDistance): бегущий вор не проскакивает их между проверками. Подсветка устройства: дежурит — бирюзовая, сработало — красная. Взлом двери — удержание 5 с, уроном не прерывается,
+-- закрывают), его можно сломать ударами. Лазер, ловушка и капкан смотрят путь вора за такт с высотой
+-- (DefenseRules.CrossedLaser, ZoneHit): бегущий вор не проскакивает их между проверками, перепрыгнувший — не задевает. Подсветка устройства: дежурит — бирюзовая, сработало — красная. Взлом двери — удержание 5 с, уроном не прерывается,
 -- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
 -- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
 -- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
@@ -38,6 +38,7 @@ local ModelBuilder = require(Server.World.ModelBuilder)
 local DefenseModels = require(Server.World.Models.Defense)
 
 local cfg = GameConfig.Defense
+local TRANSFER_WINDOW = 0.3 -- запас к такту защиты: перенос сервером «за этот такт»
 local FOLDER = "Defense"
 
 type Device = {
@@ -55,7 +56,8 @@ type Museum = {
 	hacked: boolean,
 	cooldowns: { [string]: number }, -- "<вид>:<UserId>" → os.clock следующего срабатывания
 	hackBegan: { [any]: number },
-	last: { [any]: Vector3 }, -- где был вор на прошлом такте (оси участка): лазер, ловушка и капкан смотрят весь путь
+	last: { [any]: { at: Vector3, root: BasePart } }, -- где был вор на прошлом такте (оси участка) и каким персонажем:
+	-- лазер, ловушка и капкан смотрят весь путь
 }
 
 local museums: { [number]: Museum } = {}
@@ -511,32 +513,43 @@ local function tick()
 			for _, thief in players do
 				local root, humanoid = Validate.GetLiveRoot(thief)
 				if
-					thief ~= owner
-					and root
-					and humanoid
-					and humanoid.Health > 0
-					and not thief:GetAttribute("Knocked")
+					thief == owner
+					or not root
+					or not humanoid
+					or humanoid.Health <= 0
+					or thief:GetAttribute("Knocked")
 				then
+					-- нокаут, смерть, нет персонажа: путь отсюда до точки после подъёма или возрождения — не бег (D52)
+					m.last[thief] = nil
+				else
 					local at = toLocal(plot, root.Position)
 					local id = tostring(thief.UserId)
 					local inside = insideHall(at, hasGalleries(plot))
-					-- путь за такт: бегущий вор проходит луч и ловушку между проверками; дальний скачок — перенос
-					local from = m.last[thief]
-					if from and (at - from).Magnitude > cfg.TrackStep then
+					-- путь за такт: бегущий вор проходит луч и ловушку между проверками; дальний скачок — перенос, только
+					-- если переносил сервер (D52: иначе это прыжок или телепорт через устройство — путь проверяется)
+					local last = m.last[thief]
+					local from = if last and last.root == root then last.at else nil -- новый персонаж — без пути
+					if
+						from
+						and (at - from).Magnitude > cfg.TrackStep
+						and MoveGuard.TransferredWithin(thief, cfg.Tick + TRANSFER_WINDOW)
+					then
 						from = nil
 					end
-					m.last[thief] = at
+					m.last[thief] = { at = at, root = root }
 					-- отброс от устройства — к выходу (источник чуть глубже в зале)
 					local push = plot.floorOrigin * (at + Vector3.new(0, 0, cfg.PushDepth))
 					if m.installed.Door and not m.hacked and inside then
-						root.CFrame = plot.floorOrigin
-							* CFrame.new(
-								cfg.Door.At.X + cfg.DoorEject.X,
-								cfg.DoorEject.Y,
-								cfg.Door.At.Z + cfg.DoorEject.Z
-							)
-							* CFrame.Angles(0, math.pi, 0)
-						MoveGuard.Mark(thief) -- выброс у двери — перенос сервером (D52)
+						MoveGuard.Teleport( -- выброс у двери — перенос сервером (D52)
+							thief,
+							plot.floorOrigin
+								* CFrame.new(
+									cfg.Door.At.X + cfg.DoorEject.X,
+									cfg.DoorEject.Y,
+									cfg.Door.At.Z + cfg.DoorEject.Z
+								)
+								* CFrame.Angles(0, math.pi, 0)
+						)
 						if ready(m, "Door:" .. id, cfg.NoticeCooldown) then
 							Notify.Send(thief, "Усиленная дверь: нужен взлом", "Stop")
 						end
@@ -544,12 +557,7 @@ local function tick()
 						continue -- выставлен наружу: остальные устройства его уже не видят
 					end
 					local trap = m.installed.Trap
-					if
-						trap
-						and inside
-						and DefenseRules.PathDistance(trap.at, from, at) <= cfg.Trap.Radius
-						and math.abs(at.Y) < cfg.TrapHeight
-					then
+					if trap and inside and DefenseRules.ZoneHit(trap.at, cfg.Trap.Radius, cfg.TrapHeight, from, at) then
 						if ready(m, "Trap:" .. id, cfg.Trap.Cooldown) then
 							glow(trap, "active", 1)
 							PvpService.DamagePlayer(thief, PvpService.MaxHP(thief) * cfg.Trap.Damage, push)
@@ -565,8 +573,7 @@ local function tick()
 						snare
 						and not snare.broken
 						and inside
-						and math.abs(at.Y) < cfg.TrapHeight
-						and DefenseRules.PathDistance(snare.at, from, at) <= cfg.Snare.Radius
+						and DefenseRules.ZoneHit(snare.at, cfg.Snare.Radius, cfg.TrapHeight, from, at)
 						and PvpService.Snare(thief, cfg.Snare.Seconds) -- одноразовый: тратится, только если поймал
 					then
 						snare.broken = true
@@ -583,8 +590,7 @@ local function tick()
 						local beam = cfg.Lasers[laser.spot]
 						if
 							beam
-							and DefenseRules.CrossedLaser(cfg, beam, from, at)
-							and at.Y < beam.y + cfg.LaserHeight
+							and DefenseRules.CrossedLaser(cfg, beam, from, at, beam.y + cfg.LaserHeight)
 							and ready(m, "Laser:" .. id, cfg.Laser.Cooldown)
 						then
 							glow(laser, "active", 1)

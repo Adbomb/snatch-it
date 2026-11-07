@@ -40,7 +40,9 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	end
 	local data = DataService.GetData(player)
 	if not data then
-		return false -- сессию перехватили сразу после загрузки (игрока кикнули): дальше не строим
+		-- сессию перехватили сразу после загрузки: без профиля играть нельзя (участок освободит выход)
+		player:Kick("Сохранение открыто на другом сервере. Перезайдите.")
+		return false
 	end
 	PlotService.ShowLevel(plot, data.museumLevel)
 	GymService.OnPlayerLoaded(player, plot)

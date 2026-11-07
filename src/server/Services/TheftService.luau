@@ -264,9 +264,15 @@ local function confirm(victim: any, thief: any, uid: string, id: string)
 			return type(marks) == "table" and marks[id] ~= nil
 		end)
 		if not victimSaved and not DataService.GetData(victim) then
-			-- жертва вышла: её последнее сохранение — финальное; смотрим метку в нём
-			local data = DataService.ReadSaved(victim.UserId)
-			victimSaved = data ~= nil and type(data.transfersOut) == "table" and data.transfersOut[id] ~= nil
+			-- жертва вышла: её финальное сохранение (EndSession) может ещё писаться — читать до SaveTimeout (D52)
+			local readUntil = os.clock() + cfg.SaveTimeout
+			repeat
+				local data = DataService.ReadSaved(victim.UserId)
+				victimSaved = data ~= nil and type(data.transfersOut) == "table" and data.transfersOut[id] ~= nil
+				if not victimSaved then
+					task.wait(cfg.ReadRetrySeconds)
+				end
+			until victimSaved or os.clock() > readUntil
 			break
 		end
 	end
@@ -307,6 +313,25 @@ end
 local transferBody: (any, TheftLedger.Theft, string) -> ()
 
 -- Вор у сундука своего музея (InventoryService.tryStoreCarried): сдача добычи.
+-- Вор с добычей переместился невозможно (D52, MoveGuard). В режиме логирования (MoveGuard.Enforce = false) — только
+-- запись в лог, кража идёт дальше; иначе — срыв, добыча владельцу.
+local function impossible(thief: any, uid: string): boolean
+	if MoveGuard.Step(thief) then
+		return false
+	end
+	if not MoveGuard.Enforced() then
+		Log.Warn(
+			"TheftService",
+			("%s несёт %s: нарушение перемещения записано, кража идёт (режим логирования)"):format(
+				tostring(thief.Name),
+				uid
+			)
+		)
+		return false
+	end
+	return true
+end
+
 local function deliver(thief: any, plot: PlotService.Plot)
 	if plot.owner ~= thief then
 		return
@@ -317,7 +342,7 @@ local function deliver(thief: any, plot: PlotService.Plot)
 	if not uid or not entry or entry.state ~= "Stolen" or not theft or theft.uid ~= uid then
 		return
 	end
-	if theft.stage == "Carrying" and not MoveGuard.Step(thief) then
+	if theft.stage == "Carrying" and impossible(thief, uid) then
 		fail(thief, IMPOSSIBLE)
 		return
 	end
@@ -453,7 +478,7 @@ local function sweep()
 						else nil
 				)
 			end
-		elseif theft.stage == "Carrying" and thief and not MoveGuard.Step(thief) then
+		elseif theft.stage == "Carrying" and thief and impossible(thief, theft.uid) then
 			local failed = ledger:Fail(theft.thief, now)
 			if failed then
 				returnToOwner(failed, IMPOSSIBLE)
@@ -487,12 +512,28 @@ function TheftService.OnPlayerLeaving(player: any)
 			local entry = ItemRegistry.Get(uid)
 			local carrier = entry and (entry.carrier or entry.thief)
 			local part = entry and entry.part
-			if entry and entry.state == "Stolen" and carrier then
-				part = CarryService.ReleaseStolen(carrier, uid) or part
+			-- каждый экспонат отдельно (D52): ошибка посреди не оставит его «Stolen» в реестре и в руках вора без кражи
+			local ok, err = pcall(function()
+				if entry and entry.state == "Stolen" and carrier then
+					part = CarryService.ReleaseStolen(carrier, uid) or part
+				end
+				ItemRegistry.Unload(uid)
+			end)
+			if not ok then
+				Log.Warn(
+					"TheftService",
+					("уход владельца, %s: %s — запасная очистка"):format(
+						uid,
+						tostring(err)
+					)
+				)
+				if entry and entry.state == "Stolen" and carrier then
+					pcall(CarryService.ReleaseStolen, carrier, uid)
+				end
+				pcall(ItemRegistry.Unload, uid)
 			end
-			ItemRegistry.Unload(uid)
 			if part then
-				part:Destroy()
+				pcall(part.Destroy, part)
 			end
 			if carrier then
 				Notify.Send(carrier, "Хозяин музея ушёл — добыча исчезла", "Stop")
@@ -548,6 +589,7 @@ TheftService.Handlers = {
 	Deliver = deliver,
 	Sweep = sweep,
 	Ledger = ledger,
+	Confirm = confirm,
 }
 
 return TheftService

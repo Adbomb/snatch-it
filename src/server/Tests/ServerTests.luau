@@ -601,68 +601,159 @@ test("D52: после сорванной попытки — пауза 5 с; м�
 	TheftService.Handlers.Cancel(B)
 end)
 
+-- Проверки MoveGuard в режиме «нарушение срывает кражу, капкан возвращает» (по умолчанию — режим логирования, D52).
+local function enforced(fn: () -> ())
+	local was = GameConfig.MoveGuard.Enforce
+	GameConfig.MoveGuard.Enforce = true
+	local ok, err = pcall(fn)
+	GameConfig.MoveGuard.Enforce = was
+	if not ok then
+		error(err, 0)
+	end
+end
+
+-- Площадка под тестовым игроком (высоко над картой, вдали от всего): ровный пол, над головой пусто. base — где стоит
+-- корень на площадке.
+local function onPlatform(player: any, fn: (base: Vector3, platform: Part) -> ())
+	local root = player.Character.PrimaryPart :: BasePart
+	local platform = Instance.new("Part")
+	platform.Name = "MoveGuardTestFloor"
+	platform.Anchored = true
+	platform.Archivable = false
+	platform.Size = Vector3.new(60, 1, 60)
+	platform.CFrame = CFrame.new(root.Position - Vector3.new(0, 10, 0))
+	platform.Parent = workspace
+	local base = platform.Position + Vector3.new(0, platform.Size.Y / 2 + root.Size.Y / 2, 0)
+	local ok, err = pcall(fn, base, platform)
+	platform:Destroy()
+	if not ok then
+		error(err, 0)
+	end
+end
+
 test("D52: вор с добычей не телепортируется; рывок после лагов — можно; из капкана не уйти", function(A, B, ctx)
+	enforced(function()
+		local uid = displayOwn(ctx, A, 1)
+		doomNight()
+		local plotA, plotB = plotOf(A), plotOf(B)
+		-- телепорт с добычей к своему сундуку: при переноске (sweep) — провал, экспонат владельцу
+		steal(B, A, 1)
+		check(ItemRegistry.Get(uid).state == "Stolen", "B не унёс экспонат")
+		near(B, plotB.chest)
+		TheftService.Handlers.Sweep()
+		check(ItemRegistry.Get(uid).state == "Displayed", "телепорт с добычей не замечен при переноске")
+		check(B:WasNotified("Слишком быстрое перемещение"), "нет причины вору")
+		-- телепорт прямо к сундуку и сдача сразу — сдача отклонена
+		rested(B)
+		steal(B, A, 1)
+		near(B, plotB.chest)
+		InventoryService.Handlers.StoreCarried(B, plotB)
+		check(ItemRegistry.Get(uid).state == "Displayed", "сдача после телепорта прошла")
+		check(
+			DataService.GetData(A).items[uid] ~= nil and DataService.GetData(B).items[uid] == nil,
+			"профили изменились"
+		)
+		-- честный бег челноком по залу не быстрее скорости (пол под ногами) — добыча остаётся
+		rested(B)
+		steal(B, A, 1)
+		local humanoid = B.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+		local root = B.Character.PrimaryPart :: BasePart
+		local origin = plotA.floorOrigin
+		local half = humanoid.WalkSpeed * 0.75
+		B:MoveTo(origin * Vector3.new(-half, 3, 4))
+		MoveGuard.Mark(B) -- тестовый перенос в зал — как перенос сервером
+		local step = humanoid.WalkSpeed * 0.25
+		for i = 1, 4 do
+			task.wait(0.25)
+			B:MoveTo(origin * Vector3.new(-half + (i % 2) * step, 3, 4))
+			TheftService.Handlers.Sweep()
+		end
+		check(ItemRegistry.Get(uid).state == "Stolen", "честный бег сочтён телепортом")
+		-- сеть молчала 1.5 с, затем рывок на столько, сколько можно пробежать за это время — не нарушение
+		task.wait(1.5)
+		B:MoveTo(origin * Vector3.new(half, 3, 4))
+		TheftService.Handlers.Sweep()
+		check(ItemRegistry.Get(uid).state == "Stolen", "рывок после зависания сети сочтён телепортом")
+		-- телепорт, который сервер тут же «перенёс» (выброс из чужого хранилища), не прячет нарушение до переноса
+		B:MoveTo(origin * Vector3.new(half, 3, 4) + Vector3.new(0, 0, 120))
+		MoveGuard.Teleport(B, CFrame.new(origin * Vector3.new(0, 3, -20)))
+		TheftService.Handlers.Sweep()
+		check(ItemRegistry.Get(uid).state == "Displayed", "телепорт перед переносом сервером не замечен")
+		-- капкан: ушёл дальше PinRadius — сервер возвращает; перенос сервером точку капкана не меняет; после — свободен
+		B:MoveTo(plotA.floorOrigin.Position + Vector3.new(0, 3, 0))
+		check(PvpService.Handlers.Snare(B, 1), "капкан не сработал")
+		local trapAt = root.Position
+		local function away(): number
+			return Vector3.new(root.Position.X - trapAt.X, 0, root.Position.Z - trapAt.Z).Magnitude
+		end
+		B:MoveTo(trapAt + Vector3.new(10, 0, 0))
+		MoveGuard.CheckPins()
+		check(away() <= GameConfig.MoveGuard.PinRadius, "из капкана ушёл: " .. away())
+		MoveGuard.Teleport(B, CFrame.new(trapAt + Vector3.new(0, 0, 30))) -- например, выброс из хранилища
+		MoveGuard.CheckPins()
+		check(away() <= GameConfig.MoveGuard.PinRadius, "перенос сервером снял капкан: " .. away())
+		check(B:GetAttribute("Snared") == true, "капкан снялся от возврата")
+		task.wait(1.2)
+		check(not MoveGuard.IsPinned(B) and B:GetAttribute("Snared") == nil, "после капкана не свободен")
+		B:MoveTo(trapAt + Vector3.new(10, 0, 0))
+		MoveGuard.CheckPins()
+		check((root.Position - (trapAt + Vector3.new(10, 0, 0))).Magnitude < 0.5, "после капкана вернули к нему")
+	end)
+end)
+
+test("D52: режим логирования — нарушение записано, кража не срывается, капкан не возвращает", function(A, B, ctx)
+	check(not MoveGuard.Enforced(), "по умолчанию должен быть режим логирования")
 	local uid = displayOwn(ctx, A, 1)
 	doomNight()
 	local plotA, plotB = plotOf(A), plotOf(B)
-	-- телепорт с добычей к своему сундуку: при переноске (sweep) — провал, экспонат владельцу
 	steal(B, A, 1)
-	check(ItemRegistry.Get(uid).state == "Stolen", "B не унёс экспонат")
+	local before = B:GetAttribute("MoveViolations") or 0
 	near(B, plotB.chest)
 	TheftService.Handlers.Sweep()
-	check(ItemRegistry.Get(uid).state == "Displayed", "телепорт с добычей не замечен при переноске")
-	check(B:WasNotified("Слишком быстрое перемещение"), "нет причины вору")
-	-- телепорт прямо к сундуку и сдача сразу — сдача отклонена
-	rested(B)
-	steal(B, A, 1)
-	near(B, plotB.chest)
-	InventoryService.Handlers.StoreCarried(B, plotB)
-	check(ItemRegistry.Get(uid).state == "Displayed", "сдача после телепорта прошла")
-	check(DataService.GetData(A).items[uid] ~= nil and DataService.GetData(B).items[uid] == nil, "профили изменились")
-	-- честный бег шагами не быстрее скорости — добыча остаётся
-	rested(B)
-	steal(B, A, 1)
-	local humanoid = B.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
-	local root = B.Character.PrimaryPart :: BasePart
-	local step = humanoid.WalkSpeed * 0.25
-	for _ = 1, 4 do
-		B:MoveTo(root.Position + Vector3.new(step, 0, 0))
-		task.wait(0.25)
-		TheftService.Handlers.Sweep()
-	end
-	check(ItemRegistry.Get(uid).state == "Stolen", "честный бег сочтён телепортом")
-	-- сеть молчала 1.5 с, затем рывок на столько, сколько можно пробежать за это время — не нарушение
-	task.wait(1.5)
-	B:MoveTo(root.Position + Vector3.new(humanoid.WalkSpeed * 1.5, 0, 0))
-	TheftService.Handlers.Sweep()
-	check(ItemRegistry.Get(uid).state == "Stolen", "рывок после зависания сети сочтён телепортом")
+	check(ItemRegistry.Get(uid).state == "Stolen", "в режиме логирования кража сорвалась")
+	check((B:GetAttribute("MoveViolations") or 0) > before, "нарушение не записано")
+	check(not B:WasNotified("Слишком быстрое перемещение"), "вору сообщили о срыве")
 	CarryService.Drop(B)
 	check(ItemRegistry.Get(uid).state == "Displayed", "брошенная добыча не вернулась")
-	-- капкан: ушёл дальше PinRadius — сервер возвращает; после капкана — свободен
 	B:MoveTo(plotA.floorOrigin.Position + Vector3.new(0, 3, 0))
 	check(PvpService.Handlers.Snare(B, 1), "капкан не сработал")
-	local trapAt = root.Position
-	B:MoveTo(trapAt + Vector3.new(10, 0, 0))
+	local root = B.Character.PrimaryPart :: BasePart
+	local spot = root.Position + Vector3.new(10, 0, 0)
+	local count = B:GetAttribute("MoveViolations") or 0
+	B:MoveTo(spot)
 	MoveGuard.CheckPins()
-	local back = Vector3.new(root.Position.X - trapAt.X, 0, root.Position.Z - trapAt.Z).Magnitude
-	check(back <= GameConfig.MoveGuard.PinRadius, "из капкана ушёл: " .. back)
-	check(B:GetAttribute("Snared") == true, "капкан снялся от возврата")
+	check((root.Position - spot).Magnitude < 0.5, "в режиме логирования капкан вернул игрока")
+	check((B:GetAttribute("MoveViolations") or 0) == count + 1, "уход из капкана не записан")
 	task.wait(1.2)
-	check(not MoveGuard.IsPinned(B) and B:GetAttribute("Snared") == nil, "после капкана не свободен")
-	B:MoveTo(trapAt + Vector3.new(10, 0, 0))
-	MoveGuard.CheckPins()
-	check((root.Position - (trapAt + Vector3.new(10, 0, 0))).Magnitude < 0.5, "после капкана вернули к нему")
 end)
 
-test("D52: проверка перемещений — разрешённые переносы сервера и новый персонаж не нарушение", function(A)
+test("D52: проверка перемещений — переносы сервера, запоздавшие пакеты и новый персонаж не нарушение", function(A)
 	local root = A.Character.PrimaryPart :: BasePart
 	MoveGuard.Mark(A)
 	-- перенос сервером
-	MoveGuard.Teleport(A, CFrame.new(root.Position + Vector3.new(200, 0, 0)))
+	local start = root.Position
+	MoveGuard.Teleport(A, CFrame.new(start + Vector3.new(200, 0, 0)))
 	check((MoveGuard.Step(A)), "перенос сервером сочтён телепортом")
-	-- телепорт клиента без отметки — нарушение
+	check(MoveGuard.TransferredWithin(A, 0.5), "перенос не отмечен для защиты")
+	-- запоздавшие пакеты клиента ещё возвращают старую точку, потом — новую: не нарушение
+	A:MoveTo(start)
+	check((MoveGuard.Step(A)), "старая точка сразу после переноса сочтена телепортом")
+	A:MoveTo(start + Vector3.new(200, 0, 0))
+	check((MoveGuard.Step(A)), "новая точка после переноса сочтена телепортом")
+	-- третья точка в отсрочке — нарушение: перенос не даёт бесплатного телепорта
+	A:MoveTo(start + Vector3.new(200, 0, 100))
+	check(not (MoveGuard.Step(A)), "телепорт в отсрочке после переноса не замечен")
+	task.wait(GameConfig.MoveGuard.TransferGrace + 0.1)
+	check(not MoveGuard.TransferredWithin(A, 0.5), "перенос «недавний» через секунду")
+	-- телепорт клиента без переноса сервером — нарушение
 	A:MoveTo(root.Position + Vector3.new(200, 0, 0))
 	check(not (MoveGuard.Step(A)), "телепорт на 200 ст. не замечен")
+	-- телепорт клиента и сразу перенос сервером: нарушение до переноса вернёт следующая проверка
+	MoveGuard.Mark(A)
+	A:MoveTo(root.Position + Vector3.new(150, 0, 0))
+	MoveGuard.Teleport(A, CFrame.new(root.Position + Vector3.new(0, 0, 20)))
+	check(not (MoveGuard.Step(A)), "телепорт перед переносом сервером не замечен")
+	check((MoveGuard.Step(A)), "нарушение до переноса засчитано дважды")
 	-- падение вниз (по вертикали) — не нарушение
 	A:MoveTo(root.Position + Vector3.new(0, -60, 0))
 	check((MoveGuard.Step(A)), "падение сочтено телепортом")
@@ -675,6 +766,181 @@ test("D52: проверка перемещений — разрешённые п
 	check((MoveGuard.Step(A)), "возрождение сочтено телепортом")
 	A.Character = old
 	copy:Destroy()
+end)
+
+test("D52: бег вдвое быстрее, полёт и покачивание — нарушение; бег в допуске, прыжок, падение, край, ферма — нет", function(A)
+	local humanoid = A.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	local speed = humanoid.WalkSpeed
+	local seconds = GameConfig.MoveGuard.HoverSeconds + 1
+	onPlatform(A, function(base: Vector3, platform: Part)
+		-- челноком по площадке, шаг раз в 0.25 с: rate — во сколько раз быстрее скорости персонажа
+		local function shuttle(rate: number, steps: number): boolean
+			A:MoveTo(base)
+			MoveGuard.Mark(A)
+			local side = 1
+			for _ = 1, steps do
+				task.wait(0.25)
+				side = -side
+				A:MoveTo(base + Vector3.new(side * speed * rate * 0.125, 0, 0))
+				if not (MoveGuard.Step(A)) then
+					return false
+				end
+			end
+			return true
+		end
+		check(not shuttle(2, 10), "бег вдвое быстрее скорости не замечен")
+		check(shuttle(1.1, 8), "бег в пределах допуска (×1.1) сочтён нарушением")
+		-- высота: путь — список высот над площадкой по шагам 0.25 с (последняя повторяется до конца)
+		A:MoveTo(base)
+		check(math.abs((MoveGuard.Gap(A) or -1)) < 0.1, "стоящий на площадке не на полу: " .. tostring(MoveGuard.Gap(A)))
+		local limit = MoveGuard.HoverLimit(A)
+		local function fly(at: Vector3, heights: { number }): boolean
+			A:MoveTo(at + Vector3.new(0, heights[1], 0))
+			MoveGuard.Mark(A)
+			local started, i = os.clock(), 1
+			while os.clock() - started < seconds do
+				task.wait(0.25)
+				i += 1
+				A:MoveTo(at + Vector3.new(0, heights[math.min(i, #heights)], 0))
+				if not (MoveGuard.Step(A)) then
+					return false
+				end
+			end
+			return true
+		end
+		check(fly(base, { limit - 2 }), "высота прыжка сочтена полётом")
+		local fall = {}
+		for k = 0, 7 do
+			fall[k + 1] = limit + 14 - 2 * k -- падение 8 ст./с, всё время выше порога
+		end
+		fall[9] = 0
+		check(fly(base, fall), "падение сочтено полётом")
+		check(not fly(base, { limit + 3 }), "полёт выше прыжка не замечен")
+		local bob = {}
+		for k = 1, 12 do
+			bob[k] = limit + (if k % 2 == 0 then 1 else 3) -- вверх-вниз на 2 ст. выше прыжка
+		end
+		check(not fly(base, bob), "покачивание выше прыжка не замечено")
+		-- край площадки: центр корня над пустотой, стопа на краю — не полёт
+		local edge = base + Vector3.new(platform.Size.X / 2 + 1, 0, 0)
+		check(fly(edge, { 0 }), "стоящий на краю сочтён летящим")
+		-- ферма (TrussPart) рядом — лазание, не полёт
+		local truss = Instance.new("TrussPart")
+		truss.Anchored = true
+		truss.Archivable = false
+		truss.Size = Vector3.new(2, 30, 2)
+		truss.CFrame = CFrame.new(base + Vector3.new(0, 15, 2))
+		truss.Parent = workspace
+		local ok, climbed = pcall(fly, base, { limit + 6 })
+		truss:Destroy()
+		check(ok and climbed, "лазание по ферме сочтено полётом")
+	end)
+end)
+
+test("D52: прыжок над ловушкой — не касание; бег и телепорт по полу через неё — касание; перенос сервером — нет", function(A, B)
+	DataService.AddCoins(A, 1e6)
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
+	local museum = DefenseService.Handlers.Museum(A.UserId)
+	check(museum.installed.Trap ~= nil, "ловушка не встала")
+	TimeService.SkipTo("DoomNight", -5)
+	PvpService.Handlers.Reset()
+	local origin = plotOf(A).floorOrigin
+	local fb = PvpService.Handlers.Fighter(B)
+	-- шаг вора по залу (оси участка; y — корень над полом, стоя 3) и такт защиты
+	local function stand(z: number, y: number?)
+		B.Character.PrimaryPart.CFrame = CFrame.new(origin * Vector3.new(5, y or 3, z))
+		DefenseService.Handlers.Tick()
+	end
+	MoveGuard.Teleport(B, CFrame.new(origin * Vector3.new(5, 3, -6))) -- тестовый перенос в зал
+	DefenseService.Handlers.Tick()
+	MoveGuard.Teleport(B, CFrame.new(origin * Vector3.new(5, 3, 16))) -- сервер перенёс через ловушку
+	DefenseService.Handlers.Tick()
+	check(fb.hp == fb.maxHp, "перенос сервером через ловушку засчитан как пробег")
+	-- разбег по 4 ст. за такт, прыжок: над ловушкой — 9 над полом, приземление за ней
+	stand(12)
+	stand(8)
+	stand(5, 9)
+	stand(1)
+	check(fb.hp == fb.maxHp, "прыжок над ловушкой засчитан как касание")
+	-- бег по полу через ловушку за один такт (8 ст.) — касание
+	stand(9)
+	check(fb.hp < fb.maxHp, "пробежал по полу через ловушку — не сработала")
+	-- телепорт клиента по полу через ловушку (дальше TrackStep, сервер не переносил) — касание
+	table.clear(museum.cooldowns)
+	fb.hp = fb.maxHp
+	task.wait(GameConfig.Defense.Tick + 0.4) -- последний перенос сервером уже не «за этот такт»
+	stand(-6)
+	check(fb.hp < fb.maxHp, "телепорт по полу через ловушку не замечен")
+end)
+
+test("D52: ошибка при уходе хозяина посреди кражи — добыча не зависает у вора, экспонат у владельца", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local userId = A.UserId
+	doomNight()
+	steal(B, A, 1)
+	check(ItemRegistry.Get(uid).state == "Stolen" and ItemRegistry.GetCarriedBy(B) == uid, "B не унёс экспонат")
+	local unload = ItemRegistry.Unload
+	local failed = false
+	ItemRegistry.Unload = function(...)
+		if not failed then
+			failed = true
+			error("сбой выгрузки (проверка D52)")
+		end
+		return unload(...)
+	end
+	local ok = pcall(leave, A)
+	ItemRegistry.Unload = unload
+	check(ok and failed, "сбой не смоделирован или выход упал")
+	check(ItemRegistry.Get(uid) == nil, "экспонат ушедшего хозяина остался в реестре")
+	check(ItemRegistry.GetCarriedBy(B) == nil and B:GetAttribute("CarryingItemId") == nil, "добыча осталась у вора")
+	check(countUid(uid) == 0, "деталь экспоната осталась в мире")
+	check(B:WasNotified("Хозяин музея ушёл"), "вору не сообщили")
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "повторный вход не удался")
+	local items = DataService.GetData(again).items
+	check(items[uid] ~= nil and items[uid].place == "slot", "экспонат пропал у владельца")
+	check(DataService.GetData(B).items[uid] == nil, "экспонат и у вора — дубль")
+end)
+
+test("D52: жертва вышла до подтверждения — её финальное сохранение читается повторно", function(A, _B, ctx)
+	local victim = TestPlayer.new("Тест_жертва") -- без профиля на сервере: как вышедшая
+	ctx.track(victim)
+	local id = "D52-проверка"
+	local reads, cleared = 0, nil
+	local readSaved, clearPending, saveAndWait = DataService.ReadSaved, DataService.ClearPending, DataService.SaveAndWait
+	DataService.ReadSaved = function(userId: number, ...): (any?, boolean)
+		if userId ~= victim.UserId then
+			return readSaved(userId, ...)
+		end
+		reads += 1
+		if reads < 3 then
+			return nil, false -- финальная запись (конец сессии) ещё не дошла
+		end
+		return { transfersOut = { [id] = true } }, true
+	end
+	DataService.ClearPending = function(player: any, uid: string, transferId: string)
+		if uid ~= "uid-D52" then
+			return clearPending(player, uid, transferId)
+		end
+		cleared = uid .. "/" .. transferId
+	end
+	DataService.SaveAndWait = function(player: any, ...): boolean
+		if player ~= victim and player ~= A then
+			return saveAndWait(player, ...)
+		end
+		return false
+	end
+	local ok, err = pcall(TheftService.Handlers.Confirm, victim, A, "uid-D52", id)
+	DataService.ReadSaved, DataService.ClearPending, DataService.SaveAndWait = readSaved, clearPending, saveAndWait
+	check(ok, tostring(err))
+	check(reads >= 3, "финальное сохранение прочитано раз: " .. reads)
+	check(cleared == "uid-D52/" .. id, "передача не подтверждена после повторного чтения")
 end)
 
 test("D52: ошибка шага выхода не держит профиль и участок; повторный вход — всё на месте", function(A, _B, ctx)
@@ -714,6 +980,7 @@ test("D52: сессию перехватили до или во время за�
 	first:EndSession()
 	check(not DataService.Handlers.FinishLoad(C, first), "неактивный профиль отдан игроку")
 	check(DataService.GetData(C) == nil, "у игрока есть данные без сессии")
+	check(C.kicked ~= nil, "игрока с перехваченной сессией не кикнули")
 	-- перехват посреди загрузки, пока ждём журнал передач
 	local D = TestPlayer.new("Тест_D")
 	ctx.track(D)
@@ -741,6 +1008,7 @@ test("D52: запросы записи профиля — не чаще MinSaveI
 		return save(self, ...)
 	end
 	local interval = GameConfig.Data.MinSaveInterval
+	DataService.RequestSave(A) -- внеочередное сохранение тоже не чаще интервала (D52)
 	local ok = DataService.SaveAndWait(A, interval * 2 + 1, function()
 		return false -- подтверждение не приходит: запросы повторяются
 	end)
@@ -905,9 +1173,9 @@ test("Защита: лазер ловит вора, пробежавшего л�
 		B.Character.PrimaryPart.CFrame = CFrame.new(origin * Vector3.new(0, 3, z))
 	end
 	local fb = PvpService.Handlers.Fighter(B)
-	stand(beam.z - 30)
+	MoveGuard.Teleport(B, CFrame.new(origin * Vector3.new(0, 3, beam.z - 30))) -- тестовый перенос (D52)
 	DefenseService.Handlers.Tick()
-	stand(beam.z + 1.5) -- перенос через луч (дальше TrackStep)
+	MoveGuard.Teleport(B, CFrame.new(origin * Vector3.new(0, 3, beam.z + 1.5))) -- перенос сервером через луч
 	DefenseService.Handlers.Tick()
 	check(fb.hp == fb.maxHp, "перенос через луч засчитан как пробег")
 	stand(beam.z - 1.5) -- пробежал луч за такт: ни одна из двух точек не в луче

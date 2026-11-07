@@ -202,8 +202,9 @@ end
 -- Путь вора за такт проверки (from → to, оси участка) прошёл через луч. Такт сервера длиннее, чем бегущий вор
 -- пересекает полосу луча, поэтому проверяется весь отрезок, а не только точка to. from = nil — только точка to
 -- (первый такт, перенос).
-function DefenseRules.CrossedLaser(cfg: any, laser: any, from: Vector3?, to: Vector3): boolean
-	if DefenseRules.InLaser(cfg, laser, to) then
+function DefenseRules.CrossedLaser(cfg: any, laser: any, from: Vector3?, to: Vector3, top: number?): boolean
+	local limit = top or math.huge -- top: выше этого (над полом) луч не задевает — перепрыгнул (D52)
+	if DefenseRules.InLaser(cfg, laser, to) and to.Y < limit then
 		return true
 	end
 	if not from then
@@ -226,7 +227,45 @@ function DefenseRules.CrossedLaser(cfg: any, laser: any, from: Vector3?, to: Vec
 	end
 	local xa = from.X + (to.X - from.X) * t0
 	local xb = from.X + (to.X - from.X) * t1
-	return math.max(xa, xb) >= laser.x0 and math.min(xa, xb) <= laser.x1
+	local ya = from.Y + (to.Y - from.Y) * t0
+	local yb = from.Y + (to.Y - from.Y) * t1
+	return math.max(xa, xb) >= laser.x0 and math.min(xa, xb) <= laser.x1 and math.min(ya, yb) < limit
+end
+
+-- Путь вора за такт (from → to, оси участка; Y — высота над полом зала) прошёл через зону срабатывания устройства:
+-- круг radius вокруг center по полу при высоте меньше height (D52). Высота между проверками — по прямой: прыжок над
+-- ловушкой, пойманный в воздухе хоть одной проверкой над зоной, — не касание; бег или телепорт по полу через неё —
+-- касание (прямая не выше настоящей дуги прыжка, поэтому перелёт засчитывается только явный). from = nil — точка to.
+function DefenseRules.ZoneHit(center: Vector3, radius: number, height: number, from: Vector3?, to: Vector3): boolean
+	local cx, cz = center.X, center.Z
+	if not from then
+		return math.abs(to.Y) < height and (to.X - cx) ^ 2 + (to.Z - cz) ^ 2 <= radius * radius
+	end
+	local dx, dz = to.X - from.X, to.Z - from.Z
+	local fx, fz = from.X - cx, from.Z - cz
+	local a = dx * dx + dz * dz
+	local c = fx * fx + fz * fz - radius * radius
+	local t0, t1 = 0, 1
+	if a < 1e-9 then
+		if c > 0 then
+			return false
+		end
+	else
+		-- доля пути t, на которой расстояние по полу до центра не больше radius: a t² + b t + c ≤ 0
+		local b = 2 * (fx * dx + fz * dz)
+		local disc = b * b - 4 * a * c
+		if disc < 0 then
+			return false
+		end
+		local root = math.sqrt(disc)
+		t0, t1 = math.max(0, (-b - root) / (2 * a)), math.min(1, (-b + root) / (2 * a))
+		if t0 > t1 then
+			return false
+		end
+	end
+	local y0 = from.Y + (to.Y - from.Y) * t0
+	local y1 = from.Y + (to.Y - from.Y) * t1
+	return y0 * y1 <= 0 or math.min(math.abs(y0), math.abs(y1)) < height
 end
 
 -- Ближайшее расстояние по полу от устройства center до пути вора за такт (from → to); from = nil — до точки to.

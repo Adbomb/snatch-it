@@ -122,6 +122,10 @@ finishLoad = function(player: Player, profile: any): boolean
 		end
 	end)
 	if ended or not profile:IsActive() then
+		-- сессию перехватили ещё до загрузки: обработчик выше уже не сработает — кикнуть здесь
+		if player.Parent == Players then
+			player:Kick("Сохранение открыто на другом сервере. Перезайдите.")
+		end
 		return false
 	end
 
@@ -546,6 +550,9 @@ end
 -- Запросить запись профиля, если с прошлой нашей прошло MinSaveInterval (лимит DataStore — запись ключа раз в 6 с,
 -- D52). true — запрошено.
 local function saveIfAllowed(player: Player, profile: any): boolean
+	if profiles[player] ~= profile or not profile:IsActive() then
+		return false -- игрок вышел: закрытый профиль не пишем и состояние не заводим заново
+	end
 	local state = stateOf(player)
 	if os.clock() - state.last < GameConfig.Data.MinSaveInterval then
 		return false
@@ -667,14 +674,14 @@ function DataService.RequestSave(player: Player)
 	if state.pending then
 		return
 	end
-	local delay = state.last + GameConfig.Data.SaveCooldown - os.clock()
+	local cooldown = math.max(GameConfig.Data.SaveCooldown, GameConfig.Data.MinSaveInterval)
+	local delay = state.last + cooldown - os.clock()
 	state.pending = true
 	task.delay(math.max(delay, 0), function()
 		state.pending = false
 		local profile = getActiveProfile(player)
-		if profile then
-			state.last = os.clock()
-			profile:Save()
+		if profile and not saveIfAllowed(player, profile) then
+			DataService.RequestSave(player) -- только что записывали (подтверждение кражи): позже, не чаще MinSaveInterval
 		end
 	end)
 end

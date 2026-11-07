@@ -294,7 +294,7 @@ do
 			TransferJournal.Prune(victim.saved, {}, now) -- вход жертвы: у неё журнала и pending нет
 		end
 		local victimOut = function(from, id, age)
-			assert(from == OWNER)
+			assert(from == OWNER, "метки ухода чистятся только у жертвы")
 			if victim.saved.transfersOut[id] ~= nil then
 				return true
 			end

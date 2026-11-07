@@ -198,9 +198,7 @@ local function keepInZone(fight: Fight, root: BasePart)
 	end
 	local inside = math.clamp(z, z0 + margin, z1 - margin)
 	local p = root.Position
-	root.CFrame = CFrame.new(p.X, p.Y, inside) * root.CFrame.Rotation
-	root.AssemblyLinearVelocity = Vector3.zero
-	MoveGuard.Mark(fight.player) -- перенос сервером (D52)
+	MoveGuard.Teleport(fight.player, CFrame.new(p.X, p.Y, inside) * root.CFrame.Rotation) -- перенос сервером (D52)
 	table.insert(fight.log, "вернули в зону")
 end
 
