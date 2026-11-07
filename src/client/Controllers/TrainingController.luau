@@ -21,8 +21,8 @@ local Joints = require(script.Parent.Parent:WaitForChild("Util"):WaitForChild("J
 
 local T = UITokens.Training
 
-type Joint = { joint: Joints.Joint, pose: (k: number) -> CFrame }
-type Rig = { character: Model, joints: { Joint }, weight: number }
+type Joint = { joint: Joints.Joint, angle: (k: number) -> number }
+type Rig = { character: Model, root: BasePart, joints: { Joint }, weight: number }
 
 local TrainingController = {}
 
@@ -57,25 +57,18 @@ function TrainingController.Curl(p: number): number
 	return smooth(math.clamp(p / lift, 0, 1))
 end
 
--- Суставы и их позы по подъёму k: сгибание вперёд — поворот вокруг поперечной оси персонажа (вправо от корня),
--- переведённой в оси позы сустава; углы — градусы из UITokens.Training.
+-- Суставы и их углы по подъёму k (градусы из UITokens.Training): сгибание вперёд — поворот вокруг поперечной оси
+-- персонажа (вправо от корня), переведённой в оси позы сустава каждый кадр.
 local function rigOf(character: Model): Rig?
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not root or not root:IsA("BasePart") then
 		return nil
 	end
-	local right = root.CFrame.RightVector
 	local joints: { Joint } = {}
 	local function add(name: string, angle: (k: number) -> number)
 		local joint = Joints.Find(character, name)
 		if joint then
-			local axis = Joints.Axis(joint, right)
-			table.insert(joints, {
-				joint = joint,
-				pose = function(k: number): CFrame
-					return CFrame.fromAxisAngle(axis, math.rad(angle(k)))
-				end,
-			})
+			table.insert(joints, { joint = joint, angle = angle })
 		end
 	end
 	local r15 = T.R15
@@ -101,7 +94,7 @@ local function rigOf(character: Model): Rig?
 	if #joints == 0 then
 		return nil
 	end
-	return { character = character, joints = joints, weight = 0 }
+	return { character = character, root = root, joints = joints, weight = 0 }
 end
 
 local function restore(rig: Rig)
@@ -136,7 +129,10 @@ local function step(dt: number)
 			else
 				for _, item in rig.joints do
 					-- вес: при включении и выключении поза плавно приходит из исходной и уходит в неё
-					Joints.SetOffset(item.joint, "Training", NONE:Lerp(item.pose(curl), rig.weight))
+					-- ось — каждый кадр: прыжок или эмоция в начале тренировки не перекосят сгибание
+					local axis = Joints.Axis(item.joint, rig.root.CFrame.RightVector)
+					local pose = CFrame.fromAxisAngle(axis, math.rad(item.angle(curl)))
+					Joints.SetOffset(item.joint, "Training", NONE:Lerp(pose, rig.weight))
 				end
 			end
 		end

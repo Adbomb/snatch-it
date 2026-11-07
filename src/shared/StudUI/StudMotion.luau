@@ -67,15 +67,18 @@ function M.ScreenScale(): number
 end
 
 --- Keeps a UIScale ("WindowScale") at size * ScreenScale() (* optional animated factor NumberValue).
+--- Returns update and its connections (disconnect them when the UI is destroyed).
 function M.BindResponsive(uiScale: UIScale, size: number?, anim: NumberValue?)
 	local camera = workspace.CurrentCamera
 	local function update()
 		uiScale.Scale = (size or 1) * M.ScreenScale() * (anim and anim.Value or 1)
 	end
-	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
-	if anim then anim.Changed:Connect(update) end
+	local connections = { camera:GetPropertyChangedSignal("ViewportSize"):Connect(update) }
+	if anim then
+		table.insert(connections, anim.Changed:Connect(update))
+	end
 	update()
-	return update
+	return update, connections
 end
 
 --- Hover / press / release on a button's "ButtonScale" (created if missing). hover: 1.04 HUD, 1.05 menus, 1.06 close/slots.
@@ -209,7 +212,7 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 	end
 	local keep = opts.Keep or { TransitionUsine = true, Recompenses = true }
 	local anim = Instance.new("NumberValue"); anim.Value = 1
-	M.BindResponsive(scale, opts.Size or 1, anim)
+	local _, connections = M.BindResponsive(scale, opts.Size or 1, anim)
 
 	local menu = { Gui = gui, Fenetre = fenetre, IsOpen = false }
 	local HOME = fenetre.Position
@@ -279,13 +282,26 @@ function M.Window(gui: ScreenGui, fenetre: Frame, opts)
 
 	fenetre.Visible = false
 	local toggle = gui:FindFirstChild("Basculer")
-	if toggle then toggle.Event:Connect(menu.Toggle) end
+	if toggle then
+		table.insert(connections, toggle.Event:Connect(menu.Toggle))
+	end
 	local close = fenetre:FindFirstChild("Fermer", true)
 	if close and close:IsA("GuiButton") then M.BindButton(close, 1.06, sounds, menu.Close) end
-	UserInputService.InputBegan:Connect(function(input)
+	table.insert(connections, UserInputService.InputBegan:Connect(function(input)
 		if menu.IsOpen and (input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonB) then menu.Close() end
-	end)
-	player.CharacterAdded:Connect(function() if menu.IsOpen then menu.Close() end end)
+	end))
+	table.insert(connections, player.CharacterAdded:Connect(function()
+		if menu.IsOpen then
+			menu.Close()
+		end
+	end))
+	-- the window is rebuilt (e.g. new screen size): drop its global connections (screen, input, character)
+	function menu.Destroy()
+		for _, c in connections do
+			c:Disconnect()
+		end
+		table.clear(connections)
+	end
 	return menu
 end
 

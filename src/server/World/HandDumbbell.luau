@@ -12,6 +12,7 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 
 local CFG = GameConfig.Gym.HandDumbbell
+local warned: { [string]: boolean } = {} -- модели без загруженных мешей: предупредить один раз
 
 local HandDumbbell = {}
 
@@ -50,10 +51,23 @@ function HandDumbbell.Attach(character: Model, level: number): Model?
 	end
 	HandDumbbell.Remove(character)
 	local hand, hold = grip(character)
+	local name = ("Dumbbell%02d"):format(level)
 	if not hand then
 		return nil
 	end
-	local model = MeshBuilder.Build(("Dumbbell%02d"):format(level), CFrame.identity, nil :: any, {
+	-- меши не загрузились (ассеты недоступны): гантели нет, рука качается пустой; не собирать каждые StateCheck
+	if not MeshBuilder.IsReady(name) then
+		if not warned[name] then
+			warned[name] = true
+			warn(
+				("[HandDumbbell] меши %s не загружены — тренировка без гантели в руке"):format(
+					name
+				)
+			)
+		end
+		return nil
+	end
+	local model = MeshBuilder.Build(name, CFrame.identity, nil :: any, {
 		name = HandDumbbell.Name,
 	})
 	if not model then

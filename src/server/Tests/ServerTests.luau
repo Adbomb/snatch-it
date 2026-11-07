@@ -1007,6 +1007,63 @@ test("D51: гантель в руке меняется с уровнем и не
 	check(plotOf(A).model:GetAttribute("DumbbellLevel") == 1, "уровень гантели участка (табличка) не 1")
 end)
 
+test("D51: в нокауте сила идёт, гантели нет; у края поля — запас на выход; R6; такт по серверному времени", function(A)
+	local plotA = plotOf(A)
+	giveHand(A)
+	local field = plotA.fieldCFrame
+	local half = GameConfig.Gym.FieldSize.X / 2
+	local margin = GameConfig.Gym.FieldMargin
+	A:MoveTo((field * CFrame.new(0, 3, 0)).Position)
+	local data = DataService.GetData(A)
+	-- нокаут: правило силы как до D51 (своё поле, пустые руки), но лежачий гантель не поднимает
+	A:SetAttribute("Knocked", true)
+	local before = data.strength
+	GymService.Handlers.TickPlayer(A)
+	check(data.strength > before, "в нокауте в своём поле сила перестала идти")
+	check(idle(A), "в нокауте гантель в руке")
+	A:SetAttribute("Knocked", nil)
+	GymService.Handlers.Refresh(A)
+	check(trains(A), "после нокаута тренировка не вернулась")
+	-- у края: тренирующийся чуть за краем (в пределах запаса) продолжает, дальше — нет; новый за краем — не начинает
+	A:MoveTo((field * CFrame.new(half + margin / 2, 3, 0)).Position)
+	GymService.Handlers.Refresh(A)
+	check(trains(A), "у края поля гантель мигает")
+	local edge = data.strength
+	GymService.Handlers.TickPlayer(A)
+	check(data.strength == edge, "за краем поля сила идёт")
+	A:MoveTo((field * CFrame.new(half + margin + 0.5, 3, 0)).Position)
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "за запасом края тренировка не прекратилась")
+	A:MoveTo((field * CFrame.new(half + margin / 2, 3, 0)).Position)
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "за краем поля тренировка началась")
+	-- R6: гантель — к низу правой руки (Right Arm)
+	local r6 = Instance.new("Model")
+	local arm = Instance.new("Part")
+	arm.Name = "Right Arm"
+	arm.Size = Vector3.new(1, 2, 1)
+	arm.Anchored = true
+	arm.CanCollide = false
+	arm.CFrame = CFrame.new(0, 600, -3000)
+	arm.Parent = r6
+	r6.Parent = workspace
+	local model = HandDumbbell.Attach(r6, 3)
+	local ok = model ~= nil
+	for _, part in if model then model:GetChildren() else {} do
+		local weld = part:FindFirstChildOfClass("WeldConstraint")
+		ok = ok and weld ~= nil and weld.Part0 == arm
+	end
+	local centre = if model then arm.CFrame:PointToObjectSpace(model:GetBoundingBox().Position) else Vector3.zero
+	r6:Destroy()
+	check(ok, "у R6 гантель не в правой руке")
+	check(centre.Y < -0.5, "у R6 гантель не у кулака (низ руки): " .. tostring(centre))
+	-- такт: граница целой секунды общего серверного времени, на одной границе — один раз
+	check(GymService.NextTick(10.3, 1, -math.huge) == 11, "такт не на следующей границе")
+	check(GymService.NextTick(10.999, 1, 10) == 11, "такт пропущен")
+	check(GymService.NextTick(11.0001, 1, 11) == 12, "такт повторён на той же границе")
+	check(GymService.NextTick(10.9999, 1, 11) == 12, "такт раньше времени после повтора")
+end)
+
 test("Предмет несёт только один игрок; чужой экспонат не поднять", function(A, B, ctx)
 	local plotA = plotOf(A)
 	near(A, plotA.showcases[3])

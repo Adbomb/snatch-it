@@ -56,8 +56,8 @@ function GymService.MuseumPower(player: Player): number
 	local cfg = GameConfig.Progression.MuseumPower
 	local total = 0
 	for _, record in data.items do
-		local def = Items[record.id]
-		if record.place == "slot" and def then
+		local def = type(record) == "table" and Items[record.id]
+		if def and record.place == "slot" then
 			local variant = 1
 			for _, mod in record.mods or {} do
 				variant = math.max(variant, cfg.Variant[mod] or 1)
@@ -68,12 +68,12 @@ function GymService.MuseumPower(player: Player): number
 	return math.min(total, cfg.cap)
 end
 
--- Участок, в поле которого стоит точка (или nil).
-local function fieldAt(position: Vector3): PlotService.Plot?
+-- Участок, в поле которого стоит точка (или nil); margin — запас за краем поля (стадов).
+local function fieldAt(position: Vector3, margin: number): PlotService.Plot?
 	local size = GameConfig.Gym.FieldSize
 	for _, plot in PlotService.GetPlots() do
 		local p = plot.fieldCFrame:PointToObjectSpace(position)
-		local inside = math.abs(p.X) <= size.X / 2 and math.abs(p.Z) <= size.Y / 2
+		local inside = math.abs(p.X) <= size.X / 2 + margin and math.abs(p.Z) <= size.Y / 2 + margin
 		if inside and p.Y >= 0 and p.Y <= GameConfig.Gym.FieldHeight then
 			return plot
 		end
@@ -109,16 +109,21 @@ local function hintGuest(player: Player, owner: Player)
 	)
 end
 
--- Может ли игрок качаться сейчас и в чьём поле стоит: владелец в поле своего двора, живой (GetLiveRoot), руки
--- пустые, не в нокауте.
-local function stateOf(player: Player): (boolean, PlotService.Plot?)
+-- Состояние у качалки: gain — сила идёт (владелец в поле своего двора, живой, руки пустые — правило силы как до
+-- D51, нокаут его не меняет); visible — тренировка видна (gain и не в нокауте: лежачий гантель не поднимает); plot —
+-- в чьём поле стоит. Уже тренирующийся выходит из поля на FieldMargin дальше края, чем входит: у края гантель не
+-- мигает (сила — по точному краю).
+local function stateOf(player: Player): (boolean, boolean, PlotService.Plot?)
 	local root = Validate.GetLiveRoot(player)
-	local plot = root and fieldAt(root.Position)
-	if not plot or plot.owner ~= player then
-		return false, plot
+	if not root then
+		return false, false, nil
 	end
-	local free = player:GetAttribute("CarryingItemId") == nil and player:GetAttribute("Knocked") ~= true
-	return free, plot
+	local plot = fieldAt(root.Position, 0)
+	local free = player:GetAttribute("CarryingItemId") == nil
+	local gain = plot ~= nil and plot.owner == player and free
+	local near = if training[player] then fieldAt(root.Position, GameConfig.Gym.FieldMargin) else plot
+	local visible = near ~= nil and near.owner == player and free and player:GetAttribute("Knocked") ~= true
+	return gain, visible, plot
 end
 
 -- Тренировка видна: атрибут Training и гантель уровня в руке; не тренируется — ни того ни другого.
@@ -138,25 +143,33 @@ local function setTraining(player: Player, on: boolean)
 end
 
 local function refresh(player: Player): (boolean, PlotService.Plot?)
-	local on, plot = stateOf(player)
-	setTraining(player, on)
-	return on, plot
+	local gain, visible, plot = stateOf(player)
+	setTraining(player, visible)
+	return gain, plot
 end
 
 -- Такт качания одного игрока: владелец в своём поле с пустыми руками качается, гость — получает подсказку.
 local function tickPlayer(player: Player)
-	local on, plot = refresh(player)
-	if on then
+	local gain, plot = refresh(player)
+	if gain then
 		train(player)
 	elseif plot and plot.owner and plot.owner ~= player then
 		hintGuest(player, plot.owner)
 	end
 end
 
-local function tick()
+-- Каждый игрок отдельно: ошибка у одного (порченый профиль, персонаж без частей) не останавливает качалку всем.
+local function each(fn: (Player) -> ...any)
 	for _, player in Players:GetPlayers() do
-		tickPlayer(player)
+		local ok, err = pcall(fn, player)
+		if not ok then
+			warn(("[GymService] %s: %s"):format(player.Name, tostring(err)))
+		end
 	end
+end
+
+local function tick()
+	each(tickPlayer)
 end
 
 -- Сразу прекратить или начать по событиям (экспонат в руках, нокаут, смерть), не дожидаясь проверки по времени.
@@ -272,9 +285,7 @@ function GymService.Init()
 	task.spawn(function()
 		while true do
 			task.wait(GameConfig.Gym.StateCheck)
-			for _, player in Players:GetPlayers() do
-				refresh(player)
-			end
+			each(refresh)
 		end
 	end)
 	-- сила — на границах TickSeconds общего серверного времени: клиенты по нему же ставят верх подъёма гантели
@@ -283,12 +294,18 @@ function GymService.Init()
 		local last = -math.huge
 		while true do
 			local now = workspace:GetServerTimeNow()
-			local index = math.max(math.floor(now / period) + 1, last + 1)
+			local index = GymService.NextTick(now, period, last)
 			task.wait(math.max(0, index * period - now))
 			last = index
 			tick()
 		end
 	end)
+end
+
+-- Номер следующего такта силы: ближайшая граница period общего серверного времени после now, но не раньше
+-- такта после last (на границе не начислить дважды). Время такта — номер × period.
+function GymService.NextTick(now: number, period: number, last: number): number
+	return math.max(math.floor(now / period) + 1, last + 1)
 end
 
 -- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки и такт.

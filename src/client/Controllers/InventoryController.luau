@@ -102,12 +102,29 @@ local function send(action: string, uid: string, slot: number?)
 	Remotes.Get(Remotes.Names.InventoryAction):FireServer(action, uid, slot)
 end
 
+local zone: ScreenGui? = nil
+
+-- Безопасная зона экрана (без выреза и скруглённых углов телефона): окно строится в ScreenGui Stud-UI с
+-- DeviceSafeInsets, поэтому и размер — по ней, а не по всему экрану (у iPhone с вырезом окно иначе шире зоны).
+local function safeArea(): Vector2
+	if not zone then
+		local probe = Instance.new("ScreenGui")
+		probe.Name = "InventaireZone"
+		probe.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+		probe.ResetOnSpawn = false
+		probe.Parent = player:WaitForChild("PlayerGui")
+		zone = probe
+	end
+	local size = (zone :: ScreenGui).AbsoluteSize
+	return if size.X > 0 and size.Y > 0 then size else workspace.CurrentCamera.ViewportSize
+end
+
 -- Раскладка под текущий экран (см. шапку).
 -- В Studio (GameConfig.DevMode) экран можно подменить атрибутами игрока DevViewport (Vector2, px) и DevTouch —
 -- проверка раскладки телефона без эмулятора: окно собирается тем же кодом в размере телефона.
 local function measure(): Profile
 	local fake = GameConfig.DevMode and player:GetAttribute("DevViewport")
-	local viewport = if typeof(fake) == "Vector2" then fake else workspace.CurrentCamera.ViewportSize
+	local viewport = if typeof(fake) == "Vector2" then fake else safeArea()
 	local screen = math.clamp(
 		math.min(viewport.X / Motion.REFERENCE.X, viewport.Y / Motion.REFERENCE.Y),
 		Motion.MIN_SCALE,
@@ -744,6 +761,9 @@ local function build()
 	profile = measure()
 	local old = gui
 	if old then
+		if menu and menu.Destroy then
+			menu.Destroy() -- подписки прежнего окна на экран, клавиши и персонажа (иначе копятся при пересборке)
+		end
 		old:Destroy()
 	end
 	local screen = UI.ScreenGui("Inventaire", 12)

@@ -6,7 +6,8 @@
 -- кадра проверяются против коробок деталей здания (Building) этого участка — своими силами, потому что у декоративных
 -- деталей без столкновений выключен CanQuery и лучи Roblox их не видят. Найденные детали гаснут сразу (камера в
 -- том же кадре их пропускает), остальные плавно возвращаются. Вышел из музея, сменился персонаж, перестроился музей —
--- всё возвращается. Детали, которые прячет другой код (створки решётки хранилища у владельца), не трогаются.
+-- всё возвращается. Детали, которые прячет другой код (створки решётки хранилища у владельца), не трогаются; пол и
+-- ступени ниже ног персонажа не гаснут никогда — иначе камера Roblox уходит под пол.
 -- Зависит от Config/MuseumLayout, Config/UITokens.
 
 local Players = game:GetService("Players")
@@ -21,7 +22,7 @@ local T = UITokens.MuseumCamera
 local L = MuseumLayout
 local player = Players.LocalPlayer
 
-type Box = { part: BasePart, inv: CFrame, half: Vector3, center: Vector3, radius: number }
+type Box = { part: BasePart, inv: CFrame, half: Vector3, center: Vector3, radius: number, top: number }
 type Cache = { building: Instance, boxes: { Box }, dirty: boolean }
 
 local MuseumCameraController = {}
@@ -86,12 +87,17 @@ local function cacheOf(plot: Instance): Cache?
 	for _, d in building:GetDescendants() do
 		if d:IsA("BasePart") and (d.Transparency < 0.95 or d.CanCollide) then
 			local half = d.Size / 2
+			local cf = d.CFrame
+			local extentY = math.abs(cf.RightVector.Y) * half.X
+				+ math.abs(cf.UpVector.Y) * half.Y
+				+ math.abs(cf.LookVector.Y) * half.Z
 			table.insert(boxes, {
 				part = d,
-				inv = d.CFrame:Inverse(),
+				inv = cf:Inverse(),
 				half = half,
 				center = d.Position,
 				radius = half.Magnitude,
+				top = d.Position.Y + extentY, -- верх детали в мире: пол и ступени ниже ног не гасим
 			})
 		end
 	end
@@ -168,7 +174,10 @@ local function step(dt: number)
 	local plot = root and camera and camera.CameraType == Enum.CameraType.Custom and plotAt(root.Position)
 	local cache = plot and cacheOf(plot)
 	local want: { [BasePart]: boolean } = {}
-	if cache and camera then
+	if cache and camera and root then
+		-- ниже ног — пол, ступени, потолок хранилища под залом: их не гасить, иначе камера уходит под пол (D50)
+		local humanoid = root.Parent and root.Parent:FindFirstChildOfClass("Humanoid")
+		local feet = root.Position.Y - root.Size.Y / 2 - (if humanoid then humanoid.HipHeight else 2) + T.FloorTolerance
 		local focus = camera.Focus.Position
 		local look = camera.CFrame.LookVector
 		local far = focus - look * wantedDistance(camera)
@@ -176,7 +185,7 @@ local function step(dt: number)
 		local up = camera.CFrame.UpVector * T.Probe
 		for _, ends in { far, far + right, far - right, far + up, far - up } do
 			for _, box in cache.boxes do
-				if not want[box.part] and box.part.Parent and hits(box, focus, ends) then
+				if not want[box.part] and box.top > feet and box.part.Parent and hits(box, focus, ends) then
 					-- чужая локальная прозрачность (спрятанные створки) — не наша
 					local own = faded[box.part]
 					if own ~= nil or box.part.LocalTransparencyModifier < 0.001 then

@@ -3,7 +3,8 @@
 -- колонки (на телефоне — 2), а на узком телефоне, где колонка по ширине заходит на «Бросить», — только до верха этой
 -- кнопки. На узком телефоне, где колонка заходит под плашку входа в зону, на время показа плашки уведомления
 -- спрятаны; при открытом окне меню — справа от окна поверх всего, а где места нет (телефон) — ждут закрытия окна
--- (D50). Новое сообщение выезжает справа, через lifetime секунд уезжает обратно.
+-- (D50). Новое сообщение выезжает справа и уезжает обратно, пробыв на экране lifetime секунд (время, пока колонка
+-- спрятана, не считается).
 -- Зависит от Remotes, UIKit, UITokens, UI/HudLayout, CarryHud (кнопка «Бросить» — CarryController), LevelBanner
 -- (плашка зоны — ZoneController).
 
@@ -66,7 +67,17 @@ function NotifyController.Show(text: string, kind: UIKit.ButtonKind?)
 
 	local toast = UIKit.Toast({ text = text, kind = kind, parent = slot, position = HIDDEN })
 	TweenService:Create(toast, SLIDE_INFO, { Position = UDim2.fromScale(0, 0) }):Play()
-	task.delay(cfg.lifetime, hide, slot, toast)
+	-- срок жизни идёт, только пока колонка видна: спрятанное на время окна или плашки зоны уведомление дождётся (D50)
+	task.spawn(function()
+		local left = cfg.lifetime
+		while left > 0 and slot.Parent do
+			local dt = task.wait(0.1)
+			if column.Visible then
+				left -= dt
+			end
+		end
+		hide(slot, toast)
+	end)
 
 	local slots = {}
 	for _, child in column:GetChildren() do

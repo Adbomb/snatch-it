@@ -130,9 +130,8 @@ local function refreshPlace(showcase: BasePart)
 	local taken = open and showcase:GetAttribute("Occupied") == true
 	local top = showcase:FindFirstChild("Top") :: BasePart?
 	if top then
-		local free = open and not taken
 		top.Color = if not open then LOCKED elseif taken then TOP.taken else TOP.open
-		top.Material = if free then Enum.Material.SmoothPlastic else Enum.Material.Plastic -- свободное — гладкое
+		top.Material = Enum.Material.Plastic -- всё Plastic с квадратными пупырышками (D36), свободное — бирюзовым цветом
 	end
 	local lamp = showcase:FindFirstChild("Lamp")
 	local light = lamp and lamp:FindFirstChild("NicheLight") :: SpotLight?
