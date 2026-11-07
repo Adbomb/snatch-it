@@ -116,8 +116,15 @@
   оглушение, перезарядка `Battle.Player.AttackInterval`, ближайший соперник впереди в `Range`, урон и HP — формула
   `Battle.Player` от силы). HP 0 — нокаут: отброс (как у босса), скорость и прыжок 0, звёзды (BillboardGui, тег
   KnockStars), атрибут Knocked, 15 с неуязвим, потом полный HP; вор с добычей — `TheftService.OnDefeated`.
-  Клиент `PvpController`: ЛКМ и кнопка «Удар» (Stud-UI, только телефон и Судная ночь), эффекты PvpEffect (замах плечевым
-  Motor6D, вспышка Highlight, «-N», «НОКАУТ!», тряска камеры), свой нокаут — PlatformStand; числа — `UITokens.Pvp`.
+  Клиент `PvpController`: ЛКМ и кнопка «Удар» (Stud-UI, только телефон и Судная ночь), эффекты PvpEffect (замах плечом
+  через `Util/Joints`, ключ Swing; вспышка Highlight, «-N», «НОКАУТ!», тряска камеры), свой нокаут — PlatformStand;
+  числа — `UITokens.Pvp`.
+- Процедурные движения суставов (D18, D51): `client/Util/Joints` — сустав Motor6D или AnimationConstraint (так у R15 в
+  Studio 2026-11-07); смещение позы по ключу накладывается на Transform аниматора в PreSimulation (у AnimationConstraint
+  смещение точек крепления аниматор гасит), смещения складываются, без накопления. Сгибать — вокруг поперечной оси
+  персонажа (`Joints.Axis`), так одинаково у R6 и R15. `Controllers/TrainingController` — подъём гантели у всех игроков с
+  атрибутом Training: фаза по `workspace:GetServerTimeNow()`, верх подъёма в момент начисления силы; R15 — плечо, локоть,
+  кисть, поясница; R6 — плечо; числа — `UITokens.Training`.
 - Единый инвентарь (D46): все предметы игрока — `items[uid]`, place `slot` (Displayed) или `storage` (Stored), без
   ограничения количества. `Shared/Inventory` — чистые функции: `Normalize` (миграция и проверка при каждой загрузке:
   экспонаты на несуществующих или занятых постаментах — в инвентарь, ничего не удаляется, повтор не меняет данные),
@@ -135,7 +142,11 @@
   (выставить, переставить, повернуть, презентация), `InventoryService` (D46: единый инвентарь — сундук «В инвентарь», постамент «В инвентарь», окно: InventoryAction Display / Remove / Replace откуда угодно, правило фаз `MuseumService.ExhibitsUnlocked`, событие InventoryChanged — весь инвентарь; шлётся и по `ItemRegistry.OnChanged` (Stored/Displayed владельца, раз в кадр) — окно видит выставление из рук, перестановку и кражу), `GymService` (D34:
   такт качания — владелец в поле своего двора, сила = Power[уровень] × (1 + сила музея D31); гостю подсказка;
   «Улучшить» — подсказка на табло и запрос GymUpgrade, все проверки на сервере; атрибуты игрока Strength,
-  Coins, DumbbellLevel). Скорость от силы — `Shared/Speed` + `CarryService.RefreshSpeed`.
+  Coins, DumbbellLevel; D51: огромной гантели во дворе нет — тренирующийся (своё поле, пустые руки, жив, не в
+  нокауте; проверка каждые `Gym.StateCheck` с и сразу по CarryingItemId / Knocked / Died) получает атрибут Training и
+  гантель уровня в правую руку — `World/HandDumbbell` (модель `Dumbbell01…10` из MeshModels, уменьшенная до
+  `Gym.HandDumbbell.Length`, MeshPart без массы и столкновений, WeldConstraint к RightHand / Right Arm); сила — на
+  границах `Gym.TickSeconds` общего серверного времени). Скорость от силы — `Shared/Speed` + `CarryService.RefreshSpeed`.
 - `Services/PlayerSession` — вход (участок → профиль → здание и гантель → музей → хранилище → сообщение) и выход;
   один путь для игры и тестов (`Join(player, { mock = true })` — профиль в памяти, ProfileStore.Mock).
 - Тесты (`Server/Tests`, только Studio, в Play): `ServerTests.Run()` через `ServerStorage.DevTools.RunServerTests`

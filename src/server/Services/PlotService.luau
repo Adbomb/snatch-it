@@ -1,9 +1,10 @@
 -- Участки-музеи (5 в ряд, D35): строит их при старте, выдаёт при входе, освобождает при выходе.
 -- Хранит владельца участка на сервере; круглое фото и ник владельца над входом рисует клиент по атрибутам (D41).
 -- Музей D48-C уровня владельца (здание, галереи, открытые места; у свободного участка — уровень 1); шаблон обстановки
--- хранилища для клиента владельца. Во дворе — огромная гантель уровня владельца (D34), у свободного участка её нет.
+-- хранилища для клиента владельца. Огромной гантели во дворе нет (D51: гантель — в руке у тренирующегося,
+-- GymService); уровень гантели владельца — атрибут для таблички «Улучшение».
 -- Атрибуты модели участка для клиента: OwnerUserId, OwnerName, MuseumLevel, FloorOrigin, DumbbellLevel (0 — нет).
--- Зависит от Util/PartBuilder, World/MapLayout, World/MeshBuilder, World/MuseumVisual, GameConfig, Util/Log.
+-- Зависит от Util/PartBuilder, World/MapLayout, World/MuseumVisual, GameConfig, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -11,7 +12,6 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Log = require(ServerScriptService.Server.Util.Log)
 local MapLayout = require(ServerScriptService.Server.World.MapLayout)
-local MeshBuilder = require(ServerScriptService.Server.World.MeshBuilder)
 local PartBuilder = require(ServerScriptService.Server.Util.PartBuilder)
 local MuseumVisual = require(ServerScriptService.Server.World.MuseumVisual)
 
@@ -26,9 +26,7 @@ export type Plot = {
 	accent: Color3,
 	level: number,
 	fieldCFrame: CFrame,
-	dumbbellCFrame: CFrame,
 	signBoard: BasePart,
-	dumbbell: Model?,
 }
 
 local plots: { Plot } = {}
@@ -55,7 +53,6 @@ function PlotService.Init(world: Folder)
 			accent = parts.accent,
 			level = 1,
 			fieldCFrame = parts.fieldCFrame,
-			dumbbellCFrame = parts.dumbbellCFrame,
 			signBoard = parts.signBoard,
 		}
 		parts.model:SetAttribute("OwnerName", "")
@@ -101,19 +98,9 @@ function PlotService.ShowLevel(plot: Plot, level: number)
 	PartBuilder.SetLevel(plot, level)
 end
 
--- Огромная гантель уровня level во дворе участка (nil — убрать). Модель меняется сразу, видна всем.
+-- Уровень гантели владельца участка (nil — участок свободен): атрибут DumbbellLevel для таблички «Улучшение».
 function PlotService.ShowDumbbell(plot: Plot, level: number?)
-	if plot.dumbbell then
-		plot.dumbbell:Destroy()
-		plot.dumbbell = nil
-	end
-	plot.model:SetAttribute("DumbbellLevel", level or 0)
-	if level then
-		plot.dumbbell = MeshBuilder.Build(("Dumbbell%02d"):format(level), plot.dumbbellCFrame, plot.model, {
-			accent = plot.accent,
-			name = "GiantDumbbell",
-		})
-	end
+	plot.model:SetAttribute("DumbbellLevel", level or 0) -- модели во дворе нет (D51), только уровень для таблички
 end
 
 function PlotService.Release(player: Player)

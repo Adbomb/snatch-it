@@ -1,11 +1,14 @@
--- Качалка (D31, D34, D35): у каждого участка своё поле во дворе и огромная гантель уровня владельца. Раз в
--- GameConfig.Gym.TickSeconds владелец, стоящий в поле своего двора с пустыми руками, получает силу =
--- сила гантели × (1 + сила музея, D31); чужой в поле — только подсказка «Это гантель игрока X». Улучшение
--- гантели за монеты — подсказка «Улучшить гантель» и кнопка на табличке своего двора; сервер сам проверяет
--- владельца, расстояние, уровень и монеты. Сила, монеты и уровень гантели — в профиле; для интерфейса —
--- атрибуты игрока Strength, Coins, DumbbellLevel.
+-- Качалка (D31, D34, D35, D51): у каждого участка своё поле во дворе. Владелец, который стоит в поле своего двора
+-- с пустыми руками, живой и не в нокауте, тренируется: у него атрибут Training и гантель своего уровня в правой руке
+-- (World/HandDumbbell, видна всем; подъём рисует клиент, Controllers/TrainingController). Состояние проверяется
+-- каждые GameConfig.Gym.StateCheck секунд и сразу при подъёме экспоната и нокауте; вышел, взял экспонат, нокаут,
+-- смерть — гантель пропадает. Сила = сила гантели × (1 + сила музея, D31) — раз в TickSeconds по общему серверному
+-- времени (клиенты по нему же ставят верх подъёма в момент начисления). Чужой в поле — только подсказка «Это гантель
+-- игрока X». Улучшение гантели за монеты — подсказка «Улучшить гантель» и кнопка на табличке своего двора; сервер
+-- сам проверяет владельца, расстояние, уровень и монеты. Сила, монеты и уровень гантели — в профиле; для
+-- интерфейса — атрибуты игрока Strength, Coins, DumbbellLevel, Training.
 -- Зависит от DataService, PlotService, CarryService, Config/Items, GameConfig, Remotes, NumberFormat,
--- Util/Prompts, Util/Notify, Util/RateLimiter, Util/Validate.
+-- World/HandDumbbell, Util/Prompts, Util/Notify, Util/RateLimiter, Util/Validate.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +22,7 @@ local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local PlotService = require(Server.Services.PlotService)
+local HandDumbbell = require(Server.World.HandDumbbell)
 local Notify = require(Server.Util.Notify)
 local Prompts = require(Server.Util.Prompts)
 local RateLimiter = require(Server.Util.RateLimiter)
@@ -29,6 +33,7 @@ local MAX_LEVEL = #Dumbbell.Power
 
 local upgradeLimiter = RateLimiter.new(GameConfig.Gym.UpgradesPerSecond)
 local lastHint: { [Player]: number } = {}
+local training: { [Player]: boolean } = {} -- кто сейчас качается (атрибут Training и гантель в руке)
 
 local GymService = {}
 
@@ -96,18 +101,54 @@ local function hintGuest(player: Player, owner: Player)
 		return
 	end
 	lastHint[player] = now
-	Notify.Send(player, ("Это гантель игрока %s — качаться можно только на своей"):format(owner.DisplayName))
+	Notify.Send(
+		player,
+		("Это гантель игрока %s — качаться можно только на своей"):format(
+			owner.DisplayName
+		)
+	)
+end
+
+-- Может ли игрок качаться сейчас и в чьём поле стоит: владелец в поле своего двора, живой (GetLiveRoot), руки
+-- пустые, не в нокауте.
+local function stateOf(player: Player): (boolean, PlotService.Plot?)
+	local root = Validate.GetLiveRoot(player)
+	local plot = root and fieldAt(root.Position)
+	if not plot or plot.owner ~= player then
+		return false, plot
+	end
+	local free = player:GetAttribute("CarryingItemId") == nil and player:GetAttribute("Knocked") ~= true
+	return free, plot
+end
+
+-- Тренировка видна: атрибут Training и гантель уровня в руке; не тренируется — ни того ни другого.
+local function setTraining(player: Player, on: boolean)
+	local character = player.Character
+	local data = DataService.GetData(player)
+	if on and character and data then
+		HandDumbbell.Attach(character, data.dumbbellLevel)
+	else
+		on = false
+		HandDumbbell.Remove(character)
+	end
+	training[player] = if on then true else nil
+	if player:GetAttribute("Training") ~= (if on then true else nil) then
+		player:SetAttribute("Training", if on then true else nil)
+	end
+end
+
+local function refresh(player: Player): (boolean, PlotService.Plot?)
+	local on, plot = stateOf(player)
+	setTraining(player, on)
+	return on, plot
 end
 
 -- Такт качания одного игрока: владелец в своём поле с пустыми руками качается, гость — получает подсказку.
 local function tickPlayer(player: Player)
-	local root = Validate.GetLiveRoot(player)
-	local plot = root and fieldAt(root.Position)
-	if plot and plot.owner == player then
-		if player:GetAttribute("CarryingItemId") == nil then
-			train(player)
-		end
-	elseif plot and plot.owner then
+	local on, plot = refresh(player)
+	if on then
+		train(player)
+	elseif plot and plot.owner and plot.owner ~= player then
 		hintGuest(player, plot.owner)
 	end
 end
@@ -118,6 +159,31 @@ local function tick()
 	end
 end
 
+-- Сразу прекратить или начать по событиям (экспонат в руках, нокаут, смерть), не дожидаясь проверки по времени.
+local function watch(player: Player)
+	for _, attribute in { "CarryingItemId", "Knocked" } do
+		player:GetAttributeChangedSignal(attribute):Connect(function()
+			refresh(player)
+		end)
+	end
+	local function onCharacter(character: Model)
+		local humanoid = character:WaitForChild("Humanoid", 10)
+		if humanoid and humanoid:IsA("Humanoid") then
+			humanoid.Died:Connect(function()
+				setTraining(player, false)
+			end)
+		end
+	end
+	player.CharacterAdded:Connect(onCharacter)
+	player.CharacterRemoving:Connect(function()
+		training[player] = nil
+		player:SetAttribute("Training", nil)
+	end)
+	if player.Character then
+		task.spawn(onCharacter, player.Character)
+	end
+end
+
 -- Улучшение гантели у таблички plot. Все проверки здесь: владелец, расстояние, уровень, монеты.
 local function upgrade(player: Player, plot: PlotService.Plot?)
 	if not plot then
@@ -125,12 +191,18 @@ local function upgrade(player: Player, plot: PlotService.Plot?)
 	end
 	if plot.owner ~= player then
 		local owner = plot.owner
-		local text = if owner then ("Это гантель игрока %s"):format(owner.DisplayName) else "Это свободный участок"
+		local text = if owner
+			then ("Это гантель игрока %s"):format(owner.DisplayName)
+			else "Это свободный участок"
 		Notify.Send(player, text, "Stop")
 		return
 	end
 	if not Validate.IsNear(player, plot.signBoard.Position, GameConfig.Gym.SignDistance) then
-		Notify.Send(player, "Подойдите к табличке «Улучшение» у своего музея", "Stop")
+		Notify.Send(
+			player,
+			"Подойдите к табличке «Улучшение» у своего музея",
+			"Stop"
+		)
 		return
 	end
 	local data = DataService.GetData(player)
@@ -144,7 +216,11 @@ local function upgrade(player: Player, plot: PlotService.Plot?)
 	end
 	local price = Dumbbell.Prices[level]
 	if data.coins < price then
-		Notify.Send(player, ("Не хватает монет: нужно $%s"):format(NumberFormat.Short(price)), "Stop")
+		Notify.Send(
+			player,
+			("Не хватает монет: нужно $%s"):format(NumberFormat.Short(price)),
+			"Stop"
+		)
 		return
 	end
 	if not DataService.UpgradeDumbbell(player, price, MAX_LEVEL) then
@@ -152,11 +228,18 @@ local function upgrade(player: Player, plot: PlotService.Plot?)
 	end
 	GymService.SyncAttributes(player)
 	PlotService.ShowDumbbell(plot, level + 1)
+	if training[player] and player.Character then
+		HandDumbbell.Attach(player.Character, level + 1) -- в руке — гантель нового уровня
+	end
 	DataService.RequestSave(player)
-	Notify.Send(player, ("Гантель улучшена: %s (уровень %d)"):format(Dumbbell.Names[level + 1], level + 1), "Go")
+	Notify.Send(
+		player,
+		("Гантель улучшена: %s (уровень %d)"):format(Dumbbell.Names[level + 1], level + 1),
+		"Go"
+	)
 end
 
--- Игрок загружен и получил участок: атрибуты, гантель его уровня во дворе, скорость от силы.
+-- Игрок загружен и получил участок: атрибуты, уровень гантели участка (для таблички), скорость от силы.
 function GymService.OnPlayerLoaded(player: Player, plot: PlotService.Plot)
 	GymService.SyncAttributes(player)
 	PlotService.ShowDumbbell(plot, DataService.GetData(player).dumbbellLevel)
@@ -177,18 +260,38 @@ function GymService.Init()
 			upgrade(player, PlotService.GetPlotOf(player))
 		end
 	end)
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastHint[player] = nil
+		training[player] = nil
 	end)
+	-- гантель в руке появляется и пропадает быстро (вошёл в поле, вышел)
 	task.spawn(function()
 		while true do
-			task.wait(GameConfig.Gym.TickSeconds)
+			task.wait(GameConfig.Gym.StateCheck)
+			for _, player in Players:GetPlayers() do
+				refresh(player)
+			end
+		end
+	end)
+	-- сила — на границах TickSeconds общего серверного времени: клиенты по нему же ставят верх подъёма гантели
+	task.spawn(function()
+		local period = GameConfig.Gym.TickSeconds
+		local last = -math.huge
+		while true do
+			local now = workspace:GetServerTimeNow()
+			local index = math.max(math.floor(now / period) + 1, last + 1)
+			task.wait(math.max(0, index * period - now))
+			last = index
 			tick()
 		end
 	end)
 end
 
 -- Обработчики для серверных тестов (Server/Tests): те же функции, что вызывают подсказки и такт.
-GymService.Handlers = { Upgrade = upgrade, TickPlayer = tickPlayer }
+GymService.Handlers = { Upgrade = upgrade, TickPlayer = tickPlayer, Refresh = refresh }
 
 return GymService

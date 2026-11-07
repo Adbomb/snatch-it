@@ -61,7 +61,6 @@ export type PlotParts = {
 	floorOrigin: CFrame, -- центр участка на уровне пола, вход в -Z
 	accent: Color3,
 	fieldCFrame: CFrame, -- центр поля качалки на уровне двора
-	dumbbellCFrame: CFrame, -- где висит огромная гантель (рукоять вдоль Z участка)
 	signBoard: BasePart, -- табло таблички «Улучшение» (лицо — сторона -Z, к полю)
 }
 
@@ -306,7 +305,6 @@ function PartBuilder.BuildPlot(index: number, origin: CFrame, parent: Instance):
 		floorOrigin = floorOrigin,
 		accent = accent,
 		fieldCFrame = fieldCFrame,
-		dumbbellCFrame = fieldCFrame * CFrame.new(0, Gym.DumbbellHeight, 0) * CFrame.Angles(0, math.rad(90), 0),
 		signBoard = signBoard,
 	}
 	PartBuilder.SetLevel(parts, 1)

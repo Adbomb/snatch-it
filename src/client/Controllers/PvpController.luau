@@ -6,7 +6,7 @@
 -- сервера, тег KnockStars) крутятся у всех.
 -- Без загруженных ассетов: только Motor6D, Highlight, BillboardGui и Stud-UI.
 -- Кнопка на телефоне не ниже 52 px (D32, D50). Зависит от Remotes, Shared/StudUI, Config/Battle, Config/UITokens,
--- UI/HudLayout.
+-- UI/HudLayout, Util/Joints.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -23,6 +23,7 @@ local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
+local Joints = require(script.Parent.Parent:WaitForChild("Util"):WaitForChild("Joints"))
 
 local T = UITokens.Pvp
 local player = Players.LocalPlayer
@@ -68,22 +69,32 @@ local function characterOf(userId: number?): Model?
 	return other and other.Character
 end
 
--- Замах правой рукой: плечевой Motor6D (R15 RightShoulder, R6 Right Shoulder) — C0 вперёд и обратно.
+-- Замах правой рукой: плечо (R15 RightShoulder, R6 Right Shoulder; Motor6D или AnimationConstraint) вперёд вокруг
+-- поперечной оси персонажа и обратно — смещение поверх анимаций (Util/Joints, ключ "Swing"; D51: у обновлённых
+-- суставов аватаров прежний замах через C0 не двигался). Второй замах до конца первого не начинается (Swinging).
 local function swing(character: Model)
-	local shoulder = character:FindFirstChild("RightShoulder", true) or character:FindFirstChild("Right Shoulder", true)
-	if not shoulder or not shoulder:IsA("Motor6D") or shoulder:GetAttribute("Swinging") then
+	local shoulder = Joints.Find(character, "RightShoulder") or Joints.Find(character, "Right Shoulder")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not shoulder or not root or not root:IsA("BasePart") or shoulder:GetAttribute("Swinging") then
 		return
 	end
+	local joint = shoulder :: Joints.Joint
 	shoulder:SetAttribute("Swinging", true)
-	local base = shoulder.C0
+	local axis = Joints.Axis(joint, root.CFrame.RightVector)
+	local amount = Instance.new("NumberValue")
+	amount.Changed:Connect(function(value)
+		Joints.SetOffset(joint, "Swing", CFrame.fromAxisAngle(axis, math.rad(T.SwingAngle * value)))
+	end)
 	local half = TweenInfo.new(T.Swing / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	local forward = TweenService:Create(shoulder, half, { C0 = base * CFrame.Angles(math.rad(T.SwingAngle), 0, 0) })
+	local forward = TweenService:Create(amount, half, { Value = 1 })
 	forward:Play()
 	forward.Completed:Connect(function()
-		local back = TweenService:Create(shoulder, half, { C0 = base })
+		local back = TweenService:Create(amount, half, { Value = 0 })
 		back:Play()
 		back.Completed:Connect(function()
+			Joints.SetOffset(joint, "Swing", nil)
 			shoulder:SetAttribute("Swinging", nil)
+			amount:Destroy()
 		end)
 	end)
 end

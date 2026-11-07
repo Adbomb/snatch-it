@@ -31,6 +31,7 @@ local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local GymService = require(Server.Services.GymService)
+local HandDumbbell = require(Server.World.HandDumbbell)
 local IncomeService = require(Server.Services.IncomeService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local MuseumService = require(Server.Services.MuseumService)
@@ -893,6 +894,117 @@ test("В чужом поле качалки сила не растёт, в св�
 	A:MoveTo(inField + Vector3.new(2, 0, 0))
 	GymService.Handlers.TickPlayer(A)
 	check(DataService.GetData(A).strength > 0, "A не качается в своём поле")
+end)
+
+-- D51: огромной гантели во дворе нет; гантель уровня — в руке у владельца в своём поле с пустыми руками.
+-- У манекена нет рук: кисть R15 для гантели — деталь, приваренная к корню (ходит вместе с ним).
+local function giveHand(player: any): BasePart
+	local root = player.Character.PrimaryPart :: BasePart
+	local hand = Instance.new("Part")
+	hand.Name = "RightHand"
+	hand.Size = Vector3.new(0.6, 0.6, 0.6)
+	hand.CanCollide = false
+	hand.Transparency = 1
+	hand.CFrame = root.CFrame * CFrame.new(1.5, -1, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = root
+	weld.Part1 = hand
+	weld.Parent = hand
+	hand.Parent = player.Character
+	return hand
+end
+
+local function trains(player: any): boolean
+	return player:GetAttribute("Training") == true and HandDumbbell.Get(player.Character) ~= nil
+end
+
+local function idle(player: any): boolean
+	return player:GetAttribute("Training") == nil and HandDumbbell.Get(player.Character) == nil
+end
+
+test("D51: гантель в руке — в своём поле; выход, экспонат, нокаут, смерть прекращают; гостю нет", function(A, B, ctx)
+	local plotA = plotOf(A)
+	check(plotA.model:FindFirstChild("GiantDumbbell", true) == nil, "во дворе стоит огромная гантель")
+	local hand = giveHand(A)
+	local inField = plotA.fieldCFrame.Position + Vector3.new(1, 3, 1)
+	A:MoveTo(inField)
+	local data = DataService.GetData(A)
+	local before = data.strength
+	local gain = GameConfig.Progression.Dumbbell.Power[data.dumbbellLevel] * (1 + GymService.MuseumPower(A))
+	GymService.Handlers.TickPlayer(A)
+	check(trains(A), "в своём поле тренировка не началась")
+	check(data.strength == before + gain, "сила за такт изменилась: " .. tostring(data.strength - before))
+	local model = HandDumbbell.Get(A.Character) :: Model
+	check(model:GetAttribute("Level") == data.dumbbellLevel, "в руке гантель не того уровня")
+	local _, size = model:GetBoundingBox()
+	local longest = math.max(size.X, size.Y, size.Z)
+	check(math.abs(longest - GameConfig.Gym.HandDumbbell.Length) < 0.1, "гантель не обычного размера: " .. longest)
+	local parts = 0
+	for _, part in model:GetChildren() do
+		if part:IsA("BasePart") then
+			parts += 1
+			check(part:IsA("MeshPart"), "в руке не модель гантели, а примитив " .. part.Name)
+			check(part.Massless and not part.CanCollide and not part.Anchored, "деталь гантели мешает: " .. part.Name)
+			local welded = part:FindFirstChildOfClass("WeldConstraint")
+			check(welded and welded.Part0 == hand, "деталь гантели не приварена к кисти")
+		end
+	end
+	check(parts > 0, "у гантели в руке нет деталей")
+	-- гость в чужом поле: подсказка, без тренировки и гантели
+	B:MoveTo(inField + Vector3.new(2, 0, 0))
+	GymService.Handlers.TickPlayer(B)
+	check(idle(B), "гость тренируется в чужом поле")
+	-- экспонат в руках — тренировка прекращается, сила не растёт
+	carry(ctx, A)
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "с экспонатом гантель в руке")
+	local carrying = data.strength
+	GymService.Handlers.TickPlayer(A)
+	check(data.strength == carrying, "с экспонатом в руках сила растёт")
+	CarryService.Drop(A)
+	GymService.Handlers.Refresh(A)
+	check(trains(A), "после броска тренировка не вернулась")
+	-- нокаут
+	A:SetAttribute("Knocked", true)
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "в нокауте гантель в руке")
+	A:SetAttribute("Knocked", nil)
+	GymService.Handlers.Refresh(A)
+	check(trains(A), "после нокаута тренировка не вернулась")
+	-- вышел из поля
+	A:MoveTo(inField + Vector3.new(0, 0, GameConfig.Gym.FieldSize.Y))
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "вне поля гантель в руке")
+	-- смерть
+	A:MoveTo(inField)
+	GymService.Handlers.Refresh(A)
+	check(trains(A), "в поле снова не тренируется")
+	local humanoid = A.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	humanoid.Health = 0
+	GymService.Handlers.Refresh(A)
+	check(idle(A), "у погибшего гантель в руке")
+end)
+
+test("D51: гантель в руке меняется с уровнем и не копится, одна на персонажа", function(A)
+	local cfg = GameConfig.Progression.Dumbbell
+	check(GameConfig.Gym.TickSeconds == 1, "такт не 1 с — один подъём в секунду")
+	giveHand(A)
+	local first = HandDumbbell.Attach(A.Character, 1)
+	check(first and HandDumbbell.Attach(A.Character, 1) == first, "та же гантель пересоздаётся")
+	for level = 2, #cfg.Power do
+		local model = HandDumbbell.Attach(A.Character, level)
+		check(model and model:GetAttribute("Level") == level, "гантель уровня " .. level .. " не встала")
+	end
+	local count = 0
+	for _, child in A.Character:GetChildren() do
+		if child.Name == HandDumbbell.Name then
+			count += 1
+		end
+	end
+	check(count == 1, "в руке гантелей: " .. count)
+	HandDumbbell.Remove(A.Character)
+	check(HandDumbbell.Get(A.Character) == nil, "гантель не убралась")
+	check(plotOf(A).model:GetAttribute("DumbbellLevel") == 1, "уровень гантели участка (табличка) не 1")
 end)
 
 test("Предмет несёт только один игрок; чужой экспонат не поднять", function(A, B, ctx)

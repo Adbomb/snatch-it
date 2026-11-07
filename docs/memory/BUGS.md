@@ -28,6 +28,12 @@
   `DevTouch`): перед релизом — эмулятор Studio (Test → Device) или настоящее устройство.
 
 ## Studio и инструменты
+- Суставы персонажей R15 в Studio (2026-11-07) — AnimationConstraint, а не Motor6D (одно имя: RightElbow и т. п.;
+  `workspace.AvatarJointUpgrade` при этом false). Аниматор пересчитывает Transform так, что смещение Attachment0
+  гасится, а C0 у них нет: процедурные движения — только поверх Transform в PreSimulation (`client/Util/Joints`).
+  Старый замах «Удар» через C0 Motor6D на таких персонажах молча не работал. Из MCP `C0` — только чтение.
+- StyLua на весь `ServerTests.luau` переформатирует файл целиком (старые расхождения): правки в него — без StyLua
+  по файлу (проверять `stylua --check` до запуска).
 - 2026-11-07 ночью `rojo serve` завершился с кодом 1073807364 (0x40010004 — закрыт сеанс или консоль), сторож
   `rojo-serve.ps1` погиб вместе с ним: Studio молча перестаёт получать правки. Признак — в Edit у модулей старый
   `Source`. Запуск сторожа — `Invoke-CimMethod Win32_Process Create` (ниже), плагин подключается сам.
