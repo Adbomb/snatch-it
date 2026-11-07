@@ -3,7 +3,8 @@
 -- сам: начало удержания (PromptButtonHoldBegan) резервирует экспонат, музей и вора (Util/TheftLedger), отпускание или
 -- уход отменяет, завершение (Triggered) проверяет, что удержание длилось нужное время. И в начале, и в конце вор
 -- должен быть рядом, внутри музея (зал или открытая галерея) и видеть экспонат — не через стену (D52,
--- Util/MuseumSpace). После отменённой или сорванной попытки — пауза RetrySeconds (D52). Снятый экспонат
+-- Util/MuseumSpace). После отменённой или сорванной попытки — пауза RetrySeconds (D52). Вор с добычей не может
+-- перемещаться быстрее бега (Services/MoveGuard: при переноске и при сдаче), иначе добыча возвращается. Снятый экспонат
 -- (Stolen) вор несёт к сундуку своего музея; сдача — передача владения с журналом (DESIGN §6, Util/TransferJournal,
 -- DataService): запись — у вора в инвентаре (Stored, без дохода до выставления), у прежнего владельца удалена.
 -- Провал — вор отпустил, бросил, проиграл, вышел, его вынесло ночью или вышли 10 с доставки — экспонат сразу
@@ -24,6 +25,7 @@ local DataService = require(Server.Services.DataService)
 local InventoryService = require(Server.Services.InventoryService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local ItemFactory = require(Server.Util.ItemFactory)
+local MoveGuard = require(Server.Services.MoveGuard)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local Log = require(Server.Util.Log)
@@ -40,6 +42,9 @@ local limiter = RateLimiter.new(GameConfig.RateLimits.Steal)
 local parts: { [string]: BasePart } = {} -- uid → Part экспоната, снятого с вора на время передачи
 
 local TheftService = {}
+
+local IMPOSSIBLE =
+	"Слишком быстрое перемещение — добыча вернулась владельцу"
 
 -- Проверка доступа к экспонату (DefenseService.Init): закрытая усиленная дверь не даёт красть снаружи зала.
 -- access(вор, владелец, участок) → nil — можно, иначе причина.
@@ -228,6 +233,7 @@ local function tryComplete(thief: any, plot: PlotService.Plot, slot: number)
 		fail(thief, "Кража сорвалась")
 		return
 	end
+	MoveGuard.Mark(thief) -- отсюда сервер следит, чтобы вор не двигался быстрее бега (D52)
 	Notify.Send(
 		thief,
 		("Добыча у вас: несите «%s» к сундуку своего музея!"):format(
@@ -308,6 +314,10 @@ local function deliver(thief: any, plot: PlotService.Plot)
 	local entry = uid and ItemRegistry.Get(uid)
 	local theft = ledger:ByThief(thief.UserId)
 	if not uid or not entry or entry.state ~= "Stolen" or not theft or theft.uid ~= uid then
+		return
+	end
+	if theft.stage == "Carrying" and not MoveGuard.Step(thief) then
+		fail(thief, IMPOSSIBLE)
 		return
 	end
 	local ok, reason = ledger:StartDelivery(thief.UserId, uid, phase())
@@ -441,6 +451,11 @@ local function sweep()
 						then "Судная ночь закончилась — кража сорвалась"
 						else nil
 				)
+			end
+		elseif theft.stage == "Carrying" and thief and not MoveGuard.Step(thief) then
+			local failed = ledger:Fail(theft.thief, now)
+			if failed then
+				returnToOwner(failed, IMPOSSIBLE)
 			end
 		elseif theft.stage == "Carrying" and current == nil then
 			local failed = ledger:Fail(theft.thief, now)

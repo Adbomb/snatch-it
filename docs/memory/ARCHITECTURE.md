@@ -122,6 +122,7 @@
   через `Util/Joints`, ключ Swing; вспышка Highlight, «-N», «НОКАУТ!», тряска камеры), свой нокаут — PlatformStand;
   числа — `UITokens.Pvp`.
 - Пространство музея на сервере (D52): `Util/MuseumSpace` — Inside (зал или открытая галерея в осях участка; ею же пользуется DefenseService) и Sees (луч через Building и Showcases участка, детали без столкновений лучу не мешают). `TheftService.reachable` — рядом, внутри и видит экспонат; `TheftLedger` — пауза RetrySeconds после провала по вине вора (Fail с now).
+- Невозможные перемещения (D52): `Services/MoveGuard` — Step (смещение с отметки ≤ скорость × время × Tolerance + Slack, время стоянки копится до MaxStall), Mark (переносы сервером: DefenseService выброс, VaultService, NightService, BattleService.keepInZone; новый персонаж — сам), Pin/Unpin (капкан, PvpService), CheckPins раз в Tick. Числа — `GameConfig.MoveGuard`. TheftService: при переноске (sweep) и сдаче — Step, нарушение → добыча владельцу.
 - Процедурные движения суставов (D18, D51): `client/Util/Joints` — сустав Motor6D или AnimationConstraint (так у R15 в
   Studio 2026-11-07); смещение позы по ключу накладывается на Transform аниматора в PreSimulation (у AnimationConstraint
   смещение точек крепления аниматор гасит), смещения складываются, без накопления. Сгибать — вокруг поперечной оси

@@ -8,7 +8,7 @@
 -- • Терминал (окно «Инвентарь») и центр безопасности (окно «Защита») — подсказки; сервер проверяет владельца и
 --   расстояние и только тогда просит клиент открыть окно (Remotes.OpenWindow).
 -- Группы персонажей — Util/CharacterGroups (общие с боем: стены зон боссов, D49).
--- Зависит от GameConfig, Config/MuseumLayout, PlotService, Util/CharacterGroups, Util/Prompts, Util/Notify,
+-- Зависит от MoveGuard (D52), GameConfig, Config/MuseumLayout, PlotService, Util/CharacterGroups, Util/Prompts, Util/Notify,
 -- Util/Validate, Util/RateLimiter, Util/Log, Remotes.
 
 local PhysicsService = game:GetService("PhysicsService")
@@ -22,6 +22,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local PlotService = require(ServerScriptService.Server.Services.PlotService)
 local CharacterGroups = require(ServerScriptService.Server.Util.CharacterGroups)
 local Log = require(ServerScriptService.Server.Util.Log)
+local MoveGuard = require(ServerScriptService.Server.Services.MoveGuard)
 local Notify = require(ServerScriptService.Server.Util.Notify)
 local Prompts = require(ServerScriptService.Server.Util.Prompts)
 local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
@@ -101,6 +102,7 @@ local function tick(): number
 				if root and VaultService.IsInside(plot.floorOrigin:PointToObjectSpace(root.Position)) then
 					root.CFrame = exitCFrame(plot)
 					root.AssemblyLinearVelocity = Vector3.zero
+					MoveGuard.Mark(player) -- перенос сервером (D52)
 					moved += 1
 					local now = os.clock()
 					if now - (noticeAt[player] or 0) >= cfg.NoticeCooldown then

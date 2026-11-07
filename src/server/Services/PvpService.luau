@@ -5,7 +5,7 @@
 -- потом встаёт на месте с полным HP. Вор с добычей проиграл — добыча сразу у владельца (TheftService.OnDefeated).
 -- Эффекты (замах, попадание, нокаут) — событие PvpEffect игрокам рядом, рисует клиент (PvpController).
 -- Правила — Util/PvpRules (проверяются в Lune). Бой с боссами не меняется.
--- Зависит от DataService, CarryService, PlotService, TheftService, TimeService, Shared/GameTime, World/MapLayout,
+-- Зависит от MoveGuard (D52), DataService, CarryService, PlotService, TheftService, TimeService, Shared/GameTime, World/MapLayout,
 -- Util/*, Remotes, Config/Battle, GameConfig.
 
 local CollectionService = game:GetService("CollectionService")
@@ -23,6 +23,7 @@ local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local PlotService = require(Server.Services.PlotService)
+local MoveGuard = require(Server.Services.MoveGuard)
 local TheftService = require(Server.Services.TheftService)
 local TimeService = require(Server.Services.TimeService)
 local Log = require(Server.Util.Log)
@@ -181,6 +182,7 @@ local function setFrozen(player: any, frozen: boolean)
 end
 
 local function release(player: any)
+	MoveGuard.Unpin(player)
 	if player:GetAttribute("Snared") then
 		player:SetAttribute("Snared", nil)
 	end
@@ -340,6 +342,7 @@ function PvpService.Snare(target: any, seconds: number): boolean
 	target:SetAttribute("Snared", true)
 	target:SetAttribute("SnareToken", token)
 	setFrozen(target, true)
+	MoveGuard.Pin(target) -- из капкана не уйти даже читом: дальше PinRadius сервер вернёт (D52)
 	task.delay(seconds, function()
 		-- снимает только свой капкан: после нокаута и нового капкана старый таймер не освобождает раньше срока
 		if

@@ -10,7 +10,7 @@
 -- после боя здоровье прежнее). Боец заперт в зоне босса до конца боя: невидимые стены на границах зон (группа
 -- ZoneLock) сталкиваются только с бойцами (Util/CharacterGroups), сервер возвращает бойца в зону, если тот оказался
 -- снаружи. Побега по расстоянию нет; босс не уходит дальше Leash от своего места (площадка без декора, D43).
--- Зависит от BossService, BossLootService, CarryService, DataService, TimeService, Config/Battle, Shared/GameTime,
+-- Зависит от MoveGuard (D52), BossService, BossLootService, CarryService, DataService, TimeService, Config/Battle, Shared/GameTime,
 -- World/MapLayout, Util/CharacterGroups, Util/Notify, Util/Validate, Util/Log.
 
 local PhysicsService = game:GetService("PhysicsService")
@@ -26,6 +26,7 @@ local Server = ServerScriptService.Server
 local BossLootService = require(Server.Services.BossLootService)
 local BossService = require(Server.Services.BossService)
 local DataService = require(Server.Services.DataService)
+local MoveGuard = require(Server.Services.MoveGuard)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local TimeService = require(Server.Services.TimeService)
 local MapLayout = require(Server.World.MapLayout)
@@ -199,6 +200,7 @@ local function keepInZone(fight: Fight, root: BasePart)
 	local p = root.Position
 	root.CFrame = CFrame.new(p.X, p.Y, inside) * root.CFrame.Rotation
 	root.AssemblyLinearVelocity = Vector3.zero
+	MoveGuard.Mark(fight.player) -- перенос сервером (D52)
 	table.insert(fight.log, "вернули в зону")
 end
 

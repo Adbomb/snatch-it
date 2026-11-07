@@ -4,7 +4,7 @@
 -- его и может выставить позже (доход — только на витрине). Пока ночь, сервер раз в
 -- GameConfig.Time.NightCheckSeconds выводит из коридора тех, кто туда попал. С рассветом барьер убирается.
 -- Бои с боссами прерывает BossService (этап 4), слоты боссов обновляет BossLootService (этап 3).
--- Зависит от TimeService, CarryService, Shared/GameTime, World/MapLayout, GameConfig, Util/Notify, Util/Log.
+-- Зависит от MoveGuard (D52), TimeService, CarryService, Shared/GameTime, World/MapLayout, GameConfig, Util/Notify, Util/Log.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +16,7 @@ local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
 local TimeService = require(Server.Services.TimeService)
 local Log = require(Server.Util.Log)
+local MoveGuard = require(Server.Services.MoveGuard)
 local Notify = require(Server.Util.Notify)
 local MapLayout = require(Server.World.MapLayout)
 
@@ -42,6 +43,7 @@ local function sweep(players: { Player }): number
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position) then
 			(character :: Model):PivotTo(safePoint())
+			MoveGuard.Mark(player) -- перенос сервером (D52)
 			moved += 1
 			Notify.Send(player, "Ночь: коридор уровней закрыт — вы в безопасной зоне", "Stop")
 		end

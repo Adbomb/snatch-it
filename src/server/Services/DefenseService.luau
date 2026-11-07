@@ -10,7 +10,7 @@
 -- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
 -- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
 -- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
--- Зависит от DataService, PlotService, PvpService, TimeService, Shared/DefenseRules, Shared/GameTime, World/Models/Defense,
+-- Зависит от MoveGuard (D52), DataService, PlotService, PvpService, TimeService, Shared/DefenseRules, Shared/GameTime, World/Models/Defense,
 -- World/ModelBuilder, Util/*, Remotes, GameConfig.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +23,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local Server = ServerScriptService.Server
 local DataService = require(Server.Services.DataService)
+local MoveGuard = require(Server.Services.MoveGuard)
 local PlotService = require(Server.Services.PlotService)
 local PvpService = require(Server.Services.PvpService)
 local TheftService = require(Server.Services.TheftService)
@@ -535,6 +536,7 @@ local function tick()
 								cfg.Door.At.Z + cfg.DoorEject.Z
 							)
 							* CFrame.Angles(0, math.pi, 0)
+						MoveGuard.Mark(thief) -- выброс у двери — перенос сервером (D52)
 						if ready(m, "Door:" .. id, cfg.NoticeCooldown) then
 							Notify.Send(thief, "Усиленная дверь: нужен взлом", "Stop")
 						end

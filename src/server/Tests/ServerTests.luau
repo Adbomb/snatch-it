@@ -47,6 +47,7 @@ local Prompts = require(Server.Util.Prompts)
 local TestPlayer = require(Server.Tests.TestPlayer)
 local TheftService = require(Server.Services.TheftService)
 local PvpService = require(Server.Services.PvpService)
+local MoveGuard = require(Server.Services.MoveGuard)
 local DefenseService = require(Server.Services.DefenseService)
 local VaultService = require(Server.Services.VaultService)
 local CharacterGroups = require(Server.Util.CharacterGroups)
@@ -406,6 +407,7 @@ end
 local function deliverHome(thief: any)
 	local plot = plotOf(thief)
 	near(thief, plot.chest)
+	MoveGuard.Mark(thief) -- тестовый перенос — как перенос сервером; невозможные перемещения — тест D52
 	InventoryService.Handlers.StoreCarried(thief, plot)
 end
 
@@ -584,12 +586,90 @@ test("D52: после сорванной попытки — пауза 5 с; м�
 	TheftService.Handlers.Cancel(B)
 end)
 
+test("D52: вор с добычей не телепортируется; рывок после лагов — можно; из капкана не уйти", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA, plotB = plotOf(A), plotOf(B)
+	-- телепорт с добычей к своему сундуку: при переноске (sweep) — провал, экспонат владельцу
+	steal(B, A, 1)
+	check(ItemRegistry.Get(uid).state == "Stolen", "B не унёс экспонат")
+	near(B, plotB.chest)
+	TheftService.Handlers.Sweep()
+	check(ItemRegistry.Get(uid).state == "Displayed", "телепорт с добычей не замечен при переноске")
+	check(B:WasNotified("Слишком быстрое перемещение"), "нет причины вору")
+	-- телепорт прямо к сундуку и сдача сразу — сдача отклонена
+	rested(B)
+	steal(B, A, 1)
+	near(B, plotB.chest)
+	InventoryService.Handlers.StoreCarried(B, plotB)
+	check(ItemRegistry.Get(uid).state == "Displayed", "сдача после телепорта прошла")
+	check(DataService.GetData(A).items[uid] ~= nil and DataService.GetData(B).items[uid] == nil, "профили изменились")
+	-- честный бег шагами не быстрее скорости — добыча остаётся
+	rested(B)
+	steal(B, A, 1)
+	local humanoid = B.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	local root = B.Character.PrimaryPart :: BasePart
+	local step = humanoid.WalkSpeed * 0.25
+	for _ = 1, 4 do
+		B:MoveTo(root.Position + Vector3.new(step, 0, 0))
+		task.wait(0.25)
+		TheftService.Handlers.Sweep()
+	end
+	check(ItemRegistry.Get(uid).state == "Stolen", "честный бег сочтён телепортом")
+	-- сеть молчала 1.5 с, затем рывок на столько, сколько можно пробежать за это время — не нарушение
+	task.wait(1.5)
+	B:MoveTo(root.Position + Vector3.new(humanoid.WalkSpeed * 1.5, 0, 0))
+	TheftService.Handlers.Sweep()
+	check(ItemRegistry.Get(uid).state == "Stolen", "рывок после зависания сети сочтён телепортом")
+	CarryService.Drop(B)
+	check(ItemRegistry.Get(uid).state == "Displayed", "брошенная добыча не вернулась")
+	-- капкан: ушёл дальше PinRadius — сервер возвращает; после капкана — свободен
+	B:MoveTo(plotA.floorOrigin.Position + Vector3.new(0, 3, 0))
+	check(PvpService.Handlers.Snare(B, 1), "капкан не сработал")
+	local trapAt = root.Position
+	B:MoveTo(trapAt + Vector3.new(10, 0, 0))
+	MoveGuard.CheckPins()
+	local back = Vector3.new(root.Position.X - trapAt.X, 0, root.Position.Z - trapAt.Z).Magnitude
+	check(back <= GameConfig.MoveGuard.PinRadius, "из капкана ушёл: " .. back)
+	check(B:GetAttribute("Snared") == true, "капкан снялся от возврата")
+	task.wait(1.2)
+	check(not MoveGuard.IsPinned(B) and B:GetAttribute("Snared") == nil, "после капкана не свободен")
+	B:MoveTo(trapAt + Vector3.new(10, 0, 0))
+	MoveGuard.CheckPins()
+	check((root.Position - (trapAt + Vector3.new(10, 0, 0))).Magnitude < 0.5, "после капкана вернули к нему")
+end)
+
+test("D52: проверка перемещений — разрешённые переносы сервера и новый персонаж не нарушение", function(A)
+	local root = A.Character.PrimaryPart :: BasePart
+	MoveGuard.Mark(A)
+	-- перенос сервером
+	MoveGuard.Teleport(A, CFrame.new(root.Position + Vector3.new(200, 0, 0)))
+	check((MoveGuard.Step(A)), "перенос сервером сочтён телепортом")
+	-- телепорт клиента без отметки — нарушение
+	A:MoveTo(root.Position + Vector3.new(200, 0, 0))
+	check(not (MoveGuard.Step(A)), "телепорт на 200 ст. не замечен")
+	-- падение вниз (по вертикали) — не нарушение
+	A:MoveTo(root.Position + Vector3.new(0, -60, 0))
+	check((MoveGuard.Step(A)), "падение сочтено телепортом")
+	-- новый персонаж (возрождение) — новая отметка
+	local old = A.Character
+	local copy = old:Clone()
+	copy.Parent = old.Parent
+	A.Character = copy
+	copy.PrimaryPart.CFrame = CFrame.new(root.Position + Vector3.new(500, 0, 0))
+	check((MoveGuard.Step(A)), "возрождение сочтено телепортом")
+	A.Character = old
+	copy:Destroy()
+end)
+
 -- PvP Судной ночи (D37, D46) ─────────────────────────────────────────────────────────────────────────────────
 
 -- B стоит в point, A — в 3 стадах позади по +Z и смотрит на него (−Z).
 local function face(A: any, B: any, point: Vector3)
 	B:MoveTo(point)
 	A:MoveTo(point + Vector3.new(0, 0, 3))
+	MoveGuard.Mark(A)
+	MoveGuard.Mark(B)
 	task.wait(0.2)
 end
 
