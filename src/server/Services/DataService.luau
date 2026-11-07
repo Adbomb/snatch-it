@@ -24,7 +24,10 @@ local TransferJournal = require(ServerScriptService.Server.Util.TransferJournal)
 local store = ProfileStore.New(GameConfig.Data.StoreName, ProfileTemplate)
 local profiles: { [Player]: any } = {}
 local saveState: { [Player]: { last: number, pending: boolean } } = {}
-local mockUsers: { [number]: boolean } = {} -- тестовые профили (ProfileStore.Mock): журнал краж — в памяти
+-- тестовые профили (ProfileStore.Mock): журнал краж — в памяти; отметка остаётся и после выхода (D53: сохранённые
+-- данные ушедшего тестового игрока читаются из того же хранилища в памяти)
+local mockUsers: { [number]: boolean } = {}
+local waiting: { [Player]: { string } } = {} -- передачи с решением «ждать» при загрузке (D53: проверяет TheftService)
 
 -- Журнал передач (DESIGN §6): DataStore «Transfers», ключ to_<вор> → список записей. Пока ProfileStore работает с
 -- DataStore (DataStoreState = "Access"), журнал — только там (с повторами при сбоях); без доступа к API (Studio) и у
@@ -139,7 +142,7 @@ finishLoad = function(player: Player, profile: any): boolean
 		profile.Data.items = {} -- нечитаемое поле предметов (Inventory.Normalize сделал бы то же)
 	end
 	-- Незавершённые передачи украденного (DESIGN §6): до проверки записей; подтверждение — после загрузки.
-	local confirmLater = DataService.ResolveTransfers(player, profile.Data)
+	local confirmLater, waitLater = DataService.ResolveTransfers(player, profile.Data)
 	-- schema 2 → 3 (D46) и проверка записей при каждой загрузке.
 	local report = Inventory.Normalize(
 		profile.Data,
@@ -184,6 +187,7 @@ finishLoad = function(player: Player, profile: any): boolean
 		return false
 	end
 	profiles[player] = profile
+	waiting[player] = if waitLater and #waitLater > 0 then waitLater else nil
 	if confirmLater and #confirmLater > 0 then
 		task.spawn(DataService.ConfirmResolved, player, confirmLater)
 	end
@@ -199,10 +203,10 @@ end
 
 -- Игрок вышел: сохранить и снять блокировку сессии.
 function DataService.Release(player: Player)
-	mockUsers[player.UserId] = nil
 	local profile = profiles[player]
 	profiles[player] = nil
 	saveState[player] = nil
+	waiting[player] = nil
 	if profile then
 		profile:EndSession()
 	end
@@ -422,8 +426,9 @@ local function victimOut(from: number, id: string, age: number): boolean?
 end
 
 -- При загрузке вора: незавершённые передачи по журналу и меткам (TransferJournal). Меняет data до проверки записей.
--- Возвращает действия, которые надо подтвердить сохранением (ConfirmResolved), или nil.
-function DataService.ResolveTransfers(player: Player, data: any): { any }?
+-- Возвращает действия, которые надо подтвердить сохранением (ConfirmResolved), или nil, и id передач с решением
+-- «ждать» (D53: их во время сессии перепроверяет TheftService.WatchTransfers).
+function DataService.ResolveTransfers(player: Player, data: any): ({ any }?, { string }?)
 	local entries = DataService.JournalRead(player.UserId)
 	if entries == nil then
 		Log.Warn(
@@ -435,22 +440,123 @@ function DataService.ResolveTransfers(player: Player, data: any): { any }?
 	end
 	local now = os.time()
 	local actions = TransferJournal.Resolve(entries, data, now, victimOut)
+	local waits = {}
+	for _, action in actions do
+		if action.kind == "wait" then
+			table.insert(waits, action.id)
+		end
+	end
 	local done, confirm = TransferJournal.Apply(actions, data, now)
 	TransferJournal.Prune(data, entries, now)
 	if #done > 0 then
 		DataService.JournalRemove(player.UserId, done)
 	end
-	if #confirm > 0 or #done > 0 then
+	if #confirm > 0 or #done > 0 or #waits > 0 then
 		Log.Warn(
 			"DataService",
-			("%s: передач по журналу — решено %d, ждут сохранения %d"):format(
+			("%s: передач по журналу — решено %d, ждут сохранения %d, ждут жертву %d"):format(
 				player.Name,
 				#done,
-				#confirm
+				#confirm,
+				#waits
 			)
 		)
 	end
-	return confirm
+	return confirm, waits
+end
+
+-- Передачи, которые при загрузке ждали жертву (id); забирает список (D53, TheftService.WatchTransfers).
+function DataService.TakeWaitingTransfers(player: Player): { string }?
+	local ids = waiting[player]
+	waiting[player] = nil
+	return ids
+end
+
+-- Повторная проверка передач ids во время сессии вора (D53). Решение — только однозначное: метка жертвы сохранена
+-- (выдать или оставить) или у жертвы нет живой сессии и метки нет (кража не состоялась — убрать у вора). Живая
+-- сессия без метки — ждать дальше: решение по сроку (TransferJournal.SessionGrace) принимается только при входе, как
+-- раньше. Применяет решения к профилю в памяти в одном кадре после всех чтений. Возвращает применённые действия,
+-- оставшиеся id и действия для ConfirmResolved; nil — профиль не загружен или журнал не прочитан.
+function DataService.ResolveWaiting(player: Player, ids: { string }): ({ any }?, { string }, { any })
+	local want: { [string]: boolean } = {}
+	for _, id in ids do
+		want[id] = true
+	end
+	local entries = DataService.JournalRead(player.UserId)
+	local data = DataService.GetData(player)
+	if entries == nil or data == nil then
+		return nil, ids, {}
+	end
+	-- жертвы нужных передач: из журнала и из записей вора с pending (без журнала — from в записи)
+	local sources: { [string]: number } = {}
+	local chosen = {}
+	for _, entry in entries do
+		if type(entry) == "table" and type(entry.id) == "string" and want[entry.id] then
+			table.insert(chosen, entry)
+			sources[entry.id] = tonumber(entry.from) or 0
+		end
+	end
+	for _, record in data.items do
+		if type(record) == "table" and type(record.pending) == "string" and want[record.pending] then
+			sources[record.pending] = sources[record.pending] or tonumber(record.from) or 0
+		end
+	end
+	-- чтения сохранений жертв (ждут DataStore) — до решений
+	local outcome: { [string]: boolean? } = {}
+	for id, from in sources do
+		local saved, active = DataService.ReadSaved(from)
+		if saved ~= nil then
+			local marks = saved.transfersOut
+			if type(marks) == "table" and marks[id] ~= nil then
+				outcome[id] = true
+			elseif not active then
+				outcome[id] = false
+			end
+		end
+	end
+	data = DataService.GetData(player)
+	if data == nil then
+		return nil, ids, {}
+	end
+	-- решения и применение — в одном кадре, без yield
+	local now = os.time()
+	local actions = {}
+	for _, action in
+		TransferJournal.Resolve(chosen, data, now, function(_from: number, id: string): boolean?
+			return outcome[id]
+		end)
+	do
+		if want[action.id] then
+			table.insert(actions, action)
+		end
+	end
+	local left, seen = {}, {}
+	for _, action in actions do
+		seen[action.id] = true
+		if action.kind == "wait" then
+			table.insert(left, action.id)
+		end
+	end
+	local _, confirm = TransferJournal.Apply(actions, data, now)
+	-- «уже закрыта» (done) — тоже через ConfirmResolved: запись журнала удаляется только после сохранения (D53, ревью)
+	for _, action in actions do
+		if action.kind == "done" and action.journal then
+			table.insert(confirm, action)
+		end
+	end
+	local applied = {}
+	for _, action in actions do
+		if action.kind ~= "wait" then
+			table.insert(applied, action)
+		end
+	end
+	for _, id in ids do
+		if not seen[id] then
+			-- ни записи журнала, ни pending: передачу уже закрыли (другим путём) — больше не ждать
+			Log.Debug("DataService", ("%s: передача %s уже закрыта"):format(player.Name, id))
+		end
+	end
+	return applied, left, confirm
 end
 
 -- После загрузки: дождаться сохранения, в котором есть решения журнала, и только тогда удалить записи журнала.

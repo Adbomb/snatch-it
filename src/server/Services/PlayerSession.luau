@@ -48,6 +48,7 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	GymService.OnPlayerLoaded(player, plot)
 	MuseumService.LoadMuseum(player)
 	InventoryService.Sync(player)
+	TheftService.WatchTransfers(player) -- украденное, которое при входе ждало жертву, — перепроверять (D53)
 	DefenseService.OnPlayerLoaded(player) -- поставленное к ещё не прошедшей ночи — снова в запасе
 	DefenseService.Sync(player)
 	Notify.Send(

@@ -167,7 +167,8 @@ function DevTools.Init()
 	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
 	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
 	-- "GiveDefense <userId> <вид> <сколько>" | "Exhibit <userId> <место> [предмет]" |
-	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>". Выполняются в потоке этого скрипта (как RunTests),
+	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53).
+	-- Выполняются в потоке этого скрипта (как RunTests),
 	-- ответ — атрибут CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
 		local line = folder:GetAttribute("Command")
@@ -279,6 +280,22 @@ function DevTools.Init()
 				DefenseService.Handlers.Action(player, "Install", kind, spot)
 				local installed = DefenseService.Handlers.Museum(player.UserId).installed[kind]
 				return if installed then "установлено" else "отказ (см. уведомление игроку)"
+			elseif command == "Strength" then
+				-- проверка капкана и нокаута на трёх клиентах (D53): сила игрока — урон в PvP. Только в локальном
+				-- Studio: в опубликованной игре DevTools не создаётся, и команда сама проверяет Studio ещё раз.
+				if not RunService:IsStudio() then
+					return "только в Studio"
+				end
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				local data = player and DataService.GetData(player)
+				if not player or not data then
+					return "нет игрока"
+				end
+				local value = math.floor(tonumber(words[3]) or 0)
+				data.strength = math.clamp(value, 0, GameConfig.Gym.MaxStrength)
+				GymService.SyncAttributes(player)
+				require(ServerScriptService.Server.Services.CarryService).RefreshSpeed(player) -- скорость — от силы
+				return data.strength
 			end
 			return "неизвестная команда"
 		end)

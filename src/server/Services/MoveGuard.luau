@@ -43,6 +43,7 @@ local MoveGuard = {}
 local marks: { [any]: Mark } = {}
 local pins: { [any]: Pin } = {}
 local transfers: { [any]: number } = {} -- игрок → когда его последний раз перенёс сервер
+local transferred: { [any]: number } = {} -- игрок → сколько стадов по горизонтали его перенёс сервер (D53, доставка)
 
 local function flat(v: Vector3): number
 	return Vector3.new(v.X, 0, v.Z).Magnitude
@@ -228,12 +229,18 @@ function MoveGuard.Teleport(player: any, cframe: CFrame)
 	local before = root.Position
 	root.CFrame = cframe
 	root.AssemblyLinearVelocity = Vector3.zero
+	transferred[player] = (transferred[player] or 0) + flat(cframe.Position - before)
 	local arrived = fresh(root, humanoid)
 	arrived.graceUntil = os.clock() + cfg.TransferGrace
 	arrived.graceFrom = before
 	arrived.owed = owed
 	marks[player] = arrived
 	transfers[player] = os.clock()
+end
+
+-- Сколько всего стадов по горизонтали игрока перенёс сервер (разность двух значений — переносы между ними; D53).
+function MoveGuard.TransferDistance(player: any): number
+	return transferred[player] or 0
 end
 
 -- Сервер переносил игрока за последние seconds секунд (защита: дальний скачок — перенос, а не прыжок через устройство).
@@ -280,6 +287,7 @@ function MoveGuard.Forget(player: any)
 	marks[player] = nil
 	pins[player] = nil
 	transfers[player] = nil
+	transferred[player] = nil
 end
 
 function MoveGuard.Init()

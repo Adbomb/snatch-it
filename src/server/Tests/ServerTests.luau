@@ -1022,6 +1022,342 @@ test("D52: запросы записи профиля — не чаще MinSaveI
 	end
 end)
 
+-- D53: время доставки, ждущие передачи, выход во время записи журнала ─────────────────────────────────────
+
+-- Переноску «отодвинуть» в прошлое: как будто вор нёс добычу ещё seconds секунд.
+local function carriedFor(thief: any, seconds: number)
+	local carried = TheftService.Handlers.Carries[thief.UserId]
+	check(carried ~= nil, "переноска не отмечена при снятии")
+	carried.at -= seconds
+end
+
+-- Сколько раз uid встречается: в профилях игроков players (данные в памяти) и деталях мира.
+local function owners(uid: string, players: { any }): number
+	local count = 0
+	for _, player in players do
+		local data = DataService.GetData(player)
+		if data and data.items[uid] ~= nil then
+			count += 1
+		end
+	end
+	return count
+end
+
+-- Есть ли запись id в журнале вора.
+local function journaled(thief: any, id: string): boolean
+	for _, entry in DataService.JournalRead(thief.UserId) or {} do
+		if type(entry) == "table" and entry.id == id then
+			return true
+		end
+	end
+	return false
+end
+
+-- Условие выполнилось за seconds секунд (проверяется, пока не выполнится; после успеха — не вызывается).
+local function eventually(seconds: number, condition: () -> boolean): boolean
+	local started = os.clock()
+	repeat
+		if condition() then
+			return true
+		end
+		task.wait(0.2)
+	until os.clock() - started >= seconds
+	return condition()
+end
+
+-- Незавершённая передача вручную: запись журнала вора; withRecord — у вора уже запись с pending и метка получения.
+local function pendingTransfer(thief: any, victim: any, uid: string, itemId: string, id: string, withRecord: boolean)
+	local record = {
+		id = itemId,
+		mods = {},
+		place = "storage",
+		rot = 0,
+		acquiredAt = os.time(),
+		source = "raid",
+		from = victim.UserId,
+	}
+	check(
+		DataService.JournalUpdate(thief.UserId, function(list)
+			table.insert(list, { id = id, uid = uid, from = victim.UserId, record = record, at = os.time() })
+			return list
+		end),
+		"журнал не записан"
+	)
+	if withRecord then
+		local copy = table.clone(record)
+		copy.pending = id
+		local data = DataService.GetData(thief)
+		data.items[uid] = copy
+		data.transfersIn[id] = { uid = uid, at = os.time() }
+	end
+end
+
+-- Жертва отдала экспонат по передаче id и сохранилась с меткой ухода (как после шага 2 и сохранения).
+local function victimGave(victim: any, uid: string, id: string)
+	local entry = ItemRegistry.Get(uid)
+	local part = entry and entry.part
+	ItemRegistry.Unload(uid)
+	if part then
+		part:Destroy()
+	end
+	local data = DataService.GetData(victim)
+	data.items[uid] = nil
+	data.transfersOut[id] = { uid = uid, at = os.time() }
+	check(
+		DataService.SaveAndWait(victim, 15, function(saved)
+			return type(saved.transfersOut) == "table" and saved.transfersOut[id] ~= nil
+		end),
+		"жертва не сохранилась с меткой"
+	)
+end
+
+test("D53: время доставки — честная (и с лагом) не записана, телепорт записан и не заблокирован, перенос сервером засчитан", function(A, B, ctx)
+	local first = displayOwn(ctx, A, 1)
+	local second = displayOwn(ctx, A, 2)
+	local third = displayOwn(ctx, A, 3)
+	local plotB = plotOf(B)
+	local function suspicious(): number
+		return B:GetAttribute("SuspiciousDeliveries") or 0
+	end
+	-- честная: шёл по прямой на своей скорости, но события пришли на 1 с «раньше» (лаг)
+	doomNight()
+	steal(B, A, 1)
+	local lifted = TheftService.Handlers.Carries[B.UserId]
+	local offset = plotB.chest.Position - lifted.from
+	local distance = Vector3.new(offset.X, 0, offset.Z).Magnitude
+	check(distance > 30 and lifted.speed > 0, ("путь %.1f, скорость %.1f"):format(distance, lifted.speed))
+	carriedFor(B, distance / lifted.speed - 1)
+	deliverHome(B)
+	check(ItemRegistry.Get(first).state == "Stored", "честная доставка не прошла")
+	check(suspicious() == 0, "честная доставка записана как подозрительная")
+	-- телепорт к сундуку сразу после кражи: записана, но сдача прошла (только лог, D53)
+	doomNight()
+	steal(B, A, 2)
+	deliverHome(B)
+	local entry = ItemRegistry.Get(second)
+	check(entry.state == "Stored" and entry.owner == B.UserId, "подозрительная доставка заблокирована")
+	check(suspicious() == 1, "телепорт к сундуку не записан")
+	-- перенос сервером к сундуку — не подозрительно
+	doomNight()
+	steal(B, A, 3)
+	MoveGuard.Teleport(B, CFrame.new(plotB.chest.Position + Vector3.new(0, 0, -4)))
+	InventoryService.Handlers.StoreCarried(B, plotB)
+	check(ItemRegistry.Get(third).state == "Stored", "доставка после переноса сервером не прошла")
+	check(suspicious() == 1, "перенос сервером засчитан как подозрительная доставка")
+	check(owners(first, { A, B }) == 1 and owners(second, { A, B }) == 1 and owners(third, { A, B }) == 1, "дубли")
+end)
+
+test("D53: передача ждёт жертву после перезахода вора — решается во время сессии, без дублей и потерь", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	local cfgT = GameConfig.Theft
+	local confirmSeconds, retry = cfgT.ConfirmSeconds, cfgT.ResolveRetrySeconds
+	local saveAndWait = DataService.SaveAndWait
+	local profileA = DataService.Handlers.Profile(A)
+	-- сбой DataStore у жертвы: её сохранения не проходят, подтверждение передачи сдаётся быстро
+	profileA.Save = function() end
+	DataService.SaveAndWait = function(player: any, ...): boolean
+		if player == A then
+			task.wait(0.1)
+			return false
+		end
+		return saveAndWait(player, ...)
+	end
+	cfgT.ConfirmSeconds = 0.5
+	cfgT.ResolveRetrySeconds = 0.3
+	local ok, err = pcall(function()
+		steal(B, A, 1)
+		deliverHome(B)
+		check(ItemRegistry.Get(uid).state == "Stored", "сдача не прошла")
+		task.wait(1)
+		local id = DataService.GetData(B).items[uid].pending
+		check(type(id) == "string", "у вора нет pending")
+		local userId = B.UserId
+		leave(B)
+		local again = TestPlayer.new("Тест_B_снова")
+		again.UserId = userId
+		ctx.track(again)
+		check(join(again), "повторный вход вора не удался")
+		local record = DataService.GetData(again).items[uid]
+		check(record and record.pending == id, "после входа передача не ждёт жертву")
+		check(ItemRegistry.Get(uid) == nil, "ждущая передача попала в реестр")
+		task.wait(1)
+		check(DataService.GetData(again).items[uid].pending == id, "без метки жертвы передача решилась")
+		-- жертва сохранилась с меткой: следующая перепроверка решает «оставить»
+		profileA.Save = nil
+		DataService.SaveAndWait = saveAndWait
+		check(
+			DataService.SaveAndWait(A, 15, function(saved)
+				return type(saved.transfersOut) == "table" and saved.transfersOut[id] ~= nil
+			end),
+			"жертва не сохранилась с меткой"
+		)
+		check(
+			eventually(3, function()
+				local now = DataService.GetData(again).items[uid]
+				return now ~= nil and now.pending == nil
+			end),
+			"передача не решилась во время сессии"
+		)
+		local entry = ItemRegistry.Get(uid)
+		check(entry and entry.state == "Stored" and entry.owner == again.UserId, "решённое не в инвентаре вора")
+		check(owners(uid, { A, again }) == 1 and countUid(uid) == 0, "дубль после решения")
+		check(
+			eventually(20, function()
+				return not journaled(again, id)
+			end),
+			"запись журнала не удалена после подтверждения"
+		)
+	end)
+	profileA.Save = nil
+	DataService.SaveAndWait = saveAndWait
+	cfgT.ConfirmSeconds, cfgT.ResolveRetrySeconds = confirmSeconds, retry
+	if not ok then
+		error(err, 0)
+	end
+end)
+
+test("D53: ждущая передача — окно проверок закончилось: ничего не выдано и не убрано, решается при следующем входе", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local itemId = ItemRegistry.Get(uid).itemId
+	local id = "D53-окно"
+	pendingTransfer(B, A, uid, itemId, id, true)
+	local cfgT = GameConfig.Theft
+	local retry, window = cfgT.ResolveRetrySeconds, cfgT.ResolveWindow
+	cfgT.ResolveRetrySeconds, cfgT.ResolveWindow = 0.2, 1
+	local ok, err = pcall(function()
+		local userId = B.UserId
+		leave(B)
+		local again = TestPlayer.new("Тест_B_снова")
+		again.UserId = userId
+		ctx.track(again)
+		check(join(again), "вход вора не удался")
+		task.wait(1.6) -- окно закончилось, жертва метку не сохраняла
+		local record = DataService.GetData(again).items[uid]
+		check(record and record.pending == id, "без подтверждения предмет выдан или убран")
+		check(journaled(again, id), "запись журнала пропала — при входе не восстановить")
+		check(DataService.GetData(A).items[uid] ~= nil and ItemRegistry.Get(uid).state == "Displayed", "у жертвы пропал")
+		-- жертва отдала и сохранилась уже после окна: частых проверок больше нет — до входа передача ждёт
+		victimGave(A, uid, id)
+		task.wait(cfgT.ResolveRetrySeconds * 3)
+		check(DataService.GetData(again).items[uid].pending == id, "после окна перепроверки продолжились")
+		check(journaled(again, id), "запись журнала пропала после окна")
+		-- вор снова входит — решение при входе
+		leave(again)
+		local third = TestPlayer.new("Тест_B_третий")
+		third.UserId = userId
+		ctx.track(third)
+		check(join(third), "третий вход вора не удался")
+		local now = DataService.GetData(third).items[uid]
+		check(now and now.pending == nil, "при следующем входе передача не решилась")
+		check(ItemRegistry.Get(uid) and ItemRegistry.Get(uid).owner == third.UserId, "не в реестре у вора")
+		check(owners(uid, { A, third }) == 1, "дубль")
+	end)
+	cfgT.ResolveRetrySeconds, cfgT.ResolveWindow = retry, window
+	if not ok then
+		error(err, 0)
+	end
+end)
+
+test("D53: перепроверка во время сессии — выдать (метка у жертвы) и убрать (жертва вышла без метки), без дублей", function(A, B, ctx)
+	-- выдать: жертва сохранила уход, у вора записи ещё нет (сервер упал до его сохранения)
+	local given = displayOwn(ctx, A, 1)
+	local itemId = ItemRegistry.Get(given).itemId
+	victimGave(A, given, "D53-выдать")
+	pendingTransfer(B, A, given, itemId, "D53-выдать", false)
+	local left = TheftService.Handlers.ResolveWaitingOnce(B, { "D53-выдать" })
+	check(#left == 0, "выдача не решилась")
+	local record = DataService.GetData(B).items[given]
+	check(record and record.pending == nil and DataService.GetData(B).transfersIn["D53-выдать"], "вор не получил")
+	check(ItemRegistry.Get(given) and ItemRegistry.Get(given).owner == B.UserId, "выданное не в реестре вора")
+	check(owners(given, { A, B }) == 1 and countUid(given) == 0, "дубль после выдачи")
+	-- убрать: у вора запись с pending, жертва без метки — пока она в игре, ждать; вышла без метки — кража не состоялась
+	local kept = displayOwn(ctx, A, 2)
+	pendingTransfer(B, A, kept, ItemRegistry.Get(kept).itemId, "D53-убрать", true)
+	left = TheftService.Handlers.ResolveWaitingOnce(B, { "D53-убрать" })
+	check(#left == 1 and DataService.GetData(B).items[kept].pending == "D53-убрать", "живая жертва без метки — решено")
+	local userIdA = A.UserId
+	leave(A)
+	check(
+		eventually(5, function()
+			left = TheftService.Handlers.ResolveWaitingOnce(B, { "D53-убрать" })
+			return #left == 0
+		end),
+		"после выхода жертвы без метки передача не решилась"
+	)
+	check(DataService.GetData(B).items[kept] == nil, "у вора осталось то, что жертва не отдала — дубль")
+	check(
+		eventually(30, function()
+			return not journaled(B, "D53-убрать") and not journaled(B, "D53-выдать")
+		end),
+		"записи журнала не удалены"
+	)
+	local againA = TestPlayer.new("Тест_A_снова")
+	againA.UserId = userIdA
+	ctx.track(againA)
+	check(join(againA), "вход жертвы не удался")
+	local items = DataService.GetData(againA).items
+	check(items[kept] and items[kept].place == "slot", "у жертвы пропал неотданный экспонат")
+	check(items[given] == nil, "отданный вернулся жертве — дубль")
+	check(countUid(kept) == 1, "деталей неотданного: " .. countUid(kept))
+end)
+
+test("D53: выход жертвы или вора во время записи журнала (шаг 1) — кража отменена, без потерь и дублей", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local other = displayOwn(ctx, A, 2)
+	local userIdA, userIdB = A.UserId, B.UserId
+	local journalUpdate = DataService.JournalUpdate
+	-- жертва выходит, пока пишется журнал
+	doomNight()
+	steal(B, A, 1)
+	local hit = false
+	DataService.JournalUpdate = function(...)
+		local result = journalUpdate(...)
+		if not hit then
+			hit = true
+			leave(A)
+		end
+		return result
+	end
+	local ok, err = pcall(deliverHome, B)
+	DataService.JournalUpdate = journalUpdate
+	check(ok and hit, "сбой не смоделирован: " .. tostring(err))
+	check(ItemRegistry.Get(uid) == nil and countUid(uid) == 0, "экспонат ушедшей жертвы остался на сервере")
+	check(DataService.GetData(B).items[uid] == nil, "вор получил экспонат ушедшей жертвы")
+	check(#(DataService.JournalRead(userIdB) or {}) == 0, "запись журнала осталась")
+	local againA = TestPlayer.new("Тест_A_снова")
+	againA.UserId = userIdA
+	ctx.track(againA)
+	check(join(againA), "вход жертвы не удался")
+	check(DataService.GetData(againA).items[uid].place == "slot", "у жертвы пропал экспонат")
+	check(countUid(uid) == 1, "деталей экспоната: " .. countUid(uid))
+	-- вор выходит, пока пишется журнал
+	doomNight()
+	rested(B)
+	steal(B, againA, 2)
+	hit = false
+	DataService.JournalUpdate = function(...)
+		local result = journalUpdate(...)
+		if not hit then
+			hit = true
+			leave(B)
+		end
+		return result
+	end
+	ok, err = pcall(deliverHome, B)
+	DataService.JournalUpdate = journalUpdate
+	check(ok and hit, "сбой не смоделирован: " .. tostring(err))
+	local entry = ItemRegistry.Get(other)
+	check(entry and entry.state == "Displayed" and entry.slot == 2 and countUid(other) == 1, "экспонат не вернулся")
+	check(DataService.GetData(againA).items[other].place == "slot", "у жертвы пропала запись")
+	check(#(DataService.JournalRead(userIdB) or {}) == 0, "запись журнала вора осталась")
+	local againB = TestPlayer.new("Тест_B_снова")
+	againB.UserId = userIdB
+	ctx.track(againB)
+	check(join(againB), "вход вора не удался")
+	check(DataService.GetData(againB).items[other] == nil, "вор получил экспонат — дубль")
+end)
+
 -- PvP Судной ночи (D37, D46) ─────────────────────────────────────────────────────────────────────────────────
 
 -- B стоит в point, A — в 3 стадах позади по +Z и смотрит на него (−Z).

@@ -12,6 +12,7 @@ local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
 local GameTime = Env.Require("ReplicatedStorage.Shared.GameTime")
 local TheftLedger = Env.Require("ServerScriptService.Server.Util.TheftLedger")
 local TransferJournal = Env.Require("ServerScriptService.Server.Util.TransferJournal")
+local DeliveryRules = Env.Require("ServerScriptService.Server.Util.DeliveryRules")
 
 local failed, passed = 0, 0
 local function check(ok: boolean, message: string)
@@ -416,6 +417,25 @@ do
 		TransferJournal.Confirmed(grant, { items = { [UID] = { id = "Moai" } }, transfersIn = { [ID] = {} } }),
 		"сохранение с меткой и записью подтверждает"
 	)
+end
+
+print("Наименьшее время доставки (D53, только лог):")
+do
+	local p = { Tolerance = 1.2, Slack = 6, Lag = 1.5 }
+	local speed = 12.6
+	-- честный вор: 100 ст. по прямой на своей скорости — 7.9 с; с лагом на 1.5 с раньше — всё равно не подозрителен
+	local need = DeliveryRules.MinSeconds(100, 0, speed, p)
+	check(math.abs(need - ((100 - 6) / (speed * 1.2) - 1.5)) < 1e-9, "формула: (путь − запас) / (скорость × 1.2) − лаг")
+	check(not DeliveryRules.Suspicious(100 / speed, need), "честный по прямой — не подозрителен")
+	check(not DeliveryRules.Suspicious(100 / speed - 1.5, need), "честный, события пришли на 1.5 с раньше (лаг) — не подозрителен")
+	check(not DeliveryRules.Suspicious(100 / (speed * 1.2), need), "честный на 20 % быстрее (рывки, сеть) — не подозрителен")
+	check(DeliveryRules.Suspicious(0.5, need), "телепорт: 100 ст. за 0.5 с — подозрителен")
+	check(DeliveryRules.Suspicious(100 / (speed * 2), need), "вдвое быстрее скорости — подозрителен")
+	check(DeliveryRules.MinSeconds(100, 100, speed, p) == 0, "весь путь — перенос сервером: не судить")
+	check(DeliveryRules.MinSeconds(100, 60, speed, p) < need, "перенос сервером уменьшает наименьшее время")
+	check(DeliveryRules.MinSeconds(5, 0, speed, p) == 0, "сдача рядом с местом кражи (в пределах запаса): не судить")
+	check(DeliveryRules.MinSeconds(100, 0, 0, p) == 0 and DeliveryRules.MinSeconds(0 / 0, 0, speed, p) == 0, "скорость или путь неизвестны: не судить")
+	check(not DeliveryRules.Suspicious(0, 0), "наименьшее 0 — не подозрительно даже мгновенно")
 end
 
 print(("Проверок: %d, не прошло: %d"):format(passed + failed, failed))

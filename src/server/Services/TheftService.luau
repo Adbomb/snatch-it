@@ -9,8 +9,10 @@
 -- DataService): запись — у вора в инвентаре (Stored, без дохода до выставления), у прежнего владельца удалена.
 -- Провал — вор отпустил, бросил, проиграл, вышел, его вынесло ночью или вышли 10 с доставки — экспонат сразу
 -- возвращается на свой постамент (не падает и не подбирается). Владелец вышел — кража отменяется, экспонат у него.
+-- Слишком быстрая доставка (быстрее прямой на скорости вора, Util/DeliveryRules) — только запись в лог (D53).
+-- Передачи, которые при входе вора ждали жертву, перепроверяются во время сессии (WatchTransfers, D53).
 -- Зависит от ItemRegistry, CarryService, DataService, InventoryService, MuseumService, PlotService, Shared/GameTime,
--- Util/TheftLedger, Shared/MuseumSpace, Util/*, GameConfig, Config/Items.
+-- Util/TheftLedger, Util/DeliveryRules, Shared/MuseumSpace, Util/*, GameConfig, Config/Items.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +25,7 @@ local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Server = ServerScriptService.Server
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
+local DeliveryRules = require(Server.Util.DeliveryRules)
 local InventoryService = require(Server.Services.InventoryService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local ItemFactory = require(Server.Util.ItemFactory)
@@ -40,6 +43,10 @@ local cfg = GameConfig.Theft
 local ledger = TheftLedger.new(cfg.HoldSeconds, cfg.HoldTolerance, cfg.RetrySeconds)
 local limiter = RateLimiter.new(GameConfig.RateLimits.Steal)
 local parts: { [string]: BasePart } = {} -- uid → Part экспоната, снятого с вора на время передачи
+-- переноска (D53, проверка времени доставки): вор → где и когда снял, наибольшая скорость, переносы сервером к тому
+-- времени
+type Carry = { uid: string, at: number, from: Vector3, speed: number, moved: number }
+local carries: { [number]: Carry } = {}
 
 local TheftService = {}
 
@@ -235,6 +242,16 @@ local function tryComplete(thief: any, plot: PlotService.Plot, slot: number)
 		return
 	end
 	MoveGuard.Mark(thief) -- отсюда сервер следит, чтобы вор не двигался быстрее бега (D52)
+	local root, humanoid = Validate.GetLiveRoot(thief)
+	carries[thief.UserId] = if root and humanoid
+		then {
+			uid = theft.uid,
+			at = os.clock(),
+			from = root.Position,
+			speed = humanoid.WalkSpeed,
+			moved = MoveGuard.TransferDistance(thief),
+		}
+		else nil
 	Notify.Send(
 		thief,
 		("Добыча у вас: несите «%s» к сундуку своего музея!"):format(
@@ -312,7 +329,6 @@ end
 
 local transferBody: (any, TheftLedger.Theft, string) -> ()
 
--- Вор у сундука своего музея (InventoryService.tryStoreCarried): сдача добычи.
 -- Вор с добычей переместился невозможно (D52, MoveGuard). В режиме логирования (MoveGuard.Enforce = false) — только
 -- запись в лог, кража идёт дальше; иначе — срыв, добыча владельцу.
 local function impossible(thief: any, uid: string): boolean
@@ -332,6 +348,47 @@ local function impossible(thief: any, uid: string): boolean
 	return true
 end
 
+-- Наибольшая скорость вора за переноску (проверка времени доставки, D53).
+local function noteSpeed(thief: any)
+	local carry = carries[thief.UserId]
+	local _, humanoid = Validate.GetLiveRoot(thief)
+	if carry and humanoid then
+		carry.speed = math.max(carry.speed, humanoid.WalkSpeed)
+	end
+end
+
+-- Доставка быстрее наименьшего честного времени (D53): только запись в лог и атрибут SuspiciousDeliveries, сдача идёт.
+local function checkDeliveryTime(thief: any, uid: string)
+	local carry = carries[thief.UserId]
+	carries[thief.UserId] = nil
+	local root = Validate.GetLiveRoot(thief)
+	if not carry or carry.uid ~= uid or not root then
+		return
+	end
+	noteSpeed(thief)
+	local elapsed = os.clock() - carry.at
+	local offset = root.Position - carry.from
+	local distance = Vector3.new(offset.X, 0, offset.Z).Magnitude
+	local credit = MoveGuard.TransferDistance(thief) - carry.moved
+	local need = DeliveryRules.MinSeconds(distance, credit, carry.speed, cfg.Delivery)
+	if DeliveryRules.Suspicious(elapsed, need) then
+		thief:SetAttribute("SuspiciousDeliveries", (thief:GetAttribute("SuspiciousDeliveries") or 0) + 1)
+		Log.Warn(
+			"TheftService",
+			("подозрительная доставка %s: %s — %.1f ст. за %.1f с, честно не меньше %.1f с (скорость %.1f, переносы сервером %.1f ст.) — сдача не заблокирована"):format(
+				uid,
+				tostring(thief.Name),
+				distance,
+				elapsed,
+				need,
+				carry.speed,
+				credit
+			)
+		)
+	end
+end
+
+-- Вор у сундука своего музея (InventoryService.tryStoreCarried): сдача добычи.
 local function deliver(thief: any, plot: PlotService.Plot)
 	if plot.owner ~= thief then
 		return
@@ -350,6 +407,10 @@ local function deliver(thief: any, plot: PlotService.Plot)
 	if not ok then
 		Notify.Send(thief, reason or "Сдать нельзя", "Stop")
 		return
+	end
+	local checked, why = pcall(checkDeliveryTime, thief, uid)
+	if not checked then
+		Log.Warn("TheftService", "проверка времени доставки: " .. tostring(why))
 	end
 	local done, err = pcall(transferBody, thief, theft, uid)
 	if not done then
@@ -457,6 +518,9 @@ local function sweep()
 	local now = os.clock()
 	for _, theft in ledger:All() do
 		local thief, _ = ownerOf(theft.thief)
+		if thief and theft.stage == "Carrying" then
+			noteSpeed(thief)
+		end
 		local _, ownerPlot = ownerOf(theft.owner)
 		local showcase = ownerPlot and ownerPlot.showcases[theft.slot]
 		local overdue = now - theft.startedAt > cfg.HoldSeconds + cfg.HoldTolerance + cfg.LiftGrace
@@ -505,6 +569,7 @@ end
 function TheftService.OnPlayerLeaving(player: any)
 	fail(player, nil)
 	ledger.retryAt[player.UserId] = nil -- пауза ушедшего не нужна (таблица не копится)
+	carries[player.UserId] = nil
 	for _, uid in ItemRegistry.GetBeingStolenFrom(player.UserId) do
 		local theft = ledger:ByUid(uid)
 		if theft and theft.stage ~= "Delivering" then
@@ -540,6 +605,94 @@ function TheftService.OnPlayerLeaving(player: any)
 			end
 		end
 	end
+end
+
+-- Одна перепроверка ждущих передач ids вора (D53): решения журнала — к профилю (DataService.ResolveWaiting), выданное
+-- и оставленное — в реестр (в инвентарь), подтверждение сохранением и удаление записей журнала — ConfirmResolved.
+-- Возвращает id, которые всё ещё ждут.
+local function resolveWaitingOnce(player: any, ids: { string }): { string }
+	local applied, left, confirmList = DataService.ResolveWaiting(player, ids)
+	if applied == nil then
+		return left
+	end
+	local data = DataService.GetData(player)
+	if #applied > 0 and data then
+		for _, action in applied do
+			local record = data.items[action.uid]
+			if
+				(action.kind == "grant" or action.kind == "keep")
+				and type(record) == "table"
+				and record.pending == nil
+			then
+				local present = ItemRegistry.Get(action.uid)
+				if present then
+					Log.Warn(
+						"TheftService",
+						("%s: %s уже на сервере (%s) — в инвентарь не поставлен"):format(
+							tostring(player.Name),
+							action.uid,
+							present.state
+						)
+					)
+				elseif not ItemRegistry.Restore(action.uid, record.id, player.UserId, "storage", nil, nil) then
+					Log.Warn(
+						"TheftService",
+						("%s: %s не поставлен в инвентарь (реестр отказал)"):format(
+							tostring(player.Name),
+							action.uid
+						)
+					)
+				end
+			end
+			Log.Warn(
+				"TheftService",
+				("%s: передача %s решена во время сессии — %s"):format(
+					tostring(player.Name),
+					action.uid,
+					action.kind
+				)
+			)
+		end
+		InventoryService.Sync(player)
+	end
+	if #confirmList > 0 then
+		task.spawn(DataService.ConfirmResolved, player, confirmList)
+	end
+	return left
+end
+
+-- После входа (PlayerSession.Join): передачи, которые при загрузке ждали жертву, перепроверять раз в
+-- ResolveRetrySeconds, не дольше ResolveWindow (D53). Дальше — при следующем входе: без подтверждения собственности
+-- предмет не выдаётся и не убирается, запись журнала остаётся.
+function TheftService.WatchTransfers(player: any)
+	local ids = DataService.TakeWaitingTransfers(player)
+	if not ids or #ids == 0 then
+		return
+	end
+	task.spawn(function()
+		local started = os.clock()
+		while #ids > 0 and os.clock() - started < cfg.ResolveWindow do
+			task.wait(cfg.ResolveRetrySeconds)
+			if not DataService.GetData(player) then
+				return -- вышел: решится при следующем входе
+			end
+			local ok, result = pcall(resolveWaitingOnce, player, ids)
+			if ok then
+				ids = result
+			else
+				Log.Warn("TheftService", "перепроверка передач: " .. tostring(result))
+			end
+		end
+		if #ids > 0 then
+			Log.Warn(
+				"TheftService",
+				("%s: передач ждут жертву %d — решатся при следующем входе"):format(
+					tostring(player.Name),
+					#ids
+				)
+			)
+		end
+	end)
 end
 
 -- Кража, которую сейчас ведёт игрок (для интерфейса и тестов).
@@ -590,6 +743,8 @@ TheftService.Handlers = {
 	Sweep = sweep,
 	Ledger = ledger,
 	Confirm = confirm,
+	ResolveWaitingOnce = resolveWaitingOnce,
+	Carries = carries,
 }
 
 return TheftService
