@@ -24,9 +24,9 @@ local Palette = require(World.Palette)
 local Signs = require(World.Signs)
 local Studs = require(World.Studs)
 local FleaMarket = require(World.Models.FleaMarket)
+local SubwayStation = require(World.Models.SubwayStation)
 local Junkyard = require(World.Models.Junkyard)
 local Shops = require(World.Models.Shops)
-local Props = require(World.Models.Props)
 local Tree = require(World.Models.Tree)
 local ZoneDecor = require(World.Models.ZoneDecor)
 
@@ -478,11 +478,8 @@ local function buildZone(index: number, parent: Instance)
 		decor = Junkyard.Zone() -- уровень 1 «Свалка» (D41)
 	elseif zone.id == "Flea" then
 		decor, signs = FleaMarket.Zone() -- уровень 2 «Барахолка» (D43)
-	elseif zone.id == "Warehouse" then
-		decor = ZoneDecor.Warehouse()
-		for i, spot in { Vector3.new(-24, 0, -16), Vector3.new(24, 0, -16), Vector3.new(24, 4, -16), Vector3.new(-24, 0, -11) } do
-			place("Crate", Props.Crate, frame * CFrame.new(spot) * CFrame.Angles(0, i * 0.2, 0), f)
-		end
+	elseif zone.id == "Subway" then
+		decor, signs = SubwayStation.Zone() -- уровень 3 «Подземка» (D54)
 	elseif zone.id == "Bank" then
 		decor = ZoneDecor.Bank(size)
 	elseif zone.id == "Jungle" then

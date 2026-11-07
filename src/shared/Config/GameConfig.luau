@@ -267,8 +267,9 @@ GameConfig.Zones = {
 	-- Барахолка (D43, D44): пол зоны виден между павильонами, мощение и площадку босса кладёт декор
 	-- (World/Models/FleaMarket), узора нет.
 	{ id = "Flea", name = "Барахолка", boss = "Торговец-громила", floor = "565D6D", accent = "2CB5A8", mood = "🙂" },
-	{ id = "Warehouse", name = "Склад", boss = "Робот-охранник", floor = "90A4AE", accent = "3D8EE0", mood = "😐",
-		pattern = pattern("grid", "455A64", 12, 0.55) },
+	-- Подземка (D54, заменила «Склад»): перрон, пути, платформы и площадку босса кладёт декор
+	-- (World/Models/SubwayStation), узора нет.
+	{ id = "Subway", name = "Подземка", boss = "Крысиный король", floor = "8B8478", accent = "3D8EE0", mood = "😐" },
 	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E", mood = "😬",
 		pattern = pattern("waves", "D99A3A", 28, 0.38) },
 	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7", mood = "😨",

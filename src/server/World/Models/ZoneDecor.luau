@@ -31,36 +31,7 @@ end
 
 -- Барахолка (уровень 2) — World/Models/FleaMarket (D43).
 
--- Склад: жёлтая разметка и стеллажи с коробками (ящики ставит WorldBuilder).
-function ZoneDecor.Warehouse(): { ModelBuilder.Brick }
-	local bricks: { ModelBuilder.Brick } = {}
-	local yellow = hex("FFC400")
-	for _, x in { -7, 7 } do
-		table.insert(bricks, B(Vector3.new(1, 0.1, 50), Vector3.new(x, 0.05, 0), yellow, DECOR))
-	end
-	local boxColors = { hex("A1887F"), hex("8D6E63"), hex("BCAAA4") }
-	for _, rackX in { -20, 20 } do
-		local z, length, height = 27, 16, 10
-		for _, dx in { -length / 2, length / 2 } do
-			for _, dz in { -1.6, 1.6 } do
-				table.insert(bricks, B(Vector3.new(0.6, height, 0.6), Vector3.new(rackX + dx, height / 2, z + dz), hex("1565C0")))
-			end
-		end
-		for shelf = 1, 3 do
-			local y = shelf * 3.2
-			-- Полка выступает за стойки на 0.1: грани не совпадают (D36).
-			table.insert(bricks, B(Vector3.new(length + 0.8, 0.4, 4), Vector3.new(rackX, y, z), hex("FF7043")))
-			for box = 1, 3 do
-				local size = Vector3.new(3.4, 2.2, 2.8)
-				table.insert(
-					bricks,
-					B(size, Vector3.new(rackX - length / 3 + (box - 1) * length / 3, y + 0.2 + size.Y / 2, z), boxColors[(shelf + box) % 3 + 1], DECOR)
-				)
-			end
-		end
-	end
-	return bricks
-end
+-- Подземка (уровень 3) — World/Models/SubwayStation (D54).
 
 -- Банк: «мраморный» пол в шахматку (светлые плитки), колонны, сейфы у задней стены, золотая окантовка.
 function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }

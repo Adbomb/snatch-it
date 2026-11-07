@@ -11,6 +11,8 @@
    перечисляется как «ожидает импорта», не ошибка.
 5. Босс 2 подключён (D42, D43): Battle.Bosses[2] с силой Progression.Bosses[2], BossModels[2], скелет
    Boss2TraderRig в BossService и BossAnimController, площадка MapLayout.Arenas[2], декор FleaMarket в WorldBuilder.
+6. Уровень 3 «Подземка» подключён (D54): зона Subway в GameConfig, площадка MapLayout.Arenas[3], декор
+   SubwayStation в WorldBuilder.
 
 Запуск: python scripts/check_project.py (код выхода 1 — есть ошибки). Ни от чего не зависит, кроме стандартной
 библиотеки Python.
@@ -239,6 +241,12 @@ if not re.search(r"Arenas = \{\s*\[2\] = \{", src("src/server/World/MapLayout.lu
     errors.append("нет площадки босса 2 (MapLayout.Arenas[2])")
 if "FleaMarket.Zone()" not in src("src/server/World/WorldBuilder.luau"):
     errors.append("декор «Барахолки» (FleaMarket) не подключён в WorldBuilder")
+if not re.search(r'id = "Subway", name = "Подземка", boss = "Крысиный король"', src("src/shared/Config/GameConfig.luau")):
+    errors.append("нет зоны 3 «Подземка» с боссом «Крысиный король» (GameConfig.Zones)")
+if not re.search(r"\[3\] = \{\s*top = ", src("src/server/World/MapLayout.luau")):
+    errors.append("нет площадки босса 3 (MapLayout.Arenas[3])")
+if "SubwayStation.Zone()" not in src("src/server/World/WorldBuilder.luau"):
+    errors.append("декор «Подземки» (SubwayStation) не подключён в WorldBuilder")
 
 print(f"require проверено: {checked}; предметов с моделями (ItemModels): {len(models)}; коллекция босса 2: "
       f"{len(boss2_ids)} в игре, исключено из каталога {len(excluded)}")

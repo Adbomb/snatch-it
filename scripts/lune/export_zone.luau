@@ -1,7 +1,7 @@
 --!nocheck
 -- Выгрузка зоны для предпросмотра без Roblox Studio (Lune → JSON → scripts/blender/preview_zone.py): плита пола
 -- зоны, декор, босс в стойке (части скелета блоками цвета, как до импорта мешей) и заготовки 4 предметов на местах
--- слотов; у деталей со светом — его параметры. Координаты — мировые, Roblox (Y вверх). Пока сделано для зон 1 и 2.
+-- слотов; у деталей со светом — его параметры. Координаты — мировые, Roblox (Y вверх). Сделано для зон 1–3.
 -- Запуск из корня репозитория: lune run scripts/lune/export_zone.luau <зона> <файл.json> [id предметов через запятую]
 
 local fs = require("@lune/fs")
@@ -21,16 +21,18 @@ local UITokens = Env.Require("ReplicatedStorage.Shared.Config.UITokens")
 local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
+local SubwayStation = Env.Require("ServerScriptService.Server.World.Models.SubwayStation")
 
 local RIGS = {
 	[1] = Env.Require("ReplicatedStorage.Shared.Config.Boss1DogRig"),
 	[2] = Env.Require("ReplicatedStorage.Shared.Config.Boss2TraderRig"),
+	[3] = Env.Require("ReplicatedStorage.Shared.Config.Boss3RatKingRig"),
 }
 local signs = {}
-local DECOR = {
-	[1] = Junkyard.Zone,
-	[2] = function()
-		local bricks, list = FleaMarket.Zone()
+-- Декор с надписями: кирпичи, а надписи — в общий список для рендера.
+local function withSigns(build)
+	return function()
+		local bricks, list = build()
 		for _, sign in list do
 			local faces = {}
 			for _, face in sign.faces do
@@ -39,12 +41,17 @@ local DECOR = {
 			table.insert(signs, { name = sign.name, text = sign.text, faces = faces })
 		end
 		return bricks
-	end,
+	end
+end
+local DECOR = {
+	[1] = Junkyard.Zone,
+	[2] = withSigns(FleaMarket.Zone),
+	[3] = withSigns(SubwayStation.Zone),
 }
 
 local zone = tonumber(process.args[1] or "2") or 2
 local target = process.args[2] or "zone.json"
-assert(DECOR[zone], "Выгрузка есть только для зон 1 и 2")
+assert(DECOR[zone], "Выгрузка есть только для зон 1–3")
 
 local out = {}
 
