@@ -4,7 +4,8 @@
 -- Правила: красть можно только в Судную ночь (фаза Open), только чужой выставленный экспонат; удержание HoldSeconds;
 -- у вора одна кража за раз и одна успешная за событие (по UserId), у музея — один украденный предмет за событие;
 -- резерв атомарный (пока экспонат крадут, его и этот музей другой вор не трогает); провал резерв снимает и лимит
--- не тратит. Донести можно в Судную ночь и в окно доставки (фаза Delivery). Ни от чего не зависит.
+-- не тратит, но вор ждёт retry секунд до новой попытки (D52: повторным удержанием нельзя держать музей занятым всю
+-- ночь). Донести можно в Судную ночь и в окно доставки (фаза Delivery). Ни от чего не зависит.
 
 local TheftLedger = {}
 TheftLedger.__index = TheftLedger
@@ -44,11 +45,13 @@ export type Ledger = typeof(setmetatable(
 		byUid: { [string]: Theft },
 		done: { [number]: number }, -- вор → событие его успешной кражи
 		lost: { [number]: number }, -- владелец → событие потери
+		retry: number, -- пауза после сорванной попытки, секунд
+		retryAt: { [number]: number }, -- вор → когда снова можно начать
 	},
 	TheftLedger
 ))
 
-function TheftLedger.new(holdSeconds: number, tolerance: number?): Ledger
+function TheftLedger.new(holdSeconds: number, tolerance: number?, retrySeconds: number?): Ledger
 	return setmetatable({
 		hold = holdSeconds,
 		tolerance = tolerance or 0.25,
@@ -57,13 +60,22 @@ function TheftLedger.new(holdSeconds: number, tolerance: number?): Ledger
 		byUid = {},
 		done = {},
 		lost = {},
+		retry = retrySeconds or 0,
+		retryAt = {},
 	}, TheftLedger)
 end
 
--- Можно ли начать кражу. Возвращает причину отказа для игрока.
-function TheftLedger.CanBegin(self: Ledger, a: BeginArgs): (boolean, string?)
+-- Можно ли начать кражу (now — для паузы после сорванной попытки). Возвращает причину отказа для игрока.
+function TheftLedger.CanBegin(self: Ledger, a: BeginArgs, now: number?): (boolean, string?)
 	if a.phase ~= "Open" then
 		return false, "Красть можно только в Судную ночь"
+	end
+	local waitUntil = self.retryAt[a.thief]
+	if now and waitUntil and now < waitUntil then
+		return false,
+			("Кража сорвалась — новая попытка через %d с"):format(
+				math.ceil(waitUntil - now)
+			)
 	end
 	if a.thief == a.owner then
 		return false, "Это ваш экспонат"
@@ -94,7 +106,7 @@ end
 
 -- Начало удержания: резервирует экспонат, музей и вора. Проверки — те же, что CanBegin.
 function TheftLedger.Begin(self: Ledger, a: BeginArgs, now: number): (boolean, string?)
-	local ok, reason = self:CanBegin(a)
+	local ok, reason = self:CanBegin(a, now)
 	if not ok then
 		return false, reason
 	end
@@ -110,6 +122,7 @@ function TheftLedger.Begin(self: Ledger, a: BeginArgs, now: number): (boolean, s
 	self.byThief[a.thief] = theft
 	self.byOwner[a.owner] = theft
 	self.byUid[a.uid] = theft
+	self.retryAt[a.thief] = nil
 	return true, nil
 end
 
@@ -168,12 +181,17 @@ end
 
 -- Провал (отпустил E, ушёл, проиграл, время вышло, вышел из игры): резервы снимаются, лимиты не тратятся.
 -- Возвращает кражу, чтобы сервис вернул экспонат владельцу. Во время передачи (Delivering) не срабатывает.
-function TheftLedger.Fail(self: Ledger, thief: number): Theft?
+-- now — провал по вине вора (отпустил, сорвалась): до now + retry новая попытка не начнётся; nil — не его вина
+-- (хозяин музея вышел).
+function TheftLedger.Fail(self: Ledger, thief: number, now: number?): Theft?
 	local theft = self.byThief[thief]
 	if not theft or theft.stage == "Delivering" then
 		return nil
 	end
 	release(self, theft)
+	if now then
+		self.retryAt[thief] = now + self.retry
+	end
 	return theft
 end
 

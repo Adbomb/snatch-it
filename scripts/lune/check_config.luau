@@ -138,6 +138,17 @@ for zone, rig in RIGS do
 	)
 end
 
+print("Дальность боя (D52):")
+-- игрок достаёт босса не дальше, чем босс начинает выпад (BattleService: одна дальность AttackRange + Reach), а
+-- попадание выпада (AttackRange + 2.5) — с запасом на шаг назад за время HitDelay
+check(
+	Battle.Player.Reach <= 1,
+	("игрок не бьёт издалека: Reach = %s (было 3 — удары без ответа с 10.5…12.5 ст.)"):format(
+		tostring(Battle.Player.Reach)
+	)
+)
+check(Battle.Player.Reach + 1.5 <= 2.5, "попадание босса дальше начала выпада хотя бы на 1.5 ст.")
+
 print("Анимации:")
 local STATES = { "Sleep", "Wake", "StandUp", "ToCombat", "Combat", "Victory", "Defeat", "Return", "FallAsleep" }
 for zone, rig in RIGS do

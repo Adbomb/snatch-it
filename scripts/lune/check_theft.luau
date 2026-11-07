@@ -158,6 +158,33 @@ do
 	check(winners == 1, "20 воров на один экспонат: начал ровно один")
 end
 
+print("Пауза после сорванной попытки (D52):")
+do
+	local RETRY = GameConfig.Theft.RetrySeconds
+	check(RETRY == 5, "пауза 5 с в конфиге")
+	local L = TheftLedger.new(HOLD, nil, RETRY)
+	-- «щит»: друг владельца держит 2.5 с, отпускает и снова жмёт — музей больше не занят им всю ночь
+	check(L:Begin(args(), 100), "первая попытка")
+	check(L:Fail(THIEF, 102.5) ~= nil, "отпустил на 2.5 с — провал")
+	local ok, reason = L:Begin(args(), 102.6)
+	check(not ok and reason ~= nil and reason:find("через") ~= nil, "сразу снова нельзя: " .. tostring(reason))
+	check(not L:Begin(args(), 107.4), "через 4.9 с ещё нельзя")
+	check(L:Begin(args({ thief = THIEF2 }), 102.7), "другой вор может красть из этого музея сразу")
+	check(L:Fail(THIEF2, 103) ~= nil, "другой вор сорвался")
+	check(L:Begin(args(), 107.6), "через 5 с первая попытка снова разрешена")
+	-- пауза сброшена успешным началом; провал без вины вора (хозяин вышел) паузы не даёт
+	check(L:Fail(THIEF) ~= nil, "провал без вины вора")
+	check(L:Begin(args(), 107.7), "без вины — пауза не ставится")
+	-- провал при переноске (бросил, время доставки вышло) — тоже пауза
+	check(L:Complete(THIEF, "u1", 110.8, "Open"), "снято")
+	check(L:Fail(THIEF, 111) ~= nil, "добычу уронил")
+	check(not L:Begin(args({ uid = "u2", slot = 2 }), 112), "после провала с добычей — пауза")
+	check(L:Begin(args({ uid = "u2", slot = 2 }), 116.1), "после паузы — можно")
+	-- без паузы в конфиге (retry 0) — как раньше
+	local L0 = TheftLedger.new(HOLD)
+	check(L0:Begin(args(), 0) and L0:Fail(THIEF, 1) ~= nil and L0:Begin(args(), 1), "без паузы — сразу")
+end
+
 print("Номер события и фазы (GameTime):")
 do
 	local cfg = GameConfig.Time

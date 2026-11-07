@@ -1,13 +1,15 @@
 -- Кража в Судную ночь (D37, D46). На каждом постаменте — подсказка «Украсть» с удержанием GameConfig.Theft.HoldSeconds
 -- (E на ПК, экранная кнопка на телефоне); клиент показывает её только чужим в Судную ночь, но сервер проверяет всё
 -- сам: начало удержания (PromptButtonHoldBegan) резервирует экспонат, музей и вора (Util/TheftLedger), отпускание или
--- уход отменяет, завершение (Triggered) проверяет, что удержание длилось нужное время и вор рядом. Снятый экспонат
+-- уход отменяет, завершение (Triggered) проверяет, что удержание длилось нужное время. И в начале, и в конце вор
+-- должен быть рядом, внутри музея (зал или открытая галерея) и видеть экспонат — не через стену (D52,
+-- Util/MuseumSpace). После отменённой или сорванной попытки — пауза RetrySeconds (D52). Снятый экспонат
 -- (Stolen) вор несёт к сундуку своего музея; сдача — передача владения с журналом (DESIGN §6, Util/TransferJournal,
 -- DataService): запись — у вора в инвентаре (Stored, без дохода до выставления), у прежнего владельца удалена.
 -- Провал — вор отпустил, бросил, проиграл, вышел, его вынесло ночью или вышли 10 с доставки — экспонат сразу
 -- возвращается на свой постамент (не падает и не подбирается). Владелец вышел — кража отменяется, экспонат у него.
 -- Зависит от ItemRegistry, CarryService, DataService, InventoryService, MuseumService, PlotService, Shared/GameTime,
--- Util/TheftLedger, Util/*, GameConfig, Config/Items.
+-- Util/TheftLedger, Util/MuseumSpace, Util/*, GameConfig, Config/Items.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -25,6 +27,7 @@ local ItemFactory = require(Server.Util.ItemFactory)
 local MuseumService = require(Server.Services.MuseumService)
 local PlotService = require(Server.Services.PlotService)
 local Log = require(Server.Util.Log)
+local MuseumSpace = require(Server.Util.MuseumSpace)
 local Notify = require(Server.Util.Notify)
 local Prompts = require(Server.Util.Prompts)
 local RateLimiter = require(Server.Util.RateLimiter)
@@ -32,7 +35,7 @@ local TheftLedger = require(Server.Util.TheftLedger)
 local Validate = require(Server.Util.Validate)
 
 local cfg = GameConfig.Theft
-local ledger = TheftLedger.new(cfg.HoldSeconds, cfg.HoldTolerance)
+local ledger = TheftLedger.new(cfg.HoldSeconds, cfg.HoldTolerance, cfg.RetrySeconds)
 local limiter = RateLimiter.new(GameConfig.RateLimits.Steal)
 local parts: { [string]: BasePart } = {} -- uid → Part экспоната, снятого с вора на время передачи
 
@@ -113,14 +116,38 @@ local function returnToOwner(theft: TheftLedger.Theft, message: string?)
 	end
 end
 
--- Кража сорвалась (кроме передачи владения): резерв снят, лимиты не тратятся, экспонат — владельцу.
+-- Кража сорвалась (кроме передачи владения): резерв снят, лимиты не тратятся, экспонат — владельцу; вору — пауза
+-- до новой попытки (D52).
 local function fail(thief: any, message: string?): boolean
-	local theft = ledger:Fail(thief.UserId)
+	local theft = ledger:Fail(thief.UserId, os.clock())
 	if theft then
 		returnToOwner(theft, message)
 		return true
 	end
 	return false
+end
+
+-- Может ли вор дотянуться до экспоната места slot: живой, рядом (Distance + 1 на сеть), внутри музея (зал или
+-- открытая галерея, не снаружи и не в хранилище) и видит экспонат — между глазами и верхом тумбы нет стены (D52).
+-- nil — можно, иначе причина для вора.
+local function reachable(thief: any, plot: PlotService.Plot, slot: number): string?
+	local showcase = plot.showcases[slot]
+	local root = Validate.GetLiveRoot(thief)
+	if not showcase or not root then
+		return "Кража сорвалась"
+	end
+	if not Validate.IsNear(thief, showcase.Position, cfg.Distance + 1) then
+		return "Слишком далеко — подойдите к экспонату"
+	end
+	if not MuseumSpace.Inside(plot, root.Position) then
+		return "Красть можно только изнутри музея"
+	end
+	local eye = root.Position + Vector3.new(0, cfg.EyeHeight, 0)
+	local top = showcase.Position + Vector3.new(0, showcase.Size.Y / 2 + cfg.ExhibitLift, 0)
+	if not MuseumSpace.Sees(plot, eye, top, showcase) then
+		return "Экспонат не видно — подойдите к нему"
+	end
+	return nil
 end
 
 -- Удержание «Украсть» началось.
@@ -132,10 +159,7 @@ local function tryBegin(thief: any, plot: PlotService.Plot, slot: number)
 	if not owner or not DataService.GetData(thief) or not DataService.GetData(owner) then
 		return
 	end
-	if not Validate.IsNear(thief, plot.showcases[slot].Position, cfg.Distance + 1) then
-		return
-	end
-	local blocked = access and access(thief, owner, plot)
+	local blocked = reachable(thief, plot, slot) or (access and access(thief, owner, plot))
 	if blocked then
 		Notify.Send(thief, blocked, "Stop")
 		return
@@ -185,11 +209,7 @@ local function tryComplete(thief: any, plot: PlotService.Plot, slot: number)
 	if not theft or theft.stage ~= "Lifting" or theft.slot ~= slot or not owner or theft.owner ~= owner.UserId then
 		return -- без начала удержания (подделанный Triggered) ничего не происходит
 	end
-	if not Validate.IsNear(thief, plot.showcases[slot].Position, cfg.Distance + 1) then
-		fail(thief, "Слишком далеко — кража сорвалась")
-		return
-	end
-	local blocked = access and access(thief, owner, plot)
+	local blocked = reachable(thief, plot, slot) or (access and access(thief, owner, plot))
 	if blocked then
 		fail(thief, blocked)
 		return
@@ -408,12 +428,12 @@ local function sweep()
 			and showcase ~= nil
 			and not Validate.IsNear(thief, showcase.Position, cfg.Distance + 2)
 		if theft.stage == "Lifting" and (overdue or away) then
-			local failed = ledger:Fail(theft.thief)
+			local failed = ledger:Fail(theft.thief, now)
 			if failed then
 				returnToOwner(failed, if thief then "Кража сорвалась" else nil)
 			end
 		elseif theft.stage == "Lifting" and current ~= "Open" then
-			local failed = ledger:Fail(theft.thief)
+			local failed = ledger:Fail(theft.thief, now)
 			if failed then
 				returnToOwner(
 					failed,
@@ -423,7 +443,7 @@ local function sweep()
 				)
 			end
 		elseif theft.stage == "Carrying" and current == nil then
-			local failed = ledger:Fail(theft.thief)
+			local failed = ledger:Fail(theft.thief, now)
 			if failed then
 				returnToOwner(
 					failed,
@@ -474,6 +494,7 @@ function TheftService.Init()
 		for slot, showcase in plot.showcases do
 			local prompt = Prompts.Create(showcase, "Steal", "Постамент " .. slot, cfg.Distance)
 			prompt.HoldDuration = cfg.HoldSeconds
+			prompt.RequiresLineOfSight = true -- через стену подсказки не видно (D52; сервер проверяет сам)
 			Prompts.BindHold(
 				prompt,
 				function(player)

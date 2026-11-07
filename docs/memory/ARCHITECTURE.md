@@ -121,6 +121,7 @@
   Клиент `PvpController`: ЛКМ и кнопка «Удар» (Stud-UI, только телефон и Судная ночь), эффекты PvpEffect (замах плечом
   через `Util/Joints`, ключ Swing; вспышка Highlight, «-N», «НОКАУТ!», тряска камеры), свой нокаут — PlatformStand;
   числа — `UITokens.Pvp`.
+- Пространство музея на сервере (D52): `Util/MuseumSpace` — Inside (зал или открытая галерея в осях участка; ею же пользуется DefenseService) и Sees (луч через Building и Showcases участка, детали без столкновений лучу не мешают). `TheftService.reachable` — рядом, внутри и видит экспонат; `TheftLedger` — пауза RetrySeconds после провала по вине вора (Fail с now).
 - Процедурные движения суставов (D18, D51): `client/Util/Joints` — сустав Motor6D или AnimationConstraint (так у R15 в
   Studio 2026-11-07); смещение позы по ключу накладывается на Transform аниматора в PreSimulation (у AnimationConstraint
   смещение точек крепления аниматор гасит), смещения складываются, без накопления. Сгибать — вокруг поперечной оси

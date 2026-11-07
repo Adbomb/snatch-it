@@ -28,6 +28,7 @@ local PvpService = require(Server.Services.PvpService)
 local TheftService = require(Server.Services.TheftService)
 local TimeService = require(Server.Services.TimeService)
 local Log = require(Server.Util.Log)
+local MuseumSpace = require(Server.Util.MuseumSpace)
 local Notify = require(Server.Util.Notify)
 local Prompts = require(Server.Util.Prompts)
 local RateLimiter = require(Server.Util.RateLimiter)
@@ -99,7 +100,7 @@ local function showcasesLocal(plot: PlotService.Plot): { Vector3 }
 end
 
 local function hasGalleries(plot: PlotService.Plot): boolean
-	return (plot.level or 1) >= cfg.Galleries.Level
+	return MuseumSpace.HasGalleries(plot)
 end
 
 -- Подсветка устройства (детали Glow): цвет состояния; seconds — вернуть дежурный цвет через столько секунд.
@@ -258,27 +259,8 @@ end
 
 -- Точка в осях участка — внутри музея (за дверью): главный зал, а при galleries — и галереи (вход в них только из
 -- зала, D48-C).
-local function insideHall(at: Vector3, galleries: boolean?): boolean
-	if at.Y <= cfg.HallHeight.X or at.Y >= cfg.HallHeight.Y then
-		return false
-	end
-	local hall = cfg.Hall
-	if
-		at.X > hall.MinX - cfg.HallMargin
-		and at.X < hall.MaxX + cfg.HallMargin
-		and at.Z > cfg.Door.At.Z
-		and at.Z < hall.MaxZ + cfg.HallMargin
-	then
-		return true
-	end
-	local g = cfg.Galleries
-	local x = math.abs(at.X)
-	return galleries == true
-		and x > g.MinX
-		and x < g.MaxX + cfg.HallMargin
-		and at.Z > g.MinZ - cfg.HallMargin
-		and at.Z < g.MaxZ + cfg.HallMargin
-end
+-- «В зале или открытой галерее» — общая проверка пространства музея (Util/MuseumSpace, её же берут кражи, D52).
+local insideHall = MuseumSpace.InsideLocal
 
 -- Робот видит вора: между корпусом и вором нет стен и тумб здания своего участка.
 local function robotSees(plot: PlotService.Plot, from: Vector3, root: BasePart): boolean

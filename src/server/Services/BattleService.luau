@@ -363,8 +363,11 @@ local function step(fight: Fight)
 		BossService.Stop(boss)
 	end
 	local now = os.clock()
+	-- Одна дальность на двоих (D52): игрок достаёт босса ровно с той дистанции, с которой босс начинает выпад, —
+	-- безнаказанно бить издалека (у края поводка, отступая) нельзя.
+	local reach = bossCfg.AttackRange + Battle.Player.Reach
 	-- Удар игрока: автоматически, если достаёт.
-	if now >= fight.nextPlayer and dist <= bossCfg.AttackRange + Battle.Player.Reach then
+	if now >= fight.nextPlayer and dist <= reach then
 		fight.nextPlayer = now + Battle.Player.AttackInterval
 		local hit = roll(fight.damage)
 		fight.bossHp -= hit
@@ -377,7 +380,7 @@ local function step(fight: Fight)
 		end
 	end
 	-- Выпад босса: попадание через HitDelay, если игрок ещё рядом.
-	if now >= fight.nextBoss and dist <= bossCfg.AttackRange + 1 then
+	if now >= fight.nextBoss and dist <= reach then
 		fight.nextBoss = now + bossCfg.AttackInterval
 		fight.attacks += 1
 		BossService.Attack(boss, if fight.attacks % 3 == 0 then "swipe" else "bite")

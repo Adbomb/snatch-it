@@ -397,6 +397,12 @@ local function steal(thief: any, owner: any, slot: number, hold: number?)
 	TheftService.Handlers.Complete(thief, plot, slot)
 end
 
+-- Снять паузу после сорванной попытки (D52) — в тестах, где вор сразу пробует снова; саму паузу проверяет
+-- отдельный тест «D52: после сорванной попытки…».
+local function rested(thief: any)
+	TheftService.Handlers.Ledger.retryAt[thief.UserId] = nil
+end
+
 local function deliverHome(thief: any)
 	local plot = plotOf(thief)
 	near(thief, plot.chest)
@@ -449,6 +455,7 @@ test("Кража: провалы возвращают экспонат на по
 	TheftService.Handlers.Cancel(B)
 	check(ItemRegistry.Get(uid).state == "Displayed" and ItemRegistry.Get(uid).slot == 1, "после отпускания не на месте")
 	-- поддельное завершение через 1 с
+	rested(B)
 	steal(B, A, 1, 1)
 	check(ItemRegistry.Get(uid).state == "Displayed", "кража за 1 с прошла")
 	-- Triggered без начала удержания
@@ -456,6 +463,7 @@ test("Кража: провалы возвращают экспонат на по
 	check(ItemRegistry.Get(uid).state == "Displayed", "кража без удержания прошла")
 	-- поражение вора с добычей
 	task.wait(0.3)
+	rested(B)
 	steal(B, A, 1)
 	check(ItemRegistry.Get(uid).state == "Stolen", "вторая попытка не удалась")
 	TheftService.OnDefeated(B)
@@ -465,11 +473,13 @@ test("Кража: провалы возвращают экспонат на по
 	check(plotA.showcases[1]:GetAttribute("Occupied") == true, "постамент не занят после возврата")
 	-- бросил добычу (G)
 	task.wait(0.3)
+	rested(B)
 	steal(B, A, 1)
 	CarryService.Drop(B)
 	check(ItemRegistry.Get(uid).state == "Displayed", "брошенная добыча не вернулась")
 	-- время доставки вышло
 	task.wait(0.3)
+	rested(B)
 	steal(B, A, 1)
 	check(ItemRegistry.Get(uid).state == "Stolen", "третья попытка не удалась")
 	TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 1))
@@ -496,6 +506,7 @@ test("Кража: два вора на один экспонат, Stored и св
 	check(C:WasNotified("уже крадут"), "C не получил причину")
 	TheftService.Handlers.Cancel(B)
 	-- свой экспонат и предмет из инвентаря
+	rested(B)
 	steal(B, B, 1, 0.1)
 	check(ItemRegistry.Get(own).state == "Displayed", "B украл свой экспонат")
 	check(ItemRegistry.Get(stored).state == "Stored", "предмет из инвентаря A сдвинулся")
@@ -505,6 +516,72 @@ test("Кража: два вора на один экспонат, Stored и св
 	near(C, plotA.showcases[1])
 	TheftService.Handlers.Begin(C, plotA, 1)
 	check(ItemRegistry.Get(uid).state == "Displayed", "кража в окне доставки началась")
+end)
+
+test("D52: красть только изнутри музея и при прямой видимости экспоната", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA = plotOf(A)
+	local showcase = plotA.showcases[1]
+	local at = plotA.floorOrigin:PointToObjectSpace(showcase.Position)
+	local side = if at.X >= 0 then 1 else -1
+	-- снаружи, за наружной стеной зала: до постамента ближе Distance, но не внутри и стена закрывает
+	local outside = plotA.floorOrigin:PointToWorldSpace(Vector3.new(side * (MuseumLayout.Hall.HalfWidth + 0.8), 3, at.Z))
+	check((outside - showcase.Position).Magnitude < GameConfig.Theft.Distance, "точка снаружи не в радиусе подсказки")
+	B:MoveTo(outside)
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "кража снаружи через стену началась")
+	check(B:WasNotified("изнутри музея"), "нет причины «изнутри музея»")
+	-- внутри, но между вором и экспонатом стена со столкновениями — не видно
+	near(B, showcase)
+	local root = B.Character.PrimaryPart :: BasePart
+	local wall = Instance.new("Part")
+	wall.Name = "__TestWall"
+	wall.Anchored = true
+	wall.CanCollide = true
+	wall.Size = Vector3.new(8, 8, 0.4)
+	wall.CFrame = CFrame.lookAt((root.Position + showcase.Position) / 2, showcase.Position)
+	wall.Parent = plotA.model:FindFirstChild("Building")
+	TheftService.Handlers.Begin(B, plotA, 1)
+	local blockedState = ItemRegistry.Get(uid).state
+	wall:Destroy()
+	check(blockedState == "Displayed", "кража сквозь стену внутри зала началась")
+	check(B:WasNotified("не видно"), "нет причины «не видно»")
+	-- видно и внутри — начинается; ушёл наружу до конца удержания — сорвалась
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Lifting", "кража изнутри при видимости не началась")
+	task.wait(GameConfig.Theft.HoldSeconds + 0.1)
+	B:MoveTo(outside)
+	TheftService.Handlers.Complete(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "завершили снаружи")
+	check(ItemRegistry.GetCarriedBy(B) == nil, "добыча у вора после провала")
+end)
+
+test("D52: после сорванной попытки — пауза 5 с; музей не занят повторным удержанием", function(A, B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	doomNight()
+	local plotA = plotOf(A)
+	near(B, plotA.showcases[1])
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Lifting", "кража не началась")
+	TheftService.Handlers.Cancel(B)
+	B:ClearSent()
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed", "повтор сразу после отмены начался")
+	check(B:WasNotified("новая попытка через"), "нет причины паузы")
+	-- музей свободен: другой вор начинает сразу
+	local C = TestPlayer.new("Тест_C")
+	ctx.track(C)
+	check(join(C), "C не вошёл")
+	near(C, plotA.showcases[1])
+	TheftService.Handlers.Begin(C, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Lifting" and ItemRegistry.Get(uid).thief == C, "другой вор не смог начать")
+	TheftService.Handlers.Cancel(C)
+	-- через RetrySeconds вор снова может
+	task.wait(GameConfig.Theft.RetrySeconds + 0.1)
+	TheftService.Handlers.Begin(B, plotA, 1)
+	check(ItemRegistry.Get(uid).state == "Lifting" and ItemRegistry.Get(uid).thief == B, "после паузы не начать")
+	TheftService.Handlers.Cancel(B)
 end)
 
 -- PvP Судной ночи (D37, D46) ─────────────────────────────────────────────────────────────────────────────────
@@ -544,6 +621,7 @@ test("PvP: урон, перезарядка, нокаут 15 с, лежачег�
 	task.wait(Battle.Player.AttackInterval + 0.05)
 	PvpService.Handlers.Attack(A)
 	check(fb.hp == 0, "лежачего добили")
+	rested(B)
 	steal(B, A, 1, 0.1)
 	check(ItemRegistry.Get(uid).state == "Displayed", "оглушённый начал кражу")
 	PvpService.Handlers.Recover(B)
@@ -762,6 +840,7 @@ test("Ревью: залипшее удержание и уход владель
 	TheftService.Handlers.Sweep()
 	check(ItemRegistry.Get(first).state == "Displayed", "залипшее удержание держит резерв")
 	task.wait(0.3)
+	rested(B)
 	steal(B, A, 1)
 	check(ItemRegistry.Get(first).state == "Stolen", "B не унёс экспонат")
 	local userId = A.UserId
