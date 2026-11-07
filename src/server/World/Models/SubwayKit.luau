@@ -29,12 +29,16 @@ local SubwayKit = {}
 SubwayKit.B, SubwayKit.V = B, V
 SubwayKit.Box, SubwayKit.Disc, SubwayKit.Round, SubwayKit.Neon = Box, Disc, FleaKit.Round, Neon
 SubwayKit.Board, SubwayKit.Label, SubwayKit.Put, SubwayKit.Gem = FleaKit.Board, FleaKit.Label, FleaKit.Put, FleaKit.Gem
-SubwayKit.Coin, SubwayKit.Sack, SubwayKit.GoldChest = FleaKit.Coin, FleaKit.Sack, FleaKit.GoldChest
+SubwayKit.Sack, SubwayKit.GoldChest = FleaKit.Sack, FleaKit.GoldChest
 SubwayKit.Suitcases, SubwayKit.CoinSacks = FleaKit.Suitcases, FleaKit.CoinSacks
 SubwayKit.Reset, SubwayKit.Signs, SubwayKit.With = FleaKit.Reset, FleaKit.Signs, FleaKit.With
 SubwayKit.DECOR, SubwayKit.ROUND, SubwayKit.BALL = DECOR, ROUND, BALL
 SubwayKit.UPRIGHT, SubwayKit.ALONG_Z, SubwayKit.TURN = FleaKit.UPRIGHT, FleaKit.ALONG_Z, FleaKit.TURN
 SubwayKit.ALONG_X = CFrame.new() -- цилиндр Roblox и так лежит осью вдоль X
+-- Мягкие квадратные пупырышки (D36: шахматка едва заметна) — на больших поверхностях станции (плиты перронов, кафель
+-- стен, навес): одинаковый рельеф на огромных плоскостях рябил (уточнение D54 по просьбе владельца).
+SubwayKit.SOFT = "LegoSquaresSoft"
+SubwayKit.FLOOR = FleaKit.With(DECOR, { variant = SubwayKit.SOFT })
 
 SubwayKit.C = {
 	tile = hex("2F6DB5"), -- кафель стен
@@ -42,13 +46,17 @@ SubwayKit.C = {
 	tileLight = hex("5B92D6"),
 	tunnel = hex("18365E"), -- глубина тоннеля: тёмно-синяя, не чёрная
 	tunnelDeep = hex("0F2442"),
-	cream = hex("EFE3C2"), -- кремовые полосы кафеля, свод
-	creamDark = hex("D9CBA6"),
-	concrete = hex("B9B2A6"), -- перрон
-	concreteDark = hex("A39C90"),
-	concreteSide = hex("A8A296"), -- боковые платформы
-	seam = hex("7E776C"),
-	yellow = hex("F2C230"), -- линия безопасности
+	-- Светлые тона приглушены (просьба владельца после рендеров): в дневном свете Roblox (Brightness 3, Bloom) кремовый,
+	-- светлый бетон и золото засвечивались почти до белого (как D9C8A5 у «Барахолки», D45).
+	cream = hex("DCCB9E"), -- кремовые полосы кафеля, свод (было EFE3C2)
+	creamDark = hex("C4B289"),
+	concrete = hex("A39D91"), -- перрон (было B9B2A6)
+	concreteMid = hex("968F83"), -- вторая тональность плит перрона
+	concreteDark = hex("88827A"),
+	concreteSide = hex("9A9488"), -- боковые платформы
+	granite = hex("6F6A63"), -- кайма перрона у жёлтой линии
+	seam = hex("6A645B"),
+	yellow = hex("E8B41C"), -- линия безопасности
 	gravel = hex("6E6258"),
 	gravelDark = hex("5A4F47"),
 	sleeper = hex("6B4A32"),
@@ -56,19 +64,19 @@ SubwayKit.C = {
 	railDark = hex("6E7682"),
 	red = hex("D8352A"), -- вагоны
 	redDark = hex("A82820"),
-	wagonCream = hex("F2E6CF"),
-	roof = hex("C9CED6"),
-	window = hex("FFD27A"), -- окна светятся тёплым
+	wagonCream = hex("E2D2AE"),
+	roof = hex("AEB5C0"),
+	window = hex("F3C060"), -- окна светятся тёплым
 	interior = hex("3A2E3A"),
 	purple = hex("6B3FB8"), -- ковёр короля
 	purpleDark = hex("4E2A8C"),
 	purpleLight = hex("9B6BE0"),
 	velvet = hex("C2263A"), -- подушки-подстилки предметов
-	gold = hex("F2C230"),
-	goldDark = hex("C9952A"),
-	goldLight = hex("FFE27A"),
-	lamp = hex("FFB23F"), -- тёплые лампы
-	lampLight = hex("FFE2A0"),
+	gold = hex("E0A824"), -- золото глубже: не слепит (было F2C230)
+	goldDark = hex("B5821E"),
+	goldLight = hex("EEC040"), -- было FFE27A
+	lamp = hex("FFA63A"), -- тёплые лампы
+	lampLight = hex("FFCC70"), -- шары-лампы теплее, без белого ореола (было FFE2A0)
 	green = hex("3DDC84"),
 	signal = hex("FF4D4D"),
 	iron = hex("5A6170"), -- крышка люка, металл
@@ -80,13 +88,19 @@ SubwayKit.C = {
 	ratFur = hex("8790B0"), -- крысята-статисты: шерсть как у короля
 	ratPink = hex("F49AB0"),
 	foil = hex("D9DEE6"), -- корона из фольги
-	paper = hex("F4F1E8"),
+	paper = hex("E2DACA"),
 	spot = hex("FFF1C9"), -- свет прожекторов
 	wood = Palette.Wood,
 	woodDark = Palette.WoodDark,
 	white = Palette.White,
 }
 local C = SubwayKit.C
+
+-- Монета, лежащая на полу (толщина задаёт высоту верха: у соседних монет разная), золото «Подземки».
+function SubwayKit.Coin(x: number, z: number, thickness: number, size: number?): Brick
+	local d = size or 0.9
+	return B(V(thickness, d, d), CFrame.new(x, thickness / 2, z) * FleaKit.UPRIGHT, C.gold, ROUND)
+end
 
 -- Колесо с осью вдоль X (вагоны, дрезина, вагонетки): центр at, диаметр d, толщина t.
 function SubwayKit.Wheel(at: Vector3, d: number, t: number): Brick

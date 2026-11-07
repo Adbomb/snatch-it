@@ -33,6 +33,8 @@ OUT = argv[1] if len(argv) > 1 else "."
 VIEWS = argv[2] if len(argv) > 2 else None
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STUDS = os.path.join(ROOT, "assets", "textures", "lego_squares_color.png")
+# MaterialVariant D36 → своя карта пупырышков (у Soft шахматка едва заметна, у Deep квадратики глубже).
+VARIANTS = {"LegoSquaresSoft": "lego_squares_soft_color.png", "LegoSquaresDeep": "lego_squares_deep_color.png"}
 
 P = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))  # Roblox → Blender
 
@@ -221,6 +223,10 @@ def build(data):
         studs = bpy.data.images.load(STUDS)
         studs.colorspace_settings.name = "sRGB"
         mats["Plastic"] = plastic_material(studs)
+        for variant, file in VARIANTS.items():
+            image = bpy.data.images.load(os.path.join(ROOT, "assets", "textures", file))
+            image.colorspace_settings.name = "sRGB"
+            mats["Plastic:" + variant] = plastic_material(image)
         mats["SmoothPlastic"] = simple_material("Smooth", 0.45)
         mats["Neon"] = simple_material("Neon", 0.4, emission=2.2)
         mats["Glass"] = simple_material("Glass", 0.05, alpha=0.3)
@@ -241,6 +247,8 @@ def build(data):
         obj.color = (color[0], color[1], color[2], 1.0 - b["t"] if glass else 1.0)
         if not FAST:
             kind = "Glass" if glass else (b["mat"] if b["mat"] in mats else "Plastic")
+            if kind == "Plastic" and b.get("var") and ("Plastic:" + b["var"]) in mats:
+                kind = "Plastic:" + b["var"]
             set_material(obj, mats[kind])
             light = b.get("light")
             if light:

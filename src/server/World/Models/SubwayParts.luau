@@ -278,7 +278,7 @@ function SubwayParts.BufferStop(): { Brick }
 		)
 	end
 	for _, x in { -3.25, 0 } do -- белые полосы; первая выступает за торец бруса
-		table.insert(out, Box(x, x + 1.6, 2.15, 3.45, -0.46, -0.38, C.white, DECOR))
+		table.insert(out, Box(x, x + 1.6, 2.15, 3.45, -0.46, -0.38, C.paper, DECOR))
 	end
 	return out
 end

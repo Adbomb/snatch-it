@@ -24,14 +24,18 @@ export type Sign = { name: string, faces: { Enum.NormalId }, text: string }
 
 local B, V, C = SubwayKit.B, SubwayKit.V, SubwayKit.C
 local Box, Disc, Neon, Put = SubwayKit.Box, SubwayKit.Disc, SubwayKit.Neon, SubwayKit.Put
-local DECOR = SubwayKit.DECOR
+local DECOR, FLOOR, SOFT = SubwayKit.DECOR, SubwayKit.FLOOR, SubwayKit.SOFT
 
 local HALF = MapLayout.ZoneSize / 2 -- вход −HALF, выход +HALF
 local PLATFORM = 30 -- перрон |x| < 30
 local TRACK = 39 -- ось пути
 local SIDE = 47 -- боковые платформы с |x| = 47
 local WALL = 86 -- лицо стены станции (обрыв — с 92)
-local WALL_TOP = 24
+local WALL_TOP = 31.5 -- стена закрывает земляной срез обрыва (30 + трава): станция, а не карьер
+local CANOPY = { inner = 66, bottom = 29.5 } -- навес-потолок над боковыми платформами: от стены до x = inner
+-- Стены, навес и трубы кончаются на |z| = WALL_END: у границ зон на x = ±MapLayout.PylonX стоят светящиеся столбики,
+-- они не должны тонуть в кафеле.
+local WALL_END = HALF - 1.6
 local COLUMN = 50.5 -- колонны боковых платформ
 local BAYS = { -38, -19, 0, 19, 38 } -- колонны, рёбра свода, пилястры стен
 local RUNNER = 4.5 -- полуширина ковровой дорожки
@@ -79,7 +83,8 @@ function SubwayStation.Ground(): { Brick }
 		return inArena or onRunner
 	end
 
-	-- Перрон: ряды плит со сдвигом на полплиты по подложке (швы), редкие плиты темнее.
+	-- Перрон: ряды плит со сдвигом на полплиты по подложке (швы), шахматкой двух тонов на мягких пупырышках —
+	-- крупный рисунок вместо одинаковой ряби.
 	table.insert(out, Box(-PLATFORM, PLATFORM, 0, TOP.grout, -HALF + 0.1, HALF - 0.1, C.seam, DECOR))
 	for row = 0, 15 do
 		local z0 = -HALF + row * ROW
@@ -93,9 +98,9 @@ function SubwayStation.Ground(): { Brick }
 		for column = 1, #edges - 1 do
 			local x0, x1 = edges[column], edges[column + 1]
 			if not hidden(x0, x1, z0, z0 + ROW) then
-				local color = if (row * 5 + column * 3) % 7 == 0 then C.concreteDark else C.concrete
+				local color = if (row + column) % 2 == 0 then C.concrete else C.concreteMid
 				local half = SEAM / 2
-				table.insert(out, Box(x0 + half, x1 - half, 0, TOP.slab, z0 + half, z0 + ROW - half, color, DECOR))
+				table.insert(out, Box(x0 + half, x1 - half, 0, TOP.slab, z0 + half, z0 + ROW - half, color, FLOOR))
 			end
 		end
 	end
@@ -104,13 +109,15 @@ function SubwayStation.Ground(): { Brick }
 	for _, s in { -1, 1 } do
 		local a, b = X(s, PLATFORM - 1.6, PLATFORM - 0.4)
 		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.3, HALF - 0.3, C.yellow, DECOR))
+		a, b = X(s, PLATFORM - 3.4, PLATFORM - 1.6) -- тёмная кайма перрона
+		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.4, HALF - 0.4, C.granite, DECOR))
 		a, b = X(s, PLATFORM - 0.3, PLATFORM + 0.5)
 		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.2, HALF - 0.2, C.concreteDark, DECOR))
 		-- Путь: щебень, шпалы, рельсы.
 		a, b = X(s, PLATFORM + 0.5, SIDE)
 		table.insert(out, Box(a, b, 0, TOP.ballast, -HALF, HALF, C.gravel, DECOR))
-		for k = 0, 37 do
-			local z = -HALF + 1.25 + k * 2.5
+		for k = 0, 31 do
+			local z = -HALF + 1.5 + k * 3
 			local x0, x1 = X(s, TRACK - 5.5, TRACK + 5.5)
 			table.insert(out, Box(x0, x1, 0, TOP.sleeper, z - 0.6, z + 0.6, C.sleeper, DECOR))
 		end
@@ -125,8 +132,8 @@ function SubwayStation.Ground(): { Brick }
 			local z0 = -HALF + row * HALF / 4
 			for _, span in { { SIDE + 0.8, 66.5 }, { 66.5, WALL } } do
 				local x0, x1 = X(s, span[1] + SEAM / 2, span[2] - SEAM / 2)
-				local color = if (row + span[1]) % 3 < 1 then C.concreteDark else C.concreteSide
-				table.insert(out, Box(x0, x1, 0, TOP.slab, z0 + SEAM / 2, z0 + HALF / 4 - SEAM / 2, color, DECOR))
+				local color = if (row + (if span[1] < 66 then 0 else 1)) % 2 == 0 then C.concreteSide else C.concreteMid
+				table.insert(out, Box(x0, x1, 0, TOP.slab, z0 + SEAM / 2, z0 + HALF / 4 - SEAM / 2, color, FLOOR))
 			end
 		end
 		a, b = X(s, SIDE, SIDE + 0.8)
@@ -161,8 +168,44 @@ function SubwayStation.Ground(): { Brick }
 			Neon(V(0.9, TOP.carpet, 0.9), around(math.rad(11.25 + k * 22.5), outer - 0.9, TOP.carpet), C.yellow)
 		)
 	end
+	-- Кафельное кольцо шахматкой: светлые плитки между огоньками.
+	for k = 0, 15 do
+		table.insert(
+			out,
+			B(V(4.2, TOP.rim, 1.4), around(math.rad(k * 22.5), arena.radius + 2.15, TOP.rim), C.tile, DECOR)
+		)
+	end
 	table.insert(out, disc((arena.radius + 1.3) * 2, TOP.rim, C.gold))
 	table.insert(out, disc(arena.radius * 2, TOP.carpet, C.purple))
+	-- Розетка: 16 лучей от люка к пунктиру — тёмные широкие и золотые узкие по очереди (под подушками проходят ниже).
+	for k = 0, 15 do
+		local wide = k % 2 == 0
+		local ray = CFrame.new(center.X, TOP.dash / 2, center.Y)
+			* CFrame.Angles(0, math.rad(k * 22.5 + 11.25), 0)
+			* CFrame.new(0, 0, 13)
+		table.insert(
+			out,
+			B(V(if wide then 1.8 else 0.55, TOP.dash, 11), ray, if wide then C.purpleDark else C.gold, DECOR)
+		)
+	end
+	-- Золотое кольцо плиток вокруг крышки люка.
+	for k = 0, 23 do
+		table.insert(out, B(V(1.1, TOP.dash, 0.7), around(math.rad(k * 15), 6.3, TOP.dash), C.goldDark, DECOR))
+	end
+	-- Мозаика-корона на ковре перед боссом со стороны входа (зубцы — к боссу): её видно, пока идёшь по дорожке.
+	local cz = center.Y - 16
+	local function tile(x0: number, x1: number, z0: number, z1: number, top: number, color: Color3)
+		table.insert(out, Box(center.X + x0, center.X + x1, 0, top, cz + z0, cz + z1, color, DECOR))
+	end
+	tile(-2.8, 2.8, -1.2, 0.4, 0.4, C.gold) -- обруч
+	for _, x in { -2.8, -0.4, 2.0 } do
+		tile(x, x + 0.8, 0.4, 2.0, 0.4, C.gold) -- три зубца
+	end
+	tile(-2.0, -1.2, 0.4, 1.2, 0.4, C.gold)
+	tile(1.2, 2.0, 0.4, 1.2, 0.4, C.gold)
+	for _, x in { -1.6, 0, 1.6 } do
+		tile(x - 0.3, x + 0.3, -0.7, -0.1, 0.45, C.velvet) -- камни на обруче
+	end
 	for k = 0, 23 do
 		table.insert(
 			out,
@@ -201,18 +244,20 @@ function SubwayStation.Ground(): { Brick }
 	return out
 end
 
--- Стена станции с той стороны s (лицо x = s·WALL, до обрыва): кафель, тёмный цоколь, кремовая полоса, карниз и
--- верхний пояс, пилястры у рёбер свода; проёмы — тоннель и решётка эскалатора.
+-- Стена станции с той стороны s (лицо x = s·WALL, до обрыва) в высоту WALL_TOP — закрывает земляной срез обрыва:
+-- внизу синий кафель, тёмный цоколь, кремовая полоса; выше фриз из светлого кафеля с кремовыми ромбами, верхний тёмный
+-- кафель и кремовый карниз под навесом; пилястры у рёбер свода; проёмы — тоннель и решётка эскалатора. Тело стены —
+-- на мягких пупырышках (большая плоскость).
 local function wall(out: { Brick }, s: number, openings: { { number } })
 	local function slab(z0: number, z1: number, y0: number, y1: number, color: Color3)
 		local x0, x1 = X(s, WALL, 92)
-		table.insert(out, Box(x0, x1, y0, y1, z0, z1, color))
+		table.insert(out, Box(x0, x1, y0, y1, z0, z1, color, { variant = SOFT }))
 	end
 	-- Тело стены: между проёмами — во всю высоту, над и под проёмом — куски.
 	table.sort(openings, function(a, b)
 		return a[1] < b[1]
 	end)
-	local z = -HALF
+	local z = -WALL_END
 	for _, o in openings do
 		slab(z, o[1], 0, WALL_TOP, C.tile)
 		if o[3] > 0 then
@@ -221,26 +266,67 @@ local function wall(out: { Brick }, s: number, openings: { { number } })
 		slab(o[1], o[2], o[4], WALL_TOP, C.tile)
 		z = o[2]
 	end
-	slab(z, HALF, 0, WALL_TOP, C.tile)
+	slab(z, WALL_END, 0, WALL_TOP, C.tile)
 	-- Полосы вдоль стены, с пропусками в проёмах, которые они пересекли бы.
 	local function band(y0: number, y1: number, color: Color3, depth: number)
 		local x0, x1 = X(s, WALL - depth, WALL)
-		local from = -HALF
+		local from = -WALL_END
 		for _, o in openings do
 			if y1 > o[3] and y0 < o[4] then
 				table.insert(out, Box(x0, x1, y0, y1, from, o[1], color, DECOR))
 				from = o[2]
 			end
 		end
-		table.insert(out, Box(x0, x1, y0, y1, from, HALF, color, DECOR))
+		table.insert(out, Box(x0, x1, y0, y1, from, WALL_END, color, DECOR))
 	end
 	band(0, 2.2, C.tileDark, 0.15)
 	band(7.8, 8.9, C.cream, 0.12)
-	band(20.8, 22.2, C.cream, 0.3)
-	band(22.2, WALL_TOP, C.tileDark, 0.1)
+	band(21.8, 23.2, C.tileLight, 0.18) -- фриз
+	band(23.2, 28.0, C.tileDark, 0.08) -- верхний тёмный кафель
+	band(28.0, 29.2, C.cream, 0.35) -- карниз под навесом
+	-- Ромбы фриза между пилястрами.
+	for zc = -WALL_END + 2.4, WALL_END - 2.4, 4.8 do
+		local nearBay = false
+		for _, bz in BAYS do
+			nearBay = nearBay or math.abs(zc - bz) < 2
+		end
+		if not nearBay then
+			local at = CFrame.new(s * (WALL - 0.12), 22.5, zc) * CFrame.Angles(math.rad(45), 0, 0)
+			table.insert(out, B(V(0.3, 0.8, 0.8), at, C.cream, DECOR))
+		end
+	end
 	for _, bz in BAYS do
 		local x0, x1 = X(s, WALL - 0.5, WALL)
-		table.insert(out, Box(x0, x1, 0, 20.8, bz - 1.2, bz + 1.2, C.tileLight, DECOR))
+		table.insert(out, Box(x0, x1, 0, 21.8, bz - 1.2, bz + 1.2, C.tileLight, DECOR))
+	end
+	-- Концы стены у границ зоны: кремовые пилястры (стена не обрывается срезом).
+	for _, e in { -1, 1 } do
+		local x0, x1 = X(s, WALL - 0.6, WALL)
+		local z0, z1 =
+			math.min(e * (WALL_END - 1.2), e * (WALL_END + 0.1)), math.max(e * (WALL_END - 1.2), e * (WALL_END + 0.1))
+		table.insert(out, Box(x0, x1, 0, 28.0, z0, z1, C.cream, DECOR))
+	end
+end
+
+-- Навес-потолок над боковой платформой стороны s: тёмная кафельная плита от стены до x = CANOPY.inner на высоте
+-- карниза, кремовая балка-край с бортиком, полосы тёплого света под навесом, кремовые торцы у границ зоны. Середина
+-- станции открыта небу, а боковые платформы — под потолком: подземка, а не карьер.
+local function canopy(out: { Brick }, s: number)
+	local x0, x1 = X(s, CANOPY.inner, WALL)
+	table.insert(out, Box(x0, x1, CANOPY.bottom, WALL_TOP, -WALL_END, WALL_END, C.tileDark, { variant = SOFT }))
+	x0, x1 = X(s, CANOPY.inner - 0.4, CANOPY.inner + 0.6)
+	local fascia = WALL_END - 0.1
+	table.insert(out, Box(x0, x1, CANOPY.bottom - 0.9, WALL_TOP + 0.6, -fascia, fascia, C.cream))
+	for _, d in { 72, 80 } do
+		local a, b = X(s, d - 0.35, d + 0.35)
+		local strip = V(b - a, 0.2, WALL_END * 2 - 2)
+		table.insert(out, Neon(strip, V((a + b) / 2, CANOPY.bottom - 0.1, 0), C.lampLight))
+	end
+	for _, e in { -1, 1 } do
+		x0, x1 = X(s, CANOPY.inner + 0.6, WALL)
+		local z0, z1 =
+			math.min(e * (WALL_END - 0.5), e * (WALL_END - 0.1)), math.max(e * (WALL_END - 0.5), e * (WALL_END - 0.1))
+		table.insert(out, Box(x0, x1, CANOPY.bottom - 0.6, WALL_TOP + 0.5, z0, z1, C.cream, DECOR))
 	end
 end
 
@@ -322,25 +408,28 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 	})
 	tunnel(out, L, TUNNELS[L])
 	tunnel(out, R, TUNNELS[R])
+	canopy(out, L)
+	canopy(out, R)
 
-	-- Колонны с лампами, рёбра свода с подвесными лампами над боковыми платформами (поперёк коридора ничего нет).
-	local span = WALL - COLUMN
+	-- Колонны с лампами, рёбра свода от капителей к краю навеса, подвесные лампы (поперёк коридора ничего нет).
+	local span = CANOPY.inner - COLUMN
+	local rise = CANOPY.bottom - 0.6 - 15.2
 	for _, s in { L, R } do
 		for _, z in BAYS do
 			Put(out, SubwayParts.Column(), if s == L then left(z, COLUMN) else right(z, COLUMN))
 			local turn = if s < 0 then CFrame.Angles(0, math.pi, 0) else CFrame.new()
-			Put(out, SubwayParts.Rib(span, 15.2, 8), CFrame.new(s * COLUMN, 0, z) * turn)
-			-- Лампа на цепи с середины ребра (там его низ на высоте около 21.5).
+			Put(out, SubwayParts.Rib(span, 15.2, rise), CFrame.new(s * COLUMN, 0, z) * turn)
+			-- Лампа на цепи с середины ребра (там его низ на высоте около 26.4).
 			local x = s * (COLUMN + span / 2)
-			table.insert(out, Box(x - 0.1, x + 0.1, 18.6, 21.6, z - 0.1, z + 0.1, C.graphite, DECOR))
-			table.insert(out, Box(x - 0.55, x + 0.55, 18.2, 18.7, z - 0.55, z + 0.55, C.goldDark, DECOR))
+			table.insert(out, Box(x - 0.1, x + 0.1, 22.6, 26.6, z - 0.1, z + 0.1, C.graphite, DECOR))
+			table.insert(out, Box(x - 0.55, x + 0.55, 22.2, 22.7, z - 0.55, z + 0.55, C.goldDark, DECOR))
 			local glow = SubwayKit.With(SubwayKit.BALL, { material = Enum.Material.Neon })
-			table.insert(out, B(V(1.5, 1.5, 1.5), V(x, 17.5, z), C.lampLight, glow))
+			table.insert(out, B(V(1.5, 1.5, 1.5), V(x, 21.5, z), C.lampLight, glow))
 		end
 		-- Трубы вдоль стены и хомуты у пилястр.
 		for _, pipe in { { 18.6, 0.9, C.pipeRed }, { 19.8, 0.7, C.pipeTeal } } do
 			local at = CFrame.new(s * (WALL - 0.75), pipe[1], 0) * CFrame.Angles(0, math.pi / 2, 0)
-			table.insert(out, B(V(HALF * 2 - 0.4, pipe[2], pipe[2]), at, pipe[3], SubwayKit.ROUND))
+			table.insert(out, B(V(WALL_END * 2 - 0.4, pipe[2], pipe[2]), at, pipe[3], SubwayKit.ROUND))
 		end
 		for _, z in BAYS do
 			local x0, x1 = X(s, WALL - 1.4, WALL - 0.5)
@@ -376,7 +465,7 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 	table.insert(out, Box(g0, g1, e.rise, e.rise + 4.6, e.z - e.half - 0.6, e.z + e.half + 0.6, C.tunnelDeep, DECOR))
 	local face = if R < 0 then Enum.NormalId.Right else Enum.NormalId.Left -- табличка смотрит в коридор
 	local exitSign = SubwayKit.Label("ВЫХОД ЗАКРЫТ", { face })
-	table.insert(out, SubwayKit.Board(V(0.3, 1.3, 8.6), V(R * (WALL - 0.4), 22.75, e.z), C.signal, exitSign))
+	table.insert(out, SubwayKit.Board(V(0.3, 1.3, 8.6), V(R * (WALL - 0.4), 25.2, e.z), C.signal, exitSign))
 
 	-- Вагон на левом пути: открытая дверь с золотом, на крыше ящики и крысёнок.
 	local inward = CFrame.Angles(0, L * math.pi / 2, 0) -- лицом −Z к середине коридора с левой стороны

@@ -18,6 +18,7 @@ local Items = Env.Require("ReplicatedStorage.Shared.Config.Items")
 local NumberFormat = Env.Require("ReplicatedStorage.Shared.NumberFormat")
 local Rarities = Env.Require("ReplicatedStorage.Shared.Config.Rarities")
 local UITokens = Env.Require("ReplicatedStorage.Shared.Config.UITokens")
+local TextCase = Env.Require("ReplicatedStorage.Shared.TextCase")
 local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
@@ -63,10 +64,12 @@ local function add(
 	material: string?,
 	transparency: number?,
 	light: any?,
-	name: string?
+	name: string?,
+	variant: string?
 )
 	table.insert(out, {
 		name = name,
+		var = variant,
 		s = { size.X, size.Y, size.Z },
 		cf = { cframe:GetComponents() },
 		c = { color.R, color.G, color.B },
@@ -129,18 +132,19 @@ for _, s in { -1, 1 } do
 	)
 	add(Vector3.new(2.2, 2.2, 2.2), pylon * CFrame.new(0, 10.3, 0), Color3.fromHex(cfg.accent), "Block", "Neon")
 end
--- Голограмма: только контур (в игре — светящийся текст без фона).
+-- Голограмма: как в игре — светящийся текст названия без фона и рамки (World/Hologram): невидимая деталь с надписью.
 local holo = frame * CFrame.new(0, MapLayout.HologramHeight, -half + MapLayout.HologramInset)
-local hw, hh = MapLayout.HologramSize.X / 2, MapLayout.HologramSize.Y / 2
-for _, bar in { { 0, hh, hw * 2, 0.3 }, { 0, -hh, hw * 2, 0.3 }, { -hw, 0, 0.3, hh * 2 }, { hw, 0, 0.3, hh * 2 } } do
-	add(
-		Vector3.new(bar[3], bar[4], 0.2),
-		holo * CFrame.new(bar[1], bar[2], 0),
-		Color3.fromHex(cfg.accent),
-		"Block",
-		"Neon"
-	)
-end
+add(
+	Vector3.new(MapLayout.HologramSize.X, MapLayout.HologramSize.Y, 0.2),
+	holo,
+	Color3.fromHex(cfg.accent),
+	"Block",
+	"SmoothPlastic",
+	1,
+	nil,
+	"Hologram"
+)
+table.insert(signs, { name = "Hologram", text = TextCase.Upper(cfg.name), faces = { "Front" } })
 
 for _, brick in DECOR[zone]() do
 	add(
@@ -151,7 +155,8 @@ for _, brick in DECOR[zone]() do
 		brick.material and brick.material.Name,
 		brick.transparency,
 		brick.light,
-		brick.name
+		brick.name,
+		brick.variant
 	)
 end
 
