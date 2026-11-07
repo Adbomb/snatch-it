@@ -175,8 +175,12 @@ local function setFrozen(player: any, frozen: boolean)
 	if frozen then
 		humanoid.WalkSpeed = 0
 		humanoid.JumpHeight = 0
+		-- игра прыгает по JumpPower (StarterPlayer.CharacterUseJumpPower): без этого пойманный и оглушённый
+		-- подпрыгивали на ~10 ст. и «скакали» в сторону (D53, проверка капкана на трёх клиентах)
+		humanoid.JumpPower = 0
 	else
 		humanoid.JumpHeight = StarterPlayer.CharacterJumpHeight
+		humanoid.JumpPower = StarterPlayer.CharacterJumpPower
 		CarryService.RefreshSpeed(player)
 	end
 end

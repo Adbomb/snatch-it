@@ -1638,6 +1638,16 @@ test("Ревью: капкан — 10 с не ходит и не бьёт, по 
 	check(PvpService.Handlers.Snare(B, GameConfig.Defense.Snare.Seconds) == true, "капкан не сработал")
 	check(not PvpService.Handlers.Snare(B, 1), "второй капкан сработал на пойманного")
 	check(B:GetAttribute("Snared") == true, "нет атрибута Snared")
+	-- D53 (три клиента): прыжок в игре — по JumpPower; пойманный не ходит и не прыгает
+	local humanoid = B.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	check(
+		humanoid.WalkSpeed == 0 and humanoid.JumpHeight == 0 and humanoid.JumpPower == 0,
+		("пойманный может двигаться: скорость %s, прыжок %s/%s"):format(
+			tostring(humanoid.WalkSpeed),
+			tostring(humanoid.JumpHeight),
+			tostring(humanoid.JumpPower)
+		)
+	)
 	local fb = PvpService.Handlers.Fighter(B)
 	PvpService.Handlers.Attack(A)
 	check(fb.hp < fb.maxHp, "по пойманному не бьётся")
@@ -1655,7 +1665,12 @@ test("Ревью: капкан — 10 с не ходит и не бьёт, по 
 		PvpService.Handlers.Attack(A)
 	end
 	check(B:GetAttribute("Knocked") == true and B:GetAttribute("Snared") == nil, "нокаут не снял капкан")
+	check(humanoid.JumpPower == 0 and humanoid.WalkSpeed == 0, "оглушённый может прыгать или ходить")
 	PvpService.Handlers.Recover(B)
+	check(
+		humanoid.JumpPower == game:GetService("StarterPlayer").CharacterJumpPower and humanoid.WalkSpeed > 0,
+		"после подъёма прыжок или скорость не вернулись"
+	)
 end)
 
 test("Ревью: защита списывается при установке, возвращается до ночи; взлом вне ночи не начинается", function(A, B)
