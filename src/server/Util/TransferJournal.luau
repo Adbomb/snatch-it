@@ -36,7 +36,10 @@ export type Action = {
 -- удаление). Дольше — живой сессии без сохранения не бывает (автосохранение ProfileStore — раз в 300 с).
 TransferJournal.SessionGrace = 1800
 
--- Метки старше этого (секунд) удаляются при загрузке, если на них не ссылаются журнал и pending.
+-- Метки получения (transfersIn, у вора) старше этого (секунд) удаляются при загрузке, если на них не ссылаются журнал
+-- и pending. Метки ухода (transfersOut, у жертвы) не удаляются никогда (D52): жертва не знает, закрыл ли вор передачу,
+-- а без метки Resolve вора решил бы «drop» — предмет пропал бы у обоих. Рост ограничен: музей теряет не больше одного
+-- предмета за Судную ночь (D37), запись — id и время.
 TransferJournal.MarkerTtl = 30 * 24 * 3600
 
 function TransferJournal.Key(thief: number): string
@@ -148,7 +151,8 @@ function TransferJournal.Confirmed(action: Action, saved: any): boolean
 	return true
 end
 
--- Старые метки (на которые не ссылаются журнал и pending) удаляются.
+-- Старые метки получения (transfersIn), на которые не ссылаются журнал и pending, удаляются; метки ухода
+-- (transfersOut) — нет (см. MarkerTtl).
 function TransferJournal.Prune(data: any, entries: { Entry }, now: number)
 	local keep: { [string]: boolean } = {}
 	for _, entry in entries do
@@ -161,14 +165,12 @@ function TransferJournal.Prune(data: any, entries: { Entry }, now: number)
 			keep[record.pending] = true
 		end
 	end
-	for _, field in { "transfersIn", "transfersOut" } do
-		local marks = data[field]
-		if type(marks) == "table" then
-			for id, mark in marks do
-				local at = if type(mark) == "table" and type(mark.at) == "number" then mark.at else 0
-				if not keep[id] and now - at > TransferJournal.MarkerTtl then
-					marks[id] = nil
-				end
+	local marks = data.transfersIn
+	if type(marks) == "table" then
+		for id, mark in marks do
+			local at = if type(mark) == "table" and type(mark.at) == "number" then mark.at else 0
+			if not keep[id] and now - at > TransferJournal.MarkerTtl then
+				marks[id] = nil
 			end
 		end
 	end

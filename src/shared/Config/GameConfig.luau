@@ -12,6 +12,9 @@ GameConfig.Data = {
 	StoreName = "PlayerData",
 	KeyPrefix = "Player_",
 	SaveCooldown = 10, -- секунд между внеочередными сохранениями после изменения профиля
+	-- D52: запись ключа DataStore — не чаще раза в 6 с; наши сохранения профиля (подтверждение кражи, внеочередные) —
+	-- не чаще раза в столько секунд
+	MinSaveInterval = 7,
 	TransferStoreName = "Transfers", -- журнал передачи украденного (DESIGN §6, D46)
 }
 

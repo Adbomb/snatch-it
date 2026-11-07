@@ -83,6 +83,8 @@ local function getActiveProfile(player: Player): any
 	return nil
 end
 
+local finishLoad: (Player, any) -> boolean
+
 -- Загружает профиль (ждёт). true — профиль готов; false — игрока кикнули или он уже вышел.
 -- mock — профиль в памяти (ProfileStore.Mock), в DataStore не пишется: только для серверных тестов.
 function DataService.LoadAsync(player: Player, mock: boolean?): boolean
@@ -99,6 +101,27 @@ function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 				"Не удалось загрузить сохранение. Попробуйте зайти ещё раз."
 			)
 		end
+		return false
+	end
+	return finishLoad(player, profile)
+end
+
+-- Загрузка после начала сессии. Конец сессии (её перехватил другой сервер) ловится сразу — в том числе пока ждём
+-- журнал передач (DataStore); профиль, который уже не активен, игроку не отдаётся (D52: иначе игрок остался бы без
+-- сохранения, а GetData — nil посреди входа).
+finishLoad = function(player: Player, profile: any): boolean
+	local ended = false
+	profile.OnSessionEnd:Connect(function()
+		ended = true
+		if profiles[player] == profile then
+			profiles[player] = nil
+			saveState[player] = nil
+		end
+		if player.Parent == Players then
+			player:Kick("Сохранение открыто на другом сервере. Перезайдите.")
+		end
+	end)
+	if ended or not profile:IsActive() then
 		return false
 	end
 
@@ -141,16 +164,19 @@ function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 		)
 	end
 
-	profile.OnSessionEnd:Connect(function()
-		profiles[player] = nil
-		saveState[player] = nil
+	if player.Parent ~= Players then
+		profile:EndSession()
+		return false
+	end
+	if ended or not profile:IsActive() then
+		-- сессию перехватили, пока шла загрузка (ждали журнал): без профиля играть нельзя
+		Log.Warn(
+			"DataService",
+			player.Name .. ": сессия профиля закончилась во время загрузки"
+		)
 		if player.Parent == Players then
 			player:Kick("Сохранение открыто на другом сервере. Перезайдите.")
 		end
-	end)
-
-	if player.Parent ~= Players then
-		profile:EndSession()
 		return false
 	end
 	profiles[player] = profile
@@ -508,8 +534,30 @@ function DataService.ClearPending(player: Player, uid: string, transferId: strin
 	end
 end
 
+local function stateOf(player: Player): { last: number, pending: boolean }
+	local state = saveState[player]
+	if not state then
+		state = { last = -math.huge, pending = false }
+		saveState[player] = state
+	end
+	return state
+end
+
+-- Запросить запись профиля, если с прошлой нашей прошло MinSaveInterval (лимит DataStore — запись ключа раз в 6 с,
+-- D52). true — запрошено.
+local function saveIfAllowed(player: Player, profile: any): boolean
+	local state = stateOf(player)
+	if os.clock() - state.last < GameConfig.Data.MinSaveInterval then
+		return false
+	end
+	state.last = os.clock()
+	profile:Save()
+	return true
+end
+
 -- Сохранить профиль и дождаться записи, в которой выполнено check(сохранённые данные), не дольше timeout секунд.
 -- Сохранение, начатое раньше (снимок до изменений), не засчитывается: проверяется содержимое. true — записано.
+-- Запросы записи — не чаще MinSaveInterval (D52), включая внеочередные сохранения (RequestSave).
 function DataService.SaveAndWait(player: Player, timeout: number, check: ((any) -> boolean)?): boolean
 	local profile = getActiveProfile(player)
 	if not profile then
@@ -521,13 +569,12 @@ function DataService.SaveAndWait(player: Player, timeout: number, check: ((any) 
 			saved = true
 		end
 	end)
-	profile:Save()
-	local started, lastRequest = os.clock(), os.clock()
+	local started = os.clock()
+	saveIfAllowed(player, profile)
 	while not saved and os.clock() - started < timeout and profile:IsActive() do
 		task.wait(0.1)
-		if not saved and os.clock() - lastRequest > 3 then
-			lastRequest = os.clock()
-			profile:Save()
+		if not saved then
+			saveIfAllowed(player, profile)
 		end
 	end
 	connection:Disconnect()
@@ -616,11 +663,7 @@ function DataService.RequestSave(player: Player)
 	if not getActiveProfile(player) then
 		return
 	end
-	local state = saveState[player]
-	if not state then
-		state = { last = -math.huge, pending = false }
-		saveState[player] = state
-	end
+	local state = stateOf(player)
 	if state.pending then
 		return
 	end
@@ -635,5 +678,16 @@ function DataService.RequestSave(player: Player)
 		end
 	end)
 end
+
+-- Для серверных тестов (Server/Tests): загрузка после начала сессии (моделирование перехвата сессии) и профиль игрока
+-- (подсчёт запросов записи).
+DataService.Handlers = {
+	FinishLoad = function(player: Player, profile: any): boolean
+		return finishLoad(player, profile)
+	end,
+	Profile = function(player: Player): any
+		return profiles[player]
+	end,
+}
 
 return DataService

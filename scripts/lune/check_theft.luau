@@ -241,7 +241,9 @@ do
 	end
 	-- Шаги TheftService: 1 журнал; 2 передача в одном кадре; 3 сохранение жертвы с меткой; 4 снять pending, сохранить
 	-- вора с меткой, удалить журнал. Подтверждения засчитываются только по содержимому сохранений.
-	local function run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late)
+	-- late: вор вошёл намного позже; veryLate (D52): позже срока меток MarkerTtl, а жертва за это время заходила —
+	-- её загрузка чистила метки (Prune), и только потом решает вор
+	local function run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late, veryLate)
 		local victim = newProfile({ [UID] = copy(RECORD) })
 		local thief = newProfile({})
 		local journal = {}
@@ -284,7 +286,13 @@ do
 		end
 		-- падение: незаписанные снимки пропадают; вор входит со своим сохранением
 		local loaded = copy(thief.saved)
-		local now = if late then AT + 10 * TransferJournal.SessionGrace else AT + 5
+		local now = if veryLate
+			then AT + TransferJournal.MarkerTtl + 86400
+			elseif late then AT + 10 * TransferJournal.SessionGrace
+			else AT + 5
+		if veryLate then
+			TransferJournal.Prune(victim.saved, {}, now) -- вход жертвы: у неё журнала и pending нет
+		end
 		local victimOut = function(from, id, age)
 			assert(from == OWNER)
 			if victim.saved.transfersOut[id] ~= nil then
@@ -312,10 +320,11 @@ do
 		for victimSnapAt = -1, 4 do
 			for thiefSnapAt = -1, 4 do
 				for landOrder = -1, 4 do
-					for _, late in { false, true } do
+					for _, mode in { "soon", "late", "veryLate" } do
+						local late = mode ~= "soon"
 						scenarios += 1
 						local victimOwns, thiefOwns, waiting =
-							run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late)
+							run(crashAfter, victimSnapAt, thiefSnapAt, landOrder, late, mode == "veryLate")
 						local ok
 						if late then
 							ok = victimOwns ~= thiefOwns and not waiting
@@ -326,12 +335,12 @@ do
 							bad += 1
 							if bad <= 5 then
 								print(
-									("    сбой: падение после %d, снимки жертвы %d, вора %d, запись %d, поздно %s — жертва %s, вор %s, ждёт %s"):format(
+									("    сбой: падение после %d, снимки жертвы %d, вора %d, запись %d, вход %s — жертва %s, вор %s, ждёт %s"):format(
 										crashAfter,
 										victimSnapAt,
 										thiefSnapAt,
 										landOrder,
-										tostring(late),
+										mode,
 										tostring(victimOwns),
 										tostring(thiefOwns),
 										tostring(waiting)
@@ -346,10 +355,26 @@ do
 	end
 	check(
 		bad == 0,
-		("%d сценариев падения и несвежих сохранений: ни дублей, ни потерь"):format(
+		("%d сценариев падения и несвежих сохранений (вор входит сразу, поздно и через 30+ дней): ни дублей, ни потерь"):format(
 			scenarios
 		)
 	)
+
+	-- D52: Prune удаляет только старые метки получения вора, не ссылающиеся на журнал и pending; метки ухода жертвы —
+	-- никогда (иначе поздний вход вора решил бы «drop» — потеря у обоих)
+	do
+		local old = AT
+		local now = AT + TransferJournal.MarkerTtl + 1
+		local data = {
+			items = { kept = { id = "Moai", pending = "p1" } },
+			transfersIn = { gone = { uid = "x", at = old }, p1 = { uid = "kept", at = old }, j1 = { uid = "y", at = old } },
+			transfersOut = { out1 = { uid = "z", at = old } },
+		}
+		TransferJournal.Prune(data, { { id = "j1", uid = "y", from = OWNER, record = {}, at = old } }, now)
+		check(data.transfersIn.gone == nil, "старая метка получения без ссылок удалена")
+		check(data.transfersIn.p1 ~= nil and data.transfersIn.j1 ~= nil, "метки с pending и журналом остались")
+		check(data.transfersOut.out1 ~= nil, "метка ухода жертвы не удаляется по сроку")
+	end
 
 	-- Без падения: подтверждение вора не прошло, запись журнала осталась; предмет потом законно украли у вора (метка
 	-- получения сохранена, записи нет) — повторный вход не выдаёт его снова.

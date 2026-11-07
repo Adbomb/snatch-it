@@ -37,6 +37,8 @@ local ItemRegistry = require(Server.Services.ItemRegistry)
 local MuseumService = require(Server.Services.MuseumService)
 local PlayerSession = require(Server.Services.PlayerSession)
 local PlotService = require(Server.Services.PlotService)
+local ProfileStore = require(Server.Vendor.ProfileStore)
+local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
 local NightService = require(Server.Services.NightService)
 local InventoryService = require(Server.Services.InventoryService)
 local TimeService = require(Server.Services.TimeService)
@@ -660,6 +662,83 @@ test("D52: проверка перемещений — разрешённые п
 	check((MoveGuard.Step(A)), "возрождение сочтено телепортом")
 	A.Character = old
 	copy:Destroy()
+end)
+
+test("D52: ошибка шага выхода не держит профиль и участок; повторный вход — всё на месте", function(A, _B, ctx)
+	local uid = displayOwn(ctx, A, 1)
+	local stored = toInventory(ctx, A)
+	local userId = A.UserId
+	local original = TheftService.OnPlayerLeaving
+	TheftService.OnPlayerLeaving = function()
+		error("сбой шага выхода (проверка D52)")
+	end
+	local ok = pcall(leave, A)
+	TheftService.OnPlayerLeaving = original
+	check(ok, "выход упал целиком")
+	check(DataService.GetData(A) == nil, "сессия профиля не закрыта")
+	check(PlotService.GetPlotOf(A) == nil, "участок остался за ушедшим")
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "повторный вход не удался")
+	local items = DataService.GetData(again).items
+	check(items[uid] ~= nil and items[uid].place == "slot", "экспонат пропал после сбоя выхода")
+	check(items[stored] ~= nil and items[stored].place == "storage", "предмет из инвентаря пропал")
+	local count = 0
+	for _ in items do
+		count += 1
+	end
+	check(count == 2, "после повторного входа предметов " .. count .. " (дубль или потеря)")
+end)
+
+test("D52: сессию перехватили до или во время загрузки — профиль не отдаётся, игрок кикнут", function(_A, _B, ctx)
+	local store = ProfileStore.New(GameConfig.Data.StoreName, ProfileTemplate).Mock
+	-- перехват до конца загрузки
+	local C = TestPlayer.new("Тест_C")
+	ctx.track(C)
+	local first = store:StartSessionAsync(GameConfig.Data.KeyPrefix .. C.UserId)
+	check(first ~= nil, "сессия не открылась")
+	first:EndSession()
+	check(not DataService.Handlers.FinishLoad(C, first), "неактивный профиль отдан игроку")
+	check(DataService.GetData(C) == nil, "у игрока есть данные без сессии")
+	-- перехват посреди загрузки, пока ждём журнал передач
+	local D = TestPlayer.new("Тест_D")
+	ctx.track(D)
+	local second = store:StartSessionAsync(GameConfig.Data.KeyPrefix .. D.UserId)
+	check(second ~= nil, "вторая сессия не открылась")
+	local resolve = DataService.ResolveTransfers
+	DataService.ResolveTransfers = function()
+		second:EndSession()
+		return nil
+	end
+	local loaded = DataService.Handlers.FinishLoad(D, second)
+	DataService.ResolveTransfers = resolve
+	check(not loaded, "профиль, потерянный во время загрузки, отдан")
+	check(DataService.GetData(D) == nil, "у игрока данные без сессии")
+	check(D.kicked ~= nil, "игрока без профиля не кикнули")
+end)
+
+test("D52: запросы записи профиля — не чаще MinSaveInterval (лимит DataStore)", function(A)
+	local profile = DataService.Handlers.Profile(A)
+	check(profile ~= nil, "нет профиля")
+	local calls = {}
+	local save = profile.Save
+	profile.Save = function(self, ...)
+		table.insert(calls, os.clock())
+		return save(self, ...)
+	end
+	local interval = GameConfig.Data.MinSaveInterval
+	local ok = DataService.SaveAndWait(A, interval * 2 + 1, function()
+		return false -- подтверждение не приходит: запросы повторяются
+	end)
+	DataService.RequestSave(A)
+	task.wait(0.2)
+	profile.Save = nil -- снова метод профиля
+	check(not ok, "подтверждение пришло само")
+	check(#calls >= 2, "повторных запросов нет: " .. #calls)
+	for i = 2, #calls do
+		check(calls[i] - calls[i - 1] >= interval - 0.05, ("запросы чаще %d с: %.2f"):format(interval, calls[i] - calls[i - 1]))
+	end
 end)
 
 -- PvP Судной ночи (D37, D46) ─────────────────────────────────────────────────────────────────────────────────
