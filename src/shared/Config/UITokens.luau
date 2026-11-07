@@ -196,7 +196,7 @@ UITokens.TimeHud = {
 		DoomNight = Color3.fromHex("FF7A7A"),
 	},
 	DoomFill = Color3.fromHex("4A0F1C"), -- капсула в Судную ночь
-	-- Названия в капсуле прописными (string.upper кириллицу не меняет); у дня добавляется номер.
+	-- Названия в капсуле прописными (string.upper кириллицу не меняет); номер дня не пишется (D51).
 	Titles = { Day = "ДЕНЬ", Preparation = "ПОДГОТОВКА", Night = "НОЧЬ", DoomNight = "СУДНАЯ НОЧЬ" },
 	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
 }

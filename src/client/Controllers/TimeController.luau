@@ -1,5 +1,6 @@
 -- Таймер фазы (D37) — HUD v2 (D48 v2): сверху по центру, под кнопками Roblox (CoreUISafeInsets) — капсула с иконкой
--- фазы, названием и обратным отсчётом, под ней полоса фазы и подпись на тёмной капсуле: «до Судной ночи: N дней»,
+-- фазы, её названием без номера дня (D51) и обратным отсчётом, под ней полоса фазы и подпись на тёмной капсуле:
+-- «до Судной ночи: N дней»,
 -- в последние два дня — «Судная ночь — завтра / сегодня», в подготовку и Судную ночь — что делать (D50). Фазу клиент
 -- считает сам той же функцией, что и сервер (Shared/GameTime от общего времени), поэтому таймер верен с первой
 -- секунды, даже при входе посреди цикла. Зависит от Shared/GameTime, Shared/StudUI, Config/UITokens, UI/HudIcons.
@@ -19,10 +20,10 @@ local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("
 
 local TimeController = {}
 
--- Название в капсуле: у дня — его номер в круге.
+-- Название в капсуле — только фаза: «ДЕНЬ», «НОЧЬ», «ПОДГОТОВКА», «СУДНАЯ НОЧЬ» (D51: без номера дня; сколько
+-- осталось до Судной ночи — в подписи под капсулой).
 local function title(state: GameTime.State): string
-	local name = UITokens.TimeHud.Titles[state.phase] or GameTime.Names[state.phase]
-	return if state.phase == "Day" then ("%s %d"):format(name, state.day) else name
+	return UITokens.TimeHud.Titles[state.phase] or GameTime.Names[state.phase]
 end
 
 local function clock(seconds: number): string

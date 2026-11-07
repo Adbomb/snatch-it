@@ -304,11 +304,15 @@ def build_stair():
         bx(m, "d48step", -STW, STW, VF, -k, ST0 + k - 1, ST0 + k, bevel=0.04)
         bx(m, "d48gold", -STW + 0.1, STW - 0.1, -k - 0.02, -k + 0.03, ST0 + k - 1.0, ST0 + k - 0.85, bevel=0)
     rot = Matrix.Rotation(math.radians(45), 4, "X")  # Blender X = Roblox x: спуск к +z
-    mid_y, mid_z = -6.5 + 1.2, ST0 + 5.5
-    length = 11.0 * math.sqrt(2) + 1.5
+    # D50: верхний конец — за решёткой (z ≥ ST0 + 0.6), нижний — над серединой последней ступени; ось на 1.2 выше
+    # линии середин ступеней (как Part-версия, src/server/World/Models/MuseumD48.luau)
+    z0, z1 = ST0 + 0.6, ST0 + 11.5
+    mid_z = (z0 + z1) / 2
+    mid_y = -(mid_z - ST0 + 0.5) + 1.2
+    length = (z1 - z0) * math.sqrt(2)
     for sx in (-1, 1):
-        m.box("Glass", (sx * (STW + 0.1), mid_y, mid_z), (0.12, 2.1, length), "d48glass", bevel=0, rotation=rot)
-        m.box("Body", (sx * (STW + 0.1), mid_y + 1.15, mid_z), (0.3, 0.25, length), "d48gold", bevel=0.05,
+        m.box("Glass", (sx * (STW + 0.08), mid_y, mid_z), (0.12, 2.1, length), "d48glass", bevel=0, rotation=rot)
+        m.box("Body", (sx * (STW + 0.08), mid_y + 1.15, mid_z), (0.2, 0.25, length), "d48gold", bevel=0.05,
               rotation=rot)
 
 

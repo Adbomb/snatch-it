@@ -451,11 +451,17 @@ local function stair(): { Brick }
 	for k = 1, L.Stair.Steps do
 		box(b, -STW, STW, VF, -k, ST0 + k - 1, ST0 + k, C.step, { shell = true, name = "Step" })
 	end
-	local tilt = CFrame.Angles(math.rad(-45), 0, 0)
-	local length = (L.Stair.Steps - 1) * math.sqrt(2) + 1.5
-	local midY, midZ = -L.Stair.Steps / 2 - 0.5 + 1.2, ST0 + L.Stair.Steps / 2 - 0.5
+	-- перила спускаются вместе со ступенями (к +z; D50: были наклонены обратно и выходили над полом зала за
+	-- проёмом). Ось — на RAIL выше линии середин ступеней, от START за решёткой (z ≥ ST0) до середины нижней ступени.
+	local RAIL, START = 1.2, 0.6
+	local tilt = CFrame.Angles(math.rad(45), 0, 0)
+	local z0, z1 = ST0 + START, ST0 + L.Stair.Steps - 0.5
+	local length = (z1 - z0) * math.sqrt(2)
+	local midZ = (z0 + z1) / 2
+	local midY = -(midZ - ST0 + 0.5) + RAIL
 	for _, sx in { -1, 1 } do
-		local x = sx * (STW + 0.1)
+		-- стекло 2.62…2.74 (ступени до 2.6), поручень 2.58…2.78 — внутри проёма пола (2.8), граней встык нет
+		local x = sx * (STW + 0.08)
 		table.insert(
 			b,
 			ModelBuilder.Brick(Vector3.new(0.12, 2.1, length), CFrame.new(x, midY, midZ) * tilt, C.glass, {
@@ -468,7 +474,7 @@ local function stair(): { Brick }
 		)
 		table.insert(
 			b,
-			ModelBuilder.Brick(Vector3.new(0.3, 0.25, length), CFrame.new(x, midY + 1.15, midZ) * tilt, C.gold, {
+			ModelBuilder.Brick(Vector3.new(0.2, 0.25, length), CFrame.new(x, midY + 1.15, midZ) * tilt, C.gold, {
 				name = "Detail",
 				collide = false,
 				variant = SOFT,
