@@ -48,6 +48,12 @@
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
   Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
   `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
+- Концепты Ловибумов (D55, этап 0; не в игре) — `scripts/blender/lovibum_concepts.py` на `art_style.Art` без запекания:
+  Бум, Турбо, Мега в закрытом и открытом виде (крышка или нос поворачиваются `Art.transform` вокруг шарнира), повороты,
+  три рядом спереди и сзади, манекены Roblox с Ловибумом на ладони (родитель-пустышка; `view_layer.update()` перед
+  `bounds` — иначе `matrix_world` старый). Листы с подписями — `scripts/d55_lovibum_sheets.py` (Pillow) →
+  `assets/concepts/d55/lovibums/`. Проверка граней у открытых (повёрнутых) деталей даёт ложные совпадения — смотреть
+  закрытый вид.
 - Прежняя коллекция босса 3 «Подземка» (D54, до замены каталога; модели сохранены, в игру не идут) — `scripts/blender/art_subway.py` (группы COMMON / RARE / EPIC): FBX
   на предмет `assets/models/art/<id>.fbx`, карты `<id>_{color,normal}.png`; режимы `check`, `quick` (без запекания),
   список id — только эти предметы. Свои помощники: `pixel_boxes` (пиксельный знак прямоугольниками без общих граней,
