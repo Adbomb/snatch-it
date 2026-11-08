@@ -12,6 +12,7 @@
 -- Окно собирается при первом открытии и пересобирается, если поменялся размер экрана.
 -- Клиент только показывает и просит: InventoryAction проверяет сервер; в подготовку, Судную ночь и 10 с доставки
 -- кнопки неактивны и окно объясняет почему (Shared/GameTime.ExhibitLock — то же правило, что на сервере).
+-- Раздел «Ловибумы» (D55, «чип» в строке сортировки): запас Ловибумов по уровням и видам (LovibumsChanged).
 -- Зависит от Shared/StudUI, Shared/GameTime, Shared/NumberFormat, Shared/TextCase, Remotes, Config/Items,
 -- Config/Rarities, Config/GameConfig, Config/UITokens, UI/MenuHud.
 
@@ -62,6 +63,8 @@ local origin: number? = nil -- фильтр: номер босса (локаци
 local query = ""
 local picking: Card? = nil -- выбран предмет — показан выбор постамента
 local forSlot: number? = nil -- окно открыто с постамента: выбрать предмет для него
+local section = "Items" -- "Items" | "Lovibums" (D55: запас Ловибумов)
+local lovibums: { [string]: { [string]: number } } = {}
 
 local gui: ScreenGui? = nil
 local win: any
@@ -657,6 +660,14 @@ local function buildBar()
 		question.LayoutOrder = 2
 		return
 	end
+	-- D55: раздел «Ловибумы» — первый «чип»; в нём сортировки и фильтры не нужны
+	chip("Ловибумы", section == "Lovibums", 0, function()
+		section = if section == "Lovibums" then "Items" else "Lovibums"
+		render()
+	end)
+	if section == "Lovibums" then
+		return
+	end
 	chip("По доходу", sortMode == "Income", 1, function()
 		sortMode = "Income"
 		render()
@@ -706,6 +717,58 @@ local function fitGrid(cellHeight: number, minWidth: number): number
 	return width
 end
 
+-- Раздел «Ловибумы» (D55): строка на уровень с запасом каждого вида; пусто — подсказка про «Магазин».
+local function lovibumGrid()
+	local catch = GameConfig.Catch
+	local rows = 0
+	local width = fitGrid(T.LovibumRow, T.LovibumMin)
+	for lvl = 1, catch.Levels do
+		local byKind = lovibums["L" .. lvl]
+		if type(byKind) ~= "table" or next(byKind) == nil then
+			continue
+		end
+		rows += 1
+		local frame = cardFrame(grid, lvl, nil)
+		local place = GameConfig.Zones[lvl]
+		line(frame, "Niveau", ("Уровень %d — %s"):format(lvl, place.name), T.CardPad, 28, {
+			Max = T.NameText,
+			Min = T.MinText,
+			W = width - 2 * T.CardPad,
+		})
+		local parts = {}
+		for _, kind in catch.Kinds do
+			local n = byKind[kind] or 0
+			table.insert(
+				parts,
+				('%s <font color="%s">×%s</font>'):format(
+					catch.Names[kind],
+					if n > 0 then UI.Colors.HighlightHex else "#8C93A3",
+					NumberFormat.Short(n)
+				)
+			)
+		end
+		line(frame, "Stock", table.concat(parts, "   "), T.CardPad + 34, 26, {
+			Font = "Bold",
+			Max = T.InfoText,
+			Min = T.MinText,
+			Rich = true,
+			W = width - 2 * T.CardPad,
+		})
+	end
+	if rows == 0 then
+		local layout = grid:FindFirstChildOfClass("UIGridLayout") :: UIGridLayout
+		layout.CellSize = UDim2.fromOffset(gridWidth - 2 * T.GridPad - 8, 90)
+		UI.Text(
+			grid,
+			if player:GetAttribute("Tutorial")
+				then "Ловибумы продаются в «Магазине» — он откроется после обучения"
+				else "Ловибумов нет: купите их в «Магазине» (кнопка справа)",
+			{ Name = "Vide", Font = "Bold", Size = UDim2.fromOffset(gridWidth - 80, 60), Max = 24, Color = T.Muted, ZIndex = 4 }
+		).LayoutOrder =
+			1
+	end
+end
+
 render = function()
 	if not win then
 		return
@@ -720,7 +783,9 @@ render = function()
 	end
 	buildBar()
 	clearGrid()
-	if picking then
+	if section == "Lovibums" and not picking then
+		lovibumGrid()
+	elseif picking then
 		local height = if profile.compact then profile.card else T.Pedestal.Y + profile.button
 		local width = fitGrid(height, if profile.compact then T.Row.MinWidth else T.Pedestal.X)
 		local slots = player:GetAttribute("MuseumSlots") or GameConfig.Museum.SlotsByLevel[1]
@@ -900,6 +965,9 @@ local function open(slot: number?)
 	end
 	forSlot = slot
 	picking = nil
+	if slot then
+		section = "Items" -- с постамента — выбор предмета
+	end
 	render()
 	menu.Open()
 end
@@ -945,6 +1013,14 @@ function InventoryController.Init()
 				end
 			end
 			render()
+		end
+	end)
+	Remotes.Get(Remotes.Names.LovibumsChanged).OnClientEvent:Connect(function(payload)
+		if type(payload) == "table" and type(payload.lovibums) == "table" then
+			lovibums = payload.lovibums
+			if isOpen() and section == "Lovibums" then
+				render()
+			end
 		end
 	end)
 	player:GetAttributeChangedSignal("Income"):Connect(function()

@@ -22,5 +22,6 @@ require(Controllers:WaitForChild("OwnerTagController")).Init()
 require(Controllers:WaitForChild("ItemLabelController")).Init()
 require(Controllers:WaitForChild("PvpController")).Init()
 require(Controllers:WaitForChild("DefenseController")).Init()
+require(Controllers:WaitForChild("ShopController")).Init() -- D55: магазин Ловибумов
 require(Controllers:WaitForChild("MuseumVisualController")).Init()
 require(Controllers:WaitForChild("MuseumCameraController")).Init()

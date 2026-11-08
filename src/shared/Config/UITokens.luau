@@ -266,6 +266,8 @@ UITokens.HudIcons = {
 	Strength = "Player/Arm/Arm 1st Outline", -- до загрузки кулака (готов: assets/ui/hud/icon_fist_256.png)
 	Inventory = "Item/Backpack/Backpack 1st Outline", -- до загрузки портфеля (icon_briefcase.png)
 	Defense = "Item/Shield/Shield 1st Outline",
+	Shop = "Main/Shopping Cart/Red Shopping Cart 1st Outline", -- «Магазин» Ловибумов (D55): красный — магазин (Stud-UI)
+	Lovibum = "Currency/Crystal/Crystal Blue Outline", -- раздел «Ловибумы» в инвентаре: кристалл — знак Ловибумов
 	Day = "Main/Star/Golden Star 1st Outline",
 	Preparation = "UI/Warning/Warning 1st Outline",
 	Night = "Nature/Cloud/Cloud 1st Outline",
@@ -404,9 +406,37 @@ UITokens.Defense = {
 	},
 }
 
+-- Магазин Ловибумов (D55, Stud-UI: красная шапка — магазин). Окно — по экрану, как «Инвентарь»: наибольшее Window,
+-- на маленьком экране — по экрану без Margin, не меньше MinWindow; на касании масштаб не меньше PhoneScale, кнопки не
+-- ниже MinTouch px. Сверху — уровни 1–10 (Ловибум уровня N — только для существ босса N), ниже три карточки: Бум,
+-- Турбо, Мега — 3D-модель, бонус, запас, цена, количество (−, число, +; касание числа: 1 → 5 → 10), «Купить».
+UITokens.Shop = {
+	Window = Vector2.new(980, 600),
+	MinWindow = Vector2.new(700, 380),
+	Margin = 16,
+	PhoneScale = 0.78,
+	MinTouch = 52,
+	Header = "pink",
+	Pad = 14,
+	Tab = Vector2.new(0, 50), -- вкладка уровня: ширина — по окну (10 в ряд), высота
+	Button = 52, -- высота кнопок (на касании — не меньше MinTouch / масштаб)
+	QtyButton = 52, -- «−» и «+»: квадрат
+	QtyValue = 64, -- ширина числа
+	Buy = 150, -- ширина «Купить»
+	NameText = 30,
+	InfoText = 19,
+	SmallText = 16,
+	Turn = 0.35, -- оборотов превью в секунду
+	CardTop = { Boom = "amber", Turbo = "cyan", Mega = "violet" }, -- градиент полоски карточки (UI.StudPanel)
+	KindColor = { Boom = Color3.fromHex("FFC21A"), Turbo = Color3.fromHex("5AC8FF"), Mega = Color3.fromHex("C482FF") },
+	Presets = { 1, 5, 10 },
+}
+
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
 -- Вид музея D48-C у владельца (Controllers/MuseumVisualController): экран сканера у павильона хранилища.
 UITokens.Museum = {
+	LovibumRow = 84, -- раздел «Ловибумы» (D55): высота строки уровня и наименьшая ширина
+	LovibumMin = 300,
 	ScannerOwner = Color3.fromHex("4CE07A"), -- свой музей: проход открыт
 	ScannerIdle = Color3.fromHex("39E1FF"), -- чужой: решётка закрыта
 }

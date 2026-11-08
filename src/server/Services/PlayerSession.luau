@@ -1,7 +1,7 @@
 -- Вход и выход игрока: участок, профиль, гантель, музей, хранилище — в одном порядке для игры и серверных тестов
 -- (Main вызывает Join/Leave на PlayerAdded/PlayerRemoving, Server/Tests — для тестовых игроков с профилем в памяти).
 -- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, InventoryService, TheftService, DefenseService,
--- VaultService, Util/Notify, Util/Log.
+-- VaultService, ShopService (D55), Util/Notify, Util/Log.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -15,6 +15,7 @@ local InventoryService = require(Server.Services.InventoryService)
 local TheftService = require(Server.Services.TheftService)
 local DefenseService = require(Server.Services.DefenseService)
 local VaultService = require(Server.Services.VaultService)
+local ShopService = require(Server.Services.ShopService)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 
@@ -51,6 +52,7 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	TheftService.WatchTransfers(player) -- украденное, которое при входе ждало жертву, — перепроверять (D53)
 	DefenseService.OnPlayerLoaded(player) -- поставленное к ещё не прошедшей ночи — снова в запасе
 	DefenseService.Sync(player)
+	ShopService.Sync(player) -- запас Ловибумов и доступность магазина (D55)
 	Notify.Send(
 		player,
 		("Ваш музей — участок %d (ищите табличку со своим именем)"):format(
