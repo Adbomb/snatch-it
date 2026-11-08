@@ -1,4 +1,8 @@
-"""Концепты Ловибумов, вторая версия (D55, этап 0): энергетические капсулы Бум, Турбо и Мега, стиль D39.
+"""Концепты Ловибумов v3 (D55, этап 0): энергетические капсулы Бум, Турбо и Мега, стиль D39.
+
+v3 — правки владельца к предварительно утверждённой v2 (2026-11-08): Бум круглее (мельче ступени торцов, шире срез
+углов), боковые дуги Меги меньше на ~22 %, общий символ системы — светящийся ромб на тёмной плашке верхнего пояса со
+всех сторон; проверка читаемости в руке и при броске в кадрах размера экрана телефона (844 × 390).
 
 Первая версия (персонажи с глазами и зубами) владелец отклонил 2026-11-08: нужны устройства одной линейки, без лиц,
 с понятной прогрессией. Эта версия — одна форма на всех: вертикальная капсула (квадрат со срезанными углами в сечении),
@@ -34,15 +38,15 @@ import art_style as S  # noqa: E402
 argv = sys.argv[sys.argv.index("--") + 1 :]
 REPO, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
 os.makedirs(OUT, exist_ok=True)
-GLOW = {"core": 4.0, "glow": 3.0, "net": 3.0, "spark": 3.5, "crystal": 3.0, "dark": 1.2}  # светящиеся ключи и сила свечения
+GLOW = {"core": 4.0, "glow": 3.0, "net": 3.0, "spark": 3.5, "crystal": 3.0, "dark": 1.2, "mark": 3.5}  # светящиеся ключи и сила свечения
 
 TYPES = {
     "Boom": {"body": "FF8A1F", "cap": "FFC21A", "trim": "E8641A", "foot": "2A3344", "core": "2EE6D6",
-             "glow": "8AFFF2", "scale": 1.0},
+             "glow": "8AFFF2", "scale": 1.0, "cut": 0.16, "round": True},
     "Turbo": {"body": "2F6BFF", "cap": "E6F3FF", "trim": "1E2B4F", "foot": "1E2B4F", "core": "3FD8FF",
-              "glow": "5CE8FF", "scale": 1.05},
+              "glow": "5CE8FF", "scale": 1.05, "cut": 0.12, "round": False},
     "Mega": {"body": "7A2FE0", "cap": "F2C230", "trim": "C98E12", "foot": "C98E12", "core": "E57BFF",
-             "glow": "FFD1FF", "scale": 1.1},
+             "glow": "FFD1FF", "scale": 1.1, "cut": 0.12, "round": False},
 }
 
 
@@ -68,7 +72,7 @@ def paint(a, spec):
                              ("foot", spec["foot"], False), ("core", spec["core"], False),
                              ("glow", spec["glow"], False), ("dark", "6A1FC0", False), ("gold", "F2C230", False),
                              ("golddark", "C98E12", False), ("crystal", spec["core"], False),
-                             ("white", "FFFDF4", False)):
+                             ("white", "FFFDF4", False), ("plate", "1C2030", False), ("mark", "FFF4C9", False)):
         a.paint(key, code, rings)
 
 
@@ -76,9 +80,9 @@ W, CUT, IN = 0.4, 0.12, 0.17  # полуширина стоек, срез угл
 ZB, ZT = 0.32, 1.12  # низ и верх стоек; торцы симметричны относительно середины (капсула-пилюля)
 
 
-def column_pts(sx, sy):
+def column_pts(sx, sy, cut=CUT):
     """Угловая стойка: пятиугольник со срезанным внешним углом (как у торцов)."""
-    base = [(IN, IN), (W, IN), (W, W - CUT), (W - CUT, W), (IN, W)]
+    base = [(IN, IN), (W, IN), (W, W - cut), (W - cut, W), (IN, W)]
     return [(sx * x, sy * y) for x, y in base]
 
 
@@ -91,14 +95,33 @@ def chamfer_strip(sx, sy, z0, z1, a, key, out=0.015):
     a.prism(key, pts, z0, z1, bevel=0)
 
 
-def ends(a, band, cap, emit):
-    """Торцы-ступени сверху и снизу (зеркально): пояс, две ступени, излучатель."""
+STEP_ENDS = ((0.12, 0.035, 0.0, 0.07), (0.24, 0.07, 0.06, 0.15), (0.33, 0.1, 0.14, 0.24))
+ROUND_ENDS = ((0.12, 0.045, 0.0, 0.06), (0.2, 0.075, 0.05, 0.11), (0.27, 0.1, 0.1, 0.16), (0.33, 0.125, 0.15, 0.21),
+              (0.38, 0.145, 0.2, 0.26))  # Бум: ступени мельче, срез шире — торец ближе к куполу
+TOP_BAND = (1.07, 1.21)  # верхний пояс выше нижнего (0.23…0.33): на нём символ-ромб
+
+
+def ends(a, band, cap, emit, round_=False, band_cut=0.125):
+    """Торцы-ступени сверху и снизу (зеркально): излучатель, ступени, пояс; верхний пояс выше — под символ."""
+    steps = ROUND_ENDS if round_ else STEP_ENDS
     for flip in (False, True):
-        for key, h, cut, z0, z1 in ((emit, 0.12, 0.035, 0.0, 0.07), (cap, 0.24, 0.07, 0.06, 0.15),
-                                    (cap, 0.33, 0.1, 0.14, 0.24), (band, 0.42, 0.125, 0.23, 0.33)):
+        for i, (h, cut, z0, z1) in enumerate(steps):
             if flip:
                 z0, z1 = ZB + ZT - z1, ZB + ZT - z0
-            a.prism(key, sq(h, cut), z0, z1)
+            a.prism(emit if i == 0 else cap, sq(h, cut), z0, z1)
+    a.prism(band, sq(0.42, band_cut), 0.23 if not round_ else 0.25, 0.33)
+    a.prism(band, sq(0.42, band_cut), *TOP_BAND)
+
+
+def emblem(a, cut):
+    """Символ системы Ловибумов — светящийся ромб на тёмной плашке, на верхнем поясе с четырёх сторон."""
+    c = (TOP_BAND[0] + TOP_BAND[1]) / 2
+    hz, hw = 0.062, 0.045  # полувысота и полуширина ромба (вытянут вверх — «кристалл»)
+    for s in (-1, 1):
+        a.box("plate", -0.09, 0.09, s * 0.415, s * 0.44, c - 0.068, c + 0.068)
+        a.box("plate", s * 0.415, s * 0.44, -0.09, 0.09, c - 0.068, c + 0.068)
+        a.prism("mark", [(0, c + hz), (hw, c), (0, c - hz), (-hw, c)], s * 0.435, s * 0.458, axis="y", bevel=0)
+        a.prism("mark", [(c + hz, 0), (c, hw), (c - hz, 0), (c, -hw)], s * 0.435, s * 0.458, axis="x", bevel=0)
 
 
 # ── Капсула: общая форма линейки ────────────────────────────────────────────────────────────────────────────
@@ -109,7 +132,10 @@ def capsule(name):
     a = S.Art("Lovibum_" + name, ring_z0=0.72)
     paint(a, spec)
     a.transform = Matrix.Scale(spec["scale"], 4)
-    ends(a, "cap" if name == "Boom" else "trim", "cap", "glow" if name != "Mega" else "crystal")
+    cut = spec["cut"]
+    ends(a, "cap" if name == "Boom" else "trim", "cap", "glow" if name != "Mega" else "crystal", spec["round"],
+         band_cut=0.155 if spec["round"] else 0.125)
+    emblem(a, cut)
     # Ядро и четыре угловые стойки; окна — между стойками на каждой стороне.
     if name == "Mega":
         a.prism("dark", sq(0.22, 0.06), ZB + 0.01, ZT - 0.01)
@@ -117,10 +143,10 @@ def capsule(name):
         a.frustum("crystal", (-0.03, 0.03, -0.03, 0.03), (-0.29, 0.29, -0.29, 0.29), 0.35, 0.73, matrix=rot)
         a.frustum("crystal", (-0.29, 0.29, -0.29, 0.29), (-0.03, 0.03, -0.03, 0.03), 0.72, 1.1, matrix=rot)
     else:
-        a.prism("core", sq(0.3, 0.09), ZB - 0.01, ZT + 0.01)
+        a.prism("core", sq(0.3, 0.12 if spec["round"] else 0.09), ZB - 0.01, ZT + 0.01)
     for sx in (-1, 1):
         for sy in (-1, 1):
-            a.prism("body", column_pts(sx, sy), ZB, ZT)
+            a.prism("body", column_pts(sx, sy, cut), ZB, ZT)
     if name == "Turbo":
         # Решётка в окнах: по две тёмные планки (вертикальные — без «экватора»).
         for k in (-0.07, 0.07):
@@ -145,17 +171,18 @@ def capsule(name):
             for sy in (-1, 1):
                 chamfer_strip(sx, sy, 0.38, 1.06, a, "gold")
         # Золотые дуги по бокам: от нижнего пояса к верхнему, выгнуты наружу; накладки на концах, камень в середине.
+        # v3: дуги меньше на ~22 % (выгиб 0.17 → 0.13, высота 0.6 → 0.47, толщина и кристалл тоньше).
         n = 6
         for s in (-1, 1):
-            pts = [Vector((s * (0.43 + 0.17 * math.sin(math.pi * i / n)), 0, 0.42 + (1.02 - 0.42) * i / n))
+            pts = [Vector((s * (0.43 + 0.13 * math.sin(math.pi * i / n)), 0, 0.485 + (0.955 - 0.485) * i / n))
                    for i in range(n + 1)]
             for i in range(n):
-                w = 0.07 if i % 2 else 0.082  # соседние бруски разной толщины: без совпадающих граней
-                bar(a, "gold", pts[i], pts[i + 1], w, w + 0.03)
-            for z in (0.42, 1.02):
-                a.box("golddark", s * 0.38, s * 0.47, -0.075, 0.075, z - 0.05, z + 0.05)
-            a.frustum("crystal", (-0.05, 0.05, -0.05, 0.05), (0, 0, 0, 0), 0.0, 0.13,
-                      matrix=Matrix.Translation((s * 0.63, 0, 0.72)) @ Matrix.Rotation(s * math.pi / 2, 4, "Y"))
+                w = 0.056 if i % 2 else 0.066  # соседние бруски разной толщины: без совпадающих граней
+                bar(a, "gold", pts[i], pts[i + 1], w, w + 0.024)
+            for z in (0.485, 0.955):
+                a.box("golddark", s * 0.38, s * 0.46, -0.06, 0.06, z - 0.04, z + 0.04)
+            a.frustum("crystal", (-0.04, 0.04, -0.04, 0.04), (0, 0, 0, 0), 0.0, 0.1,
+                      matrix=Matrix.Translation((s * 0.585, 0, 0.72)) @ Matrix.Rotation(s * math.pi / 2, 4, "Y"))
     a.transform = None
     return a
 
@@ -538,6 +565,67 @@ for name, (root, palm) in roots.items():
     p = root.matrix_world @ palm
     shot(os.path.join(OUT, f"hand_{name}.png"), (p.x - 1.5, p.y - 5.4, p.z + 1.4), (p.x + 0.8, p.y, p.z + 0.35),
          50, (900, 900))
+
+
+
+# 6. Телефон: кадры 844 × 390 (логический размер экрана телефона в ландшафте) — проверка читаемости.
+def phone_man():
+    """Манекен Roblox с правой рукой вперёд (как с инструментом); возвращает точку перед кулаком."""
+    grey = bpy.data.materials.get("Mannequin")
+    blocks = (((0, 0, 4.65), (1.15, 1.15, 1.15)), ((0, 0, 3.2), (2.0, 1.0, 1.75)),
+              ((1.5, 0, 3.2), (0.95, 0.95, 1.75)), ((-1.5, -0.66, 3.6), (0.95, 2.3, 0.95)),
+              ((-0.5, 0, 1.15), (0.95, 0.95, 2.3)), ((0.5, 0, 1.15), (0.95, 0.95, 2.3)))
+    for center, size in blocks:
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=1.0)
+        bmesh.ops.scale(bm, vec=size, verts=bm.verts)
+        bmesh.ops.bevel(bm, geom=list(bm.edges), offset=0.05, segments=2, affect="EDGES")
+        bmesh.ops.translate(bm, vec=Vector(center), verts=bm.verts)
+        me = bpy.data.meshes.new("PhoneMan")
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(grey)
+        collection.objects.link(bpy.data.objects.new("PhoneMan", me))
+    return Vector((-1.5, -1.55, 4.075))  # на ладони у кулака, поверх руки — не закрыта ею
+
+
+hand = phone_man()
+man = [o for o in bpy.context.scene.objects if o.name.startswith("PhoneMan")]
+for obj in caps.values():
+    obj.parent = None
+    place(obj, (0, 0, 0))
+bpy.context.view_layer.update()
+dims = {n: S.bounds(o) for n, o in caps.items()}
+PHONE = (844, 390)
+for name, obj in caps.items():
+    lo, hi = dims[name]
+    place(obj, hand - Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z)), (0, 0, math.radians(-30)))
+    only([obj] + man)
+    bpy.context.view_layer.update()
+    shot(os.path.join(OUT, f"phone_hand_{name}.png"), (-5.4, 9.4, 7.2), (-1.1, -1.6, 3.1), 12, PHONE)
+
+# Бросок: камера мини-игры за игроком, существо впереди, капсула на полпути со следом.
+offset = Vector((0, -8, 0))
+turn = Matrix.Rotation(math.pi, 4, "Z")  # существо лицом к игроку
+for o, (loc, sc) in base_tf.items():
+    o.location, o.scale = turn @ loc + offset, sc
+    o.rotation_euler.z += math.pi
+for o in cre:
+    o.hide_render = False
+target = Vector((0, -8, 1.2))
+for name, obj in caps.items():
+    pos = Vector((1.35, -1.7, 3.35))
+    d = (target - pos).normalized()
+    aim(obj, pos, d, spin=0.6)
+    tr = fx_art(f"PhoneTrail_{name}", TYPES[name]["core"])
+    trail(tr, [pos - d * (0.95 + 0.26 * k) for k in range(5)], [0.075 * (1 - k / 6) for k in range(5)])
+    fx = build(tr)
+    only([obj, fx] + cre)
+    bpy.context.view_layer.update()
+    shot(os.path.join(OUT, f"phone_throw_{name}.png"), (0.9, 3.4, 4.6), (0, -8, 1.4), 17.8, PHONE)
+    fx.hide_render = True
+for obj in caps.values():
+    place(obj, (0, 0, 0))
 
 with open(os.path.join(OUT, "report.json"), "w", encoding="utf-8") as f:
     json.dump(report, f, ensure_ascii=False, indent=1)

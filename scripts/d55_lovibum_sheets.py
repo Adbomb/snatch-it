@@ -1,11 +1,11 @@
-"""Листы концептов Ловибумов, вторая версия (D55, этап 0: энергетические капсулы) с русскими подписями.
+"""Листы концептов Ловибумов v3 (D55, этап 0: энергетические капсулы) с русскими подписями.
 
 Берёт рендеры scripts/blender/lovibum_concepts.py: у главных кадров есть проход свечения <кадр>_glow.png — его
 размытие добавляется к кадру (ореол ядер, сети и искр). Пишет в <папка>: lineup.jpg (линейка), boom.jpg / turbo.jpg /
 mega.jpg (крупно и повороты), flight.jpg (в полёте), capture.jpg (захват энергетической сетью по шагам), scale.jpg
-(манекены Roblox с капсулой на ладони и крупные планы), before_after.jpg (отклонённая первая версия и новая — если
-передан кадр первой версии).
-Запуск: python scripts/d55_lovibum_sheets.py <рендеры> <папка> [<trio_front.png первой версии>]
+(манекены Roblox с капсулой на ладони и крупные планы), phone.jpg (кадры размера экрана телефона 844 × 390 в масштабе
+1 : 1: в руке и бросок, с увеличением места, где капсула), before_after.jpg (v2 и v3 — если передан кадр v2).
+Запуск: python scripts/d55_lovibum_sheets.py <рендеры> <папка> [<lineup.png v2>]
 Зависит от Pillow.
 """
 
@@ -100,17 +100,17 @@ report = json.load(open(os.path.join(RAW, "report.json"), encoding="utf-8"))
 # 1. Линейка.
 lineup = names(load("lineup.png"), {"Boom": 350, "Turbo": 975, "Mega": 1600})
 d = ImageDraw.Draw(lineup)
-text(d, (30, lineup.height - 118), "Одна форма: капсула, ступенчатые торцы, четыре стойки, энергетическое ядро в окнах", 36,
+text(d, (30, lineup.height - 118), "Одна форма: капсула, торцы, четыре стойки, ядро в окнах; символ — светящийся ромб", 36,
      fill=(220, 224, 235))
 text(d, (30, lineup.height - 66), "Рост: простой корпус → стабилизаторы и свет → золото, кристалл и дуги", 36,
      fill=(220, 224, 235))
-stack([lineup], header="Ловибумы v2 — энергетические капсулы (стиль D39), на утверждение").save(
+stack([lineup], header="Ловибумы v3 — энергетические капсулы (стиль D39), финальные правки").save(
     os.path.join(OUT, "lineup.jpg"), quality=90)
 
 # 2. Каждая капсула: крупно и повороты.
-notes = {"Boom": "оранжево-жёлтый корпус, бирюзовое ядро — самая простая",
+notes = {"Boom": "оранжево-жёлтая, бирюзовое ядро — самая простая; v3: круглее (мельче ступени, шире срез)",
          "Turbo": "сине-голубая, решётка, световые полосы, огоньки, 4 стабилизатора",
-         "Mega": "фиолетово-золотая, кристаллическое ядро, золотые дуги с кристаллами"}
+         "Mega": "фиолетово-золотая, кристаллическое ядро, золотые дуги; v3: дуги меньше на ~22 %"}
 for name in ("Boom", "Turbo", "Mega"):
     ru, bonus, color = NAMES[name]
     hero = load(f"Lovibum_{name}_hero.png")
@@ -124,7 +124,8 @@ for name in ("Boom", "Turbo", "Mega"):
     text(d, (40, 60), ru, 110, fill=color)
     text(d, (40, 200), bonus, 54)
     y = 300
-    for line in (notes[name], f"{size[0]} × {size[1]} × {size[2]} стада", f"{report[name]['tris']} треугольников"):
+    for line in (notes[name], "символ системы — светящийся ромб на верхнем поясе",
+                 f"{size[0]} × {size[1]} × {size[2]} стада", f"{report[name]['tris']} треугольников"):
         for chunk in wrap(line, 34):
             text(d, (40, y), chunk, 44, fill=(220, 224, 235))
             y += 60
@@ -172,11 +173,53 @@ closeups = [fit(load(f"hand_{n}.png"), (scale.width - 16) // 3) for n in ("Boom"
 stack([scale, row(closeups)], header="Масштаб: манекен Roblox 5.2 стада, капсула на ладони вытянутой руки").save(
     os.path.join(OUT, "scale.jpg"), quality=90)
 
-# 6. Было → стало.
+# 6. Телефон: кадры 844 × 390 в масштабе 1 : 1 и увеличение места, где капсула (по проходу свечения).
+def zoom_box(name, pad=60, k=3):
+    glow = Image.open(os.path.join(RAW, name.replace(".png", "_glow.png"))).convert("L")
+    box = glow.point(lambda v: 255 if v > 90 else 0).getbbox() or (0, 0, glow.width, glow.height)
+    cx, cy = (box[0] + box[2]) // 2, (box[1] + box[3]) // 2
+    half = max(box[2] - box[0], box[3] - box[1]) // 2 + pad
+    crop = (max(0, cx - half), max(0, cy - half), min(glow.width, cx + half), min(glow.height, cy + half))
+    return crop, k
+
+
+def phone_frame(im):
+    w, h = im.size
+    out = Image.new("RGB", (w + 40, h + 40), (12, 13, 18))
+    d = ImageDraw.Draw(out)
+    d.rounded_rectangle((2, 2, w + 37, h + 37), radius=26, outline=(70, 74, 88), width=3)
+    out.paste(im, (20, 20))
+    return out
+
+
+rows_ = []
+for name in ("Boom", "Turbo", "Mega"):
+    ru, bonus, color = NAMES[name]
+    cells = []
+    for kind, title in (("hand", "в руке — камера Roblox"), ("throw", "бросок в мини-игре")):
+        fname = f"phone_{kind}_{name}.png"
+        im = load(fname)
+        crop, k = zoom_box(fname)
+        z = im.crop(crop)
+        z = z.resize((z.width * k, z.height * k), Image.NEAREST)
+        z = z.resize((im.height, im.height), Image.LANCZOS) if z.height != im.height else z
+        framed = phone_frame(im)
+        d = ImageDraw.Draw(framed)
+        text(d, (34, 28), f"{ru} — {title}", 26, fill=color)
+        d.rectangle((20 + crop[0], 20 + crop[1], 20 + crop[2], 20 + crop[3]), outline=(255, 214, 64), width=2)
+        zoomed = Image.new("RGB", (im.height + 40, im.height + 40), BG)
+        zoomed.paste(z, (20, 20))
+        text(ImageDraw.Draw(zoomed), (30, 26), "увеличено", 24, fill=(255, 214, 64))
+        cells += [framed, zoomed]
+    rows_.append(row(cells, gap=12))
+phone = stack(rows_, gap=12, header="Телефон: кадры 844 × 390 точек в масштабе 1 : 1 (жёлтая рамка — что увеличено)")
+phone.save(os.path.join(OUT, "phone.jpg"), quality=90)
+
+# 7. Было → стало.
 if BEFORE:
     a = fit(Image.open(BEFORE).convert("RGB"), 1400)
     b = fit(load("lineup.png"), 1400)
-    text(ImageDraw.Draw(a), (24, 20), "v1 — отклонено: персонажи с лицами", 50)
-    text(ImageDraw.Draw(b), (24, 20), "v2 — устройства одной линейки, без лиц", 50)
-    stack([a, b], header="Ловибумы: первая версия и новая").save(os.path.join(OUT, "before_after.jpg"), quality=90)
+    text(ImageDraw.Draw(a), (24, 20), "v2 — предварительно утверждено", 50)
+    text(ImageDraw.Draw(b), (24, 20), "v3 — Бум круглее, дуги Меги меньше, символ-ромб", 50)
+    stack([a, b], header="Ловибумы: v2 и v3").save(os.path.join(OUT, "before_after.jpg"), quality=90)
 print("SHEETS_OK")

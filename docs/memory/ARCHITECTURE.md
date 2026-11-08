@@ -48,14 +48,17 @@
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
   Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
   `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
-- Концепты Ловибумов (D55, этап 0; не в игре; v2 — энергетические капсулы, v1 с лицами отклонён, его листы —
-  `assets/concepts/d55/lovibums/`, код — в истории git) — `scripts/blender/lovibum_concepts.py` на `art_style.Art` без
-  запекания: общая капсула `capsule(name)` (стойки `column_pts`, торцы `ends`, детали по виду), светящиеся ключи
+- Концепты Ловибумов (D55, этап 0; не в игре; v3 — энергетические капсулы с правками владельца, листы v2 и v3 —
+  `assets/concepts/d55/lovibums_v2/`, `lovibums_v3/`; v1 с лицами отклонён, его листы — `assets/concepts/d55/lovibums/`,
+  код — в истории git) — `scripts/blender/lovibum_concepts.py` на `art_style.Art` без запекания: общая капсула
+  `capsule(name)` (стойки `column_pts(cut)`, торцы `ends` — ступенчатые `STEP_ENDS` или круглее `ROUND_ENDS` у Бума,
+  верхний пояс `TOP_BAND` выше — на нём символ `emblem`: светящийся ромб `mark` на плашке, детали по виду), кадры
+  телефона 844 × 390 (`phone_hand_*`, `phone_throw_*`; лист `phone.jpg` с увеличением по проходу свечения), светящиеся ключи
   (`GLOW`: сила эмиссии после `build`), свет ядра — точечный источник-ребёнок капсулы; эффекты захвата — отдельные
   `Art` (`net_dome`, `net_cube`, `sparks`, `trail`); существо для кадров — FBX босса 3 с картой цвета (части FBX —
   верхние объекты, двигать каждую); манекены — родитель-пустышка, `view_layer.update()` перед `bounds`. Свечение:
   каждый главный кадр рендерится второй раз без света и неба (`<кадр>_glow.png`), листы `scripts/d55_lovibum_sheets.py`
-  (Pillow) размывают его и добавляют экраном → `assets/concepts/d55/lovibums_v2/`. Проверка граней у повёрнутых
+  (Pillow) размывают его и добавляют экраном → `assets/concepts/d55/lovibums_v3/`. Проверка граней у повёрнутых
   деталей может давать ложные совпадения (сравнивает габариты).
 - Прежняя коллекция босса 3 «Подземка» (D54, до замены каталога; модели сохранены, в игру не идут) — `scripts/blender/art_subway.py` (группы COMMON / RARE / EPIC): FBX
   на предмет `assets/models/art/<id>.fbx`, карты `<id>_{color,normal}.png`; режимы `check`, `quick` (без запекания),
