@@ -57,6 +57,21 @@
   `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
   повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
   Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
+- Поимка D55 на клиенте (этап F): `Controllers/CatchController` (CatchState → камера Scriptable к существу, управление
+  и `UserInputService.ModalEnabled`; круг = `CatchRules.CircleRadius`, проекция радиуса в пиксели; жест: старт и
+  конец в координатах экрана камеры — Position ввода + GuiInset; точка прилёта — луч камеры на вертикальной
+  плоскости через существо; «Throw» вид, точка, `GetServerTimeNow`), `Controllers/LovibumFxController`
+  (CatchEffect: Start — Ловибум в руке; Throw — полёт / сеть / куб / луч / захват или побег по времени сервера;
+  поймано — закрытый Ловибум лежит, пока CatchMode = Hidden; один PointLight на время полёта и сети; звуки —
+  `GameConfig.Sounds.Lovibum`, пусто). `World/LovibumModel` — Part-версия из `Config/LovibumRigs` (Place одним
+  BulkMoveTo, раскрытие когтей, SetLight).
+- Обучение D55 (этап G): `Services/TutorialService` (шаги `TutorialRules`; личные существо и пёс в
+  `World.Tutorial` с атрибутом TutorialOwner на `MapLayout.TutorialPoints()`; учебная поимка — `CatchService.BeginTutorial`;
+  бой по сценарию на `BossService.BuildPersonal`; выдача — `ItemRegistry.CreateTutorial` (uid из профиля) → Carried;
+  хуки: `CarryService.CanDrop`, `InventoryService.CanStore`, `MuseumService.CanBypassLock` / `OnDisplayed`,
+  `IncomeService.OnPaid`, `NightService.IsExempt`; группа столкновений Student проходит NightBarrier; PvP, защита и
+  кражи — по атрибуту игрока Tutorial (`ShopService.Sync`); `TheftLedger` — флаги student и protected).
+  `Controllers/TutorialController` — панель задачи, Beam к цели, чужие учебные модели скрыты, кнопка «Защита» скрыта.
 - Поимка D55 на сервере (этап E): `Services/CatchService` — «Поймать» (подсказка `BossLootService`, `OnTakeRequest`) →
   проверки начала, `BossLootService.Reserve` + `SetOpen(false)`, атрибуты корня CatchMode/Since/Face; бросок
   (`CatchAction` "Throw", вид, точка прилёта, время отпускания): `CatchRules.CheckThrow` → `DataService.SpendLovibum`
