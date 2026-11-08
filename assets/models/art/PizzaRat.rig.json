@@ -1,0 +1,221 @@
+{
+ "id": "PizzaRat",
+ "order": [
+  "Stand",
+  "Pizza",
+  "Head",
+  "EarL",
+  "EarR",
+  "PawL",
+  "PawR",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    -0.0181,
+    0.79,
+    0.0
+   ],
+   "size": [
+    3.2238,
+    1.58,
+    3.1876
+   ]
+  },
+  "Pizza": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.24,
+    0.0
+   ],
+   "center": [
+    -0.1058,
+    0.5837,
+    0.0505
+   ],
+   "size": [
+    3.3924,
+    1.4163,
+    2.7702
+   ]
+  },
+  "Head": {
+   "parent": "Pizza",
+   "pivot": [
+    -0.15,
+    0.57,
+    0.53
+   ],
+   "center": [
+    -0.0,
+    0.195,
+    0.598
+   ],
+   "size": [
+    1.304,
+    0.806,
+    1.352
+   ]
+  },
+  "EarL": {
+   "parent": "Head",
+   "pivot": [
+    -0.54,
+    0.986,
+    0.881
+   ],
+   "center": [
+    -0.052,
+    0.182,
+    0.0195
+   ],
+   "size": [
+    0.5285,
+    0.5285,
+    0.169
+   ]
+  },
+  "EarR": {
+   "parent": "Head",
+   "pivot": [
+    0.24,
+    0.986,
+    0.881
+   ],
+   "center": [
+    0.052,
+    0.182,
+    0.0195
+   ],
+   "size": [
+    0.5285,
+    0.5285,
+    0.169
+   ]
+  },
+  "PawL": {
+   "parent": "Pizza",
+   "pivot": [
+    -0.71,
+    0.45,
+    0.94
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.2
+   ],
+   "size": [
+    0.24,
+    0.14,
+    0.4
+   ]
+  },
+  "PawR": {
+   "parent": "Pizza",
+   "pivot": [
+    0.41,
+    0.45,
+    0.94
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.2
+   ],
+   "size": [
+    0.24,
+    0.14,
+    0.4
+   ]
+  },
+  "Tail": {
+   "parent": "Pizza",
+   "pivot": [
+    0.28,
+    0.7248,
+    -0.6304
+   ],
+   "center": [
+    -0.272,
+    0.5165,
+    -0.477
+   ],
+   "size": [
+    0.9424,
+    1.1854,
+    1.016
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    16
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EarL": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EarR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "PawL": {
+   "rot_xyz_blender_deg": [
+    -35,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,340 @@
+{
+ "id": "CheeseSkater",
+ "order": [
+  "Stand",
+  "Board",
+  "WheelB",
+  "WheelF",
+  "LegL",
+  "LegR",
+  "Body",
+  "Tail",
+  "ArmL",
+  "ArmR",
+  "Head",
+  "EarL",
+  "EarR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.315,
+    0.0
+   ],
+   "size": [
+    3.091,
+    2.63,
+    3.091
+   ]
+  },
+  "Board": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.5,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.06,
+    0.0
+   ],
+   "size": [
+    2.6,
+    0.32,
+    0.72
+   ]
+  },
+  "WheelB": {
+   "parent": "Board",
+   "pivot": [
+    -0.72,
+    0.37,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "size": [
+    0.2772,
+    0.2772,
+    0.8
+   ]
+  },
+  "WheelF": {
+   "parent": "Board",
+   "pivot": [
+    0.72,
+    0.37,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "size": [
+    0.2772,
+    0.2772,
+    0.8
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.16,
+    0.98,
+    0.0
+   ],
+   "center": [
+    -0.2121,
+    -0.1604,
+    0.06
+   ],
+   "size": [
+    0.4958,
+    0.3992,
+    0.38
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.16,
+    0.98,
+    0.0
+   ],
+   "center": [
+    0.2111,
+    -0.1594,
+    0.06
+   ],
+   "size": [
+    0.4977,
+    0.4011,
+    0.38
+   ]
+  },
+  "Body": {
+   "parent": "Board",
+   "pivot": [
+    0.0,
+    0.96,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.28,
+    0.015
+   ],
+   "size": [
+    0.56,
+    0.64,
+    0.47
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.0,
+    -0.22
+   ],
+   "center": [
+    0.1687,
+    0.4097,
+    -0.3618
+   ],
+   "size": [
+    0.4245,
+    0.9969,
+    0.7388
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.28,
+    1.4,
+    0.0
+   ],
+   "center": [
+    -0.3063,
+    0.1027,
+    0.0705
+   ],
+   "size": [
+    0.6474,
+    0.2946,
+    0.239
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.28,
+    1.4,
+    0.0
+   ],
+   "center": [
+    0.3099,
+    0.0393,
+    0.07
+   ],
+   "size": [
+    0.6403,
+    0.1815,
+    0.24
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.56,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.401,
+    0.112
+   ],
+   "size": [
+    0.8074,
+    0.618,
+    0.964
+   ]
+  },
+  "EarL": {
+   "parent": "Head",
+   "pivot": [
+    -0.27,
+    2.02,
+    0.03
+   ],
+   "center": [
+    -0.053,
+    0.182,
+    0.0058
+   ],
+   "size": [
+    0.3862,
+    0.3862,
+    0.1235
+   ]
+  },
+  "EarR": {
+   "parent": "Head",
+   "pivot": [
+    0.27,
+    2.02,
+    0.03
+   ],
+   "center": [
+    0.053,
+    0.182,
+    0.0058
+   ],
+   "size": [
+    0.3862,
+    0.3862,
+    0.1235
+   ]
+  }
+ },
+ "demo_pose": {
+  "WheelF": {
+   "rot_xyz_blender_deg": [
+    0,
+    60,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Board": {
+   "rot_xyz_blender_deg": [
+    0,
+    -6,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -25
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

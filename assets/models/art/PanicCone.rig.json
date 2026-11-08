@@ -1,0 +1,252 @@
+{
+ "id": "PanicCone",
+ "order": [
+  "Stand",
+  "FootL",
+  "FootR",
+  "Body",
+  "EyeL",
+  "EyeR",
+  "ArmL",
+  "ArmR",
+  "Lamp"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0139,
+    1.515,
+    0.0
+   ],
+   "size": [
+    2.7323,
+    3.03,
+    2.7046
+   ]
+  },
+  "FootL": {
+   "parent": "Body",
+   "pivot": [
+    -0.34,
+    0.32,
+    0.5
+   ],
+   "center": [
+    0.0,
+    -0.01,
+    0.3
+   ],
+   "size": [
+    0.32,
+    0.18,
+    0.4
+   ]
+  },
+  "FootR": {
+   "parent": "Body",
+   "pivot": [
+    0.34,
+    0.32,
+    0.5
+   ],
+   "center": [
+    0.0,
+    -0.01,
+    0.3
+   ],
+   "size": [
+    0.32,
+    0.18,
+    0.4
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.32,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.1,
+    0.0
+   ],
+   "size": [
+    1.56,
+    2.28,
+    1.56
+   ]
+  },
+  "EyeL": {
+   "parent": "Body",
+   "pivot": [
+    -0.2,
+    1.6275,
+    0.4575
+   ],
+   "center": [
+    0.0,
+    -0.0082,
+    -0.0336
+   ],
+   "size": [
+    0.3,
+    0.3689,
+    0.2717
+   ]
+  },
+  "EyeR": {
+   "parent": "Body",
+   "pivot": [
+    0.2,
+    1.6275,
+    0.4575
+   ],
+   "center": [
+    -0.0,
+    -0.0082,
+    -0.0336
+   ],
+   "size": [
+    0.3,
+    0.3689,
+    0.2717
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.4093,
+    1.37,
+    0.05
+   ],
+   "center": [
+    -0.3149,
+    0.5993,
+    0.1412
+   ],
+   "size": [
+    0.6915,
+    1.2215,
+    0.3577
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.4093,
+    1.37,
+    0.05
+   ],
+   "center": [
+    0.3135,
+    0.5986,
+    0.1396
+   ],
+   "size": [
+    0.6944,
+    1.2227,
+    0.3608
+   ]
+  },
+  "Lamp": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.56,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.18,
+    0.0
+   ],
+   "size": [
+    0.9758,
+    0.44,
+    0.8701
+   ]
+  }
+ },
+ "demo_pose": {
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Lamp": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.06
+   ]
+  },
+  "EyeL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EyeR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FootL": {
+   "rot_xyz_blender_deg": [
+    -25,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

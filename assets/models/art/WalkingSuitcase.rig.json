@@ -1,0 +1,190 @@
+{
+ "id": "WalkingSuitcase",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Lid",
+  "EyeL",
+  "EyeR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.265,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    2.53,
+    2.8978
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.45,
+    0.64,
+    0.12
+   ],
+   "center": [
+    0.0,
+    -0.2,
+    0.11
+   ],
+   "size": [
+    0.34,
+    0.44,
+    0.5
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.45,
+    0.64,
+    -0.12
+   ],
+   "center": [
+    -0.0,
+    -0.2,
+    0.11
+   ],
+   "size": [
+    0.34,
+    0.44,
+    0.5
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.62,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.395,
+    0.055
+   ],
+   "size": [
+    2.2,
+    0.91,
+    1.21
+   ]
+  },
+  "Lid": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.32,
+    -0.45
+   ],
+   "center": [
+    0.0,
+    0.4,
+    0.45
+   ],
+   "size": [
+    2.2,
+    1.04,
+    1.1
+   ]
+  },
+  "EyeL": {
+   "parent": "Lid",
+   "pivot": [
+    -0.4,
+    1.6,
+    0.55
+   ],
+   "center": [
+    0.0,
+    0.0,
+    0.0125
+   ],
+   "size": [
+    0.34,
+    0.36,
+    0.265
+   ]
+  },
+  "EyeR": {
+   "parent": "Lid",
+   "pivot": [
+    0.4,
+    1.6,
+    0.55
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.0125
+   ],
+   "size": [
+    0.34,
+    0.36,
+    0.265
+   ]
+  }
+ },
+ "demo_pose": {
+  "Lid": {
+   "rot_xyz_blender_deg": [
+    -24,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    -25,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EyeL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

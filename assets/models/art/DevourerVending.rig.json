@@ -1,0 +1,290 @@
+{
+ "id": "DevourerVending",
+ "order": [
+  "Stand",
+  "LegFL",
+  "LegBL",
+  "LegFR",
+  "LegBR",
+  "Body",
+  "EyeL",
+  "EyeR",
+  "Brows",
+  "EyeS",
+  "Jaw"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.875,
+    0.0
+   ],
+   "size": [
+    3.091,
+    3.75,
+    3.091
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    -0.7,
+    0.44,
+    0.4
+   ],
+   "center": [
+    -0.0,
+    -0.12,
+    0.0
+   ],
+   "size": [
+    0.32,
+    0.24,
+    0.32
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    -0.7,
+    0.44,
+    -0.4
+   ],
+   "center": [
+    0.0,
+    -0.12,
+    0.0
+   ],
+   "size": [
+    0.32,
+    0.24,
+    0.32
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    0.7,
+    0.44,
+    0.4
+   ],
+   "center": [
+    0.0,
+    -0.12,
+    0.0
+   ],
+   "size": [
+    0.32,
+    0.24,
+    0.32
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    0.7,
+    0.44,
+    -0.4
+   ],
+   "center": [
+    0.0,
+    -0.12,
+    0.0
+   ],
+   "size": [
+    0.32,
+    0.24,
+    0.32
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.42,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.74,
+    0.0804
+   ],
+   "size": [
+    2.0,
+    3.48,
+    1.4809
+   ]
+  },
+  "EyeL": {
+   "parent": "Body",
+   "pivot": [
+    -0.46,
+    3.03,
+    0.75
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.0225
+   ],
+   "size": [
+    0.44,
+    0.38,
+    0.305
+   ]
+  },
+  "EyeR": {
+   "parent": "Body",
+   "pivot": [
+    0.1,
+    3.03,
+    0.75
+   ],
+   "center": [
+    0.0,
+    0.0,
+    0.0225
+   ],
+   "size": [
+    0.44,
+    0.38,
+    0.305
+   ]
+  },
+  "Brows": {
+   "parent": "Body",
+   "pivot": [
+    -0.18,
+    3.28,
+    0.76
+   ],
+   "center": [
+    -0.0005,
+    0.0,
+    0.0
+   ],
+   "size": [
+    1.217,
+    0.2225,
+    0.11
+   ]
+  },
+  "EyeS": {
+   "parent": "Body",
+   "pivot": [
+    0.22,
+    2.56,
+    0.71
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.0125
+   ],
+   "size": [
+    0.24,
+    0.26,
+    0.205
+   ]
+  },
+  "Jaw": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.86,
+    0.2
+   ],
+   "center": [
+    0.0,
+    -0.0223,
+    0.7226
+   ],
+   "size": [
+    1.42,
+    0.4047,
+    0.7461
+   ]
+  }
+ },
+ "demo_pose": {
+  "Jaw": {
+   "rot_xyz_blender_deg": [
+    18,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EyeL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EyeR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Brows": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    -0.06
+   ]
+  },
+  "EyeS": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    40
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    -20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

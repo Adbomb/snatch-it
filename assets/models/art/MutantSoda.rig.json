@@ -1,0 +1,290 @@
+{
+ "id": "MutantSoda",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "EyeL",
+  "EyeR",
+  "Jaw",
+  "Bubbles",
+  "Tab",
+  "ArmL",
+  "ArmR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.515,
+    0.0
+   ],
+   "size": [
+    2.8012,
+    3.03,
+    2.8012
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.28,
+    0.72,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.24,
+    0.12
+   ],
+   "size": [
+    0.28,
+    0.52,
+    0.48
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.28,
+    0.72,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.24,
+    0.12
+   ],
+   "size": [
+    0.28,
+    0.52,
+    0.48
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.0,
+    0.1056
+   ],
+   "size": [
+    1.2577,
+    2.16,
+    1.4689
+   ]
+  },
+  "EyeL": {
+   "parent": "Body",
+   "pivot": [
+    -0.24,
+    2.32,
+    0.7489
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    -0.0975
+   ],
+   "size": [
+    0.42,
+    0.46,
+    0.585
+   ]
+  },
+  "EyeR": {
+   "parent": "Body",
+   "pivot": [
+    0.3,
+    2.36,
+    0.7189
+   ],
+   "center": [
+    0.0,
+    0.0,
+    -0.0975
+   ],
+   "size": [
+    0.3,
+    0.3,
+    0.525
+   ]
+  },
+  "Jaw": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.26,
+    0.2
+   ],
+   "center": [
+    0.0,
+    -0.005,
+    0.38
+   ],
+   "size": [
+    0.96,
+    0.11,
+    0.56
+   ]
+  },
+  "Bubbles": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.6,
+    0.8989
+   ],
+   "center": [
+    -0.0346,
+    0.2508,
+    0.2625
+   ],
+   "size": [
+    0.894,
+    1.0463,
+    0.795
+   ]
+  },
+  "Tab": {
+   "parent": "Body",
+   "pivot": [
+    0.1,
+    2.78,
+    -0.05
+   ],
+   "center": [
+    0.1,
+    0.0,
+    -0.06
+   ],
+   "size": [
+    0.36,
+    0.08,
+    0.26
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.6,
+    1.7,
+    0.05
+   ],
+   "center": [
+    -0.2365,
+    0.3429,
+    0.1067
+   ],
+   "size": [
+    0.5271,
+    0.7141,
+    0.2866
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.6,
+    1.7,
+    0.05
+   ],
+   "center": [
+    0.2365,
+    0.3429,
+    0.1067
+   ],
+   "size": [
+    0.5271,
+    0.7141,
+    0.2866
+   ]
+  }
+ },
+ "demo_pose": {
+  "Jaw": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Bubbles": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    -0.15,
+    0.3
+   ]
+  },
+  "Tab": {
+   "rot_xyz_blender_deg": [
+    -40,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EyeR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    -25,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

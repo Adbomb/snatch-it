@@ -1,0 +1,283 @@
+{
+ "id": "DuckInspector",
+ "order": [
+  "Stand",
+  "FootL",
+  "FootR",
+  "Body",
+  "Tail",
+  "Head",
+  "Beak",
+  "Cap",
+  "WingL",
+  "WingR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.415,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    2.83,
+    2.8978
+   ]
+  },
+  "FootL": {
+   "parent": "Body",
+   "pivot": [
+    -0.32,
+    0.36,
+    0.45
+   ],
+   "center": [
+    0.0,
+    -0.025,
+    0.19
+   ],
+   "size": [
+    0.4687,
+    0.17,
+    0.52
+   ]
+  },
+  "FootR": {
+   "parent": "Body",
+   "pivot": [
+    0.32,
+    0.36,
+    0.45
+   ],
+   "center": [
+    -0.0,
+    -0.025,
+    0.19
+   ],
+   "size": [
+    0.4687,
+    0.17,
+    0.52
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.42,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.43,
+    0.07
+   ],
+   "size": [
+    1.7,
+    0.9,
+    1.58
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.02,
+    -0.65
+   ],
+   "center": [
+    0.0,
+    0.275,
+    -0.1517
+   ],
+   "size": [
+    0.6311,
+    0.55,
+    0.5883
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.28,
+    0.2
+   ],
+   "center": [
+    0.0,
+    0.38,
+    0.19
+   ],
+   "size": [
+    1.0,
+    0.84,
+    1.26
+   ]
+  },
+  "Beak": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    1.47,
+    0.62
+   ],
+   "center": [
+    0.0,
+    -0.06,
+    0.17
+   ],
+   "size": [
+    0.44,
+    0.12,
+    0.38
+   ]
+  },
+  "Cap": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    2.06,
+    0.2
+   ],
+   "center": [
+    0.0,
+    0.135,
+    0.0958
+   ],
+   "size": [
+    1.2,
+    0.37,
+    1.3515
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    -0.72,
+    1.12,
+    0.05
+   ],
+   "center": [
+    -0.0365,
+    -0.2255,
+    -0.06
+   ],
+   "size": [
+    0.3383,
+    0.5714,
+    0.82
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    0.72,
+    1.12,
+    0.05
+   ],
+   "center": [
+    0.1743,
+    0.2899,
+    0.35
+   ],
+   "size": [
+    0.6515,
+    1.4602,
+    1.4
+   ]
+  }
+ },
+ "demo_pose": {
+  "Beak": {
+   "rot_xyz_blender_deg": [
+    -25,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Cap": {
+   "rot_xyz_blender_deg": [
+    0,
+    10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.05
+   ]
+  },
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    30,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FootL": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}
