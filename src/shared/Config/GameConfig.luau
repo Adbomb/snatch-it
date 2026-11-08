@@ -316,6 +316,8 @@ GameConfig.Presentation = {
 GameConfig.Sounds = {
 	Presentation = { Rare = "", Legendary = "", Secret = "" }, -- презентация экспоната по редкости
 	Place = "", -- любое выставление (и Common)
+	-- D55: звуков пока нет (решение владельца 2026-11-08) — место для них; ID — от владельца
+	Lovibum = { Throw = "", Open = "", Net = "", Caught = "", Escape = "", Buy = "" },
 }
 
 -- Запас к дистанции на сервере: позиция игрока на сервере слегка отстаёт от клиента.
@@ -337,7 +339,12 @@ GameConfig.RateLimits = {
 	Rotate = 6,
 	Steal = 4,
 	PvpAttack = 4, -- запросов удара в секунду (сама частота ударов — Battle.Player.AttackInterval)
+	Shop = 4, -- покупки Ловибумов (D55)
+	Catch = 4, -- запросы мини-игры поимки (сами броски — не чаще Catch.Game.ThrowGap)
 }
+
+-- Поимка «Ловибум», магазин, живые существа, обучение (D55) — Config/Catch (цены не утверждены).
+GameConfig.Catch = require(script.Parent.Catch)
 
 -- Долгая прогрессия (D29–D31): боссы, гантель, музей, сила музея, доход, редкость, каталог, скорость.
 -- Отдельный файл, чтобы его читал симулятор scripts/sim/progression.py.

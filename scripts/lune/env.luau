@@ -208,5 +208,6 @@ function Env.FakeRoot(groups: { { name: string, bricks: { any } } })
 end
 
 Env.roblox = roblox
+Env.Random = Random -- своя замена Random (для проверок со случайностью)
 Env.services = services
 return Env

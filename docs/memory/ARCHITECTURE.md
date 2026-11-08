@@ -48,6 +48,15 @@
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
   Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
   `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
+- Поимка D55, данные и правила (этап B): `Config/Catch` (через `GameConfig.Catch`: виды и бонусы, шансы, цены — `Prices` пусто,
+  пока владелец не утвердит, `TestPrices` только Studio + DevMode; мини-игра, блуждание, обучение), `Shared/CatchRules`
+  (шанс, проверка покупки, запас `lovibums` = { L<уровень> → { вид → n } }, круг и попадание, автомат сессии, личная
+  пауза), `Shared/CreatureMotion` (поза существа = функция общего времени и зерна uid: Wander / Catch / Flee / Calm;
+  дискретные решения — хэш bit32, одинаков везде; FNV-1a зерна сверен с Python), `Shared/TutorialRules` (шаги
+  Intro → Catch → Battle → Carry → Income → Done, миграция v3 → v4, защита стартового uid). Профиль schema 4:
+  `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
+  повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
+  Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
 - Ловибумы в игре (D55, этап A): геометрия v5 — `scripts/blender/lovibum_shapes.py` (общая с концептами; части
   `a.group`: Base, Core, Claw1…4, Crystal; `a.rig`, `a.axes` — ось раскрытия когтя, `a.lift`, `a.light`).
   `scripts/blender/lovibum_models.py` → `assets/models/lovibums/Lovibum_<Вид>.fbx` (меши Lovibum<Вид><Часть>,

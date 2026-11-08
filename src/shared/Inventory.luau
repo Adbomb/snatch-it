@@ -132,7 +132,8 @@ function Inventory.Normalize(data: any, slotCount: number, itemDefs: { [string]:
 			end
 		end
 	end
-	if data.schema ~= Inventory.Schema then
+	-- только повышение до 3: старшие схемы (4 — D55) ведёт DataService
+	if type(data.schema) ~= "number" or data.schema < Inventory.Schema then
 		data.schema = Inventory.Schema
 		report.changed = true
 	end

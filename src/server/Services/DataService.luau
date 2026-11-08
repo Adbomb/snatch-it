@@ -5,8 +5,10 @@
 -- Кража (D46, DESIGN §6): передача записи между профилями (TransferItem), сохранение с ожиданием (SaveAndWait) и журнал
 -- передач в DataStore «Transfers» (в Studio без доступа к API и у тестовых профилей — в памяти); при загрузке вора
 -- незавершённые передачи решает Util/TransferJournal.
--- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Util/TransferJournal,
--- Util/Log.
+-- D55: schema 3 → 4 (Ловибумы и обучение, Shared/TutorialRules.Migrate) — после разбора журнала и проверки записей;
+-- покупка и трата Ловибумов — атомарно (монеты и запас в одном кадре, без yield).
+-- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Shared/CatchRules,
+-- Shared/TutorialRules, Util/TransferJournal, Util/Log.
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
@@ -15,7 +17,9 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
+local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
 local Inventory = require(ReplicatedStorage.Shared.Inventory)
+local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
 local ProfileStore = require(ServerScriptService.Server.Vendor.ProfileStore)
 local Log = require(ServerScriptService.Server.Util.Log)
@@ -160,6 +164,16 @@ finishLoad = function(player: Player, profile: any): boolean
 			)
 		)
 	end
+	-- schema 3 → 4 (D55): обучение — по своим предметам (pending не считается), Ловибумы — пусто; затем проверка
+	-- Ловибумов и записи обучения при каждой загрузке.
+	if TutorialRules.Migrate(profile.Data, ProfileTemplate.schema) then
+		Log.Debug(
+			"DataService",
+			("%s: миграция v3 → v4, обучение — %s"):format(player.Name, profile.Data.tutorial.step)
+		)
+	end
+	profile.Data.lovibums = CatchRules.Normalize(profile.Data.lovibums)
+	TutorialRules.Normalize(profile.Data)
 	if profile.Data.schema ~= ProfileTemplate.schema then
 		Log.Warn(
 			"DataService",
@@ -701,6 +715,79 @@ function DataService.Spend(player: Player, amount: number): boolean
 		return false
 	end
 	data.coins -= amount
+	return true
+end
+
+-- ── Ловибумы (D55) ─────────────────────────────────────────────────────────────────────────────────────────
+
+-- Запас Ловибумов (lovibums = { L<уровень> → { вид → n } }), проверенный; nil — профиль не загружен.
+function DataService.Lovibums(player: Player): { [string]: { [string]: number } }?
+	local data = DataService.GetData(player)
+	if not data then
+		return nil
+	end
+	data.lovibums = CatchRules.Normalize(data.lovibums)
+	return data.lovibums
+end
+
+-- Покупка: монеты и запас — в одном кадре (без yield). total — итог из CatchRules.CheckBuy (проверки — в ShopService,
+-- здесь последняя защита данных). false — не хватает монет, переполнение запаса или профиль не загружен.
+function DataService.BuyLovibums(player: Player, level: number, kind: string, count: number, total: number): boolean
+	local data = DataService.GetData(player)
+	local lovibums = DataService.Lovibums(player)
+	if not data or not lovibums or not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) then
+		return false
+	end
+	if not CatchRules.IsWhole(count) or count < 1 or not CatchRules.IsWhole(total) or total < 0 or data.coins < total then
+		return false
+	end
+	local have = CatchRules.Stock(lovibums, level, kind)
+	if have + count > CatchRules.Config.MaxStock then
+		return false
+	end
+	local key = CatchRules.LevelKey(level)
+	data.coins -= total
+	lovibums[key] = lovibums[key] or {}
+	lovibums[key][kind] = have + count
+	return true
+end
+
+-- Списать один Ловибум (бросок, D55: до результата). false — нет такого.
+function DataService.SpendLovibum(player: Player, level: number, kind: string): boolean
+	local lovibums = DataService.Lovibums(player)
+	if not lovibums or not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) then
+		return false
+	end
+	local have = CatchRules.Stock(lovibums, level, kind)
+	if have < 1 then
+		return false
+	end
+	local key = CatchRules.LevelKey(level)
+	lovibums[key][kind] = if have > 1 then have - 1 else nil
+	if next(lovibums[key]) == nil then
+		lovibums[key] = nil
+	end
+	return true
+end
+
+-- ── Обучение (D55) ─────────────────────────────────────────────────────────────────────────────────────────
+
+-- Запись обучения (проверенная); nil — профиль не загружен. Менять — через SetTutorial.
+function DataService.Tutorial(player: Player): TutorialRules.State?
+	local data = DataService.GetData(player)
+	return if data then TutorialRules.Normalize(data) else nil
+end
+
+-- Изменить запись обучения: поля fields (false — стереть поле). Без yield.
+function DataService.SetTutorial(player: Player, fields: { [string]: any }): boolean
+	local data = DataService.GetData(player)
+	if not data then
+		return false
+	end
+	local t = TutorialRules.Normalize(data)
+	for key, value in fields do
+		(t :: any)[key] = if value == false then nil else value
+	end
 	return true
 end
 

@@ -1577,7 +1577,7 @@ test("Ревью: миграция через настоящую загрузк�
 	ctx.track(again)
 	check(join(again), "A не вошёл после миграции")
 	local items = DataService.GetData(again).items
-	check(DataService.GetData(again).schema == 3, "схема не 3")
+	check(DataService.GetData(again).schema == 4, "схема не 4 (D55: v2 → v3 → v4)")
 	check(ItemRegistry.Get(keep).state == "Displayed" and ItemRegistry.Get(keep).slot == 1, "старший экспонат не на месте")
 	check(items["dup-late"].place == "storage" and ItemRegistry.Get("dup-late").state == "Stored", "второй на постаменте 1")
 	check(items["far"].place == "storage", "экспонат вне музея не в инвентаре")
