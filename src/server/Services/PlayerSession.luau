@@ -21,6 +21,7 @@ local Notify = require(Server.Util.Notify)
 
 export type JoinOptions = {
 	mock: boolean?, -- профиль в памяти (ProfileStore.Mock), только серверные тесты
+	veteran: boolean?, -- серверные тесты: обучение D55 уже пройдено (как у старого профиля), если в профиле не начато
 }
 
 local PlayerSession = {}
@@ -44,6 +45,9 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 		-- сессию перехватили сразу после загрузки: без профиля играть нельзя (участок освободит выход)
 		player:Kick("Сохранение открыто на другом сервере. Перезайдите.")
 		return false
+	end
+	if options and options.mock and options.veteran and data.tutorial and data.tutorial.step == "Intro" then
+		data.tutorial = { step = "Done", migrated = true } -- только тестовые профили (ProfileStore.Mock)
 	end
 	PlotService.ShowLevel(plot, data.museumLevel)
 	GymService.OnPlayerLoaded(player, plot)

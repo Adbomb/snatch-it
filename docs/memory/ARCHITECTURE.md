@@ -57,6 +57,17 @@
   `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
   повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
   Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
+- Поимка D55 на сервере (этап E): `Services/CatchService` — «Поймать» (подсказка `BossLootService`, `OnTakeRequest`) →
+  проверки начала, `BossLootService.Reserve` + `SetOpen(false)`, атрибуты корня CatchMode/Since/Face; бросок
+  (`CatchAction` "Throw", вид, точка прилёта, время отпускания): `CatchRules.CheckThrow` → `DataService.SpendLovibum`
+  → попадание (`CreatureMotion` в момент прилёта, круг `CatchRules.CircleRadius`) → шанс; `CatchEffect` всем в
+  `Catch.Game.EffectRadius`, `CatchState` — ловящему; поимка → CatchMode Hidden → `BattleService.Begin(…, { caught =
+  true })`; поражение / прерывание боя — `BossLootService.Release` снимает Hidden; конец без поимки — Flee, пауза
+  `CatchRules.SetPause`, босс свободен. Учебная — `CatchService.BeginTutorial(player, target)` (onCaught, onEnd).
+  Сторож раз в 0.5 с (бездействие, сторож, «кончились», нокаут). Бой Крысиного короля: `RIGS[3]` в BossService и
+  BossAnimController, `BossModels[3]` (мешей нет — блоки), `Battle.Bosses[3]` (как у боссов 1–2, сила
+  Progression.Bosses[3]). Тесты: `PlayerSession.Join(…, { veteran = true })`, `CatchService.Handlers.SetRoll`.
+  DevTools: `Lovibums`, `Tutorial`, `CatchRoll`.
 - Живые существа (D55, этап D): поза у босса — `Shared/CreatureMotion` (общее время + зерно uid), сервер пишет на
   корень предмета атрибуты Home (CFrame низа места), Drop (высота места над полом), CatchMode / CatchSince /
   CatchFace / CatchAnchor; `Controllers/CreatureController` двигает корень локально у всех клиентов (у сервера он на

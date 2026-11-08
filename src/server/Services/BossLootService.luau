@@ -87,10 +87,10 @@ local tryTake: (Player, Slot) -> ()
 local function addPrompt(part: BasePart, entry: Slot)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "TakePrompt"
-	prompt.ActionText = "Забрать"
+	prompt.ActionText = "Поймать" -- D55: мини-игра «Ловибум», после поимки — бой
 	prompt.ObjectText = Items[part:GetAttribute("ItemId") :: string].displayName
-	prompt.HoldDuration = GameConfig.Bosses.TakeHold
-	prompt.MaxActivationDistance = GameConfig.Bosses.TakeDistance
+	prompt.HoldDuration = GameConfig.Catch.Game.PromptHold
+	prompt.MaxActivationDistance = GameConfig.Catch.Game.PromptDistance
 	prompt.RequiresLineOfSight = false
 	prompt.Enabled = not closed[entry.boss]
 	prompt.Parent = part
@@ -243,11 +243,18 @@ function BossLootService.Reserve(boss: number, slot: number, player: any): boole
 	return true
 end
 
--- Бой закончился без победы: предмет снова свободен (он не покидал своё место).
+-- Бой (или поимка) закончился без победы: предмет снова свободен (он не покидал своё место). D55: пойманное и
+-- спрятанное в Ловибуме существо снова бродит у своего места (побег после поимки задаёт CatchService сам).
 function BossLootService.Release(boss: number, slot: number)
 	local entry = slots[boss] and slots[boss][slot]
 	if entry then
 		entry.reservedBy = nil
+		local item = entry.uid and ItemRegistry.Get(entry.uid)
+		if item and item.part and item.part:GetAttribute("CatchMode") == "Hidden" then
+			for _, name in { "CatchMode", "CatchSince", "CatchFace", "CatchAnchor" } do
+				item.part:SetAttribute(name, nil)
+			end
+		end
 	end
 end
 

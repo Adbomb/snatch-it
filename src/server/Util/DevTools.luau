@@ -167,7 +167,8 @@ function DevTools.Init()
 	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
 	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
 	-- "GiveDefense <userId> <вид> <сколько>" | "Exhibit <userId> <место> [предмет]" |
-	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53).
+	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53) |
+	-- D55: "Lovibums <userId> <уровень> <вид> <n>" | "Tutorial <userId> <шаг>" | "CatchRoll <0…1 | off>".
 	-- Выполняются в потоке этого скрипта (как RunTests),
 	-- ответ — атрибут CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
@@ -296,6 +297,47 @@ function DevTools.Init()
 				GymService.SyncAttributes(player)
 				require(ServerScriptService.Server.Services.CarryService).RefreshSpeed(player) -- скорость — от силы
 				return data.strength
+			elseif command == "Lovibums" or command == "Tutorial" or command == "CatchRoll" then
+				-- D55 (только Studio): «Lovibums <userId> <уровень> <вид> <сколько>» — Ловибумы в запас без покупки (цены не
+				-- утверждены); «Tutorial <userId> <шаг>» — шаг обучения (Done — пройдено); «CatchRoll <0…1 | off>» —
+				-- исход шанса захвата для проверки (0 — поймано, 0.999 — побег, off — случайно).
+				if not RunService:IsStudio() then
+					return "только в Studio"
+				end
+				local Server = ServerScriptService.Server
+				if command == "CatchRoll" then
+					local value = tonumber(words[2])
+					require(Server.Services.CatchService).Handlers.SetRoll(value)
+					return if value then ("шанс: %.3f"):format(value) else "случайно"
+				end
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				local data = player and DataService.GetData(player)
+				if not player or not data then
+					return "нет игрока"
+				end
+				local ShopService = require(Server.Services.ShopService)
+				if command == "Lovibums" then
+					local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+					local level, kind = tonumber(words[3]), words[4]
+					local n = math.floor(tonumber(words[5]) or 1)
+					if not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) or n < 1 then
+						return "уровень 1–10, вид Boom | Turbo | Mega"
+					end
+					local lovibums = DataService.Lovibums(player) :: any
+					local key = CatchRules.LevelKey(level :: number)
+					lovibums[key] = lovibums[key] or {}
+					lovibums[key][kind] = math.min((lovibums[key][kind] or 0) + n, GameConfig.Catch.MaxStock)
+					ShopService.Sync(player)
+					return lovibums[key][kind]
+				end
+				local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
+				local step = words[3]
+				if not TutorialRules.IsStep(step) then
+					return "шаги: " .. table.concat(TutorialRules.Steps, ", ")
+				end
+				data.tutorial = if step == "Done" then { step = "Done", migrated = true } else { step = step }
+				ShopService.Sync(player)
+				return step
 			end
 			return "неизвестная команда"
 		end)

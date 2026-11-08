@@ -10,6 +10,8 @@
 -- после боя здоровье прежнее). Боец заперт в зоне босса до конца боя: невидимые стены на границах зон (группа
 -- ZoneLock) сталкиваются только с бойцами (Util/CharacterGroups), сервер возвращает бойца в зону, если тот оказался
 -- снаружи. Побега по расстоянию нет; босс не уходит дальше Leash от своего места (площадка без декора, D43).
+-- D55: бой начинается после поимки «Ловибумом» (CatchService): слот уже закреплён за ловящим (Begin с caught = true);
+-- пока идёт поимка, босс занят (IsCatchBusy задаёт CatchService) — бой с ним не начать.
 -- Зависит от MoveGuard (D52), BossService, BossLootService, CarryService, DataService, TimeService, Config/Battle, Shared/GameTime,
 -- World/MapLayout, Util/CharacterGroups, Util/Notify, Util/Validate, Util/Log.
 
@@ -63,6 +65,13 @@ local random = Random.new()
 local BAR_ABOVE_BOSS = 3.2 -- полоска HP над макушкой босса, стадов
 
 local BattleService = {}
+
+-- Закреплён ли босс за поимкой (задаёт CatchService, D55).
+BattleService.IsCatchBusy = nil :: ((zone: number) -> boolean)?
+
+export type BeginOptions = {
+	caught: boolean?, -- после поимки (D55): слот уже закреплён за бойцом, подсказки уже выключены
+}
 
 -- Имя босса зоны для сообщений («Сторожевой пёс победил!»).
 local function bossName(zone: number): string
@@ -298,14 +307,31 @@ local function finish(fight: Fight, result: string)
 	end
 end
 
--- Можно ли начать бой: сообщение отказа или nil.
-function BattleService.CanStart(player: any, zone: number, slot: number): string?
+-- Занят ли босс: идёт бой, возвращается на место или не спит.
+function BattleService.Busy(zone: number): boolean
+	local boss = BossService.Get(zone)
+	return fights[zone] ~= nil
+		or returning[zone] == true
+		or (boss ~= nil and boss.state ~= "Sleep" and boss.state ~= "FallAsleep")
+end
+
+-- Идёт ли бой у игрока.
+function BattleService.InBattle(player: any): boolean
+	return byPlayer[player] ~= nil
+end
+
+-- Можно ли начать бой: сообщение отказа или nil. caught — после поимки (D55: поимка рядом, слот её).
+function BattleService.CanStart(player: any, zone: number, slot: number, caught: boolean?): string?
 	local boss = BossService.Get(zone)
 	if not boss then
 		return "У этого босса пока нет боя"
 	end
 	if fights[zone] then
 		return ("Босс занят боем с %s"):format(fights[zone].player.Name)
+	end
+	local catchBusy = BattleService.IsCatchBusy
+	if not caught and catchBusy and catchBusy(zone) then
+		return "Босс занят: у него ловят существо"
 	end
 	if returning[zone] or (boss.state ~= "Sleep" and boss.state ~= "FallAsleep") then
 		return "Босс возвращается на место"
@@ -323,7 +349,7 @@ function BattleService.CanStart(player: any, zone: number, slot: number): string
 	if not uid or not part then
 		return "Здесь уже пусто"
 	end
-	if not Validate.IsNear(player, part.Position, GameConfig.Bosses.TakeDistance) then
+	if not caught and not Validate.IsNear(player, part.Position, GameConfig.Bosses.TakeDistance) then
 		return "Подойдите ближе"
 	end
 	return nil
@@ -405,14 +431,16 @@ local function step(fight: Fight)
 end
 
 -- Начать бой за предмет в слоте slot у босса зоны zone. Возвращает бой или nil (отказ — сообщение игроку).
-function BattleService.Begin(player: any, zone: number, slot: number): Fight?
-	local refusal = BattleService.CanStart(player, zone, slot)
+-- opts.caught — после поимки (D55): слот уже закреплён за бойцом.
+function BattleService.Begin(player: any, zone: number, slot: number, opts: BeginOptions?): Fight?
+	local caught = opts ~= nil and opts.caught == true
+	local refusal = BattleService.CanStart(player, zone, slot, caught)
 	if refusal then
 		Notify.Send(player, refusal, "Stop")
 		return nil
 	end
 	local boss = BossService.Get(zone) :: BossService.Boss
-	if not BossLootService.Reserve(zone, slot, player) then
+	if not caught and not BossLootService.Reserve(zone, slot, player) then
 		Notify.Send(player, "Этот предмет уже разыгрывается", "Stop")
 		return nil
 	end
@@ -515,13 +543,7 @@ end
 
 function BattleService.Init()
 	buildZoneWalls()
-	BossLootService.OnTakeRequest = function(player: Player, zone: number, slot: number): boolean
-		if not BossService.Get(zone) then
-			return false -- у босса пока нет боя
-		end
-		BattleService.Begin(player, zone, slot)
-		return true
-	end
+	-- «Поймать» у существа начинает поимку (CatchService, D55), бой — после неё.
 	TimeService.OnPhaseChanged(function(state)
 		if GameTime.IsNight(state.phase) then
 			for _, fight in fights do

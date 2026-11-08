@@ -1,7 +1,8 @@
 -- Модели боссов из Blender (D40): у каждой части свой меш (импорт FBX в Studio даёт MeshId), карты SurfaceAppearance
 -- общие на группу частей (голова и тело, assets/textures/art/IDS.md). turn — поворот меша частей вокруг вертикали
 -- после импорта, чтобы он совпал со скелетом. Нет меша у части — часть показывается заготовкой (блок цвета из
--- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig (1 — пёс, 2 — торговец). Ни от чего не зависит.
+-- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig (1 — пёс, 2 — торговец, 3 — Крысиный король). Ни от чего
+-- не зависит.
 
 export type BossModel = {
 	name: string,
@@ -37,6 +38,10 @@ local DOG_MESHES: { [string]: number } = {
 -- цвета из скелета (Config/Boss2TraderRig).
 local TRADER_MESHES: { [string]: number } = {}
 
+-- Крысиный король (D54): FBX и карты лежат локально (assets/models/Boss3_RatKing.fbx), импорт и загрузка пока запрещены
+-- владельцем — части-заготовки цвета из скелета (Config/Boss3RatKingRig).
+local RATKING_MESHES: { [string]: number } = {}
+
 local function ids(list: { [string]: number }): { [string]: string }
 	local out = {}
 	for part, id in list do
@@ -65,6 +70,13 @@ return table.freeze({
 			Limbs = { color = "rbxassetid://126025887496516", normal = "rbxassetid://71574604601669" },
 		},
 		meshes = ids(TRADER_MESHES),
+		turn = 180,
+	} :: BossModel,
+	-- D55: бой Крысиного короля подключён на материалах D54; карт в Roblox нет (не загружались).
+	[3] = {
+		name = "Крысиный король",
+		maps = {},
+		meshes = ids(RATKING_MESHES),
 		turn = 180,
 	} :: BossModel,
 })

@@ -5,7 +5,7 @@
 -- HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
 -- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета. Карты — копии шаблонов Server/Looks
 -- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модели есть у
--- боссов 1 (пёс) и 2 (торговец); у остальных зон боя нет.
+-- боссов 1 (пёс), 2 (торговец) и 3 (Крысиный король, D55); у остальных зон боя нет.
 -- Бой и последовательность состояний ведёт BattleService. Зависит от AssetService, CollectionService, Config,
 -- World/MapLayout, Util/Log.
 
@@ -18,6 +18,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
 local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
 local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
+local Boss3RatKingRig = require(ReplicatedStorage.Shared.Config.Boss3RatKingRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local Server = ServerScriptService.Server
 local Log = require(Server.Util.Log)
@@ -36,7 +37,7 @@ export type Boss = {
 }
 
 local TAG = "Boss"
-local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig }
+local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig } -- 3 — D55 (D54)
 
 local bosses: { [number]: Boss } = {}
 

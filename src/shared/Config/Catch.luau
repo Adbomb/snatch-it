@@ -79,5 +79,6 @@ return {
 	Tutorial = {
 		ItemRarity = "Common",
 		ItemBoss = 1,
+		CircleFactor = 1.8, -- круг учебной поимки крупнее (первое попадание — захват)
 	},
 }

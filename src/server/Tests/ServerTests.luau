@@ -55,6 +55,9 @@ local VaultService = require(Server.Services.VaultService)
 local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local CatchService = require(Server.Services.CatchService)
+local ShopService = require(Server.Services.ShopService)
 
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
@@ -74,7 +77,7 @@ local function check(condition: any, message: string)
 end
 
 local function join(player: any): boolean
-	return PlayerSession.Join(player, { mock = true })
+	return PlayerSession.Join(player, { mock = true, veteran = true }) -- D55: обучение пройдено (тесты обучения — свои)
 end
 
 local function leave(player: any)
@@ -2143,7 +2146,7 @@ local function ensureDay(): boolean
 	return false
 end
 
-test("Коллекции: босс 1 — 8/8/4, босс 2 — 12/10/8 (Common/Rare/Epic) с доходом; у черновых нет лишних редкостей", function()
+test("Коллекции: босс 1 — 8/8/4, босс 2 и 3 — 12/10/8 (Common/Rare/Epic) с доходом; у черновых нет лишних редкостей", function()
 	for id, def in Items do
 		check(table.find(Rarities.Order, def.rarity), id .. ": редкость " .. tostring(def.rarity))
 		check(def.boss >= 1 and def.boss <= #GameConfig.Zones, id .. ": босс " .. tostring(def.boss))
@@ -2152,6 +2155,7 @@ test("Коллекции: босс 1 — 8/8/4, босс 2 — 12/10/8 (Common/R
 	local wants = {
 		[1] = { Common = 8, Rare = 8, Epic = 4, Legendary = 0, Secret = 0 },
 		[2] = { Common = 12, Rare = 10, Epic = 8, Legendary = 0, Secret = 0 },
+		[3] = { Common = 12, Rare = 10, Epic = 8, Legendary = 0, Secret = 0 }, -- D54 / D55: 30 существ
 	}
 	for boss = 1, #GameConfig.Zones do
 		local want = wants[boss]
@@ -2242,50 +2246,6 @@ test("Рассвет: все 40 предметов заменяются новы
 		end
 		previous = current
 	end
-end)
-
-test("Без боя (босс 3, тестовый режим): слот пуст до рассвета, «Поднять» не берёт, экспонат помнит босса", function(A, B)
-	local shifted = ensureDay()
-	BossLootService.Handlers.Refresh()
-	local entry = bossSlots()[3][1]
-	local uid = entry.uid :: string
-	local part = (ItemRegistry.Get(uid) :: any).part
-	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
-	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
-	CarryService.Handlers.Pickup(A, uid)
-	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
-	BossLootService.Handlers.Take(A, 3, 1)
-	local taken = ItemRegistry.GetCarriedBy(A) == uid
-	local emptied = entry.uid == nil
-	BossLootService.Handlers.Take(B, 3, 1)
-	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil
-	if shifted then
-		TimeService.ResetClock()
-	end
-	check(stillThere, "предмет у босса подняли обычным «Поднять»")
-	check(taken and ItemRegistry.Get(uid).boss == 3, "A не забрал предмет в тестовом режиме")
-	check(emptied and bEmpty, "слот не опустел или B что-то получил")
-	local plotA = plotOf(A)
-	near(A, plotA.showcases[1])
-	MuseumService.Handlers.Display(A, plotA, 1)
-	local record = DataService.GetData(A).items[uid]
-	check(record and record.boss == 3 and record.source == "boss", "в профиле нет босса-источника")
-	BossLootService.Handlers.Refresh()
-	check(entry.uid ~= nil, "слот не заполнен на рассвете")
-	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
-end)
-
-test("Без боя забрать нельзя вне тестового режима Studio (босс 3)", function(A)
-	BossLootService.Handlers.Refresh()
-	local uid = bossSlots()[3][1].uid :: string
-	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
-	local saved = GameConfig.Bosses.FreeTakeInStudio
-	GameConfig.Bosses.FreeTakeInStudio = false
-	local ok, err = pcall(BossLootService.Handlers.Take, A, 3, 1)
-	GameConfig.Bosses.FreeTakeInStudio = saved
-	check(ok, tostring(err))
-	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
-	check(A:WasNotified("победите босса"), "нет сообщения «победите босса»")
 end)
 
 -- ── Босс 1: модели, автобой, доход, полный путь (D40) ────────────────────────────────────────────────────────
@@ -2667,6 +2627,307 @@ end)
 -- ── D48-C: музей на 20 мест, хранилище только владельцу, графика Parts/Mesh ───────────────────────────────────
 
 -- Уровень музея игрока: профиль и здание (как команда DevTools MuseumLevel).
+-- D55: у предмета у босса — «Поймать»; бросок в центр существа — попадание, шанс задаёт тест (SetRoll).
+local function giveLovibums(player: any, level: number, kind: string, n: number)
+	local lovibums = DataService.Lovibums(player) :: any
+	local key = "L" .. level
+	lovibums[key] = lovibums[key] or {}
+	lovibums[key][kind] = (lovibums[key][kind] or 0) + n
+end
+
+local function stockOf(player: any, level: number, kind: string): number
+	return CatchRules.Stock(DataService.Lovibums(player), level, kind)
+end
+
+local CG = GameConfig.Catch.Game
+
+-- Ждать, пока сервер разрешит следующий бросок (полёт и сеть / побег видны всем).
+local function waitReady(player: any)
+	local a = CatchService.Handlers.Active(player)
+	while a and workspace:GetServerTimeNow() < a.session.readyAt + 0.05 do
+		task.wait(0.05)
+	end
+end
+
+-- Бросок Ловибума kind: в центр существа в момент прилёта (hit) или далеко мимо круга; время отпускания — сейчас.
+local function throw(player: any, kind: string, hit: boolean)
+	local a = CatchService.Handlers.Active(player)
+	check(a, player.Name .. ": поимка не идёт")
+	local t = workspace:GetServerTimeNow()
+	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
+	local miss = Vector3.new(0, 0, CG.Circle.Max * 2 * a.target.params.scale + 1.5)
+	CatchService.Handlers.Action(player, "Throw", kind, if hit then center else center + miss, t)
+end
+
+-- Встать у существа в слоте и начать поимку (Ловибумы уровня даются заранее).
+local function beginCatch(player: any, boss: number, slot: number): boolean
+	local _, part = BossLootService.SlotItem(boss, slot)
+	check(part, ("босс %d, слот %d пуст"):format(boss, slot))
+	local home = (part :: BasePart):GetAttribute("Home") :: CFrame
+	player:MoveTo(home.Position + Vector3.new(0, 3, -5))
+	return CatchService.Begin(player, boss, slot)
+end
+
+test("Без боя (босс 4, тестовый режим): поимка — и в руки, слот пуст до рассвета, экспонат помнит босса", function(A, B)
+	local shifted = ensureDay()
+	BossLootService.Handlers.Refresh()
+	local entry = bossSlots()[4][1]
+	local uid = entry.uid :: string
+	local part = (ItemRegistry.Get(uid) :: any).part
+	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
+	CarryService.Handlers.Pickup(A, uid)
+	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
+	giveLovibums(A, 4, "Mega", 3)
+	CatchService.Handlers.SetRoll(0)
+	local started = beginCatch(A, 4, 1)
+	if started then
+		throw(A, "Mega", true)
+		waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) == uid
+		end, CG.FlightTime + CG.CaptureTime + 3)
+	end
+	CatchService.Handlers.SetRoll(nil)
+	local taken = ItemRegistry.GetCarriedBy(A) == uid
+	local emptied = entry.uid == nil
+	giveLovibums(B, 4, "Boom", 1)
+	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
+	BossLootService.Handlers.Take(B, 4, 1)
+	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil and not CatchService.IsCatching(B)
+	if shifted then
+		TimeService.ResetClock()
+	end
+	check(stillThere, "предмет у босса подняли обычным «Поднять»")
+	check(started, "поимка не началась: " .. table.concat(A:Notices(), "; "))
+	check(taken and ItemRegistry.Get(uid).boss == 4, "A не получил пойманное в тестовом режиме")
+	check(stockOf(A, 4, "Mega") == 2, "Ловибум не списан")
+	check(part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil, "у пойманного остались атрибуты босса")
+	check(emptied and bEmpty, "слот не опустел или B что-то получил")
+	local plotA = plotOf(A)
+	near(A, plotA.showcases[1])
+	MuseumService.Handlers.Display(A, plotA, 1)
+	local record = DataService.GetData(A).items[uid]
+	check(record and record.boss == 4 and record.source == "boss", "в профиле нет босса-источника")
+	BossLootService.Handlers.Refresh()
+	check(entry.uid ~= nil, "слот не заполнен на рассвете")
+	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
+end)
+
+test("Без боя поймать нельзя вне тестового режима Studio (босс 4)", function(A)
+	BossLootService.Handlers.Refresh()
+	local uid = bossSlots()[4][1].uid :: string
+	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
+	giveLovibums(A, 4, "Boom", 1)
+	local saved = GameConfig.Bosses.FreeTakeInStudio
+	GameConfig.Bosses.FreeTakeInStudio = false
+	local ok, err = pcall(BossLootService.Handlers.Take, A, 4, 1)
+	GameConfig.Bosses.FreeTakeInStudio = saved
+	check(ok, tostring(err))
+	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
+	check(not CatchService.IsCatching(A), "поимка у босса без боя началась")
+	check(A:WasNotified("нет боя"), "нет сообщения «у этого босса пока нет боя»")
+	check(stockOf(A, 4, "Boom") == 1, "Ловибум списан без броска")
+end)
+
+-- ── D55: магазин Ловибумов, поимка, бой после поимки ─────────────────────────────────────────────────────────
+
+local function waitCatchEnd(player: any, timeout: number): boolean
+	return waitUntil(function()
+		return not CatchService.IsCatching(player)
+	end, timeout)
+end
+
+test("D55 магазин: покупка и все отказы (уровень, вид, количество, монеты, запас, обучение, поимка)", function(A)
+	local data = DataService.GetData(A)
+	data.coins = 1e6
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 3)
+	local price = CatchRules.Price(ShopService.Prices(), 1, "Boom")
+	check(price, "в Studio нет тестовых цен")
+	check(stockOf(A, 1, "Boom") == 3 and data.coins == 1e6 - 3 * (price :: number), "покупка не прошла")
+	local before = data.coins
+	for _, bad in {
+		{ 0, "Boom", 1 },
+		{ 11, "Boom", 1 },
+		{ 1.5, "Boom", 1 },
+		{ 1, "Ultra", 1 },
+		{ 1, "Boom", 0 },
+		{ 1, "Boom", 100 },
+		{ 1, "Boom", 2.5 },
+		{ 1, "Boom", 0 / 0 },
+		{ "1", "Boom", 1 },
+		{ 1, nil, 1 },
+	} do
+		task.wait(0.3) -- лимит запросов
+		ShopService.Handlers.Action(A, "Buy", bad[1], bad[2], bad[3])
+	end
+	check(data.coins == before and stockOf(A, 1, "Boom") == 3, "поддельная покупка что-то изменила")
+	task.wait(0.3)
+	data.coins = 10
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	check(data.coins == 10 and stockOf(A, 1, "Boom") == 3, "купил без денег")
+	task.wait(0.3)
+	data.coins = 1e6
+	local saved = data.tutorial
+	data.tutorial = { step = "Catch" }
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	data.tutorial = saved
+	check(stockOf(A, 1, "Boom") == 3 and A:WasNotified("после обучения"), "во время обучения магазин продал")
+	task.wait(0.3)
+	local saveIsCatching = ShopService.IsCatching
+	ShopService.IsCatching = function()
+		return true
+	end
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	ShopService.IsCatching = saveIsCatching
+	check(stockOf(A, 1, "Boom") == 3 and A:WasNotified("поимки"), "во время поимки магазин продал")
+end)
+
+test("D55 поимка: три неудачи — побег, босс свободен для второго; у первого пауза 10 с только у этого босса", function(A, B)
+	local shifted = ensureDay()
+	check(waitBossHome(1), "пёс не дома")
+	BossLootService.Handlers.Refresh()
+	giveLovibums(A, 1, "Boom", 3)
+	local uid = BossLootService.SlotItem(1, 2)
+	check(beginCatch(A, 1, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
+	check(A:GetAttribute("Catching") == 1, "нет атрибута Catching")
+	local part = (ItemRegistry.Get(uid :: string) :: any).part
+	check(part:GetAttribute("CatchMode") == "Catch", "существо не в режиме мини-игры")
+	check(not BossLootService.IsOpen(1), "подсказки у босса не выключены")
+	for i = 1, 3 do
+		waitReady(A)
+		throw(A, "Boom", false)
+		check(stockOf(A, 1, "Boom") == 3 - i, ("бросок %d не списал Ловибум"):format(i))
+	end
+	check(waitCatchEnd(A, CG.FlightTime + CG.CaptureTime + 4), "мини-игра не кончилась после трёх бросков")
+	check(BossLootService.SlotItem(1, 2) == uid, "существо ушло со слота")
+	check(part:GetAttribute("CatchMode") == "Flee", "существо не убегает")
+	check(BossLootService.IsOpen(1), "босс не освободился")
+	local left = CatchRules.PauseLeft(CatchService.Handlers.Pauses(), A.UserId, 1, workspace:GetServerTimeNow())
+	check(left > 5 and left <= CG.FailPause, ("пауза у этого босса %.1f с"):format(left))
+	check(CatchRules.PauseLeft(CatchService.Handlers.Pauses(), A.UserId, 2, workspace:GetServerTimeNow()) == 0, "пауза у другого босса")
+	-- второй игрок начинает сразу, первый — нет
+	giveLovibums(B, 1, "Boom", 1)
+	check(beginCatch(B, 1, 3), "B не начал поимку сразу: " .. table.concat(B:Notices(), "; "))
+	CatchService.Handlers.Action(B, "Leave")
+	giveLovibums(A, 1, "Boom", 1)
+	check(not beginCatch(A, 1, 3), "A начал поимку в паузе")
+	check(A:WasNotified("насторожены"), "A не сказали про паузу")
+	if shifted then
+		TimeService.ResetClock()
+	end
+end)
+
+test("D55 поимка → бой: победа — в руки; поражение — существо на месте, Ловибумы не вернулись", function(A)
+	ensureDay()
+	check(waitBossHome(1), "пёс не дома")
+	BossLootService.Handlers.Refresh()
+	giveLovibums(A, 1, "Turbo", 2)
+	CatchService.Handlers.SetRoll(0)
+	local uid = BossLootService.SlotItem(1, 1) :: string
+	check(beginCatch(A, 1, 1), "поимка не началась")
+	throw(A, "Turbo", true)
+	local part = (ItemRegistry.Get(uid) :: any).part
+	check(waitUntil(function()
+		return BattleService.Handlers.FightOf(A) ~= nil
+	end, CG.FlightTime + CG.CaptureTime + 3), "бой не начался после поимки")
+	check(part:GetAttribute("CatchMode") == "Hidden", "пойманное не спрятано в Ловибум")
+	local fight = BattleService.Handlers.FightOf(A)
+	BattleService.Handlers.Finish(fight, "lose")
+	check(BossLootService.SlotItem(1, 1) == uid and part:GetAttribute("CatchMode") == nil, "после поражения существо не на месте")
+	check(stockOf(A, 1, "Turbo") == 1, "Ловибум вернули после поражения")
+	check(waitBossHome(1), "пёс не вернулся")
+	check(beginCatch(A, 1, 1), "после поражения нельзя ловить снова (без паузы)")
+	throw(A, "Turbo", true)
+	check(waitUntil(function()
+		return BattleService.Handlers.FightOf(A) ~= nil
+	end, CG.FlightTime + CG.CaptureTime + 3), "второй бой не начался")
+	BattleService.Handlers.Finish(BattleService.Handlers.FightOf(A), "win")
+	CatchService.Handlers.SetRoll(nil)
+	check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
+	check(part:GetAttribute("Home") == nil, "у существа в руках остался Home")
+	check(stockOf(A, 1, "Turbo") == 0, "Ловибумы посчитаны неверно")
+	CarryService.LoseCarried(A, "уборка после теста")
+	check(waitBossHome(1), "пёс не вернулся")
+	TimeService.ResetClock()
+end)
+
+test("D55 занятый босс: второй не ловит, не начинает бой; подделки бросков — отказ без списания", function(A, B)
+	ensureDay()
+	check(waitBossHome(1), "пёс не дома")
+	BossLootService.Handlers.Refresh()
+	giveLovibums(A, 1, "Boom", 5)
+	giveLovibums(B, 1, "Boom", 1)
+	check(beginCatch(A, 1, 1), "поимка A не началась")
+	B:ClearSent()
+	check(not beginCatch(B, 1, 3), "B поймал у занятого босса")
+	check(B:WasNotified("ловит"), "B не сказали, что босс занят")
+	check(BattleService.Handlers.Begin(B, 1, 3) == nil, "B начал бой с занятым боссом")
+	local a = CatchService.Handlers.Active(A)
+	local t = workspace:GetServerTimeNow()
+	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
+	local fakes = {
+		{ "Mega", center, t }, -- вида нет в запасе
+		{ "Ultra", center, t },
+		{ "Boom", center, t + 5 }, -- время из будущего
+		{ "Boom", center, t - 5 }, -- старое
+		{ "Boom", center, 0 / 0 },
+		{ "Boom", center + Vector3.new(0, 0, 50), t }, -- далеко от существа
+		{ "Boom", Vector3.new(0 / 0, 0, 0), t },
+		{ "Boom", "строка", t },
+	}
+	for _, f in fakes do
+		task.wait(0.3)
+		CatchService.Handlers.Action(A, "Throw", f[1], f[2], workspace:GetServerTimeNow() + (f[3] - t))
+	end
+	check(stockOf(A, 1, "Boom") == 5 and a.session.throws == 0, "поддельный бросок засчитан")
+	CatchService.Handlers.Action(B, "Throw", "Boom", center, workspace:GetServerTimeNow())
+	check(stockOf(B, 1, "Boom") == 1, "бросок без своей мини-игры засчитан")
+	throw(A, "Boom", false)
+	check(stockOf(A, 1, "Boom") == 4, "настоящий бросок не засчитан")
+	throw(A, "Boom", false)
+	check(stockOf(A, 1, "Boom") == 4, "бросок раньше паузы засчитан")
+	CatchService.Handlers.Action(A, "Leave")
+	check(waitCatchEnd(A, 3), "«Уйти» не закончило поимку")
+	TimeService.ResetClock()
+end)
+
+test("D55 прерывания: ночь, выход и гибель снимают закрепление, существо возвращается", function(A, B)
+	ensureDay()
+	check(waitBossHome(1), "пёс не дома")
+	BossLootService.Handlers.Refresh()
+	giveLovibums(A, 1, "Boom", 3)
+	check(beginCatch(A, 1, 4), "поимка не началась")
+	TimeService.SkipTo("Night", 0)
+	check(waitCatchEnd(A, 3), "ночь не прервала поимку")
+	check(BossLootService.IsOpen(1), "босс не освободился ночью")
+	TimeService.ResetClock()
+	ensureDay()
+	BossLootService.Handlers.Refresh()
+	giveLovibums(B, 1, "Boom", 1)
+	check(beginCatch(B, 1, 2), "поимка B не началась")
+	local _, humanoid = A.Character, B.Character and B.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+		check(waitCatchEnd(B, 3), "гибель не прервала поимку")
+	else
+		CatchService.Abort(B, "Died")
+	end
+	check(BossLootService.IsOpen(1), "босс не освободился после гибели")
+	TimeService.ResetClock()
+end)
+
+test("D55 Ловибумы сохраняются после выхода и входа; босс 3 с боем", function(A, _B, ctx)
+	giveLovibums(A, 3, "Mega", 7)
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл снова")
+	check(stockOf(again, 3, "Mega") == 7, "Ловибумы не сохранились")
+	check(BossService.Get(3) ~= nil, "у Крысиного короля нет боя")
+	check(Battle.Bosses[3] and Battle.Bosses[3].Strength == GameConfig.Progression.Bosses[3], "сила короля не из Progression")
+end)
+
 local function setMuseumLevel(player: any, level: number)
 	DataService.GetData(player).museumLevel = level
 	PlotService.ShowLevel(plotOf(player), level)
