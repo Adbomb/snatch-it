@@ -1,0 +1,5566 @@
+{
+ "version": "D54-final-2026-11-08",
+ "axes": "Roblox: x вправо, y вверх, z к зрителю − (лицо смотрит в −z); стады",
+ "root": "Stand",
+ "roughness_map": "assets/textures/art/art_roughness.png",
+ "items": [
+  {
+   "id": "LiveCheeseMonster",
+   "n": 1,
+   "rarity": "Common",
+   "name": "Живой сыр-монстр",
+   "description": "Огромный кусок сыра с выпученными глазами, квадратными зубами и крошечными лапками. Из дырок выглядывают маленькие глазки.",
+   "fbx": "assets/models/art/LiveCheeseMonster.fbx",
+   "rig": "assets/models/art/LiveCheeseMonster.rig.json",
+   "maps": [
+    "assets/textures/art/LiveCheeseMonster_color.png",
+    "assets/textures/art/LiveCheeseMonster_normal.png"
+   ],
+   "footprint": [
+    3.08,
+    2.84
+   ],
+   "height": 2.69,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      -0.62,
+      0.66,
+      0.25
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      -0.62,
+      0.66,
+      -0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      0.62,
+      0.66,
+      0.25
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      0.62,
+      0.66,
+      -0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.22,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.46,
+      1.9,
+      0.72
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      18,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.5,
+      1.98,
+      0.69
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      -22,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Jaw",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.98,
+      0.05
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      24,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -1.05,
+      1.25,
+      0.15
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -35
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      1.05,
+      1.25,
+      0.15
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "PizzaRat",
+   "n": 2,
+   "rarity": "Common",
+   "name": "Пицца-крыса",
+   "description": "Крыса застряла внутри гигантского куска пиццы. С одной стороны торчит мордочка, с другой — длинный хвост.",
+   "fbx": "assets/models/art/PizzaRat.fbx",
+   "rig": "assets/models/art/PizzaRat.rig.json",
+   "maps": [
+    "assets/textures/art/PizzaRat_color.png",
+    "assets/textures/art/PizzaRat_normal.png"
+   ],
+   "footprint": [
+    3.4,
+    3.42
+   ],
+   "height": 1.83,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Pizza",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.24,
+      0.0
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Pizza",
+     "pivot": [
+      -0.15,
+      0.57,
+      0.53
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      16,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.54,
+      0.986,
+      0.881
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.24,
+      0.986,
+      0.881
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "PawL",
+     "parent": "Pizza",
+     "pivot": [
+      -0.71,
+      0.45,
+      0.94
+     ],
+     "role": "лапка: шевелится",
+     "demo_rot_rbx_deg": [
+      -35,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "PawR",
+     "parent": "Pizza",
+     "pivot": [
+      0.41,
+      0.45,
+      0.94
+     ],
+     "role": "лапка: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Pizza",
+     "pivot": [
+      0.28,
+      0.7248,
+      -0.6304
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      30,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RunawayTicket",
+   "n": 3,
+   "rarity": "Common",
+   "name": "Билетик-беглец",
+   "description": "Живой билет метро с огромными глазами и быстрыми ножками. Его постоянно пытаются поймать турникеты.",
+   "fbx": "assets/models/art/RunawayTicket.fbx",
+   "rig": "assets/models/art/RunawayTicket.rig.json",
+   "maps": [
+    "assets/textures/art/RunawayTicket_color.png",
+    "assets/textures/art/RunawayTicket_normal.png"
+   ],
+   "footprint": [
+    2.96,
+    2.9
+   ],
+   "height": 2.78,
+   "yaw_deg": 0,
+   "hide_with_stand": [
+    "Grabber"
+   ],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Grabber",
+     "parent": "Stand",
+     "pivot": [
+      -0.88,
+      1.42,
+      -0.25
+     ],
+     "role": "«рогатка» турникета-ловца: вращается (декор подставки)",
+     "demo_rot_rbx_deg": [
+      25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.95,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.3,
+      1.7821,
+      0.2583
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      -15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      1.7821,
+      0.2583
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.95,
+      1.6927,
+      0.1044
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.95,
+      1.6927,
+      0.1044
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.32,
+      0.97,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      30,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.32,
+      0.97,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -30,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RatKnight",
+   "n": 4,
+   "rarity": "Common",
+   "name": "Крыса-рыцарь",
+   "description": "Маленькая крыса в огромном рыцарском шлеме, с сырным мечом и щитом из крышки от банки.",
+   "fbx": "assets/models/art/RatKnight.fbx",
+   "rig": "assets/models/art/RatKnight.rig.json",
+   "maps": [
+    "assets/textures/art/RatKnight_color.png",
+    "assets/textures/art/RatKnight_normal.png"
+   ],
+   "footprint": [
+    2.83,
+    2.8
+   ],
+   "height": 3.13,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.18,
+      0.64,
+      0.02
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.18,
+      0.64,
+      0.02
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.64,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.32
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.32,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Plume",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.62,
+      -0.1
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.52,
+      2.17,
+      -0.05
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.52,
+      2.17,
+      -0.05
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Visor",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.3,
+      0.52
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      -70,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.36,
+      1.22,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.36,
+      1.22,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "MutantSoda",
+   "n": 5,
+   "rarity": "Common",
+   "name": "Газировка-мутант",
+   "description": "Банка газировки с огромным ртом, из которого торчат разноцветные пузырьки. Маленькие ноги и бешеное выражение лица.",
+   "fbx": "assets/models/art/MutantSoda.fbx",
+   "rig": "assets/models/art/MutantSoda.rig.json",
+   "maps": [
+    "assets/textures/art/MutantSoda_color.png",
+    "assets/textures/art/MutantSoda_normal.png"
+   ],
+   "footprint": [
+    2.8,
+    2.96
+   ],
+   "height": 3.03,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.28,
+      0.72,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.28,
+      0.72,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.72,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.24,
+      2.32,
+      0.7489
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      2.36,
+      0.7189
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      30,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Jaw",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.26,
+      0.2
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Bubbles",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.6,
+      0.8989
+     ],
+     "role": "вылетают из пасти: смещение вперёд-вверх",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.3,
+      0.15
+     ]
+    },
+    {
+     "name": "Tab",
+     "parent": "Body",
+     "pivot": [
+      0.1,
+      2.78,
+      -0.05
+     ],
+     "role": "язычок банки на макушке: качается",
+     "demo_rot_rbx_deg": [
+      -40,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.6,
+      1.7,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.6,
+      1.7,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "SubwaySnail",
+   "n": 6,
+   "rarity": "Common",
+   "name": "Улитка-метро",
+   "description": "Толстая улитка, у которой вместо раковины маленький вагон метро с окнами и фарами.",
+   "fbx": "assets/models/art/SubwaySnail.fbx",
+   "rig": "assets/models/art/SubwaySnail.rig.json",
+   "maps": [
+    "assets/textures/art/SubwaySnail_color.png",
+    "assets/textures/art/SubwaySnail_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.09
+   ],
+   "height": 2.33,
+   "yaw_deg": 28,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.22,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "StalkL",
+     "parent": "Body",
+     "pivot": [
+      -0.8961,
+      1.27,
+      0.6577
+     ],
+     "role": "глаз на стебельке: качается",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "StalkR",
+     "parent": "Body",
+     "pivot": [
+      -1.0464,
+      1.27,
+      0.3751
+     ],
+     "role": "глаз на стебельке: качается",
+     "demo_rot_rbx_deg": [
+      -12,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Shell",
+     "parent": "Body",
+     "pivot": [
+      0.1766,
+      0.54,
+      -0.0939
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      8
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "WalkingSuitcase",
+   "n": 7,
+   "rarity": "Common",
+   "name": "Чемодан на ножках",
+   "description": "Чемодан с глазами, зубастой молнией и короткими ножками. Из него торчат носки и сыр.",
+   "fbx": "assets/models/art/WalkingSuitcase.fbx",
+   "rig": "assets/models/art/WalkingSuitcase.rig.json",
+   "maps": [
+    "assets/textures/art/WalkingSuitcase_color.png",
+    "assets/textures/art/WalkingSuitcase_normal.png"
+   ],
+   "footprint": [
+    2.9,
+    2.9
+   ],
+   "height": 2.53,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.45,
+      0.64,
+      0.12
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      0.64,
+      -0.12
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.62,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Lid",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.32,
+      -0.45
+     ],
+     "role": "крышка-челюсть: откидывается назад",
+     "demo_rot_rbx_deg": [
+      -24,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeL",
+     "parent": "Lid",
+     "pivot": [
+      -0.4,
+      1.6,
+      0.55
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Lid",
+     "pivot": [
+      0.4,
+      1.6,
+      0.55
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "AngryAlarmClock",
+   "n": 8,
+   "rarity": "Common",
+   "name": "Злой будильник",
+   "description": "Часы со злой мордой. Стрелки вместо усов, а сверху два звонка, похожих на уши.",
+   "fbx": "assets/models/art/AngryAlarmClock.fbx",
+   "rig": "assets/models/art/AngryAlarmClock.rig.json",
+   "maps": [
+    "assets/textures/art/AngryAlarmClock_color.png",
+    "assets/textures/art/AngryAlarmClock_normal.png"
+   ],
+   "footprint": [
+    2.73,
+    2.7
+   ],
+   "height": 3.04,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.45,
+      0.72,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      0.72,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.62,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.3,
+      1.8,
+      0.48
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      -12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      1.8,
+      0.48
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Mustache",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.58,
+      0.45
+     ],
+     "role": "стрелки-усы: подкручиваются",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -18
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "BellL",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      2.46,
+      0.0
+     ],
+     "role": "звонок или молоточек: дрожит, бьёт",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "BellR",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      2.46,
+      0.0
+     ],
+     "role": "звонок или молоточек: дрожит, бьёт",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Hammer",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.53,
+      0.0
+     ],
+     "role": "звонок или молоточек: дрожит, бьёт",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SneakerTenant",
+   "n": 9,
+   "rarity": "Common",
+   "name": "Кроссовок с жильцом",
+   "description": "Огромный кроссовок, из которого выглядывает маленькая крыса. Шнурки образуют смешные усы.",
+   "fbx": "assets/models/art/SneakerTenant.fbx",
+   "rig": "assets/models/art/SneakerTenant.rig.json",
+   "maps": [
+    "assets/textures/art/SneakerTenant_color.png",
+    "assets/textures/art/SneakerTenant_normal.png"
+   ],
+   "footprint": [
+    3.22,
+    3.09
+   ],
+   "height": 2.84,
+   "yaw_deg": 20,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.22,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tongue",
+     "parent": "Body",
+     "pivot": [
+      0.3947,
+      1.62,
+      -0.1436
+     ],
+     "role": "язык: болтается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Rat",
+     "parent": "Body",
+     "pivot": [
+      0.8235,
+      1.98,
+      -0.4274
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      -15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.12,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Rat",
+     "pivot": [
+      0.5655,
+      2.52,
+      -0.142
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "PawL",
+     "parent": "Rat",
+     "pivot": [
+      0.6852,
+      2.08,
+      0.0699
+     ],
+     "role": "лапка: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Rat",
+     "pivot": [
+      1.2045,
+      2.52,
+      -0.3746
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "PawR",
+     "parent": "Rat",
+     "pivot": [
+      1.249,
+      2.08,
+      -0.1354
+     ],
+     "role": "лапка: шевелится",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Laces",
+     "parent": "Body",
+     "pivot": [
+      0.8407,
+      1.84,
+      0.2048
+     ],
+     "role": "бантик-усы: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "DuckInspector",
+   "n": 10,
+   "rarity": "Common",
+   "name": "Утка-контролёр",
+   "description": "Жёлтая резиновая утка в фуражке контролёра, с гигантским компостером в крыле.",
+   "fbx": "assets/models/art/DuckInspector.fbx",
+   "rig": "assets/models/art/DuckInspector.rig.json",
+   "maps": [
+    "assets/textures/art/DuckInspector_color.png",
+    "assets/textures/art/DuckInspector_normal.png"
+   ],
+   "footprint": [
+    2.9,
+    2.9
+   ],
+   "height": 2.83,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FootL",
+     "parent": "Body",
+     "pivot": [
+      -0.32,
+      0.36,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FootR",
+     "parent": "Body",
+     "pivot": [
+      0.32,
+      0.36,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.42,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.02,
+      -0.65
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.28,
+      0.2
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Beak",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      1.47,
+      0.62
+     ],
+     "role": "нижний клюв: открывается",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Cap",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.06,
+      0.2
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    },
+    {
+     "name": "WingL",
+     "parent": "Body",
+     "pivot": [
+      -0.72,
+      1.12,
+      0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingR",
+     "parent": "Body",
+     "pivot": [
+      0.72,
+      1.12,
+      0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "PanicCone",
+   "n": 11,
+   "rarity": "Common",
+   "name": "Конус-паникёр",
+   "description": "Дорожный конус с руками, испуганным лицом и мигающей лампочкой на голове.",
+   "fbx": "assets/models/art/PanicCone.fbx",
+   "rig": "assets/models/art/PanicCone.rig.json",
+   "maps": [
+    "assets/textures/art/PanicCone_color.png",
+    "assets/textures/art/PanicCone_normal.png"
+   ],
+   "footprint": [
+    2.73,
+    2.7
+   ],
+   "height": 3.03,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FootL",
+     "parent": "Body",
+     "pivot": [
+      -0.34,
+      0.32,
+      0.5
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FootR",
+     "parent": "Body",
+     "pivot": [
+      0.34,
+      0.32,
+      0.5
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.32,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.2,
+      1.6275,
+      0.4575
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.2,
+      1.6275,
+      0.4575
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.4093,
+      1.37,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.4093,
+      1.37,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Lamp",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.56,
+      0.0
+     ],
+     "role": "вращается",
+     "demo_rot_rbx_deg": [
+      0,
+      30,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.06,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "CheeseSkater",
+   "n": 12,
+   "rarity": "Common",
+   "name": "Сырный скейтер",
+   "description": "Маленький мышонок в шлеме, стоящий на скейтборде из сыра с колёсами-монетами.",
+   "fbx": "assets/models/art/CheeseSkater.fbx",
+   "rig": "assets/models/art/CheeseSkater.rig.json",
+   "maps": [
+    "assets/textures/art/CheeseSkater_color.png",
+    "assets/textures/art/CheeseSkater_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.09
+   ],
+   "height": 2.63,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Board",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.5,
+      0.0
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      0,
+      8,
+      6
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WheelB",
+     "parent": "Board",
+     "pivot": [
+      -0.72,
+      0.37,
+      0.0
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WheelF",
+     "parent": "Board",
+     "pivot": [
+      0.72,
+      0.37,
+      0.0
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -60
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.16,
+      0.98,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.16,
+      0.98,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Board",
+     "pivot": [
+      0.0,
+      0.96,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.0,
+      -0.22
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      -25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.28,
+      1.4,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.28,
+      1.4,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.56,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.27,
+      2.02,
+      0.03
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.27,
+      2.02,
+      0.03
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "DevourerVending",
+   "n": 13,
+   "rarity": "Rare",
+   "name": "Автомат-пожиратель",
+   "description": "Торговый автомат с огромной зубастой пастью. Вместо товаров внутри видны глаза, сыр и украденные монеты.",
+   "fbx": "assets/models/art/DevourerVending.fbx",
+   "rig": "assets/models/art/DevourerVending.rig.json",
+   "maps": [
+    "assets/textures/art/DevourerVending_color.png",
+    "assets/textures/art/DevourerVending_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.09
+   ],
+   "height": 3.9,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      -0.7,
+      0.44,
+      0.4
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      -0.7,
+      0.44,
+      -0.4
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      0.7,
+      0.44,
+      0.4
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      0.7,
+      0.44,
+      -0.4
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.42,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.46,
+      3.03,
+      0.75
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      0.1,
+      3.03,
+      0.75
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Brows",
+     "parent": "Body",
+     "pivot": [
+      -0.18,
+      3.28,
+      0.76
+     ],
+     "role": "брови: хмурятся (смещение вниз)",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      -0.06,
+      0
+     ]
+    },
+    {
+     "name": "EyeS",
+     "parent": "Body",
+     "pivot": [
+      0.22,
+      2.56,
+      0.71
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      40,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Jaw",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.86,
+      0.2
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      18,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RoyalRatTrain",
+   "n": 14,
+   "rarity": "Rare",
+   "name": "Королевский крысовоз",
+   "description": "Мини-поезд с крысиными ушами, короной на крыше и мордой вместо переднего окна.",
+   "fbx": "assets/models/art/RoyalRatTrain.fbx",
+   "rig": "assets/models/art/RoyalRatTrain.rig.json",
+   "maps": [
+    "assets/textures/art/RoyalRatTrain_color.png",
+    "assets/textures/art/RoyalRatTrain_normal.png"
+   ],
+   "footprint": [
+    3.23,
+    3.23
+   ],
+   "height": 3.04,
+   "yaw_deg": 24,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WheelF",
+     "parent": "Body",
+     "pivot": [
+      -0.5664,
+      0.66,
+      0.2522
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -50
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WheelB",
+     "parent": "Body",
+     "pivot": [
+      0.5024,
+      0.66,
+      -0.2237
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.7,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -0.9337,
+      1.58,
+      0.6565
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      -1.1127,
+      1.58,
+      0.2546
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Jaw",
+     "parent": "Body",
+     "pivot": [
+      -0.9135,
+      0.86,
+      0.4067
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -22
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Body",
+     "pivot": [
+      -0.5225,
+      2.18,
+      0.6705
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarR",
+     "parent": "Body",
+     "pivot": [
+      -0.8479,
+      2.18,
+      -0.0604
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Crown",
+     "parent": "Body",
+     "pivot": [
+      0.0457,
+      2.2,
+      -0.0203
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.9135,
+      1.0,
+      -0.4067
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "BuffRat",
+   "n": 15,
+   "rarity": "Rare",
+   "name": "Крыса-качок",
+   "description": "Огромная мускулистая крыса с крошечными ножками, поднимает гантель из двух головок сыра.",
+   "fbx": "assets/models/art/BuffRat.fbx",
+   "rig": "assets/models/art/BuffRat.rig.json",
+   "maps": [
+    "assets/textures/art/BuffRat_color.png",
+    "assets/textures/art/BuffRat_normal.png"
+   ],
+   "footprint": [
+    3.11,
+    3.09
+   ],
+   "height": 3.75,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.2,
+      0.64,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.2,
+      0.64,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.66,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.82,
+      -0.3
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.24,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      -12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.27,
+      2.7,
+      0.1
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.27,
+      2.7,
+      0.1
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.78,
+      2.1,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      12
+     ],
+     "demo_offset_rbx": [
+      0,
+      -0.15,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.78,
+      2.1,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      -0.15,
+      0
+     ]
+    },
+    {
+     "name": "Barbell",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      3.24,
+      0.1
+     ],
+     "role": "штанга: вверх-вниз вместе с руками",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      -0.3,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "TrashGobbler",
+   "n": 16,
+   "rarity": "Rare",
+   "name": "Мусорный обжора",
+   "description": "Живой мусорный бак с пастью под крышкой и огромным языком из старого ковра. На спине сидит крыса.",
+   "fbx": "assets/models/art/TrashGobbler.fbx",
+   "rig": "assets/models/art/TrashGobbler.rig.json",
+   "maps": [
+    "assets/textures/art/TrashGobbler_color.png",
+    "assets/textures/art/TrashGobbler_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.15
+   ],
+   "height": 3.44,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WheelL",
+     "parent": "Body",
+     "pivot": [
+      -0.7,
+      0.46,
+      -0.45
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": [
+      40,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WheelR",
+     "parent": "Body",
+     "pivot": [
+      0.7,
+      0.46,
+      -0.45
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.42,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tongue",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.78,
+      0.6
+     ],
+     "role": "язык: болтается",
+     "demo_rot_rbx_deg": [
+      14,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Lid",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.86,
+      -0.66
+     ],
+     "role": "крышка-челюсть: откидывается назад",
+     "demo_rot_rbx_deg": [
+      -22,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeL",
+     "parent": "Lid",
+     "pivot": [
+      -0.36,
+      2.22,
+      0.72
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Lid",
+     "pivot": [
+      0.36,
+      2.22,
+      0.72
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Rat",
+     "parent": "Lid",
+     "pivot": [
+      0.0,
+      2.02,
+      -0.25
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.08,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RatWizard",
+   "n": 17,
+   "rarity": "Rare",
+   "name": "Крысиный маг",
+   "description": "Маленький волшебник в огромном фиолетовом колпаке. Вместо магического кристалла — сияющий сыр.",
+   "fbx": "assets/models/art/RatWizard.fbx",
+   "rig": "assets/models/art/RatWizard.rig.json",
+   "maps": [
+    "assets/textures/art/RatWizard_color.png",
+    "assets/textures/art/RatWizard_normal.png"
+   ],
+   "footprint": [
+    2.99,
+    2.99
+   ],
+   "height": 3.54,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.18,
+      0.42,
+      0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.18,
+      0.42,
+      0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.32,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.52,
+      -0.45
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      -25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.47,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Hat",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      1.94,
+      0.0
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.04,
+      0
+     ]
+    },
+    {
+     "name": "HatTip",
+     "parent": "Hat",
+     "pivot": [
+      0.0,
+      3.2,
+      0.0
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.4,
+      1.88,
+      0.08
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.4,
+      1.88,
+      0.08
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      1.32,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.3,
+      1.32,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RatMimic",
+   "n": 18,
+   "rarity": "Rare",
+   "name": "Сундук-мимик",
+   "description": "Сундук с крысиными ушами, квадратными зубами и длинным языком. Монеты торчат из пасти.",
+   "fbx": "assets/models/art/RatMimic.fbx",
+   "rig": "assets/models/art/RatMimic.rig.json",
+   "maps": [
+    "assets/textures/art/RatMimic_color.png",
+    "assets/textures/art/RatMimic_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.09
+   ],
+   "height": 2.84,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      -0.62,
+      0.52,
+      0.38
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      -0.62,
+      0.52,
+      -0.38
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      0.62,
+      0.52,
+      0.38
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      0.62,
+      0.52,
+      -0.38
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.52,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tongue",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.34,
+      0.55
+     ],
+     "role": "язык: болтается",
+     "demo_rot_rbx_deg": [
+      18,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Lid",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.42,
+      -0.6
+     ],
+     "role": "крышка-челюсть: откидывается назад",
+     "demo_rot_rbx_deg": [
+      -28,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeL",
+     "parent": "Lid",
+     "pivot": [
+      -0.4,
+      1.84,
+      0.55
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarL",
+     "parent": "Lid",
+     "pivot": [
+      -0.55,
+      1.97,
+      0.0
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Lid",
+     "pivot": [
+      0.4,
+      1.84,
+      0.55
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Lid",
+     "pivot": [
+      0.55,
+      1.97,
+      0.0
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.6
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ThreeHeadedRat",
+   "n": 19,
+   "rarity": "Rare",
+   "name": "Трёхголовая крыса",
+   "description": "Один толстый корпус и три разные морды: злая, сонная и глупая. У каждой свой головной убор.",
+   "fbx": "assets/models/art/ThreeHeadedRat.fbx",
+   "rig": "assets/models/art/ThreeHeadedRat.rig.json",
+   "maps": [
+    "assets/textures/art/ThreeHeadedRat_color.png",
+    "assets/textures/art/ThreeHeadedRat_normal.png"
+   ],
+   "footprint": [
+    3.29,
+    3.23
+   ],
+   "height": 3.56,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": true,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.4,
+      0.62,
+      0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.4,
+      0.62,
+      0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.62,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.75
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.75,
+      1.52,
+      0.1
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.75,
+      1.52,
+      0.1
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "HeadL",
+     "parent": "Body",
+     "pivot": [
+      -0.51,
+      1.84,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadC",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.84,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadR",
+     "parent": "Body",
+     "pivot": [
+      0.51,
+      1.84,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Propeller",
+     "parent": "HeadR",
+     "pivot": [
+      1.0692,
+      2.6494,
+      0.18
+     ],
+     "role": "вращается",
+     "demo_rot_rbx_deg": [
+      0,
+      60,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "TurnstileTerminator",
+   "n": 20,
+   "rarity": "Rare",
+   "name": "Турникет-терминатор",
+   "description": "Живой турникет на мощных ногах. Вместо рук — вращающиеся штанги, а в центре большое электронное лицо.",
+   "fbx": "assets/models/art/TurnstileTerminator.fbx",
+   "rig": "assets/models/art/TurnstileTerminator.rig.json",
+   "maps": [
+    "assets/textures/art/TurnstileTerminator_color.png",
+    "assets/textures/art/TurnstileTerminator_normal.png"
+   ],
+   "footprint": [
+    3.09,
+    3.09
+   ],
+   "height": 3.64,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      1.47,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -18,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      1.47,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.47,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Lamp",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      3.18,
+      0.0
+     ],
+     "role": "вращается",
+     "demo_rot_rbx_deg": [
+      0,
+      45,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.74,
+      2.42,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      40,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.74,
+      2.42,
+      0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      -40,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "PizzaUfo",
+   "n": 21,
+   "rarity": "Rare",
+   "name": "Пицца-НЛО",
+   "description": "Летающая тарелка из гигантской пиццы. Под ней луч поднимает маленького мышонка.",
+   "fbx": "assets/models/art/PizzaUfo.fbx",
+   "rig": "assets/models/art/PizzaUfo.rig.json",
+   "maps": [
+    "assets/textures/art/PizzaUfo_color.png",
+    "assets/textures/art/PizzaUfo_normal.png"
+   ],
+   "footprint": [
+    3.15,
+    3.13
+   ],
+   "height": 3.38,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Beam",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.22,
+      0.0
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Mouse",
+     "parent": "Beam",
+     "pivot": [
+      0.0,
+      1.12,
+      0.05
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      30,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.25,
+      0
+     ]
+    },
+    {
+     "name": "Ufo",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      2.22,
+      0.0
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -8
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.12,
+      0
+     ]
+    },
+    {
+     "name": "Dome",
+     "parent": "Ufo",
+     "pivot": [
+      0.0,
+      2.32,
+      0.0
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Pilot",
+     "parent": "Ufo",
+     "pivot": [
+      0.0,
+      2.64,
+      0.2
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      -20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RubyThief",
+   "n": 22,
+   "rarity": "Rare",
+   "name": "Рубиновый воришка",
+   "description": "Маленькая крыса тащит огромный красный рубин в вагонетке. Рубин значительно больше самой крысы.",
+   "fbx": "assets/models/art/RubyThief.fbx",
+   "rig": "assets/models/art/RubyThief.rig.json",
+   "maps": [
+    "assets/textures/art/RubyThief_color.png",
+    "assets/textures/art/RubyThief_normal.png"
+   ],
+   "footprint": [
+    3.19,
+    3.19
+   ],
+   "height": 3.85,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WheelF",
+     "parent": "Cart",
+     "pivot": [
+      0.18,
+      0.62,
+      -0.15
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -45
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WheelB",
+     "parent": "Cart",
+     "pivot": [
+      1.0,
+      0.62,
+      -0.15
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Cart",
+     "parent": "Stand",
+     "pivot": [
+      0.6,
+      0.8,
+      -0.15
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0.1,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Ruby",
+     "parent": "Cart",
+     "pivot": [
+      0.6,
+      1.5,
+      -0.15
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.06,
+      0
+     ]
+    },
+    {
+     "name": "Rat",
+     "parent": "Stand",
+     "pivot": [
+      -0.75,
+      0.67,
+      0.2
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      10
+     ],
+     "demo_offset_rbx": [
+      0.1,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RatThrone",
+   "n": 23,
+   "rarity": "Epic",
+   "name": "Крысиный трон",
+   "description": "Толстый самодовольный король сидит на огромном золотом троне из украденных монет, скипетров и сыра.",
+   "fbx": "assets/models/art/RatThrone.fbx",
+   "rig": "assets/models/art/RatThrone.rig.json",
+   "maps": [
+    "assets/textures/art/RatThrone_color.png",
+    "assets/textures/art/RatThrone_normal.png"
+   ],
+   "footprint": [
+    3.56,
+    3.56
+   ],
+   "height": 3.76,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": "трон — сиденье короля: без него король висит в воздухе",
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.3,
+      1.2,
+      0.58
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -28,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      1.2,
+      0.58
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.12,
+      -0.05
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.55,
+      2.12,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -14
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.55,
+      2.12,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      22
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.3,
+      0.05
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      6,
+      -12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.36,
+      2.82,
+      0.01
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.36,
+      2.82,
+      0.01
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      18
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Crown",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.9,
+      0.05
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      14
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.04,
+      0
+     ]
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.6,
+      1.1,
+      -0.72
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      -18,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "MonsterTrain",
+   "n": 24,
+   "rarity": "Epic",
+   "name": "Поезд-монстр",
+   "description": "Передняя часть красного поезда превратилась в огромную зубастую морду. Из окон выглядывают маленькие крысы.",
+   "fbx": "assets/models/art/MonsterTrain.fbx",
+   "rig": "assets/models/art/MonsterTrain.rig.json",
+   "maps": [
+    "assets/textures/art/MonsterTrain_color.png",
+    "assets/textures/art/MonsterTrain_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 3.55,
+   "yaw_deg": 26,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": true,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WheelF",
+     "parent": "Body",
+     "pivot": [
+      -0.4943,
+      0.78,
+      0.2411
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -40
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WheelB",
+     "parent": "Body",
+     "pivot": [
+      0.6741,
+      0.78,
+      -0.3288
+     ],
+     "role": "колёса с осью: вращение",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.96,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      -1.0369,
+      2.09,
+      0.8395
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      -1.2999,
+      2.09,
+      0.3002
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Jaw",
+     "parent": "Body",
+     "pivot": [
+      -0.8539,
+      1.16,
+      0.4165
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Rat1",
+     "parent": "Body",
+     "pivot": [
+      0.0208,
+      1.76,
+      0.6129
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.1,
+      0
+     ]
+    },
+    {
+     "name": "Rat2",
+     "parent": "Body",
+     "pivot": [
+      0.605,
+      1.76,
+      0.328
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Rat3",
+     "parent": "Body",
+     "pivot": [
+      0.6533,
+      1.76,
+      -0.9417
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "CheeseDragon",
+   "n": 25,
+   "rarity": "Epic",
+   "name": "Сырный дракон",
+   "description": "Дракон из золотого сыра с крыльями, острыми зубами и сияющими глазами. Из пасти вылетают сырные кубики.",
+   "fbx": "assets/models/art/CheeseDragon.fbx",
+   "rig": "assets/models/art/CheeseDragon.rig.json",
+   "maps": [
+    "assets/textures/art/CheeseDragon_color.png",
+    "assets/textures/art/CheeseDragon_normal.png"
+   ],
+   "footprint": [
+    3.51,
+    3.62
+   ],
+   "height": 4.05,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": true,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.45,
+      0.84,
+      -0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      0.84,
+      -0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.84,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "WingL",
+     "parent": "Body",
+     "pivot": [
+      -0.4,
+      2.04,
+      -0.3
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingR",
+     "parent": "Body",
+     "pivot": [
+      0.4,
+      2.04,
+      -0.3
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.45,
+      1.94,
+      0.2
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      1.94,
+      0.2
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.26,
+      0.1
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      8,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Jaw",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.74,
+      0.25
+     ],
+     "role": "челюсть: открывается поворотом вокруг шарнира",
+     "demo_rot_rbx_deg": [
+      -25,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Cubes",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.84,
+      1.2
+     ],
+     "role": "вылетают из пасти: смещение вперёд-вверх",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.1,
+      0.2
+     ]
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.94,
+      -0.55
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "GoldenRatMech",
+   "n": 26,
+   "rarity": "Epic",
+   "name": "Золотой крысомех",
+   "description": "Крошечная крыса управляет огромным золотым роботом с ушами, короной и мощными кулаками.",
+   "fbx": "assets/models/art/GoldenRatMech.fbx",
+   "rig": "assets/models/art/GoldenRatMech.rig.json",
+   "maps": [
+    "assets/textures/art/GoldenRatMech_color.png",
+    "assets/textures/art/GoldenRatMech_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 4.25,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      1.34,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      1.34,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.34,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Pilot",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.94,
+      0.4
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.95,
+      2.64,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -40
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.95,
+      2.64,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.89,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      -0.5,
+      3.59,
+      0.0
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      0.5,
+      3.59,
+      0.0
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Crown",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      3.66,
+      0.0
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "SubwayOctopus",
+   "n": 27,
+   "rarity": "Epic",
+   "name": "Подземный осьминог",
+   "description": "Огромные щупальца вылезают из люка метро, держат сундуки, фонари и золотую корону.",
+   "fbx": "assets/models/art/SubwayOctopus.fbx",
+   "rig": "assets/models/art/SubwayOctopus.rig.json",
+   "maps": [
+    "assets/textures/art/SubwayOctopus_color.png",
+    "assets/textures/art/SubwayOctopus_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 4.05,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": "люк в подставке — осьминог вылезает из него",
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.44,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.1,
+      0
+     ]
+    },
+    {
+     "name": "Tentacle1",
+     "parent": "Head",
+     "pivot": [
+      -0.45,
+      0.74,
+      0.3
+     ],
+     "role": "щупальце со своей ношей: изгиб, взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tentacle2",
+     "parent": "Head",
+     "pivot": [
+      0.45,
+      0.74,
+      0.3
+     ],
+     "role": "щупальце со своей ношей: изгиб, взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tentacle3",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      0.94,
+      -0.4
+     ],
+     "role": "щупальце со своей ношей: изгиб, взмах",
+     "demo_rot_rbx_deg": [
+      10,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tentacle4",
+     "parent": "Head",
+     "pivot": [
+      -0.4,
+      0.64,
+      -0.35
+     ],
+     "role": "щупальце со своей ношей: изгиб, взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tentacle5",
+     "parent": "Head",
+     "pivot": [
+      0.4,
+      0.64,
+      -0.35
+     ],
+     "role": "щупальце со своей ношей: изгиб, взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "ClockGolem",
+   "n": 28,
+   "rarity": "Epic",
+   "name": "Часовой голем",
+   "description": "Огромный живой механизм из часов метро, золотых шестерёнок и циферблатов, с глазами из рубинов.",
+   "fbx": "assets/models/art/ClockGolem.fbx",
+   "rig": "assets/models/art/ClockGolem.rig.json",
+   "maps": [
+    "assets/textures/art/ClockGolem_color.png",
+    "assets/textures/art/ClockGolem_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 4.46,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": false,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.4,
+      1.39,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.4,
+      1.39,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.39,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Hands",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.29,
+      0.5
+     ],
+     "role": "стрелки часов: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -60
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "GearL",
+     "parent": "Body",
+     "pivot": [
+      -0.95,
+      2.84,
+      0.1
+     ],
+     "role": "плечо-шестерёнка: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -1.0,
+      2.74,
+      -0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "GearR",
+     "parent": "Body",
+     "pivot": [
+      0.95,
+      2.84,
+      0.1
+     ],
+     "role": "плечо-шестерёнка: вращение",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      1.0,
+      2.74,
+      -0.05
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      3.24,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "CheeseVaultHeart",
+   "n": 29,
+   "rarity": "Epic",
+   "name": "Сердце сырного хранилища",
+   "description": "Гигантский светящийся кристалл в форме сыра внутри открытого золотого сейфа, который охраняют две маленькие крысы.",
+   "fbx": "assets/models/art/CheeseVaultHeart.fbx",
+   "rig": "assets/models/art/CheeseVaultHeart.rig.json",
+   "maps": [
+    "assets/textures/art/CheeseVaultHeart_color.png",
+    "assets/textures/art/CheeseVaultHeart_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 3.75,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "attention": true,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.34,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "DoorL",
+     "parent": "Body",
+     "pivot": [
+      -0.95,
+      1.39,
+      0.55
+     ],
+     "role": "створка сейфа: закрывается и открывается вокруг петли",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "DoorR",
+     "parent": "Body",
+     "pivot": [
+      0.95,
+      1.39,
+      0.55
+     ],
+     "role": "створка сейфа: закрывается и открывается вокруг петли",
+     "demo_rot_rbx_deg": [
+      0,
+      -25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Crystal",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.39,
+      -0.05
+     ],
+     "role": "парит и вращается",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.15,
+      0
+     ]
+    },
+    {
+     "name": "GuardL",
+     "parent": "Stand",
+     "pivot": [
+      -1.3,
+      0.34,
+      0.45
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      -20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "GuardR",
+     "parent": "Stand",
+     "pivot": [
+      1.3,
+      0.34,
+      0.45
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ThreeTailEmperor",
+   "n": 30,
+   "rarity": "Epic",
+   "name": "Император трёх хвостов",
+   "description": "Огромная статуэтка крысы-императора с тремя хвостами, гигантской короной и красным плащом. Стоит на золотой горе.",
+   "fbx": "assets/models/art/ThreeTailEmperor.fbx",
+   "rig": "assets/models/art/ThreeTailEmperor.rig.json",
+   "maps": [
+    "assets/textures/art/ThreeTailEmperor_color.png",
+    "assets/textures/art/ThreeTailEmperor_normal.png"
+   ],
+   "footprint": [
+    3.5,
+    3.5
+   ],
+   "height": 4.55,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": "статуэтка стоит на золотой горе (так в описании владельца)",
+   "attention": true,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      -0.22,
+      1.34,
+      0.05
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      0.22,
+      1.34,
+      0.05
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.34,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Cape",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.54,
+      -0.3
+     ],
+     "role": "крупная часть: покачивание, парение",
+     "demo_rot_rbx_deg": [
+      -10,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tail1",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.39,
+      -0.5
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      -20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tail2",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.39,
+      -0.5
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Tail3",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.39,
+      -0.5
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      -0.45,
+      2.44,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      2.44,
+      0.0
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.61,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Crown",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      3.14,
+      -0.03
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.06,
+      0
+     ]
+    }
+   ]
+  }
+ ]
+}

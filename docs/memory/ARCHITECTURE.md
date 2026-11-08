@@ -46,6 +46,8 @@
   parent, pivot, center, size, пробная поза). Проверка `rig_check` (каждая группа — часть, один корень) и кадр
   `Art_<id>_pose.png` в пробной позе `a.pose`; перед связыванием частей — `view_layer.update()`, иначе дети уезжают.
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
+  Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
+  `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
 - Прежняя коллекция босса 3 «Подземка» (D54, до замены каталога; модели сохранены, в игру не идут) — `scripts/blender/art_subway.py` (группы COMMON / RARE / EPIC): FBX
   на предмет `assets/models/art/<id>.fbx`, карты `<id>_{color,normal}.png`; режимы `check`, `quick` (без запекания),
   список id — только эти предметы. Свои помощники: `pixel_boxes` (пиксельный знак прямоугольниками без общих граней,

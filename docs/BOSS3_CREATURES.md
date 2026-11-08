@@ -1,0 +1,134 @@
+# Существа босса 3 «Крысиный король» — передача файлов и спецификаций для D55
+
+Финальная версия коллекции D54 (утверждена владельцем 2026-11-08, все 30 моделей). Каталог (названия, редкости,
+описания) — `docs/CATALOG.md`; решение — DESIGN.md D54; механика поимки и анимаций существ — D55. Этот документ —
+только данные моделей: код поимки, боя и сохранений здесь не меняется. В Roblox ничего не загружено.
+
+## Файлы
+
+| Что | Где |
+|---|---|
+| Модель (FBX, плоские части) | `assets/models/art/<id>.fbx` — объекты `Art_<id>_<Часть>` |
+| Скелет | `assets/models/art/<id>.rig.json` |
+| Карты SurfaceAppearance (1024²) | `assets/textures/art/<id>_color.png`, `<id>_normal.png`; шероховатость общая `art_roughness.png` (0.5) |
+| Индекс всех 30 (для кода и таблиц) | `assets/models/art/Boss3Creatures.index.json` |
+| Исходник моделей | `scripts/blender/art_rats.py` (стиль D39, общие инструменты `art_style.py`) |
+| Проверка скелетов против FBX | `scripts/blender/check_rigs.py` |
+| Пересборка индекса | `python scripts/build_creature_index.py` |
+| Рендеры (общий кадр, повороты, пробные позы, масштаб) | `assets/concepts/d54/catalog_v2/{common,rare,epic}/` |
+
+Прежний список D54 (14 моделей «обычных вещей метро»: ChampionCheese, GoldMineCart, RatScepter, RatToken…) — в
+каталог и игру не входит, файлы сохранены (`art_subway.py`).
+
+## Соглашения
+
+- **Единицы** — стады (1 единица модели = 1 стад, как у коллекций D39 боссов 1–2). Всё помещается на площадку
+  3.7 × 3.7 (наибольший габарит 3.56 × 3.62), высота ≤ 4.55; бюджет ≤ 3 000 треугольников на предмет (все 30 — от
+  1 184 до 2 934).
+- **Оси скелета — Roblox**: x вправо, y вверх, лицо существа смотрит в −z. Из Blender: (x, y, z) → (x, z, −y).
+  Низ подставки — y = 0, центр подставки — x = z = 0.
+- **Части** плоские (без иерархии в FBX), начало координат каждой — её точка вращения (`pivot`). Иерархия — в
+  скелете (`parent`). Корень всегда `Stand`.
+- **rig.json**: `order` — порядок частей; `parts[имя] = {parent, pivot, center, size}`: `pivot` — точка вращения в
+  осях модели, `center`/`size` — габарит меша части относительно её точки вращения; `demo_pose` — пробная поза
+  (поворот в градусах по осям **Blender**: X → Roblox X, Z → Roblox Y, Y → −Roblox Z; смещение так же). В индексе
+  пробная поза уже переведена в оси Roblox (`demo_rot_rbx_deg`, `demo_offset_rbx`).
+- **Поворот к зрителю** (`yaw_deg` в индексе): у улитки (28°), кроссовка (20°), крысовоза (24°) и поезда-монстра (26°)
+  корпус развёрнут к главному ракурсу — оси их шарниров (челюсть, колёса, раковина) повёрнуты на этот угол вокруг
+  вертикали; поворачивать такие части нужно вокруг повёрнутой оси, а не вокруг x модели.
+- **Скрытые грани** удалены только внутри своей части: при движении частей дыр нет (проверено кадрами поз).
+- **Запекание** с разнесёнными частями: на части нет чужих теней — любая поза выглядит чисто.
+
+## Подставка (Stand)
+
+`Stand` — отдельная часть-корень: подставка Common (бирюзовая), Rare (фиолетовая с золотом) или гора золота Epic.
+Её можно скрыть независимо от существа (в FBX нет иерархии; проверено `check_rigs.py`). Особые случаи
+(`hide_with_stand` и `keep_stand` в индексе):
+
+- **RunawayTicket** — часть `Grabber` («рогатка» турникета-ловца) — декор подставки: прятать вместе со Stand.
+- **RatThrone** — Stand это трон, на нём сидит король: без трона король висит в воздухе — Stand лучше оставить.
+- **SubwayOctopus** — в подставке люк, из которого вылезает осьминог — Stand лучше оставить.
+- **ThreeTailEmperor** — статуэтка «стоит на золотой горе» (описание владельца) — Stand лучше оставить.
+- **CheeseVaultHeart** — Stand только гора золота: сейф — `Body`, крысы-стражи `GuardL`/`GuardR` — отдельные части
+  (родитель Stand; при скрытой подставке остаются на местах).
+- **PizzaUfo** — луч `Beam` и мышонок `Mouse` в нём — часть образа (родитель Stand), тарелка `Ufo` — тоже; при
+  скрытой подставке луч остаётся опорой тарелки.
+
+## Особое внимание при анимации (владелец)
+
+- **MonsterTrain (поезд-монстр)** — `Jaw` (нижняя челюсть-кабина с клыками и языком) открывается вниз вокруг шарнира
+  у основания кабины; ось шарнира — поперёк вагона, повёрнута на yaw 26°. `EyeL`/`EyeR` — фары-глаза (поворот,
+  «прищур» масштабом). `Rat1…Rat3` — крысята в окнах: выглядывают смещением вверх и поворотом. `WheelF`/`WheelB` —
+  тележки, вращение вокруг повёрнутой оси. Нос — к −z повёрнутой на 26° оси; не путать с лицом модели.
+- **CheeseDragon (сырный дракон)** — `WingL`/`WingR` машут вокруг корня крыла (ось вдоль тела, вперёд-назад);
+  `Head` (шея и голова) кивает и поворачивается, `Jaw` — нижняя челюсть внутри `Head`; `Cubes` — сырные кубики у
+  пасти: «вылет» смещением вперёд-вверх с возвратом (или исчезновением); `Tail` — длинный, виляет; `ArmL`/`ArmR`,
+  `LegL`/`LegR`. Габарит по глубине 3.62 (кубики спереди) — при смещении `Cubes` вперёд держать в пределах площадки.
+- **ThreeHeadedRat (трёхголовая крыса)** — три независимые головы на шеях с разным характером: `HeadL` злая (рогатый
+  шлем; резкие короткие кивки, «щёлк»), `HeadC` сонная (ночной колпак, глаза закрыты; медленное покачивание, «клюёт
+  носом»), `HeadR` глупая (шапка с пропеллером, язык набок; болтается), `Propeller` — дочерняя часть HeadR, вращается
+  вокруг своей оси (наклонена вместе с головой на 26°). Точки вращения голов — у основания шей.
+- **CheeseVaultHeart (сердце хранилища)** — сейф `Body` с двумя створками `DoorL`/`DoorR` на вертикальных петлях
+  (в покое распахнуты на 100° наружу; закрываются поворотом вокруг вертикали навстречу друг другу); `Crystal` —
+  кристалл-сыр в камере, парит и медленно вращается; `GuardL`/`GuardR` — две крысы-стражи с копьями (переминаются,
+  поворачиваются к игроку).
+- **ThreeTailEmperor (император трёх хвостов)** — `Tail1…Tail3` выходят из одной точки и веером виляют вразнобой;
+  `Crown` — огромная корона, дочерняя `Head`, подпрыгивает с запаздыванием; `Cape` — плащ, качается вокруг плеч;
+  `ArmL` (держава), `ArmR` (скипетр). Stand (золотая гора) — часть статуэтки.
+
+## Все 30 предметов
+
+Части — без Stand. Подробно (роли частей, точки вращения, пробные позы) — `Boss3Creatures.index.json`.
+
+| № | Редкость | Предмет | id | Частей | Габарит x × z × высота | Подвижные части | Примечания |
+|---|---|---|---|---|---|---|---|
+| 1 | Common | Живой сыр-монстр | `LiveCheeseMonster` | 11 | 3.08 × 2.84 × 2.69 | LegFL, LegBL, LegFR, LegBR, Body, EyeL, EyeR, Jaw, ArmL, ArmR |  |
+| 2 | Common | Пицца-крыса | `PizzaRat` | 8 | 3.4 × 3.42 × 1.83 | Pizza, Head, EarL, EarR, PawL, PawR, Tail |  |
+| 3 | Common | Билетик-беглец | `RunawayTicket` | 9 | 2.96 × 2.9 × 2.78 | Grabber, Body, EyeL, EyeR, ArmL, ArmR, LegL, LegR | прятать со Stand: Grabber |
+| 4 | Common | Крыса-рыцарь | `RatKnight` | 12 | 2.83 × 2.8 × 3.13 | LegL, LegR, Body, Tail, Head, Plume, EarL, EarR, Visor, ArmR, ArmL |  |
+| 5 | Common | Газировка-мутант | `MutantSoda` | 11 | 2.8 × 2.96 × 3.03 | LegL, LegR, Body, EyeL, EyeR, Jaw, Bubbles, Tab, ArmL, ArmR |  |
+| 6 | Common | Улитка-метро | `SubwaySnail` | 5 | 3.09 × 3.09 × 2.33 | Body, StalkL, StalkR, Shell | yaw 28° |
+| 7 | Common | Чемодан на ножках | `WalkingSuitcase` | 7 | 2.9 × 2.9 × 2.53 | LegL, LegR, Body, Lid, EyeL, EyeR |  |
+| 8 | Common | Злой будильник | `AngryAlarmClock` | 10 | 2.73 × 2.7 × 3.04 | LegL, LegR, Body, EyeL, EyeR, Mustache, BellL, BellR, Hammer |  |
+| 9 | Common | Кроссовок с жильцом | `SneakerTenant` | 9 | 3.22 × 3.09 × 2.84 | Body, Tongue, Rat, EarL, PawL, EarR, PawR, Laces | yaw 20° |
+| 10 | Common | Утка-контролёр | `DuckInspector` | 10 | 2.9 × 2.9 × 2.83 | FootL, FootR, Body, Tail, Head, Beak, Cap, WingL, WingR |  |
+| 11 | Common | Конус-паникёр | `PanicCone` | 9 | 2.73 × 2.7 × 3.03 | FootL, FootR, Body, EyeL, EyeR, ArmL, ArmR, Lamp |  |
+| 12 | Common | Сырный скейтер | `CheeseSkater` | 13 | 3.09 × 3.09 × 2.63 | Board, WheelB, WheelF, LegL, LegR, Body, Tail, ArmL, ArmR, Head, EarL, EarR |  |
+| 13 | Rare | Автомат-пожиратель | `DevourerVending` | 11 | 3.09 × 3.09 × 3.9 | LegFL, LegBL, LegFR, LegBR, Body, EyeL, EyeR, Brows, EyeS, Jaw |  |
+| 14 | Rare | Королевский крысовоз | `RoyalRatTrain` | 11 | 3.23 × 3.23 × 3.04 | WheelF, WheelB, Body, EyeL, EyeR, Jaw, EarL, EarR, Crown, Tail | yaw 24° |
+| 15 | Rare | Крыса-качок | `BuffRat` | 11 | 3.11 × 3.09 × 3.75 | LegL, LegR, Body, Tail, Head, EarL, EarR, ArmL, ArmR, Barbell |  |
+| 16 | Rare | Мусорный обжора | `TrashGobbler` | 9 | 3.09 × 3.15 × 3.44 | WheelL, WheelR, Body, Tongue, Lid, EyeL, EyeR, Rat |  |
+| 17 | Rare | Крысиный маг | `RatWizard` | 12 | 2.99 × 2.99 × 3.54 | LegL, LegR, Body, Tail, Head, Hat, HatTip, EarL, EarR, ArmR, ArmL |  |
+| 18 | Rare | Сундук-мимик | `RatMimic` | 13 | 3.09 × 3.09 × 2.84 | LegFL, LegBL, LegFR, LegBR, Body, Tongue, Lid, EyeL, EarL, EyeR, EarR, Tail |  |
+| 19 | Rare | Трёхголовая крыса | `ThreeHeadedRat` | 11 | 3.29 × 3.23 × 3.56 | LegL, LegR, Body, Tail, ArmL, ArmR, HeadL, HeadC, HeadR, Propeller | **особое внимание** |
+| 20 | Rare | Турникет-терминатор | `TurnstileTerminator` | 7 | 3.09 × 3.09 × 3.64 | LegL, LegR, Body, Lamp, ArmL, ArmR |  |
+| 21 | Rare | Пицца-НЛО | `PizzaUfo` | 6 | 3.15 × 3.13 × 3.38 | Beam, Mouse, Ufo, Dome, Pilot |  |
+| 22 | Rare | Рубиновый воришка | `RubyThief` | 6 | 3.19 × 3.19 × 3.85 | WheelF, WheelB, Cart, Ruby, Rat |  |
+| 23 | Epic | Крысиный трон | `RatThrone` | 11 | 3.56 × 3.56 × 3.76 | LegL, LegR, Body, ArmL, ArmR, Head, EarL, EarR, Crown, Tail | Stand лучше оставить |
+| 24 | Epic | Поезд-монстр | `MonsterTrain` | 10 | 3.5 × 3.5 × 3.55 | WheelF, WheelB, Body, EyeL, EyeR, Jaw, Rat1, Rat2, Rat3 | yaw 26°; **особое внимание** |
+| 25 | Epic | Сырный дракон | `CheeseDragon` | 12 | 3.51 × 3.62 × 4.05 | LegL, LegR, Body, WingL, WingR, ArmL, ArmR, Head, Jaw, Cubes, Tail | **особое внимание** |
+| 26 | Epic | Золотой крысомех | `GoldenRatMech` | 11 | 3.5 × 3.5 × 4.25 | LegL, LegR, Body, Pilot, ArmL, ArmR, Head, EarL, EarR, Crown |  |
+| 27 | Epic | Подземный осьминог | `SubwayOctopus` | 7 | 3.5 × 3.5 × 4.05 | Head, Tentacle1, Tentacle2, Tentacle3, Tentacle4, Tentacle5 | Stand лучше оставить |
+| 28 | Epic | Часовой голем | `ClockGolem` | 10 | 3.5 × 3.5 × 4.46 | LegL, LegR, Body, Hands, GearL, ArmL, GearR, ArmR, Head |  |
+| 29 | Epic | Сердце сырного хранилища | `CheeseVaultHeart` | 7 | 3.5 × 3.5 × 3.75 | Body, DoorL, DoorR, Crystal, GuardL, GuardR | **особое внимание** |
+| 30 | Epic | Император трёх хвостов | `ThreeTailEmperor` | 12 | 3.5 × 3.5 × 4.55 | LegL, LegR, Body, Cape, Tail1, Tail2, Tail3, ArmL, ArmR, Head, Crown | Stand лучше оставить; **особое внимание** |
+
+## Импорт в Studio (когда разрешит владелец)
+
+1. File → Import 3D, по одному FBX: части приходят MeshPart'ами `Art_<id>_<Часть>`; карты color/normal (+ общая
+   roughness) — в SurfaceAppearance каждой части (одна пара карт на предмет). Материал — SmoothPlastic (D39).
+2. Сборка существа: по `rig.json` — часть-корень Stand, остальные — Motor6D от родителя. Studio ставит MeshPart в
+   центр габарита его меша (позиция части в покое = `pivot + center`), поэтому сустав:
+   `C0 = CFrame.new(pivot − (pivot_родителя + center_родителя))`, `C1 = CFrame.new(−center)` — тогда
+   `Transform` сустава поворачивает часть вокруг её точки вращения. Положение в мире — CFrame корня на площадке
+   (низ подставки на верх подушки `Arenas[3].top`).
+3. Проверка после импорта — пробная поза из индекса (`demo_rot_rbx_deg`) должна выглядеть как кадры
+   `catalog_v2/*/poses.jpg`.
+4. Без разрешения владельца ничего не загружать (правило проекта); запрещённые asset ID — `scripts/check_project.py`.
+
+## Проверено (2026-11-08)
+
+`blender --background --factory-startup --python scripts/blender/check_rigs.py -- <репо>` → RIGS_OK: 30 предметов,
+0 ошибок, 0 предупреждений — имена частей FBX = скелет, положение каждой части = её pivot (±0.01), габариты = скелет,
+один корень Stand, у частей нет поворота/масштаба и иерархии в FBX, точки вращения не дальше 0.6 стада от своей
+части, карты на месте, треугольников ≤ 3 000.
