@@ -1,6 +1,7 @@
 # Существа босса 3 «Крысиный король» — передача файлов и спецификаций для D55
 
-Финальная версия коллекции D54 (утверждена владельцем 2026-11-08, все 30 моделей). Каталог (названия, редкости,
+Финальная версия коллекции D54 (утверждена владельцем 2026-11-08, все 30 моделей; **передача принята владельцем
+как окончательная** 2026-11-08 — модели не переделываются). Каталог (названия, редкости,
 описания) — `docs/CATALOG.md`; решение — DESIGN.md D54; механика поимки и анимаций существ — D55. Этот документ —
 только данные моделей: код поимки, боя и сохранений здесь не меняется. В Roblox ничего не загружено.
 
@@ -39,16 +40,30 @@
 - **Скрытые грани** удалены только внутри своей части: при движении частей дыр нет (проверено кадрами поз).
 - **Запекание** с разнесёнными частями: на части нет чужих теней — любая поза выглядит чисто.
 
+## Правила анимации (владелец, 2026-11-08 — обязательные)
+
+1. Stand скрывается только там, где он декоративная подставка (`stand_policy: "hide"` в индексе — 26 предметов).
+2. У **Крысиного трона**, **Подземного осьминога** и **Императора трёх хвостов** Stand — часть композиции и
+   **остаётся** (`stand_policy: "keep"`).
+3. У **Билетика-беглеца** вместе с подставкой скрывается декоративный турникет — часть `Grabber`
+   (`stand_policy: "hide_with_parts"`, `hide_with_stand: ["Grabber"]`).
+4. У моделей с повёрнутым корпусом (`yaw_deg` ≠ 0: улитка, кроссовок, крысовоз, поезд-монстр) — анимировать в
+   **локальных осях суставов**, повёрнутых на yaw, а не в осях модели.
+5. Подвижные части анимируются **без разрывов и смещений**: только вращение вокруг своей точки вращения (`pivot`) и
+   небольшие смещения из пробных поз; суставы — Motor6D по `rig.json` (формула — ниже, «Импорт в Studio»).
+6. Код поимки не меняется до утверждения концептов Ловибумов и плана соответствующего этапа D55; в Roblox ничего
+   не загружается.
+
 ## Подставка (Stand)
 
 `Stand` — отдельная часть-корень: подставка Common (бирюзовая), Rare (фиолетовая с золотом) или гора золота Epic.
 Её можно скрыть независимо от существа (в FBX нет иерархии; проверено `check_rigs.py`). Особые случаи
-(`hide_with_stand` и `keep_stand` в индексе):
+(`stand_policy`, `hide_with_stand`, `keep_stand` в индексе):
 
-- **RunawayTicket** — часть `Grabber` («рогатка» турникета-ловца) — декор подставки: прятать вместе со Stand.
-- **RatThrone** — Stand это трон, на нём сидит король: без трона король висит в воздухе — Stand лучше оставить.
-- **SubwayOctopus** — в подставке люк, из которого вылезает осьминог — Stand лучше оставить.
-- **ThreeTailEmperor** — статуэтка «стоит на золотой горе» (описание владельца) — Stand лучше оставить.
+- **RunawayTicket** — часть `Grabber` («рогатка» турникета-ловца) — декор подставки: скрывается вместе со Stand.
+- **RatThrone** — Stand это трон, на нём сидит король — остаётся (решение владельца).
+- **SubwayOctopus** — в подставке люк, из которого вылезает осьминог — остаётся (решение владельца).
+- **ThreeTailEmperor** — статуэтка стоит на золотой горе — остаётся (решение владельца).
 - **CheeseVaultHeart** — Stand только гора золота: сейф — `Body`, крысы-стражи `GuardL`/`GuardR` — отдельные части
   (родитель Stand; при скрытой подставке остаются на местах).
 - **PizzaUfo** — луч `Beam` и мышонок `Mouse` в нём — часть образа (родитель Stand), тарелка `Ufo` — тоже; при
@@ -84,7 +99,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | Common | Живой сыр-монстр | `LiveCheeseMonster` | 11 | 3.08 × 2.84 × 2.69 | LegFL, LegBL, LegFR, LegBR, Body, EyeL, EyeR, Jaw, ArmL, ArmR |  |
 | 2 | Common | Пицца-крыса | `PizzaRat` | 8 | 3.4 × 3.42 × 1.83 | Pizza, Head, EarL, EarR, PawL, PawR, Tail |  |
-| 3 | Common | Билетик-беглец | `RunawayTicket` | 9 | 2.96 × 2.9 × 2.78 | Grabber, Body, EyeL, EyeR, ArmL, ArmR, LegL, LegR | прятать со Stand: Grabber |
+| 3 | Common | Билетик-беглец | `RunawayTicket` | 9 | 2.96 × 2.9 × 2.78 | Grabber, Body, EyeL, EyeR, ArmL, ArmR, LegL, LegR | скрывать со Stand: Grabber |
 | 4 | Common | Крыса-рыцарь | `RatKnight` | 12 | 2.83 × 2.8 × 3.13 | LegL, LegR, Body, Tail, Head, Plume, EarL, EarR, Visor, ArmR, ArmL |  |
 | 5 | Common | Газировка-мутант | `MutantSoda` | 11 | 2.8 × 2.96 × 3.03 | LegL, LegR, Body, EyeL, EyeR, Jaw, Bubbles, Tab, ArmL, ArmR |  |
 | 6 | Common | Улитка-метро | `SubwaySnail` | 5 | 3.09 × 3.09 × 2.33 | Body, StalkL, StalkR, Shell | yaw 28° |
@@ -104,14 +119,14 @@
 | 20 | Rare | Турникет-терминатор | `TurnstileTerminator` | 7 | 3.09 × 3.09 × 3.64 | LegL, LegR, Body, Lamp, ArmL, ArmR |  |
 | 21 | Rare | Пицца-НЛО | `PizzaUfo` | 6 | 3.15 × 3.13 × 3.38 | Beam, Mouse, Ufo, Dome, Pilot |  |
 | 22 | Rare | Рубиновый воришка | `RubyThief` | 6 | 3.19 × 3.19 × 3.85 | WheelF, WheelB, Cart, Ruby, Rat |  |
-| 23 | Epic | Крысиный трон | `RatThrone` | 11 | 3.56 × 3.56 × 3.76 | LegL, LegR, Body, ArmL, ArmR, Head, EarL, EarR, Crown, Tail | Stand лучше оставить |
+| 23 | Epic | Крысиный трон | `RatThrone` | 11 | 3.56 × 3.56 × 3.76 | LegL, LegR, Body, ArmL, ArmR, Head, EarL, EarR, Crown, Tail | Stand остаётся (решение владельца) |
 | 24 | Epic | Поезд-монстр | `MonsterTrain` | 10 | 3.5 × 3.5 × 3.55 | WheelF, WheelB, Body, EyeL, EyeR, Jaw, Rat1, Rat2, Rat3 | yaw 26°; **особое внимание** |
 | 25 | Epic | Сырный дракон | `CheeseDragon` | 12 | 3.51 × 3.62 × 4.05 | LegL, LegR, Body, WingL, WingR, ArmL, ArmR, Head, Jaw, Cubes, Tail | **особое внимание** |
 | 26 | Epic | Золотой крысомех | `GoldenRatMech` | 11 | 3.5 × 3.5 × 4.25 | LegL, LegR, Body, Pilot, ArmL, ArmR, Head, EarL, EarR, Crown |  |
-| 27 | Epic | Подземный осьминог | `SubwayOctopus` | 7 | 3.5 × 3.5 × 4.05 | Head, Tentacle1, Tentacle2, Tentacle3, Tentacle4, Tentacle5 | Stand лучше оставить |
+| 27 | Epic | Подземный осьминог | `SubwayOctopus` | 7 | 3.5 × 3.5 × 4.05 | Head, Tentacle1, Tentacle2, Tentacle3, Tentacle4, Tentacle5 | Stand остаётся (решение владельца) |
 | 28 | Epic | Часовой голем | `ClockGolem` | 10 | 3.5 × 3.5 × 4.46 | LegL, LegR, Body, Hands, GearL, ArmL, GearR, ArmR, Head |  |
 | 29 | Epic | Сердце сырного хранилища | `CheeseVaultHeart` | 7 | 3.5 × 3.5 × 3.75 | Body, DoorL, DoorR, Crystal, GuardL, GuardR | **особое внимание** |
-| 30 | Epic | Император трёх хвостов | `ThreeTailEmperor` | 12 | 3.5 × 3.5 × 4.55 | LegL, LegR, Body, Cape, Tail1, Tail2, Tail3, ArmL, ArmR, Head, Crown | Stand лучше оставить; **особое внимание** |
+| 30 | Epic | Император трёх хвостов | `ThreeTailEmperor` | 12 | 3.5 × 3.5 × 4.55 | LegL, LegR, Body, Cape, Tail1, Tail2, Tail3, ArmL, ArmR, Head, Crown | Stand остаётся (решение владельца); **особое внимание** |
 
 ## Импорт в Studio (когда разрешит владелец)
 

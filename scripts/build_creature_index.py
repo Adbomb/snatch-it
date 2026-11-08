@@ -18,11 +18,11 @@ ART = os.path.join(ROOT, "assets", "models", "art")
 YAW = {"SubwaySnail": 28, "SneakerTenant": 20, "RoyalRatTrain": 24, "MonsterTrain": 26}
 # Части-декор подставки: прятать вместе со Stand.
 HIDE_WITH_STAND = {"RunawayTicket": ["Grabber"]}
-# Подставка — часть образа: у живого существа лучше оставить (или заменить своим декором).
+# Подставка — часть композиции: у живого существа остаётся (решение владельца 2026-11-08).
 KEEP_STAND = {
-    "RatThrone": "трон — сиденье короля: без него король висит в воздухе",
-    "SubwayOctopus": "люк в подставке — осьминог вылезает из него",
-    "ThreeTailEmperor": "статуэтка стоит на золотой горе (так в описании владельца)",
+    "RatThrone": "трон — сиденье короля, часть композиции",
+    "SubwayOctopus": "люк в подставке — осьминог вылезает из него, часть композиции",
+    "ThreeTailEmperor": "статуэтка стоит на золотой горе, часть композиции",
 }
 ATTENTION = {"MonsterTrain", "CheeseDragon", "ThreeHeadedRat", "CheeseVaultHeart", "ThreeTailEmperor"}
 
@@ -107,8 +107,15 @@ def main():
                       "maps": [f"assets/textures/art/{item_id}_color.png", f"assets/textures/art/{item_id}_normal.png"],
                       "footprint": [round(hi[0] - lo[0], 2), round(hi[2] - lo[2], 2)], "height": round(hi[1] - lo[1], 2),
                       "yaw_deg": YAW.get(item_id, 0), "hide_with_stand": HIDE_WITH_STAND.get(item_id, []),
-                      "keep_stand": KEEP_STAND.get(item_id), "attention": item_id in ATTENTION, "parts": parts})
-    out = {"version": "D54-final-2026-11-08", "axes": "Roblox: x вправо, y вверх, z к зрителю − (лицо смотрит в −z); стады",
+                      "keep_stand": KEEP_STAND.get(item_id),
+                      "stand_policy": ("keep" if item_id in KEEP_STAND else
+                                       "hide_with_parts" if item_id in HIDE_WITH_STAND else "hide"), "attention": item_id in ATTENTION, "parts": parts})
+    out = {"version": "D54-final-2026-11-08", "accepted": "передача принята владельцем как окончательная 2026-11-08",
+           "rules": ["Stand скрывается только там, где он декоративная подставка (stand_policy hide)",
+                     "stand_policy keep — Stand часть композиции и остаётся (RatThrone, SubwayOctopus, ThreeTailEmperor)",
+                     "stand_policy hide_with_parts — вместе со Stand скрываются hide_with_stand (RunawayTicket: Grabber)",
+                     "yaw_deg ≠ 0 — анимировать в локальных осях суставов (повёрнутых на yaw), не в осях модели",
+                     "подвижные части анимируются без разрывов и смещений: вращение вокруг pivot, Motor6D по rig.json"], "axes": "Roblox: x вправо, y вверх, z к зрителю − (лицо смотрит в −z); стады",
            "root": "Stand", "roughness_map": "assets/textures/art/art_roughness.png", "items": items}
     path = os.path.join(ART, "Boss3Creatures.index.json")
     with open(path, "w", encoding="utf-8", newline="\n") as f:

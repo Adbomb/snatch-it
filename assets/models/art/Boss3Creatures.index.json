@@ -1,5 +1,13 @@
 {
  "version": "D54-final-2026-11-08",
+ "accepted": "передача принята владельцем как окончательная 2026-11-08",
+ "rules": [
+  "Stand скрывается только там, где он декоративная подставка (stand_policy hide)",
+  "stand_policy keep — Stand часть композиции и остаётся (RatThrone, SubwayOctopus, ThreeTailEmperor)",
+  "stand_policy hide_with_parts — вместе со Stand скрываются hide_with_stand (RunawayTicket: Grabber)",
+  "yaw_deg ≠ 0 — анимировать в локальных осях суставов (повёрнутых на yaw), не в осях модели",
+  "подвижные части анимируются без разрывов и смещений: вращение вокруг pivot, Motor6D по rig.json"
+ ],
  "axes": "Roblox: x вправо, y вверх, z к зрителю − (лицо смотрит в −z); стады",
  "root": "Stand",
  "roughness_map": "assets/textures/art/art_roughness.png",
@@ -24,6 +32,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -236,6 +245,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -398,6 +408,7 @@
     "Grabber"
    ],
    "keep_stand": null,
+   "stand_policy": "hide_with_parts",
    "attention": false,
    "parts": [
     {
@@ -578,6 +589,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -794,6 +806,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -998,6 +1011,7 @@
    "yaw_deg": 28,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1106,6 +1120,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1246,6 +1261,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1438,6 +1454,7 @@
    "yaw_deg": 20,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1610,6 +1627,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1810,6 +1828,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -1990,6 +2009,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -2226,6 +2246,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -2430,6 +2451,7 @@
    "yaw_deg": 24,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -2634,6 +2656,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -2838,6 +2861,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -3010,6 +3034,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -3226,6 +3251,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -3446,6 +3472,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": true,
    "parts": [
     {
@@ -3650,6 +3677,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -3798,6 +3826,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -3926,6 +3955,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -4053,7 +4083,8 @@
    "height": 3.76,
    "yaw_deg": 0,
    "hide_with_stand": [],
-   "keep_stand": "трон — сиденье короля: без него король висит в воздухе",
+   "keep_stand": "трон — сиденье короля, часть композиции",
+   "stand_policy": "keep",
    "attention": false,
    "parts": [
     {
@@ -4266,6 +4297,7 @@
    "yaw_deg": 26,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": true,
    "parts": [
     {
@@ -4450,6 +4482,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": true,
    "parts": [
     {
@@ -4666,6 +4699,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -4869,7 +4903,8 @@
    "height": 4.05,
    "yaw_deg": 0,
    "hide_with_stand": [],
-   "keep_stand": "люк в подставке — осьминог вылезает из него",
+   "keep_stand": "люк в подставке — осьминог вылезает из него, часть композиции",
+   "stand_policy": "keep",
    "attention": false,
    "parts": [
     {
@@ -5018,6 +5053,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": false,
    "parts": [
     {
@@ -5210,6 +5246,7 @@
    "yaw_deg": 0,
    "hide_with_stand": [],
    "keep_stand": null,
+   "stand_policy": "hide",
    "attention": true,
    "parts": [
     {
@@ -5357,7 +5394,8 @@
    "height": 4.55,
    "yaw_deg": 0,
    "hide_with_stand": [],
-   "keep_stand": "статуэтка стоит на золотой горе (так в описании владельца)",
+   "keep_stand": "статуэтка стоит на золотой горе, часть композиции",
+   "stand_policy": "keep",
    "attention": true,
    "parts": [
     {
