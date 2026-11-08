@@ -57,14 +57,23 @@
   `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
   повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
   Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
-- Поимка D55 на клиенте (этап F): `Controllers/CatchController` (CatchState → камера Scriptable к существу, управление
-  и `UserInputService.ModalEnabled`; круг = `CatchRules.CircleRadius`, проекция радиуса в пиксели; жест: старт и
-  конец в координатах экрана камеры — Position ввода + GuiInset; точка прилёта — луч камеры на вертикальной
-  плоскости через существо; «Throw» вид, точка, `GetServerTimeNow`), `Controllers/LovibumFxController`
-  (CatchEffect: Start — Ловибум в руке; Throw — полёт / сеть / куб / луч / захват или побег по времени сервера;
-  поймано — закрытый Ловибум лежит, пока CatchMode = Hidden; один PointLight на время полёта и сети; звуки —
-  `GameConfig.Sounds.Lovibum`, пусто). `World/LovibumModel` — Part-версия из `Config/LovibumRigs` (Place одним
-  BulkMoveTo, раскрытие когтей, SetLight).
+- Модель броска D55 (общая): `Shared/CatchThrow` — камера поимки `Frame(home, params, height)` (от места существа
+  в начале мини-игры `CreatureMotion.CatchBase` к ловящему, расстояние по размеру, FOV 70), жест `{dx, dy, speed,
+  length}` в долях высоты экрана — `Parse` (не бросок: short / slow / side / bad), `Aim` (точка на вертикальной
+  плоскости через место: направление → вбок, скорость → по высоте через ln), `GestureFor` (обратная, для тестов),
+  `Origin`. Числа — `Config/Catch.Throw`, `Catch.Game.Camera`.
+- Поимка D55 на клиенте (от первого лица): `Controllers/CatchController` — камера = `state.camera` от сервера (подлёт
+  Tween), FOV, свой персонаж и HUD игры спрятаны, подписи предметов (BillboardGui у частей с ItemId) выключены;
+  два ScreenGui: `CaptureVisee` (без вставок: кольца и 3D-Ловибум; координаты камеры → GUI = минус
+  `AbsolutePosition + GuiInset`) и `Capture` (CoreUISafeInsets: «Уйти», заголовок, кнопка вида и список). Жест —
+  только с Ловибума внизу; скорость — за последние `Throw.Window` секунд движения (замер ≤ `Grace` не обнуляет);
+  шлёт «Throw», вид, жест, время; сразу `LovibumFx.LocalThrow` к той же точке. Studio: атрибуты `DevCatchScreen`
+  (Vector3 ширина, высота, вырез — моделирование экрана телефона: интерфейс в рамке, снимок обрезать) и
+  `DevTouch`. `Controllers/LovibumFxController` (CatchEffect: Start — Ловибум в руке у других; Throw — полёт,
+  промах; попадание — вспышка, подскок, втягивание существа, падение, 3 покачивания (побег — после 1–3 по времени
+  броска), поймано — закрытый Ловибум лежит, пока CatchMode = Hidden; свои броски — `pending` по времени
+  отпускания, исход подставляется из CatchEffect; звуки — `GameConfig.Sounds.Lovibum`, пусто).
+  `World/LovibumModel` — Part-версия из `Config/LovibumRigs` (Place одним BulkMoveTo, раскрытие когтей, SetLight).
 - Обучение D55 (этап G): `Services/TutorialService` (шаги `TutorialRules`; личные существо и пёс в
   `World.Tutorial` с атрибутом TutorialOwner на `MapLayout.TutorialPoints()`; учебная поимка — `CatchService.BeginTutorial`;
   бой по сценарию на `BossService.BuildPersonal`; выдача — `ItemRegistry.CreateTutorial` (uid из профиля) → Carried;
@@ -73,9 +82,11 @@
   кражи — по атрибуту игрока Tutorial (`ShopService.Sync`); `TheftLedger` — флаги student и protected).
   `Controllers/TutorialController` — панель задачи, Beam к цели, чужие учебные модели скрыты, кнопка «Защита» скрыта.
 - Поимка D55 на сервере (этап E): `Services/CatchService` — «Поймать» (подсказка `BossLootService`, `OnTakeRequest`) →
-  проверки начала, `BossLootService.Reserve` + `SetOpen(false)`, атрибуты корня CatchMode/Since/Face; бросок
-  (`CatchAction` "Throw", вид, точка прилёта, время отпускания): `CatchRules.CheckThrow` → `DataService.SpendLovibum`
-  → попадание (`CreatureMotion` в момент прилёта, круг `CatchRules.CircleRadius`) → шанс; `CatchEffect` всем в
+  проверки начала, `BossLootService.Reserve` + `SetOpen(false)`, атрибуты корня CatchMode/Since/Face, камера поимки
+  `CatchThrow.Frame` (в Active и CatchState); бросок (`CatchAction` "Throw", вид, жест, время отпускания):
+  `CatchThrow.Parse` (не бросок — ничего не списано) → `CatchRules.CheckThrow` → `DataService.SpendLovibum` → точка
+  `CatchThrow.Aim` (считает сервер) → попадание (`CreatureMotion` в момент прилёта, кольцо `CatchRules.CircleRadius`)
+  → шанс; `a.last` — исход и точка (тесты); `CatchEffect` всем в
   `Catch.Game.EffectRadius`, `CatchState` — ловящему; поимка → CatchMode Hidden → `BattleService.Begin(…, { caught =
   true })`; поражение / прерывание боя — `BossLootService.Release` снимает Hidden; конец без поимки — Flee, пауза
   `CatchRules.SetPause`, босс свободен. Учебная — `CatchService.BeginTutorial(player, target)` (onCaught, onEnd).

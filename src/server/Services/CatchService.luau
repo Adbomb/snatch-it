@@ -2,24 +2,29 @@
 -- есть бой (или тестовый режим Studio), босс спит и свободен, существо на месте и не закреплено, игрок рядом, не в паузе
 -- у этого босса, руки пустые, не в бою и не в нокауте, жив, обучение пройдено, есть Ловибум уровня босса. Затем босс
 -- и слот закреплены за ловящим (подсказки у босса выключены), существо переходит в режим мини-игры (атрибуты корня —
--- клиенты считают его движение той же функцией Shared/CreatureMotion). Бросок (CatchAction "Throw"): проверки сессии
--- и времени (Shared/CatchRules), сначала Ловибум списывается в профиле, потом попадание — точка прилёта внутри круга
--- вокруг существа в момент прилёта (та же функция движения), потом шанс (база редкости × бонус вида). Итог видят все
--- рядом (CatchEffect), прицел — только ловящий (CatchState). Поимка — существо в закрытом Ловибуме на месте (Hidden),
--- после сети начинается бой (BattleService, слот уже закреплён); поражение и прерывание боя — существо снова на месте
--- (BossLootService.Release). Конец без поимки (три неудачи, кончились Ловибумы уровня, «Уйти», ночь, выход, гибель,
+-- клиенты считают его движение той же функцией Shared/CreatureMotion), камеру поимки считает сервер
+-- (Shared/CatchThrow.Frame) и присылает ловящему. Бросок (CatchAction "Throw", kind, жест, время отпускания): клиент
+-- присылает только жест — направление, скорость и длину смахивания; точке прилёта от клиента сервер не верит. Порядок:
+-- жест (короткий, медленный, вбок, испорченный — не бросок, Ловибум не тратится) → проверки сессии и времени
+-- (Shared/CatchRules) → Ловибум списывается в профиле → точку прилёта сервер считает сам по жесту и камере поимки
+-- (CatchThrow.Aim), попадание — она внутри кольца вокруг существа в момент прилёта (та же функция движения, с
+-- уклонениями) → шанс (база редкости × бонус вида; размер кольца на шанс не влияет). Итог видят все рядом
+-- (CatchEffect), прицел — только ловящий (CatchState). Поимка — существо в закрытом Ловибуме на месте (Hidden), после
+-- трёх покачиваний начинается бой (BattleService, слот уже закреплён); поражение и прерывание боя — существо снова на
+-- месте (BossLootService.Release). Конец без поимки (три неудачи, кончились Ловибумы уровня, «Уйти», ночь, выход, гибель,
 -- нокаут, бездействие, сторож) — существо убегает и возвращается, босс сразу свободен, у игрока — личная пауза
 -- FailPause у этого босса. Учебная поимка (TutorialService) — личное существо: броски бесплатные, первое попадание —
 -- захват, без паузы и лимита, ночь не прерывает.
 -- Зависит от BattleService, BossService, BossLootService, DataService, ItemRegistry, ShopService, TimeService,
--- Shared/CatchRules, Shared/CreatureMotion, Shared/GameTime, Shared/TutorialRules, Remotes, Config, Util/RateLimiter,
--- Util/Notify, Util/Validate, Util/Log.
+-- Shared/CatchRules, Shared/CatchThrow, Shared/CreatureMotion, Shared/GameTime, Shared/TutorialRules, Remotes, Config,
+-- Util/RateLimiter, Util/Notify, Util/Validate, Util/Log.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
 local CreatureMotion = require(ReplicatedStorage.Shared.CreatureMotion)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
@@ -67,6 +72,9 @@ type Active = {
 	target: Target,
 	ending: boolean,
 	died: RBXScriptConnection?,
+	camera: CFrame, -- камера поимки (CatchThrow.Frame): по ней сервер считает траекторию броска
+	stage: Vector3, -- центр места мини-игры
+	last: { outcome: string, aim: Vector3 }?, -- последний бросок (серверные тесты)
 }
 
 local active: { [any]: Active } = {} -- по игроку
@@ -137,9 +145,46 @@ local function sendState(a: Active?, player: any)
 		max = if s.tutorial then 0 else G.MaxThrows,
 		readyAt = s.readyAt,
 		face = t.params.face,
+		camera = a.camera,
+		stage = a.stage,
 		tutorial = s.tutorial,
 		circle = if s.tutorial then Catch.Tutorial.CircleFactor else 1,
 	})
+end
+
+-- Камера поимки не за стеной: луч от центра места к камере; видимое препятствие — камера ближе (на Pad перед ним, не
+-- ближе Near). Существо, персонажи и предметы у боссов не мешают, невидимые барьеры — тоже. Считается один раз.
+local function catchCamera(target: Target): (CFrame, Vector3)
+	local camera, stage = CatchThrow.Frame(target.home, target.params, target.height)
+	local c = G.Camera
+	local ignore: { Instance } = { target.part }
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(ignore, p.Character)
+		end
+	end
+	local world = workspace:FindFirstChild("World")
+	local items = world and world:FindFirstChild("Items")
+	if items then
+		table.insert(ignore, items)
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ray = camera.Position - stage
+	for _ = 1, 8 do
+		params.FilterDescendantsInstances = ignore
+		local hit = workspace:Raycast(stage, ray, params)
+		if not hit then
+			return camera, stage
+		end
+		if hit.Instance:IsA("BasePart") and hit.Instance.Transparency < 0.9 then
+			local flat = Vector3.new(ray.X, 0, ray.Z).Magnitude
+			local near = math.max(flat * (hit.Distance / ray.Magnitude) - c.Pad, c.Near)
+			return CatchThrow.Frame(target.home, target.params, target.height, near)
+		end
+		table.insert(ignore, hit.Instance)
+	end
+	return camera, stage
 end
 
 -- Поза существа цели в момент time (мини-игра) и центр для попадания.
@@ -309,6 +354,7 @@ local function start(player: any, target: Target): Active?
 	target.params.face = math.atan2(-rel.X, -rel.Z)
 	target.params.mode = "Catch"
 	target.params.since = t
+	local camera, stage = catchCamera(target)
 	local a: Active = {
 		player = player,
 		session = CatchRules.NewSession(
@@ -323,6 +369,9 @@ local function start(player: any, target: Target): Active?
 		target = target,
 		ending = false,
 		died = nil,
+		camera = camera,
+		stage = stage,
+		last = nil,
 	}
 	active[player] = a
 	if not target.tutorial then
@@ -385,17 +434,17 @@ function CatchService.BeginTutorial(player: any, target: Target): boolean
 	return start(player, target) ~= nil
 end
 
-local function onThrow(player: any, kind: any, aim: any, release: any)
+local function onThrow(player: any, kind: any, gesture: any, release: any)
 	local a = active[player]
 	if not a or a.ending then
 		return
 	end
 	local s, target = a.session, a.target
 	local t = now()
-	if typeof(aim) ~= "Vector3" or aim.X ~= aim.X or aim.Y ~= aim.Y or aim.Z ~= aim.Z then
-		return
-	end
-	if (aim - target.home.Position).Magnitude > G.AimRange then
+	-- жест: не бросок — ничего не списано (клиент такие не шлёт: подделка или сбой)
+	local g, why = CatchThrow.Parse(gesture)
+	if not g then
+		Log.Debug("CatchService", ("%s: жест не принят (%s)"):format(player.Name, tostring(why)))
 		return
 	end
 	local stock = if s.tutorial then 0 else CatchRules.Stock(DataService.Lovibums(player), target.boss, kind)
@@ -411,11 +460,14 @@ local function onThrow(player: any, kind: any, aim: any, release: any)
 	if not s.tutorial then
 		if not DataService.SpendLovibum(player, target.boss, kind) then
 			Notify.Send(player, "Ловибумы этого вида кончились", "Stop")
+			sendState(a, player)
 			return
 		end
 		DataService.RequestSave(player)
 		ShopService.Sync(player)
 	end
+	-- точка прилёта — по жесту и камере поимки (сервер считает сам), существо — где оно в момент прилёта
+	local aim = CatchThrow.Aim(a.camera, a.stage, g)
 	local arrival = release + G.FlightTime
 	local center = centerAt(target, arrival)
 	local factor = if s.tutorial then Catch.Tutorial.CircleFactor else 1
@@ -424,6 +476,7 @@ local function onThrow(player: any, kind: any, aim: any, release: any)
 	local chance = CatchRules.Chance(target.rarity, if s.tutorial then "Boom" else kind)
 	local outcome = CatchRules.Outcome(s, hit, chance, forcedRoll or random:NextNumber())
 	CatchRules.AfterThrow(s, outcome, release)
+	a.last = { outcome = outcome, aim = aim }
 	effect(target, {
 		kind = "Throw",
 		user = player.UserId,

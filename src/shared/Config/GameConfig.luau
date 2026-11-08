@@ -317,7 +317,7 @@ GameConfig.Sounds = {
 	Presentation = { Rare = "", Legendary = "", Secret = "" }, -- презентация экспоната по редкости
 	Place = "", -- любое выставление (и Common)
 	-- D55: звуков пока нет (решение владельца 2026-11-08) — место для них; ID — от владельца
-	Lovibum = { Throw = "", Open = "", Net = "", Caught = "", Escape = "", Buy = "" },
+	Lovibum = { Throw = "", Open = "", Absorb = "", Wobble = "", Caught = "", Escape = "", Buy = "" },
 }
 
 -- Запас к дистанции на сервере: позиция игрока на сервере слегка отстаёт от клиента.

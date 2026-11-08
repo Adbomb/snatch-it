@@ -204,6 +204,13 @@ local function catchPose(p: Params, t: number): Pose
 	}
 end
 
+-- Место мини-игры (в осях места, низ, без прыжка): где существо бродило в начале режима Catch (камера поимки и
+-- плоскость броска — Shared/CatchThrow).
+function CreatureMotion.CatchBase(p: Params): Vector3
+	local start = wander(p, p.since or 0)
+	return Vector3.new(start.offset.X, 0, start.offset.Z)
+end
+
 -- Побег: прочь от ловящего (с постамента — спрыгнуть), постоять, оглянуться, вернуться.
 local function anchorOf(p: Params): Vector3
 	if not p.anchor then

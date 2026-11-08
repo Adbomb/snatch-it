@@ -56,6 +56,8 @@ local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
+local CreatureMotion = require(ReplicatedStorage.Shared.CreatureMotion)
 local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local CatchService = require(Server.Services.CatchService)
 local ShopService = require(Server.Services.ShopService)
@@ -2651,14 +2653,25 @@ local function waitReady(player: any)
 	end
 end
 
--- Бросок Ловибума kind: в центр существа в момент прилёта (hit) или далеко мимо круга; время отпускания — сейчас.
+-- Жест (как у клиента), который приведёт Ловибум в точку point (на плоскости броска камеры поимки этой мини-игры).
+local function gestureTo(a: any, point: Vector3): any
+	local look = a.camera.LookVector
+	local plane = Vector3.new(look.X, 0, look.Z).Unit
+	return CatchThrow.GestureFor(a.camera, point - plane * (point - a.stage):Dot(plane))
+end
+
+-- Бросок Ловибума kind жестом: в центр существа в момент прилёта (hit) или мимо кольца; время отпускания — сейчас.
+-- Клиент шлёт только жест — точку прилёта считает сервер (CatchThrow.Aim).
 local function throw(player: any, kind: string, hit: boolean)
 	local a = CatchService.Handlers.Active(player)
 	check(a, player.Name .. ": поимка не идёт")
 	local t = workspace:GetServerTimeNow()
 	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
-	local miss = Vector3.new(0, 0, CG.Circle.Max * 2 * a.target.params.scale + 1.5)
-	CatchService.Handlers.Action(player, "Throw", kind, if hit then center else center + miss, t)
+	local factor = if a.session.tutorial then GameConfig.Catch.Tutorial.CircleFactor else 1
+	local away = a.camera.RightVector * (CG.Circle.Max * a.target.params.scale * factor + 0.5) -- вбок: по высоте узко
+	local g = gestureTo(a, if hit then center else center + away)
+	check(g, player.Name .. ": жест для броска не нашёлся")
+	CatchService.Handlers.Action(player, "Throw", kind, g, t)
 end
 
 -- Встать у существа в слоте и начать поимку (Ловибумы уровня даются заранее).
@@ -2870,14 +2883,29 @@ test("D55 занятый босс: второй не ловит, не начин
 	local a = CatchService.Handlers.Active(A)
 	local t = workspace:GetServerTimeNow()
 	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
+	local good = gestureTo(a, center)
+	check(good, "жест в существо не нашёлся")
+	local TH = GameConfig.Catch.Throw
+	local function with(field: string, value: any): any
+		local g = table.clone(good)
+		g[field] = value
+		return g
+	end
 	local fakes = {
-		{ "Mega", center, t }, -- вида нет в запасе
-		{ "Ultra", center, t },
-		{ "Boom", center, t + 5 }, -- время из будущего
-		{ "Boom", center, t - 5 }, -- старое
-		{ "Boom", center, 0 / 0 },
-		{ "Boom", center + Vector3.new(0, 0, 50), t }, -- далеко от существа
+		{ "Mega", good, t }, -- вида нет в запасе
+		{ "Ultra", good, t },
+		{ "Boom", good, t + 5 }, -- время из будущего
+		{ "Boom", good, t - 5 }, -- старое
+		{ "Boom", good, 0 / 0 },
+		{ "Boom", center, t }, -- точка прицела от клиента (старый формат) — не верим
 		{ "Boom", Vector3.new(0 / 0, 0, 0), t },
+		{ "Boom", with("length", TH.MinSwipe * 0.5), t }, -- короткий жест — не бросок
+		{ "Boom", with("speed", TH.MinSpeed * 0.5), t }, -- медленный
+		{ "Boom", with("dx", 5), t }, -- вбок
+		{ "Boom", with("dy", 1), t }, -- вниз
+		{ "Boom", with("speed", 0 / 0), t },
+		{ "Boom", with("length", math.huge), t },
+		{ "Boom", { dx = "0", dy = -1, speed = 3, length = 0.3 }, t },
 		{ "Boom", "строка", t },
 	}
 	for _, f in fakes do
@@ -2885,12 +2913,65 @@ test("D55 занятый босс: второй не ловит, не начин
 		CatchService.Handlers.Action(A, "Throw", f[1], f[2], workspace:GetServerTimeNow() + (f[3] - t))
 	end
 	check(stockOf(A, 1, "Boom") == 5 and a.session.throws == 0, "поддельный бросок засчитан")
-	CatchService.Handlers.Action(B, "Throw", "Boom", center, workspace:GetServerTimeNow())
+	check(a.last == nil, "поддельный бросок дошёл до проверки попадания")
+	CatchService.Handlers.Action(B, "Throw", "Boom", good, workspace:GetServerTimeNow())
 	check(stockOf(B, 1, "Boom") == 1, "бросок без своей мини-игры засчитан")
 	throw(A, "Boom", false)
 	check(stockOf(A, 1, "Boom") == 4, "настоящий бросок не засчитан")
 	throw(A, "Boom", false)
 	check(stockOf(A, 1, "Boom") == 4, "бросок раньше паузы засчитан")
+	CatchService.Handlers.Action(A, "Leave")
+	check(waitCatchEnd(A, 3), "«Уйти» не закончило поимку")
+	TimeService.ResetClock()
+end)
+
+test("D55 бросок жестом: точку считает сервер; в существо — попадание, в рывке уклонения — промах", function(A)
+	ensureDay()
+	check(waitBossHome(1), "пёс не дома")
+	BossLootService.Handlers.Refresh()
+	giveLovibums(A, 1, "Boom", 4)
+	check(beginCatch(A, 1, 1), "поимка не началась")
+	local a = CatchService.Handlers.Active(A)
+	check(typeof(a.camera) == "CFrame" and typeof(a.stage) == "Vector3", "нет камеры поимки")
+	check((a.camera.Position - a.stage).Magnitude <= GameConfig.Catch.Game.Camera.Max * 1.1, "камера далеко от существа")
+	-- в существо: попадание (шанс — побег, чтобы не начинать бой); точка — та, что дал бы клиент
+	CatchService.Handlers.SetRoll(0.999)
+	local t = workspace:GetServerTimeNow()
+	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
+	local g = gestureTo(a, center)
+	check(g, "жест в существо не нашёлся")
+	CatchService.Handlers.Action(A, "Throw", "Boom", g, t)
+	check(a.last and a.last.outcome == "Escape", "бросок в существо — не попадание: " .. tostring(a.last and a.last.outcome))
+	local parsed = CatchThrow.Parse(g)
+	check(parsed and a.last and (a.last.aim - CatchThrow.Aim(a.camera, a.stage, parsed)).Magnitude < 1e-6, "сервер посчитал другую точку")
+	check(stockOf(A, 1, "Boom") == 3, "попадание не списало Ловибум")
+	CatchService.Handlers.SetRoll(nil)
+	-- в рывке уклонения: жест в место, где существо стоит обычно, — промах (сервер считает, где оно в момент прилёта)
+	waitReady(A)
+	local p, target = a.target.params, a.target
+	local function dodging(at: number): boolean
+		local arrival = at + CG.FlightTime
+		local pose = CreatureMotion.Pose(p, arrival)
+		local c = CreatureMotion.Center(target.home, pose, target.height)
+		local r = CatchRules.CircleRadius(arrival, a.session.since, p.scale)
+		return math.abs(pose.dodge) >= 0.99 and not CatchRules.IsHit(a.stage, c, r)
+	end
+	local found: number? = nil
+	local from = workspace:GetServerTimeNow() + 0.3
+	for i = 0, 600 do
+		local at = from + i * 0.05
+		if dodging(at) and dodging(at + 0.1) then
+			found = at
+			break
+		end
+	end
+	check(found, "нет уклонения в ближайшие 30 с")
+	while workspace:GetServerTimeNow() < (found :: number) do
+		task.wait()
+	end
+	CatchService.Handlers.Action(A, "Throw", "Boom", gestureTo(a, a.stage), workspace:GetServerTimeNow())
+	check(a.last and a.last.outcome == "Miss", "в рывке уклонения — не промах: " .. tostring(a.last and a.last.outcome))
+	check(stockOf(A, 1, "Boom") == 2, "промах не списал Ловибум")
 	CatchService.Handlers.Action(A, "Leave")
 	check(waitCatchEnd(A, 3), "«Уйти» не закончило поимку")
 	TimeService.ResetClock()

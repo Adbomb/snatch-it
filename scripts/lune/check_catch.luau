@@ -3,7 +3,8 @@
 -- (уровень, вид, количество, монеты, запас, NaN, дроби, переполнение), запас в профиле (Normalize), автомат мини-игры
 -- (броски, промах, побег, поимка, конец, учебная), личная пауза только у этого игрока и босса, круг и попадание,
 -- движение существ (Shared/CreatureMotion: одно зерно и время — одна поза, не дальше радиуса, на постаменте — без
--- сдвига, уклонение с замахом, одинаковый хэш). Запуск из корня репозитория: lune run scripts/lune/check_catch.luau.
+-- сдвига, уклонение с замахом, одинаковый хэш), бросок (Shared/CatchThrow: камера поимки, жест → точка, не броски,
+-- обратная задача, уклонение уводит из кольца). Запуск из корня репозитория: lune run scripts/lune/check_catch.luau.
 
 local process = require("@lune/process")
 
@@ -353,6 +354,138 @@ check(
 	"после промаха — короткая пауза"
 )
 check(CatchRules.CheckThrow(ts, again + 0.01, "Boom", 3, again + 0.01) == nil, "потом можно")
+
+-- ── Бросок: жест → точка (сервер считает сам) ─────────────────────────────────────────────────────────────
+section("бросок: камера поимки, жест, точка прилёта, уклонение")
+local CatchThrow = Env.Require("ReplicatedStorage.Shared.CatchThrow")
+local CFrame = Env.roblox.CFrame
+local TH, CAM, GM = Catch.Throw, Catch.Game.Camera, Catch.Game
+local home = CFrame.new(10, 2, -30) * CFrame.Angles(0, 0.7, 0)
+local params = {
+	seed = CreatureMotion.SeedOf("бросок"),
+	radius = 0.45,
+	scale = 1,
+	mode = "Catch",
+	since = 100,
+	face = 0.4,
+}
+local height = 2
+local cam, stage = CatchThrow.Frame(home, params, height)
+check(
+	(cam.LookVector - (stage - cam.Position).Unit).Magnitude < 1e-4,
+	"камера смотрит в центр места"
+)
+local toward = home:VectorToWorldSpace(CFrame.Angles(0, 0.4, 0).LookVector)
+local flatCam = Vector3.new(cam.Position.X - stage.X, 0, cam.Position.Z - stage.Z)
+check(
+	flatCam.Unit:Dot(Vector3.new(toward.X, 0, toward.Z).Unit) > 0.999,
+	"камера — со стороны ловящего"
+)
+check(
+	flatCam.Magnitude >= CAM.Min - 1e-6 and flatCam.Magnitude <= CAM.Max + 1e-6,
+	"расстояние камеры в пределах"
+)
+check(cam.Position.Y > stage.Y, "камера чуть выше существа")
+local cam2, stage2 = CatchThrow.Frame(home, params, height)
+check(
+	(cam2.Position - cam.Position).Magnitude < 1e-9 and stage2 == stage,
+	"одни данные — одна камера"
+)
+local base = CreatureMotion.CatchBase(params)
+local start = CreatureMotion.Pose(params, params.since)
+check(
+	math.abs(base.X - start.offset.X) < 1e-9 and math.abs(base.Z - start.offset.Z) < 1e-9,
+	"место — где стояло"
+)
+
+local function aimOf(g)
+	local parsed = CatchThrow.Parse(g)
+	return parsed and CatchThrow.Aim(cam, stage, parsed)
+end
+local plane = Vector3.new(cam.LookVector.X, 0, cam.LookVector.Z).Unit
+local straight = aimOf({ dx = 0, dy = -1, speed = TH.Ideal, length = 0.3 })
+check(
+	straight ~= nil and (straight - stage).Magnitude < 1e-3,
+	"прямо вверх с идеальной скоростью — в центр"
+)
+local right = aimOf({ dx = 0.3, dy = -1, speed = TH.Ideal, length = 0.3 })
+local left = aimOf({ dx = -0.3, dy = -1, speed = TH.Ideal, length = 0.3 })
+check(
+	(right - stage):Dot(cam.RightVector) > 0.2 and (left - stage):Dot(cam.RightVector) < -0.2,
+	"вбок — в ту сторону"
+)
+local slow = aimOf({ dx = 0, dy = -1, speed = TH.Ideal / 2, length = 0.3 })
+local fast = aimOf({ dx = 0, dy = -1, speed = TH.Ideal * 2, length = 0.3 })
+check(
+	slow.Y < stage.Y - 0.3 and fast.Y > stage.Y + 0.3,
+	"медленнее — недолёт ниже, быстрее — перелёт выше"
+)
+local long = aimOf({ dx = 0, dy = -1, speed = TH.Ideal, length = 1.5 })
+check(
+	(long - straight).Magnitude < 1e-9,
+	"длина жеста силу не меняет — только скорость"
+)
+for _, a in { straight, right, left, slow, fast } do
+	check(math.abs((a - stage):Dot(plane)) < 1e-3, "точка — на плоскости через место")
+end
+local huge = CatchThrow.Parse({ dx = 0, dy = -1, speed = 1e6, length = 0.3 })
+check(huge ~= nil and huge.speed == TH.MaxSpeed, "быстрее MaxSpeed — как MaxSpeed")
+local far = CatchThrow.Aim(cam, stage, huge)
+check(
+	(far - stage).Magnitude < CAM.Max * 1.2,
+	"даже предельный жест — недалеко от места"
+)
+local NOT_THROWS = {
+	{ { dx = 0, dy = -1, speed = 3, length = TH.MinSwipe * 0.5 }, "short", "короткий" },
+	{ { dx = 0, dy = -1, speed = TH.MinSpeed * 0.5, length = 0.3 }, "slow", "медленный" },
+	{ { dx = 1, dy = -0.2, speed = 3, length = 0.3 }, "side", "вбок" },
+	{ { dx = 0, dy = 1, speed = 3, length = 0.3 }, "side", "вниз" },
+	{ { dx = 0 / 0, dy = -1, speed = 3, length = 0.3 }, "bad", "NaN" },
+	{ { dx = 0, dy = -1, speed = math.huge, length = 0.3 }, "bad", "бесконечная скорость" },
+	{ { dx = 0, dy = -1, speed = 3, length = 50 }, "bad", "длина 50 экранов" },
+	{ { dx = 0, dy = 0, speed = 3, length = 0.3 }, "bad", "без направления" },
+	{ { dx = "0", dy = -1, speed = 3, length = 0.3 }, "bad", "строка" },
+	{ "жест", "bad", "не таблица" },
+	{ Vector3.new(1, 2, 3), "bad", "старый формат — точка прицела" },
+}
+for _, case in NOT_THROWS do
+	local g, why = CatchThrow.Parse(case[1])
+	check(g == nil and why == case[2], ("не бросок: %s (%s)"):format(case[3], tostring(why)))
+end
+for _, target in
+	{
+		stage,
+		stage + cam.RightVector * 0.8,
+		stage + Vector3.new(0, 0.6, 0),
+		stage - cam.RightVector * 0.5 - Vector3.new(0, 0.4, 0),
+	}
+do
+	local g = CatchThrow.GestureFor(cam, target)
+	check(g ~= nil and (CatchThrow.Aim(cam, stage, g) - target).Magnitude < 1e-3, "GestureFor → та же точка")
+end
+local origin = CatchThrow.Origin(cam, 2)
+local rel = cam:PointToObjectSpace(origin)
+check(
+	rel.Z < 0 and rel.Y < 0 and math.abs(rel.X) < 1e-6,
+	"Ловибум — внизу по центру перед камерой"
+)
+-- попадание — по положению существа в момент прилёта: в рывке уклонения бросок в место — мимо
+local missDodge, hitCalm = false, false
+for i = 0, 600 do
+	local t = params.since + 0.5 + i * 0.05
+	local arrival = t + GM.FlightTime
+	local pose = CreatureMotion.Pose(params, arrival)
+	local center = CreatureMotion.Center(home, pose, height)
+	local hit = CatchRules.IsHit(straight, center, CatchRules.CircleRadius(arrival, params.since, params.scale))
+	if math.abs(pose.dodge) >= 0.99 and not hit then
+		missDodge = true
+	end
+	if math.abs(pose.dodge) < 0.05 and hit then
+		hitCalm = true
+	end
+end
+check(missDodge, "в рывке уклонения бросок в место — мимо")
+check(hitCalm, "без уклонения бросок в место — в кольце")
 
 print(("Итог: %d проверок, ошибок %d"):format(passed + failed, failed))
 process.exit(if failed == 0 then 0 else 1)
