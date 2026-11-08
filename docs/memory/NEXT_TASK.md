@@ -116,6 +116,11 @@ Common ур. 1 (10–18/с): Бум за 500 — 30–50 с дохода.
    `Controllers/CreatureController.luau` (клиент двигает существ рядом с камерой, дальние не считает: один меш — всем
    телом; со скелетом — ещё суставы: глаза, челюсть, лапы, хвост, уши; `Stand` у живого скрыт; на постаменте —
    спокойная поза на месте), скелеты в Luau — из `<id>.rig.json` скриптом (как `Config/Boss3RatKingRig`).
+   Существа босса 3 — финал D54 (тег `d54-boss3-collection-final`, 6382e6c): спецификация `docs/BOSS3_CREATURES.md`
+   (оси, схема rig.json, подставка `Stand` и исключения, повёрнутые модели, Motor6D после импорта: C0 = pivot −
+   (pivot родителя + center родителя), C1 = −center; особое внимание владельца — MonsterTrain, CheeseDragon,
+   ThreeHeadedRat, CheeseVaultHeart, ThreeTailEmperor), индекс для кода `assets/models/art/Boss3Creatures.index.json`
+   (`scripts/build_creature_index.py`), проверка `scripts/blender/check_rigs.py` (30/30).
 4. Поимка на сервере: `Services/CatchService.luau` (начало, броски, исход, личная пауза 10 с у босса, сразу свободный
    босс, прерывания — ночь, выход, смерть, нокаут, бездействие; игрок стоит на месте; эффекты рядом — CatchEffect),
    связка с `BattleService` (бой после поимки, поражение — существо на место), `Remotes` (CatchAction, CatchEffect),
