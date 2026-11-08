@@ -297,10 +297,18 @@ function DevTools.Init()
 				GymService.SyncAttributes(player)
 				require(ServerScriptService.Server.Services.CarryService).RefreshSpeed(player) -- скорость — от силы
 				return data.strength
-			elseif command == "Lovibums" or command == "Tutorial" or command == "CatchRoll" then
+			elseif
+				command == "Lovibums"
+				or command == "Tutorial"
+				or command == "CatchRoll"
+				or command == "CatchThrow"
+			then
 				-- D55 (только Studio): «Lovibums <userId> <уровень> <вид> <сколько>» — Ловибумы в запас без покупки (цены не
 				-- утверждены); «Tutorial <userId> <шаг>» — шаг обучения (Done — пройдено); «CatchRoll <0…1 | off>» —
-				-- исход шанса захвата для проверки (0 — поймано, 0.999 — побег, off — случайно).
+				-- исход шанса захвата для проверки (0 — поймано, 0.999 — побег, off — случайно); «CatchThrow <userId>
+				-- <hit | miss> [вид]» — бросок за игрока тем же серверным обработчиком, жест — по той же модели
+				-- (CatchThrow.GestureFor): проверка на нескольких клиентах, где MCP не может слать remote с клиента, а
+				-- мышь MCP смахивает слишком медленно.
 				if not RunService:IsStudio() then
 					return "только в Studio"
 				end
@@ -314,6 +322,31 @@ function DevTools.Init()
 				local data = player and DataService.GetData(player)
 				if not player or not data then
 					return "нет игрока"
+				end
+				if command == "CatchThrow" then
+					local CatchService = require(Server.Services.CatchService)
+					local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
+					local a = CatchService.Handlers.Active(player)
+					if not a then
+						return "игрок не ловит"
+					end
+					local g = GameConfig.Catch.Game
+					local t = workspace:GetServerTimeNow()
+					local center = CatchService.Handlers.CenterAt(a.target, t + g.FlightTime)
+					local look = a.camera.LookVector
+					local plane = Vector3.new(look.X, 0, look.Z).Unit
+					local point = center
+					if words[3] == "miss" then
+						local side = if (center - a.stage):Dot(a.camera.RightVector) > 0 then -1 else 1
+						point = center + a.camera.RightVector * side * (g.Circle.Max * a.target.params.scale * 2 + 0.5)
+					end
+					local gesture = CatchThrow.GestureFor(a.camera, point - plane * (point - a.stage):Dot(plane))
+					if not gesture then
+						return "жест не найден"
+					end
+					local before = a.last
+					CatchService.Handlers.Action(player, "Throw", words[4] or "Boom", gesture, t)
+					return if a.last and a.last ~= before then a.last.outcome else "не принят"
 				end
 				local ShopService = require(Server.Services.ShopService)
 				if command == "Lovibums" then

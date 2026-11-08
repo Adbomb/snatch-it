@@ -2668,7 +2668,9 @@ local function throw(player: any, kind: string, hit: boolean)
 	local t = workspace:GetServerTimeNow()
 	local center = CatchService.Handlers.CenterAt(a.target, t + CG.FlightTime)
 	local factor = if a.session.tutorial then GameConfig.Catch.Tutorial.CircleFactor else 1
-	local away = a.camera.RightVector * (CG.Circle.Max * a.target.params.scale * factor + 0.5) -- вбок: по высоте узко
+	-- мимо — вбок, в сторону места (уклонившееся существо уже в стороне: туда область броска может не дотянуться)
+	local side = if (center - a.stage):Dot(a.camera.RightVector) > 0 then -1 else 1
+	local away = a.camera.RightVector * side * (CG.Circle.Max * a.target.params.scale * factor + 0.5)
 	local g = gestureTo(a, if hit then center else center + away)
 	check(g, player.Name .. ": жест для броска не нашёлся")
 	CatchService.Handlers.Action(player, "Throw", kind, g, t)

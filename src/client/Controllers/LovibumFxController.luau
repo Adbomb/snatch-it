@@ -25,11 +25,14 @@ local LovibumModel = require(script.Parent.Parent:WaitForChild("World"):WaitForC
 local G = GameConfig.Catch.Game
 local SOUNDS = GameConfig.Sounds.Lovibum
 local HAND_SCALE = 0.75
-local HOVER = 1.3 -- над макушкой существа
+local HOVER = 0 -- основание Ловибума на уровне макушки существа (и чуть ближе к бросившему — в кадре, не под плашкой)
 local LIGHT_RANGE = 9
 local WOBBLE_START, WOBBLE_EVERY, WOBBLE_LEN = 1.15, 0.55, 0.42 -- покачивания на земле: начало, шаг, длительность
 local CAUGHT_COLOR = Color3.fromHex("FFE15A") -- звёзды поимки
 local WAIT = 2 -- свой бросок без ответа сервера: столько секунд висит у цели, потом гаснет
+local NEAR_SCALE = 0.7 -- Ловибум у существа меньше (существо не закрыто)
+local FADE = 0.4 -- существо, втягиваясь, бледнеет до этого (видно), потом — в кристалле
+local CAPTURE_LIGHT = 0.6 -- свет кристалла у существа слабее (не засвечивает его)
 
 local LovibumFxController = {}
 
@@ -159,23 +162,25 @@ local function moveSparks(list: { Spark }, t: number)
 	end
 end
 
--- Существо у этого клиента: втянуто в Ловибум — не видно, вырвалось — снова видно (пойманное прячет CreatureController).
-local function setCreatureHidden(part: any, hidden: boolean)
+-- Существо у этого клиента: прозрачность value (0 — видно, 1 — втянуто в Ловибум). Пойманное (Hidden) прячет
+-- CreatureController — его не открывать.
+local function setCreatureFade(part: any, value: number)
 	if typeof(part) ~= "Instance" or not part.Parent then
 		return
 	end
-	if not hidden and part:GetAttribute("CatchMode") == "Hidden" then
+	if value < 1 and part:GetAttribute("CatchMode") == "Hidden" then
 		return
 	end
 	for _, d in part:GetDescendants() do
 		if d:IsA("BasePart") then
-			d.LocalTransparencyModifier = if hidden then 1 else 0
+			d.LocalTransparencyModifier = value
 		end
 	end
 end
 
 -- Полёт и поимка одного броска. Полёт — по дуге кристаллом вперёд с коротким следом; промах — летит дальше и падает;
--- попадание — Ловибум подскакивает над существом, когти раскрываются, существо светом втягивается в кристалл, когти
+-- попадание — Ловибум (у существа он меньше: не закрывает его) подскакивает над существом, когти раскрываются,
+-- существо бледнеет, тонкий луч и светящийся шарик уходят в кристалл (существо видно до последнего мига), когти
 -- смыкаются, Ловибум падает на землю и качается: поимка — после третьего покачивания щелчок и звёзды из квадратов,
 -- закрытый Ловибум лежит, пока идёт бой; побег — после 1–3 покачиваний (у всех одинаково, по времени броска) когти
 -- раскрываются, существо выскакивает, Ловибум рассыпается. Исход может прийти позже начала (свой бросок).
@@ -225,15 +230,18 @@ local function throwFx(payload: any): Fx?
 	local arc = math.clamp((aim - from).Magnitude * 0.18, 0.5, 2.2)
 	local yaw = math.atan2(from.X - aim.X, from.Z - aim.Z) -- Ловибум на земле — к бросившему
 	local breaks = 1 + math.floor(release * 1000) % 3 -- побег: после стольких покачиваний
-	local ghost: Part? = nil
+	local orb: Part? = nil
 	local beam: Part? = nil
 	local hidden = false
+	local faded = false -- существо бледнело (втягивание) — при очистке вернуть
 	local stage = 0 -- пройденные отметки: 1 — вспышка, 2 — втягивание, 3 — щелчок / побег
 	local wobbled = 0
 	local capEnd = arrival + G.CaptureTime
 
+	local toward = Vector3.new(from.X - aim.X, 0, from.Z - aim.Z) -- от существа к бросившему
+	toward = if toward.Magnitude > 1e-3 then toward.Unit else Vector3.zAxis
 	local function hover(): Vector3
-		return center + Vector3.new(0, size.Y / 2 + HOVER, 0)
+		return center + Vector3.new(0, size.Y / 2 + HOVER, 0) + toward * (math.max(size.X, size.Z) * 0.2)
 	end
 	local function ground(): Vector3
 		return center - Vector3.new(0, size.Y / 2, 0)
@@ -244,14 +252,14 @@ local function throwFx(payload: any): Fx?
 		for _, s in sparks do
 			s.part:Destroy()
 		end
-		if ghost then
-			ghost:Destroy()
+		if orb then
+			orb:Destroy()
 		end
 		if beam then
 			beam:Destroy()
 		end
-		if hidden then
-			setCreatureHidden(part, false) -- поймано и спрятано сервером (Hidden) — не трогает
+		if hidden or faded then
+			setCreatureFade(part, 0) -- поймано и спрятано сервером (Hidden) — не трогает
 		end
 	end
 
@@ -268,7 +276,7 @@ local function throwFx(payload: any): Fx?
 			local dir = at(math.min(f + 0.05, 1)) - pos
 			dir = if dir.Magnitude > 1e-3 then dir.Unit else (aim - from).Unit
 			local cf = CFrame.lookAt(pos, pos + dir) * CFrame.Angles(-math.pi / 2, 0, 0) * CFrame.Angles(0, t * 14, 0)
-			LovibumModel.Place(model, cf * CFrame.new(0, -0.6, 0), 0, fromScale + (1 - fromScale) * f)
+			LovibumModel.Place(model, cf * CFrame.new(0, -0.6, 0), 0, fromScale + (NEAR_SCALE - fromScale) * f)
 			if t - lastDot > 0.045 and f < 1 then
 				lastDot = t
 				spark(sparks, pos, Vector3.zero, color, 0.16, t, 0.35)
@@ -278,7 +286,7 @@ local function throwFx(payload: any): Fx?
 		if outcome == nil then
 			-- свой бросок, сервер ещё не ответил: Ловибум висит у цели (не показываем промах, которого не было)
 			local f = math.clamp((k - WAIT) / 0.4, 0, 1)
-			LovibumModel.Place(model, CFrame.new(aim + Vector3.new(0, 0.1 * math.sin(t * 6), 0)), 0, 1)
+			LovibumModel.Place(model, CFrame.new(aim + Vector3.new(0, 0.1 * math.sin(t * 6), 0)), 0, NEAR_SCALE)
 			LovibumModel.SetTransparency(model, f)
 			return f < 1
 		end
@@ -291,7 +299,7 @@ local function throwFx(payload: any): Fx?
 			local dir = Vector3.new(aim.X - from.X, 0, aim.Z - from.Z)
 			dir = if dir.Magnitude > 1e-3 then dir.Unit else Vector3.zAxis
 			local pos = aim + dir * 3 * f - Vector3.new(0, 4 * f * f, 0)
-			LovibumModel.Place(model, CFrame.new(pos) * CFrame.Angles(f * 3, t * 10, 0), 0, 1)
+			LovibumModel.Place(model, CFrame.new(pos) * CFrame.Angles(f * 3, t * 10, 0), 0, NEAR_SCALE)
 			LovibumModel.SetTransparency(model, f)
 			LovibumModel.SetLight(model, 0)
 			return true
@@ -299,6 +307,7 @@ local function throwFx(payload: any): Fx?
 		-- попадание: вспышка, подскок над существом, когти раскрываются
 		if stage < 1 then
 			stage = 1
+			LovibumModel.SetLight(model, LIGHT_RANGE * 0.6, CAPTURE_LIGHT)
 			burst(sparks, aim, 10, 5, color, 0.22, t)
 			play("Open", hover())
 		end
@@ -315,34 +324,43 @@ local function throwFx(payload: any): Fx?
 				else 0
 			pos = hover():Lerp(ground(), d * d) + Vector3.new(0, bounce, 0)
 		end
-		-- существо светом втягивается в кристалл
+		-- существо втягивается в кристалл: бледнеет (видно), тонкий луч и светящийся шарик уходят вверх, в конце — внутри
 		if k >= 0.2 and k < 0.65 then
-			if not ghost then
-				local g = Instance.new("Part")
-				g.Anchored, g.CanCollide, g.CanQuery, g.CanTouch, g.CastShadow = true, false, false, false, false
-				g.Material = Enum.Material.Neon
-				g.Color = color
-				g.Parent = folder
-				ghost = g
-				beam = bar(center, hover(), 0.15, color)
+			if not orb then
+				local o = Instance.new("Part")
+				o.Anchored, o.CanCollide, o.CanQuery, o.CanTouch, o.CastShadow = true, false, false, false, false
+				o.Material = Enum.Material.Neon
+				o.Color = color
+				o.Size = Vector3.one * 0.4
+				o.Parent = folder
+				orb = o
+				beam = bar(center, hover(), 0.07, color)
 				play("Absorb", center)
 			end
-			local f = smooth((k - 0.2) / 0.45)
-			local g = ghost :: Part
-			g.Size = size * (1 - f) + Vector3.one * 0.2
-			g.CFrame = CFrame.new(center:Lerp(hover(), f * f))
-			g.Transparency = 0.35 + 0.6 * f
-			if k >= 0.3 and not hidden then
-				hidden = true
-				setCreatureHidden(part, true)
+			local f = smooth((k - 0.2) / 0.4)
+			local o = orb :: Part
+			o.CFrame = CFrame.new(center:Lerp(hover(), f * f)) * CFrame.Angles(t * 4, t * 3, 0)
+			o.Transparency = 0.2 + 0.6 * f
+			if beam then
+				beam.Transparency = 0.35 + 0.5 * f
 			end
-		elseif ghost then
-			ghost:Destroy()
-			ghost = nil
+			if not hidden then
+				faded = true
+				setCreatureFade(part, FADE * f)
+			end
+		elseif orb then
+			orb:Destroy()
+			orb = nil
 			if beam then
 				beam:Destroy()
 				beam = nil
 			end
+		end
+		-- втянуто: проверка вне окна втягивания (медленный кадр не оставит существо полупрозрачным)
+		if k >= 0.58 and not hidden and stage < 3 then
+			hidden = true
+			setCreatureFade(part, 1)
+			burst(sparks, center, 8, 3, color, 0.14, t)
 		end
 		-- покачивания на земле
 		local last = if outcome == "Caught" then 3 else breaks
@@ -364,14 +382,14 @@ local function throwFx(payload: any): Fx?
 			if stage < 3 then
 				stage = 3
 				hidden = false
-				setCreatureHidden(part, false)
+				setCreatureFade(part, 0)
 				burst(sparks, ground() + Vector3.new(0, 0.5, 0), 14, 6, color, 0.3, t)
 				play("Escape", center)
 			end
 			local f = math.clamp((w - last * WOBBLE_EVERY) / 0.5, 0, 1)
 			LovibumModel.SetLight(model, 0)
 			LovibumModel.SetTransparency(model, f)
-			LovibumModel.Place(model, CFrame.new(ground()) * CFrame.Angles(0, yaw, 0), 1, 1)
+			LovibumModel.Place(model, CFrame.new(ground()) * CFrame.Angles(0, yaw, 0), 1, NEAR_SCALE)
 			return f < 1 or #sparks > 0
 		end
 		if outcome == "Caught" and done then
@@ -382,7 +400,7 @@ local function throwFx(payload: any): Fx?
 				burst(sparks, ground() + Vector3.new(0, 0.8, 0), 12, 4, CAUGHT_COLOR, 0.26, t)
 				play("Caught", center)
 			end
-			LovibumModel.Place(model, CFrame.new(ground()) * CFrame.Angles(0, yaw, 0), 0, 1)
+			LovibumModel.Place(model, CFrame.new(ground()) * CFrame.Angles(0, yaw, 0), 0, NEAR_SCALE)
 			local stillHidden = typeof(part) == "Instance"
 				and part.Parent ~= nil
 				and part:GetAttribute("CatchMode") == "Hidden"
@@ -392,7 +410,7 @@ local function throwFx(payload: any): Fx?
 			model,
 			CFrame.new(pos) * CFrame.Angles(0, if k < 0.75 then t * 1.5 else yaw, 0) * CFrame.Angles(0, 0, tilt),
 			open,
-			1
+			NEAR_SCALE
 		)
 		return true
 	end

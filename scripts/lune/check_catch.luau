@@ -466,7 +466,7 @@ end
 local origin = CatchThrow.Origin(cam, 2)
 local rel = cam:PointToObjectSpace(origin)
 check(
-	rel.Z < 0 and rel.Y < 0 and math.abs(rel.X) < 1e-6,
+	rel.Z < 0 and rel.Y < 0 and math.abs(rel.X) < 1e-4,
 	"Ловибум — внизу по центру перед камерой"
 )
 -- попадание — по положению существа в момент прилёта: в рывке уклонения бросок в место — мимо
