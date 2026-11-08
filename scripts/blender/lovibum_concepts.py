@@ -1,23 +1,20 @@
-"""Концепты Ловибумов v3 (D55, этап 0): энергетические капсулы Бум, Турбо и Мега, стиль D39.
+"""Концепты Ловибумов v4 (D55, этап 0): Бум, Турбо и Мега — игрушечные устройства поимки, стиль D39.
 
-v3 — правки владельца к предварительно утверждённой v2 (2026-11-08): Бум круглее (мельче ступени торцов, шире срез
-углов), боковые дуги Меги меньше на ~22 %, общий символ системы — светящийся ромб на тёмной плашке верхнего пояса со
-всех сторон; проверка читаемости в руке и при броске в кадрах размера экрана телефона (844 × 390).
+История: v1 (персонажи с лицами) отклонён; v2–v3 (энергетические капсулы) — направление верное, но владелец увидел в
+них батарейки и картриджи (2026-11-08). v4 сохраняет идею компактной капсулы с энергетическим ядром, цвета и захват
+сетью, а силуэт делает игрушечным. Фирменный элемент всей линейки — «кристалл в когтях»: четыре угловые стойки v3
+стали сегментированными когтями-захватами, они выгибаются наружу и смыкаются над головой, держа кристалл-ромб; между
+когтями светится ядро. При поимке когти раскрываются, кристалл выпускает сеть — символ стал и силуэтом, и механизмом.
+Плоских торцов-«контактов» нет. Прогрессия:
+- Бум (×1): широкий и приземистый, толстые оранжевые когти с жёлтыми суставами, боковые защёлки, бирюзовое ядро;
+- Турбо (×1.5): вытянутый, хищные синие когти со световыми полосами, большие стреловидные стабилизаторы со светящейся
+  кромкой, сопло-кольцо снизу, голубой вытянутый кристалл;
+- Мега (×2): фиолетовые когти с золотыми суставами и кончиками, золотой обод-корона на кончиках, золотая база с
+  камнями, самый крупный кристалл.
+Без глаз, ртов и лиц; без центральной кнопки и деления на половины.
 
-Первая версия (персонажи с глазами и зубами) владелец отклонил 2026-11-08: нужны устройства одной линейки, без лиц,
-с понятной прогрессией. Эта версия — одна форма на всех: вертикальная капсула (квадрат со срезанными углами в сечении),
-ступенчатые торцы, четыре угловые стойки держат светящееся энергетическое ядро, оно видно в четырёх окнах. Шва-экватора,
-центральной кнопки и деления на половины нет. Прогрессия — от простого к премиальному:
-- Бум (бонус ×1): оранжевые стойки, жёлтые торцы, бирюзовое ядро; без лишних деталей;
-- Турбо (×1.5): синий корпус, светлые торцы с тёмными поясами, голубое ядро за решёткой, световые полосы на стойках,
-  четыре небольших стабилизатора снизу, огоньки на верхнем торце;
-- Мега (×2): фиолетовый корпус, золотые торцы и канты, кристаллическое ядро, две золотые дуги над капсулой с камнем.
-Захват — энергетическая сеть: капсула зависает над существом, из окон уходят лучи, сеть из квадратных ячеек накрывает
-существо, стягивается в куб света и уходит в ядро; при неудаче рассыпается на квадраты.
-
-Только концепт на утверждение: рендеры EEVEE, без запекания, FBX и загрузок. Для свечения каждый главный кадр
-рендерится второй раз (свет и небо выключены — видны только светящиеся детали): <кадр>_glow.png, листы
-(scripts/d55_lovibum_sheets.py) размывают его и добавляют к кадру. 1 единица = 1 стад, z вверх, лицом в −y.
+Только концепт на утверждение: рендеры EEVEE и проход свечения (<кадр>_glow.png — листы scripts/d55_lovibum_sheets.py
+размывают его и добавляют к кадру), без запекания, FBX и загрузок. 1 единица = 1 стад, z вверх, лицом в −y.
 Запуск: blender --background --factory-startup --python scripts/blender/lovibum_concepts.py -- <репо> <превью>
 Зависит от art_style.py.
 """
@@ -38,16 +35,31 @@ import art_style as S  # noqa: E402
 argv = sys.argv[sys.argv.index("--") + 1 :]
 REPO, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
 os.makedirs(OUT, exist_ok=True)
-GLOW = {"core": 4.0, "glow": 3.0, "net": 3.0, "spark": 3.5, "crystal": 3.0, "dark": 1.2, "mark": 3.5}  # светящиеся ключи и сила свечения
+GLOW = {"core": 1.4, "crystal": 1.6, "glow": 2.4, "net": 2.0, "spark": 2.6}  # светящиеся ключи и сила свечения
 
 TYPES = {
-    "Boom": {"body": "FF8A1F", "cap": "FFC21A", "trim": "E8641A", "foot": "2A3344", "core": "2EE6D6",
-             "glow": "8AFFF2", "scale": 1.0, "cut": 0.16, "round": True},
-    "Turbo": {"body": "2F6BFF", "cap": "E6F3FF", "trim": "1E2B4F", "foot": "1E2B4F", "core": "3FD8FF",
-              "glow": "5CE8FF", "scale": 1.05, "cut": 0.12, "round": False},
-    "Mega": {"body": "7A2FE0", "cap": "F2C230", "trim": "C98E12", "foot": "C98E12", "core": "E57BFF",
-             "glow": "FFD1FF", "scale": 1.1, "cut": 0.12, "round": False},
+    "Boom": {"claw": "FF8A1F", "knuckle": "FFC21A", "tip": "FFC21A", "base": "FFC21A", "foot": "2A3344",
+             "trim": "E8641A", "core": "2EE6D6", "crystal": "22D8C8", "glow": "8AFFF2",
+             "widths": (0.36, 0.35, 0.32, 0.27, 0.2), "thick": 0.12, "scale": (1.12, 1.12, 0.92),
+             "profile": [(0.34, 0.14), (0.46, 0.33), (0.5, 0.55), (0.46, 0.77), (0.34, 0.92), (0.2, 1.0)],
+             "crystal_at": (0.95, 1.13, 1.38, 0.16),
+             "orb": [(0.2, 0.17, 0.27), (0.31, 0.25, 0.39), (0.37, 0.37, 0.63), (0.31, 0.61, 0.79), (0.2, 0.77, 0.9)]},
+    "Turbo": {"claw": "2F6BFF", "knuckle": "1E2B4F", "tip": "E6F3FF", "base": "E6F3FF", "foot": "1E2B4F",
+              "trim": "1E2B4F", "core": "3FD8FF", "crystal": "2CB8FF", "glow": "5CE8FF",
+              "widths": (0.28, 0.27, 0.23, 0.18, 0.13), "thick": 0.1, "scale": (0.98, 0.98, 1.06),
+              "profile": [(0.33, 0.14), (0.43, 0.36), (0.45, 0.6), (0.38, 0.84), (0.25, 1.01), (0.14, 1.11)],
+              "crystal_at": (1.04, 1.24, 1.56, 0.13),
+              "orb": [(0.18, 0.17, 0.29), (0.27, 0.27, 0.43), (0.33, 0.41, 0.69), (0.27, 0.67, 0.87),
+                      (0.17, 0.85, 1.0)]},
+    "Mega": {"claw": "7A2FE0", "knuckle": "F2C230", "tip": "F2C230", "base": "F2C230", "foot": "C98E12",
+             "trim": "C98E12", "core": "E57BFF", "crystal": "D45CFF", "glow": "FFD1FF",
+             "widths": (0.34, 0.33, 0.3, 0.25, 0.19), "thick": 0.12, "scale": (1.05, 1.05, 1.05),
+             "profile": [(0.35, 0.16), (0.47, 0.37), (0.51, 0.59), (0.46, 0.82), (0.33, 0.98), (0.21, 1.07)],
+             "crystal_at": (0.98, 1.21, 1.53, 0.21),
+             "orb": [(0.2, 0.18, 0.28), (0.32, 0.26, 0.41), (0.38, 0.39, 0.66), (0.32, 0.64, 0.83),
+                     (0.21, 0.81, 0.95)]},
 }
+OPEN_DEG = 52  # раскрытие когтей при поимке
 
 
 # ── Помощники ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -58,7 +70,7 @@ def sq(h, cut):
 
 
 def bar(a, key, p0, p1, w, h=None, bevel=S.BEVEL):
-    """Брусок от точки p0 до p1 с сечением w × h."""
+    """Брусок от p0 до p1 с сечением w × h (поворот сечения — как получится; для сетей и следов)."""
     p0, p1 = Vector(p0), Vector(p1)
     d = p1 - p0
     up = "Y" if abs(d.normalized().z) > 0.95 else "Z"
@@ -67,127 +79,121 @@ def bar(a, key, p0, p1, w, h=None, bevel=S.BEVEL):
     a.box(key, -d.length / 2, d.length / 2, -w / 2, w / 2, -h / 2, h / 2, bevel=bevel, matrix=m)
 
 
+def bar_side(a, key, p0, p1, w, h, side, bevel=S.BEVEL, extend=0.0):
+    """Брусок от p0 до p1: ширина w вдоль side (поперёк плоскости когтя), толщина h — в плоскости когтя."""
+    p0, p1 = Vector(p0), Vector(p1)
+    x = (p1 - p0).normalized()
+    y = (side - x * side.dot(x)).normalized()
+    z = x.cross(y)
+    m = Matrix((x, y, z)).transposed().to_4x4()
+    m.translation = (p0 + p1) / 2
+    half = (p1 - p0).length / 2 + extend
+    a.box(key, -half, half, -w / 2, w / 2, -h / 2, h / 2, bevel=bevel, matrix=m)
+
+
 def paint(a, spec):
-    for key, code, rings in (("body", spec["body"], True), ("cap", spec["cap"], False), ("trim", spec["trim"], False),
-                             ("foot", spec["foot"], False), ("core", spec["core"], False),
-                             ("glow", spec["glow"], False), ("dark", "6A1FC0", False), ("gold", "F2C230", False),
-                             ("golddark", "C98E12", False), ("crystal", spec["core"], False),
-                             ("white", "FFFDF4", False), ("plate", "1C2030", False), ("mark", "FFF4C9", False)):
+    for key, code, rings in (("claw", spec["claw"], True), ("knuckle", spec["knuckle"], False),
+                             ("tip", spec["tip"], False), ("base", spec["base"], False), ("foot", spec["foot"], False),
+                             ("trim", spec["trim"], False), ("core", spec["core"], False),
+                             ("crystal", spec["crystal"], False), ("glow", spec["glow"], False),
+                             ("gemp", "FF3B7F", False), ("gemc", "3FE0FF", False), ("white", "FFFDF4", False)):
         a.paint(key, code, rings)
 
 
-W, CUT, IN = 0.4, 0.12, 0.17  # полуширина стоек, срез углов, внутренний край стойки (окно — между ±IN)
-ZB, ZT = 0.32, 1.12  # низ и верх стоек; торцы симметричны относительно середины (капсула-пилюля)
+def claw(a, theta, prof, widths, thick, open_deg=0.0, strip=None, hinges=(1, 3)):
+    """Коготь-лепесток в вертикальной плоскости под углом theta: пластины сужаются к кончику (ширина поперёк плоскости
+    когтя, толщина — по радиусу), чередование толщины — без совпадающих граней; оси-шарниры поперёк когтя (видно, что
+    он раскрывается); кончик — крючок к кристаллу; strip — полоса по наружной стороне (свет у Турбо, золото у Меги).
+    open_deg — раскрытие наружу вокруг основания."""
+    u = Vector((math.cos(theta), math.sin(theta), 0))
+    t = Vector((-math.sin(theta), math.cos(theta), 0))
+    pts = [u * r + Vector((0, 0, z)) for r, z in prof]
+    if open_deg:
+        rot = Matrix.Rotation(math.radians(open_deg), 4, t)
+        pts = [pts[0] + (rot @ (p - pts[0])) for p in pts]
+    n = len(pts) - 1
+    for i in range(n):
+        bar_side(a, "claw", pts[i], pts[i + 1], widths[i], thick * (1 if i % 2 == 0 else 0.9), t, extend=0.025)
+    for i in hinges:
+        half = widths[i] / 2 + 0.035
+        bar_side(a, "knuckle", pts[i] - t * half, pts[i] + t * half, 0.085 + 0.006 * (i % 2), 0.085, u)
+    tip = pts[-1]
+    hook = Vector((-u.x, -u.y, 0)) * 0.09 + Vector((0, 0, 0.05))
+    bar_side(a, "tip", tip, tip + hook, widths[-1] * 0.8, thick * 1.1, t, extend=0.03)
+    bar_side(a, "tip", tip + hook, tip + hook * 1.7, widths[-1] * 0.45, thick * 0.8, t)
+    if strip:
+        for i in range(n - 1):
+            d = (pts[i + 1] - pts[i]).normalized()
+            out = t.cross(d).normalized()  # наружу от оси
+            if out.dot(u) < 0:
+                out = -out
+            off = out * (thick / 2 + 0.006)
+            bar_side(a, strip, pts[i] + off, pts[i + 1] + off, 0.06 + 0.004 * (i % 2), 0.024, t, bevel=0)
+    return pts
 
 
-def column_pts(sx, sy, cut=CUT):
-    """Угловая стойка: пятиугольник со срезанным внешним углом (как у торцов)."""
-    base = [(IN, IN), (W, IN), (W, W - cut), (W - cut, W), (IN, W)]
-    return [(sx * x, sy * y) for x, y in base]
+def crystal(a, lo, mid, hi, half, key="crystal", lift=0.0):
+    """Кристалл-ромб (бипирамида, повёрнута на 45°: грани смотрят на когти)."""
+    rot = Matrix.Translation((0, 0, lift)) @ Matrix.Rotation(math.radians(45), 4, "Z")
+    a.frustum(key, (-0.02, 0.02, -0.02, 0.02), (-half, half, -half, half), lo, mid + 0.005, matrix=rot)
+    a.frustum(key, (-half, half, -half, half), (-0.02, 0.02, -0.02, 0.02), mid - 0.005, hi, matrix=rot)
 
 
-def chamfer_strip(sx, sy, z0, z1, a, key, out=0.015):
-    """Полоса на срезе угловой стойки (световая у Турбо, золотой кант у Меги)."""
-    p, q = Vector((sx * (W - CUT), sy * W)), Vector((sx * W, sy * (W - CUT)))
-    n = Vector((sx, sy)).normalized()
-    p1, p2 = p + (q - p) * 0.28, p + (q - p) * 0.72
-    pts = [tuple(p1 - n * 0.01), tuple(p2 - n * 0.01), tuple(p2 + n * out), tuple(p1 + n * out)]
-    a.prism(key, pts, z0, z1, bevel=0)
+# ── Ловибум: общая конструкция «кристалл в когтях» ──────────────────────────────────────────────────────────
 
 
-STEP_ENDS = ((0.12, 0.035, 0.0, 0.07), (0.24, 0.07, 0.06, 0.15), (0.33, 0.1, 0.14, 0.24))
-ROUND_ENDS = ((0.12, 0.045, 0.0, 0.06), (0.2, 0.075, 0.05, 0.11), (0.27, 0.1, 0.1, 0.16), (0.33, 0.125, 0.15, 0.21),
-              (0.38, 0.145, 0.2, 0.26))  # Бум: ступени мельче, срез шире — торец ближе к куполу
-TOP_BAND = (1.07, 1.21)  # верхний пояс выше нижнего (0.23…0.33): на нём символ-ромб
-
-
-def ends(a, band, cap, emit, round_=False, band_cut=0.125):
-    """Торцы-ступени сверху и снизу (зеркально): излучатель, ступени, пояс; верхний пояс выше — под символ."""
-    steps = ROUND_ENDS if round_ else STEP_ENDS
-    for flip in (False, True):
-        for i, (h, cut, z0, z1) in enumerate(steps):
-            if flip:
-                z0, z1 = ZB + ZT - z1, ZB + ZT - z0
-            a.prism(emit if i == 0 else cap, sq(h, cut), z0, z1)
-    a.prism(band, sq(0.42, band_cut), 0.23 if not round_ else 0.25, 0.33)
-    a.prism(band, sq(0.42, band_cut), *TOP_BAND)
-
-
-def emblem(a, cut):
-    """Символ системы Ловибумов — светящийся ромб на тёмной плашке, на верхнем поясе с четырёх сторон."""
-    c = (TOP_BAND[0] + TOP_BAND[1]) / 2
-    hz, hw = 0.062, 0.045  # полувысота и полуширина ромба (вытянут вверх — «кристалл»)
-    for s in (-1, 1):
-        a.box("plate", -0.09, 0.09, s * 0.415, s * 0.44, c - 0.068, c + 0.068)
-        a.box("plate", s * 0.415, s * 0.44, -0.09, 0.09, c - 0.068, c + 0.068)
-        a.prism("mark", [(0, c + hz), (hw, c), (0, c - hz), (-hw, c)], s * 0.435, s * 0.458, axis="y", bevel=0)
-        a.prism("mark", [(c + hz, 0), (c, hw), (c - hz, 0), (c, -hw)], s * 0.435, s * 0.458, axis="x", bevel=0)
-
-
-# ── Капсула: общая форма линейки ────────────────────────────────────────────────────────────────────────────
-
-
-def capsule(name):
+def lovibum(name, opened=False):
     spec = TYPES[name]
-    a = S.Art("Lovibum_" + name, ring_z0=0.72)
+    a = S.Art("Lovibum_" + name + ("_open" if opened else ""), ring_z0=0.6)
     paint(a, spec)
-    a.transform = Matrix.Scale(spec["scale"], 4)
-    cut = spec["cut"]
-    ends(a, "cap" if name == "Boom" else "trim", "cap", "glow" if name != "Mega" else "crystal", spec["round"],
-         band_cut=0.155 if spec["round"] else 0.125)
-    emblem(a, cut)
-    # Ядро и четыре угловые стойки; окна — между стойками на каждой стороне.
-    if name == "Mega":
-        a.prism("dark", sq(0.22, 0.06), ZB + 0.01, ZT - 0.01)
-        rot = Matrix.Rotation(math.radians(45), 4, "Z")
-        a.frustum("crystal", (-0.03, 0.03, -0.03, 0.03), (-0.29, 0.29, -0.29, 0.29), 0.35, 0.73, matrix=rot)
-        a.frustum("crystal", (-0.29, 0.29, -0.29, 0.29), (-0.03, 0.03, -0.03, 0.03), 0.72, 1.1, matrix=rot)
-    else:
-        a.prism("core", sq(0.3, 0.12 if spec["round"] else 0.09), ZB - 0.01, ZT + 0.01)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            a.prism("body", column_pts(sx, sy, cut), ZB, ZT)
-    if name == "Turbo":
-        # Решётка в окнах: по две тёмные планки (вертикальные — без «экватора»).
-        for k in (-0.07, 0.07):
-            for s in (-1, 1):
-                a.box("trim", k - 0.016, k + 0.016, s * 0.29, s * 0.37, ZB + 0.01, ZT - 0.01)
-                a.box("trim", s * 0.29, s * 0.37, k - 0.016, k + 0.016, ZB + 0.01, ZT - 0.01)
-        # Световые полосы на срезах стоек и огоньки на верхней ступени.
-        for sx in (-1, 1):
-            for sy in (-1, 1):
-                chamfer_strip(sx, sy, 0.42, 1.02, a, "glow")
-                a.box("glow", sx * 0.25 - 0.03, sx * 0.25 + 0.03, sy * 0.25 - 0.03, sy * 0.25 + 0.03, 1.29, 1.335)
-        # Четыре стабилизатора снизу по диагоналям: тонкие пластины ступенькой, светящийся кончик.
-        for sx in (-1, 1):
-            for sy in (-1, 1):
-                m = Matrix.Rotation(math.atan2(sy, sx), 4, "Z")
-                a.box("trim", 0.3, 0.6, -0.025, 0.025, 0.01, 0.3, matrix=m)
-                a.box("trim", 0.3, 0.5, -0.025, 0.025, 0.29, 0.44, matrix=m)
-                a.box("glow", 0.58, 0.64, -0.03, 0.03, 0.02, 0.14, matrix=m)
-    if name == "Mega":
-        # Золотые канты на срезах стоек.
-        for sx in (-1, 1):
-            for sy in (-1, 1):
-                chamfer_strip(sx, sy, 0.38, 1.06, a, "gold")
-        # Золотые дуги по бокам: от нижнего пояса к верхнему, выгнуты наружу; накладки на концах, камень в середине.
-        # v3: дуги меньше на ~22 % (выгиб 0.17 → 0.13, высота 0.6 → 0.47, толщина и кристалл тоньше).
-        n = 6
+    sx, sy, sz = spec["scale"]
+    a.transform = Matrix.Diagonal((sx, sy, sz, 1.0))
+    # База: ножка и кольцо, из которого растут когти.
+    a.prism("foot", sq(0.26, 0.07), 0.0, 0.07)
+    a.prism("base", sq(0.42, 0.13), 0.05, 0.2)
+    # Ядро-шар ступенями — светится между когтями.
+    for h, z0, z1 in spec["orb"]:
+        a.prism("core", sq(h, h * 0.32), z0, z1)
+    strip = {"Turbo": "glow", "Mega": "knuckle"}.get(name)
+    for k in range(4):
+        claw(a, math.pi / 4 + k * math.pi / 2, spec["profile"], spec["widths"], spec["thick"],
+             OPEN_DEG if opened else 0.0, strip=strip)
+    lo, mid, hi, half = spec["crystal_at"]
+    crystal(a, lo, mid, hi, half, lift=0.14 if opened else 0.0)
+    if name == "Boom":
+        # Боковые защёлки, как у игрушечного ланч-бокса.
         for s in (-1, 1):
-            pts = [Vector((s * (0.43 + 0.13 * math.sin(math.pi * i / n)), 0, 0.485 + (0.955 - 0.485) * i / n))
-                   for i in range(n + 1)]
-            for i in range(n):
-                w = 0.056 if i % 2 else 0.066  # соседние бруски разной толщины: без совпадающих граней
-                bar(a, "gold", pts[i], pts[i + 1], w, w + 0.024)
-            for z in (0.485, 0.955):
-                a.box("golddark", s * 0.38, s * 0.46, -0.06, 0.06, z - 0.04, z + 0.04)
-            a.frustum("crystal", (-0.04, 0.04, -0.04, 0.04), (0, 0, 0, 0), 0.0, 0.1,
-                      matrix=Matrix.Translation((s * 0.585, 0, 0.72)) @ Matrix.Rotation(s * math.pi / 2, 4, "Y"))
+            a.box("base", s * 0.4, s * 0.56, -0.13, 0.13, 0.34, 0.62)
+            a.box("trim", s * 0.54, s * 0.62, -0.1, 0.1, 0.55, 0.69)
+            a.box("trim", s * 0.555, s * 0.585, -0.07, 0.07, 0.39, 0.45)
+    if name == "Turbo":
+        # Стреловидные стабилизаторы со светящейся передней кромкой; сопло-кольцо снизу.
+        fin = [(0.38, 0.2), (0.38, 0.8), (0.56, 0.72), (0.95, 0.25), (0.98, 0.05), (0.72, 0.11)]
+        for s in (-1, 1):
+            pts = [(s * x, z) for x, z in fin]
+            a.extrude("trim", pts, -0.034, 0.034, axis="y")
+            bar_side(a, "glow", Vector((s * 0.57, 0, 0.74)), Vector((s * 0.97, 0, 0.26)), 0.08, 0.05,
+                     Vector((0, 1, 0)), bevel=0)
+            a.box("white", s * 0.37, s * 0.46, -0.05, 0.05, 0.32, 0.7)
+        a.prism("glow", sq(0.2, 0.06), -0.05, 0.015)
+    if name == "Mega":
+        # Камни на золотой базе, золотой обод-корона на кончиках когтей.
+        for k in range(4):
+            ang = k * math.pi / 2
+            c = Vector((math.cos(ang) * 0.42, math.sin(ang) * 0.42, 0.125))
+            a.box("gemp" if k % 2 else "gemc", -0.05, 0.05, -0.05, 0.05, -0.05, 0.05,
+                  matrix=Matrix.Translation(c) @ Matrix.Rotation(ang, 4, "Z") @ Matrix.Rotation(math.radians(45), 4,
+                                                                                                    "X"))
+        if not opened:
+            pts = [Vector((math.cos(math.pi / 4 + k * math.pi / 4) * 0.25, math.sin(math.pi / 4 + k * math.pi / 4) * 0.25,
+                           1.06)) for k in range(8)]
+            for k in range(8):
+                bar(a, "knuckle", pts[k], pts[(k + 1) % 8], 0.06 if k % 2 else 0.068, 0.07 if k % 2 else 0.078)
     a.transform = None
     return a
 
 
-# ── Эффекты захвата: сеть, куб, искры, осколки, след ────────────────────────────────────────────────────────
+# ── Эффекты захвата: сеть, куб, искры, след ─────────────────────────────────────────────────────────────────
 
 
 def fx_art(name, color):
@@ -198,25 +204,7 @@ def fx_art(name, color):
     return a
 
 
-def net_tent(a, base, top, z0, z1, rings=5, lines=5, w=0.04):
-    """Сеть-шатёр: квадратные кольца от основания base (полусторона на z0) до верха top (на z1) и линии по граням."""
-    def ring(h, z):
-        c = [Vector((-h, -h, z)), Vector((h, -h, z)), Vector((h, h, z)), Vector((-h, h, z))]
-        for i in range(4):
-            bar(a, "net", c[i], c[(i + 1) % 4], w, w, bevel=0)
-    for i in range(rings + 1):
-        t = i / rings
-        ring(base + (top - base) * t, z0 + (z1 - z0) * t)
-    for side in range(4):
-        for j in range(lines + 1):
-            s = -1 + 2 * j / lines
-            def at(h, z):
-                p = [(s * h, -h), (h, s * h), (-s * h, h), (-h, -s * h)][side]
-                return Vector((p[0], p[1], z))
-            bar(a, "net", at(base, z0), at(top, z1), w, w, bevel=0)
-
-
-def net_dome(a, base, top, z0, z1, rings=6, lines=6, w=0.04):
+def net_dome(a, base, top, z0, z1, rings=6, lines=6, w=0.03):
     """Сеть-купол: квадратные кольца, полусторона от base на z0 до top на z1 по выпуклому профилю, и линии по граням."""
     hs = [top + (base - top) * math.cos(math.pi / 2 * i / rings) ** 0.6 for i in range(rings + 1)]
     zs = [z0 + (z1 - z0) * (i / rings) ** 1.15 for i in range(rings + 1)]
@@ -235,7 +223,7 @@ def net_dome(a, base, top, z0, z1, rings=6, lines=6, w=0.04):
                 bar(a, "net", at(hs[i], zs[i]), at(hs[i + 1], zs[i + 1]), w, w, bevel=0)
 
 
-def net_cube(a, h, z0, cells=4, w=0.045):
+def net_cube(a, h, z0, cells=3, w=0.035):
     """Сеть, стянутая в куб: решётка на всех гранях куба полустороны h, низ на z0."""
     for i in range(cells + 1):
         t = -h + 2 * h * i / cells
@@ -276,8 +264,8 @@ def build(art, glow_keys=GLOW):
     return obj
 
 
-def core_light(obj, color, z, energy=12.0):
-    """Свет ядра изнутри капсулы — подсвечивает стойки цветом ядра; следует за капсулой."""
+def core_light(obj, color, z, energy=6.0):
+    """Свет ядра изнутри — подсвечивает когти цветом ядра; следует за Ловибумом."""
     data = bpy.data.lights.new(obj.name + "_Core", "POINT")
     data.energy, data.color, data.shadow_soft_size = energy, S.rgb(color), 0.1
     light = bpy.data.objects.new(obj.name + "_Core", data)
@@ -288,7 +276,7 @@ def core_light(obj, color, z, energy=12.0):
 
 
 def creature():
-    """Существо босса 3 из FBX с картой цвета (без подставки) — для кадров захвата; пустой список, если не вышло."""
+    """Существо босса 3 из FBX с картой цвета (без подставки) — для кадров поимки; пустой список, если не вышло."""
     fbx = os.path.join(REPO, "assets", "models", "art", "LiveCheeseMonster.fbx")
     tex = os.path.join(REPO, "assets", "textures", "art", "LiveCheeseMonster_color.png")
     if not (os.path.exists(fbx) and os.path.exists(tex)):
@@ -314,7 +302,7 @@ def creature():
         for c in list(o.users_collection):
             c.objects.unlink(o)
         collection.objects.link(o)
-        if o.name.endswith("_Stand") or "Stand" in o.name:
+        if "Stand" in o.name:
             o.hide_render = True
             o.name = "CreatureStand"
         else:
@@ -328,14 +316,16 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 collection = bpy.data.collections.new("Lovibums")
 bpy.context.scene.collection.children.link(collection)
 
-report, caps = {}, {}
+report, caps, opens = {}, {}, {}
 for name in TYPES:
-    art = capsule(name)
-    obj = build(art)
-    lo, hi = S.bounds(obj)
-    report[name] = {**art.stats, "size": [round(hi[i] - lo[i], 2) for i in range(3)]}
-    caps[name] = obj
-    core_light(obj, TYPES[name]["core"], 0.62 * TYPES[name]["scale"])
+    for opened, store in ((False, caps), (True, opens)):
+        art = lovibum(name, opened)
+        obj = build(art)
+        if not opened:
+            lo, hi = S.bounds(obj)
+            report[name] = {**art.stats, "size": [round(hi[i] - lo[i], 2) for i in range(3)]}
+        store[name] = obj
+        core_light(obj, TYPES[name]["core"], 0.55 * TYPES[name]["scale"][2])
 print("REPORT " + json.dumps(report, ensure_ascii=False), flush=True)
 
 prev = S.Preview(collection)
@@ -345,9 +335,7 @@ world_bg = next(n for n in bpy.context.scene.world.node_tree.nodes if n.type == 
 def only(objs):
     for o in bpy.context.scene.objects:
         if o.type == "MESH" and o.name != "Floor":
-            o.hide_render = o not in objs and not o.name.startswith("CreatureStand")
-            if o.name.startswith("CreatureStand"):
-                o.hide_render = True
+            o.hide_render = o not in objs or o.name.startswith("CreatureStand")
     for o in bpy.context.scene.objects:
         if o.type == "LIGHT" and o.parent is not None:
             o.hide_render = o.parent.hide_render
@@ -376,119 +364,119 @@ def place(obj, loc, rot=(0, 0, 0)):
 
 
 def aim(obj, loc, direction, spin=0.0):
-    """Капсула верхом по направлению полёта (и поворот вокруг своей оси)."""
+    """Ловибум кристаллом по направлению полёта (и поворот вокруг своей оси)."""
     q = Vector(direction).normalized().to_track_quat("Z", "Y")
     obj.rotation_mode = "QUATERNION"
     obj.location = loc
     obj.rotation_quaternion = q @ Matrix.Rotation(spin, 4, "Z").to_quaternion()
 
 
-# 1. Повороты и крупный кадр каждой капсулы.
+def hero(obj, path):
+    lo, hi = S.bounds(obj)
+    size, cz = max(hi - lo), (lo.z + hi.z) / 2
+    dist = 2.7 * size + 1.0
+    shot(path, (-0.62 * dist, -0.85 * dist, cz + 0.55 * size), (0, 0, cz - 0.05 * size), 75, (1100, 1100))
+
+
+# 1. Повороты, крупный кадр и раскрытые когти каждого.
 for name, obj in caps.items():
     only([obj])
     S.render_item(prev, obj, OUT)
     only([obj])
-    lo, hi = S.bounds(obj)
-    size, cz = max(hi - lo), (lo.z + hi.z) / 2
-    dist = 2.7 * size + 1.0
-    shot(os.path.join(OUT, f"{obj.name}_hero.png"), (-0.62 * dist, -0.85 * dist, cz + 0.55 * size),
-         (0, 0, cz - 0.05 * size), 75, (1100, 1100))
+    hero(obj, os.path.join(OUT, f"{obj.name}_hero.png"))
+    only([opens[name]])
+    hero(opens[name], os.path.join(OUT, f"Lovibum_{name}_open_hero.png"))
 
 # 2. Линейка: три рядом, слева направо по старшинству.
-for name, x in (("Boom", -1.45), ("Turbo", 0.0), ("Mega", 1.55)):
+for name, x in (("Boom", -1.55), ("Turbo", 0.05), ("Mega", 1.7)):
     place(caps[name], (x, 0, 0), (0, 0, math.radians(-25)))
 only(list(caps.values()))
 bpy.context.view_layer.update()
-shot(os.path.join(OUT, "lineup.png"), (-1.2, -6.4, 2.3), (0.05, 0, 0.72), 50, (2000, 1000))
+shot(os.path.join(OUT, "lineup.png"), (-1.2, -6.9, 2.4), (0.1, 0, 0.72), 50, (2000, 1000))
 
-# 3. В полёте: капсулы летят вправо-вниз верхом вперёд, за ними след из квадратных искр цвета ядра.
+# 3. В полёте: кристаллом вперёд, короткий след из квадратных искр цвета ядра.
 fly = []
 for i, (name, x, z) in enumerate((("Boom", -3.3, 3.5), ("Turbo", 0.1, 2.25), ("Mega", 3.5, 1.0))):
     d = Vector((1, 0, -0.12)).normalized()
     aim(caps[name], Vector((x, 0, z)), d, spin=0.5 + 0.4 * i)
     t = fx_art(f"Trail_{name}", TYPES[name]["core"])
-    path = [Vector((x, 0, z)) - d * (0.95 + 0.2 * k) + Vector((0, 0, 0.01 * k * k)) for k in range(7)]
-    trail(t, path, [0.085 * (1 - k / 8) for k in range(7)])
+    path = [Vector((x, 0, z)) - d * (0.9 + 0.2 * k) + Vector((0, 0, 0.01 * k * k)) for k in range(6)]
+    trail(t, path, [0.075 * (1 - k / 7) for k in range(6)])
     fly.append(build(t))
 only(list(caps.values()) + fly)
 bpy.context.view_layer.update()
 shot(os.path.join(OUT, "flight.png"), (0.0, -14.5, 3.4), (0.0, 0, 2.25), 50, (2000, 1000))
 for o in fly:
     o.hide_render = True
+for o in caps.values():
+    place(o, (0, 0, 0))
 
-# 4. Захват энергетической сетью (Бум): бросок → сеть → сжатие → поймано; и «вырвалось».
+# 4. Поимка энергетической сетью (Бум): бросок → когти раскрылись, сеть → сжатие → поймано; и «вырвалось».
 cre = creature()
-boom = caps["Boom"]
+boom, boom_open = caps["Boom"], opens["Boom"]
 boom_core = TYPES["Boom"]["core"]
+cre_h = 2.6
 if cre:
     bpy.context.view_layer.update()
-    lo = Vector((min(S.bounds(o)[0].x for o in cre), min(S.bounds(o)[0].y for o in cre),
-                 min(S.bounds(o)[0].z for o in cre)))
-    hi = Vector((max(S.bounds(o)[1].x for o in cre), max(S.bounds(o)[1].y for o in cre),
-                 max(S.bounds(o)[1].z for o in cre)))
+    lo = Vector([min(S.bounds(o)[0][i] for o in cre) for i in range(3)])
+    hi = Vector([max(S.bounds(o)[1][i] for o in cre) for i in range(3)])
     for o in cre:
         if o.parent is None:
             o.location += Vector((-(lo.x + hi.x) / 2, -(lo.y + hi.y) / 2, -lo.z))
     cre_h = hi.z - lo.z
     print("CREATURE", len(cre), [round(v, 2) for v in (hi - lo)], flush=True)
-else:
-    cre_h = 2.6
-cam = ((-5.2, -8.2, 3.9), (0, 0, 1.6), 50, (1100, 1100))
-base_tf = {o: (o.location.copy(), o.scale.copy()) for o in cre if o.parent is None}
+base_tf = {o: (o.location.copy(), o.scale.copy(), o.rotation_euler.copy()) for o in cre if o.parent is None}
 
 
-def set_creature(scale=1.0, z=0.0, hide=False):
-    """Существо целиком: части FBX — верхние объекты (их и двигаем), масштаб относительно начала координат."""
+def set_creature(scale=1.0, z=0.0, hide=False, offset=Vector((0, 0, 0)), face=False):
+    """Существо целиком: части FBX — верхние объекты; масштаб от начала координат; face — лицом к +y (к игроку)."""
+    turn = Matrix.Rotation(math.pi if face else 0.0, 4, "Z")
     for o in cre:
         o.hide_render = hide
-    for o, (loc, sc) in base_tf.items():
-        o.location = loc * scale + Vector((0, 0, z))
+    for o, (loc, sc, rot) in base_tf.items():
+        o.location = turn @ (loc * scale) + Vector((0, 0, z)) + offset
         o.scale = sc * scale
+        o.rotation_euler = rot.copy()
+        o.rotation_euler.z += math.pi if face else 0.0
 
 
-# 4.1 Бросок: капсула летит к существу, след искр.
-place(boom, (-1.6, -2.6, 2.4), (math.radians(20), math.radians(50), math.radians(-40)))
+cam = ((-5.9, -9.3, 4.4), (0, 0, 1.85), 50, (1100, 1100))
+set_creature()
+pos1 = Vector((-2.7, -0.2, 3.2))  # на подлёте сбоку-сверху, не на линии камеры — морду не закрывает
+aim(boom, pos1, Vector((0, 0, 1.3)) - pos1, spin=0.5)
+d1 = (Vector((0, 0, 1.3)) - pos1).normalized()
 t1 = fx_art("Fx_Throw", boom_core)
-trail(t1, [Vector((-2.2 - 0.36 * k, -3.3 - 0.42 * k, 2.25 - 0.08 * k)) for k in range(9)],
-      [0.1 * (1 - k / 10) for k in range(9)])
+trail(t1, [pos1 - d1 * (0.9 + 0.22 * k) for k in range(6)], [0.075 * (1 - k / 7) for k in range(6)])
 fx1 = build(t1)
 only([boom, fx1] + cre)
 bpy.context.view_layer.update()
 shot(os.path.join(OUT, "capture_1_throw.png"), *cam)
-fx1.hide_render = True
 
-# 4.2 Сеть: капсула зависла над существом, из окон — сеть-шатёр из квадратных ячеек до земли.
-top_z = cre_h + 0.9
-place(boom, (0, 0, top_z), (0, 0, math.radians(-20)))
+top_z = cre_h + 0.75
+place(boom_open, (0, 0, top_z), (0, 0, math.radians(-20)))
 t2 = fx_art("Fx_Net", boom_core)
-net_dome(t2, 1.9, 0.36, 0.02, top_z + 0.05, rings=7, lines=6)
-sparks(t2, (0, 0, top_z + 0.6), 10, 0.3, 0.9, 0.05, 3)
+net_dome(t2, 1.9, 0.3, 0.02, top_z + 0.9, rings=7, lines=6)
 fx2 = build(t2)
-only([boom, fx2] + cre)
+only([boom_open, fx2] + cre)
 bpy.context.view_layer.update()
 shot(os.path.join(OUT, "capture_2_net.png"), *cam)
-fx2.hide_render = True
 
-# 4.3 Сжатие: сеть стянулась в куб света вокруг уменьшенного существа, луч в ядро капсулы.
-set_creature(0.42, 0.25)
+set_creature(0.42, 0.22)
 t3 = fx_art("Fx_Cube", boom_core)
-net_cube(t3, 0.66, 0.12, cells=3, w=0.035)
+net_cube(t3, 0.66, 0.12)
 for k in range(5):
-    s = 0.16 - 0.02 * k
-    a_z = 1.62 + 0.32 * k
-    t3.box("net", -s, s, -s, s, a_z, a_z + 0.22, bevel=0)
+    s = 0.14 - 0.018 * k
+    t3.box("net", -s, s, -s, s, 1.6 + 0.3 * k, 1.8 + 0.3 * k, bevel=0)
 fx3 = build(t3)
-place(boom, (0, 0, 3.35), (0, 0, math.radians(-20)))
-only([boom, fx3] + cre)
+place(boom_open, (0, 0, 3.25), (0, 0, math.radians(-20)))
+only([boom_open, fx3] + cre)
 bpy.context.view_layer.update()
 shot(os.path.join(OUT, "capture_3_squeeze.png"), *cam)
-fx3.hide_render = True
 
-# 4.4 Поймано: капсула на земле, ядро сияет, вокруг квадратные искры.
-set_creature(1.0, 0.0, hide=True)
+set_creature(hide=True)
 place(boom, (0, 0, 0), (0, 0, math.radians(-20)))
 t4 = fx_art("Fx_Caught", boom_core)
-sparks(t4, (0, 0, 0.8), 26, 0.6, 1.8, 0.07, 7, up=0.4)
+sparks(t4, (0, 0, 0.8), 22, 0.6, 1.8, 0.06, 7, up=0.4)
 fx4 = build(t4)
 only([boom, fx4])
 bpy.context.view_layer.update()
@@ -498,40 +486,42 @@ light.data.energy = energy * 3
 shot(os.path.join(OUT, "capture_4_caught.png"), (-3.4, -5.4, 2.6), (0, 0, 0.8), 50, (1100, 1100))
 light.data.energy = energy
 
-# 4.5 Вырвалось: сеть рассыпалась на квадратные осколки, существо снова на месте, капсула упала рядом.
-set_creature(1.0, 0.0)
-place(boom, (1.8, -1.3, 0.42), (0, math.radians(90), math.radians(30)))
+set_creature()
+place(boom, (1.8, -1.3, 0.5), (0, math.radians(90), math.radians(30)))
 t5 = fx_art("Fx_Break", boom_core)
 rnd = random.Random(11)
-for _ in range(60):
+for _ in range(50):
     d = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(0, 1))).normalized()
-    p = Vector((0, 0, 1.3)) + d * rnd.uniform(1.4, 2.6)
-    s = rnd.uniform(0.06, 0.14)
+    p = Vector((0, 0, 1.3)) + d * rnd.uniform(1.5, 2.7)
+    s = rnd.uniform(0.05, 0.12)
     m = Matrix.Translation(p) @ Matrix.Rotation(rnd.uniform(0, 3), 4, Vector((rnd.random(), rnd.random(), 1)))
-    t5.box("net", -s, s, -0.012, 0.012, -s, s, bevel=0, matrix=m)
+    t5.box("net", -s, s, -0.01, 0.01, -s, s, bevel=0, matrix=m)
 fx5 = build(t5)
 only([boom, fx5] + cre)
 bpy.context.view_layer.update()
 shot(os.path.join(OUT, "capture_5_escape.png"), *cam)
-fx5.hide_render = True
-set_creature(1.0, 0.0, hide=True)
-for o in caps.values():
+set_creature(hide=True)
+for o in list(caps.values()) + list(opens.values()):
     place(o, (0, 0, 0))
+for o in (fx1, fx2, fx3, fx4, fx5):
+    o.hide_render = True
 bpy.context.view_layer.update()
 
 
-# 5. Масштаб: три манекена Roblox (5.2 стада) с капсулой на ладони вытянутой в сторону руки и крупные планы.
-def holder(x, turn):
+# 5. Масштаб: три манекена Roblox (5.2 стада), Ловибум на ладони вытянутой в сторону руки, и крупные планы.
+def mannequin(name, x, turn, arm):
+    """Блочный манекен Roblox; arm "side" — правая рука в сторону, "forward" — вперёд (как с инструментом)."""
     grey = bpy.data.materials.get("Mannequin") or bpy.data.materials.new("Mannequin")
     grey.use_nodes = True
     next(n for n in grey.node_tree.nodes if n.type == "BSDF_PRINCIPLED").inputs["Base Color"].default_value = (
         *S.lin("8E98AC"), 1)
-    root = bpy.data.objects.new("MannequinRoot", None)
+    root = bpy.data.objects.new(name + "Root", None)
     collection.objects.link(root)
     root.location = (x, 0, 0)
     root.rotation_euler = (0, 0, math.radians(turn))
+    right = ((-2.15, 0, 3.6), (2.3, 0.95, 0.95)) if arm == "side" else ((-1.5, -0.66, 3.6), (0.95, 2.3, 0.95))
     blocks = (((0, 0, 4.65), (1.15, 1.15, 1.15)), ((0, 0, 3.2), (2.0, 1.0, 1.75)),
-              ((1.5, 0, 3.2), (0.95, 0.95, 1.75)), ((-2.15, 0, 3.6), (2.3, 0.95, 0.95)),
+              ((1.5, 0, 3.2), (0.95, 0.95, 1.75)), right,
               ((-0.5, 0, 1.15), (0.95, 0.95, 2.3)), ((0.5, 0, 1.15), (0.95, 0.95, 2.3)))
     for center, size in blocks:
         bm = bmesh.new()
@@ -539,21 +529,23 @@ def holder(x, turn):
         bmesh.ops.scale(bm, vec=size, verts=bm.verts)
         bmesh.ops.bevel(bm, geom=list(bm.edges), offset=0.05, segments=2, affect="EDGES")
         bmesh.ops.translate(bm, vec=Vector(center), verts=bm.verts)
-        me = bpy.data.meshes.new("Mannequin")
+        me = bpy.data.meshes.new(name)
         bm.to_mesh(me)
         bm.free()
         me.materials.append(grey)
-        o = bpy.data.objects.new("Mannequin", me)
+        o = bpy.data.objects.new(name, me)
         collection.objects.link(o)
         o.parent = root
-    return root, Vector((-2.85, 0, 4.075))
+    palm = Vector((-2.85, 0, 4.075)) if arm == "side" else Vector((-1.5, -1.55, 4.075))
+    return root, palm
 
 
+dims = {n: S.bounds(o) for n, o in caps.items()}
 roots = {}
 for name, x in (("Boom", -5.6), ("Turbo", 1.0), ("Mega", 7.6)):
-    root, palm = holder(x, -12)
+    root, palm = mannequin("Mannequin", x, -12, "side")
     obj = caps[name]
-    lo, hi = S.bounds(obj)
+    lo, hi = dims[name]
     obj.parent = root
     obj.location = palm - Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
     obj.rotation_euler = (0, 0, math.radians(-20))
@@ -565,66 +557,48 @@ for name, (root, palm) in roots.items():
     p = root.matrix_world @ palm
     shot(os.path.join(OUT, f"hand_{name}.png"), (p.x - 1.5, p.y - 5.4, p.z + 1.4), (p.x + 0.8, p.y, p.z + 0.35),
          50, (900, 900))
-
-
-
-# 6. Телефон: кадры 844 × 390 (логический размер экрана телефона в ландшафте) — проверка читаемости.
-def phone_man():
-    """Манекен Roblox с правой рукой вперёд (как с инструментом); возвращает точку перед кулаком."""
-    grey = bpy.data.materials.get("Mannequin")
-    blocks = (((0, 0, 4.65), (1.15, 1.15, 1.15)), ((0, 0, 3.2), (2.0, 1.0, 1.75)),
-              ((1.5, 0, 3.2), (0.95, 0.95, 1.75)), ((-1.5, -0.66, 3.6), (0.95, 2.3, 0.95)),
-              ((-0.5, 0, 1.15), (0.95, 0.95, 2.3)), ((0.5, 0, 1.15), (0.95, 0.95, 2.3)))
-    for center, size in blocks:
-        bm = bmesh.new()
-        bmesh.ops.create_cube(bm, size=1.0)
-        bmesh.ops.scale(bm, vec=size, verts=bm.verts)
-        bmesh.ops.bevel(bm, geom=list(bm.edges), offset=0.05, segments=2, affect="EDGES")
-        bmesh.ops.translate(bm, vec=Vector(center), verts=bm.verts)
-        me = bpy.data.meshes.new("PhoneMan")
-        bm.to_mesh(me)
-        bm.free()
-        me.materials.append(grey)
-        collection.objects.link(bpy.data.objects.new("PhoneMan", me))
-    return Vector((-1.5, -1.55, 4.075))  # на ладони у кулака, поверх руки — не закрыта ею
-
-
-hand = phone_man()
-man = [o for o in bpy.context.scene.objects if o.name.startswith("PhoneMan")]
 for obj in caps.values():
     obj.parent = None
     place(obj, (0, 0, 0))
 bpy.context.view_layer.update()
-dims = {n: S.bounds(o) for n, o in caps.items()}
+
+# 6. Телефон: кадры 844 × 390 (логический размер экрана телефона в ландшафте), 1 : 1 — в руке, бросок, сеть.
 PHONE = (844, 390)
+_, hand = mannequin("PhoneMan", 0, 0, "forward")
+man = [o for o in bpy.context.scene.objects if o.name.startswith("PhoneMan") and o.type == "MESH"]
 for name, obj in caps.items():
     lo, hi = dims[name]
     place(obj, hand - Vector(((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z)), (0, 0, math.radians(-30)))
     only([obj] + man)
     bpy.context.view_layer.update()
     shot(os.path.join(OUT, f"phone_hand_{name}.png"), (-5.4, 9.4, 7.2), (-1.1, -1.6, 3.1), 12, PHONE)
+    place(obj, (0, 0, 0))
 
-# Бросок: камера мини-игры за игроком, существо впереди, капсула на полпути со следом.
-offset = Vector((0, -8, 0))
-turn = Matrix.Rotation(math.pi, 4, "Z")  # существо лицом к игроку
-for o, (loc, sc) in base_tf.items():
-    o.location, o.scale = turn @ loc + offset, sc
-    o.rotation_euler.z += math.pi
-for o in cre:
-    o.hide_render = False
 target = Vector((0, -8, 1.2))
+phone_cam = ((0.9, 3.4, 4.6), (0, -8, 1.4), 17.8, PHONE)
+set_creature(offset=Vector((0, -8, 0)), face=True)
 for name, obj in caps.items():
     pos = Vector((1.35, -1.7, 3.35))
     d = (target - pos).normalized()
     aim(obj, pos, d, spin=0.6)
     tr = fx_art(f"PhoneTrail_{name}", TYPES[name]["core"])
-    trail(tr, [pos - d * (0.95 + 0.26 * k) for k in range(5)], [0.075 * (1 - k / 6) for k in range(5)])
+    trail(tr, [pos - d * (0.95 + 0.26 * k) for k in range(5)], [0.065 * (1 - k / 6) for k in range(5)])
     fx = build(tr)
     only([obj, fx] + cre)
     bpy.context.view_layer.update()
-    shot(os.path.join(OUT, f"phone_throw_{name}.png"), (0.9, 3.4, 4.6), (0, -8, 1.4), 17.8, PHONE)
+    shot(os.path.join(OUT, f"phone_throw_{name}.png"), *phone_cam)
     fx.hide_render = True
-for obj in caps.values():
+    place(obj, (0, 0, 0))
+for name, obj in opens.items():
+    place(obj, (0, -8, cre_h + 0.75), (0, 0, math.radians(-20)))
+    tn = fx_art(f"PhoneNet_{name}", TYPES[name]["core"])
+    net_dome(tn, 1.9, 0.3, 0.02, cre_h + 1.65, rings=7, lines=6, w=0.028)
+    fx = build(tn)
+    fx.location = (0, -8, 0)
+    only([obj, fx] + cre)
+    bpy.context.view_layer.update()
+    shot(os.path.join(OUT, f"phone_net_{name}.png"), *phone_cam)
+    fx.hide_render = True
     place(obj, (0, 0, 0))
 
 with open(os.path.join(OUT, "report.json"), "w", encoding="utf-8") as f:
