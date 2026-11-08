@@ -2312,22 +2312,31 @@ def cheese_vault_heart():
     for x in (-0.85, 0.85):
         for z in (top + 0.1, top + 2.0):
             a.box("goldL", x - 0.06, x + 0.06, -0.6, -0.54, z - 0.06, z + 0.06, bevel=0)
-    # Дверца распахнута влево на петлях: толстая плита, кодовый диск, ручка-штурвал.
-    part(a, "Door", "Body", (-0.95, -0.55, top + 1.05))
-    dm = tilt((-0.95, -0.55, top + 1.05), "Z", -110)
-    a.transform = dm
-    a.box("gold", -0.95, 0.85, -0.75, -0.55, top + 0.05, top + 2.05)
-    a.box("gold2", -0.8, 0.7, -0.79, -0.74, top + 0.2, top + 1.9, bevel=0)
-    disc(a, "steel", 0.0, top + 1.25, 0.28, -0.85, -0.78, n=12, axis="y")
-    for k in range(12):
-        t = math.radians(k * 30)
-        a.box("dark", 0.22 * math.sin(t) - 0.02, 0.22 * math.sin(t) + 0.02, -0.87, -0.84, top + 1.25 + 0.22 *
-              math.cos(t) - 0.02, top + 1.25 + 0.22 * math.cos(t) + 0.02, bevel=0)
-    for ang in (0, 60, 120):
-        r = math.radians(ang)
-        bar(a, "steel", (-0.3 * math.cos(r), -0.86, top + 0.6 - 0.3 * math.sin(r)),
-            (0.3 * math.cos(r), -0.86, top + 0.6 + 0.3 * math.sin(r)), 0.05 + 0.003 * (ang // 60), bevel=0)
-    a.transform = None
+    # Две створки распахнуты наружу на петлях (одна широкая дверь вышла бы за площадку 3.7): левая — с кодовым
+    # диском, правая — со штурвалом.
+    for s_, name in ((-1, "DoorL"), (1, "DoorR")):
+        hx = s_ * 0.95
+        part(a, name, "Body", (hx, -0.55, top + 1.05))
+        a.transform = tilt((hx, -0.55, top + 1.05), "Z", s_ * 100)
+        x0, x1 = sorted((hx, s_ * 0.02))
+        a.box("gold", x0, x1, -0.75, -0.55, top + 0.05, top + 2.05)
+        p0, p1 = sorted((s_ * 0.85, s_ * 0.12))
+        a.box("gold2", p0, p1, -0.79, -0.74, top + 0.2, top + 1.9, bevel=0)
+        cx = s_ * 0.48
+        if s_ < 0:
+            disc(a, "steel", cx, top + 1.25, 0.26, -0.85, -0.78, n=12, axis="y")
+            for k in range(12):
+                t = math.radians(k * 30)
+                a.box("dark", cx + 0.2 * math.sin(t) - 0.02, cx + 0.2 * math.sin(t) + 0.02, -0.87, -0.84,
+                      top + 1.25 + 0.2 * math.cos(t) - 0.02, top + 1.25 + 0.2 * math.cos(t) + 0.02, bevel=0)
+        else:
+            disc(a, "steel", cx, top + 1.05, 0.08, -0.86, -0.78, n=8, axis="y", bevel=0)
+            for ang in (0, 60, 120):
+                r = math.radians(ang)
+                bar(a, "steel", (cx - 0.28 * math.cos(r), -0.84, top + 1.05 - 0.28 * math.sin(r)),
+                    (cx + 0.28 * math.cos(r), -0.84, top + 1.05 + 0.28 * math.sin(r)), 0.05 + 0.003 * (ang // 60),
+                    bevel=0)
+        a.transform = None
     # Кристалл-сыр: гранёный клин светится, светлые грани, лучи (своя часть — парит и вращается).
     part(a, "Crystal", "Body", (0, 0.05, top + 1.05))
     a.prism("crysD", [(-0.5, top + 0.35), (0.5, top + 0.35), (0.5, top + 0.75), (-0.5, top + 1.5)], -0.3, 0.4,
@@ -2361,7 +2370,7 @@ def cheese_vault_heart():
                                                                                          -0.6, -0.6), top + 1.58,
                   top + 1.8, bevel=0)
         a.box("pink", gx + s * 0.28 - 0.08, gx + s * 0.28 + 0.08, -0.66, -0.52, top + 0.6, top + 0.74)
-    a.pose = {"Door": ((0, 0, 35), (0, 0, 0)), "Crystal": ((0, 0, 25), (0, 0, 0.15)), "GuardL": ((0, 0, -20), (0, 0, 0)),
+    a.pose = {"DoorL": ((0, 0, 25), (0, 0, 0)), "DoorR": ((0, 0, -25), (0, 0, 0)), "Crystal": ((0, 0, 25), (0, 0, 0.15)), "GuardL": ((0, 0, -20), (0, 0, 0)),
               "GuardR": ((0, 0, 20), (0, 0, 0.05))}
     return a
 

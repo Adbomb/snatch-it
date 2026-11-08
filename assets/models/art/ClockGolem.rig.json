@@ -1,0 +1,271 @@
+{
+ "id": "ClockGolem",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Hands",
+  "GearL",
+  "ArmL",
+  "GearR",
+  "ArmR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    2.075,
+    0.0
+   ],
+   "size": [
+    3.5,
+    4.15,
+    3.5
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.4,
+    1.39,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.52,
+    0.1
+   ],
+   "size": [
+    0.6,
+    1.06,
+    0.76
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.4,
+    1.39,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.52,
+    0.1
+   ],
+   "size": [
+    0.6,
+    1.06,
+    0.76
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.39,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.9,
+    0.035
+   ],
+   "size": [
+    1.942,
+    1.942,
+    0.87
+   ]
+  },
+  "Hands": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.29,
+    0.5
+   ],
+   "center": [
+    0.1149,
+    0.2748,
+    0.01
+   ],
+   "size": [
+    0.4444,
+    0.6974,
+    0.1
+   ]
+  },
+  "GearL": {
+   "parent": "Body",
+   "pivot": [
+    -0.95,
+    2.84,
+    0.1
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.12
+   ],
+   "size": [
+    0.84,
+    0.84,
+    0.2
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -1.0,
+    2.74,
+    -0.05
+   ],
+   "center": [
+    -0.2171,
+    -0.8374,
+    0.1979
+   ],
+   "size": [
+    0.6458,
+    1.7253,
+    0.6041
+   ]
+  },
+  "GearR": {
+   "parent": "Body",
+   "pivot": [
+    0.95,
+    2.84,
+    0.1
+   ],
+   "center": [
+    -0.0,
+    0.0,
+    0.12
+   ],
+   "size": [
+    0.84,
+    0.84,
+    0.2
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    1.0,
+    2.74,
+    -0.05
+   ],
+   "center": [
+    0.2171,
+    -0.8374,
+    0.1979
+   ],
+   "size": [
+    0.6458,
+    1.7253,
+    0.6041
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    3.24,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.5861,
+    0.1119
+   ],
+   "size": [
+    0.8693,
+    1.2722,
+    0.7438
+   ]
+  }
+ },
+ "demo_pose": {
+  "Hands": {
+   "rot_xyz_blender_deg": [
+    0,
+    60,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "GearL": {
+   "rot_xyz_blender_deg": [
+    0,
+    30,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "GearR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -30,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    -15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

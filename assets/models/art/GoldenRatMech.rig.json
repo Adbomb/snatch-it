@@ -1,0 +1,290 @@
+{
+ "id": "GoldenRatMech",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Pilot",
+  "ArmL",
+  "ArmR",
+  "Head",
+  "EarL",
+  "EarR",
+  "Crown"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    2.125,
+    0.0
+   ],
+   "size": [
+    3.5,
+    4.25,
+    3.5
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.42,
+    1.34,
+    0.0
+   ],
+   "center": [
+    -0.0,
+    -0.49,
+    0.11
+   ],
+   "size": [
+    0.6,
+    1.02,
+    0.78
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.42,
+    1.34,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.49,
+    0.11
+   ],
+   "size": [
+    0.6,
+    1.02,
+    0.78
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.34,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.75,
+    0.06
+   ],
+   "size": [
+    1.64,
+    1.6,
+    1.12
+   ]
+  },
+  "Pilot": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.94,
+    0.4
+   ],
+   "center": [
+    0.0,
+    0.3118,
+    0.0796
+   ],
+   "size": [
+    0.5976,
+    0.7959,
+    0.6888
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.95,
+    2.64,
+    0.0
+   ],
+   "center": [
+    -0.1786,
+    -0.5364,
+    0.1064
+   ],
+   "size": [
+    0.7227,
+    1.6272,
+    0.7672
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.95,
+    2.64,
+    0.0
+   ],
+   "center": [
+    0.1786,
+    -0.5364,
+    0.1064
+   ],
+   "size": [
+    0.7228,
+    1.6272,
+    0.7672
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.89,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.4,
+    0.075
+   ],
+   "size": [
+    1.1,
+    0.74,
+    0.99
+   ]
+  },
+  "EarL": {
+   "parent": "Head",
+   "pivot": [
+    -0.5,
+    3.59,
+    0.0
+   ],
+   "center": [
+    -0.05,
+    0.25,
+    0.025
+   ],
+   "size": [
+    0.5913,
+    0.5913,
+    0.17
+   ]
+  },
+  "EarR": {
+   "parent": "Head",
+   "pivot": [
+    0.5,
+    3.59,
+    0.0
+   ],
+   "center": [
+    0.05,
+    0.25,
+    0.025
+   ],
+   "size": [
+    0.5913,
+    0.5913,
+    0.17
+   ]
+  },
+  "Crown": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    3.66,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1969,
+    0.106
+   ],
+   "size": [
+    0.7867,
+    0.5045,
+    0.9387
+   ]
+  }
+ },
+ "demo_pose": {
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    40,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Pilot": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.05
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    -15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EarL": {
+   "rot_xyz_blender_deg": [
+    0,
+    15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

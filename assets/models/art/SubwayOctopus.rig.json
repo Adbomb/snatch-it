@@ -1,0 +1,202 @@
+{
+ "id": "SubwayOctopus",
+ "order": [
+  "Stand",
+  "Head",
+  "Tentacle1",
+  "Tentacle2",
+  "Tentacle3",
+  "Tentacle4",
+  "Tentacle5"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    2.025,
+    0.0
+   ],
+   "size": [
+    3.5,
+    4.05,
+    3.5
+   ]
+  },
+  "Head": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.44,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.615,
+    0.0861
+   ],
+   "size": [
+    1.1456,
+    1.33,
+    1.3178
+   ]
+  },
+  "Tentacle1": {
+   "parent": "Head",
+   "pivot": [
+    -0.45,
+    0.74,
+    0.3
+   ],
+   "center": [
+    -0.3383,
+    1.1516,
+    0.1381
+   ],
+   "size": [
+    0.9753,
+    2.4568,
+    0.6238
+   ]
+  },
+  "Tentacle2": {
+   "parent": "Head",
+   "pivot": [
+    0.45,
+    0.74,
+    0.3
+   ],
+   "center": [
+    0.3298,
+    1.3469,
+    0.012
+   ],
+   "size": [
+    0.9243,
+    2.8261,
+    0.5083
+   ]
+  },
+  "Tentacle3": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    0.94,
+    -0.4
+   ],
+   "center": [
+    0.05,
+    1.5278,
+    0.0853
+   ],
+   "size": [
+    0.6374,
+    3.1045,
+    0.8493
+   ]
+  },
+  "Tentacle4": {
+   "parent": "Head",
+   "pivot": [
+    -0.4,
+    0.64,
+    -0.35
+   ],
+   "center": [
+    -0.4897,
+    0.2685,
+    -0.1482
+   ],
+   "size": [
+    1.1978,
+    0.7892,
+    0.7735
+   ]
+  },
+  "Tentacle5": {
+   "parent": "Head",
+   "pivot": [
+    0.4,
+    0.64,
+    -0.35
+   ],
+   "center": [
+    0.5114,
+    0.2208,
+    -0.2539
+   ],
+   "size": [
+    1.2544,
+    0.7007,
+    0.7395
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tentacle1": {
+   "rot_xyz_blender_deg": [
+    0,
+    -15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tentacle2": {
+   "rot_xyz_blender_deg": [
+    0,
+    15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tentacle3": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.1
+   ]
+  },
+  "Tentacle4": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}
