@@ -183,7 +183,12 @@ local function startBattle(player: any)
 	p.fighting = true
 	local _, dogHome = points()
 	if not p.dog then
-		local dog = BossService.BuildPersonal(1, dogHome, folder)
+		local dog = BossService.BuildPersonal(1, dogHome, folder) -- ждёт загрузку мешей
+		if personal[player] ~= p or (typeof(player) == "Instance" and player.Parent == nil) then
+			dog.model:Destroy() -- ученик ушёл, пока строился пёс
+			p.fighting = false
+			return
+		end
 		dog.model:SetAttribute("TutorialOwner", player.UserId)
 		p.dog = dog
 	end
@@ -211,14 +216,17 @@ local function startBattle(player: any)
 		BossService.SetState(dog, "Defeat")
 		task.wait(tl.Defeat)
 		p.fighting = false
-		if giveCreature(player) then
-			advance(player, "Carry")
-			Notify.Send(
-				player,
-				"Победа! Несите существо в свой музей и поставьте на постамент",
-				"Go"
-			)
+		if personal[player] ~= p or (typeof(player) == "Instance" and player.Parent == nil) then
+			return -- ушёл посреди боя: при входе — снова поимка (ничего не выдано)
 		end
+		advance(player, "Carry")
+		giveCreature(player) -- погиб к концу боя — существо в руки при возрождении (цикл ниже)
+		push(player)
+		Notify.Send(
+			player,
+			"Победа! Несите существо в свой музей и поставьте на постамент",
+			"Go"
+		)
 		BossService.SetState(dog, "FallAsleep")
 		task.wait(tl.FallAsleep)
 		removeDog(p)
@@ -234,14 +242,16 @@ giveCreature = function(player: any): boolean
 	if ItemRegistry.GetCarriedBy(player) == t.uid then
 		return true
 	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if not root or not humanoid or humanoid.Health <= 0 then
+		return false -- не жив: дадим при возрождении
+	end
+	if ItemRegistry.Get(t.uid) then
+		return false -- предмет уже где-то (выставлен) — не дублировать
+	end
 	if ItemRegistry.GetCarriedBy(player) then
 		CarryService.LoseCarried(player, "обучение: в руки — учебное существо")
-	end
-	local p = stateOf(player)
-	removeCreature(p)
-	local existing = ItemRegistry.Get(t.uid)
-	if existing then
-		return false -- предмет уже где-то (выставлен) — не дублировать
 	end
 	local part = ItemFactory.Create(t.itemId)
 	part.Anchored = true
@@ -257,7 +267,12 @@ giveCreature = function(player: any): boolean
 		return false
 	end
 	CarryService.RegisterMapItem(t.uid, part)
-	CarryService.AttachCarried(player, t.uid)
+	if not CarryService.AttachCarried(player, t.uid) then
+		ItemRegistry.Discard(t.uid, "обучение: не вышло дать в руки") -- цикл попробует снова
+		part:Destroy()
+		return false
+	end
+	removeCreature(stateOf(player)) -- учебное существо у места обучения больше не нужно
 	return true
 end
 
@@ -288,7 +303,7 @@ startCatch = function(player: any)
 		height = def.size.Y,
 		params = {
 			seed = CreatureMotion.SeedOf(t.uid :: string),
-			radius = 1.6,
+			radius = CreatureMotion.WanderRadius(Tutorial.ItemBoss), -- как у клиента (CreatureController)
 			scale = CreatureMotion.ScaleOf(def.size),
 			mode = "Wander",
 			drop = 0,
@@ -319,8 +334,8 @@ local function setup(player: any)
 			end
 		end
 		table.sort(pool)
-		local pick = pool[Random.new():NextInteger(1, #pool)]
-		DataService.SetTutorial(player, { itemId = pick, uid = HttpService:GenerateGUID(false) })
+		local pick = t.itemId or pool[Random.new():NextInteger(1, #pool)] -- выбранное раньше — не менять
+		DataService.SetTutorial(player, { itemId = pick, uid = t.uid or HttpService:GenerateGUID(false) })
 		DataService.RequestSave(player)
 	end
 	local resume = TutorialRules.ResumeStep(t.step)
@@ -332,9 +347,7 @@ local function setup(player: any)
 		spawnCreature(player)
 	elseif t.step == "Carry" then
 		removeCreature(p)
-		if player.Character then
-			giveCreature(player)
-		end
+		giveCreature(player) -- без персонажа — при появлении (цикл ниже)
 	end
 	push(player)
 end
@@ -351,6 +364,15 @@ end
 local function locked(player: any, uid: string): string?
 	local t = active(player) and DataService.Tutorial(player)
 	if t and t.uid == uid and t.step == "Carry" then
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if not humanoid or humanoid.Health <= 0 then
+			-- погиб: на землю не падает (его не подобрать другим) — исчезает и снова в руках при возрождении
+			task.defer(
+				CarryService.LoseCarried,
+				player,
+				"обучение: ученик погиб — существо вернётся в руки"
+			)
+		end
 		return "Учебное существо нужно поставить на постамент в музее"
 	end
 	return nil
@@ -369,8 +391,12 @@ function TutorialService.Init(world: Instance)
 	-- выставили учебное существо: «поставлено» и шаг Income — в той же записи профиля, что и предмет (без yield)
 	MuseumService.OnDisplayed = function(player: any, uid: string)
 		local t = active(player) and DataService.Tutorial(player)
-		if t and t.uid == uid and t.step == "Carry" then
-			DataService.SetTutorial(player, { step = "Income", placed = true })
+		if t and t.uid == uid then
+			-- запись предмета уже есть: Normalize сам переводит Carry → Income; здесь — явно и в том же кадре
+			if t.step == "Carry" then
+				DataService.SetTutorial(player, { step = "Income", placed = true })
+			end
+			DataService.RequestSave(player)
 			push(player)
 			Notify.Send(player, "Экспонат на месте! Ждём первый доход", "Go")
 		end
@@ -413,7 +439,12 @@ function TutorialService.Init(world: Instance)
 				if not t or t.step == "Done" then
 					continue
 				end
-				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				local character = player.Character
+				local root = character and character:FindFirstChild("HumanoidRootPart")
+				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+				if humanoid and humanoid.Health <= 0 then
+					root = nil -- погибший — ждём возрождения
+				end
 				if
 					t.step == "Intro"
 					and p.creature

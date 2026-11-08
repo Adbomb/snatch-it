@@ -367,10 +367,10 @@ local function step(dt: number)
 	local radius = CatchRules.CircleRadius(t, state.since, scaleOf(), state.circle or 1)
 	local p0, on = camera:WorldToViewportPoint(center)
 	local p1 = camera:WorldToViewportPoint(center + camera.CFrame.RightVector * radius)
-	local inset = GuiService:GetGuiInset()
+	local origin = gui.AbsolutePosition -- ScreenGui без полосы Roblox (IgnoreGuiInset): сдвиг — только безопасная зона
 	local px = (Vector2.new(p1.X, p1.Y) - Vector2.new(p0.X, p0.Y)).Magnitude
 	circle.Visible = on
-	circle.Position = UDim2.fromOffset(p0.X, p0.Y - inset.Y)
+	circle.Position = UDim2.fromOffset(p0.X - origin.X, p0.Y - origin.Y)
 	circle.Size = UDim2.fromOffset(px * 2, px * 2)
 	local ready = t >= (state.readyAt or 0) and state.state == "Aim"
 	circleStroke.Color = if ready then T.CircleReady else T.CircleWait

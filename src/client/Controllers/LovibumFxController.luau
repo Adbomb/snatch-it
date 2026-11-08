@@ -399,7 +399,8 @@ local function step()
 			LovibumModel.Place(entry.model, (cf :: CFrame) * CFrame.new(0, -0.45, 0), 0, HAND_SCALE)
 		end
 		LovibumModel.SetTransparency(entry.model, if visible then 0 else 1)
-		if not Players:GetPlayerByUserId(userId) then
+		local who = Players:GetPlayerByUserId(userId)
+		if not who or who:GetAttribute("Catching") == nil then
 			setHand(userId, nil)
 		end
 	end

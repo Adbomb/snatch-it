@@ -98,7 +98,6 @@ end
 function NightService.Init(worldFolder: Instance)
 	world = worldFolder
 	CharacterGroups.Register(CharacterGroups.NightBarrier)
-	CharacterGroups.Register(CharacterGroups.Student)
 	barrier = NightService.BuildBarrier()
 
 	TimeService.OnPhaseChanged(function(state, previous)
@@ -139,7 +138,7 @@ function NightService.BuildBarrier(): Model
 	wall.CanQuery = false
 	wall.CanTouch = false
 	wall.Size = Vector3.new(width, cfg.height + 1, cfg.thickness)
-	wall.CollisionGroup = CharacterGroups.NightBarrier -- ученик (группа Student) проходит, D55
+	wall.CollisionGroup = CharacterGroups.NightBarrier -- ученик (группа Student_<участок>) проходит, D55
 	wall.CFrame = CFrame.new(0, MapLayout.Heights.Ground + cfg.height / 2 - 0.5, z)
 	wall.Parent = model
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do

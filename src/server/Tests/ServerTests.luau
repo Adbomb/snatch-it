@@ -2715,6 +2715,7 @@ test("Без боя (босс 4, тестовый режим): поимка — 
 end)
 
 test("Без боя поймать нельзя вне тестового режима Studio (босс 4)", function(A)
+	local shifted = ensureDay() -- ночью отказ был бы «ночь», а не «нет боя»
 	BossLootService.Handlers.Refresh()
 	local uid = bossSlots()[4][1].uid :: string
 	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
@@ -2728,6 +2729,9 @@ test("Без боя поймать нельзя вне тестового реж
 	check(not CatchService.IsCatching(A), "поимка у босса без боя началась")
 	check(A:WasNotified("нет боя"), "нет сообщения «у этого босса пока нет боя»")
 	check(stockOf(A, 4, "Boom") == 1, "Ловибум списан без броска")
+	if shifted then
+		TimeService.ResetClock()
+	end
 end)
 
 -- ── D55: магазин Ловибумов, поимка, бой после поимки ─────────────────────────────────────────────────────────
