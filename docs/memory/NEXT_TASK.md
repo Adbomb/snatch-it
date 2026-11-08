@@ -129,7 +129,12 @@ Common ур. 1 (10–18/с): Бум за 500 — 30–50 с дохода.
    (оси, схема rig.json, подставка `Stand` и исключения, повёрнутые модели, Motor6D после импорта: C0 = pivot −
    (pivot родителя + center родителя), C1 = −center; особое внимание владельца — MonsterTrain, CheeseDragon,
    ThreeHeadedRat, CheeseVaultHeart, ThreeTailEmperor), индекс для кода `assets/models/art/Boss3Creatures.index.json`
-   (`scripts/build_creature_index.py`), проверка `scripts/blender/check_rigs.py` (30/30).
+   (`scripts/build_creature_index.py`), проверка `scripts/blender/check_rigs.py` (30/30). Передача принята владельцем
+   окончательно (7873ad2), 30 моделей не переделывать; **обязательные правила анимации** — раздел «Правила анимации»
+   спецификации и поля индекса `stand_policy` / `rules` / `yaw_deg`: `Stand` прятать только декоративный (`hide`, 26
+   существ); у RatThrone, SubwayOctopus, ThreeTailEmperor он часть композиции (`keep`); у RunawayTicket вместе с
+   подставкой прятать турникет Grabber (`hide_with_parts`); у повёрнутых моделей — локальные оси суставов; без разрывов
+   и смещений частей. Код поимки — только после утверждения концептов Ловибумов и плана этапа.
 4. Поимка на сервере: `Services/CatchService.luau` (начало, броски, исход, личная пауза 10 с у босса, сразу свободный
    босс, прерывания — ночь, выход, смерть, нокаут, бездействие; игрок стоит на месте; эффекты рядом — CatchEffect),
    связка с `BattleService` (бой после поимки, поражение — существо на место), `Remotes` (CatchAction, CatchEffect),
