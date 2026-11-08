@@ -48,6 +48,17 @@
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
   Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
   `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
+- Ловибумы в игре (D55, этап A): геометрия v5 — `scripts/blender/lovibum_shapes.py` (общая с концептами; части
+  `a.group`: Base, Core, Claw1…4, Crystal; `a.rig`, `a.axes` — ось раскрытия когтя, `a.lift`, `a.light`).
+  `scripts/blender/lovibum_models.py` → `assets/models/lovibums/Lovibum_<Вид>.fbx` (меши Lovibum<Вид><Часть>,
+  начало — точка вращения), `<Вид>.rig.json`, карты D39 512² `assets/textures/lovibums/`, `parts.json` — Part-версия:
+  те же вызовы деталей пишет `PartArt` примитивами Roblox (брусок → Block; восьмигранник → Block + 2 Block + 4 Wedge,
+  светящийся — Cylinder; пирамида → 4 CornerWedge, вершина CornerWedge — угол (+X, +Y, −Z), проверено лучами в
+  Studio; многоугольник → Wedge по прямоугольным треугольникам; Wedge — прямой угол у (−Y, +Z)). Проверки: ≤ 2 000
+  треуг., совпадающих граней 0 у меша и у Part-версии (точное перекрытие многоугольников, скрытые внутри деталей
+  грани не считаются). `scripts/lovibum_rig_to_luau.py` → `src/shared/Config/LovibumRigs.luau` (сгенерирован, StyLua
+  не запускать). Лист `scripts/d55_lovibum_sheets.py --models` → `assets/concepts/d55/lovibums_models/models.jpg`.
+  Кристалл и ядро — Neon; меши не импортированы (импорт и загрузка запрещены владельцем) — в игре Part-версия.
 - Концепты Ловибумов (D55, этап 0; не в игре; v5 «кристалл в когтях»; листы прежних версий — `assets/concepts/d55/`
   `lovibums/` (v1 с лицами, отклонён), `lovibums_v2/`, `lovibums_v3/` (капсулы, v3 — «батарейки», не утверждён),
   `lovibums_v4/` (направление верное, нужен проход силуэтов), их код — в истории git) —

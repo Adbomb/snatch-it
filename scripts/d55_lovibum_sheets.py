@@ -6,7 +6,9 @@ lineup.jpg (линейка), boom.jpg / turbo.jpg / mega.jpg (закрыт, ко
 capture.jpg (поимка сетью по шагам), scale.jpg (манекены Roblox с Ловибумом на ладони и крупные планы), phone.jpg
 (кадры размера экрана телефона 844 × 390 в масштабе 1 : 1 без увеличения: в руке, бросок, сеть над существом),
 before_after.jpg (v4 и v5 — если передан кадр линейки v4).
-Запуск: python scripts/d55_lovibum_sheets.py <рендеры> <папка> [<lineup.png v4>]
+Режим --models (этап A, рендеры scripts/blender/lovibum_models.py): models.jpg — у каждого вида концепт, меш с
+картами D39 и Part-версия (как в игре до импорта), раскрытие когтей 0 / 50 / 100 % у меша и Part-версии.
+Запуск: python scripts/d55_lovibum_sheets.py [--models] <рендеры> <папка> [<lineup.png v4>]
 Зависит от Pillow.
 """
 
@@ -16,8 +18,10 @@ import sys
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
-RAW, OUT = sys.argv[1], sys.argv[2]
-BEFORE = sys.argv[3] if len(sys.argv) > 3 else None
+MODELS = "--models" in sys.argv
+ARGS = [a for a in sys.argv[1:] if a != "--models"]
+RAW, OUT = ARGS[0], ARGS[1]
+BEFORE = ARGS[2] if len(ARGS) > 2 else None
 os.makedirs(OUT, exist_ok=True)
 BG = (32, 35, 44)
 FONT = "C:/Windows/Fonts/segoeuib.ttf"
@@ -89,6 +93,31 @@ def names(im, centers, y=36, big=62, small=38):
         text(d, (x, y + big + 8), bonus, small, anchor="ma")
     return im
 
+
+if MODELS:
+    rep = json.load(open(os.path.join(RAW, "report.json"), encoding="utf-8"))
+    rows_ = []
+    for name in ("Boom", "Turbo", "Mega"):
+        ru, bonus, color = NAMES[name]
+        cells = []
+        for fname, label in ((f"{name}_concept", "Концепт v5"), (f"{name}_mesh_open0", "Меш, карты D39"),
+                             (f"{name}_mesh_open50", "Меш 50 %"), (f"{name}_mesh_open100", "Меш 100 %"),
+                             (f"{name}_parts_open0", "Part-версия"), (f"{name}_parts_open50", "Part 50 %"),
+                             (f"{name}_parts_open100", "Part 100 %")):
+            im = fit(load(fname + ".png"), 420)
+            text(ImageDraw.Draw(im), (16, 12), label, 30)
+            cells.append(im)
+        r = rep[name]
+        line = row(cells)
+        d = ImageDraw.Draw(line)
+        text(d, (16, line.height - 50), f"{ru}: меш {r['tris']} треуг., Part-версия {r['part_version']} дет., "
+             f"совпадающих граней {r['part_coplanar_count']}", 30, fill=color)
+        rows_.append(line)
+    stack(rows_, header="Ловибумы v5 — игровые модели: концепт, меш, Part-версия и раскрытие когтей",
+          sub="Кристалл и ядро — Neon; меши и карты лежат локально (импорт и загрузка запрещены), в игре Part-версия").save(
+        os.path.join(OUT, "models.jpg"), quality=90)
+    print("SHEETS_OK")
+    sys.exit(0)
 
 report = json.load(open(os.path.join(RAW, "report.json"), encoding="utf-8"))
 
