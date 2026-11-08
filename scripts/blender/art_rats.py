@@ -1152,6 +1152,631 @@ def devourer_vending():
     return a
 
 
+def rails(a, top, half=1.25, y=0.0, turn=None):
+    """Кусок пути на подставке: шпалы и два рельса (часть Stand)."""
+    prev = a.transform
+    a.transform = turn
+    for x in (-half * 0.75, 0.0, half * 0.75):
+        a.box("wood", x - 0.14, x + 0.14, y - 0.62, y + 0.62, top - 0.01, top + 0.1)
+    for k, dy in enumerate((-0.4, 0.4)):
+        a.box("rail", -half, half, y + dy - 0.05, y + dy + 0.05, top + 0.08 + 0.005 * k, top + 0.18 + 0.005 * k)
+    a.transform = prev
+
+
+# ── 14. Королевский крысовоз: красный мини-паровозик с мордой крысы вместо переднего окна (глаза, розовый нос,
+#        усы, резцы на скотосбрасывателе-челюсти), круглые уши на крыше, золотая корона, колёса, хвост сзади ────────
+
+
+def royal_rat_train():
+    a = S.Art("Art_RoyalRatTrain", ring_z0=1.2)
+    a.paint("car", "D8352A", rings=True)
+    for key, code in RUNNER_PAINT + (("carD", "A11E2B"), ("goldL", "FFE07A"), ("gold2", "C9921A"), ("roof", "6B3FB8"),
+                                     ("window", "FFD86B"), ("wheel", "2B2F38"), ("wood", "8A5A34"), ("rail", "C3CAD4"),
+                                     ("ruby", "E53935"), ("sapph", "2F7DE1"), ("lamp", "FFF3B0")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.62)
+    sparkle(a, "glint", (1.35, -0.7, 2.9), 0.28)
+    turn = tilt((0, 0, 0), "Z", 24)  # нос — вперёд-влево, к главному ракурсу
+    rails(a, top, 1.3, 0.0, turn)
+    zb = top + 0.18
+    # Колёса — две пары (свои части: крутятся).
+    for x in (-0.62, 0.55):
+        part(a, "WheelF" if x < 0 else "WheelB", "Body", tuple(turn @ Vector((x, 0, zb + 0.26))))
+        a.transform = turn
+        a.box("gold2", x - 0.03, x + 0.03, -0.5, 0.5, zb + 0.22, zb + 0.3, bevel=0)
+        for s in (-1, 1):
+            y0, y1 = sorted((s * 0.4, s * 0.5))
+            disc(a, "wheel", x, zb + 0.26, 0.26, y0, y1, n=8, axis="y")
+            c0, c1 = sorted((s * 0.49, s * 0.53))
+            disc(a, "goldL", x, zb + 0.26, 0.11, c0, c1, n=8, axis="y", bevel=0)
+        a.transform = None
+    # Кузов: красный, тёмная рама, фиолетовая крыша с золотым кантом, окна, золотые полосы.
+    part(a, "Body", "Stand", tuple(turn @ Vector((0, 0, zb + 0.3))))
+    a.transform = turn
+    a.box("carD", -1.15, 1.0, -0.42, 0.42, zb + 0.28, zb + 0.46)
+    a.box("car", -1.05, 0.92, -0.5, 0.5, zb + 0.44, zb + 1.6)
+    a.frustum("roof", (-1.12, 1.0, -0.58, 0.58), (-0.98, 0.86, -0.4, 0.4), zb + 1.58, zb + 1.8)
+    a.box("gold", -1.08, 0.95, -0.53, 0.53, zb + 1.5, zb + 1.6, bevel=0)
+    a.box("gold", -1.08, 0.95, -0.53, 0.53, zb + 0.62, zb + 0.7, bevel=0)
+    for s in (-1, 1):
+        y0, y1 = sorted((s * 0.5, s * 0.53))
+        for x in (-0.3, 0.2, 0.62):
+            a.box("window", x - 0.15, x + 0.13, y0, y1, zb + 0.9, zb + 1.3, bevel=0)
+    # Морда спереди (−x): глаза вместо окна, щёки-фары, розовый нос, усы.
+    for s in (-1, 1):
+        disc(a, "lamp", zb + 0.84, s * 0.34, 0.1, -1.1, -1.04, n=8, axis="x", bevel=0)
+        for dz in (0.0, -0.08):
+            bar(a, "dark", (-1.08, s * 0.14, zb + 0.82 + dz), (-1.12, s * 0.62, zb + 0.9 + dz * 2), 0.025, bevel=0)
+    a.frustum("pink", (zb + 0.66, zb + 0.9, -0.14, 0.14), (zb + 0.7, zb + 0.86, -0.1, 0.1), -1.05, -1.22, axis="x")
+    a.transform = None
+    for s in (-1, 1):
+        part(a, "EyeL" if s < 0 else "EyeR", "Body", tuple(turn @ Vector((-1.12, s * 0.22, zb + 1.18))))
+        a.transform = turn  # глаз лицом к −x: белок, зрачок (смотрит чуть вбок), блик
+        a.box("white", -1.2, -1.03, s * 0.22 - 0.17, s * 0.22 + 0.17, zb + 1.0, zb + 1.38)
+        a.box("dark", -1.23, -1.19, s * 0.22 - 0.08 + 0.04, s * 0.22 + 0.08 + 0.04, zb + 1.08, zb + 1.24, bevel=0)
+        a.box("glint", -1.245, -1.225, s * 0.22 - 0.02, s * 0.22 + 0.02, zb + 1.18, zb + 1.22, bevel=0)
+        a.transform = None
+    # Челюсть — скотосбрасыватель с резцами.
+    part(a, "Jaw", "Body", tuple(turn @ Vector((-1.0, 0, zb + 0.46))))
+    a.transform = turn
+    a.prism("gold2", [(-1.05, zb + 0.46), (-1.45, zb + 0.2), (-1.05, zb + 0.2)], -0.44, 0.44, axis="y")
+    for k, y in enumerate((-0.08, 0.08)):
+        a.box("white", -1.24, -1.12, y - 0.07, y + 0.07, zb + 0.42 + 0.01 * k, zb + 0.6 + 0.01 * k, bevel=0)
+    a.transform = None
+    # Круглые уши на крыше, корона, хвост.
+    for s in (-1, 1):
+        part(a, "EarL" if s < 0 else "EarR", "Body", tuple(turn @ Vector((-0.75, s * 0.4, zb + 1.78))))
+        a.transform = turn
+        x0, x1 = sorted((-0.82, -0.68))
+        disc(a, "fur", zb + 2.06, s * 0.42, 0.3, x0, x1, n=8, axis="x")
+        disc(a, "pink", zb + 2.06, s * 0.42, 0.2, -0.86, -0.82, n=8, axis="x", bevel=0)
+        a.transform = None
+    part(a, "Crown", "Body", tuple(turn @ Vector((0.05, 0, zb + 1.8))))
+    a.transform = turn
+    a.frame("gold", ngon(0.05, 0, 0.38, 8), 0.09, zb + 1.78, zb + 2.0, axis="z")
+    a.prism("roof", ngon(0.05, 0, 0.3, 8), zb + 1.8, zb + 2.05, bevel=0)
+    for i in range(0, 8, 2):
+        ang = math.pi / 8 + i * math.pi / 4
+        px, py = 0.05 + 0.33 * math.cos(ang), 0.33 * math.sin(ang)
+        a.frustum("gold", (px - 0.07, px + 0.07, py - 0.07, py + 0.07), (px, px, py, py), zb + 1.98, zb + 2.28, bevel=0)
+        a.box("goldL", px - 0.05, px + 0.05, py - 0.05, py + 0.05, zb + 2.24, zb + 2.34, bevel=0)
+    gem(a, "ruby", (0.05 - 0.4, 0, zb + 1.9), 0.14, 90)
+    a.transform = None
+    part(a, "Tail", "Body", tuple(turn @ Vector((1.0, 0, zb + 0.6))))
+    a.transform = turn
+    chain(a, "pink", [(1.0, 0, zb + 0.6), (1.4, 0.05, zb + 0.75), (1.55, 0.1, zb + 1.15), (1.38, 0.12, zb + 1.45),
+                      (1.15, 0.1, zb + 1.4)], 0.11, 0.06)
+    a.transform = None
+    a.pose = {"Jaw": ((0, 22, 0), (0, 0, 0)), "EarL": ((15, 0, 0), (0, 0, 0)), "EarR": ((-15, 0, 0), (0, 0, 0)),
+              "Crown": ((0, 10, 0), (0, 0, 0.05)), "WheelF": ((0, 50, 0), (0, 0, 0)), "Tail": ((0, 0, 25), (0, 0, 0))}
+    return a
+
+
+# ── 15. Крыса-качок: огромная мускулистая крыса (широкие плечи, бицепсы, кубики пресса, красная повязка) на
+#        крошечных ножках поднимает над головой штангу-гантель из двух головок сыра ────────────────────────────────
+
+
+def buff_rat():
+    a = S.Art("Art_BuffRat", ring_z0=1.6)
+    a.paint("fur", "8790B0", rings=True)
+    a.paint("cheese", "F9C93A", rings=True)
+    for key, code in RUNNER_PAINT + (("rind", "E89A22"), ("hole", "B8700E"), ("metal", "C3CAD4"), ("belly", "D9CBB4"),
+                                     ("band", "E53935"), ("shorts", "2F6BD8"), ("mouth", "5A1020")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.55)
+    sparkle(a, "glint", (-1.35, -0.6, 3.6), 0.28)
+    for s in (-1, 1):  # крошечные ножки
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.2, 0, top + 0.42))
+        a.box("fur", s * 0.2 - 0.08, s * 0.2 + 0.08, -0.08, 0.08, top + 0.1, top + 0.44)
+        a.box("pink", s * 0.2 - 0.12, s * 0.2 + 0.12, -0.3, 0.1, top, top + 0.12)
+    # Торс: шорты, пресс-кубики, грудь шире, плечи-шары; хвост.
+    part(a, "Body", "Stand", (0, 0, top + 0.44))
+    a.box("shorts", -0.42, 0.42, -0.3, 0.3, top + 0.4, top + 0.72)
+    a.frustum("fur", (-0.4, 0.4, -0.3, 0.3), (-0.75, 0.75, -0.42, 0.42), top + 0.7, top + 1.75)
+    a.box("fur", -0.8, 0.8, -0.44, 0.44, top + 1.72, top + 2.02)
+    for i in range(3):  # кубики пресса
+        for s in (-1, 1):
+            z = top + 0.82 + i * 0.2
+            a.box("belly", s * 0.11 - 0.09, s * 0.11 + 0.09, -0.4, -0.33, z, z + 0.16, bevel=0)
+    for s in (-1, 1):  # грудные мышцы
+        a.box("belly", s * 0.26 - 0.22, s * 0.26 + 0.22, -0.47, -0.42, top + 1.5, top + 1.86, bevel=0)
+    part(a, "Tail", "Body", (0, 0.3, top + 0.6))
+    chain(a, "pink", [(0, 0.3, top + 0.6), (0.15, 0.8, top + 0.4), (0.55, 1.1, top + 0.5), (0.8, 0.95, top + 0.85)],
+          0.11, 0.07)
+    # Голова маленькая, уверенная ухмылка, повязка.
+    hc = (0, -0.12, top + 2.32)
+    part(a, "Head", "Body", (0, 0, top + 2.02))
+    rat_head(a, hc, 0.8, look=(0.0, 0.4))
+    a.box("band", -0.29, 0.29, -0.31, 0.31, top + 2.42, top + 2.52, bevel=0)
+    a.box("band", 0.12, 0.3, 0.2, 0.32, top + 2.28, top + 2.48, bevel=0)
+    for s in (-1, 1):
+        part(a, "EarL" if s < 0 else "EarR", "Head", (s * 0.27, -0.1, top + 2.48))
+        rat_ear(a, hc, 0.8, s)
+    # Руки: бицепсы, предплечья вверх; штанга из двух головок сыра над головой — своя часть.
+    for s in (-1, 1):
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", (s * 0.78, 0, top + 1.88))
+        bar(a, "fur", (s * 0.78, 0, top + 1.88), (s * 1.15, -0.05, top + 2.2), 0.34, 0.3)
+        a.box("fur", s * 1.15 - 0.24, s * 1.15 + 0.24, -0.25, 0.2, top + 2.02, top + 2.4)  # бицепс
+        bar(a, "fur", (s * 1.15, -0.05, top + 2.3), (s * 1.0, -0.1, top + 2.95), 0.2, 0.18)
+        a.box("pink", s * 1.0 - 0.13, s * 1.0 + 0.13, -0.24, 0.04, top + 2.92, top + 3.12)
+    part(a, "Barbell", "Body", (0, -0.1, top + 3.02))
+    a.box("metal", -1.55, 1.55, -0.16, -0.04, top + 2.96, top + 3.08, bevel=0)
+    for s in (-1, 1):
+        x0, x1 = sorted((s * 1.18, s * 1.52))
+        disc(a, "cheese", top + 3.02, -0.1, 0.5, x0, x1, n=12, axis="x")
+        r0, r1 = sorted((s * 1.15, s * 1.55))
+        a.frame("rind", ngon(top + 3.02, -0.1, 0.53, 12), 0.07, r0, r1, axis="x", bevel=0)
+        h0, h1 = sorted((s * 1.52, s * 1.555))
+        for dz, dy, rr in ((0.18, -0.18, 0.08), (-0.2, 0.05, 0.1), (0.05, 0.22, 0.06)):
+            disc(a, "hole", top + 3.02 + dz, -0.1 + dy, rr, h0, h1, n=8, axis="x", bevel=0)
+    a.pose = {"Barbell": ((0, 0, 0), (0, 0, -0.3)), "ArmL": ((0, -12, 0), (0, 0, -0.15)),
+              "ArmR": ((0, 12, 0), (0, 0, -0.15)), "Head": ((0, 0, -12), (0, 0, 0)), "Tail": ((0, 0, 25), (0, 0, 0)),
+              "LegL": ((-15, 0, 0), (0, 0, 0))}
+    return a
+
+
+# ── 16. Мусорный обжора: зелёный бак на колёсах с пастью под крышкой (зубы, глаза на крышке), из пасти до самой
+#        подставки свисает огромный язык из старого ковра с узором и бахромой; на крышке сидит довольная крыса ────
+
+
+def trash_gobbler():
+    a = S.Art("Art_TrashGobbler", ring_z0=1.3)
+    a.paint("bin", "2E9E4F", rings=True)
+    for key, code in RUNNER_PAINT + (("binD", "1F7A3A"), ("mouth", "1E0E14"), ("rug", "B83A5E"), ("rugP", "F2C230"),
+                                     ("rugB", "4FC3FF"), ("fringe", "F4E2C0"), ("wheel", "2B2F38"), ("metal", "C3CAD4"),
+                                     ("banana", "FFD23F"), ("can", "E53935"), ("belly", "D9CBB4")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.55)
+    sparkle(a, "glint", (1.35, -0.6, 3.3), 0.28)
+    for s in (-1, 1):
+        part(a, "WheelL" if s < 0 else "WheelR", "Body", (s * 0.7, 0.45, top + 0.24))
+        x0, x1 = sorted((s * 0.62, s * 0.78))
+        disc(a, "wheel", top + 0.24, 0.45, 0.22, x0, x1, n=8, axis="x")
+        c0, c1 = sorted((s * 0.77, s * 0.8))
+        disc(a, "metal", top + 0.24, 0.45, 0.08, c0, c1, n=8, axis="x", bevel=0)
+    # Бак: шире кверху, рёбра, тёмная пасть с нижними зубами, мусор торчит.
+    part(a, "Body", "Stand", (0, 0, top + 0.2))
+    a.frustum("bin", (-0.62, 0.62, -0.55, 0.55), (-0.75, 0.75, -0.68, 0.68), top + 0.18, top + 1.6)
+    for z in (top + 0.5, top + 1.0):
+        w = 0.62 + 0.13 * (z - top - 0.18) / 1.42
+        a.frame("binD", S.octagon(-w - 0.04, w + 0.04, -w + 0.03, w - 0.03 + 0.06, 0.08), 0.06, z, z + 0.08, axis="z",
+                bevel=0)
+    a.box("mouth", -0.7, 0.7, -0.62, 0.62, top + 1.48, top + 1.64, bevel=0)
+    for i in range(6):
+        x = -0.55 + i * 0.22
+        a.frustum("white", (x - 0.08, x + 0.08, -0.72, -0.62), (x, x, -0.67, -0.67), top + 1.55, top + 1.75, bevel=0)
+    a.prism("banana", [(-0.2, 0.0), (0.25, 0.1), (0.3, 0.25), (-0.15, 0.2)], top + 1.6, top + 1.7)
+    disc(a, "can", 0.45, 0.25, 0.1, top + 1.6, top + 1.9, n=8)
+    # Язык-ковёр свисает до подставки: узор ромбами, бахрома на конце.
+    part(a, "Tongue", "Body", (0, -0.6, top + 1.56))
+    a.box("rug", -0.42, 0.42, -0.92, -0.62, top + 1.48, top + 1.58)
+    a.box("rug", -0.4, 0.4, -0.98, -0.86, top + 0.12, top + 1.52)
+    a.box("rug", -0.42, 0.42, -1.45, -0.94, top + 0.02, top + 0.14)
+    for i, z in enumerate((top + 0.4, top + 0.85, top + 1.3)):
+        a.prism("rugP" if i % 2 == 0 else "rugB", [(0.0, z - 0.14), (0.16, z), (0.0, z + 0.14), (-0.16, z)], -1.0,
+                -0.98, axis="y", bevel=0)
+    for x in (-0.36, -0.2, -0.04, 0.12, 0.28):
+        a.box("fringe", x - 0.04, x + 0.04, -1.6, -1.45, top + 0.03, top + 0.09, bevel=0)
+    # Крышка — верхняя челюсть на шарнире сзади: зубы, сердитые глаза; на крышке сидит крыса.
+    part(a, "Lid", "Body", (0, 0.66, top + 1.64))
+    a.box("binD", -0.82, 0.82, -0.78, 0.74, top + 1.62, top + 1.8)
+    a.box("binD", -0.2, 0.2, 0.2, 0.42, top + 1.78, top + 1.9)
+    for i in range(6):
+        x = -0.45 + i * 0.18
+        a.frustum("white", (x - 0.07, x + 0.07, -0.76, -0.66), (x, x, -0.71, -0.71), top + 1.63, top + 1.46, bevel=0)
+    for s in (-1, 1):
+        part(a, "EyeL" if s < 0 else "EyeR", "Lid", (s * 0.36, -0.72, top + 2.0))
+        eye(a, (s * 0.36, -0.6, top + 2.0), 0.36, 0.34, look=(-s * 0.4, -0.6), depth=0.18)
+        bar(a, "dark", (s * 0.1, -0.8, top + 2.24), (s * 0.58, -0.8, top + 2.3), 0.08, 0.06, bevel=0)
+    a.box("binD", -0.62, 0.62, -0.62, -0.5, top + 1.78, top + 2.2)  # бровь-козырёк крышки
+    part(a, "Rat", "Lid", (0, 0.25, top + 1.8))
+    disc(a, "fur", 0, 0.28, 0.3, top + 1.8, top + 2.3, n=8)
+    a.box("belly", -0.16, 0.16, -0.06, -0.0, top + 1.88, top + 2.2, bevel=0)
+    rat_head(a, (0, 0.18, top + 2.55), 0.75, look=(0.3, 0.2))
+    for s in (-1, 1):
+        rat_ear(a, (0, 0.18, top + 2.55), 0.75, s)
+        bar(a, "fur", (s * 0.26, 0.2, top + 2.15), (s * 0.42, 0.0, top + 2.0), 0.09)
+    chain(a, "pink", [(0, 0.55, top + 1.86), (0.3, 0.85, top + 1.84), (0.55, 0.95, top + 1.6), (0.6, 0.82, top + 1.3)],
+          0.08, 0.05)
+    a.pose = {"Lid": ((-22, 0, 0), (0, 0, 0)), "Tongue": ((14, 0, 0), (0, 0, 0)), "EyeL": ((0, 0, 15), (0, 0, 0)),
+              "WheelL": ((40, 0, 0), (0, 0, 0)), "Rat": ((0, 0, 20), (0, 0, 0.08))}
+    return a
+
+
+# ── 17. Крысиный маг: маленькая крыса-волшебник в огромном фиолетовом колпаке со звёздами и загнутым кончиком,
+#        с белой бородой и в мантии; посох с сияющим сыром вместо кристалла, лучи света, искры из лапы ────────────
+
+
+def rat_wizard():
+    a = S.Art("Art_RatWizard", ring_z0=1.4)
+    a.paint("hat", "6B3FB8", rings=True)
+    for key, code in RUNNER_PAINT + (("robe", "4B2A8C"), ("gold", "F2C230"), ("star", "FFE45C"), ("beard", "F4F1EA"),
+                                     ("staff", "8A5A34"), ("cheese", "FFD54F"), ("cheeseL", "FFF6B0"), ("ray", "FFF09A"),
+                                     ("hole", "D89A1C"), ("spark", "7FE0FF")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.5)
+    for s in (-1, 1):  # ножки из-под мантии
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.18, -0.1, top + 0.2))
+        a.box("pink", s * 0.18 - 0.12, s * 0.18 + 0.12, -0.46, -0.1, top, top + 0.12)
+    # Мантия-колокол со звёздами и золотой каймой; хвост.
+    part(a, "Body", "Stand", (0, 0, top + 0.1))
+    a.frustum("robe", (-0.62, 0.62, -0.55, 0.55), (-0.32, 0.32, -0.28, 0.3), top + 0.08, top + 1.28)
+    a.frame("gold", S.octagon(-0.66, 0.66, -0.59, 0.59, 0.16), 0.08, top + 0.06, top + 0.18, axis="z", bevel=0)
+    for x, z in ((-0.3, top + 0.5), (0.25, top + 0.75), (-0.05, top + 0.95)):
+        w = 0.55 - 0.27 * (z - top - 0.08) / 1.2
+        pixel_boxes(a, "star", [".#.", "###", ".#."], 0.06, x - 0.09, z + 0.09, -w - 0.04, -w + 0.01)
+    part(a, "Tail", "Body", (0, 0.45, top + 0.3))
+    chain(a, "pink", [(0, 0.45, top + 0.3), (0.3, 0.85, top + 0.2), (0.65, 0.9, top + 0.45), (0.75, 0.7, top + 0.75)],
+          0.09, 0.05)
+    # Голова с бородой; огромный колпак (кончик загнут — своя часть); уши из-под полей.
+    hc = (0, -0.1, top + 1.5)
+    part(a, "Head", "Body", (0, 0, top + 1.25))
+    rat_head(a, hc, 0.75, look=(0.3, 0.3), teeth=False)
+    a.frustum("beard", (-0.24, 0.24, -0.62, -0.3), (-0.05, 0.05, -0.55, -0.4), top + 1.32, top + 0.95)
+    part(a, "Hat", "Head", (0, 0, top + 1.72))
+    a.prism("hat", S.octagon(-0.62, 0.62, -0.6, 0.6, 0.2), top + 1.68, top + 1.78)
+    a.frustum("hat", (-0.4, 0.4, -0.38, 0.38), (-0.12, 0.12, -0.1, 0.12), top + 1.76, top + 3.0)
+    a.frame("gold", S.octagon(-0.44, 0.44, -0.42, 0.42, 0.12), 0.07, top + 1.76, top + 1.88, axis="z", bevel=0)
+    for x, z, rr in ((-0.18, top + 2.2, 0.07), (0.12, top + 2.55, 0.06)):
+        w = 0.4 - 0.28 * (z - top - 1.76) / 1.24
+        pixel_boxes(a, "star", [".#.", "###", ".#."], rr, x - 1.5 * rr, z + 1.5 * rr, -w - 0.05, -w + 0.01)
+    part(a, "HatTip", "Hat", (0, 0, top + 2.98))
+    bar(a, "hat", (0, 0, top + 2.96), (0.25, -0.15, top + 3.25), 0.16, 0.14)
+    bar(a, "hat", (0.24, -0.15, top + 3.24), (0.55, -0.2, top + 3.18), 0.12, 0.11)
+    gem(a, "star", (0.6, -0.2, top + 3.18), 0.16)
+    for s in (-1, 1):
+        part(a, "EarL" if s < 0 else "EarR", "Head", (s * 0.4, -0.08, top + 1.66))
+        x0, x1 = sorted((s * 0.42, s * 0.5))
+        disc(a, "fur", top + 1.66, -0.08, 0.17, x0, x1, n=8, axis="x")
+        disc(a, "pink", top + 1.66, -0.08, 0.1, *sorted((s * 0.5, s * 0.52)), n=8, axis="x", bevel=0)
+    # Правая лапа — посох с сияющим сыром; левая колдует искры.
+    part(a, "ArmR", "Body", (0.3, 0, top + 1.1))
+    bar(a, "robe", (0.3, 0, top + 1.1), (0.62, -0.3, top + 1.15), 0.14)
+    a.box("pink", 0.56, 0.76, -0.42, -0.22, top + 1.08, top + 1.26)
+    a.box("staff", 0.62, 0.72, -0.37, -0.27, top + 0.08, top + 2.5)
+    for z in (top + 0.6, top + 1.7):
+        a.box("gold", 0.6, 0.74, -0.39, -0.25, z, z + 0.06, bevel=0)
+    a.prism("cheese", [(0.4, top + 2.48), (0.95, top + 2.48), (0.95, top + 2.92)], -0.48, -0.16, axis="y")
+    a.prism("cheeseL", [(0.58, top + 2.56), (0.86, top + 2.56), (0.86, top + 2.76)], -0.5, -0.47, axis="y", bevel=0)
+    for x, z in ((0.5, top + 2.54), (0.8, top + 2.82)):
+        a.box("hole", x - 0.04, x + 0.04, -0.495, -0.475, z - 0.04, z + 0.04, bevel=0)
+    for ang in range(0, 360, 45):  # лучи сияния
+        r = math.radians(ang)
+        c = Vector((0.72, -0.32, top + 2.66))
+        d = Vector((math.cos(r), 0, math.sin(r)))
+        bar(a, "ray", tuple(c + 0.42 * d), tuple(c + 0.6 * d), 0.05, bevel=0)
+    part(a, "ArmL", "Body", (-0.3, 0, top + 1.1))
+    bar(a, "robe", (-0.3, 0, top + 1.1), (-0.7, -0.25, top + 1.4), 0.14)
+    a.box("pink", -0.82, -0.62, -0.36, -0.16, top + 1.36, top + 1.54)
+    for x, z, sz in ((-0.95, top + 1.75, 0.12), (-0.78, top + 1.95, 0.09), (-1.1, top + 1.55, 0.08)):
+        gem(a, "spark", (x, -0.3, z), sz)
+    a.pose = {"HatTip": ((0, 0, 0), (0, 0, 0)), "Hat": ((0, -10, 0), (0, 0, 0.04)), "ArmR": ((0, -15, 0), (0, 0, 0)),
+              "ArmL": ((0, 25, 0), (0, 0, 0)), "Head": ((0, 0, 14), (0, 0, 0)), "Tail": ((0, 0, -25), (0, 0, 0))}
+    return a
+
+
+# ── 18. Сундук-мимик с крысиными ушами: деревянный сундук в золотых оковках — крышка-челюсть с квадратными зубами,
+#        длинный розовый язык, монеты торчат из пасти, круглые уши на крышке, глаза, лапки и хвост ──────────────────
+
+
+def rat_mimic():
+    a = S.Art("Art_RatMimic", ring_z0=1.0)
+    a.paint("wood", "9A6236", rings=True)
+    for key, code in RUNNER_PAINT + (("woodD", "6B4226"), ("goldL", "FFE07A"), ("gold2", "C9921A"), ("mouth", "2A0E14"),
+                                     ("tongue", "F06A86"), ("tongueD", "D84A6A"), ("ruby", "E53935")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.55)
+    sparkle(a, "glint", (-1.3, -0.6, 2.7), 0.28)
+    for x in (-0.62, 0.62):  # розовые лапки
+        for y in (-0.38, 0.38):
+            part(a, "Leg" + ("F" if y < 0 else "B") + ("L" if x < 0 else "R"), "Body", (x, y, top + 0.3))
+            a.box("pink", x - 0.13, x + 0.13, y - 0.16 - (0.08 if y < 0 else 0), y + 0.12, top, top + 0.32)
+    # Нижняя часть: короб, золотые оковки и уголки, тёмная пасть, нижние квадратные зубы, монеты.
+    part(a, "Body", "Stand", (0, 0, top + 0.3))
+    a.box("wood", -0.92, 0.92, -0.6, 0.6, top + 0.28, top + 1.1)
+    for x in (-0.55, 0.55):
+        a.box("gold", x - 0.08, x + 0.08, -0.63, 0.63, top + 0.26, top + 1.06, bevel=0)
+    for x in (-0.92, 0.92):
+        for y in (-0.6, 0.6):
+            a.box("goldL", x - 0.09, x + 0.09, y - 0.09, y + 0.09, top + 0.24, top + 0.42)
+    a.box("mouth", -0.88, 0.88, -0.56, 0.56, top + 1.04, top + 1.22, bevel=0)
+    for i, x in enumerate((-0.66, -0.4, -0.14, 0.12, 0.38, 0.64)):
+        a.box("white", x - 0.1, x + 0.1, -0.66, -0.52, top + 1.04, top + 1.2 + 0.03 * (i % 2), bevel=0)
+    for x, ang in ((-0.35, 20), (0.0, -15), (0.42, 35)):
+        disc(a, "gold", x, -0.62, 0.15, top + 1.12, top + 1.18, n=8, bevel=0, matrix=tilt((x, -0.62, top + 1.15), "X",
+                                                                                            ang))
+    gem(a, "ruby", (0.2, -0.5, top + 1.22), 0.16)
+    # Язык — свисает до подставки, своя часть.
+    part(a, "Tongue", "Body", (0, -0.55, top + 1.12))
+    a.box("tongue", -0.21, 0.21, -0.95, -0.5, top + 1.08, top + 1.18)
+    a.box("tongue", -0.225, 0.225, -1.08, -0.92, top + 0.32, top + 1.14)
+    a.box("tongue", -0.205, 0.205, -1.45, -1.0, top + 0.02, top + 0.34)
+    a.box("tongueD", -0.025, 0.025, -1.1, -1.06, top + 0.4, top + 1.05, bevel=0)
+    # Крышка-челюсть: выпуклая, оковки, верхние зубы, глаза, уши, замок.
+    part(a, "Lid", "Body", (0, 0.6, top + 1.2))
+    a.box("wood", -0.92, 0.92, -0.6, 0.6, top + 1.2, top + 1.5)
+    a.frustum("wood", (-0.92, 0.92, -0.6, 0.6), (-0.86, 0.86, -0.3, 0.3), top + 1.48, top + 1.78)
+    for x in (-0.55, 0.55):
+        a.box("gold", x - 0.08, x + 0.08, -0.63, 0.63, top + 1.22, top + 1.52, bevel=0)
+    for i, x in enumerate((-0.54, -0.27, 0.0, 0.27, 0.54)):
+        a.box("white", x - 0.1, x + 0.1, -0.645, -0.53, top + 1.06 - 0.03 * (i % 2), top + 1.24, bevel=0)
+    a.box("goldL", -0.13, 0.13, -0.68, -0.6, top + 1.24, top + 1.46)
+    a.box("dark", -0.03, 0.03, -0.7, -0.67, top + 1.3, top + 1.4, bevel=0)
+    for s in (-1, 1):
+        part(a, "EyeL" if s < 0 else "EyeR", "Lid", (s * 0.4, -0.55, top + 1.62))
+        eye(a, (s * 0.4, -0.34, top + 1.6), 0.3, 0.3, look=(-s * 0.3, -0.4), depth=0.3)
+        part(a, "EarL" if s < 0 else "EarR", "Lid", (s * 0.55, 0.0, top + 1.75))
+        disc(a, "fur", s * 0.58, top + 2.0, 0.3, -0.08, 0.04, n=8, axis="y")
+        disc(a, "pink", s * 0.58, top + 2.0, 0.2, -0.11, -0.07, n=8, axis="y", bevel=0)
+    part(a, "Tail", "Body", (0, 0.6, top + 0.5))
+    chain(a, "pink", [(0, 0.6, top + 0.5), (0.25, 1.05, top + 0.35), (0.7, 1.15, top + 0.6), (0.85, 0.95, top + 1.0)],
+          0.11, 0.06)
+    a.pose = {"Lid": ((-28, 0, 0), (0, 0, 0)), "Tongue": ((18, 0, 0), (0, 0, 0)), "EarL": ((0, 20, 0), (0, 0, 0)),
+              "LegFL": ((-20, 0, 0), (0, 0, 0)), "Tail": ((0, 0, 25), (0, 0, 0))}
+    return a
+
+
+# ── 19. Трёхголовая крыса: толстый корпус, три разные морды — злая (рогатый шлем, оскал), сонная (ночной колпак,
+#        закрытые глаза) и глупая (шапка с пропеллером, язык набок); короткие лапки, хвост ─────────────────────────
+
+
+def three_headed_rat():
+    a = S.Art("Art_ThreeHeadedRat", ring_z0=1.2)
+    a.paint("fur", "8790B0", rings=True)
+    for key, code in RUNNER_PAINT + (("belly", "D9CBB4"), ("steel", "B8C0CC"), ("horn", "F4E2C0"), ("cap", "4FC3FF"),
+                                     ("capS", "FFFDF4"), ("prop", "FFD23F"), ("propB", "E53935"), ("beanie", "FF6B35"),
+                                     ("beanieB", "2F6BD8"), ("tongue", "F06A86"), ("mouth", "5A1020")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.62)
+    sparkle(a, "glint", (1.4, -0.7, 3.2), 0.28)
+    for s in (-1, 1):
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.4, -0.1, top + 0.4))
+        a.box("fur", s * 0.4 - 0.13, s * 0.4 + 0.13, -0.2, 0.06, top + 0.1, top + 0.42)
+        a.box("pink", s * 0.4 - 0.17, s * 0.4 + 0.17, -0.42, 0.08, top, top + 0.12)
+    part(a, "Body", "Stand", (0, 0, top + 0.4))
+    disc(a, "fur", 0, 0, 0.82, top + 0.36, top + 1.3, n=8)
+    disc(a, "fur", 0, 0, 0.7, top + 1.26, top + 1.7, n=8)
+    disc(a, "belly", 0, top + 0.95, 0.5, -0.82, -0.72, n=8, axis="y", bevel=0)
+    part(a, "Tail", "Body", (0, 0.75, top + 0.5))
+    chain(a, "pink", [(0, 0.75, top + 0.5), (0.4, 1.2, top + 0.35), (0.95, 1.2, top + 0.6), (1.15, 0.9, top + 1.0)],
+          0.12, 0.07)
+    for s in (-1, 1):
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", (s * 0.75, -0.1, top + 1.3))
+        bar(a, "fur", (s * 0.75, -0.1, top + 1.3), (s * 1.05, -0.35, top + 0.95), 0.18)
+        a.box("pink", s * 1.05 - 0.11, s * 1.05 + 0.11, -0.47, -0.25, top + 0.84, top + 1.02)
+    # Три шеи-головы веером: злая слева, сонная посередине (выше), глупая справа.
+    heads = (("HeadL", (-0.85, -0.25, top + 1.98), -26), ("HeadC", (0.0, -0.34, top + 2.38), 0),
+             ("HeadR", (0.85, -0.25, top + 1.98), 26))
+    for name, c, lean in heads:
+        c = Vector(c)
+        neck = Vector((c.x * 0.6, 0, top + 1.62))
+        part(a, name, "Body", tuple(neck))
+        bar(a, "fur", tuple(neck), tuple(c + Vector((0, 0.15, -0.2))), 0.3, 0.28)
+        a.transform = tilt(tuple(c), "Y", lean)
+        if name == "HeadL":  # злая: прищур, брови, оскал, рогатый шлем
+            rat_head(a, tuple(c), 0.85, look=(0.3, -0.4))
+            for s in (-1, 1):
+                bar(a, "dark", (c.x + s * 0.05, c.y - 0.33, c.z + 0.3), (c.x + s * 0.3, c.y - 0.33, c.z + 0.22), 0.06,
+                    0.05, bevel=0)
+            a.box("white", c.x - 0.12, c.x + 0.12, c.y - 0.56, c.y - 0.5, c.z - 0.3, c.z - 0.16, bevel=0)
+            a.prism("steel", S.octagon(c.x - 0.33, c.x + 0.33, c.y - 0.22, c.y + 0.36, 0.1), c.z + 0.24, c.z + 0.42)
+            a.prism("steel", S.octagon(c.x - 0.25, c.x + 0.25, c.y - 0.14, c.y + 0.28, 0.08), c.z + 0.4, c.z + 0.52)
+            for s in (-1, 1):
+                bar(a, "horn", (c.x + s * 0.3, c.y + 0.05, c.z + 0.36), (c.x + s * 0.55, c.y + 0.0, c.z + 0.7),
+                    0.1 + 0.005 * (s > 0))
+        elif name == "HeadC":  # сонная: глаза закрыты, ночной колпак с помпоном
+            rat_head(a, tuple(c), 0.85, eyes=False)
+            for s in (-1, 1):
+                a.box("dark", c.x + s * 0.14 - 0.09, c.x + s * 0.14 + 0.09, c.y - 0.2, c.y - 0.16, c.z + 0.12,
+                      c.z + 0.16, bevel=0)
+            a.frustum("cap", (c.x - 0.3, c.x + 0.3, c.y - 0.2, c.y + 0.34), (c.x + 0.12, c.x + 0.2, c.y, c.y + 0.08),
+                      c.z + 0.24, c.z + 0.78)
+            a.box("capS", c.x - 0.31, c.x + 0.31, c.y - 0.21, c.y + 0.35, c.z + 0.22, c.z + 0.32, bevel=0)
+            gem(a, "capS", (c.x + 0.2, c.y + 0.05, c.z + 0.82), 0.16)
+            for dz, sz in ((0.6, 0.1), (0.78, 0.08)):  # «Z-z»
+                pixel_boxes(a, "white", ["###", "..#", ".#.", "#..", "###"], sz * 0.3, c.x + 0.35, c.z + dz, c.y - 0.2,
+                            c.y - 0.17)
+        else:  # глупая: глаза врозь, язык набок, шапка с пропеллером
+            rat_head(a, tuple(c), 0.85, look=(0.0, 0.0), teeth=False)
+            a.box("tongue", c.x + 0.02, c.x + 0.16, c.y - 0.62, c.y - 0.5, c.z - 0.34, c.z - 0.12, bevel=0)
+            a.prism("beanie", S.octagon(c.x - 0.31, c.x + 0.31, c.y - 0.2, c.y + 0.34, 0.1), c.z + 0.24, c.z + 0.46)
+            a.box("beanieB", c.x - 0.05, c.x + 0.05, c.y - 0.22, c.y + 0.36, c.z + 0.24, c.z + 0.47, bevel=0)
+        for s in (-1, 1):
+            rat_ear(a, tuple(c), 0.85, s)
+        a.transform = None
+    hr = Vector((0.85, -0.25, top + 1.98))
+    part(a, "Propeller", "HeadR", tuple(tilt(tuple(hr), "Y", 26) @ (hr + Vector((0, 0.07, 0.5)))))
+    a.transform = tilt(tuple(hr), "Y", 26)
+    a.box("dark", hr.x - 0.025, hr.x + 0.025, hr.y + 0.045, hr.y + 0.095, hr.z + 0.46, hr.z + 0.58, bevel=0)
+    a.box("prop", hr.x - 0.36, hr.x, hr.y + 0.04, hr.y + 0.1, hr.z + 0.56, hr.z + 0.6, bevel=0)
+    a.box("propB", hr.x, hr.x + 0.36, hr.y + 0.05, hr.y + 0.105, hr.z + 0.565, hr.z + 0.605, bevel=0)
+    a.transform = None
+    a.pose = {"HeadL": ((0, -10, 0), (0, 0, 0)), "HeadC": ((12, 0, 0), (0, 0, 0)), "HeadR": ((0, 12, 10), (0, 0, 0)),
+              "Propeller": ((0, 0, 60), (0, 0, 0)), "ArmL": ((0, 30, 0), (0, 0, 0)), "Tail": ((0, 0, 20), (0, 0, 0))}
+    return a
+
+
+# ── 20. Турникет-терминатор: живой турникет на мощных механических ногах; вместо рук — две вращающиеся «рогатки»,
+#        в центре большой экран с красным пиксельным лицом, сверху мигалка, на груди золотая щель для жетонов ────────
+
+
+TERM_FACE = ["##.....##",
+             ".##...##.",
+             "..#...#..",
+             ".........",
+             "..#####..",
+             ".#.....#."]
+
+
+def turnstile_terminator():
+    a = S.Art("Art_TurnstileTerminator", ring_z0=1.6)
+    a.paint("body", "2B3550", rings=True)
+    for key, code in RUNNER_PAINT + (("bodyL", "3E4C72"), ("chrome", "C3CAD4"), ("screen", "120E18"), ("red", "FF2E3A"),
+                                     ("redD", "A11E2B"), ("lamp", "FF7A1A"), ("lampL", "FFE0B0"), ("goldL", "FFE07A")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.55)
+    sparkle(a, "glint", (-1.35, -0.6, 3.5), 0.28)
+    # Мощные ноги: бедро, колено-шар, голень, ступня-платформа.
+    for s in (-1, 1):
+        hip = Vector((s * 0.42, 0, top + 1.25))
+        part(a, "LegL" if s < 0 else "LegR", "Body", tuple(hip))
+        bar(a, "chrome", tuple(hip), (s * 0.55, -0.12, top + 0.75), 0.24, 0.26)
+        disc(a, "bodyL", top + 0.72, -0.12, 0.17, s * 0.55 - 0.15, s * 0.55 + 0.15, n=8, axis="x")
+        bar(a, "body", (s * 0.55, -0.12, top + 0.7), (s * 0.55, -0.02, top + 0.2), 0.3, 0.28)
+        a.box("body", s * 0.55 - 0.26, s * 0.55 + 0.26, -0.5, 0.22, top, top + 0.2)
+        a.box("chrome", s * 0.55 - 0.27, s * 0.55 + 0.27, -0.55, -0.4, top + 0.02, top + 0.14, bevel=0)
+    # Корпус-тумба: тёмно-синий, хромовая крышка, экран с красным лицом, щель для жетонов.
+    part(a, "Body", "Stand", (0, 0, top + 1.25))
+    a.box("body", -0.62, 0.62, -0.45, 0.45, top + 1.15, top + 2.85)
+    a.box("chrome", -0.66, 0.66, -0.49, 0.49, top + 2.82, top + 2.96)
+    a.box("chrome", -0.66, 0.66, -0.49, 0.49, top + 1.1, top + 1.2)
+    a.box("screen", -0.48, 0.48, -0.5, -0.44, top + 1.95, top + 2.68, bevel=0)
+    a.frame("chrome", S.octagon(-0.53, 0.53, top + 1.9, top + 2.73, 0.08), 0.05, -0.53, -0.47, axis="y")
+    pixel_boxes(a, "red", TERM_FACE, 0.08, -0.36, top + 2.55, -0.53, -0.49)
+    a.box("goldL", -0.18, 0.18, -0.5, -0.44, top + 1.55, top + 1.65, bevel=0)
+    a.box("dark", -0.12, 0.12, -0.52, -0.49, top + 1.58, top + 1.62, bevel=0)
+    for z in (top + 1.32, top + 1.42):
+        a.box("bodyL", -0.5, 0.5, -0.48, -0.44, z, z + 0.05, bevel=0)
+    # Мигалка сверху.
+    part(a, "Lamp", "Body", (0, 0, top + 2.96))
+    disc(a, "lamp", 0, 0, 0.2, top + 2.94, top + 3.2, n=8)
+    disc(a, "lampL", 0, 0, 0.12, top + 3.18, top + 3.28, n=8, bevel=0)
+    # Руки — «рогатки» по бокам: ступица и три хромовые штанги с красными наконечниками.
+    for s in (-1, 1):
+        hub = Vector((s * 0.74, -0.05, top + 2.2))
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", tuple(hub))
+        x0, x1 = sorted((s * 0.6, s * 0.86))
+        disc(a, "chrome", top + 2.2, -0.05, 0.2, x0, x1, n=8, axis="x")
+        for phi, w in ((90, 0.09), (210, 0.095), (330, 0.1)):
+            f = math.radians(phi)
+            v = Vector((s * 0.55, 0.75 * math.cos(f) * 0.6, 0.75 * math.sin(f))).normalized()
+            p1 = hub + 0.7 * v
+            bar(a, "chrome", tuple(hub), tuple(p1), w)
+            gem(a, "red", tuple(p1 + 0.04 * v), 0.15)
+    a.pose = {"ArmL": ((40, 0, 0), (0, 0, 0)), "ArmR": ((-40, 0, 0), (0, 0, 0)), "LegL": ((-18, 0, 0), (0, 0, 0)),
+              "LegR": ((12, 0, 0), (0, 0, 0)), "Lamp": ((0, 0, 45), (0, 0, 0))}
+    return a
+
+
+# ── 21. Пицца-НЛО: летающая тарелка из целой гигантской пиццы (бортик, сыр, пепперони, огни по краю), купол с
+#        крысой-пилотом; снизу луч из колец поднимает маленького мышонка, тот болтает лапками ────────────────────────
+
+
+def pizza_ufo():
+    a = S.Art("Art_PizzaUfo", ring_z0=2.4)
+    a.paint("cheese", "FFC93C", rings=True)
+    for key, code in RUNNER_PAINT + (("crust", "C77A2E"), ("dough", "E8B86A"), ("pep", "D7262E"), ("pepD", "A11E24"),
+                                     ("olive", "2B2B33"), ("basil", "3DBA4E"), ("dome", "9FE3FF"), ("domeL", "D8F6FF"),
+                                     ("beam", "C8FF7A"), ("beamL", "EFFFC8"), ("l1", "FF4FD8"), ("l2", "4FC3FF"),
+                                     ("l3", "FFE14F"), ("metal", "C3CAD4")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.55)
+    # Луч: кольца света от подставки к тарелке (держат тарелку), ярче к низу.
+    part(a, "Beam", "Stand", (0, 0, top))
+    for i, z in enumerate((top + 0.05, top + 0.75, top + 1.45)):
+        r = 0.95 - i * 0.15
+        a.frame("beam" if i % 2 else "beamL", ngon(0, 0, r, 8), 0.1, z, z + 0.12, axis="z", bevel=0)
+    for ang in (45, 135, 225, 315):  # тонкие стойки луча
+        rr = math.radians(ang)
+        bar(a, "beamL", (0.82 * math.cos(rr), 0.82 * math.sin(rr), top + 0.1), (0.6 * math.cos(rr), 0.6 * math.sin(rr),
+                                                                                 top + 1.95), 0.05, bevel=0)
+    # Мышонок в луче — поднимается, лапки вверх.
+    part(a, "Mouse", "Beam", (0, -0.05, top + 0.9))
+    disc(a, "fur", 0, -0.05, 0.2, top + 0.62, top + 1.05, n=8)
+    a.paint("fur", "B9BFCC")
+    a.paint("furL", "DADFE8")
+    rat_head(a, (0, -0.1, top + 1.22), 0.55, look=(0.0, 0.8))
+    for s in (-1, 1):
+        rat_ear(a, (0, -0.1, top + 1.22), 0.55, s)
+        bar(a, "fur", (s * 0.18, -0.05, top + 0.98), (s * 0.4, -0.12, top + 1.3), 0.07)
+        bar(a, "fur", (s * 0.1, -0.05, top + 0.66), (s * 0.18, -0.1, top + 0.42), 0.075)
+    chain(a, "pink", [(0, 0.12, top + 0.7), (0.15, 0.35, top + 0.55), (0.3, 0.4, top + 0.7)], 0.05, 0.04)
+    # Тарелка-пицца: тесто, сыр, бортик, начинка, огни по краю; купол с пилотом.
+    zt = top + 2.0
+    part(a, "Ufo", "Stand", (0, 0, zt))
+    disc(a, "dough", 0, 0, 1.55, zt - 0.18, zt + 0.02, n=12)
+    disc(a, "metal", 0, 0, 1.0, zt - 0.3, zt - 0.16, n=8, bevel=0)
+    a.frame("crust", ngon(0, 0, 1.62, 12), 0.24, zt - 0.02, zt + 0.22, axis="z", bevel=0)
+    disc(a, "cheese", 0, 0, 1.4, zt, zt + 0.1, n=12, bevel=0)
+    for x, y in ((-0.9, -0.3), (0.85, -0.45), (0.2, 0.95), (-0.55, 0.75), (-0.1, -0.95)):
+        disc(a, "pep", x, y, 0.2, zt + 0.08, zt + 0.15, n=8, bevel=0)
+    a.frame("olive", ngon(0.5, -0.9, 0.1, 8), 0.04, zt + 0.09, zt + 0.16, axis="z")  # одна оливка — бюджет 3000
+    for i in range(8):
+        ang = math.radians(i * 45 + 22.5)
+        disc(a, ("l1", "l2", "l3")[i % 3], 1.45 * math.cos(ang), 1.45 * math.sin(ang), 0.1, zt - 0.26, zt - 0.14, n=6,
+             bevel=0)
+    part(a, "Dome", "Ufo", (0, 0, zt + 0.1))
+    disc(a, "dome", 0, 0, 0.62, zt + 0.08, zt + 0.42, n=8)
+    disc(a, "dome", 0, 0, 0.48, zt + 0.4, zt + 0.62, n=8)
+    disc(a, "domeL", 0, 0, 0.3, zt + 0.6, zt + 0.72, n=8, bevel=0)
+    a.box("white", -0.4, -0.28, -0.6, -0.56, zt + 0.22, zt + 0.38, bevel=0)
+    part(a, "Pilot", "Ufo", (0, -0.2, zt + 0.42))
+    rat_head(a, (0, -0.25, zt + 0.82), 0.6, look=(0.3, 0.2))
+    for s in (-1, 1):
+        rat_ear(a, (0, -0.25, zt + 0.82), 0.6, s)
+    sparkle(a, "glint", (-1.45, -0.6, top + 2.9), 0.28)
+    a.pose = {"Ufo": ((0, 8, 0), (0, 0, 0.12)), "Mouse": ((0, 0, 30), (0, 0, 0.25)), "Pilot": ((0, 0, -20), (0, 0, 0)),
+              "Dome": ((0, 0, 0), (0, 0, 0))}
+    return a
+
+
+# ── 22. Рубиновый воришка: маленькая крыса изо всех сил тянет за ручку вагонетку, в которой огромный гранёный
+#        рубин — больше самой крысы; кусок пути, капли пота ─────────────────────────────────────────────────────
+
+
+def ruby_thief():
+    a = S.Art("Art_RubyThief", ring_z0=1.5)
+    a.paint("ruby", "D8203A", rings=True)
+    for key, code in RUNNER_PAINT + (("rubyL", "FF6B7E"), ("rubyD", "9E1028"), ("iron", "4E5A6E"), ("ironD", "3A4252"),
+                                     ("wheel", "2B2F38"), ("wood", "8A5A34"), ("rail", "C3CAD4"), ("rope", "C8A06A"),
+                                     ("sweat", "7FD4FF"), ("goldL", "FFE07A"), ("mouth", "5A1020"), ("belly", "D9CBB4")):
+        a.paint(key, code)
+    top = stand(a, "rare", 1.6)
+    sparkle(a, "glint", (0.6, -0.8, 3.7), 0.3)
+    rails(a, top, 1.4, 0.15)
+    zb = top + 0.18
+    # Вагонетка справа: колёса (свои части), железный кузов.
+    for x in (0.18, 1.0):
+        part(a, "WheelB" if x > 0.5 else "WheelF", "Cart", (x, 0.15, zb + 0.22))
+        for s in (-1, 1):
+            y0, y1 = sorted((0.15 + s * 0.4, 0.15 + s * 0.5))
+            disc(a, "wheel", x, zb + 0.22, 0.22, y0, y1, n=8, axis="y")
+    part(a, "Cart", "Stand", (0.6, 0.15, zb + 0.4))
+    a.frustum("iron", (0.0, 1.2, -0.3, 0.6), (-0.12, 1.32, -0.42, 0.72), zb + 0.38, zb + 1.15)
+    a.frame("ironD", S.octagon(-0.16, 1.36, -0.46, 0.76, 0.05), 0.08, zb + 1.1, zb + 1.22, axis="z", bevel=0)
+    bar(a, "rope", (0.0, -0.1, zb + 0.95), (-0.55, -0.35, zb + 1.1), 0.05, bevel=0)
+    # Огромный гранёный рубин в вагонетке (своя часть — качается).
+    rc = Vector((0.6, 0.15, zb + 1.85))
+    part(a, "Ruby", "Cart", (0.6, 0.15, zb + 1.1))
+    rm = Matrix.Translation(rc) @ Matrix.Rotation(math.radians(20), 4, "Z") @ Matrix.Translation(-rc)
+    a.frustum("rubyD", (0.25, 0.95, -0.2, 0.5), (0.6, 0.6, 0.15, 0.15), rc.z - 0.15, zb + 0.95, matrix=rm, bevel=0)
+    a.frustum("ruby", (0.15, 1.05, -0.3, 0.6), (0.25, 0.95, -0.2, 0.5), rc.z - 0.16, rc.z + 0.32, matrix=rm)
+    a.frustum("rubyL", (0.25, 0.95, -0.2, 0.5), (0.42, 0.78, -0.03, 0.33), rc.z + 0.3, rc.z + 0.62, matrix=rm)
+    a.box("glint", 0.38, 0.5, -0.36, -0.34, rc.z + 0.1, rc.z + 0.24, bevel=0, matrix=rm)
+    # Крыса тянет вагонетку: наклонилась вперёд, лапы на верёвке, капли пота.
+    part(a, "Rat", "Stand", (-0.75, -0.2, top + 0.45))
+    rm2 = tilt((-0.75, -0.2, top + 0.45), "Y", -18)
+    a.transform = rm2
+    disc(a, "fur", -0.75, -0.2, 0.26, top + 0.42, top + 1.0, n=8)
+    disc(a, "belly", -0.75, top + 0.7, 0.16, -0.48, -0.43, n=8, axis="y", bevel=0)
+    rat_head(a, (-0.82, -0.33, top + 1.2), 0.7, look=(-0.6, 0.0))
+    for s in (-1, 1):
+        rat_ear(a, (-0.82, -0.33, top + 1.2), 0.7, s)
+    a.transform = None
+    for s in (-1, 1):
+        bar(a, "fur", (-0.75 + s * 0.12, -0.2, top + 0.5), (-0.85 + s * 0.15, -0.3 + s * 0.12, top + 0.12), 0.09)
+        a.box("pink", -0.85 + s * 0.15 - 0.1, -0.85 + s * 0.15 + 0.1, -0.45 + s * 0.12, -0.15 + s * 0.12, top,
+              top + 0.09)
+    bar(a, "fur", (-0.58, -0.25, top + 0.95), (-0.5, -0.35, top + 1.1), 0.08)
+    a.box("pink", -0.6, -0.44, -0.44, -0.28, top + 1.04, top + 1.18)
+    chain(a, "pink", [(-0.85, 0.05, top + 0.55), (-1.15, 0.3, top + 0.5), (-1.25, 0.45, top + 0.8)], 0.07, 0.05)
+    for x, z, sz in ((-1.15, top + 1.55, 0.12), (-1.3, top + 1.35, 0.09)):
+        gem(a, "sweat", (x, -0.4, z), sz)
+    a.pose = {"Ruby": ((0, -12, 0), (0, 0, 0.06)), "Rat": ((0, -10, 0), (0.1, 0, 0)), "WheelF": ((0, 45, 0), (0, 0, 0)),
+              "Cart": ((0, 0, 0), (0.1, 0, 0))}
+    return a
+
+
 # ══ EPIC ═════════════════════════════════════════════════════════════════════════════════════════════════════
 
 # ── 23. Крысиный трон: толстый самодовольный король (прищур, ухмылка, корона набекрень, кубок в лапе) на огромном
@@ -1284,14 +1909,556 @@ def rat_throne():
     return a
 
 
+def gold_mound(a, r=1.75, coins=((-1.4, -1.0, 20), (1.35, -1.1, -30), (0.95, -1.4, 45))):
+    """Подставка Epic — гора золота ступенями с монетами по краю (часть Stand). Возвращает высоту верха."""
+    part(a, "Stand", None, (0, 0, 0))
+    a.paint("gold", "F2C230", rings=True)
+    a.paint("gold2", "C9921A")
+    a.paint("goldL", "FFE07A")
+    a.prism("gold2", S.octagon(-r, r, -r, r, r * 0.29), 0.0, 0.16)
+    a.prism("gold", S.octagon(-r + 0.18, r - 0.18, -r + 0.18, r - 0.18, r * 0.26), 0.14, 0.34)
+    for x, y, ang in coins:
+        disc(a, "goldL", x, y, 0.15, 0.3, 0.37, n=6, bevel=0, matrix=tilt((x, y, 0.33), "Y", ang * 0.3))
+    return 0.34
+
+
+# ── 24. Поезд-монстр: нос красного вагона метро стал огромной зубастой мордой — фары-глаза со злыми бровями,
+#        пасть-кабина с клыками (нижняя челюсть открывается), из боковых окон выглядывают крысята; рельсы на золоте ──
+
+
+def monster_train():
+    a = S.Art("Art_MonsterTrain", ring_z0=1.4)
+    a.paint("car", "D8352A", rings=True)
+    for key, code in RUNNER_PAINT + (("carD", "A11E2B"), ("cream", "EFE3C2"), ("window", "FFD86B"), ("mouth", "2A0E14"),
+                                     ("tongue", "F06A86"), ("lamp", "FFF3B0"), ("wheel", "2B2F38"), ("wood", "8A5A34"),
+                                     ("rail", "C3CAD4"), ("metal", "C3CAD4")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (1.45, -0.7, 3.4), 0.3)
+    turn = tilt((0, 0, 0), "Z", 26)
+    rails(a, top, 1.5, 0.0, turn)
+    zb = top + 0.2
+    for x in (-0.55, 0.75):  # тележки с колёсами — свои части
+        part(a, "WheelF" if x < 0 else "WheelB", "Body", tuple(turn @ Vector((x, 0, zb + 0.24))))
+        a.transform = turn
+        a.box("metal", x - 0.3, x + 0.3, -0.45, 0.45, zb + 0.3, zb + 0.42, bevel=0)
+        for dx in (-0.18, 0.18):
+            for s in (-1, 1):
+                y0, y1 = sorted((s * 0.38, s * 0.48))
+                disc(a, "wheel", x + dx, zb + 0.22, 0.18, y0, y1, n=6, axis="y", bevel=0)
+        a.transform = None
+    # Вагон: кузов, кремовая полоса, окна с крысятами, крыша; нос — морда.
+    part(a, "Body", "Stand", tuple(turn @ Vector((0, 0, zb + 0.42))))
+    a.transform = turn
+    a.box("car", -0.95, 1.35, -0.58, 0.58, zb + 0.4, zb + 1.95)
+    a.box("cream", -0.97, 1.37, -0.6, 0.6, zb + 0.95, zb + 1.05, bevel=0)
+    a.frustum("metal", (-0.95, 1.35, -0.58, 0.58), (-0.85, 1.25, -0.42, 0.42), zb + 1.93, zb + 2.1)
+    for s in (-1, 1):
+        y0, y1 = sorted((s * 0.58, s * 0.61))
+        for x in (-0.25, 0.4, 1.0):
+            a.box("window", x - 0.2, x + 0.18, y0, y1, zb + 1.2, zb + 1.7, bevel=0)
+    # Морда спереди (−x): брови, пасть с клыками сверху, язык.
+    a.box("carD", -1.25, -0.9, -0.58, 0.58, zb + 0.42, zb + 1.93)
+    a.box("mouth", -1.28, -1.2, -0.48, 0.48, zb + 0.7, zb + 1.28, bevel=0)
+    for i, y in enumerate((-0.36, -0.18, 0.0, 0.18, 0.36)):
+        a.frustum("white", (-1.36, -1.24, y - 0.08, y + 0.08), (-1.3, -1.3, y, y), zb + 1.3 + 0.006 * (i % 2),
+                  zb + 1.02 - 0.06 * (i % 2), bevel=0)  # основания через одно на разной высоте
+    for s in (-1, 1):
+        bar(a, "dark", (-1.3, s * 0.1, zb + 1.86), (-1.3, s * 0.52, zb + 1.74), 0.1, 0.08, bevel=0)
+    a.transform = None
+    for s in (-1, 1):  # фары-глаза
+        part(a, "EyeL" if s < 0 else "EyeR", "Body", tuple(turn @ Vector((-1.3, s * 0.3, zb + 1.55))))
+        a.transform = turn
+        disc(a, "lamp", zb + 1.55, s * 0.3, 0.17, -1.38, -1.24, n=8, axis="x")
+        disc(a, "dark", zb + 1.52, s * 0.3 - s * 0.04, 0.07, -1.41, -1.37, n=8, axis="x", bevel=0)
+        a.transform = None
+    part(a, "Jaw", "Body", tuple(turn @ Vector((-0.95, 0, zb + 0.62))))
+    a.transform = turn
+    a.box("carD", -1.4, -0.92, -0.56, 0.56, zb + 0.32, zb + 0.66)
+    for i, y in enumerate((-0.3, -0.1, 0.1, 0.3)):
+        a.frustum("white", (-1.38, -1.26, y - 0.08, y + 0.08), (-1.32, -1.32, y, y), zb + 0.66, zb + 0.9 + 0.05 * (i % 2),
+                  bevel=0)
+    a.box("tongue", -1.34, -1.0, -0.26, 0.26, zb + 0.62, zb + 0.72, bevel=0)
+    a.transform = None
+    # Крысята в окнах — свои части (выглядывают).
+    for k, (x, s) in enumerate(((-0.25, -1), (0.4, -1), (1.0, 1))):
+        c = Vector((x, s * 0.66, zb + 1.42))
+        part(a, f"Rat{k + 1}", "Body", tuple(turn @ (c + Vector((0, -s * 0.1, -0.2)))))
+        a.transform = turn @ tilt(tuple(c), "Z", 0 if s < 0 else 180)
+        rat_head(a, tuple(c), 0.42, look=(0.3, 0.4))
+        for e in (-1, 1):
+            rat_ear(a, tuple(c), 0.42, e)
+        a.transform = None
+    a.pose = {"Jaw": ((0, 20, 0), (0, 0, 0)), "EyeL": ((15, 0, 0), (0, 0, 0)), "Rat1": ((0, 0, 0), (0, 0, 0.1)),
+              "Rat2": ((0, 0, 20), (0, 0, 0)), "WheelF": ((0, 40, 0), (0, 0, 0))}
+    return a
+
+
+# ── 25. Сырный дракон: дракон из золотого сыра (дырки) сидит на горе золота — крылья из сырных пластин, рога,
+#        клыки, сияющие глаза; пасть открыта, из неё вылетают сырные кубики; длинный хвост ─────────────────────────
+
+
+def cheese_dragon():
+    a = S.Art("Art_CheeseDragon", ring_z0=1.6)
+    a.paint("cheese", "F5A623", rings=True)
+    for key, code in RUNNER_PAINT + (("cheeseD", "D9791A"), ("hole", "A85A0A"), ("wing", "FFE7A0"), ("glow", "9FF7FF"),
+                                     ("horn", "F4E2C0"), ("mouth", "5A1020"), ("cube", "FFE45C"), ("belly", "FFE7A0")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (-1.45, -0.6, 3.9), 0.3)
+    for s in (-1, 1):  # задние лапы
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.45, 0.1, top + 0.5))
+        a.box("cheese", s * 0.45 - 0.22, s * 0.45 + 0.22, -0.15, 0.4, top + 0.05, top + 0.55)
+        a.box("cheeseD", s * 0.45 - 0.24, s * 0.45 + 0.24, -0.42, 0.05, top, top + 0.16)
+        for dx in (-0.12, 0.0, 0.12):
+            a.frustum("horn", (s * 0.45 + dx - 0.04, s * 0.45 + dx + 0.04, -0.5, -0.42), (s * 0.45 + dx, s * 0.45 + dx,
+                                                                                         -0.56, -0.56), top, top + 0.06,
+                      bevel=0)
+    # Туловище: груша из двух ступеней, светлое брюхо пластинами, дырки.
+    part(a, "Body", "Stand", (0, 0, top + 0.5))
+    disc(a, "cheese", 0, 0.05, 0.72, top + 0.4, top + 1.4, n=8)
+    disc(a, "cheese", 0, 0.0, 0.56, top + 1.36, top + 1.95, n=8)
+    for i, z in enumerate((top + 0.55, top + 0.85, top + 1.15, top + 1.45)):
+        w = 0.36 - 0.03 * i
+        a.box("belly", -w, w, -0.66 + 0.04 * i, -0.56 + 0.04 * i, z, z + 0.22, bevel=0)
+    for s in (-1, 1):
+        for z, dy, rr in ((top + 0.75, 0.25, 0.1), (top + 1.1, -0.15, 0.08), (top + 1.65, 0.05, 0.07)):
+            ax = 0.67 if z < top + 1.36 else 0.52
+            disc(a, "hole", z, dy, rr, *sorted((s * ax, s * (ax + 0.03))), n=8, axis="x", bevel=0)
+    # Крылья — пластины сыра с рёбрами, своя часть каждое.
+    for s in (-1, 1):
+        root = Vector((s * 0.4, 0.3, top + 1.7))
+        part(a, "WingL" if s < 0 else "WingR", "Body", tuple(root))
+        a.extrude("wing", [(s * 0.4, top + 1.6), (s * 1.6, top + 2.5), (s * 1.75, top + 1.75), (s * 1.3, top + 1.2),
+                           (s * 0.75, top + 1.25)], 0.3, 0.38, axis="y")
+        for k, tip in enumerate(((s * 1.6, top + 2.5), (s * 1.75, top + 1.75), (s * 1.3, top + 1.2))):
+            bar(a, "cheeseD", (s * 0.4, 0.27, top + 1.65), (tip[0], 0.27, tip[1]), 0.08 + 0.006 * k, 0.07, bevel=0)
+    # Передние лапы с когтями.
+    for s in (-1, 1):
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", (s * 0.45, -0.2, top + 1.6))
+        bar(a, "cheese", (s * 0.45, -0.2, top + 1.6), (s * 0.55, -0.62, top + 1.2), 0.18)
+        for dx in (-0.08, 0.08):
+            a.frustum("horn", (s * 0.55 + dx - 0.04, s * 0.55 + dx + 0.04, -0.74, -0.66), (s * 0.55 + dx, s * 0.55 + dx,
+                                                                                           -0.72, -0.72), top + 1.16,
+                      top + 1.0, bevel=0)
+    # Шея и голова: рога, сияющие глаза, клыки; нижняя челюсть открывается; кубики сыра вылетают.
+    part(a, "Head", "Body", (0, -0.1, top + 1.92))
+    bar(a, "cheese", (0, -0.05, top + 1.9), (0, -0.3, top + 2.45), 0.36, 0.34)
+    hz = top + 2.6
+    a.box("cheese", -0.46, 0.46, -0.72, 0.22, hz - 0.24, hz + 0.3)
+    a.box("cheese", -0.34, 0.34, -1.16, -0.7, hz - 0.14, hz + 0.14)
+    a.box("dark", -0.2, -0.12, -1.13, -1.1, hz, hz + 0.06, bevel=0)
+    a.box("dark", 0.12, 0.2, -1.13, -1.1, hz, hz + 0.06, bevel=0)
+    for s in (-1, 1):
+        a.box("glow", s * 0.24 - 0.14, s * 0.24 + 0.14, -0.76, -0.7, hz + 0.04, hz + 0.24, bevel=0)
+        a.box("cheeseD", s * 0.27 - 0.045, s * 0.27 + 0.045, -0.78, -0.75, hz + 0.08, hz + 0.2, bevel=0)
+        bar(a, "cheeseD", (s * 0.08, -0.76, hz + 0.32), (s * 0.42, -0.76, hz + 0.26), 0.07, 0.06, bevel=0)
+        bar(a, "horn", (s * 0.28, -0.1, hz + 0.2), (s * 0.45, 0.25, hz + 0.65), 0.12 + 0.005 * (s > 0))
+        for x in (s * 0.12, s * 0.24):
+            a.frustum("white", (x - 0.04, x + 0.04, -1.08, -1.0), (x, x, -1.04, -1.04), hz - 0.12, hz - 0.24, bevel=0)
+    for z in (hz + 0.28, hz + 0.4):  # гребень
+        a.frustum("cheeseD", (-0.06, 0.06, -0.3, -0.1), (0, 0, -0.2, -0.2), z - 0.04, z + 0.14, bevel=0)
+    part(a, "Jaw", "Head", (0, -0.25, hz - 0.2))
+    a.box("cheeseD", -0.28, 0.28, -1.05, -0.2, hz - 0.4, hz - 0.22)
+    a.box("mouth", -0.2, 0.2, -0.98, -0.3, hz - 0.23, hz - 0.21, bevel=0)
+    part(a, "Cubes", "Head", (0, -1.2, hz - 0.1))
+    for x, y, z, sz in ((0.05, -1.32, hz - 0.15, 0.22), (-0.22, -1.52, hz - 0.02, 0.18), (0.25, -1.62, hz + 0.12, 0.16),
+                        (-0.05, -1.78, hz + 0.28, 0.14), (0.3, -1.4, hz - 0.35, 0.12)):
+        a.box("cube", x - sz / 2, x + sz / 2, y - sz / 2, y + sz / 2, z - sz / 2, z + sz / 2,
+              matrix=tilt((x, y, z), "Z", 25))
+    part(a, "Tail", "Body", (0, 0.55, top + 0.6))
+    chain(a, "cheese", [(0, 0.55, top + 0.6), (0.5, 1.1, top + 0.4), (1.1, 1.2, top + 0.45), (1.45, 0.75, top + 0.6),
+                        (1.5, 0.25, top + 0.8)], 0.26, 0.12)
+    a.frustum("cheeseD", (1.42, 1.58, 0.1, 0.3), (1.5, 1.5, -0.1, -0.1), top + 0.72, top + 0.92, bevel=0)
+    a.pose = {"Jaw": ((-25, 0, 0), (0, 0, 0)), "WingL": ((0, -20, 0), (0, 0, 0)), "WingR": ((0, 20, 0), (0, 0, 0)),
+              "Head": ((8, 0, 10), (0, 0, 0)), "Tail": ((0, 0, 20), (0, 0, 0)), "Cubes": ((0, 0, 0), (0, -0.2, 0.1))}
+    return a
+
+
+# ── 26. Золотой крысомех: огромный золотой робот — голова с круглыми ушами и короной, глаза-лампы, грудь-кабина под
+#        голубым стеклом, где сидит крошечная крыса-пилот за рычагами; мощные кулаки, толстые ноги ──────────────────
+
+
+def golden_rat_mech():
+    a = S.Art("Art_GoldenRatMech", ring_z0=1.8)
+    for key, code in RUNNER_PAINT + (("glass", "9FE3FF"), ("glassL", "D8F6FF"), ("lamp", "FF4FD8"), ("metal", "8C96A6"),
+                                     ("ruby", "E53935"), ("sapph", "2F7DE1"), ("cockpit", "7CC8F0"), ("screen", "2A2440"),
+                                     ("lever", "E53935")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (1.45, -0.7, 4.1), 0.3)
+    for s in (-1, 1):  # толстые ноги-тумбы и ступни
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.42, 0, top + 1.0))
+        a.box("gold2", s * 0.42 - 0.22, s * 0.42 + 0.22, -0.2, 0.2, top + 0.24, top + 1.02)
+        a.box("gold", s * 0.42 - 0.3, s * 0.42 + 0.3, -0.5, 0.28, top, top + 0.26)
+        a.box("goldL", s * 0.42 - 0.24, s * 0.42 + 0.24, -0.24, 0.24, top + 0.56, top + 0.66, bevel=0)
+    # Корпус: таз, грудь-кабина со стеклом, заклёпки, плечи-шары.
+    part(a, "Body", "Stand", (0, 0, top + 1.0))
+    a.box("gold2", -0.6, 0.6, -0.35, 0.35, top + 0.95, top + 1.25)
+    a.box("gold", -0.82, 0.82, -0.55, 0.5, top + 1.22, top + 2.55)
+    a.box("cockpit", -0.48, 0.48, -0.58, -0.5, top + 1.5, top + 2.3, bevel=0)
+    a.frame("goldL", S.octagon(-0.56, 0.56, top + 1.42, top + 2.38, 0.12), 0.08, -0.62, -0.53, axis="y")
+    for x in (-0.7, 0.7):
+        for z in (top + 1.35, top + 2.42):
+            a.box("goldL", x - 0.05, x + 0.05, -0.59, -0.54, z - 0.05, z + 0.05, bevel=0)
+    # Пилот: крошечная крыса за рычагами (видна через «стекло» — рамка без заливки), стекло — блики по краям.
+    part(a, "Pilot", "Body", (0, -0.4, top + 1.6))
+    disc(a, "fur", 0, -0.32, 0.2, top + 1.52, top + 1.82, n=8)
+    rat_head(a, (0, -0.45, top + 2.0), 0.55, look=(0.2, 0.3))
+    for s in (-1, 1):
+        rat_ear(a, (0, -0.45, top + 2.0), 0.55, s)
+        bar(a, "lever", (s * 0.2, -0.45, top + 1.52), (s * 0.24, -0.5, top + 1.72), 0.04, bevel=0)
+        gem(a, "lever", (s * 0.24, -0.5, top + 1.75), 0.07)
+    part(a, "Body", "Stand", (0, 0, top + 1.0))
+    a.box("glassL", -0.44, -0.32, -0.6, -0.57, top + 2.0, top + 2.25, bevel=0)
+    # Плечи и руки с огромными кулаками.
+    for s in (-1, 1):
+        sh = Vector((s * 0.95, 0, top + 2.3))
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", tuple(sh))
+        disc(a, "goldL", top + 2.3, 0, 0.3, *sorted((s * 0.8, s * 1.12)), n=8, axis="x")
+        bar(a, "gold2", tuple(sh), (s * 1.15, -0.1, top + 1.55), 0.3, 0.28)
+        a.box("gold", s * 1.15 - 0.34, s * 1.15 + 0.34, -0.45, 0.25, top + 0.95, top + 1.58)  # кулак
+        for dz in (0.12, 0.3, 0.48):
+            a.box("gold2", s * 1.15 - 0.3, s * 1.15 + 0.3, -0.49, -0.44, top + 1.0 + dz, top + 1.06 + dz, bevel=0)
+    # Голова: экран-лицо с глазами-лампами, круглые уши, корона с камнями.
+    part(a, "Head", "Body", (0, 0, top + 2.55))
+    a.box("gold", -0.55, 0.55, -0.48, 0.42, top + 2.58, top + 3.32)
+    a.box("screen", -0.42, 0.42, -0.52, -0.46, top + 2.72, top + 3.18, bevel=0)
+    for s in (-1, 1):
+        disc(a, "lamp", s * 0.2, top + 2.98, 0.11, -0.56, -0.5, n=8, axis="y", bevel=0)
+        a.box("glint", s * 0.2 - 0.06, s * 0.2 - 0.02, -0.57, -0.555, top + 3.02, top + 3.06, bevel=0)
+    a.box("goldL", -0.18, 0.18, -0.53, -0.48, top + 2.78, top + 2.84, bevel=0)
+    for s in (-1, 1):
+        part(a, "EarL" if s < 0 else "EarR", "Head", (s * 0.5, 0, top + 3.25))
+        disc(a, "gold", s * 0.55, top + 3.5, 0.32, -0.08, 0.06, n=8, axis="y")
+        disc(a, "pink", s * 0.55, top + 3.5, 0.2, -0.11, -0.07, n=8, axis="y", bevel=0)
+    part(a, "Crown", "Head", (0, 0, top + 3.32))
+    a.frame("goldL", ngon(0, -0.03, 0.4, 8), 0.1, top + 3.3, top + 3.5, axis="z")
+    for i in range(0, 8, 2):
+        ang = math.pi / 8 + i * math.pi / 4
+        px, py = 0.35 * math.cos(ang), -0.03 + 0.35 * math.sin(ang)
+        a.frustum("goldL", (px - 0.07, px + 0.07, py - 0.07, py + 0.07), (px, px, py, py), top + 3.48, top + 3.76,
+                  bevel=0)
+    gem(a, "ruby", (0, -0.44, top + 3.4), 0.16)
+    gem(a, "sapph", (0, -0.03, top + 3.6), 0.2)
+    a.pose = {"ArmR": ((0, 0, 0), (0, 0, 0)), "ArmL": ((0, 40, 0), (0, 0, 0)), "Head": ((0, 0, 15), (0, 0, 0)),
+              "Pilot": ((0, 0, 20), (0, 0, 0.05)), "LegR": ((-15, 0, 0), (0, 0, 0)), "EarL": ((0, 15, 0), (0, 0, 0))}
+    return a
+
+
+# ── 27. Подземный осьминог: из люка метро (крышка сдвинута) выглядывает фиолетовая голова с глазами, пять щупалец
+#        с присосками поднимаются и держат сундук, фонарь и золотую корону, ещё два — монеты ─────────────────────────
+
+
+def subway_octopus():
+    a = S.Art("Art_SubwayOctopus", ring_z0=1.2)
+    a.paint("octo", "8E44EC", rings=True)
+    for key, code in RUNNER_PAINT + (("octoD", "6B2FC0"), ("sucker", "FF9EDB"), ("iron", "4E5A6E"), ("ironD", "2B2F38"),
+                                     ("chest", "9A6236"), ("lantern", "D8352A"), ("lamp", "FFD86B"), ("ruby", "E53935"),
+                                     ("mouth", "3A0E2A")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (-1.45, -0.6, 3.9), 0.3)
+    # Люк: тёмная горловина в золоте, железное кольцо, сдвинутая крышка с узором.
+    a.prism("ironD", ngon(0, 0, 0.75, 12), top - 0.02, top + 0.04, bevel=0)
+    a.frame("iron", ngon(0, 0, 0.88, 12), 0.14, top, top + 0.16, axis="z")
+    cm = tilt((0.95, -0.85, top + 0.1), "Y", -12)
+    disc(a, "iron", 0.95, -0.85, 0.6, top + 0.02, top + 0.16, n=12, matrix=cm)
+    for r in (0.4, 0.22):
+        a.frame("ironD", ngon(0.95, -0.85, r, 12), 0.05, top + 0.15, top + 0.19, axis="z", bevel=0, matrix=cm)
+    # Голова над люком: глаза, рот-трубочка.
+    part(a, "Head", "Stand", (0, 0, top + 0.1))
+    disc(a, "octo", 0, 0, 0.62, top + 0.05, top + 0.9, n=8)
+    disc(a, "octo", 0, 0, 0.5, top + 0.88, top + 1.25, n=8)
+    disc(a, "octoD", 0, 0, 0.32, top + 1.22, top + 1.38, n=8)
+    for s in (-1, 1):
+        eye(a, (s * 0.25, -0.5, top + 0.85), 0.3, 0.34, look=(0.0, 0.4), depth=0.2)
+    disc(a, "octoD", 0, top + 0.5, 0.12, -0.7, -0.55, n=8, axis="y")
+    disc(a, "mouth", 0, top + 0.5, 0.06, -0.72, -0.69, n=8, axis="y", bevel=0)
+    # Щупальца: из люка вверх, у каждого своя ноша.
+    loads = (("Tentacle1", [(-0.45, -0.3, top + 0.4), (-0.95, -0.55, top + 1.1), (-1.15, -0.5, top + 1.8),
+                            (-0.9, -0.45, top + 2.3)], "chest"),
+             ("Tentacle2", [(0.45, -0.3, top + 0.4), (0.95, -0.4, top + 1.2), (1.1, -0.3, top + 2.0),
+                            (0.85, -0.25, top + 2.5)], "lantern"),
+             ("Tentacle3", [(0.0, 0.4, top + 0.6), (0.1, 0.55, top + 1.6), (-0.1, 0.45, top + 2.6),
+                            (0.05, 0.3, top + 3.2)], "crown"),
+             ("Tentacle4", [(-0.4, 0.35, top + 0.3), (-0.95, 0.75, top + 0.5), (-1.3, 0.6, top + 0.9),
+                            (-1.35, 0.25, top + 0.75)], None),
+             ("Tentacle5", [(0.4, 0.35, top + 0.3), (0.9, 0.85, top + 0.45), (1.3, 0.75, top + 0.8),
+                            (1.4, 0.4, top + 0.65)], None))
+    for name, pts, load in loads:
+        part(a, name, "Head", pts[0])
+        chain(a, "octo", pts, 0.3, 0.16)
+        for p, q in zip(pts[:-1], pts[1:]):
+            m = (Vector(p) + Vector(q)) / 2
+            gem(a, "sucker", (m.x, m.y - 0.12, m.z), 0.1)
+        end = Vector(pts[-1])
+        if load == "chest":
+            a.box("chest", end.x - 0.32, end.x + 0.32, end.y - 0.24, end.y + 0.24, end.z + 0.05, end.z + 0.45)
+            a.box("gold", end.x - 0.34, end.x + 0.34, end.y - 0.26, end.y + 0.26, end.z + 0.4, end.z + 0.48)
+            a.box("goldL", end.x - 0.06, end.x + 0.06, end.y - 0.3, end.y - 0.24, end.z + 0.22, end.z + 0.36)
+        elif load == "lantern":
+            a.box("lantern", end.x - 0.18, end.x + 0.18, end.y - 0.18, end.y + 0.18, end.z + 0.05, end.z + 0.15)
+            a.box("lamp", end.x - 0.15, end.x + 0.15, end.y - 0.15, end.y + 0.15, end.z + 0.15, end.z + 0.5)
+            a.frustum("lantern", (end.x - 0.2, end.x + 0.2, end.y - 0.2, end.y + 0.2),
+                      (end.x - 0.06, end.x + 0.06, end.y - 0.06, end.y + 0.06), end.z + 0.5, end.z + 0.66)
+        elif load == "crown":
+            a.frame("gold", ngon(end.x, end.y, 0.32, 8), 0.08, end.z + 0.05, end.z + 0.25, axis="z")
+            for i in range(0, 8, 2):
+                ang = math.pi / 8 + i * math.pi / 4
+                px, py = end.x + 0.28 * math.cos(ang), end.y + 0.28 * math.sin(ang)
+                a.frustum("goldL", (px - 0.06, px + 0.06, py - 0.06, py + 0.06), (px, px, py, py), end.z + 0.23,
+                          end.z + 0.48, bevel=0)
+            gem(a, "ruby", (end.x, end.y - 0.3, end.z + 0.15), 0.13)
+        else:
+            disc(a, "goldL", end.x, end.y, 0.15, end.z + 0.08, end.z + 0.14, n=8, bevel=0)
+    a.pose = {"Tentacle1": ((0, -15, 0), (0, 0, 0)), "Tentacle2": ((0, 15, 0), (0, 0, 0)),
+              "Tentacle3": ((10, 0, 0), (0, 0, 0)), "Head": ((0, 0, 12), (0, 0, 0.1)), "Tentacle4": ((0, 0, 20), (0, 0, 0))}
+    return a
+
+
+def gear(a, key, cx, cz, r, y0, y1, teeth=8):
+    """Шестерёнка лицом к −y: диск, зубцы по кругу, тёмная ступица."""
+    disc(a, key, cx, cz, r * 0.82, y0, y1, n=teeth, axis="y")
+    for i in range(teeth):
+        ang = 2 * math.pi * i / teeth
+        x, z = cx + r * 0.88 * math.cos(ang), cz + r * 0.88 * math.sin(ang)
+        a.box(key, x - r * 0.12, x + r * 0.12, y0 + 0.01, y1 - 0.01, z - r * 0.12, z + r * 0.12, bevel=0,
+              matrix=tilt((x, 0, z), "Y", -math.degrees(ang)))
+    disc(a, "dark", cx, cz, r * 0.22, y0 - 0.02, y0 + 0.01, n=6, axis="y", bevel=0)
+
+
+# ── 28. Часовой голем: живой механизм — торс-циферблат станционных часов со стрелками, плечи-шестерёнки, руки из
+#        шестерёнок и труб, голова-маленькие часы с рубиновыми глазами, ноги-колонны, золотые детали ──────────────
+
+
+def clock_golem():
+    a = S.Art("Art_ClockGolem", ring_z0=1.8)
+    a.paint("body", "24305E", rings=True)
+    for key, code in RUNNER_PAINT + (("face", "FFF8EC"), ("ruby", "E53935"), ("rubyL", "FF8A9A"), ("bronze", "B8811A"),
+                                     ("steel", "8C96A6")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (-1.45, -0.6, 4.0), 0.3)
+    for s in (-1, 1):  # ноги-колонны
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.4, 0, top + 1.05))
+        a.box("body", s * 0.4 - 0.2, s * 0.4 + 0.2, -0.2, 0.2, top + 0.24, top + 1.06)
+        a.box("gold", s * 0.4 - 0.3, s * 0.4 + 0.3, -0.48, 0.28, top, top + 0.26)
+        for z in (top + 0.5, top + 0.8):
+            a.box("gold2", s * 0.4 - 0.23, s * 0.4 + 0.23, -0.23, 0.23, z, z + 0.06, bevel=0)
+    # Торс — большие часы: синий корпус, золотой обод, циферблат с метками.
+    part(a, "Body", "Stand", (0, 0, top + 1.05))
+    cz = top + 1.95
+    disc(a, "body", 0, cz, 0.95, -0.4, 0.4, n=16, axis="y")
+    a.frame("gold", ngon(0, cz, 0.99, 16), 0.12, -0.46, -0.34, axis="y")
+    disc(a, "face", 0, cz, 0.82, -0.44, -0.38, n=16, axis="y", bevel=0)
+    for k in range(12):
+        t = math.radians(k * 30)
+        mx, mz = 0.68 * math.sin(t), cz + 0.68 * math.cos(t)
+        h = 0.07 if k % 3 else 0.11
+        a.box("dark", mx - h / 2, mx + h / 2, -0.47, -0.43, mz - h / 2, mz + h / 2, bevel=0)
+    a.box("body", -0.5, 0.5, -0.3, 0.3, top + 1.0, top + 1.2)
+    part(a, "Hands", "Body", (0, -0.5, cz))  # стрелки крутятся
+    bar(a, "dark", (0, -0.5, cz), (0.32, -0.5, cz + 0.3), 0.08, 0.05, bevel=0)
+    bar(a, "dark", (0, -0.5, cz), (-0.08, -0.5, cz + 0.62), 0.055, 0.045, bevel=0)
+    disc(a, "ruby", 0, cz, 0.08, -0.56, -0.48, n=8, axis="y", bevel=0)
+    # Плечи-шестерёнки (крутятся) и руки из труб с кулаками-шестерёнками.
+    for s in (-1, 1):
+        part(a, "GearL" if s < 0 else "GearR", "Body", (s * 0.95, -0.1, cz + 0.55))
+        gear(a, "gold", s * 0.95, cz + 0.55, 0.42, -0.3, -0.12)
+        part(a, "ArmL" if s < 0 else "ArmR", "Body", (s * 1.0, 0.05, cz + 0.45))
+        bar(a, "steel", (s * 1.0, 0.05, cz + 0.45), (s * 1.25, 0.0, cz - 0.4), 0.2, 0.18)
+        bar(a, "bronze", (s * 1.25, 0.0, cz - 0.4), (s * 1.28, -0.2, cz - 1.0), 0.18, 0.17)
+        a.box("gold", s * 1.28 - 0.25, s * 1.28 + 0.25, -0.42, 0.05, cz - 1.25, cz - 0.9)
+        for dz in (-1.15, -1.0):
+            a.box("gold2", s * 1.28 - 0.26, s * 1.28 + 0.26, -0.45, -0.4, cz + dz, cz + dz + 0.05, bevel=0)
+    # Голова — маленькие часы на шее: рубиновые глаза, золотая шестерёнка-корона.
+    part(a, "Head", "Body", (0, 0, cz + 0.95))
+    a.box("steel", -0.12, 0.12, -0.12, 0.12, cz + 0.9, cz + 1.12)
+    disc(a, "body", 0, cz + 1.45, 0.42, -0.26, 0.26, n=12, axis="y")
+    a.frame("gold", ngon(0, cz + 1.45, 0.45, 12), 0.08, -0.31, -0.22, axis="y")
+    disc(a, "face", 0, cz + 1.45, 0.35, -0.3, -0.25, n=12, axis="y", bevel=0)
+    for s in (-1, 1):
+        gem(a, "ruby", (s * 0.14, -0.34, cz + 1.5), 0.17)
+        a.box("rubyL", s * 0.14 - 0.06, s * 0.14 - 0.02, -0.46, -0.43, cz + 1.53, cz + 1.57, bevel=0)
+    a.box("dark", -0.14, 0.14, -0.31, -0.28, cz + 1.28, cz + 1.32, bevel=0)
+    gear(a, "goldL", 0, cz + 1.95, 0.24, -0.08, 0.06, teeth=6)
+    a.pose = {"Hands": ((0, 60, 0), (0, 0, 0)), "GearL": ((0, 30, 0), (0, 0, 0)), "GearR": ((0, -30, 0), (0, 0, 0)),
+              "ArmR": ((0, -25, 0), (0, 0, 0)), "Head": ((0, 0, 15), (0, 0, 0)), "LegL": ((-15, 0, 0), (0, 0, 0))}
+    return a
+
+
+# ── 29. Сердце сырного хранилища: открытый золотой сейф (дверца с кодовым диском распахнута), внутри — гигантский
+#        светящийся кристалл в форме сыра с гранями и лучами; по бокам две маленькие крысы-стражи с копьями ─────────
+
+
+def cheese_vault_heart():
+    a = S.Art("Art_CheeseVaultHeart", ring_z0=1.4)
+    for key, code in RUNNER_PAINT + (("vault", "3A3F4B"), ("crys", "FFD54F"), ("crysL", "FFF6B0"), ("crysD", "E8A82A"),
+                                     ("ray", "FFF09A"), ("steel", "C3CAD4"), ("red", "E53935"), ("helmet", "B8C0CC")):
+        a.paint(key, code)
+    top = gold_mound(a)
+    sparkle(a, "glint", (-1.45, -0.6, 3.6), 0.3)
+    # Сейф: золотой корпус с тёмной камерой, болты, ножки.
+    part(a, "Body", "Stand", (0, 0.2, top))
+    a.box("gold", -0.95, 0.95, 0.62, 0.95, top + 0.02, top + 2.08)
+    for x0, x1 in ((-0.95, -0.75), (0.75, 0.95)):
+        a.box("gold", x0, x1, -0.55, 0.94, top + 0.01, top + 2.09)
+    a.box("gold", -0.74, 0.74, -0.55, 0.94, top, top + 0.2)
+    a.box("gold", -0.74, 0.74, -0.55, 0.94, top + 1.9, top + 2.1)
+    a.box("vault", -0.74, 0.74, 0.55, 0.63, top + 0.21, top + 1.89, bevel=0)
+    for x0, x1 in ((-0.755, -0.735), (0.735, 0.755)):  # тёмные стенки камеры — кристалл светится на тёмном
+        a.box("vault", x0, x1, -0.5, 0.56, top + 0.22, top + 1.88, bevel=0)
+    for x in (-0.85, 0.85):
+        for z in (top + 0.1, top + 2.0):
+            a.box("goldL", x - 0.06, x + 0.06, -0.6, -0.54, z - 0.06, z + 0.06, bevel=0)
+    # Дверца распахнута влево на петлях: толстая плита, кодовый диск, ручка-штурвал.
+    part(a, "Door", "Body", (-0.95, -0.55, top + 1.05))
+    dm = tilt((-0.95, -0.55, top + 1.05), "Z", -110)
+    a.transform = dm
+    a.box("gold", -0.95, 0.85, -0.75, -0.55, top + 0.05, top + 2.05)
+    a.box("gold2", -0.8, 0.7, -0.79, -0.74, top + 0.2, top + 1.9, bevel=0)
+    disc(a, "steel", 0.0, top + 1.25, 0.28, -0.85, -0.78, n=12, axis="y")
+    for k in range(12):
+        t = math.radians(k * 30)
+        a.box("dark", 0.22 * math.sin(t) - 0.02, 0.22 * math.sin(t) + 0.02, -0.87, -0.84, top + 1.25 + 0.22 *
+              math.cos(t) - 0.02, top + 1.25 + 0.22 * math.cos(t) + 0.02, bevel=0)
+    for ang in (0, 60, 120):
+        r = math.radians(ang)
+        bar(a, "steel", (-0.3 * math.cos(r), -0.86, top + 0.6 - 0.3 * math.sin(r)),
+            (0.3 * math.cos(r), -0.86, top + 0.6 + 0.3 * math.sin(r)), 0.05 + 0.003 * (ang // 60), bevel=0)
+    a.transform = None
+    # Кристалл-сыр: гранёный клин светится, светлые грани, лучи (своя часть — парит и вращается).
+    part(a, "Crystal", "Body", (0, 0.05, top + 1.05))
+    a.prism("crysD", [(-0.5, top + 0.35), (0.5, top + 0.35), (0.5, top + 0.75), (-0.5, top + 1.5)], -0.3, 0.4,
+            axis="y")
+    a.prism("crys", [(-0.45, top + 0.4), (0.45, top + 0.4), (0.45, top + 0.72), (-0.45, top + 1.4)], -0.36, -0.28,
+            axis="y")
+    a.prism("crysL", [(-0.3, top + 0.55), (0.1, top + 0.55), (-0.3, top + 1.05)], -0.4, -0.35, axis="y", bevel=0)
+    for x, z in ((0.25, top + 0.55), (-0.1, top + 0.9)):
+        disc(a, "crysD", x, z, 0.07, -0.42, -0.38, n=8, axis="y", bevel=0)
+    for ang in range(0, 360, 45):
+        r = math.radians(ang)
+        c = Vector((0, -0.45, top + 0.95))
+        d = Vector((math.cos(r), 0, math.sin(r)))
+        bar(a, "ray", tuple(c + 0.62 * d), tuple(c + 0.78 * d), 0.05, bevel=0)
+    # Две крысы-стражи со шлемами и копьями.
+    for s in (-1, 1):
+        name = "GuardL" if s < 0 else "GuardR"
+        gx = s * 1.3
+        part(a, name, "Stand", (gx, -0.45, top))
+        disc(a, "fur", gx, -0.45, 0.22, top + 0.12, top + 0.62, n=8)
+        for dx in (-0.1, 0.1):
+            a.box("pink", gx + dx - 0.07, gx + dx + 0.07, -0.72, -0.4, top, top + 0.12)
+        rat_head(a, (gx, -0.52, top + 0.82), 0.55, look=(-s * 0.4, 0.2))
+        a.prism("helmet", S.octagon(gx - 0.22, gx + 0.22, -0.66, -0.3, 0.08), top + 0.94, top + 1.04)
+        a.frustum("helmet", (gx - 0.18, gx + 0.18, -0.62, -0.34), (gx - 0.03, gx + 0.03, -0.5, -0.46), top + 1.02,
+                  top + 1.2)
+        for e in (-1, 1):
+            rat_ear(a, (gx, -0.52, top + 0.82), 0.55, e)
+        a.box("steel", gx + s * 0.28 - 0.025, gx + s * 0.28 + 0.025, -0.62, -0.57, top + 0.1, top + 1.6, bevel=0)
+        a.frustum("steel", (gx + s * 0.28 - 0.07, gx + s * 0.28 + 0.07, -0.64, -0.55), (gx + s * 0.28, gx + s * 0.28,
+                                                                                         -0.6, -0.6), top + 1.58,
+                  top + 1.8, bevel=0)
+        a.box("pink", gx + s * 0.28 - 0.08, gx + s * 0.28 + 0.08, -0.66, -0.52, top + 0.6, top + 0.74)
+    a.pose = {"Door": ((0, 0, 35), (0, 0, 0)), "Crystal": ((0, 0, 25), (0, 0, 0.15)), "GuardL": ((0, 0, -20), (0, 0, 0)),
+              "GuardR": ((0, 0, 20), (0, 0, 0.05))}
+    return a
+
+
+# ── 30. Император трёх хвостов: статуэтка крысы-императора на золотой горе — гигантская корона, красный плащ с
+#        горностаем, три хвоста веером, держава в одной лапе и скипетр в другой; гора из ступеней и монет ─────────────
+
+
+def three_tail_emperor():
+    a = S.Art("Art_ThreeTailEmperor", ring_z0=2.0)
+    a.paint("cape", "D8352A", rings=True)
+    for key, code in RUNNER_PAINT + (("capeD", "A11E2B"), ("ermine", "F7F4EE"), ("belly", "D9CBB4"), ("ruby", "E53935"),
+                                     ("sapph", "2F7DE1"), ("emer", "2E9E4F"), ("purple", "6B3FB8")):
+        a.paint(key, code)
+    top = gold_mound(a, coins=((-1.4, -1.0, 20), (1.35, -1.1, -30), (-1.2, 1.2, 50)))
+    a.prism("gold", S.octagon(-1.1, 1.1, -1.1, 1.1, 0.32), top - 0.02, top + 0.32)  # гора выше
+    a.prism("gold2", S.octagon(-0.72, 0.72, -0.72, 0.72, 0.22), top + 0.3, top + 0.55)
+    for x, y in ((-0.85, -0.85), (0.9, -0.75), (0.6, 0.9)):
+        disc(a, "goldL", x, y, 0.14, top + 0.3, top + 0.37, n=6, bevel=0)
+    sparkle(a, "glint", (1.45, -0.6, 4.4), 0.3)
+    zb = top + 0.55
+    # Ноги, туловище, брюшко; плащ сзади до горы, горностаевый ворот.
+    for s in (-1, 1):
+        part(a, "LegL" if s < 0 else "LegR", "Body", (s * 0.22, -0.05, zb + 0.45))
+        a.box("fur", s * 0.22 - 0.12, s * 0.22 + 0.12, -0.17, 0.07, zb + 0.08, zb + 0.46)
+        a.box("pink", s * 0.22 - 0.16, s * 0.22 + 0.16, -0.42, 0.1, zb, zb + 0.12)
+    part(a, "Body", "Stand", (0, 0, zb + 0.45))
+    disc(a, "fur", 0, 0, 0.48, zb + 0.4, zb + 1.35, n=8)
+    disc(a, "fur", 0, 0, 0.42, zb + 1.32, zb + 1.7, n=8)
+    disc(a, "belly", 0, zb + 0.9, 0.32, -0.5, -0.42, n=8, axis="y", bevel=0)
+    part(a, "Cape", "Body", (0, 0.3, zb + 1.65))
+    a.frustum("cape", (-0.62, 0.62, 0.3, 0.5), (-0.95, 0.95, 0.38, 0.85), zb + 1.65, zb + 0.05)
+    a.frustum("capeD", (-0.5, 0.5, 0.48, 0.52), (-0.8, 0.8, 0.83, 0.87), zb + 1.5, zb + 0.2, bevel=0)
+    a.frame("ermine", ngon(0, 0.0, 0.52, 8), 0.16, zb + 1.6, zb + 1.8, axis="z", bevel=0)
+    for ang in range(0, 360, 60):
+        r = math.radians(ang + 30)
+        a.box("dark", 0.44 * math.cos(r) - 0.03, 0.44 * math.cos(r) + 0.03, 0.44 * math.sin(r) - 0.03,
+              0.44 * math.sin(r) + 0.03, zb + 1.79, zb + 1.82, bevel=0)
+    # Три хвоста веером — своя часть каждый.
+    for k, (ang, lift) in enumerate(((-35, 0.0), (0, 0.25), (35, 0.0))):
+        r = math.radians(ang)
+        base = Vector((0.0, 0.5, zb + 0.5))
+        d = Vector((math.sin(r), math.cos(r), 0))
+        part(a, f"Tail{k + 1}", "Body", tuple(base))
+        pts = [base, base + 0.5 * d + Vector((0, 0, -0.1)), base + 1.0 * d + Vector((0, 0, 0.25 + lift)),
+               base + 1.15 * d + Vector((0, 0, 0.8 + lift)), base + 0.95 * d + Vector((0, 0, 1.15 + lift))]
+        chain(a, "pink", [tuple(p) for p in pts], 0.15 - 0.01 * k, 0.07)
+    # Лапы: держава (левая) и скипетр (правая).
+    part(a, "ArmL", "Body", (-0.45, 0, zb + 1.55))
+    bar(a, "fur", (-0.45, 0, zb + 1.55), (-0.7, -0.35, zb + 1.2), 0.16)
+    a.box("pink", -0.82, -0.6, -0.48, -0.26, zb + 1.08, zb + 1.24)
+    disc(a, "gold", -0.71, -0.37, 0.18, zb + 1.22, zb + 1.5, n=8)
+    gem(a, "ruby", (-0.71, -0.37, zb + 1.6), 0.16)
+    part(a, "ArmR", "Body", (0.45, 0, zb + 1.55))
+    bar(a, "fur", (0.45, 0, zb + 1.55), (0.72, -0.35, zb + 1.25), 0.16)
+    a.box("pink", 0.62, 0.84, -0.48, -0.26, zb + 1.14, zb + 1.3)
+    a.box("gold2", 0.68, 0.78, -0.42, -0.32, zb + 0.6, zb + 2.3)
+    disc(a, "goldL", 0.73, -0.37, 0.13, zb + 2.26, zb + 2.42, n=8)
+    gem(a, "sapph", (0.73, -0.37, zb + 2.55), 0.2)
+    # Голова с огромной короной (своя часть — корона, выше головы вдвое).
+    hc = (0, -0.12, zb + 2.0)
+    part(a, "Head", "Body", (0, 0, zb + 1.72))
+    rat_head(a, hc, 0.85, look=(0.0, 0.2))
+    for s in (-1, 1):
+        rat_ear(a, hc, 0.85, s)
+    part(a, "Crown", "Head", (0, 0.03, zb + 2.25))
+    a.frame("gold", ngon(0, 0.03, 0.46, 8), 0.1, zb + 2.22, zb + 2.55, axis="z")
+    a.prism("purple", ngon(0, 0.03, 0.38, 8), zb + 2.24, zb + 2.7)
+    for i in range(8):
+        ang = math.pi / 8 + i * math.pi / 4
+        px, py = 0.41 * math.cos(ang), 0.03 + 0.41 * math.sin(ang)
+        tip = zb + (3.05 if i % 2 == 0 else 2.85)
+        a.frustum("gold", (px - 0.08, px + 0.08, py - 0.08, py + 0.08), (px, px, py, py), zb + 2.52, tip, bevel=0)
+        a.box("goldL", px - 0.06, px + 0.06, py - 0.06, py + 0.06, tip - 0.05, tip + 0.07, bevel=0)
+    for ang, key in ((270, "ruby"), (0, "emer"), (180, "sapph")):
+        r = math.radians(ang)
+        gem(a, key, (0.47 * math.cos(r), 0.03 + 0.47 * math.sin(r), zb + 2.38), 0.17, ang)
+    gem(a, "ruby", (0, 0.03, zb + 2.82), 0.26)
+    a.pose = {"Tail1": ((0, 0, -20), (0, 0, 0)), "Tail3": ((0, 0, 20), (0, 0, 0)), "Tail2": ((15, 0, 0), (0, 0, 0)),
+              "Crown": ((0, -10, 0), (0, 0, 0.06)), "ArmR": ((0, -20, 0), (0, 0, 0)), "Cape": ((-10, 0, 0), (0, 0, 0)),
+              "Head": ((0, 0, 12), (0, 0, 0))}
+    return a
+
+
 # ══ Сборка, запекание, экспорт, проверочные рендеры ════════════════════════════════════════════════════════
 
 COMMON = [("LiveCheeseMonster", live_cheese_monster), ("PizzaRat", pizza_rat), ("RunawayTicket", runaway_ticket),
           ("RatKnight", rat_knight), ("MutantSoda", mutant_soda), ("SubwaySnail", subway_snail),
           ("WalkingSuitcase", walking_suitcase), ("AngryAlarmClock", angry_alarm_clock), ("SneakerTenant", sneaker_tenant),
           ("DuckInspector", duck_inspector), ("PanicCone", panic_cone), ("CheeseSkater", cheese_skater)]
-RARE = [("DevourerVending", devourer_vending)]
-EPIC = [("RatThrone", rat_throne)]
+RARE = [("DevourerVending", devourer_vending), ("RoyalRatTrain", royal_rat_train), ("BuffRat", buff_rat),
+        ("TrashGobbler", trash_gobbler), ("RatWizard", rat_wizard), ("RatMimic", rat_mimic),
+        ("ThreeHeadedRat", three_headed_rat), ("TurnstileTerminator", turnstile_terminator), ("PizzaUfo", pizza_ufo),
+        ("RubyThief", ruby_thief)]
+EPIC = [("RatThrone", rat_throne), ("MonsterTrain", monster_train), ("CheeseDragon", cheese_dragon),
+        ("GoldenRatMech", golden_rat_mech), ("SubwayOctopus", subway_octopus), ("ClockGolem", clock_golem),
+        ("CheeseVaultHeart", cheese_vault_heart), ("ThreeTailEmperor", three_tail_emperor)]
 GROUPS = {"common": COMMON, "rare": RARE, "epic": EPIC}
 ITEMS = [(i, f, g) for g, items in GROUPS.items() for i, f in items if not ONLY or i in ONLY]
 
@@ -1378,7 +2545,7 @@ def rig_json(item_id, art, parts, path):
                            "center": [round(c, 4) for c in (lo + hi) / 2], "size": [round(c, 4) for c in hi - lo]}
     for g, (rot, off) in art.pose.items():
         out["demo_pose"][g] = {"rot_xyz_blender_deg": list(rot), "offset_blender": list(off)}
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, "w", encoding="utf-8", newline=chr(10)) as f:  # LF, как в репозитории
         json.dump(out, f, ensure_ascii=False, indent=1)
 
 
