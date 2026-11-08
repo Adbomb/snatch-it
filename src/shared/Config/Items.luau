@@ -1,7 +1,8 @@
 -- Каталог произведений искусства (D37, D40, D42): у каждого из 10 боссов своя коллекция. Босс 1 «Музей чудес» (D40)
 -- — 20 предметов, босс 2 «Музей безумных находок» (D42) — 30 (docs/CATALOG.md): модели из Blender (Config/ItemModels,
 -- пока меш не загружен — заготовка цвета и размера модели) и свой доход в секунду (income, предварительный баланс, без
--- множителей редкости). Коллекции боссов 3–10 — черновик (вид — заготовка, дохода нет), до их очереди. legacy —
+-- множителей редкости). Босс 3 «Крысиный король» (D54) — 30 живых существ D55 (Config/CreatureRigs). Коллекции
+-- боссов 4–10 — черновик (вид — заготовка, дохода нет), до их очереди. legacy —
 -- прежние предметы (народные промыслы босса 1 D38, антиквариат-черновик босса 2): у босса не появляются, но описание
 -- остаётся, чтобы старые сохранения загружались. id не повторяются и не переиспользуются для другого произведения.
 -- Шансы редкостей у боссов — Progression.BossLoot.
@@ -12,7 +13,7 @@ export type ItemDef = {
 	displayName: string,
 	rarity: string, -- Common | Rare | Epic | Legendary | Secret (см. Config/Rarities)
 	boss: number, -- босс (уровень 1–10), в чьей коллекции предмет
-	kind: string, -- Painting | Sculpture | Vase | Mask | Artifact | Jewel | Instrument | Textile
+	kind: string, -- Painting | Sculpture | Vase | Mask | Artifact | Jewel | Instrument | Textile | Creature (D55)
 	source: string?, -- автор и время для реальных произведений
 	weight: string, -- Light | Medium | Heavy
 	shape: string, -- Enum.PartType заготовки: Block | Ball | Cylinder | Wedge (у Ball размер берётся по X)
@@ -207,11 +208,63 @@ for _, id in { "PorcelainDog", "MantelClock", "Gramophone", "MusicBox" } do
 	Items[id].legacy = true
 end
 
--- 3. Склад — «Робот-охранник»: запасники музея.
+-- 3. Подземка — «Крысиный король»: коллекция «Крысиный король» (D54, каталог утверждён владельцем 2026-11-08,
+-- docs/CATALOG.md) — 30 живых существ D55: 12 Common, 10 Rare, 8 Epic. Модель — из подвижных частей
+-- (Config/CreatureRigs: скелет D54 и Part-версия до импорта мешей), цвет и размер — живого существа без подставки.
+-- Доход — предварительный баланс, не утверждён.
+local function creature(
+	id: string,
+	rarity: string,
+	displayName: string,
+	weight: string,
+	income: number,
+	color: string,
+	size: Vector3
+)
+	collectible(3, id, rarity, displayName, "Creature", weight, income, color, size, "существо Подземки")
+end
+
+-- D55: коллекция босса 3 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)
+creature("LiveCheeseMonster", "Common", "Живой сыр-монстр", "Medium", 110, "E8AC2C", V(3.081, 2.234, 1.954))
+creature("PizzaRat", "Common", "Пицца-крыса", "Heavy", 104, "E1B04C", V(3.393, 1.718, 3.42))
+creature("RunawayTicket", "Common", "Билетик-беглец", "Medium", 98, "F7D974", V(2.96, 2.416, 1.321))
+creature("RatKnight", "Common", "Крыса-рыцарь", "Medium", 95, "ACB3C0", V(2.401, 2.911, 2.066))
+creature("MutantSoda", "Common", "Газировка-мутант", "Medium", 108, "2DAD58", V(2.2, 2.6, 2.188))
+creature("SubwaySnail", "Common", "Улитка-метро", "Medium", 112, "2A609E", V(2.859, 1.848, 2.135))
+creature("WalkingSuitcase", "Common", "Чемодан на ножках", "Medium", 100, "E45946", V(2.201, 2.02, 1.245))
+creature("AngryAlarmClock", "Common", "Злой будильник", "Medium", 115, "DB6336", V(1.942, 2.821, 1.125))
+creature("SneakerTenant", "Common", "Кроссовок с жильцом", "Heavy", 102, "D13439", V(3.22, 2.623, 2.076))
+creature("DuckInspector", "Common", "Утка-контролёр", "Light", 118, "E4BC37", V(2.146, 2.13, 2.196))
+creature("PanicCone", "Common", "Конус-паникёр", "Medium", 120, "EAEBE4", V(2.14, 2.74, 1.78))
+creature("CheeseSkater", "Common", "Сырный скейтер", "Medium", 125, "BDBFC8", V(2.6, 2.163, 1.545))
+creature("DevourerVending", "Rare", "Автомат-пожиратель", "Heavy", 380, "AF2634", V(2, 3.7, 1.957))
+creature("RoyalRatTrain", "Rare", "Королевский крысовоз", "Medium", 340, "9F2E4E", V(2.914, 2.32, 1.95))
+creature("BuffRat", "Rare", "Крыса-качок", "Heavy", 320, "7486B3", V(3.11, 3.533, 1.798))
+creature("TrashGobbler", "Rare", "Мусорный обжора", "Medium", 330, "267A3E", V(1.639, 2.953, 2.581))
+creature("RatWizard", "Rare", "Крысиный маг", "Heavy", 370, "4B2A8B", V(2.475, 3.316, 1.553))
+creature("RatMimic", "Rare", "Сундук-мимик", "Medium", 350, "76472A", V(2.021, 2.277, 2.643))
+creature("ThreeHeadedRat", "Rare", "Трёхголовая крыса", "Heavy", 345, "848DAC", V(3.114, 3.336, 2.166))
+creature("TurnstileTerminator", "Rare", "Турникет-терминатор", "Heavy", 360, "283049", V(2.744, 3.28, 1.041))
+creature("PizzaUfo", "Rare", "Пицца-НЛО", "Medium", 400, "D49B48", V(3.154, 3.108, 3.13))
+creature("RubyThief", "Rare", "Рубиновый воришка", "Medium", 335, "4E5A6E", V(2.864, 2.65, 1.567))
+creature("RatThrone", "Epic", "Крысиный трон", "Heavy", 1500, "E2B734", V(3.56, 3.762, 3.56))
+creature("MonsterTrain", "Epic", "Поезд-монстр", "Medium", 1600, "C12D27", V(2.993, 2.061, 2.466))
+creature("CheeseDragon", "Epic", "Сырный дракон", "Heavy", 1450, "EFA222", V(3.505, 3.283, 3.171))
+creature("GoldenRatMech", "Epic", "Золотой крысомех", "Heavy", 1300, "E1B42F", V(2.981, 3.795, 1.324))
+creature("SubwayOctopus", "Epic", "Подземный осьминог", "Heavy", 1400, "CA981F", V(3.5, 4.05, 3.5))
+creature("ClockGolem", "Epic", "Часовой голем", "Heavy", 1250, "212C57", V(3.08, 4.122, 0.961))
+creature("CheeseVaultHeart", "Epic", "Сердце сырного хранилища", "Heavy", 1350, "E4B62D", V(3.321, 2.101, 2.414))
+creature("ThreeTailEmperor", "Epic", "Император трёх хвостов", "Heavy", 1700, "DEB22E", V(3.5, 4.55, 3.5))
+-- D55: конец коллекции босса 3
+
+-- Черновик «Склада» (запасники музея, D38) до D54: только для старых сохранений.
 art("CratedVase", 3, "Common", "Ваза в ящике", "Vase", "Medium", "Block", "B98B5B", V(2.2, 2.2, 2.2))
 art("PlasterBust", 3, "Common", "Гипсовый бюст", "Sculpture", "Medium", "Block", "EDEDED", V(1.6, 2.4, 1.4))
 art("KnightArmor", 3, "Rare", "Рыцарские доспехи", "Sculpture", "Heavy", "Block", "A8B2BD", V(1.8, 3.4, 1.4))
 art("BronzeHorse", 3, "Rare", "Бронзовый конь", "Sculpture", "Heavy", "Wedge", "8C6A3D", V(1.4, 2.4, 3))
+for _, id in { "CratedVase", "PlasterBust", "KnightArmor", "BronzeHorse" } do
+	Items[id].legacy = true
+end
 
 -- 4. Пустыня — «Сфинкс»: Древний Египет.
 art("CanopicJar", 4, "Common", "Канопа", "Vase", "Light", "Cylinder", "D9C7A1", V(2.2, 1.3, 1.3))

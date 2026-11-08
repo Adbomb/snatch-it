@@ -57,6 +57,17 @@
   `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
   повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
   Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
+- Живые существа (D55, этап D): поза у босса — `Shared/CreatureMotion` (общее время + зерно uid), сервер пишет на
+  корень предмета атрибуты Home (CFrame низа места), Drop (высота места над полом), CatchMode / CatchSince /
+  CatchFace / CatchAnchor; `Controllers/CreatureController` двигает корень локально у всех клиентов (у сервера он на
+  месте), части — Transform моторов по ролям D54 (`Shared/CreatureAnim`: роль → ось, размах, ритм; пробная поза —
+  направление; Yaw — сопряжение поворотом). Экспонат (атрибут Slot) — только суставы / покачивание Visual-сварки,
+  корень не трогается; в руках — Held. Существа босса 3: `Config/CreatureRigs` (генерирует
+  `scripts/creature_rigs_to_luau.py` из индекса D54, rig.json и `Boss3Creatures.parts.json`; он же вписывает 30
+  строк `creature(...)` в `Config/Items` между метками), Part-версия — `scripts/blender/creature_parts.py`
+  (вокселизация части, метка цвета ближайшей грани, жадное слияние; ≤ 40 блоков; скрываемая подставка не
+  строится). `Util/ItemFactory.buildCreature`: первый блок части — сустав (Motor6D с именем части от блока предка),
+  остальные блоки — Weld; лицо скелета D54 (+Z) повёрнуто вперёд (−Z). Lune `check_creatures`.
 - Ловибумы в игре (D55, этап A): геометрия v5 — `scripts/blender/lovibum_shapes.py` (общая с концептами; части
   `a.group`: Base, Core, Claw1…4, Crystal; `a.rig`, `a.axes` — ось раскрытия когтя, `a.lift`, `a.light`).
   `scripts/blender/lovibum_models.py` → `assets/models/lovibums/Lovibum_<Вид>.fbx` (меши Lovibum<Вид><Часть>,

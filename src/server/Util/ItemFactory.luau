@@ -6,13 +6,18 @@
 -- Blender («Visual», MeshPart с SurfaceAppearance D39) приварена к нему внутри. Иначе корень — сам цветной Part
 -- нужной формы (заготовка до импорта). Карты SurfaceAppearance игровой скрипт задать не может (права плагина) —
 -- копируется шаблон из Server/Looks (его создаёт Rojo, scripts/make_looks.py). Только внешний вид, без логики.
--- Зависит от AssetService, Config/Items, Config/ItemModels, Config/Rarities, Config/UITokens, Shared/NumberFormat,
--- Server/Looks.
+-- Живое существо из частей (D55, Config/CreatureRigs — босс 3): корень — невидимый хитбокс, каждая видимая часть —
+-- блоки Part-версии; первый блок части — её сустав: Motor6D (имя = имя части) от блока родителя (или от корня),
+-- остальные блоки приварены к нему. Скрытые части (подставка D54) блоков не имеют — их дети крепятся к ближайшему
+-- видимому предку. Лицо — вперёд (−Z). Оживляет клиент (Transform моторов, Controllers/CreatureController).
+-- Зависит от AssetService, Config/Items, Config/ItemModels, Config/CreatureRigs, Config/Rarities, Config/UITokens,
+-- Shared/NumberFormat, Server/Looks.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local CreatureRigs = require(ReplicatedStorage.Shared.Config.CreatureRigs)
 local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
@@ -21,6 +26,8 @@ local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local Looks = ServerScriptService.Server.Looks
 
 local VISUAL_NAME = "Visual"
+local BLOCK_NAME = "Blk" -- блок Part-версии существа (D55)
+local FACE = CFrame.Angles(0, math.pi, 0) -- скелет D54 смотрит в +Z, предметы — вперёд (−Z)
 
 local templates: { [string]: MeshPart } = {}
 
@@ -141,6 +148,81 @@ local function addLabel(part: BasePart, def: Items.ItemDef)
 		else rarity
 end
 
+local function block(size: Vector3, color: string): Part
+	local b = Instance.new("Part")
+	b.Name = BLOCK_NAME
+	b.Size = size
+	b.Color = Color3.fromHex(color)
+	b.Material = Enum.Material.Plastic
+	b.TopSurface = Enum.SurfaceType.Smooth
+	b.BottomSurface = Enum.SurfaceType.Smooth
+	b.Anchored = false
+	b.Massless = true
+	b.CanCollide = false
+	b.CanQuery = false
+	b.CanTouch = false
+	return b
+end
+
+-- Существо из частей (D55) внутри корня root. Возвращает число блоков.
+local function buildCreature(root: Part, rig: any): number
+	-- низ живого существа — на низ корня, середина — по центру, лицо вперёд
+	local origin = FACE * CFrame.new(-rig.Center.X, -root.Size.Y / 2 - rig.Lift, -rig.Center.Z)
+	local frames: { [string]: CFrame } = {} -- точка вращения части в осях корня (покой)
+	local joints: { [string]: { part: BasePart, offset: Vector3 } } = {} -- сустав: первый блок и его центр от pivot
+	local count = 0
+	-- ближайший предок с блоками (у скрытой подставки их нет); nil — крепить к корню
+	local function visibleAncestor(name: string?): string?
+		while name and not joints[name] do
+			name = rig.Parts[name].parent
+		end
+		return name
+	end
+	for _, name in rig.Order do
+		local spec = rig.Parts[name]
+		frames[name] = origin * CFrame.new(spec.pivot)
+		if #spec.blocks == 0 then
+			continue
+		end
+		local first = spec.blocks[1]
+		local joint = block(first[2], first[3])
+		joint.Name = name
+		joint.CFrame = root.CFrame * frames[name] * CFrame.new(first[1])
+		local motor = Instance.new("Motor6D")
+		motor.Name = name
+		motor.Part1 = joint
+		local ancestor = visibleAncestor(spec.parent)
+		if ancestor then
+			-- C0: точка вращения части в осях блока-сустава предка (его покой — pivot предка + центр блока)
+			local j = joints[ancestor]
+			motor.Part0 = j.part
+			motor.C0 = (frames[ancestor] * CFrame.new(j.offset)):Inverse() * frames[name]
+		else
+			motor.Part0 = root
+			motor.C0 = frames[name]
+		end
+		motor.C1 = CFrame.new(-first[1]) -- от точки вращения к центру блока
+		motor.Parent = joint
+		joint.Parent = root
+		joints[name] = { part = joint, offset = first[1] }
+		count += 1
+		for i = 2, #spec.blocks do
+			local entry = spec.blocks[i]
+			local b = block(entry[2], entry[3])
+			b.CFrame = joint.CFrame * CFrame.new(entry[1] - first[1])
+			local weld = Instance.new("Weld")
+			weld.Part0 = joint
+			weld.Part1 = b
+			weld.C0 = CFrame.new(entry[1] - first[1])
+			weld.Parent = b
+			b.Parent = root
+			count += 1
+		end
+	end
+	root:SetAttribute("Creature", true)
+	return count
+end
+
 function ItemFactory.Create(itemId: string): Part
 	local def = Items[itemId]
 	assert(def, "Нет предмета в Config/Items: " .. tostring(itemId))
@@ -152,6 +234,7 @@ function ItemFactory.Create(itemId: string): Part
 	part.TopSurface = Enum.SurfaceType.Smooth
 	part.BottomSurface = Enum.SurfaceType.Smooth
 	part:SetAttribute("ItemId", itemId)
+	local rig = CreatureRigs[itemId]
 	if template then
 		-- Невидимый хитбокс по размеру модели, модель приварена к нему.
 		part.Size = template.Size
@@ -169,6 +252,12 @@ function ItemFactory.Create(itemId: string): Part
 		weld.C0 = turn
 		weld.C1 = CFrame.identity
 		weld.Parent = visual
+	elseif rig then
+		-- Живое существо из частей (D55): невидимый хитбокс по габаритам существа, блоки частей на суставах.
+		part.Size = def.size
+		part.Transparency = 1
+		part.CastShadow = false
+		buildCreature(part, rig)
 	else
 		part.Shape = (Enum.PartType :: any)[def.shape] or Enum.PartType.Block
 		part.Size = def.size
@@ -179,11 +268,17 @@ function ItemFactory.Create(itemId: string): Part
 	return part
 end
 
--- Прозрачность видимой части предмета (мигание D10): у модели — меш, у простого Part — сам Part.
+-- Прозрачность видимой части предмета (мигание D10): у модели — меш, у существа — его блоки, у простого Part — сам Part.
 function ItemFactory.SetVisualTransparency(part: BasePart, transparency: number)
 	local visual = part:FindFirstChild(VISUAL_NAME)
 	if visual and visual:IsA("BasePart") then
 		visual.Transparency = transparency
+	elseif part:GetAttribute("Creature") then
+		for _, child in part:GetChildren() do
+			if child:IsA("BasePart") then
+				child.Transparency = transparency
+			end
+		end
 	else
 		part.Transparency = transparency
 	end

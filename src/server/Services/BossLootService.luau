@@ -28,7 +28,7 @@ local Notify = require(Server.Util.Notify)
 local Validate = require(Server.Util.Validate)
 local MapLayout = require(Server.World.MapLayout)
 
-type Slot = { boss: number, slot: number, point: CFrame, uid: string?, reservedBy: any? }
+type Slot = { boss: number, slot: number, point: CFrame, drop: number, uid: string?, reservedBy: any? }
 
 local loot = GameConfig.Progression.BossLoot
 local slots: { [number]: { [number]: Slot } } = {}
@@ -130,6 +130,10 @@ local function fill(entry: Slot)
 	part.CFrame = entry.point * CFrame.new(0, part.Size.Y / 2, 0)
 	part:SetAttribute("Boss", entry.boss)
 	part:SetAttribute("BossSlot", entry.slot)
+	-- D55: живое существо — клиенты двигают его вокруг места Home (низ, CFrame) общей функцией Shared/CreatureMotion;
+	-- Drop — высота места над полом зоны (убегая, существо спрыгивает с постамента)
+	part:SetAttribute("Home", entry.point)
+	part:SetAttribute("Drop", entry.drop)
 	part.Parent = itemsFolder
 	entry.uid = ItemRegistry.CreateAtBoss(itemId, part, entry.boss, entry.slot)
 	addPrompt(part, entry)
@@ -158,6 +162,10 @@ local function give(player: Player, entry: Slot): boolean
 	end
 	entry.uid = nil -- слот пуст до рассвета
 	entry.reservedBy = nil
+	-- D55: больше не живёт у босса — клиенты перестают двигать корень (дальше его ведёт перенос)
+	for _, name in { "Home", "Drop", "CatchMode", "CatchSince", "CatchFace", "CatchAnchor" } do
+		item.part:SetAttribute(name, nil)
+	end
 	local prompt = item.part:FindFirstChild("TakePrompt")
 	if prompt then
 		prompt:Destroy()
@@ -319,7 +327,14 @@ function BossLootService.Init(world: Folder)
 	itemsFolder.Parent = world
 	for _, spec in MapLayout.ArtSlotPoints() do
 		slots[spec.zone] = slots[spec.zone] or {}
-		slots[spec.zone][spec.slot] = { boss = spec.zone, slot = spec.slot, point = spec.cframe, uid = nil }
+		local arena = MapLayout.Arenas[spec.zone]
+		slots[spec.zone][spec.slot] = {
+			boss = spec.zone,
+			slot = spec.slot,
+			point = spec.cframe,
+			drop = if arena then arena.top else MapLayout.PedestalHeight,
+			uid = nil,
+		}
 	end
 	ItemRegistry.OnChanged(onRegistryChanged)
 	refresh()
