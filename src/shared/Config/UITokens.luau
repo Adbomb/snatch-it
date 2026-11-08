@@ -456,6 +456,19 @@ UITokens.Catch = {
 
 -- PvP Судной ночи (D46): кнопка «Удар» (телефон и мышь), звёзды нокаута, числа урона.
 -- Вид музея D48-C у владельца (Controllers/MuseumVisualController): экран сканера у павильона хранилища.
+-- Обучение новичка (D55): панель задачи сверху по центру, жёлтая линия к цели и метка над ней.
+UITokens.Tutorial = {
+	Panel = Vector2.new(620, 104),
+	Top = 64, -- ниже кнопок Roblox
+	TitleText = 22,
+	BodyText = 22,
+	MinText = 14,
+	Guide = Color3.fromHex("FFD23F"),
+	GuideWidth = 0.35,
+	GuideTransparency = 0.25,
+	Marker = 56,
+}
+
 UITokens.Museum = {
 	LovibumRow = 84, -- раздел «Ловибумы» (D55): высота строки уровня и наименьшая ширина
 	LovibumMin = 300,

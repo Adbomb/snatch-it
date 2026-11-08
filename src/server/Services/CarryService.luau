@@ -247,9 +247,18 @@ local function stolenLost(player: Player, uid: string, reason: string): boolean
 end
 
 -- Бросить то, что игрок несёт: предмет ложится на землю перед ним и снова доступен всем.
+-- Можно ли бросить несомое (задаёт TutorialService, D55: учебное существо — только на постамент). Причина или nil.
+CarryService.CanDrop = nil :: ((player: any, uid: string) -> string?)?
+
 function CarryService.Drop(player: Player)
 	local uid = ItemRegistry.GetCarriedBy(player)
 	if not uid then
+		return
+	end
+	local canDrop = CarryService.CanDrop
+	local refusal = canDrop and canDrop(player, uid)
+	if refusal then
+		Notify.Send(player, refusal, "Stop")
 		return
 	end
 	if stolenLost(player, uid, "вор бросил добычу") then

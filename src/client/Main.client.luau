@@ -26,5 +26,6 @@ require(Controllers:WaitForChild("ShopController")).Init() -- D55: магази�
 require(Controllers:WaitForChild("CreatureController")).Init() -- D55: живые существа
 require(Controllers:WaitForChild("CatchController")).Init() -- D55: мини-игра поимки (ловящий)
 require(Controllers:WaitForChild("LovibumFxController")).Init() -- D55: эффекты поимки у всех рядом
+require(Controllers:WaitForChild("TutorialController")).Init() -- D55: обучение новичка
 require(Controllers:WaitForChild("MuseumVisualController")).Init()
 require(Controllers:WaitForChild("MuseumCameraController")).Init()

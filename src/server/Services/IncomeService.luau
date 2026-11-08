@@ -93,6 +93,10 @@ local function tick(players: { any }): { [any]: number }
 			if coins then
 				player:SetAttribute("Coins", coins)
 				paid[player] = total
+				local onPaid = IncomeService.OnPaid
+				if onPaid then
+					onPaid(player, total) -- D55: первое начисление завершает обучение
+				end
 				if ticks % SAVE_EVERY == 0 then
 					DataService.RequestSave(player)
 				end
@@ -101,6 +105,9 @@ local function tick(players: { any }): { [any]: number }
 	end
 	return paid
 end
+
+-- После начисления игроку (задаёт TutorialService, D55).
+IncomeService.OnPaid = nil :: ((player: any, amount: number) -> ())?
 
 function IncomeService.Init()
 	ItemRegistry.OnChanged(function(_uid, fromState, toState, entry)

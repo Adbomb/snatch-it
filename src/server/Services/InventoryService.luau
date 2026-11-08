@@ -36,6 +36,9 @@ local stolenDelivery: ((player: Player, plot: PlotService.Plot) -> ())? = nil
 
 local InventoryService = {}
 
+-- Можно ли убрать несомое в сундук (задаёт TutorialService, D55). Причина отказа или nil.
+InventoryService.CanStore = nil :: ((player: any, uid: string) -> string?)?
+
 local PREVIEW_FOLDER = "ItemPreviews"
 local previewRequested: { [string]: boolean } = {}
 
@@ -161,6 +164,12 @@ local function tryStoreCarried(player: Player, plot: PlotService.Plot)
 	local uid = ItemRegistry.GetCarriedBy(player)
 	if not uid then
 		Notify.Send(player, "Сначала принесите предмет", "Stop")
+		return
+	end
+	local canStore = InventoryService.CanStore -- D55: учебное существо — только на постамент
+	local refusal = canStore and canStore(player, uid)
+	if refusal then
+		Notify.Send(player, refusal, "Stop")
 		return
 	end
 	if DataService.HasItem(player, uid) then

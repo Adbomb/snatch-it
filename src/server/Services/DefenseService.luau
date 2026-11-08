@@ -432,6 +432,10 @@ local function tryAction(player: any, action: any, a: any, b: any)
 	if not limiter:Allow(player) then
 		return
 	end
+	if player:GetAttribute("Tutorial") ~= nil then
+		Notify.Send(player, "«Защита» откроется после обучения", "Stop") -- D55
+		return
+	end
 	local data = DataService.GetData(player)
 	local defense = DataService.Defense(player)
 	if not data or not defense then

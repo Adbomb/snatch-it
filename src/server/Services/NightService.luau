@@ -19,6 +19,7 @@ local Log = require(Server.Util.Log)
 local MoveGuard = require(Server.Services.MoveGuard)
 local Notify = require(Server.Util.Notify)
 local MapLayout = require(Server.World.MapLayout)
+local CharacterGroups = require(Server.Util.CharacterGroups)
 
 local barrier: Model
 local world: Instance
@@ -26,6 +27,14 @@ local night = false
 local random = Random.new()
 
 local NightService = {}
+
+-- Игрок, на которого ночь не действует (задаёт TutorialService, D55: ученик — вынос из коридора и потеря несомого).
+NightService.IsExempt = nil :: ((player: any) -> boolean)?
+
+local function exempt(player: any): boolean
+	local fn = NightService.IsExempt
+	return fn ~= nil and fn(player)
+end
 
 -- Точка в Safe Zone: место появления с небольшим разбросом, чтобы игроки не вставали друг в друга.
 local function safePoint(): CFrame
@@ -41,7 +50,7 @@ local function sweep(players: { Player }): number
 	for _, player in players do
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if root and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position) then
+		if root and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position) and not exempt(player) then
 			MoveGuard.Teleport(player, safePoint()) -- перенос сервером (D52)
 			moved += 1
 			Notify.Send(player, "Ночь: коридор уровней закрыт — вы в безопасной зоне", "Stop")
@@ -62,7 +71,7 @@ local function startNight(players: { Player })
 	night = true
 	barrier.Parent = world
 	for _, player in players do
-		if outside(player) and CarryService.LoseCarried(player, "ночь застала вне Safe Zone (D37)") then
+		if outside(player) and not exempt(player) and CarryService.LoseCarried(player, "ночь застала вне Safe Zone (D37)") then
 			Notify.Send(player, "Ночь застала вас вне безопасной зоны — предмет потерян", "Stop")
 		end
 	end
@@ -88,6 +97,8 @@ end
 
 function NightService.Init(worldFolder: Instance)
 	world = worldFolder
+	CharacterGroups.Register(CharacterGroups.NightBarrier)
+	CharacterGroups.Register(CharacterGroups.Student)
 	barrier = NightService.BuildBarrier()
 
 	TimeService.OnPhaseChanged(function(state, previous)
@@ -128,6 +139,7 @@ function NightService.BuildBarrier(): Model
 	wall.CanQuery = false
 	wall.CanTouch = false
 	wall.Size = Vector3.new(width, cfg.height + 1, cfg.thickness)
+	wall.CollisionGroup = CharacterGroups.NightBarrier -- ученик (группа Student) проходит, D55
 	wall.CFrame = CFrame.new(0, MapLayout.Heights.Ground + cfg.height / 2 - 0.5, z)
 	wall.Parent = model
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do

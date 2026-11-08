@@ -129,6 +129,19 @@ MapLayout.Arenas = {
 	},
 }
 
+-- Место обучения (D55) в зоне 1 «Свалка»: у входа слева, вне круга настоящего пса и мест его предметов, на свободной
+-- от декора площадке (проверено по кирпичам Junkyard). creature — учебное существо, dog — личный учебный пёс.
+MapLayout.Tutorial = { zone = 1, creature = Vector2.new(-46, -36), dog = Vector2.new(-48, -16) }
+
+-- CFrame низа учебного существа (лицом ко входу) и места личного пса (лицом к существу).
+function MapLayout.TutorialPoints(): (CFrame, CFrame)
+	local cfg = MapLayout.Tutorial
+	local frame = MapLayout.ZoneCFrame(cfg.zone)
+	local creature = frame * CFrame.new(cfg.creature.X, 0, cfg.creature.Y)
+	local dogAt = (frame * CFrame.new(cfg.dog.X, 0, cfg.dog.Y)).Position
+	return creature, CFrame.lookAt(dogAt, Vector3.new(creature.Position.X, dogAt.Y, creature.Position.Z))
+end
+
 -- Границы острова (трава и плато за обрывами) — для земли и воды вокруг.
 local cliff = MapLayout.Cliff
 local OUTER_X = MapLayout.SafeZone.halfX + cliff.terrace + cliff.outer

@@ -18,6 +18,7 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules) -- D55: стартовое существо
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local MuseumSpace = require(ReplicatedStorage.Shared.MuseumSpace)
@@ -196,6 +197,8 @@ local function tryBegin(thief: any, plot: PlotService.Plot, slot: number)
 		thiefDone = event ~= nil and DataService.GetStat(thief, "theftEvent") == event,
 		ownerLost = event ~= nil and DataService.GetStat(owner, "lossEvent") == event,
 		knocked = thief:GetAttribute("Knocked") == true,
+		student = thief:GetAttribute("Tutorial") ~= nil,
+		protected = uid ~= nil and TutorialRules.IsProtected(DataService.GetData(owner), uid),
 	}
 	local ok, reason = ledger:Begin(args, os.clock())
 	if not ok then

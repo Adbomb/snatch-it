@@ -61,12 +61,15 @@ do
 		{ { thiefDone = true }, "вор уже украл этой ночью (по профилю)" },
 		{ { ownerLost = true }, "музей уже потерял предмет (по профилю)" },
 		{ { knocked = true }, "оглушённый не крадёт" },
+		{ { student = true }, "D55: ученик не крадёт" },
+		{ { protected = true }, "D55: стартовое существо не украсть" },
 	}
 	for _, case in cases do
 		local ok = L:CanBegin(args(case[1]))
 		check(not ok, "отказ: " .. case[2])
 	end
 	check(L:CanBegin(args()), "обычная кража разрешена")
+	check(L:CanBegin(args({ protected = false })), "D55: не стартовое (даже последнее в музее) — крадут как обычно")
 end
 
 print("Удержание 3 с и завершение:")

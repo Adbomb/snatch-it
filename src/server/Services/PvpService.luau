@@ -238,6 +238,9 @@ local function tryAttack(player: any)
 	if not limiter:Allow(player) then
 		return
 	end
+	if player:GetAttribute("Tutorial") ~= nil then
+		return -- D55: на ученика PvP не действует
+	end
 	local root, humanoid = Validate.GetLiveRoot(player)
 	if not root or not humanoid then
 		return
@@ -261,7 +264,7 @@ local function tryAttack(player: any)
 					id = other.UserId,
 					position = r.Position,
 					knocked = PvpRules.IsKnocked(fighter(other), now),
-					safe = inSafe(r.Position),
+					safe = inSafe(r.Position) or other:GetAttribute("Tutorial") ~= nil, -- ученика не бьют (D55)
 					alive = h.Health > 0,
 				})
 			end
@@ -315,7 +318,7 @@ end
 
 -- Урон от защиты музея (D37): ловушка, лазер, робот. amount — HP; HP 0 — нокаут, как от удара.
 function PvpService.DamagePlayer(target: any, amount: number, from: Vector3)
-	if not isOpen() then
+	if not isOpen() or target:GetAttribute("Tutorial") ~= nil then
 		return
 	end
 	local tf = fighter(target)

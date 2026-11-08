@@ -115,11 +115,18 @@ function MuseumService.ExhibitsUnlocked(player: Player): boolean
 	return true
 end
 
+-- D55 (задаёт TutorialService): учебное существо ставится в любую фазу (ночь и подготовка не мешают обучению);
+-- после выставления — отметка обучения в той же записи профиля (без yield).
+MuseumService.CanBypassLock = nil :: ((player: any, uid: string) -> boolean)?
+MuseumService.OnDisplayed = nil :: ((player: any, uid: string) -> ())?
+
 local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	if not displayLimiter:Allow(player) then
 		return
 	end
-	if not MuseumService.ExhibitsUnlocked(player) then
+	local carried = ItemRegistry.GetCarriedBy(player)
+	local bypass = MuseumService.CanBypassLock
+	if not (carried and bypass and bypass(player, carried)) and not MuseumService.ExhibitsUnlocked(player) then
 		return
 	end
 	if plot.owner ~= player then
@@ -184,6 +191,10 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 			"Stop"
 		)
 		return
+	end
+	local onDisplayed = MuseumService.OnDisplayed
+	if onDisplayed then
+		onDisplayed(player, uid) -- обучение: «поставлено» в той же записи профиля, что и предмет
 	end
 	local part = CarryService.ReleaseToMuseum(player, uid) :: BasePart
 	MuseumService.PlaceExhibit(part, plot, slot, 0)

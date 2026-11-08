@@ -180,6 +180,12 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 	}
 end
 
+-- Личный босс (D55, учебный пёс): та же модель и анимации (атрибуты, тег), но не на карте боссов — бой по сценарию
+-- ведёт TutorialService. Видит только ученик (атрибут TutorialOwner — остальные клиенты прячут).
+function BossService.BuildPersonal(zone: number, home: CFrame, parent: Instance): Boss
+	return build(zone, home, parent)
+end
+
 -- Рост босса стоя (от земли до макушки по габаритам частей скелета), стадов: над ним — полоска HP.
 function BossService.Height(boss: Boss): number
 	local top = 0

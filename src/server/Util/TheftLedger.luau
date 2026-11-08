@@ -34,6 +34,8 @@ export type BeginArgs = {
 	thiefDone: boolean, -- в профиле вора уже есть успешная кража этого события
 	ownerLost: boolean, -- в профиле владельца уже есть потеря этого события
 	knocked: boolean?, -- вор оглушён (PvP)
+	student: boolean?, -- D55: вор проходит обучение (кражи на ученика не действуют)
+	protected: boolean?, -- D55: стартовое существо владельца (навсегда защищено от кражи)
 }
 
 export type Ledger = typeof(setmetatable(
@@ -79,6 +81,12 @@ function TheftLedger.CanBegin(self: Ledger, a: BeginArgs, now: number?): (boolea
 	end
 	if a.thief == a.owner then
 		return false, "Это ваш экспонат"
+	end
+	if a.student then
+		return false, "Сначала пройдите обучение"
+	end
+	if a.protected then
+		return false, "Стартовое существо защищено от кражи"
 	end
 	if a.displayedBy ~= a.owner then
 		return false, "Этого экспоната нет на постаменте"

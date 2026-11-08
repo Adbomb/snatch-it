@@ -130,6 +130,18 @@ function ItemRegistry.CreateAtBoss(itemId: string, part: BasePart, boss: number,
 	return uid
 end
 
+-- Учебное существо (D55): uid задан записью обучения (один на аккаунт, к нему привязана защита от кражи); как
+-- предмет у босса 1 (AtBoss, слот 0) — дальше обычный переход в руки. false — такой uid уже есть.
+function ItemRegistry.CreateTutorial(uid: string, itemId: string, part: BasePart): boolean
+	if entries[uid] or not Items[itemId] then
+		return false
+	end
+	entries[uid] = { uid = uid, itemId = itemId, state = "AtBoss", part = part, boss = 1, bossSlot = 0 }
+	part:SetAttribute("ItemUid", uid)
+	Log.Debug("ItemRegistry", ("Учебное существо %s (%s)"):format(itemId, uid))
+	return true
+end
+
 -- Восстановление экспоната из сохранённого профиля (Displayed или Stored).
 function ItemRegistry.Restore(
 	uid: string,

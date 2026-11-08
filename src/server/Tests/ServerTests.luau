@@ -56,8 +56,10 @@ local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local CatchService = require(Server.Services.CatchService)
 local ShopService = require(Server.Services.ShopService)
+local TutorialService = require(Server.Services.TutorialService)
 
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
@@ -3140,6 +3142,69 @@ test("D48: защита — зоны, галереи, лазер «Галере�
 	DefenseService.Handlers.Tick()
 	check(fb.hp < hp, "лазер «Галерея» не ударил вора на дорожке")
 	TimeService.ResetClock()
+end)
+
+test("D55 обучение: новичок при силе 0 — поимка, бой, в руки, постамент, доход; повтор входа и запреты", function(A, _B, ctx)
+	-- A — новичок: выйти «опытным» и зайти новым профилем
+	local userId = A.UserId + 7000
+	local S = TestPlayer.new("Тест_ученик")
+	S.UserId = userId
+	ctx.track(S)
+	check(PlayerSession.Join(S, { mock = true }), "ученик не вошёл")
+	local t = DataService.Tutorial(S)
+	check(t and t.step == "Intro" and t.itemId and t.uid, "нет записи обучения или существа")
+	check(Items[t.itemId].boss == 1 and Items[t.itemId].rarity == "Common", "учебное существо — не Common босса 1")
+	check(S:GetAttribute("Tutorial") == "Intro", "нет атрибута Tutorial")
+	local uid, itemId = t.uid, t.itemId
+	local p = TutorialService.Handlers.Personal(S)
+	check(p and p.creature and p.creature:GetAttribute("TutorialOwner") == userId, "нет личного существа")
+	-- магазин и защита — отказ
+	DataService.GetData(S).coins = 1e6
+	ShopService.Handlers.Action(S, "Buy", 1, "Boom", 1)
+	check(CatchRules.StockOfLevel(DataService.Lovibums(S), 1) == 0, "ученик купил Ловибум")
+	-- поимка: бесплатно, первое попадание — захват
+	S:MoveTo(p.creature.Position + Vector3.new(0, 2, -5))
+	TutorialService.Handlers.StartCatch(S)
+	check(CatchService.IsCatching(S), "учебная поимка не началась")
+	check(DataService.Tutorial(S).step == "Catch", "шаг не Catch")
+	waitReady(S)
+	throw(S, "Boom", false) -- промах бесплатный
+	waitReady(S)
+	throw(S, "Boom", true)
+	check(waitUntil(function()
+		return DataService.Tutorial(S).step == "Carry"
+	end, 25), "учебный бой не закончился победой: " .. DataService.Tutorial(S).step)
+	check(ItemRegistry.GetCarriedBy(S) == uid, "учебное существо не в руках")
+	check(CatchRules.StockOfLevel(DataService.Lovibums(S), 1) == 0, "учебные броски попали в запас")
+	-- бросить и в сундук нельзя
+	CarryService.Drop(S)
+	check(ItemRegistry.GetCarriedBy(S) == uid and S:WasNotified("постамент"), "учебное существо бросили")
+	-- выход с существом в руках — при входе снова в руках, тот же uid
+	S.Parent = nil
+	PlayerSession.Leave(S)
+	S.Character:Destroy()
+	local S2 = TestPlayer.new("Тест_ученик_снова")
+	S2.UserId = userId
+	ctx.track(S2)
+	check(PlayerSession.Join(S2, { mock = true }), "ученик не вошёл снова")
+	check(DataService.Tutorial(S2).step == "Carry" and DataService.Tutorial(S2).uid == uid, "обучение не продолжилось с Carry")
+	check(ItemRegistry.GetCarriedBy(S2) == uid, "после входа существо не в руках (или другое)")
+	-- на постамент: в той же записи — предмет и «поставлено»
+	local plot = plotOf(S2)
+	near(S2, plot.showcases[1])
+	MuseumService.Handlers.Display(S2, plot, 1)
+	local data = DataService.GetData(S2)
+	check(data.items[uid] and data.items[uid].id == itemId, "предмет не записан")
+	check(data.tutorial.step == "Income" and data.tutorial.placed == true, "«поставлено» не записано вместе с предметом")
+	-- кража стартового — отказ (TheftLedger.protected)
+	check(TutorialRules.IsProtected(data, uid), "стартовое существо без защиты")
+	-- первый доход — обучение пройдено
+	IncomeService.Handlers.Tick({ S2 })
+	check(data.tutorial.step == "Done", "обучение не завершилось по первому доходу")
+	check(S2:GetAttribute("Tutorial") == nil, "атрибут Tutorial остался")
+	check(TutorialRules.IsProtected(data, uid), "после обучения защита пропала")
+	ShopService.Handlers.Action(S2, "Buy", 1, "Boom", 1)
+	check(CatchRules.Stock(DataService.Lovibums(S2), 1, "Boom") == 1, "после обучения магазин не открылся")
 end)
 
 local ServerTests = {}
