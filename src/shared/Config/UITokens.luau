@@ -197,7 +197,12 @@ UITokens.TimeHud = {
 	},
 	DoomFill = Color3.fromHex("4A0F1C"), -- капсула в Судную ночь
 	-- Названия в капсуле прописными (string.upper кириллицу не меняет); номер дня не пишется (D51).
-	Titles = { Day = "ДЕНЬ", Preparation = "ПОДГОТОВКА", Night = "НОЧЬ", DoomNight = "СУДНАЯ НОЧЬ" },
+	Titles = {
+		Day = "ДЕНЬ",
+		Preparation = "ПОДГОТОВКА",
+		Night = "НОЧЬ",
+		DoomNight = "СУДНАЯ НОЧЬ",
+	},
 	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
 }
 
@@ -391,7 +396,11 @@ UITokens.Defense = {
 	InfoText = 20,
 	Button = Vector2.new(150, 52),
 	Bar = Vector2.new(560, 120), -- панель расстановки внизу экрана
-	Ghost = { Trap = Vector3.new(2.4, 0.6, 2.4), Robot = Vector3.new(2.4, 5.8, 1.8), Snare = Vector3.new(1.9, 0.6, 1.9) },
+	Ghost = {
+		Trap = Vector3.new(2.4, 0.6, 2.4),
+		Robot = Vector3.new(2.4, 5.8, 1.8),
+		Snare = Vector3.new(1.9, 0.6, 1.9),
+	},
 	GhostOk = Color3.fromHex("5BEA72"),
 	GhostBad = Color3.fromHex("FF5A5A"),
 	GhostTransparency = 0.45,
@@ -418,12 +427,19 @@ UITokens.Shop = {
 	MinTouch = 52,
 	Header = "pink",
 	Pad = 14,
+	PadCompact = 8, -- внутри карточки телефона
+	Gap = 12, -- между карточками
+	CompactHeight = 470, -- окно ниже — раскладка телефона (и если карточка ПК не вмещает строку покупки даже с узким числом)
 	Tab = Vector2.new(0, 50), -- вкладка уровня: ширина — по окну (10 в ряд), высота
 	Button = 52, -- высота кнопок (на касании — не меньше MinTouch / масштаб)
 	QtyButton = 52, -- «−» и «+»: квадрат
 	QtyValue = 64, -- ширина числа
-	Buy = 150, -- ширина «Купить»
+	QtyCompact = 48, -- ширина числа в строке телефона и в тесной карточке (планшет)
+	Buy = 150, -- ширина «Купить» (строка телефона)
+	BuyMin = 96, -- «Купить» в карточке ПК не уже
+	BarText = 24, -- итог в строке телефона
 	NameText = 30,
+	NameCompact = 24, -- название вида в карточке телефона
 	InfoText = 19,
 	SmallText = 16,
 	Turn = 0.35, -- оборотов превью в секунду
@@ -439,6 +455,9 @@ UITokens.Catch = {
 	KindButton = Vector2.new(112, 96), -- карточка вида: превью и запас
 	KindGap = 12,
 	BottomMargin = 18,
+	SideMargin = 18, -- выбор вида — слева внизу
+	TextWidth = 760, -- подписи внизу по центру
+	CharacterFade = 0.6, -- свой персонаж на время поимки (не заслоняет существо)
 	Leave = Vector2.new(150, 56),
 	MinTouch = 52,
 	CircleReady = Color3.fromHex("5BEA72"), -- можно бросать
@@ -458,8 +477,11 @@ UITokens.Catch = {
 -- Вид музея D48-C у владельца (Controllers/MuseumVisualController): экран сканера у павильона хранилища.
 -- Обучение новичка (D55): панель задачи сверху по центру, жёлтая линия к цели и метка над ней.
 UITokens.Tutorial = {
-	Panel = Vector2.new(620, 104),
-	Top = 64, -- ниже кнопок Roblox
+	Panel = Vector2.new(460, 116),
+	-- слева сверху под кнопками Roblox (CoreUISafeInsets): выше столбика монет и силы, левее таймера дня, не заслоняет
+	-- плашку «Ты несёшь…» внизу; во время поимки панели нет
+	Left = 16,
+	Top = 8,
 	TitleText = 22,
 	BodyText = 22,
 	MinText = 14,

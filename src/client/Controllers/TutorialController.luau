@@ -1,5 +1,6 @@
--- Обучение новичка на клиенте (D55, Stud-UI): панель задачи сверху («Обучение · шаг N из 5» и что сделать), жёлтая
--- линия от игрока к цели (Beam) и метка над целью; шаг и цель присылает сервер (TutorialChanged) — клиент только
+-- Обучение новичка на клиенте (D55, Stud-UI): панель задачи слева сверху («Обучение · шаг N из 5» и что сделать;
+-- во время поимки её нет — там своя подсказка), жёлтая линия от игрока к цели (Beam) и метка над целью; шаг и цель
+-- присылает сервер (TutorialChanged) — клиент только
 -- показывает. Учебные существо и пёс других учеников (атрибут TutorialOwner ≠ мой UserId) у меня спрятаны: детали
 -- невидимы, подсказки и подписи выключены. Пока идёт обучение (атрибут Tutorial), кнопки «Защита» в меню HUD нет
 -- («Магазин» прячет ShopController). ПК и телефон: панель — одна WindowScale, текст переносится.
@@ -95,10 +96,13 @@ local function guide(target: Instance?)
 	marker = m
 end
 
+local last: any = nil
+
 local function render(payload: any)
+	last = payload
 	local step = payload and payload.step
 	local active = type(step) == "string" and step ~= "Done" and TEXTS[step] ~= nil
-	gui.Enabled = active
+	gui.Enabled = active and player:GetAttribute("Catching") == nil
 	if not active then
 		clearGuide()
 		return
@@ -137,15 +141,15 @@ local function updateMenu()
 end
 
 function TutorialController.Init()
-	gui = UI.ScreenGui("Tutoriel", 9, { Menu = false })
+	gui = UI.ScreenGui("Tutoriel", 9, { Menu = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets })
 	gui.Enabled = false
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local panel = Instance.new("Frame")
 	panel.Name = "Panneau"
 	panel.BackgroundTransparency = 1
 	panel.Size = UDim2.fromOffset(T.Panel.X, T.Panel.Y)
-	panel.AnchorPoint = Vector2.new(0.5, 0)
-	panel.Position = UDim2.new(0.5, 0, 0, T.Top)
+	panel.AnchorPoint = Vector2.zero
+	panel.Position = UDim2.fromOffset(T.Left, T.Top)
 	panel.Parent = gui
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
@@ -172,6 +176,9 @@ function TutorialController.Init()
 	body.TextWrapped = true
 	Remotes.Get(Remotes.Names.TutorialChanged).OnClientEvent:Connect(render)
 	player:GetAttributeChangedSignal("Tutorial"):Connect(updateMenu)
+	player:GetAttributeChangedSignal("Catching"):Connect(function()
+		render(last)
+	end)
 	task.defer(updateMenu)
 	player.CharacterAdded:Connect(function()
 		from = nil -- новая точка у нового персонажа (линия — при следующем шаге)

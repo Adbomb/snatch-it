@@ -149,14 +149,14 @@ local function build()
 	circleStroke.Transparency = T.CircleTransparency
 	circleStroke.Color = T.CircleReady
 	circleStroke.Parent = circle
-	-- низ: выбор вида и подписи (одна WindowScale)
+	-- выбор вида — слева внизу (низ по центру свободен для жеста броска: кнопки там перехватывали бы касание)
 	bottom = Instance.new("Frame")
 	bottom.Name = "Bas"
 	bottom.BackgroundTransparency = 1
 	local width = 3 * T.KindButton.X + 2 * T.KindGap
-	bottom.Size = UDim2.fromOffset(width, T.KindButton.Y + 70)
-	bottom.AnchorPoint = Vector2.new(0.5, 1)
-	bottom.Position = UDim2.new(0.5, 0, 1, -T.BottomMargin)
+	bottom.Size = UDim2.fromOffset(width, T.KindButton.Y)
+	bottom.AnchorPoint = Vector2.new(0, 1)
+	bottom.Position = UDim2.new(0, T.SideMargin, 1, -T.BottomMargin)
 	bottom.Parent = gui
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
@@ -165,20 +165,32 @@ local function build()
 	for i, k in Catch.Kinds do
 		kindCard(k, T.KindButton.X / 2 + (i - 1) * (T.KindButton.X + T.KindGap))
 	end
-	info = UI.Text(bottom, "", {
+	-- подписи — внизу по центру (надписи не перехватывают касание)
+	local texts = Instance.new("Frame")
+	texts.Name = "Textes"
+	texts.BackgroundTransparency = 1
+	texts.Size = UDim2.fromOffset(T.TextWidth, 64)
+	texts.AnchorPoint = Vector2.new(0.5, 1)
+	texts.Position = UDim2.new(0.5, 0, 1, -T.BottomMargin)
+	texts.Parent = gui
+	local textScale = Instance.new("UIScale")
+	textScale.Name = "WindowScale"
+	textScale.Parent = texts
+	Motion.BindResponsive(textScale)
+	info = UI.Text(texts, "", {
 		Name = "Infos",
 		Font = "Bold",
-		Size = UDim2.fromOffset(width + 200, 28),
-		Position = UDim2.fromOffset(width / 2, T.KindButton.Y + 20),
+		Size = UDim2.new(1, 0, 0, 28),
+		Position = UDim2.new(0.5, 0, 0, 14),
 		TextSize = T.InfoText,
 		Rich = true,
 		ZIndex = 5,
 	})
-	hint = UI.Text(bottom, "", {
+	hint = UI.Text(texts, "", {
 		Name = "Aide",
 		Font = "Bold",
-		Size = UDim2.fromOffset(width + 260, 28),
-		Position = UDim2.fromOffset(width / 2, T.KindButton.Y + 52),
+		Size = UDim2.new(1, 0, 0, 28),
+		Position = UDim2.new(0.5, 0, 0, 48),
 		TextSize = T.HintText,
 		Color = UI.Colors.Secondary,
 		ZIndex = 5,
@@ -237,8 +249,8 @@ function CatchController.Render()
 		then "Ловибум летит…"
 		elseif
 			touch
-		then "Проведите пальцем вверх к существу — отпустите, когда оно в круге"
-		else "Зажмите мышь внизу и потяните вверх к существу — отпустите, когда оно в круге"
+		then "Проведите пальцем снизу вверх к существу — отпустите, когда оно в круге"
+		else "Зажмите мышь внизу экрана и потяните вверх к существу — отпустите, когда оно в круге"
 end
 
 -- ── Бросок жестом ────────────────────────────────────────────────────────────────────────────────────────────
@@ -307,6 +319,19 @@ end
 
 -- ── Вход и выход ─────────────────────────────────────────────────────────────────────────────────────────────
 
+-- Свой персонаж на время поимки полупрозрачный (камера из-за плеча: маленькое существо не заслоняется).
+local function fadeCharacter(value: number)
+	local character = player.Character
+	if not character then
+		return
+	end
+	for _, d in character:GetDescendants() do
+		if d:IsA("BasePart") or d:IsA("Decal") then
+			(d :: any).LocalTransparencyModifier = value
+		end
+	end
+end
+
 local function enter()
 	local camera = workspace.CurrentCamera
 	if not cameraWas and camera then
@@ -318,6 +343,7 @@ local function enter()
 		c:Disable()
 	end
 	UserInputService.ModalEnabled = true -- на телефоне — без джойстика и прыжка (жест не крутит камеру)
+	fadeCharacter(T.CharacterFade)
 	if state.tutorial or stock(kind) < 1 then
 		kind = "Boom"
 		for _, k in Catch.Kinds do
@@ -342,6 +368,7 @@ local function exit()
 		c:Enable()
 	end
 	UserInputService.ModalEnabled = false
+	fadeCharacter(0)
 end
 
 local function step(dt: number)
@@ -354,12 +381,14 @@ local function step(dt: number)
 	if not camera or not part then
 		return
 	end
-	-- камера: за игроком и чуть выше, смотрит на существо; догоняет его плавно
+	-- камера из-за правого плеча игрока, смотрит на существо; догоняет его плавно
 	local center = part.Position
 	local from = if root then root.Position else center + Vector3.new(0, 0, 8)
-	local flat = Vector3.new(from.X - center.X, 0, from.Z - center.Z)
-	flat = if flat.Magnitude > 0.1 then flat.Unit else Vector3.new(0, 0, 1)
-	local wantPos = center + flat * G.Camera.Distance + Vector3.new(0, G.Camera.Height, 0)
+	local dir = Vector3.new(center.X - from.X, 0, center.Z - from.Z)
+	dir = if dir.Magnitude > 0.1 then dir.Unit else Vector3.new(0, 0, -1)
+	local right = dir:Cross(Vector3.yAxis)
+	local cam = G.Camera
+	local wantPos = from - dir * cam.Back + right * cam.Side + Vector3.new(0, cam.Height, 0)
 	local want = CFrame.lookAt(wantPos, center + Vector3.new(0, 0.3, 0))
 	camera.CFrame = camera.CFrame:Lerp(want, math.clamp(dt * T.CameraLerp, 0, 1))
 	-- круг: радиус сервера (в стадах) → пиксели у центра существа

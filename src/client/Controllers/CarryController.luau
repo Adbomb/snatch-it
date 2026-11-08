@@ -75,7 +75,8 @@ function CarryController.Init()
 		ContextActionService:UnbindAction(ACTION_NAME)
 		local itemId = player:GetAttribute("CarryingItemId")
 		local def = if type(itemId) == "string" then Items[itemId] else nil
-		dropButton.Instance.Visible = def ~= nil
+		-- D55: учебное существо бросить нельзя (сервер откажет) — кнопки нет, пока его несут к постаменту
+		dropButton.Instance.Visible = def ~= nil and player:GetAttribute("Tutorial") ~= "Carry"
 		pillHolder.Visible = def ~= nil
 		if not def then
 			return
@@ -94,6 +95,7 @@ function CarryController.Init()
 	end
 
 	player:GetAttributeChangedSignal("CarryingItemId"):Connect(refresh)
+	player:GetAttributeChangedSignal("Tutorial"):Connect(refresh)
 	refresh()
 end
 
