@@ -25,6 +25,7 @@ export type Params = {
 	scale: number, -- CreatureMotion.ScaleOf(размер)
 	mode: string, -- "Wander" | "Catch" | "Flee" | "Calm"
 	since: number?, -- начало режима Catch / Flee (общее время)
+	anchor: number?, -- Flee: начало мини-игры — побег начинается оттуда, где существо стояло в мини-игре
 	face: number?, -- Catch / Flee: поворот к ловящему (радианы в осях места)
 	drop: number?, -- высота места над землёй (постамент): убегая, существо спрыгивает вниз
 }
@@ -127,13 +128,16 @@ local function wander(p: Params, t: number): Pose
 			else 0.06 * p.scale * math.abs(math.sin(math.pi * 3 * f))
 		pose.offset = Vector3.new(x0 + (x1 - x0) * e, y, z0 + (z1 - z0) * e)
 		pose.yaw = lerpAngle(moveYaw(p, k - 1), yaw1, smooth(u / 0.3))
-		pose.lean = if hop then -0.1 else 0.12
+		pose.lean = (if hop then -0.1 else 0.12) * math.sin(math.pi * f) -- в начале и в конце шага — прямо
 		pose.hop = if hop then y else 0
 		pose.moving = true
-		if hop and f > 0.85 then
-			pose.squash = 1 - 0.18 * (1 - (f - 0.85) / 0.15)
+		if hop then
+			pose.squash = 1 + 0.06 * math.sin(math.pi * f) -- в полёте чуть вытягивается
 		end
 	else
+		if hop and u - M < 0.2 then
+			pose.squash = 1 - 0.15 * (1 - (u - M) / 0.2) -- приземлился: присел и выпрямился
+		end
 		-- осмотр: один взгляд влево-вправо за остаток шага, к концу — снова прямо (шаги стыкуются без скачка)
 		local f = (u - M) / (L - M)
 		pose.yaw = yaw1 + C.Look * math.sin(TAU * f) * smooth(f * 4) * smooth((1 - f) * 4)
@@ -146,9 +150,13 @@ end
 -- замах (присед, наклон в сторону), рывок вбок (на площадке) или прыжок вверх (на постаменте), пауза, возврат.
 local function catchPose(p: Params, t: number): Pose
 	local face = p.face or 0
-	local d = math.max(t - (p.since or t), 0)
+	local since = p.since or t
+	local d = math.max(t - since, 0)
+	local start = wander(p, since)
+	local base = Vector3.new(start.offset.X, 0, start.offset.Z) -- без телепорта: оттуда, где бродило
 	local rightX, rightZ = math.cos(face), -math.sin(face)
-	local side = C.Sway * p.scale * math.sin(TAU * d / 2.1 + hash(p.seed, 11) * TAU)
+	local turn = smooth(d / 0.4) -- первые 0.4 с: от позы блуждания к позе мини-игры
+	local side = C.Sway * p.scale * math.sin(TAU * d / 2.1 + hash(p.seed, 11) * TAU) * turn
 	local up = 0.05 * p.scale * math.abs(math.sin(TAU * d / 1.05))
 	local squash, roll, dodge = 1 + 0.04 * math.sin(TAU * d / 0.9), 0.0, 0.0
 	local cycle = C.DodgeEvery
@@ -160,11 +168,13 @@ local function catchPose(p: Params, t: number): Pose
 		local a, b, c = C.DodgeWindup, C.DodgeWindup + C.DodgeDash, C.DodgeWindup + C.DodgeDash + C.DodgeHold
 		local amount = 0
 		if w < a then
-			local f = smooth(w / a)
-			squash = 1 - 0.22 * f
-			roll = -dir * 0.3 * f
-			dodge = dir * 0.5 * f
-			amount = -0.12 * f -- отклоняется в другую сторону, готовясь прыгнуть
+			-- присед заметен сразу (за четверть секунды), потом существо дрожит в нём до рывка
+			local f = smooth(w / 0.25)
+			local g = smooth(w / a)
+			squash = 1 - 0.22 * f + 0.03 * math.sin(TAU * w * 6) * f
+			roll = -dir * (0.18 * f + 0.14 * g)
+			dodge = dir * (0.3 * f + 0.2 * g)
+			amount = -0.12 * g -- отклоняется в другую сторону, готовясь прыгнуть
 		elseif w < b then
 			amount = smooth((w - a) / C.DodgeDash)
 			dodge = dir
@@ -183,8 +193,8 @@ local function catchPose(p: Params, t: number): Pose
 		end
 	end
 	return {
-		offset = Vector3.new(rightX * side, up, rightZ * side),
-		yaw = face + 0.12 * math.sin(TAU * d / 3.1),
+		offset = base + Vector3.new(rightX * side, up * turn + start.offset.Y * (1 - turn), rightZ * side),
+		yaw = lerpAngle(start.yaw, face + 0.12 * math.sin(TAU * d / 3.1), turn),
 		lean = 0.05 * math.sin(TAU * d / 1.7),
 		roll = roll,
 		squash = squash,
@@ -195,9 +205,27 @@ local function catchPose(p: Params, t: number): Pose
 end
 
 -- Побег: прочь от ловящего (с постамента — спрыгнуть), постоять, оглянуться, вернуться.
+local function anchorOf(p: Params): Vector3
+	if not p.anchor then
+		return Vector3.zero
+	end
+	local start = wander(p, p.anchor)
+	return Vector3.new(start.offset.X, 0, start.offset.Z)
+end
+
 local function fleePose(p: Params, t: number): Pose
 	local face = p.face or 0
 	local d = math.max(t - (p.since or t), 0)
+	local base = anchorOf(p)
+	-- первые 0.3 с — от последней позы мини-игры (покачивание, уклонение) к побегу
+	local from = Vector3.zero
+	if p.anchor and p.since and d < 0.3 then
+		local last = catchPose(
+			{ seed = p.seed, radius = p.radius, scale = p.scale, mode = "Catch", since = p.anchor, face = face },
+			p.since
+		)
+		from = (last.offset - base) * (1 - smooth(d / 0.3))
+	end
 	local T = Catch.Game.FleeTime
 	local awayX, awayZ = math.sin(face), math.cos(face) -- от ловящего (назад от лица)
 	local dist, y, yaw, moving = 0, 0, face + math.pi, false
@@ -220,7 +248,7 @@ local function fleePose(p: Params, t: number): Pose
 		moving = true
 	end
 	return {
-		offset = Vector3.new(awayX * dist, y, awayZ * dist),
+		offset = base + from + Vector3.new(awayX * dist, y, awayZ * dist),
 		yaw = yaw,
 		lean = if moving then 0.15 else 0,
 		roll = 0,
@@ -252,6 +280,13 @@ function CreatureMotion.Pose(p: Params, t: number): Pose
 		return catchPose(p, t)
 	elseif p.mode == "Flee" and p.since and t - p.since < Catch.Game.FleeTime then
 		return fleePose(p, t)
+	elseif p.mode == "Flee" and p.since and t - p.since < Catch.Game.FleeTime + Catch.Game.Blend then
+		local pose = wander(p, t)
+		local k = smooth((t - p.since - Catch.Game.FleeTime) / Catch.Game.Blend)
+		local base = anchorOf(p)
+		pose.offset = base + (pose.offset - base) * k
+		pose.yaw = lerpAngle(p.face or 0, pose.yaw, k)
+		return pose
 	elseif p.mode == "Calm" then
 		return calmPose(p, t)
 	end

@@ -43,10 +43,11 @@ function TutorialRules.Index(step: string): number
 	return index[step] or 1
 end
 
--- Запись обучения в порядке (испорченная — с начала; поля неверного типа убираются). Меняет data.tutorial.
+-- Запись обучения в порядке. Испорченный шаг — с начала, но учебные существо и uid сохраняются (выданное один раз
+-- не выдаётся заново и защита не теряется); поля неверного типа убираются. Меняет data.tutorial.
 function TutorialRules.Normalize(data: any): State
 	local t = data.tutorial
-	if type(t) ~= "table" or not TutorialRules.IsStep(t.step) then
+	if type(t) ~= "table" then
 		t = TutorialRules.Default()
 		data.tutorial = t
 	end
@@ -56,13 +57,57 @@ function TutorialRules.Normalize(data: any): State
 	if t.uid ~= nil and type(t.uid) ~= "string" then
 		t.uid = nil
 	end
+	if not TutorialRules.IsStep(t.step) then
+		t.step = if t.placed == true then "Income" elseif t.itemId and t.uid then "Catch" else "Intro"
+	end
+	local items = if type(data.items) == "table" then data.items else {}
+	local present = type(t.uid) == "string" and items[t.uid] ~= nil
 	-- существо поставлено — значит есть и запись предмета: без неё шаг Income откатывается к Carry (донести заново
-	-- тем же uid); после Done ничего не трогаем (предмет мог законно уйти — продан правилами, перемещён)
-	if t.step == "Income" and (type(t.uid) ~= "string" or type(data.items) ~= "table" or data.items[t.uid] == nil) then
+	-- тем же uid); после Done ничего не трогаем (предмет мог законно уйти — украден, перемещён)
+	if t.step == "Income" and not present then
 		t.step = if t.itemId and t.uid then "Carry" else "Intro"
 		t.placed = nil
+	elseif (t.step == "Catch" or t.step == "Battle" or t.step == "Carry") and present then
+		-- запись предмета уже есть (выставлен, шаг не успел сохраниться): второй раз в руки его не выдавать
+		t.step = "Income"
+		t.placed = true
 	end
 	return t
+end
+
+-- Изменение записи обучения (DataService.SetTutorial): step — только на разрешённый следующий шаг; itemId и uid —
+-- один раз (защита навсегда у одного uid, D55); placed = true — только когда запись предмета uid есть. Меняет t;
+-- false — отказ (ничего не меняется).
+function TutorialRules.Apply(t: State, items: any, fields: { [string]: any }): boolean
+	local step = fields.step
+	if step ~= nil and step ~= t.step and not TutorialRules.CanAdvance(t.step, step) then
+		return false
+	end
+	for _, key in { "itemId", "uid" } do
+		local value = fields[key]
+		if value ~= nil and (type(value) ~= "string" or ((t :: any)[key] ~= nil and (t :: any)[key] ~= value)) then
+			return false
+		end
+	end
+	if fields.placed ~= nil then
+		local uid = fields.uid or t.uid
+		if fields.placed ~= true or type(uid) ~= "string" or type(items) ~= "table" or items[uid] == nil then
+			return false
+		end
+	end
+	if step ~= nil then
+		t.step = step
+	end
+	if fields.itemId ~= nil then
+		t.itemId = fields.itemId
+	end
+	if fields.uid ~= nil then
+		t.uid = fields.uid
+	end
+	if fields.placed ~= nil then
+		t.placed = true
+	end
+	return true
 end
 
 -- Миграция schema 3 → 4 (один раз; после разбора журнала передач и проверки записей): есть хотя бы один свой предмет
@@ -71,6 +116,16 @@ end
 function TutorialRules.Migrate(data: any, schema: number): boolean
 	if data.schema ~= schema - 1 then
 		return false
+	end
+	if type(data.lovibums) ~= "table" then
+		data.lovibums = {}
+	end
+	-- Профиль уже был v4, а старый сервер (без D55) сохранил его со схемой 3: начатое или пройденное обучение не
+	-- трогать (иначе стартовое существо выдалось бы снова, а защита uid пропала бы).
+	local t = data.tutorial
+	if type(t) == "table" and (t.step ~= "Intro" or t.itemId ~= nil or t.uid ~= nil or t.placed or t.migrated) then
+		data.schema = schema
+		return true
 	end
 	local own = false
 	if type(data.items) == "table" then
@@ -82,9 +137,6 @@ function TutorialRules.Migrate(data: any, schema: number): boolean
 		end
 	end
 	data.tutorial = if own then { step = "Done", migrated = true } else TutorialRules.Default()
-	if type(data.lovibums) ~= "table" then
-		data.lovibums = {}
-	end
 	data.schema = schema
 	return true
 end

@@ -99,7 +99,7 @@ local function tryAction(player: any, action: any, level: any, kind: any, count:
 		ShopService.Sync(player)
 		return
 	end
-	if not DataService.BuyLovibums(player, level, kind, count, total) then
+	if not DataService.BuyLovibums(player, level, kind, count, CatchRules.Price(ShopService.Prices(), level, kind) :: number) then
 		Notify.Send(player, "Покупка не прошла", "Stop")
 		ShopService.Sync(player)
 		return

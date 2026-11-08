@@ -730,15 +730,23 @@ function DataService.Lovibums(player: Player): { [string]: { [string]: number } 
 	return data.lovibums
 end
 
--- Покупка: монеты и запас — в одном кадре (без yield). total — итог из CatchRules.CheckBuy (проверки — в ShopService,
--- здесь последняя защита данных). false — не хватает монет, переполнение запаса или профиль не загружен.
-function DataService.BuyLovibums(player: Player, level: number, kind: string, count: number, total: number): boolean
+-- Покупка: монеты и запас — в одном кадре (без yield). price — цена штуки (CatchRules.Price; проверки — в ShopService,
+-- здесь последняя защита данных: итог считается тут). false — не хватает монет, переполнение запаса, нет цены или
+-- профиль не загружен.
+function DataService.BuyLovibums(player: Player, level: number, kind: string, count: number, price: number): boolean
 	local data = DataService.GetData(player)
 	local lovibums = DataService.Lovibums(player)
 	if not data or not lovibums or not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) then
 		return false
 	end
-	if not CatchRules.IsWhole(count) or count < 1 or not CatchRules.IsWhole(total) or total < 0 or data.coins < total then
+	if not CatchRules.IsWhole(count) or count < 1 or count > CatchRules.Config.MaxBuy then
+		return false
+	end
+	if type(price) ~= "number" or price ~= price or price <= 0 then
+		return false
+	end
+	local total = price * count
+	if not CatchRules.IsWhole(total) or data.coins < total then
 		return false
 	end
 	local have = CatchRules.Stock(lovibums, level, kind)
@@ -778,17 +786,14 @@ function DataService.Tutorial(player: Player): TutorialRules.State?
 	return if data then TutorialRules.Normalize(data) else nil
 end
 
--- Изменить запись обучения: поля fields (false — стереть поле). Без yield.
+-- Изменить запись обучения (TutorialRules.Apply: шаг — только вперёд, itemId и uid — один раз, placed — только при
+-- записи предмета). Без yield. false — отказ.
 function DataService.SetTutorial(player: Player, fields: { [string]: any }): boolean
 	local data = DataService.GetData(player)
 	if not data then
 		return false
 	end
-	local t = TutorialRules.Normalize(data)
-	for key, value in fields do
-		(t :: any)[key] = if value == false then nil else value
-	end
-	return true
+	return TutorialRules.Apply(TutorialRules.Normalize(data), data.items, fields)
 end
 
 -- Защита музея в профиле (D37): { owned = { вид → n }, hacks = { L<уровень> → n } }.

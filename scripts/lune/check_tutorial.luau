@@ -122,6 +122,67 @@ check(
 	"Inventory.Normalize не откатывает схему 4"
 )
 
+print("· старый сервер сохранил профиль v4 со схемой 3")
+local rolled = {
+	schema = 3,
+	items = { start = { id = "Moai", place = "slot", slot = 1 } },
+	tutorial = { step = "Done", itemId = "Moai", uid = "start", placed = true },
+	lovibums = { L1 = { Boom = 4 } },
+	stats = {},
+}
+load(rolled)
+check(
+	rolled.schema == 4 and rolled.tutorial.uid == "start" and rolled.tutorial.migrated == nil,
+	"пройденное обучение не тронуто"
+)
+check(
+	TutorialRules.IsProtected(rolled, "start") and rolled.lovibums.L1.Boom == 4,
+	"защита и Ловибумы на месте"
+)
+local carrying = { schema = 3, items = {}, tutorial = { step = "Carry", itemId = "Moai", uid = "u7" }, stats = {} }
+load(carrying)
+check(
+	carrying.tutorial.step == "Carry" and carrying.tutorial.uid == "u7",
+	"начатое обучение (в руках) не сбрасывается"
+)
+
+print("· изменение записи обучения (SetTutorial)")
+local rec = { tutorial = { step = "Catch", itemId = "Moai", uid = "u1" }, items = {} }
+local t = TutorialRules.Normalize(rec)
+check(not TutorialRules.Apply(t, rec.items, { uid = "u2" }), "uid второй раз не меняется")
+check(
+	not TutorialRules.Apply(t, rec.items, { itemId = "PizzaRat" }),
+	"itemId второй раз не меняется"
+)
+check(TutorialRules.Apply(t, rec.items, { uid = "u1" }), "тот же uid — можно")
+check(not TutorialRules.Apply(t, rec.items, { step = "Done" }), "через шаги — нельзя")
+check(not TutorialRules.Apply(t, rec.items, { step = "Nope" }), "несуществующий шаг — нельзя")
+check(
+	not TutorialRules.Apply(t, rec.items, { placed = true }),
+	"placed без записи предмета — нельзя"
+)
+check(TutorialRules.Apply(t, rec.items, { step = "Battle" }) and t.step == "Battle", "вперёд на шаг")
+rec.items.u1 = { id = "Moai", place = "slot", slot = 2 }
+check(
+	TutorialRules.Apply(t, rec.items, { placed = true }) and t.placed == true,
+	"placed при записи предмета"
+)
+local bad = { tutorial = { step = "Ghost", itemId = "Moai", uid = "u9" }, items = {} }
+TutorialRules.Normalize(bad)
+check(
+	bad.tutorial.uid == "u9" and bad.tutorial.itemId == "Moai" and bad.tutorial.step == "Catch",
+	"испорченный шаг: существо и uid целы"
+)
+local twice = {
+	tutorial = { step = "Carry", itemId = "Moai", uid = "u3" },
+	items = { u3 = { id = "Moai", place = "slot", slot = 1 } },
+}
+TutorialRules.Normalize(twice)
+check(
+	twice.tutorial.step == "Income" and twice.tutorial.placed == true,
+	"предмет уже записан — в руки второй раз не выдаётся"
+)
+
 print("· продолжение после входа")
 for _, step in TutorialRules.Steps do
 	local resume = TutorialRules.ResumeStep(step)

@@ -161,7 +161,8 @@ export type Session = {
 	rarity: string,
 	since: number, -- начало (общее время сервера)
 	throws: number,
-	lastThrow: number,
+	lastThrow: number, -- время отпускания последнего броска
+	readyAt: number, -- раньше этого (время отпускания) следующий бросок нельзя: полёт и сеть / побег видны всем
 	lastActive: number,
 	state: string, -- "Aim" | "Caught" | "Over"
 	tutorial: boolean, -- учебная: броски бесплатные, первое попадание — захват, без лимита бросков
@@ -186,6 +187,7 @@ function CatchRules.NewSession(
 		since = now,
 		throws = 0,
 		lastThrow = -math.huge,
+		readyAt = -math.huge,
 		lastActive = now,
 		state = "Aim",
 		tutorial = tutorial == true,
@@ -193,8 +195,9 @@ function CatchRules.NewSession(
 	}
 end
 
--- Можно ли бросить: причина отказа или nil. releaseTime — когда игрок отпустил (от клиента: проверяется близость к
--- времени сервера), stock — запас этого вида этого уровня (у учебной не нужен).
+-- Можно ли бросить: причина отказа или nil. releaseTime — когда игрок отпустил (от клиента: не позже времени сервера
+-- больше ClockAhead и не раньше ClockSlack; пауза между бросками — по временам отпускания), stock — запас этого вида
+-- этого уровня (у учебной не нужен).
 function CatchRules.CheckThrow(session: Session, now: number, kind: any, stock: number, releaseTime: any): string?
 	local g = Catch.Game
 	if session.state ~= "Aim" then
@@ -203,11 +206,14 @@ function CatchRules.CheckThrow(session: Session, now: number, kind: any, stock: 
 	if not session.tutorial and session.throws >= g.MaxThrows then
 		return "Броски кончились"
 	end
-	if now - session.lastThrow < g.ThrowGap then
-		return "Подождите"
-	end
-	if type(releaseTime) ~= "number" or releaseTime ~= releaseTime or math.abs(releaseTime - now) > g.ClockSlack then
+	if type(releaseTime) ~= "number" or releaseTime ~= releaseTime then
 		return "Бросок не засчитан"
+	end
+	if releaseTime > now + g.ClockAhead or releaseTime < now - g.ClockSlack then
+		return "Бросок не засчитан"
+	end
+	if releaseTime < session.readyAt or now < session.readyAt then
+		return "Подождите"
 	end
 	if not session.tutorial then
 		if not CatchRules.IsKind(kind) then
@@ -232,11 +238,16 @@ function CatchRules.Outcome(session: Session, hit: boolean, chance: number, roll
 end
 
 -- После броска (Ловибум уже списан): счётчик, время, состояние. Поимка — "Caught"; последний бросок без поимки —
--- "Over" (существо убегает, пауза).
-function CatchRules.AfterThrow(session: Session, outcome: string, now: number)
+-- "Over" (существо убегает, пауза). releaseTime — время отпускания (проверенное CheckThrow): следующий бросок — после
+-- прилёта и отдыха (промах) или после сети и побега.
+function CatchRules.AfterThrow(session: Session, outcome: string, releaseTime: number)
+	local g = Catch.Game
 	session.throws += 1
-	session.lastThrow = now
-	session.lastActive = now
+	session.lastThrow = releaseTime
+	session.lastActive = releaseTime
+	session.readyAt = releaseTime
+		+ g.FlightTime
+		+ (if outcome == "Miss" then g.MissRest else g.CaptureTime + g.EscapeRest)
 	if outcome == "Caught" then
 		session.state = "Caught"
 	elseif not session.tutorial and session.throws >= Catch.Game.MaxThrows then
@@ -258,8 +269,8 @@ function CatchRules.ShouldEnd(session: Session, now: number, stockOfLevel: numbe
 	if now - session.lastActive > g.Idle then
 		return "Idle"
 	end
-	if not session.tutorial and stockOfLevel < 1 and now - session.lastThrow >= g.ThrowGap then
-		return "Empty"
+	if not session.tutorial and stockOfLevel < 1 and now >= session.readyAt then
+		return "Empty" -- последний бросок уже долетел и сеть (побег) показана
 	end
 	return nil
 end

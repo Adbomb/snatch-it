@@ -240,7 +240,7 @@ for i = 1, 40 do
 			local flat = Vector3.new(pose.offset.X, 0, pose.offset.Z).Magnitude
 			maxCatch = math.max(maxCatch, flat)
 			check(
-				flat <= (Catch.Creature.Sway + Catch.Creature.DodgeSide) * cp.scale + 1e-6,
+				flat <= p.radius + (Catch.Creature.Sway + Catch.Creature.DodgeSide) * cp.scale + 1e-6,
 				"мини-игра: недалеко"
 			)
 		end
@@ -267,8 +267,10 @@ for i = 1, 60 do
 		local dodging = math.abs(pose.dodge) >= 0.99
 		if dodging and not wasDodging then
 			seen += 1
-			local before = CreatureMotion.Pose(p, t - Catch.Creature.DodgeWindup * 0.5)
-			if before.squash < 0.95 and math.abs(before.dodge) > 0.1 then
+			-- бросок, который прилетел бы во время рывка (отпущен позже, чем за полёт до него), игрок делает, уже видя
+			-- присед: замах заметен раньше, чем за полёт + 0.1 с до рывка
+			local before = CreatureMotion.Pose(p, t - g.FlightTime - 0.1)
+			if before.squash < 0.9 and math.abs(before.dodge) > 0.25 then
 				warned += 1
 			end
 		end
@@ -277,8 +279,12 @@ for i = 1, 60 do
 end
 check(
 	seen > 20 and warned == seen,
-	("каждое уклонение с замахом (%d из %d)"):format(warned, seen)
+	("присед виден до броска, который попал бы в рывок (%d из %d)"):format(
+		warned,
+		seen
+	)
 )
+check(Catch.Creature.DodgeWindup >= g.FlightTime + 0.3, "замах дольше полёта")
 local first = { seed = 5, radius = 2.4, scale = 1, mode = "Catch", since = T0, face = 0 }
 local calmStart = true
 for step = 0, math.floor(Catch.Creature.DodgeEvery / 0.05) - 1 do
@@ -292,9 +298,61 @@ check(
 	far.offset.Magnitude > g.FleeDistance * 0.9 and math.abs(far.offset.Y + 2.5) < 1e-6,
 	"побег: спрыгнул и отбежал"
 )
-local home = CreatureMotion.Pose(fp, T0 + g.FleeTime + 0.01)
-local wander = CreatureMotion.Pose({ seed = 9, radius = 0.45, scale = 1, mode = "Wander" }, T0 + g.FleeTime + 0.01)
+local after = T0 + g.FleeTime + g.Blend + 0.01
+local home = CreatureMotion.Pose(fp, after)
+local wander = CreatureMotion.Pose({ seed = 9, radius = 0.45, scale = 1, mode = "Wander" }, after)
 check(home.offset == wander.offset, "после побега — снова блуждает")
+
+-- без скачков на сменах режима: блуждание → мини-игра → побег → блуждание
+for i = 1, 30 do
+	local base = { seed = CreatureMotion.SeedOf("modes-" .. i), radius = 2.4, scale = 1.2, drop = 0 }
+	local catchAt, fleeAt = T0 + 7.3 + i * 0.37, T0 + 19.1 + i * 0.37
+	local function at(t)
+		local q = table.clone(base)
+		if t < catchAt then
+			q.mode = "Wander"
+		elseif t < fleeAt then
+			q.mode, q.since, q.face = "Catch", catchAt, 0.4
+		else
+			q.mode, q.since, q.anchor, q.face = "Flee", fleeAt, catchAt, 0.4
+		end
+		return CreatureMotion.Pose(q, t)
+	end
+	local worst = 0
+	for _, edge in { catchAt, fleeAt, fleeAt + g.FleeTime, fleeAt + g.FleeTime + g.Blend } do
+		worst = math.max(worst, (at(edge - 1 / 60).offset - at(edge + 1 / 60).offset).Magnitude)
+	end
+	check(worst < 0.35, ("смена режима без телепорта (%.2f ст.)"):format(worst))
+end
+
+section("тайминг бросков")
+local ts = CatchRules.NewSession(1, 1, 1, "u", "Common", T0, false)
+check(
+	CatchRules.CheckThrow(ts, T0 + 1, "Boom", 3, T0 + 1 + g.ClockAhead + 0.01) ~= nil,
+	"время из будущего — нет"
+)
+check(
+	CatchRules.CheckThrow(ts, T0 + 1, "Boom", 3, T0 + 1 - g.ClockSlack - 0.01) ~= nil,
+	"слишком старое — нет"
+)
+CatchRules.AfterThrow(ts, "Escape", T0 + 1)
+local ready = T0 + 1 + g.FlightTime + g.CaptureTime + g.EscapeRest
+check(
+	CatchRules.CheckThrow(ts, ready - 0.05, "Boom", 3, ready - 0.05) == "Подождите",
+	"до конца сети — нельзя"
+)
+check(CatchRules.CheckThrow(ts, ready + 0.01, "Boom", 3, ready + 0.01) == nil, "после сети — можно")
+check(
+	CatchRules.ShouldEnd(ts, ready - 0.1, 0) == nil and CatchRules.ShouldEnd(ts, ready + 0.01, 0) == "Empty",
+	"«кончились» — после показа побега"
+)
+CatchRules.AfterThrow(ts, "Miss", ready + 0.01)
+local again = ready + 0.01 + g.FlightTime + g.MissRest
+check(
+	CatchRules.CheckThrow(ts, ready + 0.5, "Boom", 3, ready + 0.5) == "Подождите",
+	"после промаха — короткая пауза"
+)
+check(CatchRules.CheckThrow(ts, again + 0.01, "Boom", 3, again + 0.01) == nil, "потом можно")
 
 print(("Итог: %d проверок, ошибок %d"):format(passed + failed, failed))
 process.exit(if failed == 0 then 0 else 1)
