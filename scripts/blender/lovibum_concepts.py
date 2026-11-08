@@ -1,16 +1,16 @@
-"""Концепты Ловибумов v4 (D55, этап 0): Бум, Турбо и Мега — игрушечные устройства поимки, стиль D39.
+"""Концепты Ловибумов v5 (D55, этап 0): Бум, Турбо и Мега — игрушечные устройства поимки, стиль D39.
 
-История: v1 (персонажи с лицами) отклонён; v2–v3 (энергетические капсулы) — направление верное, но владелец увидел в
-них батарейки и картриджи (2026-11-08). v4 сохраняет идею компактной капсулы с энергетическим ядром, цвета и захват
-сетью, а силуэт делает игрушечным. Фирменный элемент всей линейки — «кристалл в когтях»: четыре угловые стойки v3
-стали сегментированными когтями-захватами, они выгибаются наружу и смыкаются над головой, держа кристалл-ромб; между
-когтями светится ядро. При поимке когти раскрываются, кристалл выпускает сеть — символ стал и силуэтом, и механизмом.
-Плоских торцов-«контактов» нет. Прогрессия:
-- Бум (×1): широкий и приземистый, толстые оранжевые когти с жёлтыми суставами, боковые защёлки, бирюзовое ядро;
-- Турбо (×1.5): вытянутый, хищные синие когти со световыми полосами, большие стреловидные стабилизаторы со светящейся
-  кромкой, сопло-кольцо снизу, голубой вытянутый кристалл;
-- Мега (×2): фиолетовые когти с золотыми суставами и кончиками, золотой обод-корона на кончиках, золотая база с
-  камнями, самый крупный кристалл.
+История: v1 (персонажи с лицами) отклонён; v2–v3 (энергетические капсулы) — «батарейки»; v4 «кристалл в когтях» —
+направление верное (владелец, 2026-11-08), но нужен ещё проход силуэтов: Бум слабее и местами «ободок», Мега — «яйцо
+в клетке», меньше тонких деталей для телефона. v5 сохраняет фирменный элемент — четыре когтя держат кристалл-ромб и
+раскрываются при поимке — и делает силуэты жирнее и чище; прогрессия читается по кристаллу (маленький → вытянутый →
+огромный):
+- Бум (×1): простой и цельный — большое бирюзовое ядро-шар, четыре коротких толстых когтя-пластины с жёлтыми
+  заклёпками, крупные защёлки, небольшой кристалл на макушке;
+- Турбо (×1.5): чистый и быстрый — высокое ядро, хищные когти с одной широкой световой полосой, крупные стреловидные
+  стабилизаторы с яркой кромкой, сопло-кольцо, вытянутый кристалл;
+- Мега (×2): ядро — огромный гранёный кристалл в золотой оправе-короне: короткие фиолетовые когти с золотыми
+  кончиками, обод, золотые зубцы с камнями, золотая база.
 Без глаз, ртов и лиц; без центральной кнопки и деления на половины.
 
 Только концепт на утверждение: рендеры EEVEE и проход свечения (<кадр>_glow.png — листы scripts/d55_lovibum_sheets.py
@@ -35,29 +35,18 @@ import art_style as S  # noqa: E402
 argv = sys.argv[sys.argv.index("--") + 1 :]
 REPO, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
 os.makedirs(OUT, exist_ok=True)
-GLOW = {"core": 1.4, "crystal": 1.6, "glow": 2.4, "net": 2.0, "spark": 2.6}  # светящиеся ключи и сила свечения
+GLOW = {"core": 1.4, "crystal": 1.6, "crystal2": 1.4, "glow": 2.4, "net": 2.0, "spark": 2.6}  # светящиеся ключи и сила свечения
 
 TYPES = {
     "Boom": {"claw": "FF8A1F", "knuckle": "FFC21A", "tip": "FFC21A", "base": "FFC21A", "foot": "2A3344",
-             "trim": "E8641A", "core": "2EE6D6", "crystal": "22D8C8", "glow": "8AFFF2",
-             "widths": (0.36, 0.35, 0.32, 0.27, 0.2), "thick": 0.12, "scale": (1.12, 1.12, 0.92),
-             "profile": [(0.34, 0.14), (0.46, 0.33), (0.5, 0.55), (0.46, 0.77), (0.34, 0.92), (0.2, 1.0)],
-             "crystal_at": (0.95, 1.13, 1.38, 0.16),
-             "orb": [(0.2, 0.17, 0.27), (0.31, 0.25, 0.39), (0.37, 0.37, 0.63), (0.31, 0.61, 0.79), (0.2, 0.77, 0.9)]},
+             "trim": "E8641A", "core": "2EE6D6", "crystal": "22D8C8", "glow": "8AFFF2", "light_z": 0.5,
+             "scale": (1.0, 1.0, 1.0)},
     "Turbo": {"claw": "2F6BFF", "knuckle": "1E2B4F", "tip": "E6F3FF", "base": "E6F3FF", "foot": "1E2B4F",
-              "trim": "1E2B4F", "core": "3FD8FF", "crystal": "2CB8FF", "glow": "5CE8FF",
-              "widths": (0.28, 0.27, 0.23, 0.18, 0.13), "thick": 0.1, "scale": (0.98, 0.98, 1.06),
-              "profile": [(0.33, 0.14), (0.43, 0.36), (0.45, 0.6), (0.38, 0.84), (0.25, 1.01), (0.14, 1.11)],
-              "crystal_at": (1.04, 1.24, 1.56, 0.13),
-              "orb": [(0.18, 0.17, 0.29), (0.27, 0.27, 0.43), (0.33, 0.41, 0.69), (0.27, 0.67, 0.87),
-                      (0.17, 0.85, 1.0)]},
-    "Mega": {"claw": "7A2FE0", "knuckle": "F2C230", "tip": "F2C230", "base": "F2C230", "foot": "C98E12",
-             "trim": "C98E12", "core": "E57BFF", "crystal": "D45CFF", "glow": "FFD1FF",
-             "widths": (0.34, 0.33, 0.3, 0.25, 0.19), "thick": 0.12, "scale": (1.05, 1.05, 1.05),
-             "profile": [(0.35, 0.16), (0.47, 0.37), (0.51, 0.59), (0.46, 0.82), (0.33, 0.98), (0.21, 1.07)],
-             "crystal_at": (0.98, 1.21, 1.53, 0.21),
-             "orb": [(0.2, 0.18, 0.28), (0.32, 0.26, 0.41), (0.38, 0.39, 0.66), (0.32, 0.64, 0.83),
-                     (0.21, 0.81, 0.95)]},
+              "trim": "1E2B4F", "core": "3FD8FF", "crystal": "2CB8FF", "glow": "5CE8FF", "light_z": 0.6,
+              "scale": (1.0, 1.0, 1.0)},
+    "Mega": {"claw": "7A2FE0", "knuckle": "F2C230", "tip": "F2C230", "base": "F2C230", "foot": "6A1FC0",
+             "trim": "C98E12", "core": "E57BFF", "crystal": "D45CFF", "glow": "FFD1FF", "light_z": 0.8,
+             "scale": (1.0, 1.0, 1.0)},
 }
 OPEN_DEG = 52  # раскрытие когтей при поимке
 
@@ -95,15 +84,16 @@ def paint(a, spec):
     for key, code, rings in (("claw", spec["claw"], True), ("knuckle", spec["knuckle"], False),
                              ("tip", spec["tip"], False), ("base", spec["base"], False), ("foot", spec["foot"], False),
                              ("trim", spec["trim"], False), ("core", spec["core"], False),
-                             ("crystal", spec["crystal"], False), ("glow", spec["glow"], False),
-                             ("gemp", "FF3B7F", False), ("gemc", "3FE0FF", False), ("white", "FFFDF4", False)):
+                             ("crystal", spec["crystal"], False), ("crystal2", "FFC8FF", False),
+                             ("glow", spec["glow"], False), ("gemp", "FF3B7F", False), ("gemc", "3FE0FF", False),
+                             ("white", "FFFDF4", False)):
         a.paint(key, code, rings)
 
 
-def claw(a, theta, prof, widths, thick, open_deg=0.0, strip=None, hinges=(1, 3)):
-    """Коготь-лепесток в вертикальной плоскости под углом theta: пластины сужаются к кончику (ширина поперёк плоскости
-    когтя, толщина — по радиусу), чередование толщины — без совпадающих граней; оси-шарниры поперёк когтя (видно, что
-    он раскрывается); кончик — крючок к кристаллу; strip — полоса по наружной стороне (свет у Турбо, золото у Меги).
+def claw(a, theta, prof, widths, thick, open_deg=0.0, cap=None, cap_at=1, strip=None, tip_scale=1.0):
+    """Коготь-пластина в вертикальной плоскости под углом theta: сегменты сужаются к кончику (ширина поперёк плоскости
+    когтя, толщина — по радиусу), чередование толщины — без совпадающих граней; cap — крупная заклёпка-колпачок на
+    сгибе cap_at; strip — одна широкая полоса по наружной стороне средних сегментов; кончик — коготь-крючок к кристаллу.
     open_deg — раскрытие наружу вокруг основания."""
     u = Vector((math.cos(theta), math.sin(theta), 0))
     t = Vector((-math.sin(theta), math.cos(theta), 0))
@@ -112,84 +102,110 @@ def claw(a, theta, prof, widths, thick, open_deg=0.0, strip=None, hinges=(1, 3))
         rot = Matrix.Rotation(math.radians(open_deg), 4, t)
         pts = [pts[0] + (rot @ (p - pts[0])) for p in pts]
     n = len(pts) - 1
+
+    def outward(i):
+        d = (pts[min(i + 1, n)] - pts[max(i - 1, 0)]).normalized()
+        o = t.cross(d).normalized()
+        return o if o.dot(u) >= 0 or open_deg else -o
+
     for i in range(n):
-        bar_side(a, "claw", pts[i], pts[i + 1], widths[i], thick * (1 if i % 2 == 0 else 0.9), t, extend=0.025)
-    for i in hinges:
-        half = widths[i] / 2 + 0.035
-        bar_side(a, "knuckle", pts[i] - t * half, pts[i] + t * half, 0.085 + 0.006 * (i % 2), 0.085, u)
-    tip = pts[-1]
-    hook = Vector((-u.x, -u.y, 0)) * 0.09 + Vector((0, 0, 0.05))
-    bar_side(a, "tip", tip, tip + hook, widths[-1] * 0.8, thick * 1.1, t, extend=0.03)
-    bar_side(a, "tip", tip + hook, tip + hook * 1.7, widths[-1] * 0.45, thick * 0.8, t)
+        bar_side(a, "claw", pts[i], pts[i + 1], widths[i], thick * (1 if i % 2 == 0 else 0.9), t, extend=0.03)
+    if cap:
+        o = outward(cap_at)
+        m = Matrix.Translation(pts[cap_at] + o * (thick * 0.4)) @ o.to_track_quat("Z", "Y").to_matrix().to_4x4()
+        a.prism(cap, sq(0.085, 0.028), 0.0, 0.08, matrix=m)
     if strip:
-        for i in range(n - 1):
-            d = (pts[i + 1] - pts[i]).normalized()
-            out = t.cross(d).normalized()  # наружу от оси
-            if out.dot(u) < 0:
-                out = -out
-            off = out * (thick / 2 + 0.006)
-            bar_side(a, strip, pts[i] + off, pts[i + 1] + off, 0.06 + 0.004 * (i % 2), 0.024, t, bevel=0)
+        for i in range(1, n - 1):
+            o = outward(i) if not open_deg else (t.cross((pts[i + 1] - pts[i]).normalized())).normalized()
+            if o.dot(u) < 0 and not open_deg:
+                o = -o
+            off = o * (thick / 2 + 0.006)
+            bar_side(a, strip, pts[i] + off, pts[i + 1] + off, 0.1 + 0.006 * (i % 2), 0.03, t, bevel=0)
+    tip = pts[-1]
+    inward = Vector((-u.x, -u.y, 0))
+    hook = inward * 0.1 * tip_scale + Vector((0, 0, 0.06 * tip_scale))
+    bar_side(a, "tip", tip, tip + hook, widths[-1] * 0.85, thick * 1.15, t, extend=0.035)
     return pts
 
 
-def crystal(a, lo, mid, hi, half, key="crystal", lift=0.0):
-    """Кристалл-ромб (бипирамида, повёрнута на 45°: грани смотрят на когти)."""
-    rot = Matrix.Translation((0, 0, lift)) @ Matrix.Rotation(math.radians(45), 4, "Z")
+def crystal(a, lo, mid, hi, half, key="crystal", lift=0.0, turn=45.0):
+    """Кристалл-ромб (бипирамида; поворот turn: при 45° грани смотрят на когти)."""
+    rot = Matrix.Translation((0, 0, lift)) @ Matrix.Rotation(math.radians(turn), 4, "Z")
     a.frustum(key, (-0.02, 0.02, -0.02, 0.02), (-half, half, -half, half), lo, mid + 0.005, matrix=rot)
     a.frustum(key, (-half, half, -half, half), (-0.02, 0.02, -0.02, 0.02), mid - 0.005, hi, matrix=rot)
 
 
-# ── Ловибум: общая конструкция «кристалл в когтях» ──────────────────────────────────────────────────────────
+def claws(a, prof, widths, thick, opened, **kw):
+    for k in range(4):
+        claw(a, math.pi / 4 + k * math.pi / 2, prof, widths, thick, OPEN_DEG if opened else 0.0, **kw)
+
+
+# ── Ловибумы: общая конструкция «кристалл в когтях» ─────────────────────────────────────────────────────────
+
+
+def boom(a, opened):
+    """Бум — простой и цельный: большое ядро-шар, четыре коротких толстых когтя-пластины с заклёпками, крупные
+    защёлки, небольшой кристалл на макушке ядра."""
+    a.prism("foot", sq(0.3, 0.09), 0.0, 0.08)
+    a.prism("base", sq(0.48, 0.15), 0.06, 0.22)
+    for h, z0, z1 in ((0.27, 0.18, 0.29), (0.39, 0.27, 0.41), (0.45, 0.39, 0.627), (0.39, 0.607, 0.75),
+                      (0.27, 0.73, 0.85)):
+        a.prism("core", sq(h, h * 0.32), z0, z1)
+    claws(a, [(0.42, 0.16), (0.56, 0.36), (0.56, 0.6), (0.43, 0.79), (0.29, 0.88)], (0.46, 0.44, 0.38, 0.3), 0.16,
+          opened, cap="knuckle", cap_at=2, tip_scale=1.1)
+    crystal(a, 0.8, 1.0, 1.28, 0.18, lift=0.16 if opened else 0.0)
+    for s in (-1, 1):
+        a.box("base", s * 0.44, s * 0.63, -0.15, 0.15, 0.3, 0.62)
+        a.box("trim", s * 0.6, s * 0.69, -0.11, 0.11, 0.52, 0.68)
+        a.box("trim", s * 0.615, s * 0.65, -0.08, 0.08, 0.36, 0.43)
+
+
+def turbo(a, opened):
+    """Турбо — быстрый и чистый: высокое ядро, хищные когти с одной широкой световой полосой, крупные стреловидные
+    стабилизаторы с яркой кромкой, сопло-кольцо, вытянутый кристалл."""
+    a.prism("glow", sq(0.2, 0.06), -0.05, 0.015)
+    a.prism("foot", sq(0.28, 0.08), 0.0, 0.07)
+    a.prism("base", sq(0.41, 0.125), 0.05, 0.2)
+    for h, z0, z1 in ((0.19, 0.17, 0.3), (0.29, 0.28, 0.45), (0.35, 0.43, 0.72), (0.29, 0.7, 0.9), (0.18, 0.88, 1.02)):
+        a.prism("core", sq(h, h * 0.32), z0, z1)
+    claws(a, [(0.34, 0.14), (0.45, 0.38), (0.45, 0.64), (0.35, 0.88), (0.2, 1.04)], (0.32, 0.3, 0.25, 0.19), 0.12,
+          opened, strip="glow")
+    crystal(a, 0.92, 1.15, 1.58, 0.15, lift=0.16 if opened else 0.0)
+    fin = [(0.38, 0.18), (0.38, 0.84), (0.58, 0.75), (0.98, 0.22), (1.0, 0.03), (0.76, 0.1)]
+    for s in (-1, 1):
+        a.extrude("trim", [(s * x, z) for x, z in fin], -0.045, 0.045, axis="y")
+        bar_side(a, "glow", Vector((s * 0.58, 0, 0.78)), Vector((s * 1.0, 0, 0.21)), 0.11, 0.07, Vector((0, 1, 0)),
+                 bevel=0)
+
+
+def mega(a, opened):
+    """Мега — самый ценный: ядро — огромный гранёный кристалл в золотой оправе-короне: короткие фиолетовые когти с
+    крупными золотыми когтями-кончиками и заклёпками, золотые зубцы-короны с камнями между когтями, золотая база."""
+    a.prism("foot", sq(0.36, 0.11), 0.0, 0.08)
+    a.prism("base", sq(0.5, 0.155), 0.06, 0.22)
+    a.prism("trim", sq(0.44, 0.135), 0.2, 0.26)
+    lift = 0.2 if opened else 0.0
+    crystal(a, 0.22, 0.86, 1.5, 0.32, key="crystal", lift=lift)
+    crystal(a, 0.34, 0.86, 1.36, 0.25, key="crystal2", lift=lift, turn=0.0)  # второй ряд граней — «огранка»
+    claws(a, [(0.44, 0.18), (0.56, 0.38), (0.52, 0.62), (0.38, 0.8)], (0.4, 0.37, 0.3), 0.15, opened,
+          cap="knuckle", cap_at=1, tip_scale=1.7)
+    for k in range(4):  # золотые зубцы-короны с камнями между когтями
+        ang = k * math.pi / 2
+        u = Vector((math.cos(ang), math.sin(ang), 0))
+        turn = Matrix.Rotation(ang, 4, "Z")
+        for i, (r, w, z0, z1) in enumerate(((0.5, 0.2, 0.2, 0.46), (0.55, 0.14, 0.44, 0.62), (0.6, 0.075, 0.6, 0.78))):
+            a.box("knuckle", r - 0.06, r + 0.06, -w / 2, w / 2, z0, z1, matrix=turn)
+        a.box("gemp" if k % 2 else "gemc", 0.555, 0.6, -0.065, 0.065, 0.26, 0.4, matrix=turn)
+
+
+BUILD = {"Boom": boom, "Turbo": turbo, "Mega": mega}
 
 
 def lovibum(name, opened=False):
     spec = TYPES[name]
     a = S.Art("Lovibum_" + name + ("_open" if opened else ""), ring_z0=0.6)
     paint(a, spec)
-    sx, sy, sz = spec["scale"]
-    a.transform = Matrix.Diagonal((sx, sy, sz, 1.0))
-    # База: ножка и кольцо, из которого растут когти.
-    a.prism("foot", sq(0.26, 0.07), 0.0, 0.07)
-    a.prism("base", sq(0.42, 0.13), 0.05, 0.2)
-    # Ядро-шар ступенями — светится между когтями.
-    for h, z0, z1 in spec["orb"]:
-        a.prism("core", sq(h, h * 0.32), z0, z1)
-    strip = {"Turbo": "glow", "Mega": "knuckle"}.get(name)
-    for k in range(4):
-        claw(a, math.pi / 4 + k * math.pi / 2, spec["profile"], spec["widths"], spec["thick"],
-             OPEN_DEG if opened else 0.0, strip=strip)
-    lo, mid, hi, half = spec["crystal_at"]
-    crystal(a, lo, mid, hi, half, lift=0.14 if opened else 0.0)
-    if name == "Boom":
-        # Боковые защёлки, как у игрушечного ланч-бокса.
-        for s in (-1, 1):
-            a.box("base", s * 0.4, s * 0.56, -0.13, 0.13, 0.34, 0.62)
-            a.box("trim", s * 0.54, s * 0.62, -0.1, 0.1, 0.55, 0.69)
-            a.box("trim", s * 0.555, s * 0.585, -0.07, 0.07, 0.39, 0.45)
-    if name == "Turbo":
-        # Стреловидные стабилизаторы со светящейся передней кромкой; сопло-кольцо снизу.
-        fin = [(0.38, 0.2), (0.38, 0.8), (0.56, 0.72), (0.95, 0.25), (0.98, 0.05), (0.72, 0.11)]
-        for s in (-1, 1):
-            pts = [(s * x, z) for x, z in fin]
-            a.extrude("trim", pts, -0.034, 0.034, axis="y")
-            bar_side(a, "glow", Vector((s * 0.57, 0, 0.74)), Vector((s * 0.97, 0, 0.26)), 0.08, 0.05,
-                     Vector((0, 1, 0)), bevel=0)
-            a.box("white", s * 0.37, s * 0.46, -0.05, 0.05, 0.32, 0.7)
-        a.prism("glow", sq(0.2, 0.06), -0.05, 0.015)
-    if name == "Mega":
-        # Камни на золотой базе, золотой обод-корона на кончиках когтей.
-        for k in range(4):
-            ang = k * math.pi / 2
-            c = Vector((math.cos(ang) * 0.42, math.sin(ang) * 0.42, 0.125))
-            a.box("gemp" if k % 2 else "gemc", -0.05, 0.05, -0.05, 0.05, -0.05, 0.05,
-                  matrix=Matrix.Translation(c) @ Matrix.Rotation(ang, 4, "Z") @ Matrix.Rotation(math.radians(45), 4,
-                                                                                                    "X"))
-        if not opened:
-            pts = [Vector((math.cos(math.pi / 4 + k * math.pi / 4) * 0.25, math.sin(math.pi / 4 + k * math.pi / 4) * 0.25,
-                           1.06)) for k in range(8)]
-            for k in range(8):
-                bar(a, "knuckle", pts[k], pts[(k + 1) % 8], 0.06 if k % 2 else 0.068, 0.07 if k % 2 else 0.078)
-    a.transform = None
+    BUILD[name](a, opened)
     return a
 
 
@@ -325,7 +341,7 @@ for name in TYPES:
             lo, hi = S.bounds(obj)
             report[name] = {**art.stats, "size": [round(hi[i] - lo[i], 2) for i in range(3)]}
         store[name] = obj
-        core_light(obj, TYPES[name]["core"], 0.55 * TYPES[name]["scale"][2])
+        core_light(obj, TYPES[name]["core"], TYPES[name]["light_z"])
 print("REPORT " + json.dumps(report, ensure_ascii=False), flush=True)
 
 prev = S.Preview(collection)
