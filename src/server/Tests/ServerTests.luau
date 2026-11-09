@@ -3059,6 +3059,196 @@ test("D55 Ловибумы сохраняются после выхода и в�
 	check(Battle.Bosses[3] and Battle.Bosses[3].Strength == GameConfig.Progression.Bosses[3], "сила короля не из Progression")
 end)
 
+-- ── Босс 3 «Крысиный король» (D54 + D55): полный игровой цикл ────────────────────────────────────────────────
+
+local function boss3Ids(): { string }
+	local ids = {}
+	for id, def in Items do
+		if def.boss == 3 and not def.legacy then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids)
+	return ids
+end
+
+test("Босс 3: 30 существ на суставах — 8–40 блоков, подставка только у трона, осьминога и императора", function()
+	-- D54 (правила владельца): Stand — декоративная подставка, у живого скрыта; у трона, осьминога и императора — часть
+	-- композиции; у билетика с подставкой скрыт и турникет (Grabber).
+	local KEEP = { RatThrone = true, SubwayOctopus = true, ThreeTailEmperor = true }
+	local ids = boss3Ids()
+	check(#ids == 30, ("в коллекции босса 3 %d существ"):format(#ids))
+	local problems = {}
+	for _, id in ids do
+		local part = ItemFactory.Create(id)
+		local blocks, motors = 0, 0
+		for _, d in part:GetDescendants() do
+			if d:IsA("BasePart") then
+				blocks += 1
+			elseif d:IsA("Motor6D") then
+				motors += 1
+			end
+		end
+		if blocks < 8 or blocks > 40 then
+			table.insert(problems, ("%s: блоков %d"):format(id, blocks))
+		end
+		if part:GetAttribute("Creature") ~= true or motors < 2 then
+			table.insert(problems, ("%s: не существо на суставах (моторов %d)"):format(id, motors))
+		end
+		if (part:FindFirstChild("Stand") ~= nil) ~= (KEEP[id] == true) then
+			table.insert(problems, id .. ": подставка " .. (if KEEP[id] then "скрыта" else "видна"))
+		end
+		if id == "RunawayTicket" and part:FindFirstChild("Grabber") then
+			table.insert(problems, "RunawayTicket: турникет не скрыт с подставкой")
+		end
+		part:Destroy()
+	end
+	check(#problems == 0, table.concat(problems, "; "))
+end)
+
+test("Босс 3: у короля 4 существа на подушках, «Поймать», редкости 70/25/5, бродят не дальше подушки", function()
+	BossLootService.Handlers.Refresh()
+	local arena = MapLayout.Arenas[3]
+	local radius = CreatureMotion.WanderRadius(3)
+	local now = workspace:GetServerTimeNow()
+	for slot = 1, 4 do
+		local uid, part = BossLootService.SlotItem(3, slot)
+		check(uid and part, ("слот %d пуст"):format(slot))
+		local p = part :: BasePart
+		local def = Items[p:GetAttribute("ItemId") :: string]
+		check(def and def.boss == 3 and not def.legacy, ("слот %d: не существо босса 3"):format(slot))
+		check(p:GetAttribute("Creature") == true, ("слот %d: не живое существо"):format(slot))
+		local drop = p:GetAttribute("Drop")
+		check(drop == arena.top, ("слот %d: высота места %s"):format(slot, tostring(drop)))
+		local home = p:GetAttribute("Home")
+		check(typeof(home) == "CFrame", ("слот %d: нет места Home"):format(slot))
+		local prompt = p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+		check(prompt and prompt.ActionText == "Поймать", ("слот %d: нет подсказки «Поймать»"):format(slot))
+		-- та же функция движения, что у клиентов и у броска: центр не уходит с подушки 3.7 × 3.7 (половина — 1.85)
+		local params = {
+			seed = CreatureMotion.SeedOf(uid :: string),
+			radius = radius,
+			scale = CreatureMotion.ScaleOf(def.size),
+			mode = "Wander",
+			drop = arena.top,
+		}
+		local farthest = 0
+		for k = 0, 600 do
+			local pose = CreatureMotion.Pose(params, now + k * 0.37)
+			farthest = math.max(farthest, Vector3.new(pose.offset.X, 0, pose.offset.Z).Magnitude)
+		end
+		check(farthest <= math.min(radius + 0.01, 1.85), ("слот %d: ушёл на %.2f ст. от места"):format(slot, farthest))
+	end
+	local rng = Random.new(3)
+	local counts: { [string]: number } = {}
+	local n = 6000
+	for _ = 1, n do
+		local rarity = BossLootService.RollRarity(3, rng)
+		counts[rarity] = (counts[rarity] or 0) + 1
+	end
+	for rarity, chance in BossLootService.Chances(3) do
+		local share = 100 * (counts[rarity] or 0) / n
+		check(math.abs(share - chance) <= 2, ("%s: %.1f %% (ждали %s %%)"):format(rarity, share, tostring(chance)))
+		local itemId = BossLootService.ChooseItem(3, rarity, rng)
+		if chance > 0 then
+			check(itemId and Items[itemId].boss == 3 and Items[itemId].rarity == rarity, rarity .. ": нет существа")
+		end
+	end
+end)
+
+test("Босс 3: Ловибум ур. 3 → поимка → бой с королём (равная сила) → постамент → доход → вход", function(A, _B, ctx)
+	local shifted = ensureDay()
+	check(waitBossHome(3), "король не дома")
+	BossLootService.Handlers.Refresh()
+	local uid = BossLootService.SlotItem(3, 1) :: string
+	local itemId = ItemRegistry.Get(uid).itemId
+	-- Ловибум другого уровня у короля не работает
+	giveLovibums(A, 1, "Mega", 1)
+	check(not beginCatch(A, 3, 1), "поимка у короля с Ловибумом уровня 1")
+	check(A:WasNotified("уровня 3"), "нет подсказки про Ловибум уровня 3")
+	check(stockOf(A, 1, "Mega") == 1, "Ловибум уровня 1 списан")
+	DataService.AddStrength(A, GameConfig.Progression.Bosses[3])
+	giveLovibums(A, 3, "Boom", 2)
+	CatchService.Handlers.SetRoll(0)
+	check(beginCatch(A, 3, 1), "поимка не началась: " .. table.concat(A:Notices(), "; "))
+	throw(A, "Boom", true)
+	local fight
+	local fought = waitUntil(function()
+		fight = BattleService.Handlers.FightOf(A)
+		return fight ~= nil
+	end, CG.FlightTime + CG.CaptureTime + 3)
+	CatchService.Handlers.SetRoll(nil)
+	check(fought, "бой с королём не начался после поимки")
+	check(stockOf(A, 3, "Boom") == 1, "Ловибум ур. 3 не списан")
+	check(fight.zone == 3, "бой не с королём")
+	check(fightTo(fight, 90) and fight.result == "win", "при равной силе не победили: " .. tostring(fight.result))
+	check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
+	local part = (ItemRegistry.Get(uid) :: any).part
+	check(part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil, "в руках — атрибуты босса")
+	check(BossLootService.SlotItem(3, 1) == nil, "слот не опустел до рассвета")
+	-- доставка: в серверной симуляции — переносом; путь ногами и время — проверка в Play
+	local plotA = plotOf(A)
+	near(A, plotA.showcases[1])
+	MuseumService.Handlers.Display(A, plotA, 1)
+	local entry = ItemRegistry.Get(uid)
+	check(entry.state == "Displayed" and entry.slot == 1, "существо не выставлено")
+	check(entry.part:GetAttribute("Creature") == true and entry.part:GetAttribute("Slot") == 1, "экспонат не существо")
+	local record = DataService.GetData(A).items[uid]
+	check(record and record.id == itemId and record.boss == 3 and record.source == "boss", "запись в профиле неполная")
+	local coins = DataService.GetData(A).coins
+	IncomeService.Handlers.Tick({ A })
+	check(DataService.GetData(A).coins == coins + Items[itemId].income, "доход существа не начислен")
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл снова")
+	entry = ItemRegistry.Get(uid)
+	check(entry and entry.state == "Displayed" and entry.slot == 1 and entry.itemId == itemId, "не восстановлено")
+	check(countUid(uid) == 1, "дубли существа после входа")
+	check(entry.part:GetAttribute("Creature") == true, "после входа экспонат собран не существом")
+	coins = DataService.GetData(again).coins
+	IncomeService.Handlers.Tick({ again })
+	check(DataService.GetData(again).coins == coins + Items[itemId].income, "после входа доход не идёт")
+	check(waitBossHome(3), "король не вернулся домой")
+	if shifted then
+		TimeService.ResetClock()
+	end
+end)
+
+test("Босс 3: поражение от короля (сила 0) — существо на месте, Ловибум не вернули, можно ловить снова", function(A)
+	local shifted = ensureDay()
+	check(waitBossHome(3), "король не дома")
+	BossLootService.Handlers.Refresh()
+	local uid = BossLootService.SlotItem(3, 2) :: string
+	giveLovibums(A, 3, "Turbo", 1)
+	CatchService.Handlers.SetRoll(0)
+	check(beginCatch(A, 3, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
+	throw(A, "Turbo", true)
+	local fight
+	local fought = waitUntil(function()
+		fight = BattleService.Handlers.FightOf(A)
+		return fight ~= nil
+	end, CG.FlightTime + CG.CaptureTime + 3)
+	CatchService.Handlers.SetRoll(nil)
+	check(fought, "бой не начался")
+	check(fightTo(fight, 60) and fight.result == "lose", "при силе 0 короля победили: " .. tostring(fight.result))
+	local part = (ItemRegistry.Get(uid) :: any).part
+	check(BossLootService.SlotItem(3, 2) == uid and part:GetAttribute("CatchMode") == nil, "существо не на месте")
+	check(ItemRegistry.GetCarriedBy(A) == nil, "проигравшему отдали существо")
+	check(stockOf(A, 3, "Turbo") == 0, "Ловибум вернули после поражения")
+	check(waitBossHome(3), "король не вернулся домой")
+	giveLovibums(A, 3, "Boom", 1)
+	-- поражение — только отброс (не нокаут), повтор без таймеров (D37): паузы, как после неудачной мини-игры, нет
+	check(beginCatch(A, 3, 2), "после поражения нельзя ловить снова: " .. table.concat(A:Notices(), "; "))
+	CatchService.Handlers.Action(A, "Leave")
+	check(waitCatchEnd(A, 3), "«Уйти» не закончило поимку")
+	if shifted then
+		TimeService.ResetClock()
+	end
+end)
+
 local function setMuseumLevel(player: any, level: number)
 	DataService.GetData(player).museumLevel = level
 	PlotService.ShowLevel(plotOf(player), level)
