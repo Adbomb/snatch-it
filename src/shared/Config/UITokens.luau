@@ -446,6 +446,7 @@ UITokens.Shop = {
 	CardTop = { Boom = "amber", Turbo = "cyan", Mega = "violet" }, -- градиент полоски карточки (UI.StudPanel)
 	KindColor = { Boom = Color3.fromHex("FFC21A"), Turbo = Color3.fromHex("5AC8FF"), Mega = Color3.fromHex("C482FF") },
 	Presets = { 1, 5, 10 },
+	BuyWait = 1.5, -- секунд: после «Купить» ждём ответа сервера, повторное нажатие не шлём
 }
 
 -- Мини-игра поимки «Ловибум» (D55, от первого лица): кольца вокруг существа, 3D-Ловибум внизу по центру (берут и

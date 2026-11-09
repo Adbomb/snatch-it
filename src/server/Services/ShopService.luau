@@ -1,11 +1,15 @@
 -- Магазин Ловибумов (D55): покупка за монеты — уровень босса 1–10, вид, количество. Все аргументы от клиента
 -- проверяет Shared/CatchRules.CheckBuy (целые без NaN, уровень, вид, 1…MaxBuy, запас ≤ MaxStock, хватает монет); монеты
 -- и запас меняются в одном кадре (DataService.BuyLovibums). Отказ: обучение не пройдено (кнопки «Магазин» у ученика нет,
--- D55), идёт поимка (CatchService). ЦЕНЫ НЕ УТВЕРЖДЕНЫ: в опубликованной игре магазин не продаёт; в Studio + DevMode —
--- тестовые цены (Config/Catch.TestPrices). Владельцу — LovibumsChanged: запас, монеты, цены, открыт ли магазин.
+-- D55), идёт поимка (CatchService). Цены — Config/Catch.Prices (утверждены для боссов 1–3); в Studio + DevMode ещё и
+-- предварительные 4–10 (PreliminaryPrices), в опубликованной игре они не продаются. Повторная покупка раньше
+-- Catch.BuyGap после принятой не принимается (двойное нажатие — одна покупка), поток запросов режет RateLimits.Shop;
+-- каждая принятая покупка списывает ровно свой итог. Владельцу — LovibumsChanged: запас, монеты, действующие цены,
+-- открыт ли магазин.
 -- Зависит от DataService, Shared/CatchRules, Shared/TutorialRules, Remotes, Config/GameConfig, Util/RateLimiter,
 -- Util/Notify, Util/Log.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -22,18 +26,19 @@ local RateLimiter = require(Server.Util.RateLimiter)
 
 local Catch = GameConfig.Catch
 local limiter = RateLimiter.new(GameConfig.RateLimits.Shop)
+local lastBuy: { [any]: number } = {} -- игрок → время последней принятой покупки
 
 local ShopService = {}
 
 -- Идёт ли у игрока поимка (задаёт CatchService): во время поимки магазин закрыт.
 ShopService.IsCatching = nil :: ((player: any) -> boolean)?
 
--- Тестовые цены — только в Studio с DevMode (проверка покупки до утверждения цен владельцем).
+-- Предварительные цены (боссы без утверждённой цены) — только в Studio с DevMode (проверка магазина).
 local function testMode(): boolean
 	return RunService:IsStudio() and GameConfig.DevMode
 end
 
-function ShopService.Prices(): { [number]: { [string]: number } }?
+function ShopService.Prices(): { [number]: { [string]: number } }
 	return CatchRules.Prices(testMode())
 end
 
@@ -65,7 +70,6 @@ function ShopService.Sync(player: any)
 		coins = data.coins,
 		prices = ShopService.Prices(),
 		open = TutorialRules.ShopAllowed(data),
-		test = Catch.Prices == nil and testMode(),
 	})
 end
 
@@ -93,17 +97,30 @@ local function tryAction(player: any, action: any, level: any, kind: any, count:
 		Notify.Send(player, "Во время поимки магазин закрыт", "Stop")
 		return
 	end
+	if os.clock() - (lastBuy[player] or -math.huge) < Catch.BuyGap then
+		ShopService.Sync(player) -- повтор той же покупки (двойное нажатие): не принимается
+		return
+	end
 	local total, reason = CatchRules.CheckBuy(ShopService.Prices(), level, kind, count, data.coins, data.lovibums)
 	if not total then
 		Notify.Send(player, reason or "Покупка не прошла", "Stop")
 		ShopService.Sync(player)
 		return
 	end
-	if not DataService.BuyLovibums(player, level, kind, count, CatchRules.Price(ShopService.Prices(), level, kind) :: number) then
+	if
+		not DataService.BuyLovibums(
+			player,
+			level,
+			kind,
+			count,
+			CatchRules.Price(ShopService.Prices(), level, kind) :: number
+		)
+	then
 		Notify.Send(player, "Покупка не прошла", "Stop")
 		ShopService.Sync(player)
 		return
 	end
+	lastBuy[player] = os.clock()
 	player:SetAttribute("Coins", data.coins)
 	DataService.RequestSave(player)
 	Log.Debug(
@@ -116,6 +133,9 @@ end
 
 function ShopService.Init()
 	Remotes.Get(Remotes.Names.ShopAction).OnServerEvent:Connect(tryAction)
+	Players.PlayerRemoving:Connect(function(player)
+		lastBuy[player] = nil
+	end)
 end
 
 -- Для серверных тестов.

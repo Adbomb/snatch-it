@@ -3,7 +3,8 @@
 -- (World/LovibumModel), бонус к шансу, запас, цена, количество (−, число, +; касание числа: 1 → 5 → 10) и «Купить».
 -- Покупку проверяет и проводит сервер (ShopAction → ShopService); окно только показывает его ответ (LovibumsChanged).
 -- Кнопки «Магазин» нет, пока не пройдено обучение; во время поимки (атрибут Catching) окно не открывается и
--- закрывается. Цены не утверждены владельцем: без цен — «Скоро», в Studio — тестовые с пометкой.
+-- закрывается. Цены боссов 1–3 утверждены (Config/Catch.Prices); уровень без утверждённой цены — «Скоро», в Studio
+-- + DevMode — предварительная цена с пометкой «предварительно» в подвале.
 -- Адаптивно, как «Инвентарь»: размер окна — по экрану (ниже кнопок Roblox), на телефоне масштаб не меньше PhoneScale,
 -- кнопки на касание не ниже MinTouch px; в Studio экран подменяют атрибуты игрока DevViewport и DevTouch. Низкое или
 -- узкое окно (телефон) — компактная раскладка «уровень → вид → количество»: три карточки-выбора вида (превью, запас,
@@ -57,7 +58,8 @@ type Card = {
 	distance: number,
 }
 
-local state: any = { lovibums = {}, coins = 0, prices = nil, open = false, test = false }
+local state: any = { lovibums = {}, coins = 0, prices = nil, open = false }
+local waitingUntil = 0 -- после «Купить» — ждём ответа сервера (LovibumsChanged), повторное нажатие не шлём
 local level = 1
 local qty: { [string]: number } = { Boom = 1, Turbo = 1, Mega = 1 }
 local profile: Profile
@@ -229,6 +231,10 @@ local function buyRow(parent: Instance, kindOf: () -> string, x: number, rowY: n
 			Motion.Shake(buy)
 			return
 		end
+		if os.clock() < waitingUntil then
+			return -- прошлая покупка ещё не подтверждена сервером
+		end
+		waitingUntil = os.clock() + T.BuyWait
 		send("Buy", level, kind, qty[kind])
 	end)
 	return qtyText, buy
@@ -446,7 +452,7 @@ local function priceLine(kind: string, qtyLabel: TextLabel, buy: GuiButton, head
 	if not price then
 		UI.SetButtonText(buy, "Скоро")
 		UI.SetDisabled(buy, true)
-		return "Цена: пока не утверждена"
+		return "Цена: скоро"
 	end
 	local total = price * n
 	local afford = state.coins >= total
@@ -489,7 +495,7 @@ render = function()
 			c.price.Text = priceLine(kind, c.qty, c.buy)
 		else
 			local price = priceOf(level, kind)
-			c.price.Text = if price then "Цена: " .. money(price) else "Цена: не утверждена"
+			c.price.Text = if price then "Цена: " .. money(price) else "Цена: скоро"
 		end
 		if c.select then
 			c.select.Visible = kind == selected
@@ -508,12 +514,17 @@ render = function()
 		)
 	end
 	local coins = ('У вас: <font color="#60E87A">%s</font>'):format(money(state.coins or 0))
-	local note = if not state.prices
-		then "   ·   Продажа начнётся, когда будут утверждены цены"
-		elseif state.test then '   ·   <font color="#FFD23F">' .. (if bar
-			then "тест. цены"
-			else "тестовые цены (Studio)") .. "</font>"
-		else ""
+	-- уровень без утверждённой цены: в игре — «скоро», в Studio — предварительная цена с пометкой
+	local approved = Catch.Prices and Catch.Prices[level] ~= nil
+	local sold = priceOf(level, "Boom") ~= nil
+	local note = if approved
+		then ""
+		elseif sold then '   ·   <font color="#FFD23F">' .. (if bar
+			then "предв. цены"
+			else "предварительные цены (Studio)") .. "</font>"
+		else (if bar
+			then "   ·   скоро"
+			else "   ·   Ловибумы этого уровня — скоро")
 	footer.Text = if bar then coins .. "   ·   " .. levelText .. note else coins .. note
 end
 
@@ -560,6 +571,7 @@ function ShopController.Init()
 			return
 		end
 		state = payload
+		waitingUntil = 0 -- сервер ответил
 		updateHud()
 		if isOpen() then
 			if not state.open then

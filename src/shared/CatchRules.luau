@@ -43,12 +43,21 @@ end
 
 -- ── Магазин ──────────────────────────────────────────────────────────────────────────────────────────────────
 
--- Действующие цены: утверждённые; в тестовом режиме (Studio + DevMode) без утверждённых — тестовые. nil — не продаётся.
-function CatchRules.Prices(testMode: boolean): { [number]: { [string]: number } }?
-	if Catch.Prices then
-		return Catch.Prices
+-- Действующие цены (уровень → вид → монеты): утверждённые (Config/Catch.Prices); в тестовом режиме (Studio + DevMode)
+-- к ним — предварительные (PreliminaryPrices) уровней без утверждённой цены. Уровня нет — не продаётся.
+function CatchRules.Prices(testMode: boolean): { [number]: { [string]: number } }
+	local out = {}
+	for level = 1, Catch.Levels do
+		local final = if Catch.Prices then Catch.Prices[level] else nil
+		local preliminary = if testMode and Catch.PreliminaryPrices then Catch.PreliminaryPrices[level] else nil
+		out[level] = final or preliminary
 	end
-	return if testMode then Catch.TestPrices else nil
+	return out
+end
+
+-- Цена уровня ещё не утверждена владельцем (продаётся только в Studio + DevMode с пометкой).
+function CatchRules.IsPreliminary(level: number): boolean
+	return not (Catch.Prices and Catch.Prices[level])
 end
 
 -- Цена одного Ловибума вида kind уровня level или nil.

@@ -2762,7 +2762,7 @@ test("D55 магазин: покупка и все отказы (уровень,
 	data.coins = 1e6
 	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 3)
 	local price = CatchRules.Price(ShopService.Prices(), 1, "Boom")
-	check(price, "в Studio нет тестовых цен")
+	check(price, "нет цены босса 1")
 	check(stockOf(A, 1, "Boom") == 3 and data.coins == 1e6 - 3 * (price :: number), "покупка не прошла")
 	local before = data.coins
 	for _, bad in {
@@ -2800,6 +2800,48 @@ test("D55 магазин: покупка и все отказы (уровень,
 	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
 	ShopService.IsCatching = saveIsCatching
 	check(stockOf(A, 1, "Boom") == 3 and A:WasNotified("поимки"), "во время поимки магазин продал")
+end)
+
+test("D55 цены: утверждённые 1–3, покупка списывает итог и выдаёт, повторы режутся, запас и монеты сохраняются", function(A, _B, ctx)
+	-- цены: боссы 1–3 — утверждённые (как в опубликованной игре), 4–10 — только в Studio (предварительные)
+	local live = CatchRules.Prices(false)
+	check(live[1] and live[1].Boom == 1000 and live[2].Turbo == 20000 and live[3].Mega == 90000, "утверждённые цены 1–3")
+	check(live[4] == nil and ShopService.Prices()[4] ~= nil, "босс 4 — только в Studio")
+	-- покупка настоящим обработчиком: 3 Турбо босса 2 — минус ровно 60K, плюс 3 в запас
+	local data = DataService.GetData(A)
+	task.wait(1.1) -- лимит запросов прошлых тестов
+	data.coins = 100000
+	ShopService.Handlers.Action(A, "Buy", 2, "Turbo", 3)
+	check(
+		data.coins == 40000 and stockOf(A, 2, "Turbo") == 3,
+		("3 Турбо ур. 2: монет %d, запас %d"):format(data.coins, stockOf(A, 2, "Turbo"))
+	)
+	check(A:GetAttribute("Coins") == 40000, "атрибут Coins не обновился")
+	check(A:WasNotified("Куплено"), "нет уведомления о покупке")
+	-- повторные запросы подряд (двойное нажатие, подделка в цикле): принимается одна покупка (Catch.BuyGap)
+	task.wait(1.1)
+	data.coins = 1e6
+	local before = stockOf(A, 1, "Boom")
+	for _ = 1, 20 do
+		ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	end
+	local bought = stockOf(A, 1, "Boom") - before
+	check(bought == 1, ("из 20 запросов подряд принято %d (ждали 1)"):format(bought))
+	check(data.coins == 1e6 - bought * 1000, ("монеты не сходятся: %d за %d шт."):format(data.coins, bought))
+	-- после паузы — снова можно
+	task.wait(GameConfig.Catch.BuyGap + 0.3)
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	check(stockOf(A, 1, "Boom") - before == 2, "после паузы покупка не прошла")
+	-- выход и вход: запас и монеты — из профиля
+	local coins, turbo, boom = data.coins, stockOf(A, 2, "Turbo"), stockOf(A, 1, "Boom")
+	local userId = A.UserId
+	leave(A)
+	local again = TestPlayer.new("Тест_A_снова")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "A не вошёл снова")
+	check(stockOf(again, 2, "Turbo") == turbo and stockOf(again, 1, "Boom") == boom, "купленные Ловибумы не сохранились")
+	check(DataService.GetData(again).coins == coins, "монеты после покупок не сохранились")
 end)
 
 test("D55 поимка: три неудачи — побег, босс свободен для второго; у первого пауза 10 с только у этого босса", function(A, B)

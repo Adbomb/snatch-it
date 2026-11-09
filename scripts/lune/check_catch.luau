@@ -66,15 +66,51 @@ check(
 
 -- ── Покупка ───────────────────────────────────────────────────────────────────────────────────────────────
 section("покупка")
-local prices = CatchRules.Prices(true)
-check(Catch.Prices == nil, "цены не утверждены — Prices пусто")
-check(CatchRules.Prices(false) == nil, "без тестового режима не продаётся")
-check(prices ~= nil and prices[1].Boom == 500 and prices[10].Mega == 150000000, "тестовые цены")
+-- цены утверждены владельцем 2026-11-09 для боссов 1–3; 4–10 — предварительные (только Studio + DevMode)
+local APPROVED = { [1] = 1000, [2] = 10000, [3] = 30000 }
+local PRELIMINARY = { [4] = 2e5, [5] = 1e6, [6] = 4e6, [7] = 12e6, [8] = 60e6, [9] = 300e6, [10] = 1e9 }
+for level, boom in APPROVED do
+	local p = Catch.Prices[level]
+	check(
+		p ~= nil and p.Boom == boom and p.Turbo == 2 * boom and p.Mega == 3 * boom,
+		("утверждённая цена босса %d"):format(level)
+	)
+end
+for level = 4, 10 do
+	check(Catch.Prices[level] == nil, ("босс %d не в утверждённых"):format(level))
+	local p = Catch.PreliminaryPrices[level]
+	check(
+		p ~= nil and p.Boom == PRELIMINARY[level] and p.Turbo == 2 * p.Boom and p.Mega == 3 * p.Boom,
+		("предварительная цена босса %d"):format(level)
+	)
+end
+check(
+	Catch.Bonus.Boom == 1 and Catch.Bonus.Turbo == 1.5 and Catch.Bonus.Mega == 2,
+	"бонусы к шансу ×1 / ×1.5 / ×2 не менялись"
+)
+local live = CatchRules.Prices(false) -- опубликованная игра
+local studio = CatchRules.Prices(true) -- Studio + DevMode
+local last = 0
+for level = 1, 10 do
+	local boom = (studio[level] or {}).Boom or 0
+	check(boom > last, ("цена растёт с уровнем: босс %d"):format(level))
+	last = boom
+	check(
+		(live[level] ~= nil) == (level <= 3),
+		("в игре продаётся только 1–3: босс %d"):format(level)
+	)
+	check(
+		CatchRules.IsPreliminary(level) == (level > 3),
+		("предварительная — только 4–10: босс %d"):format(level)
+	)
+end
+local prices = studio
 local function buy(level, kind, count, coins, lov)
 	return CatchRules.CheckBuy(prices, level, kind, count, coins or 1e12, lov or {})
 end
-check(buy(1, "Boom", 1) == 500, "1 Бум ур. 1 = 500")
-check(buy(3, "Mega", 10) == 300000, "10 Мега ур. 3")
+check(buy(1, "Boom", 1) == 1000, "1 Бум ур. 1 = 1K")
+check(buy(2, "Turbo", 3) == 60000, "3 Турбо ур. 2 = 60K")
+check(buy(3, "Mega", 10) == 900000, "10 Мега ур. 3 = 900K")
 for _, bad in { 0, 11, 1.5, -1, 0 / 0, math.huge, "1", nil } do
 	check(buy(bad, "Boom", 1) == nil, "уровень " .. tostring(bad))
 end
@@ -84,12 +120,21 @@ end
 for _, bad in { 0, -1, 2.5, 100, 0 / 0, math.huge, "5", nil } do
 	check(buy(1, "Boom", bad) == nil, "количество " .. tostring(bad))
 end
-check(buy(1, "Boom", 99) == 49500, "99 за раз можно")
+check(buy(1, "Boom", 99) == 99000, "99 за раз можно")
 local total, reason = buy(10, "Mega", 99, 1e9)
 check(total == nil and reason == "Не хватает монет", "мало монет")
 check(buy(1, "Boom", 5, 0 / 0) == nil, "монеты NaN")
+check(
+	buy(1, "Boom", 1, 999) == nil and buy(1, "Boom", 1, 1000) == 1000,
+	"ровно на цену — можно, на 1 меньше — нет"
+)
 check(buy(1, "Boom", 2, 1e12, { L1 = { Boom = 9998 } }) == nil, "запас сверх 9999")
-check(buy(1, "Boom", 1, 1e12, { L1 = { Boom = 9998 } }) == 500, "до 9999 можно")
+check(buy(1, "Boom", 1, 1e12, { L1 = { Boom = 9998 } }) == 1000, "до 9999 можно")
+local liveTotal, liveReason = CatchRules.CheckBuy(live, 4, "Boom", 1, 1e12, {})
+check(
+	liveTotal == nil and liveReason == "Ловибумы пока не продаются",
+	"в игре босс 4 не продаётся"
+)
 check(CatchRules.CheckBuy(nil, 1, "Boom", 1, 1e12, {}) == nil, "без цен не продаётся")
 
 section("запас в профиле")

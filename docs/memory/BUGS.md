@@ -259,6 +259,9 @@
   Win32_Process Create`, команда `powershell -NoProfile -ExecutionPolicy Bypass -File scripts
 ojo-serve.ps1`).
   Плагин: всплывающее «You synced project 'snatch-it'… Connect» → Connect → окно «Confirm sync» → Accept.
+- Проверка, что Rojo-сервер жив: `Invoke-WebRequest http://127.0.0.1:34872/api/rojo` (по `localhost` запрос висит до
+  таймаута — уходит в IPv6). Связь с Studio — пробный модуль в `src/shared` (появился в Studio → удалить файл; 2026-11-09
+  плагин подключился сам после запуска сторожа).
 - Terrain: `FillBlock(Air)` ровно по объёму помещения оставляет воду в пограничных вокселях (сетка 4 ст.): в
   хранилище D48 вода заходила на 0.6–1.6 ст. (участки 2–4, проверено ReadVoxels в Play 2026-11-06). Вырезать
   `FillRegion` по объёму, выровненному `ExpandToGrid(4)` (`WorldBuilder.BuildWater`).

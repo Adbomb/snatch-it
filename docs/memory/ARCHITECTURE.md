@@ -48,15 +48,18 @@
   Скрытые грани убираются только внутри своей части — при движении дыр нет.
   Проверка FBX против скелетов — `scripts/blender/check_rigs.py`; индекс для кода —
   `assets/models/art/Boss3Creatures.index.json` (`scripts/build_creature_index.py`); спецификация — `docs/BOSS3_CREATURES.md`.
-- Поимка D55, данные и правила (этап B): `Config/Catch` (через `GameConfig.Catch`: виды и бонусы, шансы, цены — `Prices` пусто,
-  пока владелец не утвердит, `TestPrices` только Studio + DevMode; мини-игра, блуждание, обучение), `Shared/CatchRules`
+- Поимка D55, данные и правила (этап B): `Config/Catch` (через `GameConfig.Catch`: виды и бонусы, шансы, цены — `Prices`
+  утверждены для боссов 1–3, `PreliminaryPrices` 4–10 — только Studio + DevMode; `CatchRules.Prices(testMode)` собирает
+  действующую таблицу 1…10, `IsPreliminary(level)`; мини-игра, блуждание, обучение), `Shared/CatchRules`
   (шанс, проверка покупки, запас `lovibums` = { L<уровень> → { вид → n } }, круг и попадание, автомат сессии, личная
   пауза), `Shared/CreatureMotion` (поза существа = функция общего времени и зерна uid: Wander / Catch / Flee / Calm;
   дискретные решения — хэш bit32, одинаков везде; FNV-1a зерна сверен с Python), `Shared/TutorialRules` (шаги
   Intro → Catch → Battle → Carry → Income → Done, миграция v3 → v4, защита стартового uid). Профиль schema 4:
   `lovibums`, `tutorial`; миграция в `DataService` после журнала передач и `Inventory.Normalize` (он теперь только
   повышает схему до 3); `DataService.BuyLovibums` / `SpendLovibum` / `Tutorial` / `SetTutorial` — без yield.
-  Lune: `check_catch` (338 593 проверки), `check_tutorial`; цены на согласование — `scripts/sim/lovibum_prices.py`.
+  Lune: `check_catch` (338 714 проверок), `check_tutorial`; расчёт цен и сверка конфига — `scripts/sim/lovibum_prices.py`
+  (`--check`). Магазин: повторная покупка раньше `Catch.BuyGap` (0.3 с) не принимается, клиент после «Купить» ждёт
+  ответа (`UITokens.Shop.BuyWait`).
 - Модель броска D55 (общая): `Shared/CatchThrow` — камера поимки `Frame(home, params, height)` (от места существа
   в начале мини-игры `CreatureMotion.CatchBase` к ловящему, расстояние по размеру, FOV 70), жест `{dx, dy, speed,
   length}` в долях высоты экрана — `Parse` (не бросок: short / slow / side / bad), `Aim` (точка на вертикальной
