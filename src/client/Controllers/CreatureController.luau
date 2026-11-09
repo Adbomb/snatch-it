@@ -3,6 +3,7 @@
 -- пишет атрибуты предмета — Home (место у босса, CFrame низа), Drop (высота места над землёй), CatchMode ("Catch" |
 -- "Flee" | "Hidden"), CatchSince, CatchFace, CatchAnchor. У босса клиент ставит корень предмета в позу (локально, у
 -- сервера он на месте); части существ из скелета (босс 3) — Transform моторов по ролям (Shared/CreatureAnim).
+-- Части, которые смотрят на игрока (стражи сейфа), поворачиваются к камере этого клиента.
 -- Экспонат на постаменте (атрибут Slot) — спокойно на месте: только суставы и лёгкое покачивание меша (D55: без
 -- перемещения, корень не трогается — презентация и сервер двигают его сами); в руках — «трепыхание». Дальние (дальше
 -- Catch.Creature.ViewRadius от камеры) не считаются, средние — через кадр. Пойманное (Hidden) спрятано до конца боя.
@@ -36,6 +37,7 @@ type Entry = {
 	visualC0: CFrame?,
 	hidden: boolean,
 	odd: boolean,
+	looks: boolean, -- есть части, которые поворачиваются к зрителю (стражи сейфа)
 }
 
 local tracked: { [BasePart]: Entry } = {}
@@ -69,8 +71,15 @@ local function track(root: BasePart)
 		visualC0 = nil,
 		hidden = false,
 		odd = seed % 2 == 1,
+		looks = false,
 	}
 	if entry.rig then
+		for _, spec in entry.rig.Parts do
+			local role = CreatureAnim.Roles[spec.role]
+			if role and role.kind == "look" and not spec.hidden then
+				entry.looks = true
+			end
+		end
 		for _, d in root:GetDescendants() do
 			if d:IsA("Motor6D") then
 				entry.motors[d.Name] = d
@@ -143,7 +152,13 @@ local function step()
 			mode = if root.Anchored and root:GetAttribute("Slot") ~= nil then "Calm" else "Held"
 		end
 		if entry.rig then
-			CreatureAnim.Transforms(entry.rig, entry.seed, now, mode, moving, dodge, entry.out)
+			-- к зрителю — в осях модели (скелет смотрит в +Z, корень — в −Z: поворот на 180°)
+			local view: Vector3? = nil
+			if entry.looks then
+				local l = root.CFrame:PointToObjectSpace(eye)
+				view = Vector3.new(-l.X, l.Y, -l.Z)
+			end
+			CreatureAnim.Transforms(entry.rig, entry.seed, now, mode, moving, dodge, entry.out, view)
 			for name, cf in entry.out do
 				local motor = entry.motors[name]
 				if motor then
