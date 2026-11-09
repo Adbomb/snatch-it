@@ -514,9 +514,12 @@ UITokens.Tutorial = {
 	-- плашку «Ты несёшь…» внизу; во время поимки панели нет
 	Left = 16,
 	Top = 8,
+	Gap = 8, -- от низа панели до столбика монет и силы, если его пришлось опустить (низкий экран телефона)
 	TitleText = 22,
 	BodyText = 22,
 	MinText = 14,
+	BodyTop = 34, -- текст шага: от верха панели (под заголовком)
+	BodyPad = Vector2.new(28, 6), -- поля текста: по ширине всего, снизу
 	Guide = Color3.fromHex("FFD23F"),
 	GuideWidth = 0.35,
 	GuideTransparency = 0.25,
