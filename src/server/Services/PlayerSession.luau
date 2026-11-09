@@ -75,6 +75,7 @@ function PlayerSession.Leave(player: Player)
 	local steps = {
 		{ "кража", TheftService.OnPlayerLeaving }, -- вор провалил, у ушедшего владельца — отменена (D46)
 		{ "защита", DefenseService.OnPlayerLeaving }, -- установленная защита убирается (не сохраняется, D37)
+		{ "обучение", TutorialService.OnPlayerLeaving }, -- учебные поимка, существо и пёс убираются (D55)
 		{ "руки", CarryService.OnPlayerRemoving },
 		{ "музей", MuseumService.UnloadMuseum },
 		{ "участок", PlotService.Release },

@@ -36,7 +36,8 @@ local stolenDelivery: ((player: Player, plot: PlotService.Plot) -> ())? = nil
 
 local InventoryService = {}
 
--- Можно ли убрать несомое в сундук (задаёт TutorialService, D55). Причина отказа или nil.
+-- Можно ли убрать предмет в инвентарь — несомое в сундук или экспонат с постамента (задаёт TutorialService, D55:
+-- учебное — только на постамент, поставленное — до первого дохода не снять). Причина отказа или nil.
 InventoryService.CanStore = nil :: ((player: any, uid: string) -> string?)?
 
 local PREVIEW_FOLDER = "ItemPreviews"
@@ -233,6 +234,12 @@ local function removeFromSlot(player: Player, plot: PlotService.Plot, slot: numb
 	local entry = uid and ItemRegistry.Get(uid)
 	if not data or not uid or not entry or entry.state ~= "Displayed" then
 		Notify.Send(player, "Постамент пуст", "Stop")
+		return false
+	end
+	local canStore = InventoryService.CanStore -- D55: стартовое до первого дохода остаётся на постаменте
+	local refusal = canStore and canStore(player, uid)
+	if refusal then
+		Notify.Send(player, refusal, "Stop")
 		return false
 	end
 	local record = data.items[uid]

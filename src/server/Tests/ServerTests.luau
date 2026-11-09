@@ -3336,6 +3336,197 @@ test("D55 обучение: новичок при силе 0 — поимка, �
 	check(CatchRules.Stock(DataService.Lovibums(S2), 1, "Boom") == 1, "после обучения магазин не открылся")
 end)
 
+test("D55 обучение: выход и вход на каждом шаге, ночь, чужой игрок, занятые руки — существо одно", function(_A, B, ctx)
+	local TG = GameConfig.Catch.Tutorial
+	local S = TestPlayer.new("Тест_ученик_1") -- свежий UserId: профиля ещё нет
+	local userId = S.UserId
+	local n = 1
+	local function enter(player: any): any
+		ctx.track(player)
+		check(PlayerSession.Join(player, { mock = true }), player.Name .. " не вошёл")
+		return player
+	end
+	local function rejoin(old: any): any
+		leave(old)
+		n += 1
+		local again = TestPlayer.new("Тест_ученик_" .. n)
+		again.UserId = userId
+		return enter(again)
+	end
+	local function step(player: any): string
+		return (DataService.Tutorial(player) :: any).step
+	end
+	-- учебных существ (ItemId) и псов ученика в мире
+	local function personalCount(): (number, number)
+		local creatures, dogs = 0, 0
+		for _, d in workspace:GetDescendants() do
+			if d:GetAttribute("TutorialOwner") == userId then
+				if d:GetAttribute("ItemId") ~= nil then
+					creatures += 1
+				elseif d:IsA("Model") then
+					dogs += 1
+				end
+			end
+		end
+		return creatures, dogs
+	end
+	local function toCreature(player: any)
+		local p = TutorialService.Handlers.Personal(player)
+		check(p and p.creature, player.Name .. ": нет учебного существа")
+		player:MoveTo(p.creature.Position + Vector3.new(0, 2, -5))
+	end
+	local function catchIt(player: any)
+		toCreature(player)
+		TutorialService.Handlers.StartCatch(player)
+		check(CatchService.IsCatching(player), player.Name .. ": учебная поимка не началась")
+		waitReady(player)
+		throw(player, "Boom", true)
+	end
+
+	-- Intro: выбор существа не меняется, существо одно
+	enter(S)
+	local t = DataService.Tutorial(S) :: any
+	local uid, itemId = t.uid, t.itemId
+	check(t.step == "Intro" and uid and itemId, "нет записи обучения")
+	S = rejoin(S)
+	t = DataService.Tutorial(S) :: any
+	check(t.step == "Intro" and t.uid == uid and t.itemId == itemId, "вход на Intro сменил шаг или существо")
+	check(personalCount() == 1, "учебных существ после входа на Intro: " .. personalCount())
+
+	-- Catch, посреди поимки: чужой не мешает, ночь не прерывает; выход — снова поимка, ничего не выдано
+	toCreature(S)
+	B:MoveTo(S.Character.PrimaryPart.Position + Vector3.new(3, 0, 0))
+	TutorialService.Handlers.Prompt(S, B) -- чужой нажал «Поймать» у учебного существа S
+	check(not CatchService.IsCatching(B) and not CatchService.IsCatching(S), "чужое нажатие начало учебную поимку")
+	TutorialService.Handlers.StartCatch(S)
+	check(CatchService.IsCatching(S), "учебная поимка не началась")
+	local session = (CatchService.Handlers.Active(S) :: any).session
+	local throwsBefore = session.throws
+	CatchService.Handlers.Action(B, "Leave") -- чужие запросы поимки — только к своей (у B её нет)
+	TutorialService.Handlers.Prompt(S, B)
+	check(CatchService.Handlers.Active(S) and session.throws == throwsBefore, "чужой изменил учебную поимку")
+	TimeService.SkipTo("Night", 0)
+	check(GameTime.IsNight(TimeService.Current().phase), "ночь не наступила")
+	check(CatchService.IsCatching(S), "ночь или чужой прервали учебную поимку")
+	TimeService.ResetClock()
+	waitReady(S)
+	throw(S, "Boom", false) -- промах: бесплатный
+	local catching = S
+	S = rejoin(S)
+	check(CatchService.Handlers.Active(catching) == nil, "поимка ушедшего не закончилась")
+	check(step(S) == "Catch", "вход посреди поимки: шаг " .. step(S))
+	check(ItemRegistry.Get(uid) == nil, "за прерванную поимку выдано существо")
+	check(personalCount() == 1, "учебных существ после входа посреди поимки: " .. personalCount())
+
+	-- Battle, посреди боя: выход — снова поимка, старый бой ничего не выдаёт
+	catchIt(S)
+	check(waitUntil(function()
+		local p = TutorialService.Handlers.Personal(S)
+		return p ~= nil and p.dog ~= nil and p.fighting
+	end, 20), "учебный бой не начался")
+	task.wait(TG.FightStep * 2)
+	local fighting = S
+	S = rejoin(S)
+	check(step(S) == "Catch", "вход посреди боя: шаг " .. step(S))
+	task.wait(TG.FightStep * 2) -- старый бой замечает уход
+	check(TutorialService.Handlers.Personal(fighting) == nil, "учебные объекты ушедшего остались")
+	check(ItemRegistry.Get(uid) == nil and DataService.GetData(S).items[uid] == nil, "прерванный бой выдал существо")
+	local creatures, dogs = personalCount()
+	check(creatures == 1 and dogs == 0, ("после входа посреди боя: существ %d, псов %d"):format(creatures, dogs))
+
+	-- занятые руки: поимка — отказ; подобранное за время боя при выдаче — на земле, не пропало
+	toCreature(S)
+	local other = carry(ctx, S)
+	TutorialService.Handlers.StartCatch(S)
+	check(not CatchService.IsCatching(S) and S:WasNotified("Руки заняты"), "учебная поимка с занятыми руками")
+	CarryService.Drop(S)
+	check(ItemRegistry.GetCarriedBy(S) == nil, "чужой предмет не бросился")
+	catchIt(S)
+	check(waitUntil(function()
+		return step(S) == "Battle"
+	end, 10), "бой не начался: " .. step(S))
+	task.wait(1.1) -- лимит подбора
+	CarryService.Handlers.Pickup(S, other)
+	check(ItemRegistry.GetCarriedBy(S) == other, "в бою не поднял предмет")
+	check(waitUntil(function()
+		return step(S) == "Carry"
+	end, 25), "учебный бой не закончился победой: " .. step(S))
+	check(ItemRegistry.GetCarriedBy(S) == uid, "учебное существо не в руках")
+	local otherEntry = ItemRegistry.Get(other)
+	check(otherEntry and otherEntry.state == "OnMap", "подобранное в бою пропало при выдаче существа")
+
+	-- Carry ночью в коридоре: существо при нём, не переносят; чужой не поднимет
+	local at = S.Character.PrimaryPart.Position
+	check(MapLayout.InDangerZone(at), "место обучения не в коридоре")
+	local day = GameTime.At(GameConfig.Time.Epoch)
+	local nightState = GameTime.At(GameConfig.Time.Epoch + GameConfig.Time.DayLength)
+	NightService.Handlers.Apply(nightState, day, { S })
+	check(ItemRegistry.GetCarriedBy(S) == uid, "ночь отняла учебное существо")
+	check(NightService.Handlers.Sweep({ S }) == 0, "ученика ночью вывели из коридора")
+	check((S.Character.PrimaryPart.Position - at).Magnitude < 0.01, "ученика ночью перенесли")
+	NightService.Handlers.Apply(TimeService.Current(), nil, {})
+	CarryService.Handlers.Pickup(B, uid)
+	check(ItemRegistry.GetCarriedBy(S) == uid, "чужой забрал учебное существо из рук")
+
+	-- гибель с существом в руках: на землю не падает (не подобрать чужим), после возрождения — снова в руках тот же uid
+	local humanoid = S.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+	humanoid.Health = 0
+	CarryService.Drop(S) -- как при Died (CarryService.watchCharacter)
+	check(S:WasNotified("после возрождения"), "нет сообщения о возврате существа")
+	task.wait() -- отложенная потеря
+	check(ItemRegistry.GetCarriedBy(S) == nil and ItemRegistry.Get(uid) == nil, "у погибшего существо в руках или на земле")
+	humanoid:Destroy() -- «возродился»: погибший Humanoid не оживает — новый, как у нового персонажа
+	local fresh = Instance.new("Humanoid")
+	fresh.RequiresNeck = false
+	fresh.Parent = S.Character
+	check(waitUntil(function()
+		return ItemRegistry.GetCarriedBy(S) == uid
+	end, 3), "после возрождения существо не в руках")
+	check(DataService.GetData(S).items[uid] == nil, "существо попало в профиль до постамента")
+
+	-- выход с существом в руках — снова в руках, тот же uid, второго нет
+	S = rejoin(S)
+	check(step(S) == "Carry" and ItemRegistry.GetCarriedBy(S) == uid, "вход на Carry: не в руках")
+	check(personalCount() == 0, "учебное существо на месте обучения осталось при Carry")
+
+	-- постамент в Судную ночь (экспонаты заперты): стартовое ставится
+	local plot = plotOf(S)
+	near(S, plot.showcases[1])
+	TimeService.SkipTo("DoomNight", -5)
+	check(GameTime.ExhibitLock(GameTime.Now()), "экспонаты не заперты")
+	MuseumService.Handlers.Display(S, plot, 1)
+	local data = DataService.GetData(S)
+	check(data.items[uid] and data.tutorial.step == "Income" and data.tutorial.placed, "в Судную ночь не поставилось")
+	-- до первого дохода стартовое не снять в инвентарь (днём, когда экспонаты не заперты)
+	TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
+	settle()
+	InventoryService.Handlers.StoreDisplayed(S, plot, 1)
+	check(ItemRegistry.Get(uid).state == "Displayed" and S:WasNotified("первого дохода"), "стартовое сняли до дохода")
+	TimeService.ResetClock()
+
+	-- Income: выход до первого дохода — экспонат на месте, в руки второй раз не выдаётся
+	S = rejoin(S)
+	data = DataService.GetData(S)
+	local entry = ItemRegistry.Get(uid)
+	check(step(S) == "Income" and data.items[uid], "вход на Income: шаг " .. step(S))
+	check(entry and entry.state == "Displayed" and entry.owner == userId, "после входа экспонат не на витрине")
+	check(ItemRegistry.GetCarriedBy(S) == nil, "после входа на Income существо снова в руках (дубль)")
+	IncomeService.Handlers.Tick({ S })
+	check(step(S) == "Done", "первый доход не завершил обучение")
+
+	-- Done: ничего не появляется, в профиле — один предмет
+	S = rejoin(S)
+	data = DataService.GetData(S)
+	local count = 0
+	for _ in data.items do
+		count += 1
+	end
+	check(step(S) == "Done" and S:GetAttribute("Tutorial") == nil, "вход после Done: обучение снова")
+	check(TutorialService.Handlers.Personal(S) == nil and personalCount() == 0, "после Done — учебные объекты")
+	check(count == 1 and data.items[uid] and ItemRegistry.Get(uid).state == "Displayed", "предметов в профиле: " .. count)
+	check(TutorialRules.IsProtected(data, uid), "у стартового нет защиты")
+end)
+
 local ServerTests = {}
 
 -- Прогоняет все тесты по очереди: свежие игроки A и B на каждый, после — выход и уборка. Отчёт строкой.

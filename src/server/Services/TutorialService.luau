@@ -4,18 +4,20 @@
 -- игроку нет); Carry — существо в руках: донести до музея и поставить на постамент (бросить, убрать в сундук нельзя;
 -- ночь не отнимает); Income — ждём первое начисление дохода; Done — пройдено. Учебные существо и пёс — личные: стоят на
 -- месте обучения в зоне 1 (MapLayout.Tutorial), их видит только ученик (атрибут TutorialOwner — остальные клиенты
--- прячут), другие игроки не могут с ними ничего сделать (сервер проверяет владельца). Существо выбирается один раз
--- (случайное Common босса 1) вместе с uid — запись обучения в профиле; повторный вход его не меняет: вышел с ним в
--- руках — при входе снова в руках (тот же uid). Выставление записывает предмет и «поставлено» в одной записи профиля
--- (MuseumService.OnDisplayed, без yield). Стартовое существо навсегда защищено от кражи (TheftService,
--- TutorialRules.IsProtected). Пока идёт обучение: атрибут игрока Tutorial (ShopService.Sync) — «Магазин» и «Защита»
--- закрыты, ночь, барьер, PvP и кражи на ученика не действуют (NightService, PvpService, TheftService, группа Student).
+-- прячут; существо и для сервера не твёрдое), другие игроки не могут с ними ничего сделать (сервер проверяет
+-- владельца). Поимка — с пустыми руками (как обычная); подобранное за время боя при выдаче кладётся на землю. Существо
+-- выбирается один раз (случайное Common босса 1) вместе с uid — запись обучения в профиле; повторный вход его не
+-- меняет: вышел с ним в руках — при входе снова в руках (тот же uid); вышел посреди поимки или боя — снова поимка
+-- (ничего не выдано). Выставление записывает предмет и «поставлено» в одной записи профиля (MuseumService.OnDisplayed,
+-- без yield); до первого дохода стартовое не снять в инвентарь. Стартовое существо навсегда защищено от кражи
+-- (TheftService, TutorialRules.IsProtected). Пока идёт обучение: атрибут игрока Tutorial (ShopService.Sync) —
+-- «Магазин» и «Защита» закрыты, ночь, барьер, PvP и кражи на ученика не действуют (NightService, PvpService,
+-- TheftService, группа Student).
 -- Зависит от BossService, CarryService, CatchService, DataService, IncomeService, InventoryService, ItemRegistry,
 -- MuseumService, NightService, ShopService, Shared/TutorialRules, Shared/CreatureMotion, Remotes, Config,
 -- Util/ItemFactory, Util/CharacterGroups, Util/Notify, Util/Log, World/MapLayout.
 
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -43,9 +45,7 @@ local Notify = require(Server.Util.Notify)
 local MapLayout = require(Server.World.MapLayout)
 
 local Tutorial = GameConfig.Catch.Tutorial
-local NEAR = 22 -- Intro → Catch: ученик подошёл к существу ближе
-local FIGHT_HITS = 5 -- ударов ученика до победы над учебным псом
-local FIGHT_STEP = 0.9 -- секунд между ударами
+local BUSY_HANDS = "Руки заняты — сначала бросьте предмет (G)"
 
 type Personal = {
 	creature: BasePart?,
@@ -137,6 +137,13 @@ end
 
 local startCatch: (any) -> ()
 
+-- «Поймать» у учебного существа owner нажал who: ловит только сам ученик.
+local function onPrompt(owner: any, who: any)
+	if who == owner then
+		startCatch(owner)
+	end
+end
+
 -- Личное учебное существо на месте обучения (видит только ученик).
 local function spawnCreature(player: any)
 	local p = stateOf(player)
@@ -147,6 +154,11 @@ local function spawnCreature(player: any)
 	local home = points()
 	local part = ItemFactory.Create(t.itemId)
 	part.Anchored = true
+	-- место обучения одно на всех: невидимое чужим существо не держит ни персонажей, ни лучи сервера (брошенный рядом
+	-- предмет не ляжет на него и не повиснет в воздухе)
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
 	part.CFrame = home * CFrame.new(0, part.Size.Y / 2, 0)
 	part:SetAttribute("ItemUid", t.uid) -- зерно движения (в реестре его нет до выдачи)
 	part:SetAttribute("Home", home)
@@ -162,9 +174,7 @@ local function spawnCreature(player: any)
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = part
 	prompt.Triggered:Connect(function(who)
-		if who == player then
-			startCatch(player)
-		end
+		onPrompt(player, who)
 	end)
 	p.creature = part
 end
@@ -181,10 +191,14 @@ local function startBattle(player: any)
 		return
 	end
 	p.fighting = true
+	-- ученик ушёл (его учебные объекты убраны, OnPlayerLeaving): бой дальше не идёт, ничего не выдаётся
+	local function gone(): boolean
+		return personal[player] ~= p or (typeof(player) == "Instance" and player.Parent == nil)
+	end
 	local _, dogHome = points()
 	if not p.dog then
 		local dog = BossService.BuildPersonal(1, dogHome, folder) -- ждёт загрузку мешей
-		if personal[player] ~= p or (typeof(player) == "Instance" and player.Parent == nil) then
+		if gone() then
 			dog.model:Destroy() -- ученик ушёл, пока строился пёс
 			p.fighting = false
 			return
@@ -199,15 +213,19 @@ local function startBattle(player: any)
 		for _, entry in { { "Wake", tl.Wake }, { "StandUp", tl.StandUp }, { "ToCombat", tl.ToCombat } } do
 			BossService.SetState(dog, entry[1])
 			task.wait(entry[2])
-		end
-		BossService.SetState(dog, "Combat")
-		Notify.Send(player, "Учебный бой: стойте рядом — удары идут сами", "Go")
-		for i = 1, FIGHT_HITS do
-			if player.Parent == nil and typeof(player) == "Instance" then
+			if gone() then
 				p.fighting = false
 				return
 			end
-			task.wait(FIGHT_STEP)
+		end
+		BossService.SetState(dog, "Combat")
+		Notify.Send(player, "Учебный бой: стойте рядом — удары идут сами", "Go")
+		for i = 1, Tutorial.FightHits do
+			task.wait(Tutorial.FightStep)
+			if gone() then
+				p.fighting = false
+				return
+			end
 			BossService.Hit(dog)
 			if i % 2 == 0 then
 				BossService.Attack(dog, "bite") -- пёс замахивается, но учебный бой урона не наносит
@@ -216,10 +234,12 @@ local function startBattle(player: any)
 		BossService.SetState(dog, "Defeat")
 		task.wait(tl.Defeat)
 		p.fighting = false
-		if personal[player] ~= p or (typeof(player) == "Instance" and player.Parent == nil) then
+		if gone() then
 			return -- ушёл посреди боя: при входе — снова поимка (ничего не выдано)
 		end
-		advance(player, "Carry")
+		if not advance(player, "Carry") then
+			return
+		end
 		giveCreature(player) -- погиб к концу боя — существо в руки при возрождении (цикл ниже)
 		push(player)
 		Notify.Send(
@@ -236,11 +256,14 @@ end
 -- Учебное существо — в руки ученику (тот же uid; в реестре — один раз). true — в руках.
 giveCreature = function(player: any): boolean
 	local t = DataService.Tutorial(player)
-	if not t or not t.uid or not t.itemId then
+	if not t or t.step ~= "Carry" or not t.uid or not t.itemId then
 		return false
 	end
 	if ItemRegistry.GetCarriedBy(player) == t.uid then
 		return true
+	end
+	if DataService.HasItem(player, t.uid) then
+		return false -- уже записан в профиль (поставлен) — второй раз не выдаётся
 	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -251,7 +274,11 @@ giveCreature = function(player: any): boolean
 		return false -- предмет уже где-то (выставлен) — не дублировать
 	end
 	if ItemRegistry.GetCarriedBy(player) then
-		CarryService.LoseCarried(player, "обучение: в руки — учебное существо")
+		-- подобрал чужое за время боя: кладём на землю перед ним (не уничтожаем); положить некуда — теряется (D3)
+		CarryService.Drop(player)
+		if ItemRegistry.GetCarriedBy(player) then
+			CarryService.LoseCarried(player, "обучение: в руки — учебное существо")
+		end
 	end
 	local part = ItemFactory.Create(t.itemId)
 	part.Anchored = true
@@ -287,6 +314,10 @@ startCatch = function(player: any)
 		t = DataService.Tutorial(player) :: any
 	end
 	if t.step ~= "Catch" then
+		return
+	end
+	if ItemRegistry.GetCarriedBy(player) then
+		Notify.Send(player, BUSY_HANDS, "Stop") -- как у обычной поимки: пойманное пойдёт в руки
 		return
 	end
 	local part = p.creature :: BasePart
@@ -339,8 +370,8 @@ local function setup(player: any)
 		DataService.RequestSave(player)
 	end
 	local resume = TutorialRules.ResumeStep(t.step)
-	if resume ~= t.step then
-		t.step = resume -- бой прерван выходом: ничего не выдано — снова поимка
+	if resume ~= t.step and DataService.SetTutorial(player, { step = resume }) then
+		DataService.RequestSave(player) -- бой прерван выходом: ничего не выдано — снова поимка
 	end
 	local p = stateOf(player)
 	if t.step == "Intro" or t.step == "Catch" then
@@ -360,9 +391,28 @@ function TutorialService.OnPlayerLoaded(player: any)
 	setup(player)
 end
 
--- Нельзя бросить, отдать или убрать в сундук учебное существо до постамента.
+-- Игрок выходит (PlayerSession.Leave): учебная поимка прервана, личные существо и пёс убраны, бой не досчитывается
+-- (шаг в профиле — какой был: Battle при входе снова Catch, Carry — снова в руках тем же uid).
+function TutorialService.OnPlayerLeaving(player: any)
+	local ok, err = pcall(CatchService.Abort, player, "Leave")
+	if not ok then
+		Log.Warn("TutorialService", "выход: поимка не прервалась: " .. tostring(err))
+	end
+	local p = personal[player]
+	if p then
+		removeCreature(p)
+		removeDog(p)
+		personal[player] = nil
+	end
+end
+
+-- Нельзя бросить, отдать или убрать в сундук учебное существо до постамента; поставленное — снять в инвентарь до
+-- первого дохода (обучение не встанет на Income).
 local function locked(player: any, uid: string): string?
 	local t = active(player) and DataService.Tutorial(player)
+	if t and t.uid == uid and t.step == "Income" then
+		return "Сначала дождитесь первого дохода с экспоната"
+	end
 	if t and t.uid == uid and t.step == "Carry" then
 		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if not humanoid or humanoid.Health <= 0 then
@@ -372,10 +422,37 @@ local function locked(player: any, uid: string): string?
 				player,
 				"обучение: ученик погиб — существо вернётся в руки"
 			)
+			return "Учебное существо вернётся к вам в руки после возрождения"
 		end
 		return "Учебное существо нужно поставить на постамент в музее"
 	end
 	return nil
+end
+
+-- Такт цикла обучения для одного ученика: Intro → Catch рядом с существом; Carry без существа в руках — снова в руки.
+local function watchStudent(player: any, p: Personal)
+	local t = DataService.Tutorial(player)
+	if not t or t.step == "Done" then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health <= 0 then
+		root = nil -- погибший — ждём возрождения
+	end
+	if
+		t.step == "Intro"
+		and p.creature
+		and root
+		and (root.Position - p.creature.Position).Magnitude < Tutorial.Near
+	then
+		advance(player, "Catch")
+	elseif t.step == "Carry" and root and ItemRegistry.GetCarriedBy(player) ~= t.uid then
+		if not ItemRegistry.Get(t.uid :: string) and giveCreature(player) then
+			push(player) -- погиб с существом в руках: снова в руках (тот же uid)
+		end
+	end
 end
 
 function TutorialService.Init(world: Instance)
@@ -422,42 +499,18 @@ function TutorialService.Init(world: Instance)
 	NightService.IsExempt = function(player: any): boolean
 		return player:GetAttribute("Tutorial") ~= nil
 	end
-	Players.PlayerRemoving:Connect(function(player)
-		local p = personal[player]
-		if p then
-			removeCreature(p)
-			removeDog(p)
-			personal[player] = nil
-		end
-	end)
-	-- Intro → Catch, когда ученик подошёл; возрождение с существом в руках
+	-- Intro → Catch, когда ученик подошёл; возрождение с существом в руках. Ошибка у одного ученика не останавливает
+	-- цикл для остальных.
 	task.spawn(function()
 		while true do
 			task.wait(0.5)
 			for player, p in personal do
-				local t = DataService.Tutorial(player)
-				if not t or t.step == "Done" then
-					continue
-				end
-				local character = player.Character
-				local root = character and character:FindFirstChild("HumanoidRootPart")
-				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-				if humanoid and humanoid.Health <= 0 then
-					root = nil -- погибший — ждём возрождения
-				end
-				if
-					t.step == "Intro"
-					and p.creature
-					and root
-					and (root.Position - p.creature.Position).Magnitude < NEAR
-				then
-					advance(player, "Catch")
-				elseif t.step == "Carry" and root and ItemRegistry.GetCarriedBy(player) ~= t.uid then
-					local entry = ItemRegistry.Get(t.uid :: string)
-					if not entry then
-						giveCreature(player) -- погиб с существом в руках: снова в руках (тот же uid)
-						push(player)
-					end
+				local ok, err = pcall(watchStudent, player, p)
+				if not ok then
+					Log.Warn(
+						"TutorialService",
+						("цикл обучения, %s: %s"):format(tostring(player.Name), tostring(err))
+					)
 				end
 			end
 		end
@@ -473,6 +526,13 @@ TutorialService.Handlers = {
 		startCatch(player)
 	end,
 	Setup = setup,
+	Prompt = onPrompt,
+	-- DevTools (Studio): запись обучения переписана — учебные объекты заново, шаг ученику (Done — панель скрыть)
+	Reset = function(player: any)
+		TutorialService.OnPlayerLeaving(player)
+		setup(player)
+		push(player)
+	end,
 }
 
 return TutorialService

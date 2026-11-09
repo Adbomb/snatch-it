@@ -370,7 +370,8 @@ function DevTools.Init()
 				end
 				data.tutorial = if step == "Done" then { step = "Done", migrated = true } else { step = step }
 				ShopService.Sync(player)
-				return step
+				require(Server.Services.TutorialService).Handlers.Reset(player) -- учебные существо и пёс, панель
+				return (DataService.Tutorial(player) :: any).step
 			end
 			return "неизвестная команда"
 		end)
