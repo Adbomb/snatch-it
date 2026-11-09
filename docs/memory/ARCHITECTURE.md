@@ -83,7 +83,17 @@
   хуки: `CarryService.CanDrop`, `InventoryService.CanStore`, `MuseumService.CanBypassLock` / `OnDisplayed`,
   `IncomeService.OnPaid`, `NightService.IsExempt`; группа столкновений Student проходит NightBarrier; PvP, защита и
   кражи — по атрибуту игрока Tutorial (`ShopService.Sync`); `TheftLedger` — флаги student и protected).
-  `Controllers/TutorialController` — панель задачи, Beam к цели, чужие учебные модели скрыты, кнопка «Защита» скрыта.
+  Выход — `TutorialService.OnPlayerLeaving` в шагах `PlayerSession.Leave` (прервать учебную поимку, убрать существо и
+  пса; бой проверяет `gone()` после каждой паузы и ничего не выдаёт). Поимка — с пустыми руками; выдача (`giveCreature`)
+  только на шаге Carry и без записи предмета в профиле, подобранное чужое кладёт на землю (`CarryService.Drop`).
+  `CanStore` проверяют и сундук, и «снять с постамента» (`InventoryService.removeFromSlot`): стартовое на Income не
+  снять. Цикл 0.5 с — `watchStudent` под pcall. Учебное существо на сервере CanCollide/CanQuery/CanTouch = false.
+  Тестам и DevTools — `Handlers.Prompt(owner, who)`, `Handlers.Reset` (команда `Tutorial <uid> <шаг>` пересобирает).
+  `Controllers/TutorialController` — панель задачи, Beam к цели (на экране поимки и после возрождения — заново), чужие
+  учебные модели скрыты и не твёрдые, кнопка «Защита» скрыта. Раскладка (`fitPanel`, `placeStats`): панель слева
+  сверху; если до капсулы таймера места меньше 460 px (узкий телефон, iPad) — уже и выше (текст не мельче MinText,
+  GetTextBoundsAsync + полстроки запаса); если столбик монет и силы (GymHud.Stats, 0.42 высоты) налез бы на панель
+  (телефон) — пока идёт обучение, он под панелью. В Studio экран подменяет атрибут игрока DevViewport.
 - Поимка D55 на сервере (этап E): `Services/CatchService` — «Поймать» (подсказка `BossLootService`, `OnTakeRequest`) →
   проверки начала, `BossLootService.Reserve` + `SetOpen(false)`, атрибуты корня CatchMode/Since/Face, камера поимки
   `CatchThrow.Frame` (в Active и CatchState); бросок (`CatchAction` "Throw", вид, жест, время отпускания):
