@@ -288,6 +288,102 @@ check(gl > 25 and gl < 50, ("страж поворачивается к игро
 CreatureAnim.Transforms(vault, 4242, 1700000000.3, "Wander", false, 0, out, Vector3.new(-5, 0, -1))
 gl = math.deg(math.atan2(out.GuardL.LookVector.X, out.GuardL.LookVector.Z) + math.pi) % 360
 check(gl > 360 - 40 and gl < 360 - 30, ("страж не дальше 35° (%.1f°)"):format(gl))
+print("· все 30: живые (суставы двигаются в каждом режиме) и ловятся (точный бросок попадает)")
+do
+	local CreatureMotion = Env.Require("ReplicatedStorage.Shared.CreatureMotion")
+	local CatchThrow = Env.Require("ReplicatedStorage.Shared.CatchThrow")
+	local CatchRules = Env.Require("ReplicatedStorage.Shared.CatchRules")
+	local Catch = Env.Require("ReplicatedStorage.Shared.Config.Catch")
+	local G = Catch.Game
+	local T0 = 1700000000
+	local summary = {}
+	for _, item in index.items do
+		local rig = CreatureRigs[item.id]
+		local def = Items[item.id]
+		-- сколько суставов поворачивается больше чем на 3° за 6 с (у босса стоя и на ходу, на постаменте, в руках)
+		local moving = {}
+		for _, case in { { "Wander", false }, { "Wander", true }, { "Calm", false }, { "Held", false } } do
+			local first, swing = {}, {}
+			local out = {}
+			for k = 0, 90 do
+				CreatureAnim.Transforms(rig, 777, T0 + k / 15, case[1], case[2], 0, out, Vector3.new(0, 0, 5))
+				for name, cf in out do
+					first[name] = first[name] or cf
+					local _, angle = (first[name]:Inverse() * cf):ToAxisAngle()
+					swing[name] = math.max(swing[name] or 0, math.deg(math.abs(angle)))
+				end
+			end
+			local n = 0
+			for _, a in swing do
+				if a > 3 then
+					n += 1
+				end
+			end
+			table.insert(moving, n)
+		end
+		-- каждая вращающаяся часть (пропеллер, лампы, колёса, часы) у босса действительно вращается
+		local spinOut, spinFirst, spinMax = {}, {}, {}
+		for k = 0, 60 do
+			CreatureAnim.Transforms(rig, 777, T0 + k / 20, "Wander", true, 0, spinOut)
+			for name, spec in rig.Parts do
+				local role = CreatureAnim.Roles[spec.role]
+				if role and role.kind == "spin" and not spec.hidden then
+					local cf = spinOut[name]
+					spinFirst[name] = spinFirst[name] or cf
+					local _, angle = (spinFirst[name]:Inverse() * cf):ToAxisAngle()
+					spinMax[name] = math.max(spinMax[name] or 0, math.deg(math.abs(angle)))
+				end
+			end
+		end
+		for name, a in spinMax do
+			check(a > 20, ("%s.%s: вращается (%.1f° за 3 с)"):format(item.id, name, a))
+		end
+		local joints = #rig.Order - 1
+		check(
+			moving[1] >= math.min(3, joints) and moving[2] >= math.min(3, joints) and moving[3] >= 2 and moving[4] >= 2,
+			("%s: живое — двигаются у босса %d/%d, на ходу %d, на постаменте %d, в руках %d"):format(
+				item.id,
+				moving[1],
+				joints,
+				moving[2],
+				moving[3],
+				moving[4]
+			)
+		)
+		table.insert(summary, ("%s %d/%d"):format(item.id, moving[1], joints))
+		-- бросок: камера поимки как у сервера (CatchService: место, размер, масштаб), жест точно в центр существа в
+		-- момент прилёта — попадание; центр существа в кадре камеры
+		local home = CFrame.new(0, 2, 0)
+		local params = {
+			seed = CreatureMotion.SeedOf("каждое-" .. item.id),
+			radius = CreatureMotion.WanderRadius(3),
+			scale = CreatureMotion.ScaleOf(def.size),
+			mode = "Catch",
+			since = T0,
+			face = 0.4,
+			drop = 2,
+		}
+		local cam, stage = CatchThrow.Frame(home, params, def.size.Y)
+		local hits = 0
+		for _, release in { T0 + 1.2, T0 + 2.9, T0 + 4.4 } do
+			local arrival = release + G.FlightTime
+			local center = CreatureMotion.Center(home, CreatureMotion.Pose(params, arrival), def.size.Y)
+			local g = CatchThrow.GestureFor(cam, center)
+			local parsed = g and CatchThrow.Parse(g)
+			local aim = parsed and CatchThrow.Aim(cam, stage, parsed)
+			local radius = CatchRules.CircleRadius(arrival, params.since, params.scale)
+			if aim and CatchRules.IsHit(aim, center, radius) then
+				hits += 1
+			end
+		end
+		check(hits == 3, ("%s: точный бросок попадает %d/3"):format(item.id, hits))
+		local top = stage + Vector3.new(0, def.size.Y / 2, 0)
+		local look = (top - cam.Position).Unit:Dot(cam.LookVector)
+		check(look > math.cos(math.rad(30)), ("%s: верх существа в кадре поимки (%.2f)"):format(item.id, look))
+	end
+	print("  суставы в движении у босса: " .. table.concat(summary, ", "))
+end
+
 print("· Крысиный король: Part-версия по модели D54")
 do
 	local KingRig = Env.Require("ReplicatedStorage.Shared.Config.Boss3RatKingRig")

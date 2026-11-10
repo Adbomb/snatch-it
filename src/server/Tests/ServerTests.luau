@@ -3156,6 +3156,89 @@ test("Босс 3: у короля 4 существа на подушках, «П
 	end
 end)
 
+test("Босс 3: каждое из 30 существ — у короля, «Поймать», победа → в руках, постамент, доход, в инвентарь", function(A)
+	-- то же, что после победы над королём (Reserve → Award), для каждого существа коллекции по очереди
+	local shifted = ensureDay()
+	local arena = MapLayout.Arenas[3]
+	local plot = plotOf(A)
+	local problems = {}
+	for _, id in boss3Ids() do
+		local def = Items[id]
+		BossLootService.Handlers.FillWith(3, 1, id)
+		local uid, part = BossLootService.SlotItem(3, 1)
+		if not uid or not part then
+			table.insert(problems, id .. ": не появился у короля")
+			continue
+		end
+		local p = part :: BasePart
+		local prompt = p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+		if
+			p:GetAttribute("Creature") ~= true
+			or p:GetAttribute("Drop") ~= arena.top
+			or typeof(p:GetAttribute("Home")) ~= "CFrame"
+		then
+			table.insert(problems, id .. ": у короля без места живого существа")
+		end
+		if not prompt or prompt.ActionText ~= "Поймать" or prompt.ObjectText ~= def.displayName then
+			table.insert(problems, id .. ": нет подсказки «Поймать» с именем")
+		end
+		local motors = 0
+		for _, d in p:GetDescendants() do
+			if d:IsA("Motor6D") then
+				motors += 1
+			end
+		end
+		if motors < 2 then
+			table.insert(problems, ("%s: суставов %d"):format(id, motors))
+		end
+		if not (BossLootService.Reserve(3, 1, A) and BossLootService.Award(3, 1, A)) then
+			table.insert(problems, id .. ": победа не отдала в руки")
+			continue
+		end
+		if ItemRegistry.GetCarriedBy(A) ~= uid or p:GetAttribute("Home") ~= nil then
+			table.insert(problems, id .. ": в руках не то или с атрибутами босса")
+		end
+		near(A, plot.showcases[1])
+		task.wait(0.3) -- лимиты запросов игрока
+		MuseumService.Handlers.Display(A, plot, 1)
+		local entry = ItemRegistry.Get(uid)
+		local shown = entry and entry.part -- музей ставит на постамент свою деталь экспоната
+		if
+			not entry
+			or entry.state ~= "Displayed"
+			or not shown
+			or shown:GetAttribute("Slot") ~= 1
+			or shown:GetAttribute("Creature") ~= true
+		then
+			table.insert(
+				problems,
+				("%s: не выставлено живым существом (%s)"):format(id, tostring(entry and entry.state))
+			)
+			if ItemRegistry.GetCarriedBy(A) == uid then
+				CarryService.LoseCarried(A, "уборка после проверки")
+			end
+			continue
+		end
+		local coins = DataService.GetData(A).coins
+		IncomeService.Handlers.Tick({ A })
+		local got = DataService.GetData(A).coins - coins
+		if got ~= def.income or def.income <= 0 then
+			table.insert(problems, ("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(def.income)))
+		end
+		task.wait(0.3)
+		InventoryService.Handlers.StoreDisplayed(A, plot, 1)
+		entry = ItemRegistry.Get(uid)
+		if not entry or entry.state ~= "Stored" then
+			table.insert(problems, id .. ": с постамента не убрано в инвентарь")
+		end
+	end
+	BossLootService.Handlers.Refresh()
+	check(#problems == 0, table.concat(problems, "; "))
+	if shifted then
+		TimeService.ResetClock()
+	end
+end)
+
 test("Босс 3: Ловибум ур. 3 → поимка → бой с королём (равная сила) → постамент → доход → вход", function(A, _B, ctx)
 	local shifted = ensureDay()
 	check(waitBossHome(3), "король не дома")

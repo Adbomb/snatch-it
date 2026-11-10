@@ -48,6 +48,7 @@ type Entry = {
 	looks: boolean, -- есть части, которые поворачиваются к зрителю (стражи сейфа)
 	outline: Highlight?,
 	group: Model?, -- модель «Outline» с блоками на время обводки
+	added: RBXScriptConnection?, -- дошедшие позже суставы и сварка меша (модель приходит на клиент по частям)
 }
 
 local tracked: { [BasePart]: Entry } = {}
@@ -169,6 +170,18 @@ local function track(root: BasePart)
 		odd = seed % 2 == 1,
 		looks = false,
 	}
+	-- Сустав или сварка меша: модель приходит на клиент по частям, поэтому их собирают и сейчас, и по мере прихода
+	-- (иначе у части существ навсегда двигались только ноги — те, что успели дойти к первому кадру).
+	local function adopt(d: Instance)
+		if entry.rig then
+			if d:IsA("Motor6D") then
+				entry.motors[d.Name] = d
+			end
+		elseif not entry.visualWeld and d:IsA("Weld") and d.Parent and d.Parent.Name == "Visual" then
+			entry.visualWeld = d
+			entry.visualC0 = d.C0
+		end
+	end
 	if entry.rig then
 		for _, spec in entry.rig.Parts do
 			local role = CreatureAnim.Roles[spec.role]
@@ -176,19 +189,11 @@ local function track(root: BasePart)
 				entry.looks = true
 			end
 		end
-		for _, d in root:GetDescendants() do
-			if d:IsA("Motor6D") then
-				entry.motors[d.Name] = d
-			end
-		end
-	else
-		local visual = root:FindFirstChild("Visual")
-		local weld = visual and visual:FindFirstChildOfClass("Weld")
-		if weld then
-			entry.visualWeld = weld
-			entry.visualC0 = weld.C0
-		end
 	end
+	for _, d in root:GetDescendants() do
+		adopt(d)
+	end
+	entry.added = root.DescendantAdded:Connect(adopt)
 	tracked[root] = entry
 end
 
@@ -226,6 +231,9 @@ local function step(dt: number)
 	end
 	for root, entry in tracked do
 		if not root.Parent then
+			if entry.added then
+				entry.added:Disconnect()
+			end
 			tracked[root] = nil
 			continue
 		end

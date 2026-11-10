@@ -99,8 +99,9 @@ local function addPrompt(part: BasePart, entry: Slot)
 	end)
 end
 
--- Новый предмет в слоте (старый, если он ещё у босса, убирается).
-local function fill(entry: Slot)
+-- Новый предмет в слоте (старый, если он ещё у босса, убирается). forced — какой именно (серверные тесты), иначе — по
+-- шансам редкостей.
+local function fill(entry: Slot, forced: string?)
 	local old = entry.uid
 	if old then
 		local current = ItemRegistry.Get(old)
@@ -113,13 +114,16 @@ local function fill(entry: Slot)
 		entry.uid = nil
 	end
 	entry.reservedBy = nil
-	local rarity = BossLootService.RollRarity(entry.boss)
-	local itemId = BossLootService.ChooseItem(entry.boss, rarity)
-	-- Черновые коллекции боссов 3–10 неполные: нет нужной редкости — ближайшая ниже.
-	local rank = Rarities.Rank(rarity)
-	while not itemId and rank > 1 do
-		rank -= 1
-		itemId = BossLootService.ChooseItem(entry.boss, Rarities.Order[rank])
+	local itemId = forced
+	if not itemId then
+		local rarity = BossLootService.RollRarity(entry.boss)
+		itemId = BossLootService.ChooseItem(entry.boss, rarity)
+		-- Черновые коллекции боссов 3–10 неполные: нет нужной редкости — ближайшая ниже.
+		local rank = Rarities.Rank(rarity)
+		while not itemId and rank > 1 do
+			rank -= 1
+			itemId = BossLootService.ChooseItem(entry.boss, Rarities.Order[rank])
+		end
 	end
 	if not itemId then
 		Log.Warn("BossLootService", ("Босс %d: нет предмета нужной редкости"):format(entry.boss))
@@ -358,6 +362,10 @@ BossLootService.Handlers = {
 		return slots
 	end,
 	Refresh = refresh,
+	-- положить в слот именно этот предмет (проверка каждого существа коллекции)
+	FillWith = function(boss: number, slot: number, itemId: string)
+		fill(slots[boss][slot], itemId)
+	end,
 	Take = function(player: Player, boss: number, slot: number)
 		tryTake(player, slots[boss][slot])
 	end,

@@ -208,7 +208,9 @@ function CreatureAnim.Transforms(
 		local rot: CFrame
 		if role.kind == "spin" then
 			local axis = spec.axis or (if spec.demo and spec.demo.Magnitude > 0 then spec.demo.Unit else role.axis)
-			rot = CFrame.fromAxisAngle(axis, math.rad(role.deg) * speed * t + phase)
+			-- угол — в [0, 2π) до CFrame: t — время сервера (~1.8·10⁹ с), а CFrame хранит float32 — без этого угол
+			-- огрублялся до сотен радиан и пропеллер, лампы и колёса стояли
+			rot = CFrame.fromAxisAngle(axis, (math.rad(role.deg) * speed * t + phase) % TAU)
 		elseif role.kind == "dangle" then
 			local a = math.rad(role.deg) * amp
 			rot = CFrame.Angles(

@@ -146,6 +146,14 @@
   фаза у пары, навстречу, ≤ 96°), look (стражи сейфа — к камере: `Transforms(…, view)`, view — направление к
   зрителю в осях модели, считает `CreatureController`), follow (корона императора — фаза головы ×2 с отставанием).
   Тележки поезда-монстра — `bogie` (качание на оси, не вращение: в части рама с колёсами).
+  Интеграция 30 существ (D55, 2026-11-10): `CreatureController.track` собирает суставы и сварку меша и сразу, и по
+  `DescendantAdded` корня (модель приходит на клиент по частям; связь снимается, когда корень пропал);
+  `CreatureAnim` у spin берёт угол `% TAU` до CFrame (t — время сервера ~1.8·10⁹ с, CFrame — float32).
+  `BossLootService.Handlers.FillWith(boss, slot, itemId)` и DevTools `BossSlot <босс> <1–4> <предмет>` — положить
+  нужное существо в слот (только Studio). Проверки: серверный тест «каждое из 30 существ — у короля…» (слот → Home,
+  «Поймать», ≥ 2 суставов → победа в руки → постамент → доход каталога → в инвентарь), Lune `check_creatures` —
+  раздел «все 30: живые и ловятся» (суставы движутся в Wander / Calm / Held, spin крутится, бросок в центр попадает
+  3/3, верх к камере ≤ 30°).
   Обводка (визуальный QA босса 3): у ближайших `UITokens.CreatureOutline.Max` существ у боссов — Highlight только
   контуром. Highlight на детали обводит только её саму, а блоки — дети невидимого корня: на время обводки
   `CreatureController.setOutline` перекладывает блоки корня в локальную модель «Outline» внутри корня (её и обводит),
@@ -392,7 +400,7 @@
   `GameConfig.HoldRelease.ReleaseGrace`, т. к. конец удержания приходит раньше Triggered), `Validate`, `RateLimiter`,
   `Notify`, `Log`, `DevTools` (только Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info, GiveCoins,
   RunServerTests и TimeScale/TimeSkip/TimeReset; из MCP — атрибуты `RunTests` → `TestReport` и `Command` →
-  `CommandResult`).
+  `CommandResult`; команда `BossSlot` кладёт выбранный предмет в слот босса).
 - Участок (D35, музей D48-C): `PartBuilder.BuildPlot` — постоянные части: невидимая точка `Floor` (OwnerTag, свет
   зала и галерей), 20 мест `Showcase_n` (тумба 5 × 3 × 5 — она же столкновение постамента и опора экспоната, лицом в
   проход; дочерние `Top` — верх-индикатор: стекло — свободно, золото — занято, серый — закрыто; `Lamp` — SpotLight

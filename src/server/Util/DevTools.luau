@@ -168,7 +168,8 @@ function DevTools.Init()
 	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
 	-- "GiveDefense <userId> <вид> <сколько>" | "Exhibit <userId> <место> [предмет]" |
 	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53) |
-	-- D55: "Lovibums <userId> <уровень> <вид> <n>" | "Tutorial <userId> <шаг>" | "CatchRoll <0…1 | off>".
+	-- D55: "Lovibums <userId> <уровень> <вид> <n>" | "Tutorial <userId> <шаг>" | "CatchRoll <0…1 | off>" |
+	-- "BossSlot <босс> <место> <предмет>".
 	-- Выполняются в потоке этого скрипта (как RunTests),
 	-- ответ — атрибут CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
@@ -281,6 +282,22 @@ function DevTools.Init()
 				DefenseService.Handlers.Action(player, "Install", kind, spot)
 				local installed = DefenseService.Handlers.Museum(player.UserId).installed[kind]
 				return if installed then "установлено" else "отказ (см. уведомление игроку)"
+			elseif command == "BossSlot" then
+				-- «BossSlot <босс> <место> <предмет>» — в слот у босса именно этот предмет (показ и проверка каждого
+				-- существа коллекции: вид, анимации, поимка); после рассвета слоты снова случайные. Только в Studio.
+				if not RunService:IsStudio() then
+					return "только в Studio"
+				end
+				local Items = require(ReplicatedStorage.Shared.Config.Items)
+				local boss, slot, itemId = tonumber(words[2]), tonumber(words[3]), words[4]
+				local def = itemId and Items[itemId]
+				if not def or def.boss ~= boss or not slot or slot < 1 or slot > 4 then
+					return "BossSlot <босс> <1–4> <предмет этого босса>"
+				end
+				local BossLootService = require(ServerScriptService.Server.Services.BossLootService)
+				BossLootService.Handlers.FillWith(boss :: number, slot, itemId)
+				local uid = BossLootService.SlotItem(boss :: number, slot)
+				return if uid then ("%s в слоте %d"):format(itemId, slot) else "не положено"
 			elseif command == "Strength" then
 				-- проверка капкана и нокаута на трёх клиентах (D53): сила игрока — урон в PvP. Только в локальном
 				-- Studio: в опубликованной игре DevTools не создаётся, и команда сама проверяет Studio ещё раз.
