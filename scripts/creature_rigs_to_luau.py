@@ -107,7 +107,8 @@ def main():
         "-- скелета: лицо к +Z, низ подставки на y = 0 (игра поворачивает на 180°: лицо вперёд, −Z). Parts: родитель,",
         "-- точка вращения (pivot), роль (ключ Shared/CreatureAnim), пробная поза D54 (demo — градусы XYZ в осях модели,",
         "-- shift — смещение), axis — ось вращения, если её не задаёт пробная поза (второе колесо, пропеллер), hidden —",
-        "-- скрыта в игре (подставка stand_policy hide, D54), blocks — блоки части (центр от pivot, размер, цвет). Роли",
+        "-- скрыта в игре (подставка stand_policy hide, D54), center / size — габарит меша D54 части от pivot (импорт ставит",
+        "-- MeshPart в его центр), blocks — блоки Part-версии (центр от pivot, размер, цвет; резерв, если меша нет). Роли",
         "-- «особого внимания» (головы трёхголовой крысы, створки сейфа, корона императора…) — SPECIAL_ROLES генератора.",
         "-- Yaw — поворот корпуса к зрителю (D54: суставы анимировать в осях, повёрнутых на него).",
         "-- Lift — низ живого существа над низом подставки, Size — его габариты. Ни от чего не зависит.",
@@ -162,6 +163,9 @@ def main():
                 fields.append(f"shift = V({', '.join(num(c) for c in info['demo_offset_rbx'])})")
             if name in hidden:
                 fields.append("hidden = true")
+            # габарит меша D54 части от её pivot (rig.json): меш после импорта встаёт на тот же сустав
+            fields.append(f"center = V({', '.join(num(c) for c in r['center'])})")
+            fields.append(f"size = V({', '.join(num(c) for c in r['size'])})")
             bl = ", ".join(
                 f"{{ V({', '.join(num(c) for c in e['c'])}), V({', '.join(num(c) for c in e['s'])}), \"{e['col']}\" }}"
                 for e in parts_blocks.get(name, []))

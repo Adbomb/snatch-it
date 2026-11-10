@@ -1,0 +1,1802 @@
+{
+ "LiveCheeseMonster": {
+  "tris": 1846,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.55,
+     0.524,
+     0.342
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.08,
+    2.234,
+    1.955
+   ],
+   "parts_size": [
+    3.081,
+    2.234,
+    1.954
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    -0.023
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    -0.023
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 94,
+  "errors": [],
+  "warnings": []
+ },
+ "PizzaRat": {
+  "tris": 2377,
+  "parts": 8,
+  "visible": 7,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.473,
+     0.451,
+     0.361
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.392,
+    1.718,
+    3.419
+   ],
+   "parts_size": [
+    3.393,
+    1.718,
+    3.42
+   ],
+   "mesh_lift": 0.116,
+   "parts_lift": 0.116,
+   "mesh_center": [
+    -0.106,
+    0,
+    0.094
+   ],
+   "parts_center": [
+    -0.106,
+    0.0,
+    0.095
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 106,
+  "errors": [],
+  "warnings": []
+ },
+ "RunawayTicket": {
+  "tris": 1573,
+  "parts": 9,
+  "visible": 7,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.433,
+     0.485,
+     0.451
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.96,
+    2.416,
+    1.32
+   ],
+   "parts_size": [
+    2.96,
+    2.416,
+    1.321
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    0.12
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.12
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 86,
+  "errors": [],
+  "warnings": []
+ },
+ "RatKnight": {
+  "tris": 2777,
+  "parts": 12,
+  "visible": 11,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.463,
+     0.481,
+     0.461
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.501,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.401,
+    2.91,
+    2.066
+   ],
+   "parts_size": [
+    2.401,
+    2.911,
+    2.066
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    -0.14,
+    0,
+    -0.051
+   ],
+   "parts_center": [
+    -0.14,
+    0.0,
+    -0.051
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 125,
+  "errors": [],
+  "warnings": []
+ },
+ "MutantSoda": {
+  "tris": 1870,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.378,
+     0.489,
+     0.507
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.2,
+    2.6,
+    2.188
+   ],
+   "parts_size": [
+    2.2,
+    2.6,
+    2.188
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    0.465
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.465
+   ],
+   "worst": 0.0
+  },
+  "fbx_kb": 92,
+  "errors": [],
+  "warnings": []
+ },
+ "SubwaySnail": {
+  "tris": 1338,
+  "parts": 5,
+  "visible": 4,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.374,
+     0.517,
+     0.454
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.859,
+    1.847,
+    2.134
+   ],
+   "parts_size": [
+    2.859,
+    1.848,
+    2.135
+   ],
+   "mesh_lift": 0.21,
+   "parts_lift": 0.21,
+   "mesh_center": [
+    -0.047,
+    0,
+    0.015
+   ],
+   "parts_center": [
+    -0.046,
+    0.0,
+    0.015
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 68,
+  "errors": [],
+  "warnings": []
+ },
+ "WalkingSuitcase": {
+  "tris": 1467,
+  "parts": 7,
+  "visible": 6,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.476,
+     0.426,
+     0.396
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.2,
+    2.02,
+    1.245
+   ],
+   "parts_size": [
+    2.201,
+    2.02,
+    1.245
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    0.072
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.072
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 73,
+  "errors": [],
+  "warnings": []
+ },
+ "AngryAlarmClock": {
+  "tris": 2737,
+  "parts": 10,
+  "visible": 9,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.485,
+     0.43,
+     0.29
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    1.942,
+    2.82,
+    1.125
+   ],
+   "parts_size": [
+    1.942,
+    2.821,
+    1.125
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.219,
+   "mesh_center": [
+    0.0,
+    0,
+    0.023
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.022
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 114,
+  "errors": [],
+  "warnings": []
+ },
+ "SneakerTenant": {
+  "tris": 1634,
+  "parts": 9,
+  "visible": 8,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.456,
+     0.456,
+     0.475
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.221,
+    2.623,
+    2.075
+   ],
+   "parts_size": [
+    3.22,
+    2.623,
+    2.076
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    -0.016,
+    0,
+    0.027
+   ],
+   "parts_center": [
+    -0.017,
+    0.0,
+    0.028
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 88,
+  "errors": [],
+  "warnings": []
+ },
+ "DuckInspector": {
+  "tris": 1689,
+  "parts": 10,
+  "visible": 9,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.484,
+     0.496,
+     0.332
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.501,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.146,
+    2.13,
+    2.196
+   ],
+   "parts_size": [
+    2.146,
+    2.13,
+    2.196
+   ],
+   "mesh_lift": 0.25,
+   "parts_lift": 0.25,
+   "mesh_center": [
+    0.147,
+    0,
+    0.002
+   ],
+   "parts_center": [
+    0.147,
+    0.0,
+    0.002
+   ],
+   "worst": 0.0
+  },
+  "fbx_kb": 90,
+  "errors": [],
+  "warnings": []
+ },
+ "PanicCone": {
+  "tris": 1184,
+  "parts": 9,
+  "visible": 8,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.354,
+     0.387,
+     0.35
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.14,
+    2.74,
+    1.78
+   ],
+   "parts_size": [
+    2.14,
+    2.74,
+    1.78
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    0.11
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.11
+   ],
+   "worst": 0.0
+  },
+  "fbx_kb": 74,
+  "errors": [],
+  "warnings": []
+ },
+ "CheeseSkater": {
+  "tris": 2349,
+  "parts": 13,
+  "visible": 12,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.442,
+     0.491,
+     0.452
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.6,
+    2.164,
+    1.545
+   ],
+   "parts_size": [
+    2.6,
+    2.163,
+    1.545
+   ],
+   "mesh_lift": 0.231,
+   "parts_lift": 0.231,
+   "mesh_center": [
+    0.0,
+    0,
+    -0.179
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    -0.178
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 113,
+  "errors": [],
+  "warnings": []
+ },
+ "DevourerVending": {
+  "tris": 2284,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.578,
+     0.359,
+     0.313
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.0,
+    3.7,
+    1.956
+   ],
+   "parts_size": [
+    2.0,
+    3.7,
+    1.957
+   ],
+   "mesh_lift": 0.2,
+   "parts_lift": 0.2,
+   "mesh_center": [
+    0.0,
+    0,
+    0.318
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.318
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 102,
+  "errors": [],
+  "warnings": []
+ },
+ "RoyalRatTrain": {
+  "tris": 2296,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.564,
+     0.391,
+     0.356
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.914,
+    2.32,
+    1.95
+   ],
+   "parts_size": [
+    2.914,
+    2.32,
+    1.95
+   ],
+   "mesh_lift": 0.42,
+   "parts_lift": 0.42,
+   "mesh_center": [
+    -0.033,
+    0,
+    0.053
+   ],
+   "parts_center": [
+    -0.032,
+    0.0,
+    0.053
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 112,
+  "errors": [],
+  "warnings": []
+ },
+ "BuffRat": {
+  "tris": 2314,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.562,
+     0.453,
+     0.444
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.501,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.11,
+    3.532,
+    1.798
+   ],
+   "parts_size": [
+    3.11,
+    3.533,
+    1.798
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    -0.235
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    -0.235
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 106,
+  "errors": [],
+  "warnings": []
+ },
+ "TrashGobbler": {
+  "tris": 2198,
+  "parts": 9,
+  "visible": 8,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.368,
+     0.378,
+     0.337
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    1.64,
+    2.952,
+    2.581
+   ],
+   "parts_size": [
+    1.639,
+    2.953,
+    2.581
+   ],
+   "mesh_lift": 0.24,
+   "parts_lift": 0.24,
+   "mesh_center": [
+    0.0,
+    0,
+    0.309
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.31
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 100,
+  "errors": [],
+  "warnings": []
+ },
+ "RatWizard": {
+  "tris": 2044,
+  "parts": 12,
+  "visible": 11,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.504,
+     0.377,
+     0.445
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.476,
+    3.315,
+    1.553
+   ],
+   "parts_size": [
+    2.475,
+    3.316,
+    1.553
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.082,
+    0,
+    -0.159
+   ],
+   "parts_center": [
+    0.083,
+    0.0,
+    -0.159
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 104,
+  "errors": [],
+  "warnings": []
+ },
+ "RatMimic": {
+  "tris": 1834,
+  "parts": 13,
+  "visible": 12,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.571,
+     0.411,
+     0.353
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.995
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.02,
+    2.277,
+    2.642
+   ],
+   "parts_size": [
+    2.021,
+    2.277,
+    2.643
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    0.0,
+    0,
+    0.129
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.129
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 99,
+  "errors": [],
+  "warnings": []
+ },
+ "ThreeHeadedRat": {
+  "tris": 2929,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.549,
+     0.473,
+     0.542
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.113,
+    3.335,
+    2.166
+   ],
+   "parts_size": [
+    3.114,
+    3.336,
+    2.166
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    -0.118,
+    0,
+    -0.165
+   ],
+   "parts_center": [
+    -0.118,
+    0.0,
+    -0.165
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 132,
+  "errors": [],
+  "warnings": []
+ },
+ "TurnstileTerminator": {
+  "tris": 1756,
+  "parts": 7,
+  "visible": 6,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.468,
+     0.392,
+     0.441
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.744,
+    3.28,
+    1.041
+   ],
+   "parts_size": [
+    2.744,
+    3.28,
+    1.041
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.219,
+   "mesh_center": [
+    0.0,
+    0,
+    0.03
+   ],
+   "parts_center": [
+    -0.001,
+    0.0,
+    0.03
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 85,
+  "errors": [],
+  "warnings": []
+ },
+ "PizzaUfo": {
+  "tris": 2827,
+  "parts": 6,
+  "visible": 5,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.561,
+     0.485,
+     0.397
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.155,
+    3.108,
+    3.13
+   ],
+   "parts_size": [
+    3.154,
+    3.108,
+    3.13
+   ],
+   "mesh_lift": 0.27,
+   "parts_lift": 0.27,
+   "mesh_center": [
+    -0.013,
+    0,
+    0.0
+   ],
+   "parts_center": [
+    -0.012,
+    0.0,
+    0.0
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 104,
+  "errors": [],
+  "warnings": []
+ },
+ "RubyThief": {
+  "tris": 2125,
+  "parts": 6,
+  "visible": 5,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.449,
+     0.345,
+     0.393
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.863,
+    2.65,
+    1.566
+   ],
+   "parts_size": [
+    2.864,
+    2.65,
+    1.567
+   ],
+   "mesh_lift": 0.22,
+   "parts_lift": 0.22,
+   "mesh_center": [
+    -0.072,
+    0,
+    0.023
+   ],
+   "parts_center": [
+    -0.072,
+    0.0,
+    0.023
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 92,
+  "errors": [],
+  "warnings": []
+ },
+ "RatThrone": {
+  "tris": 2934,
+  "parts": 11,
+  "visible": 11,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.662,
+     0.511,
+     0.283
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.56,
+    3.763,
+    3.56
+   ],
+   "parts_size": [
+    3.56,
+    3.762,
+    3.56
+   ],
+   "mesh_lift": 0.0,
+   "parts_lift": 0.001,
+   "mesh_center": [
+    0.0,
+    0,
+    0.0
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 124,
+  "errors": [],
+  "warnings": []
+ },
+ "MonsterTrain": {
+  "tris": 2554,
+  "parts": 10,
+  "visible": 9,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.636,
+     0.457,
+     0.302
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.993,
+    2.06,
+    2.466
+   ],
+   "parts_size": [
+    2.993,
+    2.061,
+    2.466
+   ],
+   "mesh_lift": 0.58,
+   "parts_lift": 0.58,
+   "mesh_center": [
+    -0.002,
+    0,
+    -0.121
+   ],
+   "parts_center": [
+    -0.002,
+    0.0,
+    -0.121
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 119,
+  "errors": [],
+  "warnings": []
+ },
+ "CheeseDragon": {
+  "tris": 1703,
+  "parts": 12,
+  "visible": 11,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.757,
+     0.552,
+     0.173
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.505,
+    3.283,
+    3.172
+   ],
+   "parts_size": [
+    3.505,
+    3.283,
+    3.171
+   ],
+   "mesh_lift": 0.34,
+   "parts_lift": 0.34,
+   "mesh_center": [
+    0.0,
+    0,
+    0.282
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.282
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 99,
+  "errors": [],
+  "warnings": []
+ },
+ "GoldenRatMech": {
+  "tris": 2266,
+  "parts": 11,
+  "visible": 10,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.742,
+     0.591,
+     0.214
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    2.98,
+    3.796,
+    1.324
+   ],
+   "parts_size": [
+    2.981,
+    3.795,
+    1.324
+   ],
+   "mesh_lift": 0.34,
+   "parts_lift": 0.34,
+   "mesh_center": [
+    0.0,
+    0,
+    0.162
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.162
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 107,
+  "errors": [],
+  "warnings": []
+ },
+ "SubwayOctopus": {
+  "tris": 2496,
+  "parts": 7,
+  "visible": 7,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.605,
+     0.426,
+     0.403
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.5,
+    4.05,
+    3.5
+   ],
+   "parts_size": [
+    3.5,
+    4.05,
+    3.5
+   ],
+   "mesh_lift": 0.0,
+   "parts_lift": 0.0,
+   "mesh_center": [
+    0.0,
+    0,
+    0.0
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "worst": 0.0
+  },
+  "fbx_kb": 110,
+  "errors": [],
+  "warnings": []
+ },
+ "ClockGolem": {
+  "tris": 2538,
+  "parts": 10,
+  "visible": 9,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.602,
+     0.487,
+     0.211
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.996
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.08,
+    4.122,
+    0.96
+   ],
+   "parts_size": [
+    3.08,
+    4.122,
+    0.961
+   ],
+   "mesh_lift": 0.34,
+   "parts_lift": 0.34,
+   "mesh_center": [
+    0.0,
+    0,
+    0.08
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.08
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 108,
+  "errors": [],
+  "warnings": []
+ },
+ "CheeseVaultHeart": {
+  "tris": 2751,
+  "parts": 7,
+  "visible": 6,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.675,
+     0.548,
+     0.239
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.501,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.32,
+    2.1,
+    2.414
+   ],
+   "parts_size": [
+    3.321,
+    2.101,
+    2.414
+   ],
+   "mesh_lift": 0.34,
+   "parts_lift": 0.34,
+   "mesh_center": [
+    0.0,
+    0,
+    0.257
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.257
+   ],
+   "worst": 0.001
+  },
+  "fbx_kb": 108,
+  "errors": [],
+  "warnings": []
+ },
+ "ThreeTailEmperor": {
+  "tris": 2706,
+  "parts": 12,
+  "visible": 12,
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.684,
+     0.501,
+     0.297
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "channels": 4,
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "box": {
+   "mesh_size": [
+    3.5,
+    4.55,
+    3.5
+   ],
+   "parts_size": [
+    3.5,
+    4.55,
+    3.5
+   ],
+   "mesh_lift": 0.0,
+   "parts_lift": 0.0,
+   "mesh_center": [
+    0.0,
+    0,
+    0.0
+   ],
+   "parts_center": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "worst": 0.0
+  },
+  "fbx_kb": 124,
+  "errors": [],
+  "warnings": []
+ }
+}

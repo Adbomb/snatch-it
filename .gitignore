@@ -11,3 +11,6 @@ __pycache__/
 
 # Резервные копии Blender (file.blend1) — исходник пересобирается скриптом
 *.blend1
+
+# Предпросмотр мешей D54 в Studio без загрузки (scripts/creature_mesh_fixture.py) — только локально
+src/server/Tests/MeshFixture/

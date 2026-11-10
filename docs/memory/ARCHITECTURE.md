@@ -146,6 +146,14 @@
   фаза у пары, навстречу, ≤ 96°), look (стражи сейфа — к камере: `Transforms(…, view)`, view — направление к
   зрителю в осях модели, считает `CreatureController`), follow (корона императора — фаза головы ×2 с отставанием).
   Тележки поезда-монстра — `bogie` (качание на оси, не вращение: в части рама с колёсами).
+  Меши D54 вместо Part-версии (подготовлено 2026-11-10, импорта ещё нет): `ItemModels.Creatures[id][часть]` (блок
+  `CREATURE_MESHES`, ключ `<id>_<Часть>`, пишет `scripts/bind_meshes.py`), `CreatureTurn` 180, `ForceCreatureParts`.
+  `ItemFactory.Preload` грузит меш каждой части (коробка столкновений, Looks/<id>), `buildCreature` ставит видимую
+  часть мешем (центр габарита `spec.center`, размер `spec.size` из CreatureRigs, поворот CreatureTurn) или блоками,
+  если меша нет; сустав любой части — Motor6D с тем же C0 (точка вращения), C1 = смещение детали⁻¹. Только Studio:
+  `ItemFactory.SetCreatureMeshes(id, parts?)`, `CreatureMeshCount(id)`; предпросмотр — `Tests/CreatureMeshPreview`
+  (EditableMesh из `Tests/MeshFixture`, не в репозитории). Готовность моделей — `scripts/blender/check_creature_import.py`.
+  Порядок импорта — docs/BOSS3_CREATURES.md.
   Интеграция 30 существ (D55, 2026-11-10): `CreatureController.track` собирает суставы и сварку меша и сразу, и по
   `DescendantAdded` корня (модель приходит на клиент по частям; связь снимается, когда корень пропал);
   `CreatureAnim` у spin берёт угол `% TAU` до CFrame (t — время сервера ~1.8·10⁹ с, CFrame — float32).
@@ -272,7 +280,15 @@
   С ношей (босс 3): ещё отрезки от камеры к центру и верху ноши и 5 вертикальных сквозь неё (ноша — деталь на
   WeldConstraint с корнем, ItemId = `CarryingItemId`); в галерее (|x участка| > `Hall.HalfWidth`) камера не дальше
   `CarryGalleryZoom` 9 (CameraMaxZoomDistance), на выходе — прежний предел и расстояние. `MuseumCameraController.Blocked(a, b)`
-  — закрыт ли отрезок деталью здания (для подписей экспонатов).
+  — закрыт ли отрезок деталью здания (для подписей экспонатов; постаменты не считаются).
+  D55 (2026-11-10, «стены и постаменты не перекрывают игрока и экспонаты»): в коробках ещё постаменты (`Showcases`:
+  тумба, Top, Plaque — гаснут целиком); отрезки — толстый «фокус → камера» (Probe), «камера → корпус», к ≤ ExhibitMax
+  экспонатам той же части музея (зал / галерея, ≤ ExhibitRadius, в кадре; свой постамент не гаснет); гаснут и
+  экспонаты между камерой и персонажем, детали ближе NearCamera к камере, передний план чужой части (OtherRoomRadius,
+  когда камера в зале, а персонаж в галерее, и наоборот); SurfaceGui погашенной детали выключаются. После камеры
+  Roblox (`Camera + 1`, `clampStep`) камеру внутри места (тумба + экспонат) подтягивает к персонажу до края места,
+  отпускает плавно (ColumnRelease). Отсев: общий габарит отрезков → габарит каждого → сфера → плиты. Стоимость (ПК,
+  музей 20 существ): 0.16–0.20 мс/кадр (старый — 0.34–0.41). Проверка — `scripts/studio/museum_camera_probe.luau`.
 - HUD v2 (D48 v2): иконки — `client/UI/HudIcons` по `UITokens.HudIcons` (путь CheckUIIcons или rbxassetid); колонка
   меню `UI/MenuHud` справа (иконка + подпись, значок клавиши B у «Инвентаря» — саму клавишу привязывает
   `InventoryController` через ContextActionService, колонка её не слушает), статистика слева (`GymController`), таймер —

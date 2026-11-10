@@ -58,6 +58,7 @@ local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
 local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
 local CreatureMotion = require(ReplicatedStorage.Shared.CreatureMotion)
+local CreatureRigs = require(ReplicatedStorage.Shared.Config.CreatureRigs)
 local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local CatchService = require(Server.Services.CatchService)
 local ShopService = require(Server.Services.ShopService)
@@ -3237,6 +3238,146 @@ test("Босс 3: каждое из 30 существ — у короля, «П�
 	if shifted then
 		TimeService.ResetClock()
 	end
+end)
+
+-- Точки вращения суставов существа в осях корня (покой): имя мотора → позиция; и меши частей.
+local function creatureJoints(part: BasePart): ({ [string]: Vector3 }, { [string]: MeshPart })
+	local pivots, meshes = {}, {}
+	for _, d in part:GetDescendants() do
+		if d:IsA("Motor6D") and d.Part0 then
+			pivots[d.Name] = part.CFrame:PointToObjectSpace((d.Part0.CFrame * d.C0).Position)
+		elseif d:IsA("MeshPart") then
+			meshes[d.Name] = d
+		end
+	end
+	return pivots, meshes
+end
+
+test("Босс 3: меши D54 вместо Part-версии — те же суставы, место у короля, поимка, руки, постамент, доход", function(A)
+	-- До импорта мешей нет: подставляем MeshPart-заглушки с именами и габаритами частей D54 (как после импорта) —
+	-- проверяется, что сборка и механики с мешами те же, что с Part-версией (резерв).
+	local shifted = ensureDay()
+	local plot = plotOf(A)
+	local problems = {}
+	local function stand(id: string, only: { [string]: boolean }?): ({ [string]: MeshPart }, number)
+		local parts, n = {}, 0
+		for name, spec in CreatureRigs[id].Parts do
+			if not spec.hidden and (not only or only[name]) then
+				local m = Instance.new("MeshPart")
+				m.Size = spec.size
+				parts[name] = m
+				n += 1
+			end
+		end
+		return parts, n
+	end
+	local ok, err = pcall(function()
+		for _, id in boss3Ids() do
+			local def = Items[id]
+			local reference = ItemFactory.Create(id) -- Part-версия
+			local refPivots = creatureJoints(reference)
+			local parts, visible = stand(id)
+			ItemFactory.SetCreatureMeshes(id, parts)
+			check(ItemFactory.CreatureMeshCount(id) == visible, id .. ": меши не подставились")
+			local built = ItemFactory.Create(id)
+			local pivots, meshes = creatureJoints(built)
+			local blocks = 0
+			for _, d in built:GetChildren() do
+				if d:IsA("Part") then
+					blocks += 1
+				end
+			end
+			local joints, worst = 0, 0
+			for name, at in refPivots do
+				joints += 1
+				worst = math.max(worst, if pivots[name] then (pivots[name] - at).Magnitude else math.huge)
+			end
+			local meshCount = 0
+			for name, m in meshes do
+				meshCount += 1
+				local spec = CreatureRigs[id].Parts[name]
+				if not spec or (m.Size - spec.size).Magnitude > 1e-3 then
+					table.insert(problems, ("%s/%s: размер меша"):format(id, name))
+				end
+			end
+			if built.Size ~= reference.Size or meshCount ~= visible or blocks > 0 or worst > 1e-3 then
+				table.insert(
+					problems,
+					("%s: мешей %d из %d, блоков %d, суставов %d, сдвиг точки вращения %.4f"):format(
+						id,
+						meshCount,
+						visible,
+						blocks,
+						joints,
+						worst
+					)
+				)
+			end
+			reference:Destroy()
+			built:Destroy()
+			-- путь игрока: у короля → победа → в руках → постамент (музей строит экспонат заново) → доход → инвентарь
+			BossLootService.Handlers.FillWith(3, 1, id)
+			local uid, part = BossLootService.SlotItem(3, 1)
+			local p = part :: BasePart
+			local prompt = p and p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+			if not uid or not prompt or prompt.ActionText ~= "Поймать" or not p:FindFirstChildWhichIsA("MeshPart") then
+				table.insert(problems, id .. ": у короля без мешей или без «Поймать»")
+				continue
+			end
+			if not (BossLootService.Reserve(3, 1, A) and BossLootService.Award(3, 1, A)) then
+				table.insert(problems, id .. ": победа не отдала в руки")
+				continue
+			end
+			near(A, plot.showcases[1])
+			task.wait(0.3) -- лимиты запросов игрока
+			MuseumService.Handlers.Display(A, plot, 1)
+			local entry = ItemRegistry.Get(uid :: string)
+			local shown = entry and entry.part
+			if not entry or entry.state ~= "Displayed" or not shown or not shown:FindFirstChildWhichIsA("MeshPart") then
+				table.insert(problems, id .. ": на постаменте не меши")
+				if ItemRegistry.GetCarriedBy(A) == uid then
+					CarryService.LoseCarried(A, "уборка после проверки")
+				end
+				continue
+			end
+			local coins = DataService.GetData(A).coins
+			IncomeService.Handlers.Tick({ A })
+			if DataService.GetData(A).coins - coins ~= def.income then
+				table.insert(problems, id .. ": доход не как в каталоге")
+			end
+			task.wait(0.3)
+			InventoryService.Handlers.StoreDisplayed(A, plot, 1)
+			entry = ItemRegistry.Get(uid :: string)
+			if not entry or entry.state ~= "Stored" then
+				table.insert(problems, id .. ": с постамента не убрано в инвентарь")
+			end
+			ItemFactory.SetCreatureMeshes(id, nil)
+		end
+		-- часть мешей ещё не импортирована: эти части — меши, остальные — блоки Part-версии, суставы те же
+		local id = "CheeseDragon"
+		local reference = ItemFactory.Create(id)
+		local refPivots = creatureJoints(reference)
+		ItemFactory.SetCreatureMeshes(id, (stand(id, { Head = true, Body = true })))
+		local mixed = ItemFactory.Create(id)
+		local pivots, meshes = creatureJoints(mixed)
+		local worst = 0
+		for name, at in refPivots do
+			worst = math.max(worst, if pivots[name] then (pivots[name] - at).Magnitude else math.huge)
+		end
+		check(meshes.Head and meshes.Body and meshes.Jaw == nil, "смешанная сборка: не те части мешами")
+		check(mixed:FindFirstChild("Jaw") ~= nil and worst <= 1e-3, ("смешанная сборка: сдвиг %.4f"):format(worst))
+		reference:Destroy()
+		mixed:Destroy()
+	end)
+	for _, id in boss3Ids() do
+		ItemFactory.SetCreatureMeshes(id, nil)
+	end
+	BossLootService.Handlers.Refresh()
+	if shifted then
+		TimeService.ResetClock()
+	end
+	check(ok, tostring(err))
+	check(#problems == 0, table.concat(problems, "; "))
 end)
 
 test("Босс 3: Ловибум ур. 3 → поимка → бой с королём (равная сила) → постамент → доход → вход", function(A, _B, ctx)

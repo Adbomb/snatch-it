@@ -7,9 +7,11 @@
 -- нужной формы (заготовка до импорта). Карты SurfaceAppearance игровой скрипт задать не может (права плагина) —
 -- копируется шаблон из Server/Looks (его создаёт Rojo, scripts/make_looks.py). Только внешний вид, без логики.
 -- Живое существо из частей (D55, Config/CreatureRigs — босс 3): корень — невидимый хитбокс, каждая видимая часть —
--- блоки Part-версии; первый блок части — её сустав: Motor6D (имя = имя части) от блока родителя (или от корня),
--- остальные блоки приварены к нему. Скрытые части (подставка D54) блоков не имеют — их дети крепятся к ближайшему
--- видимому предку. Лицо — вперёд (−Z). Оживляет клиент (Transform моторов, Controllers/CreatureController).
+-- её меш D54 (MeshPart из ItemModels.Creatures с картами Looks/<id>, стоит в центре габарита меша, повёрнут на
+-- ItemModels.CreatureTurn) или, если меша нет или он не загрузился, блоки Part-версии (резерв); сустав части —
+-- меш или первый блок: Motor6D (имя = имя части) от сустава родителя (или от корня), остальные блоки приварены к
+-- нему. Скрытые части (подставка D54) не строятся — их дети крепятся к ближайшему видимому предку. Лицо — вперёд
+-- (−Z). Оживляет клиент (Transform моторов, Controllers/CreatureController) — одинаково для мешей и блоков.
 -- Зависит от AssetService, Config/Items, Config/ItemModels, Config/CreatureRigs, Config/Rarities, Config/UITokens,
 -- Shared/NumberFormat, Server/Looks.
 
@@ -30,6 +32,16 @@ local BLOCK_NAME = "Blk" -- блок Part-версии существа (D55)
 local FACE = CFrame.Angles(0, math.pi, 0) -- скелет D54 смотрит в +Z, предметы — вперёд (−Z)
 
 local templates: { [string]: MeshPart } = {}
+local creatureTemplates: { [string]: { [string]: MeshPart } } = {} -- [предмет][часть] — загруженные меши частей
+local creatureOverrides: { [string]: { [string]: MeshPart } } = {} -- подстановка в Studio (тесты, предпросмотр)
+
+-- Меши частей существа: подстановка Studio, иначе загруженные (nil — Part-версия целиком).
+local function creatureMeshes(itemId: string): { [string]: MeshPart }?
+	if ItemModels.ForceCreatureParts then
+		return nil
+	end
+	return creatureOverrides[itemId] or creatureTemplates[itemId]
+end
 
 local ItemFactory = {}
 
@@ -65,6 +77,30 @@ local function loadModel(itemId: string): MeshPart?
 	return mesh
 end
 
+-- Меш части существа (D55) с картами предмета: коробка столкновений (у частей CanCollide выключен), детализация —
+-- автоматическая (на слабых телефонах Roblox упрощает меш сам). nil — не загрузился (часть останется блоками).
+local function loadCreaturePart(itemId: string, partName: string, uri: string): MeshPart?
+	local ok, result = pcall(function()
+		return AssetService:CreateMeshPartAsync(Content.fromUri(uri), {
+			CollisionFidelity = Enum.CollisionFidelity.Box,
+			RenderFidelity = Enum.RenderFidelity.Automatic,
+		})
+	end)
+	if not ok or not result then
+		warn(("[ItemFactory] Меш %s/%s не загрузился: %s"):format(itemId, partName, tostring(result)))
+		return nil
+	end
+	local mesh = result :: MeshPart
+	mesh.Material = Enum.Material.SmoothPlastic -- цвет, кольца и тени — в SurfaceAppearance (D39)
+	local look = Looks:FindFirstChild(itemId)
+	if look then
+		look:Clone().Parent = mesh
+	else
+		warn(("[ItemFactory] Нет шаблона карт Looks/%s (scripts/make_looks.py)"):format(itemId))
+	end
+	return mesh
+end
+
 -- Загружает меши всех предметов один раз при старте (параллельно, ждёт сеть), чтобы Create дальше работал без
 -- задержек. Ошибка загрузки — предмет останется заготовкой.
 function ItemFactory.Preload()
@@ -76,9 +112,41 @@ function ItemFactory.Preload()
 			pending -= 1
 		end)
 	end
+	for itemId, parts in ItemModels.Creatures do
+		creatureTemplates[itemId] = creatureTemplates[itemId] or {}
+		for partName, uri in parts do
+			pending += 1
+			task.spawn(function()
+				creatureTemplates[itemId][partName] = loadCreaturePart(itemId, partName, uri)
+				pending -= 1
+			end)
+		end
+	end
 	while pending > 0 do
 		task.wait()
 	end
+end
+
+-- Только Studio (серверные тесты, предпросмотр мешей D54 без загрузки): подставить меши частей существа
+-- ({ [часть] = MeshPart }) или снять подстановку (nil) — снова загруженные меши или Part-версия.
+function ItemFactory.SetCreatureMeshes(itemId: string, parts: { [string]: MeshPart }?)
+	creatureOverrides[itemId] = parts
+end
+
+-- Сколько частей существа строится мешами (0 — Part-версия целиком).
+function ItemFactory.CreatureMeshCount(itemId: string): number
+	local rig = CreatureRigs[itemId]
+	local parts = creatureMeshes(itemId)
+	if not rig or not parts then
+		return 0
+	end
+	local count = 0
+	for name, spec in rig.Parts do
+		if not spec.hidden and parts[name] then
+			count += 1
+		end
+	end
+	return count
 end
 
 -- Есть ли у предмета загруженная модель (для тестов и проверок).
@@ -164,14 +232,17 @@ local function block(size: Vector3, color: string): Part
 	return b
 end
 
--- Существо из частей (D55) внутри корня root. Возвращает число блоков.
-local function buildCreature(root: Part, rig: any): number
+-- Существо из частей (D55) внутри корня root: у части — её меш (meshes[часть]) или блоки Part-версии. Возвращает
+-- число деталей.
+local function buildCreature(root: Part, rig: any, meshes: { [string]: MeshPart }?): number
 	-- низ живого существа — на низ корня, середина — по центру, лицо вперёд
 	local origin = FACE * CFrame.new(-rig.Center.X, -root.Size.Y / 2 - rig.Lift, -rig.Center.Z)
+	local meshTurn = CFrame.Angles(0, math.rad(ItemModels.CreatureTurn), 0)
 	local frames: { [string]: CFrame } = {} -- точка вращения части в осях корня (покой)
-	local joints: { [string]: { part: BasePart, offset: Vector3 } } = {} -- сустав: первый блок и его центр от pivot
+	-- сустав части: деталь (меш или первый блок) и её положение от точки вращения части
+	local joints: { [string]: { part: BasePart, offset: CFrame } } = {}
 	local count = 0
-	-- ближайший предок с блоками (у скрытой подставки их нет); nil — крепить к корню
+	-- ближайший предок с деталями (скрытая подставка не строится); nil — крепить к корню
 	local function visibleAncestor(name: string?): string?
 		while name and not joints[name] do
 			name = rig.Parts[name].parent
@@ -181,39 +252,58 @@ local function buildCreature(root: Part, rig: any): number
 	for _, name in rig.Order do
 		local spec = rig.Parts[name]
 		frames[name] = origin * CFrame.new(spec.pivot)
-		if #spec.blocks == 0 then
+		local template = if spec.hidden then nil else meshes and meshes[name]
+		if not template and #spec.blocks == 0 then
 			continue
 		end
-		local first = spec.blocks[1]
-		local joint = block(first[2], first[3])
+		local joint: BasePart, offset: CFrame
+		if template then
+			-- меш D54: импорт ставит MeshPart в центр габарита меша части, повёрнутым на CreatureTurn
+			joint = template:Clone()
+			joint.Size = spec.size
+			joint.Anchored = false
+			joint.Massless = true
+			joint.CanCollide = false
+			joint.CanQuery = false
+			joint.CanTouch = false
+			offset = CFrame.new(spec.center) * meshTurn
+		else
+			local first = spec.blocks[1]
+			joint = block(first[2], first[3])
+			offset = CFrame.new(first[1])
+		end
 		joint.Name = name
-		joint.CFrame = root.CFrame * frames[name] * CFrame.new(first[1])
+		joint.CFrame = root.CFrame * frames[name] * offset
 		local motor = Instance.new("Motor6D")
 		motor.Name = name
 		motor.Part1 = joint
 		local ancestor = visibleAncestor(spec.parent)
 		if ancestor then
-			-- C0: точка вращения части в осях блока-сустава предка (его покой — pivot предка + центр блока)
+			-- C0: точка вращения части в осях сустава предка (его покой — pivot предка + положение детали)
 			local j = joints[ancestor]
 			motor.Part0 = j.part
-			motor.C0 = (frames[ancestor] * CFrame.new(j.offset)):Inverse() * frames[name]
+			motor.C0 = (frames[ancestor] * j.offset):Inverse() * frames[name]
 		else
 			motor.Part0 = root
 			motor.C0 = frames[name]
 		end
-		motor.C1 = CFrame.new(-first[1]) -- от точки вращения к центру блока
+		motor.C1 = offset:Inverse() -- от точки вращения к детали
 		motor.Parent = joint
 		joint.Parent = root
-		joints[name] = { part = joint, offset = first[1] }
+		joints[name] = { part = joint, offset = offset }
 		count += 1
+		if template then
+			continue
+		end
+		local first = spec.blocks[1][1]
 		for i = 2, #spec.blocks do
 			local entry = spec.blocks[i]
 			local b = block(entry[2], entry[3])
-			b.CFrame = joint.CFrame * CFrame.new(entry[1] - first[1])
+			b.CFrame = joint.CFrame * CFrame.new(entry[1] - first)
 			local weld = Instance.new("Weld")
 			weld.Part0 = joint
 			weld.Part1 = b
-			weld.C0 = CFrame.new(entry[1] - first[1])
+			weld.C0 = CFrame.new(entry[1] - first)
 			weld.Parent = b
 			b.Parent = root
 			count += 1
@@ -257,7 +347,7 @@ function ItemFactory.Create(itemId: string): Part
 		part.Size = def.size
 		part.Transparency = 1
 		part.CastShadow = false
-		buildCreature(part, rig)
+		buildCreature(part, rig, creatureMeshes(itemId))
 	else
 		part.Shape = (Enum.PartType :: any)[def.shape] or Enum.PartType.Block
 		part.Size = def.size
@@ -268,7 +358,7 @@ function ItemFactory.Create(itemId: string): Part
 	return part
 end
 
--- Прозрачность видимой части предмета (мигание D10): у модели — меш, у существа — его блоки, у простого Part — сам Part.
+-- Прозрачность видимого предмета (мигание D10): у модели — меш, у существа — его детали (блоки или меши), у Part — он.
 function ItemFactory.SetVisualTransparency(part: BasePart, transparency: number)
 	local visual = part:FindFirstChild(VISUAL_NAME)
 	if visual and visual:IsA("BasePart") then

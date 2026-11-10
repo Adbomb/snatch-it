@@ -80,7 +80,27 @@ for itemId, meshId in MESHES do
 	ItemModels[itemId].mesh = "rbxassetid://" .. meshId
 end
 
+-- Существа босса 3 (D54, D55): у каждой части свой меш — MeshId из импорта assets/models/art/<id>.fbx (объекты
+-- Art_<id>_<Часть>; вписывает scripts/bind_meshes.py, ключ «<id>_<Часть>»), карты — одна пара на предмет (запись
+-- <id> = model(…) выше, шаблон Looks/<id>). Пока пусто — существа показываются Part-версией (Config/CreatureRigs,
+-- рабочий резерв: тег git d55-creatures-parts-v1); у части без меша — её блоки. Импорт поворачивает меши на 180°
+-- вокруг вертикали от скелета (как у пса) — CREATURE_TURN. ForceCreatureParts = true — всегда Part-версия.
+local CREATURE_MESHES: { [string]: number } = {}
+local CREATURE_TURN = 180
+
+local creatures: { [string]: { [string]: string } } = {}
+for key, meshId in CREATURE_MESHES do
+	local itemId, part = string.match(key, "^(%w+)_(%w+)$")
+	if itemId and part then
+		creatures[itemId] = creatures[itemId] or {}
+		creatures[itemId][part] = "rbxassetid://" .. meshId
+	end
+end
+
 return table.freeze({
 	Models = ItemModels,
 	Roughness = ROUGHNESS,
+	Creatures = creatures, -- [предмет][часть] = rbxassetid меша
+	CreatureTurn = CREATURE_TURN,
+	ForceCreatureParts = false,
 })
