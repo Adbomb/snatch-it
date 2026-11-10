@@ -39,7 +39,7 @@ local DOG_MESHES: { [string]: number } = {
 local TRADER_MESHES: { [string]: number } = {}
 
 -- Крысиный король (D54): FBX и карты лежат локально (assets/models/Boss3_RatKing.fbx), импорт и загрузка пока запрещены
--- владельцем — части-заготовки цвета из скелета (Config/Boss3RatKingRig).
+-- владельцем — Part-версия по утверждённой модели (Config/Boss3RatKingParts, BossService).
 local RATKING_MESHES: { [string]: number } = {}
 
 local function ids(list: { [string]: number }): { [string]: string }

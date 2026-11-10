@@ -185,22 +185,39 @@ for _, item in index.items do
 		end
 	end
 	for i = 2, #axes do
-		check(math.abs(axes[i]:Dot(axes[1])) > 0.999, item.id .. ": колёса крутятся вокруг одной оси")
+		check(
+			math.abs(axes[i]:Dot(axes[1])) > 0.999,
+			item.id .. ": колёса крутятся вокруг одной оси"
+		)
 	end
 end
 local rat = CreatureRigs.ThreeHeadedRat
 check(
-	rat.Parts.HeadL.role == "head_angry" and rat.Parts.HeadC.role == "head_sleepy" and rat.Parts.HeadR.role == "head_silly",
+	rat.Parts.HeadL.role == "head_angry"
+		and rat.Parts.HeadC.role == "head_sleepy"
+		and rat.Parts.HeadR.role == "head_silly",
 	"трёхголовая крыса: три головы — три характера"
 )
 local prop = spinAxis(rat.Parts.Propeller)
-check(math.abs(math.deg(math.acos(prop:Dot(Vector3.yAxis))) - 26) < 0.5, "пропеллер: ось наклонена на 26°")
+check(
+	math.abs(math.deg(math.acos(prop:Dot(Vector3.yAxis))) - 26) < 0.5,
+	"пропеллер: ось наклонена на 26°"
+)
 local train = CreatureRigs.MonsterTrain
-check(train.Parts.WheelF.role == "bogie" and train.Parts.WheelB.role == "bogie", "поезд-монстр: тележки качаются")
-check(train.Parts.Jaw.role == "jaw_wide", "поезд-монстр: пасть открывается вниз и кусает")
+check(
+	train.Parts.WheelF.role == "bogie" and train.Parts.WheelB.role == "bogie",
+	"поезд-монстр: тележки качаются"
+)
+check(
+	train.Parts.Jaw.role == "jaw_wide",
+	"поезд-монстр: пасть открывается вниз и кусает"
+)
 local vault = CreatureRigs.CheeseVaultHeart
 local emperor = CreatureRigs.ThreeTailEmperor
-check(emperor.Parts.Crown.role == "crown" and emperor.Parts.Crown.parent == "Head", "император: корона за головой")
+check(
+	emperor.Parts.Crown.role == "crown" and emperor.Parts.Crown.parent == "Head",
+	"император: корона за головой"
+)
 local out, maxDoor, closed = {}, 0, false
 local heads = { HeadL = {}, HeadC = {}, HeadR = {} }
 for _, mode in { "Wander", "Catch", "Calm", "Held", "Flee" } do
@@ -220,12 +237,18 @@ for _, mode in { "Wander", "Catch", "Calm", "Held", "Flee" } do
 		end
 		CreatureAnim.Transforms(vault, 4242, t, mode, false, 0, out)
 		local l, r = out.DoorL, out.DoorR
-		check(l.UpVector.Y > 0.9999 and r.UpVector.Y > 0.9999, "створки — только вокруг вертикальных петель")
+		check(
+			l.UpVector.Y > 0.9999 and r.UpVector.Y > 0.9999,
+			"створки — только вокруг вертикальных петель"
+		)
 		local al = math.deg(math.atan2(l.LookVector.X, l.LookVector.Z) + math.pi) % 360
 		local ar = math.deg(math.atan2(r.LookVector.X, r.LookVector.Z) + math.pi) % 360
 		al = if al > 180 then al - 360 else al
 		ar = if ar > 180 then ar - 360 else ar
-		check(math.abs(al + ar) < 1e-3, "створки — навстречу друг другу, одновременно")
+		check(
+			math.abs(al + ar) < 1e-3,
+			"створки — навстречу друг другу, одновременно"
+		)
 		maxDoor = math.max(maxDoor, math.abs(al))
 		closed = closed or math.abs(al) > 90
 	end
@@ -250,8 +273,14 @@ local function fastest(list)
 	return best
 end
 check(fastest(heads.HeadL) > 2 * fastest(heads.HeadC), "злая голова кивает резче сонной")
-check(span(heads.HeadC, "X") > span(heads.HeadL, "X"), "сонная голова клюёт носом ниже злой")
-check(span(heads.HeadR, "Y") > 3 and span(heads.HeadR, "Z") > 3, "глупая голова болтается в разные стороны")
+check(
+	span(heads.HeadC, "X") > span(heads.HeadL, "X"),
+	"сонная голова клюёт носом ниже злой"
+)
+check(
+	span(heads.HeadR, "Y") > 3 and span(heads.HeadR, "Z") > 3,
+	"глупая голова болтается в разные стороны"
+)
 -- стражи сейфа поворачиваются к зрителю (справа — направо), не дальше 35°; без зрителя — оглядываются сами
 CreatureAnim.Transforms(vault, 4242, 1700000000.3, "Wander", false, 0, out, Vector3.new(5, 0, 5))
 local gl = math.deg(math.atan2(out.GuardL.LookVector.X, out.GuardL.LookVector.Z) + math.pi) % 360
@@ -259,5 +288,68 @@ check(gl > 25 and gl < 50, ("страж поворачивается к игро
 CreatureAnim.Transforms(vault, 4242, 1700000000.3, "Wander", false, 0, out, Vector3.new(-5, 0, -1))
 gl = math.deg(math.atan2(out.GuardL.LookVector.X, out.GuardL.LookVector.Z) + math.pi) % 360
 check(gl > 360 - 40 and gl < 360 - 30, ("страж не дальше 35° (%.1f°)"):format(gl))
+print("· Крысиный король: Part-версия по модели D54")
+do
+	local KingRig = Env.Require("ReplicatedStorage.Shared.Config.Boss3RatKingRig")
+	local KingParts = Env.Require("ReplicatedStorage.Shared.Config.Boss3RatKingParts")
+	local total = 0
+	for _, name in KingRig.Order do
+		local list = KingParts[name]
+		check(list ~= nil and #list > 0, "король." .. name .. ": есть детали")
+		-- габарит деталей части = габарит меша D54 (с выступами накладок ≤ 0.45): размер детали по её осям, а не по
+		-- осям Blender (ревью: высота и глубина были перепутаны)
+		local lo = Vector3.new(math.huge, math.huge, math.huge)
+		local hi = -lo
+		for _, spec in list or {} do
+			local half = spec[2] / 2
+			local r = spec[4]
+			local ext = if r
+				then Vector3.new(
+					math.abs(r[1]) * half.X + math.abs(r[2]) * half.Y + math.abs(r[3]) * half.Z,
+					math.abs(r[4]) * half.X + math.abs(r[5]) * half.Y + math.abs(r[6]) * half.Z,
+					math.abs(r[7]) * half.X + math.abs(r[8]) * half.Y + math.abs(r[9]) * half.Z
+				)
+				else half
+			lo = lo:Min(spec[1] - ext)
+			hi = hi:Max(spec[1] + ext)
+		end
+		local size = KingRig.Parts[name].size
+		local diff = (hi - lo) - size
+		check(
+			math.max(math.abs(diff.X), math.abs(diff.Y), math.abs(diff.Z)) <= 0.45,
+			("король.%s: габарит деталей = габарит части (%.2f)"):format(
+				name,
+				math.max(math.abs(diff.X), math.abs(diff.Y), math.abs(diff.Z))
+			)
+		)
+		for _, spec in list or {} do
+			total += 1
+			local s = spec[2]
+			check(s.X > 0.01 and s.Y > 0.01 and s.Z > 0.01, "король." .. name .. ": размер детали")
+			-- деталь не дальше габарита части (с запасом): нет «улетевших» блоков
+			local info = KingRig.Parts[name]
+			local d = (spec[1] - info.center).Magnitude
+			check(
+				d <= info.size.Magnitude / 2 + 1.5,
+				("король.%s: деталь в габарите части (%.2f)"):format(name, d)
+			)
+			local r = spec[4]
+			if r then
+				local x = Vector3.new(r[1], r[4], r[7])
+				local y = Vector3.new(r[2], r[5], r[8])
+				local z = Vector3.new(r[3], r[6], r[9])
+				check(
+					math.abs(x.Magnitude - 1) < 1e-3 and math.abs(y.Magnitude - 1) < 1e-3 and math.abs(x:Dot(y)) < 1e-3,
+					"король." .. name .. ": поворот без масштаба"
+				)
+				check(
+					x:Cross(y):Dot(z) > 0.999,
+					"король." .. name .. ": поворот без отражения"
+				)
+			end
+		end
+	end
+	check(total >= 150 and total <= 450, ("король: деталей %d (150–450)"):format(total))
+end
 print(("Итог: %d проверок, ошибок %d"):format(passed + failed, failed))
 process.exit(if failed == 0 then 0 else 1)

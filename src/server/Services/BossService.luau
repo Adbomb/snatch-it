@@ -3,7 +3,9 @@
 -- AlignPosition и AlignOrientation, владелец — сервер, поэтому все клиенты видят плавное движение. Состояние для
 -- анимаций — атрибуты модели: State и StateAt (время сервера начала), Moving, AttackSeq/AttackKind/AttackAt,
 -- HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
--- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета. Карты — копии шаблонов Server/Looks
+-- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета; у Крысиного короля — Part-версия по
+-- утверждённой модели D54 (Config/Boss3RatKingParts: невидимый сустав части и её детали на сварке, позы те же).
+-- Карты — копии шаблонов Server/Looks
 -- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модели есть у
 -- боссов 1 (пёс), 2 (торговец) и 3 (Крысиный король, D55); у остальных зон боя нет.
 -- Бой и последовательность состояний ведёт BattleService. Зависит от AssetService, CollectionService, Config,
@@ -18,6 +20,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
 local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
 local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
+local Boss3RatKingParts = require(ReplicatedStorage.Shared.Config.Boss3RatKingParts)
 local Boss3RatKingRig = require(ReplicatedStorage.Shared.Config.Boss3RatKingRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local Server = ServerScriptService.Server
@@ -38,6 +41,9 @@ export type Boss = {
 
 local TAG = "Boss"
 local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig } -- 3 — D55 (D54)
+-- Part-версия по утверждённой модели (пока меши не загружены): детали каждой части. Без неё — блок по габариту части.
+local PART_BLOCKS: { [number]: { [string]: { any } } } = { [3] = Boss3RatKingParts }
+local BLOCK_NAME = "Block"
 
 local bosses: { [number]: Boss } = {}
 
@@ -76,6 +82,35 @@ local function makePart(zone: number, cfg: BossModels.BossModel, name: string, i
 		part.Color = Color3.fromHex(info.color)
 		part.TopSurface = Enum.SurfaceType.Smooth
 		part.BottomSurface = Enum.SurfaceType.Smooth
+		local blocks = PART_BLOCKS[zone] and PART_BLOCKS[zone][name]
+		if blocks and #blocks > 0 then
+			-- Part-версия: сама часть — невидимый сустав по габариту, видимое — её детали на сварке
+			part.Transparency = 1
+			part.CastShadow = false
+			local toPart = (CFrame.new(info.center) * CFrame.Angles(0, math.rad(cfg.turn), 0)):Inverse()
+			for _, spec in blocks do
+				local block = Instance.new("Part")
+				block.Name = BLOCK_NAME
+				block.Size = spec[2]
+				block.Color = Color3.fromHex(spec[3])
+				block.Material = Enum.Material.Plastic
+				block.TopSurface = Enum.SurfaceType.Smooth
+				block.BottomSurface = Enum.SurfaceType.Smooth
+				block.Anchored = false
+				block.Massless = true
+				block.CanCollide = false
+				block.CanQuery = false
+				block.CanTouch = false
+				local p, r = spec[1], spec[4]
+				local offset = if r then CFrame.new(p.X, p.Y, p.Z, table.unpack(r)) else CFrame.new(p)
+				local weld = Instance.new("Weld")
+				weld.Part0 = part
+				weld.Part1 = block
+				weld.C0 = toPart * offset -- от точки вращения части (оси модели) к её центру с поворотом меша
+				weld.Parent = block
+				block.Parent = part
+			end
+		end
 	end
 	part.Name = name
 	part.Anchored = false
