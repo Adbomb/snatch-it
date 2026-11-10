@@ -8,6 +8,10 @@
 -- том же кадре их пропускает), остальные плавно возвращаются. Вышел из музея, сменился персонаж, перестроился музей —
 -- всё возвращается. Детали, которые прячет другой код (створки решётки хранилища у владельца), не трогаются; пол и
 -- ступени ниже ног персонажа не гаснут никогда — иначе камера Roblox уходит под пол.
+-- С ношей над головой (крупные существа босса 3): гаснут и детали между камерой и ношей (центр и верх), и детали,
+-- сквозь которые ноша проходит (крыша галереи); в галерее камера не дальше UITokens.MuseumCamera.CarryGalleryZoom,
+-- на выходе из галереи — снова выбранное игроком расстояние. Blocked — для подписей экспонатов (ItemLabelController):
+-- закрыт ли отрезок непрозрачной деталью здания этого музея.
 -- Зависит от Config/MuseumLayout, Config/UITokens.
 
 local Players = game:GetService("Players")
@@ -167,6 +171,80 @@ local function restoreAll()
 	end
 end
 
+-- Ноша над головой: деталь предмета, приваренная к корню персонажа (CarryService). Ищем по суставам корня, пока
+-- сварка не пришла — не чаще CarryRescan.
+local carried: BasePart? = nil
+local carriedId: any = nil
+local lastScan = 0
+local function carriedPart(root: BasePart): BasePart?
+	local id = player:GetAttribute("CarryingItemId")
+	if id == nil then
+		carried, carriedId = nil, nil
+		return nil
+	end
+	if carried and carried.Parent and carriedId == id then
+		return carried
+	end
+	if os.clock() - lastScan < T.CarryRescan then
+		return nil
+	end
+	lastScan = os.clock()
+	carried, carriedId = nil, id
+	for _, joint in root:GetJoints() do
+		if joint:IsA("WeldConstraint") then
+			local other = if joint.Part0 == root then joint.Part1 else joint.Part0
+			if other and other:GetAttribute("ItemId") == id then
+				carried = other
+				break
+			end
+		end
+	end
+	return carried
+end
+
+-- В галерее (за стенами зала по оси x участка).
+local function inGallery(plot: Model, at: Vector3): boolean
+	local origin = plot:GetAttribute("FloorOrigin")
+	return typeof(origin) == "CFrame" and math.abs(origin:PointToObjectSpace(at).X) > L.Hall.HalfWidth
+end
+
+-- Камера ближе в галерее с ношей: прежний предел и выбранное расстояние, чтобы вернуть их на выходе.
+local zoomCap: { max: number, distance: number }? = nil
+local function setGalleryZoom(on: boolean, camera: Camera?)
+	if on and not zoomCap and camera then
+		zoomCap = { max = player.CameraMaxZoomDistance, distance = wantedDistance(camera) }
+		player.CameraMaxZoomDistance = math.min(player.CameraMaxZoomDistance, T.CarryGalleryZoom)
+	elseif not on and zoomCap then
+		local saved = zoomCap
+		zoomCap = nil
+		player.CameraMaxZoomDistance = saved.max
+		if not player:GetAttribute("Knocked") and saved.distance > T.CarryGalleryZoom then
+			-- вернуть отдаление игрока: на кадр поднять нижний предел до прежнего расстояния
+			local min = player.CameraMinZoomDistance
+			player.CameraMinZoomDistance = math.min(saved.distance, saved.max)
+			task.defer(function()
+				player.CameraMinZoomDistance = min
+			end)
+		end
+	end
+end
+
+-- Закрыт ли отрезок a → b непрозрачной деталью здания музея, в котором стоит точка b (подписи экспонатов).
+function MuseumCameraController.Blocked(a: Vector3, b: Vector3): boolean
+	local plot = plotAt(b)
+	local cache = plot and cacheOf(plot)
+	if not cache then
+		return false
+	end
+	for _, box in cache.boxes do
+		local part = box.part
+		if part.Parent and part.Transparency < 0.5 and part.LocalTransparencyModifier < 0.5 and hits(box, a, b) then
+			return true
+		end
+	end
+	return false
+end
+
 local function step(dt: number)
 	local camera = workspace.CurrentCamera
 	local character = player.Character
@@ -183,9 +261,32 @@ local function step(dt: number)
 		local far = focus - look * wantedDistance(camera)
 		local right = camera.CFrame.RightVector * T.Probe
 		local up = camera.CFrame.UpVector * T.Probe
+		local segments = {}
 		for _, ends in { far, far + right, far - right, far + up, far - up } do
+			table.insert(segments, { focus, ends })
+		end
+		local load = carriedPart(root)
+		if load then
+			-- ноша: от камеры к её центру и верху; и сама ноша сквозь детали (вертикали по центру и углам)
+			local c, h = load.Position, load.Size.Y / 2
+			table.insert(segments, { far, c })
+			table.insert(segments, { far, c + Vector3.new(0, h, 0) })
+			local hx, hz = load.Size.X / 2, load.Size.Z / 2
+			for _, off in
+				{
+					Vector3.zero,
+					Vector3.new(hx, 0, hz),
+					Vector3.new(-hx, 0, hz),
+					Vector3.new(hx, 0, -hz),
+					Vector3.new(-hx, 0, -hz),
+				}
+			do
+				table.insert(segments, { c + off - Vector3.new(0, h, 0), c + off + Vector3.new(0, h, 0) })
+			end
+		end
+		for _, seg in segments do
 			for _, box in cache.boxes do
-				if not want[box.part] and box.top > feet and box.part.Parent and hits(box, focus, ends) then
+				if not want[box.part] and box.top > feet and box.part.Parent and hits(box, seg[1], seg[2]) then
 					-- чужая локальная прозрачность (спрятанные створки) — не наша
 					local own = faded[box.part]
 					if own ~= nil or box.part.LocalTransparencyModifier < 0.001 then
@@ -195,6 +296,11 @@ local function step(dt: number)
 			end
 		end
 	end
+	local gallery = false
+	if cache and root and plot and carriedPart(root) then
+		gallery = inGallery(plot, root.Position)
+	end
+	setGalleryZoom(gallery, camera)
 	for part in want do
 		if (faded[part] or 0) < T.Fade then
 			setFade(part, T.Fade) -- сразу: камера в этом же кадре не считает деталь преградой

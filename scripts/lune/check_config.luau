@@ -223,6 +223,65 @@ do
 	)
 	local capped = LabelLayout.Place(stack, 4, 60)
 	check(math.max(table.unpack(capped)) <= 60, "подъём не больше предела")
+	-- визуальный QA босса 3: фигура босса перед подписью — подпись над ней или прячется; позади подписи — не мешает;
+	-- «Z z z» (глубина −1) ставится первым и не двигается; таймер вверху — запретная зона
+	local label = { x = 300, y = 300, w = 180, h = 46, depth = 40 }
+	local king = { x0 = 250, x1 = 380, y0 = 220, y1 = 500, depth = 25 }
+	local lift, hidden = LabelLayout.Clear(label, 0, { king }, 6, 400)
+	check(
+		not hidden and math.abs((label.y + label.h / 2 - lift) - (king.y0 - 6)) < 1e-6,
+		"подпись поднята над королём"
+	)
+	local _, tooHigh = LabelLayout.Clear(label, 0, { king }, 6, 50)
+	check(
+		tooHigh,
+		"слишком высоко над королём — подпись прячется, а не висит на нём"
+	)
+	local behind = { x0 = 250, x1 = 380, y0 = 220, y1 = 500, depth = 60 }
+	local same, notHidden = LabelLayout.Clear(label, 0, { behind }, 6, 50)
+	check(same == 0 and not notHidden, "король позади подписи ей не мешает")
+	local zzz = { x = 300, y = 300, w = 90, h = 60, depth = -1 }
+	local near = { x = 310, y = 305, w = 180, h = 46, depth = 20 }
+	local zl = LabelLayout.Place({ zzz, near }, 4, 1000)
+	check(
+		zl[1] == 0 and zl[2] > 0 and LabelLayout.Overlaps({ zzz, near }, zl) == 0,
+		"подпись над «Z z z», он на месте"
+	)
+	local timer = { x0 = 800, x1 = 1100, y0 = 40, y1 = 160, depth = 0 }
+	check(
+		LabelLayout.InZone({ x = 950, y = 150, w = 160, h = 40, depth = 30 }, 0, { timer }),
+		"подпись под таймером"
+	)
+	check(
+		not LabelLayout.InZone({ x = 950, y = 260, w = 160, h = 40, depth = 30 }, 0, { timer }),
+		"ниже таймера — свободно"
+	)
+	-- Arrange: без препятствий — как Place; две подписи за королём поднимаются над ним и не налезают друг на друга
+	-- (кадр со входа в «Подземку»); слишком высоко — прячется и места не занимает
+	local plain =
+		{ { x = 100, y = 100, w = 160, h = 40, depth = 10 }, { x = 120, y = 110, w = 160, h = 40, depth = 20 } }
+	local placeLifts = LabelLayout.Place(plain, 4, 200)
+	local arrangeLifts = LabelLayout.Arrange(plain, 4, 200, {}, 6, 400)
+	check(
+		placeLifts[1] == arrangeLifts[1] and placeLifts[2] == arrangeLifts[2],
+		"Arrange без препятствий = Place"
+	)
+	local pair =
+		{ { x = 280, y = 320, w = 180, h = 46, depth = 40 }, { x = 330, y = 330, w = 180, h = 46, depth = 45 } }
+	local pl, ph = LabelLayout.Arrange(pair, 4, 200, { king }, 6, 400)
+	check(
+		not ph[1]
+			and not ph[2]
+			and LabelLayout.Overlaps(pair, pl) == 0
+			and pair[1].y + pair[1].h / 2 - pl[1] <= king.y0 - 6 + 1e-6
+			and pair[2].y + pair[2].h / 2 - pl[2] <= king.y0 - 6 + 1e-6,
+		"две подписи над королём — без наложения"
+	)
+	local hl, hh = LabelLayout.Arrange(pair, 4, 200, { king }, 6, 50)
+	check(
+		hh[1] and hh[2] and hl[1] == 0,
+		"слишком высоко над королём — обе спрятаны"
+	)
 end
 
 do
@@ -297,6 +356,42 @@ do
 			)
 		)
 	end
+end
+
+-- Токены интерфейса, которые читают клиентские модули: `local x = UITokens.Раздел` и дальше `x.Имя` — каждое имя
+-- есть в разделе (визуальный QA босса 3: пропавший ItemLabel.Update ронял раскладку подписей каждый кадр).
+do
+	local fs = require("@lune/fs")
+	local missing, used = {}, 0
+	local function scan(dir: string)
+		for _, name in fs.readDir(dir) do
+			local path = dir .. "/" .. name
+			if fs.isDir(path) then
+				scan(path)
+			elseif string.match(name, "%.luau$") then
+				local source = fs.readFile(path)
+				for alias, section in string.gmatch(source, "local%s+([%a_][%w_]*)%s*=%s*UITokens%.([%a_][%w_]*)%s*\n") do
+					local tokens = UITokens[section]
+					if type(tokens) == "table" then
+						for field in string.gmatch(source, "%f[%w_]" .. alias .. "%.(%u[%w_]*)") do
+							used += 1
+							if tokens[field] == nil then
+								table.insert(missing, ("%s: %s.%s (UITokens.%s)"):format(path, alias, field, section))
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	scan("src/client")
+	check(
+		#missing == 0,
+		("токены интерфейса в клиентских модулях: %d обращений, нет в UITokens: %s"):format(
+			used,
+			if #missing == 0 then "—" else table.concat(missing, ", ")
+		)
+	)
 end
 
 if failed > 0 then
