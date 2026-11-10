@@ -11,15 +11,18 @@
 - рамка (обод уха, медальона) — бруски вдоль сторон.
 Скругления фасок не переносятся (блоки с острыми рёбрами). Цвет — цвет детали в модели (palette art.paint).
 Совпадающих граней у разных деталей нет: у пересекающихся деталей (и одного цвета) одинаково смотрящие грани ближе
-OVERLAY (в том числе наклонённые — ухо, корона) разводятся на OVERLAY (CLAUDE.md: ≥ 0.1) сдвигом грани меньшей
-детали не больше чем на OVERLAY — см. separate().
+OVERLAY (в том числе наклонённые — ухо, корона) разводятся сдвигом грани меньшей детали — см. separate(): внутри
+части — на OVERLAY (CLAUDE.md: ≥ 0.1), между частями — на FALLBACK_GAP в покое и во всех позах, что держатся
+(assets/models/Boss3_RatKing.poses.json — scripts/lune/export_king_poses.luau по Shared/BossAnim; при смене поз
+или скелета — выгрузить заново). flush_pairs() после разведения считает видимые пары вровень (должно быть 0).
 
 Пишет assets/models/Boss3_RatKing.parts.json: часть → [{c, s, col, r?, shape?}] — центр от точки вращения части и
 размер в стадах (оси Roblox, лицо +Z), поворот r — 9 чисел по строкам (если не единичный), shape "Cylinder" — круг.
 Кадры <рендеры>/king_<ракурс>_{fbx,blocks}.png: FBX с картами D54 и детали с одного ракурса (лист сравнения —
 assets/concepts/d55/boss3_visual_qa/11_king_d54_fbx_vs_parts.jpg).
 Запуск: blender --background --factory-startup --python scripts/blender/boss_parts.py -- <репо> <рендеры>
-Зависит от art_style.py и boss3_ratking.py (сборка фигур).
+Зависит от art_style.py и boss3_ratking.py (сборка фигур), Boss3_RatKing.poses.json (позы; без него — запасной
+путь POSE_MARGIN).
 """
 
 import inspect
@@ -205,8 +208,54 @@ for rec in records:
 
 OVERLAY = 0.1  # стадов (CLAUDE.md): накладка другого цвета выступает не меньше этого — иначе грани мерцают
 FACE_MIN = 0.05  # стадов: перекрытие граней меньше этого по одной из осей не считается (как в World/FaceCheck)
-PASSES = 3  # проходов разведения граней
+PASSES = 6  # проходов разведения граней (сдвиг одной грани меняет перекрытия других)
 PARALLEL = 1 - 1e-4  # |cos| осей: грани параллельны (наклонённые детали уха, короны, хвоста — тоже)
+# Разведение — с запасом к проверке: перекрытие от SEP_OVERLAP и почти параллельные до SEP_PARALLEL (≈ 1°) — иначе
+# пары на самом пороге (полоска перекрытия ровно 0.05 у обода уха) одна проверка видит, другая — нет (округления);
+# полоски уже 0.04 (дырка сыра на 0.03 в сыре) не мерцают заметно и не стоят искажения детали
+SEP_OVERLAP = 0.04  # разведение: чуть ниже FACE_MIN — пары на самом пороге (обод уха 0.0499…0.0501)
+CHECK_OVERLAP = 0.045  # проверка «с запасом» — между разведением и FaceCheck, чтобы пара на пороге не мигала
+KEEP = 0.5  # деталь вдоль оси не сужается больше чем вдвое (дырки сыра медальона не превращаются в щели)
+FALLBACK_GAP = FACE_MIN + 0.005  # запасной зазор: с округлением центров и размеров до 4 знаков — не ниже FACE_MIN
+# Детали разных частей двигаются друг относительно друга: грани, лежащие в одной плоскости, но рядом (до POSE_MARGIN),
+# в позе могут перекрыться — плоскость грани, параллельной оси поворота сустава, при повороте не меняется (мантия во
+# сне поворачивается вокруг x — её грани по x сходятся с гранями сумки; бровь опускается на блики глаз в победе)
+POSE_MARGIN = 0.5  # запасной путь — если нет выгрузки поз (scripts/lune/export_king_poses.luau)
+SEP_PARALLEL = 1 - 1.5e-4
+POSES_PATH = os.path.join(REPO, "assets", "models", "Boss3_RatKing.poses.json")
+POSE_REACH = 4.0  # стадов: дальше этого в покое детали разных частей в позах не сходятся — не проверяем
+
+
+def _load_poses():
+    """Позы из игры (Shared/BossAnim → export_king_poses.luau), только те, что держатся (held): поза → часть → 4×4 в
+    осях модели (деталь x в позе — D · x). None — выгрузки нет."""
+    if not os.path.exists(POSES_PATH):
+        return None
+    raw = json.load(open(POSES_PATH, encoding="utf-8"))
+    held = set(raw.get("held") or raw["poses"].keys())
+    data = {name: v for name, v in raw["poses"].items() if name in held}
+    out = {}
+    for name, parts_ in data.items():
+        out[name] = {}
+        for part, c in parts_.items():
+            out[name][part] = Matrix(((c[3], c[4], c[5], c[0]), (c[6], c[7], c[8], c[1]),
+                                      (c[9], c[10], c[11], c[2]), (0, 0, 0, 1)))
+    return out
+
+
+POSES = _load_poses()
+_RELATIVE = {}
+
+
+def _relative(p, q):
+    """Положение части q в осях части p: в покое и в каждой позе (D_p⁻¹ · D_q)."""
+    key = (p, q)
+    if key not in _RELATIVE:
+        mats = [Matrix.Identity(4)]
+        for pose in POSES.values():
+            mats.append(pose[p].inverted() @ pose[q])
+        _RELATIVE[key] = mats
+    return _RELATIVE[key]
 
 
 def _boxes(parts):
@@ -238,19 +287,19 @@ def _center(b):
     return c
 
 
-def _along(b, a):
-    """Отрезок коробки вдоль оси a и номер её параллельной a оси (None — такой оси нет)."""
+def _along(b, a, parallel=PARALLEL):
+    """Отрезок коробки вдоль оси a (центр — проекция её центра на a, ± полуразмер по её оси, параллельной a) и номер
+    этой оси (None — такой оси нет). Проекция центра, а не координата по своей оси: у почти параллельных (кольцо хвоста
+    наклонено на 0.6°) координаты по разным осям расходятся на |центр| × угол."""
     for j, axis in enumerate(b["axes"]):
-        d = axis.dot(a)
-        if d > PARALLEL:
-            return list(b["ext"][j]), j
-        if d < -PARALLEL:
-            lo, hi = b["ext"][j]
-            return [-hi, -lo], j
+        if abs(axis.dot(a)) > parallel:
+            mid = _center(b).dot(a)
+            half = (b["ext"][j][1] - b["ext"][j][0]) / 2
+            return [mid - half, mid + half], j
     return None, None
 
 
-def _overlap_in_plane(b, k, o, j):
+def _overlap_in_plane(b, k, o, j, least=FACE_MIN - 1e-3):
     """Перекрываются ли грани b (нормаль — ось k) и o (ось j) в своей плоскости больше чем на FACE_MIN по каждой из
     разделяющих осей (прямоугольники в плоскости могут быть повёрнуты друг к другу)."""
     cb, co = _center(b), _center(o)
@@ -262,25 +311,126 @@ def _overlap_in_plane(b, k, o, j):
         lo = max(cb.dot(w) - rb, co.dot(w) - ro)
         hi = min(cb.dot(w) + rb, co.dot(w) + ro)
         # с запасом 1e-3: в Roblox 0.05 превращается в 0.0500001, и FaceCheck пару видит
-        if hi - lo <= FACE_MIN - 1e-3:
+        if hi - lo <= least:
             return False
     return True
 
 
-def _faces(b, k, side, others):
-    """Параллельные грани той же стороны у деталей others, перекрытые с гранью b: (координата вдоль оси k детали b,
-    та же часть, тот же цвет, одна из деталей — веко)."""
-    a = b["axes"][k]
+def _moved(o, m):
+    """Коробка o, перенесённая матрицей m (поза): оси и отрезки вдоль новых осей."""
+    r = m.to_3x3()
+    c = m @ _center(o)
+    axes = [(r @ a).normalized() for a in o["axes"]]
+    ext = []
+    for k, a in enumerate(axes):
+        half = (o["ext"][k][1] - o["ext"][k][0]) / 2
+        mid = c.dot(a)
+        ext.append([mid - half, mid + half])
+    return {"axes": axes, "ext": ext, "radius": o["radius"], "part": o["part"], "col": o["col"]}
+
+
+def _scene(boxes):
+    """Для каждой части P и каждой позы (0 — покой, дальше — POSES): все коробки в осях части P — пары (коробка в позе,
+    исходная). Своя часть и покой — как есть, другие части в позе — перенесены (части двигаются друг относительно
+    друга: мантия во сне, веко под надбровьем в бою). Пересчитывается каждый проход: грани сдвигаются."""
+    count = 1 + (len(POSES) if POSES else 0)
+    scene = {}
+    for p in sorted({b["part"] for b in boxes}):
+        per = []
+        for i in range(count):
+            lst = []
+            for o in boxes:
+                if i == 0 or o["part"] == p:
+                    lst.append((o, o))
+                else:
+                    lst.append((_moved(o, _relative(p, o["part"])[i]), o))
+            per.append(lst)
+        scene[p] = per
+    return scene
+
+
+def _near(b, scene):
+    """Коробки рядом с b в каждой позе: для пар и укрытие при проверке видимости (своя часть — тоже)."""
     cb = _center(b)
     out = []
-    for o in others:
-        if (_center(o) - cb).length > b["radius"] + o["radius"] + OVERLAY:
-            continue
-        seg, j = _along(o, a)
-        if seg is None or not _overlap_in_plane(b, k, o, j):
-            continue
-        lid = o["part"].startswith("Eyelid") or b["part"].startswith("Eyelid")
-        out.append((seg[side], o["part"] == b["part"], o["col"] == b["col"], lid))
+    for i, lst in enumerate(scene[b["part"]]):
+        near = []
+        for v, src in lst:
+            if src is b:
+                continue
+            if (_center(v) - cb).length <= b["radius"] + v["radius"] + 5 * OVERLAY:
+                near.append((v, src))
+        out.append(near)
+    return out
+
+
+def _inside(p, w):
+    cw = _center(w)
+    for q in range(3):
+        if abs((p - cw).dot(w["axes"][q])) >= (w["ext"][q][1] - w["ext"][q][0]) / 2 - 1e-3:
+            return False
+    return True
+
+
+def _visible(b, k, side, v, j, cover):
+    """Видна ли пара граней (как World/FaceCheck): точки общей части граней — сетка 5 × 5 по меньшей из них внутри
+    большей — чуть наружу (0.03, обе смотрят в одну сторону) не внутри третьих коробок cover (в той же позе).
+    Симметрично: не зависит от того, какая деталь первая."""
+    n = b["axes"][k] * (-1 if side == 0 else 1)
+
+    def face(box, axis):
+        c = _center(box)
+        half = [(box["ext"][q][1] - box["ext"][q][0]) / 2 for q in range(3)]
+        sign = 1 if box["axes"][axis].dot(n) > 0 else -1
+        fc = c + box["axes"][axis] * (sign * half[axis])
+        inplane = [(box["axes"][q], half[q]) for q in range(3) if q != axis]
+        return fc, inplane
+
+    fb, ib = face(b, k)
+    fv, iv = face(v, j)
+    small, big = ((fb, ib), (fv, iv)) if ib[0][1] * ib[1][1] <= iv[0][1] * iv[1][1] else ((fv, iv), (fb, ib))
+    (fs, ((u1, h1), (u2, h2))), (fl, il) = small, big
+    for fu in (-0.8, -0.4, 0, 0.4, 0.8):
+        for fw in (-0.8, -0.4, 0, 0.4, 0.8):
+            p = fs + u1 * (h1 * fu) + u2 * (h2 * fw)
+            if any(abs((p - fl).dot(u)) > h for u, h in il):
+                continue
+            probe = p + n * 0.03
+            if not any(_inside(probe, c) for c, _ in cover if c is not v and c is not b):
+                return True
+    return False
+
+
+def _faces(b, k, side, near, mode="sep", deferred=None):
+    """Параллельные грани той же стороны у деталей рядом (near из _near — в покое и в позах), перекрытые с гранью b
+    и видимые: (координата вдоль оси k детали b, та же часть, тот же цвет, одна из деталей — веко, (часть и цвет
+    другой детали)). deferred — id деталей, с которыми сравнивать (большие при разведении). Пары дальше 0.35 от
+    грани ни на что не влияют (сдвиг ≤ 0.2, зазор 0.1) — видимость для них не считается."""
+    a = b["axes"][k]
+    cur = b["ext"][k][side]
+    least = {"strict": FACE_MIN - 1e-3, "check": CHECK_OVERLAP, "sep": SEP_OVERLAP}[mode]
+    parallel = PARALLEL if mode == "strict" else SEP_PARALLEL
+    out = []
+    for i, lst in enumerate(near):
+        for v, src in lst:
+            if deferred is not None and id(src) not in deferred:
+                continue
+            if i > 0 and src["part"] == b["part"]:
+                continue  # своя часть в позе стоит так же, как в покое: пары — только в покое
+            seg, j = _along(v, a, parallel)
+            if seg is None or abs(seg[side] - cur) > 0.35:
+                continue
+            gap = least
+            if mode == "sep" and src["part"] != b["part"] and POSES is None:
+                gap = -POSE_MARGIN  # без выгрузки поз: разные части рядом в плоскости — тоже пара (сойдутся в позе)
+            if not _overlap_in_plane(b, k, v, j, gap):
+                continue
+            # видимость — только у пар разных частей в позах (веко ездит сквозь голову: закрытые совпадения не мешают);
+            # в покое и внутри части разводятся все пары, и закрытые тоже — так надёжнее эвристики видимости
+            if i > 0 and src["part"] != b["part"] and not _visible(b, k, side, v, j, lst):
+                continue
+            lid = src["part"].startswith("Eyelid") or b["part"].startswith("Eyelid")
+            out.append((seg[side], src["part"] == b["part"], src["col"] == b["col"], lid, (src["part"], src["col"])))
     return out
 
 
@@ -293,28 +443,44 @@ def separate(parts):
     наружу (накладка выступает). У разных частей грань уходит только внутрь: части двигаются друг относительно друга,
     выступ прошёл бы сквозь соседа (блик глаза сквозь закрытое веко). Детали одного цвета тоже разводятся (пупырышки
     LegoSquares на совпадающих гранях мерцают и при одном цвете), но только наружу: внутрь — вырез или щель, если
-    большая деталь закрывает меньшую не целиком. Если места на OVERLAY нет, а грань вровень (ближе FACE_MIN), —
-    хотя бы на FACE_MIN в любую сторону (пара с веком — только внутрь). Перекрытие граней меньше FACE_MIN по одной из
+    большая деталь закрывает меньшую не целиком. Веки — последними и в любую сторону (накладка поверх головы).
+    Между разными частями хватает FALLBACK_GAP (они двигаются, совпадение случайное), внутри части — OVERLAY.
+    Если места на OVERLAY нет, а грань вровень (ближе FACE_MIN), — хотя бы на FALLBACK_GAP в любую сторону (пара с
+    веком — только внутрь). Перекрытие граней меньше FACE_MIN по одной из
     осей не считается (как в World/FaceCheck).
     Возвращает (сдвинуто граней, осталось ближе OVERLAY, осталось вровень)."""
     boxes = _boxes(parts)
-    order = sorted(boxes, key=lambda b: math.prod(x[1] - x[0] for x in b["start"]), reverse=True)
+
+    def rank_box(b):
+        # веки — последними: накладка поверх глаза и головы (бровь в победе ложится на блик), двигаются они
+        lid = 1 if b["part"].startswith("Eyelid") else 0
+        return lid, -math.prod(x[1] - x[0] for x in b["start"])
+
+    order = sorted(boxes, key=rank_box)
     near_left = flush_left = 0
     for rnd in range(PASSES):  # ещё проход: сдвиг одной грани меняет перекрытие других (верх бруска → его бок)
+        scene = _scene(order)  # все детали в осях каждой части — в покое и в позах
         for idx, b in enumerate(order):
+            around = _near(b, scene)
+            deferred = {id(o) for o in order[:idx]}  # грани больших уже на местах
             for k in range(3):
                 for side in (0, 1):  # грани смотрят в одну сторону: обе «нижние» или обе «верхние» вдоль оси
-                    faces = _faces(b, k, side, order[:idx])
+                    faces = _faces(b, k, side, around, "sep", deferred)
                     cur = b["ext"][k][side]
-                    near = [(own, same, lid) for f, own, same, lid in faces if abs(cur - f) < OVERLAY - 1e-4]
+                    # зазор: внутри части — OVERLAY (накладка выступает, CLAUDE.md), между частями — FALLBACK_GAP
+                    # (они двигаются друг относительно друга, совпадение случайное: лишь бы не вровень)
+                    near = [(own, same, lid) for f, own, same, lid, _ in faces
+                            if abs(cur - f) < (OVERLAY if own else FALLBACK_GAP) - 1e-4]
                     if not near:
                         continue
                     orig = b["start"][k][side]  # сдвиг — от исходного места грани
                     own = all(o for o, _, _ in near)
                     same = all(c for _, c, _ in near)
                     lid = any(v for _, _, v in near)
+                    own_lid = b["part"].startswith("Eyelid")  # грань самого века: в любую сторону
                     out = -1 if side == 0 else 1
                     other = b["ext"][k][1 - side]
+                    least = max(0.02, KEEP * (b["start"][k][1] - b["start"][k][0]))
 
                     def fits(p, gap, inward_only, outward_only, limit):
                         if abs(p - orig) > limit + 1e-4:
@@ -323,27 +489,30 @@ def separate(parts):
                             return False
                         if outward_only and (p - orig) * out < -1e-4:
                             return False
-                        if (other - p if side == 0 else p - other) < 0.02:
+                        if (other - p if side == 0 else p - other) < least:
                             return False
-                        return all(abs(p - f) >= gap - 1e-4 for f, _, _, _ in faces)
+                        return all(abs(p - f) >= (gap if own_f else min(gap, FALLBACK_GAP)) - 1e-4
+                                   for f, own_f, _, _, _ in faces)
 
                     def rank(p):  # ближе к исходному; при равенстве — наружу; дальше — по месту (однозначно)
                         return round(abs(p - orig), 6), 0 if (p - orig) * out > 0 else 1, round(p, 6)
 
                     best = None
-                    cands = {f + d * OVERLAY for f, _, _, _ in faces for d in (-1, 1)}
+                    cands = {f + d * (OVERLAY if own_f else FALLBACK_GAP)
+                             for f, own_f, _, _, _ in faces for d in (-1, 1)}
                     for p in sorted(cands, key=rank):
-                        if fits(p, OVERLAY, not own, own and same, OVERLAY if own else 2 * OVERLAY):
+                        if fits(p, OVERLAY, not own and not own_lid, own and same, OVERLAY if own else 2 * OVERLAY):
                             best = p
                             break
-                    flush = min(abs(cur - f) for f, _, _, _ in faces) < FACE_MIN - 1e-4
+                    flush = min(abs(cur - f) for f, _, _, _, _ in faces) < FACE_MIN - 1e-4
                     if best is None and flush:
                         # места на OVERLAY нет (грань между двумя соседними): хотя бы FACE_MIN — так World/FaceCheck
                         # пару не видит; в любую сторону, до 2 × OVERLAY, кроме пары с веком — только внутрь (блик
                         # глаза сквозь закрытое веко); у остальных разных частей выступ ≤ FACE_MIN ничего не пробивает
-                        cands = {f + d for f, _, _, _ in faces for d in (-OVERLAY, OVERLAY, -FACE_MIN, FACE_MIN)}
+                        steps = (-OVERLAY, OVERLAY, -FALLBACK_GAP, FALLBACK_GAP)
+                        cands = {f + d for f, _, _, _, _ in faces for d in steps}
                         for p in sorted(cands, key=rank):
-                            if fits(p, FACE_MIN, lid and not own, False, 2 * OVERLAY):
+                            if fits(p, FALLBACK_GAP, lid and not own and not own_lid, False, 2 * OVERLAY):
                                 best = p
                                 break
                     if best is None:
@@ -371,35 +540,41 @@ def separate(parts):
     return moved, near_left, flush_left
 
 
-def flush_pairs(parts):
-    """Проверка: пары параллельных граней (любой поворот) ближе FACE_MIN с перекрытием в плоскости (и примеры)."""
+def flush_pairs(parts, strict=False):
+    """Проверка: видимые пары параллельных граней (любой поворот; в покое и в позах, что держатся) ближе FACE_MIN с
+    перекрытием в плоскости (и примеры); strict — пороги World/FaceCheck, иначе — с запасом, как при разведении."""
     boxes = _boxes(parts)
+    scene = _scene(boxes)
     count = 0
-    examples = []
+    examples = {}  # пара граней → в скольких позах вровень
     for i, b in enumerate(boxes):
+        around = _near(b, scene)
+        deferred = {id(o) for o in boxes[i + 1:]}
         for k in range(3):
             for side in (0, 1):
                 cur = b["ext"][k][side]
-                for f, _, _, _ in _faces(b, k, side, boxes[i + 1:]):
+                for f, _, _, _, who in _faces(b, k, side, around, "strict" if strict else "check", deferred):
                     if abs(cur - f) < FACE_MIN - 1e-4:
                         count += 1
-                        if len(examples) < 8:
-                            examples.append((b["part"], b["col"], k, side, round(cur, 3), round(f, 3)))
+                        key = (b["part"], b["col"], k, side, round(cur, 3)) + who
+                        examples[key] = examples.get(key, 0) + 1
     return count, examples
 
 
 flush_before, _ = flush_pairs(parts)
 moved, near_left, flush_left = separate(parts)
 flush_after, flush_examples = flush_pairs(parts)
+flush_strict, _ = flush_pairs(parts, strict=True)
 total = sum(len(v) for v in parts.values())
 with open(DST, "w", encoding="utf-8", newline="\n") as f:
     json.dump({"source": "scripts/blender/boss3_ratking.py", "figures": len(records), "blocks": total,
                "parts": parts}, f, ensure_ascii=False, indent=1)
 print(f"KING_PARTS фигур {len(records)} → деталей {total}, отступов граней {moved}; граней ближе OVERLAY осталось "
-      f"{near_left}, вровень (< FACE_MIN) — {flush_left}; пар вровень: было {flush_before}, стало {flush_after}",
+      f"{near_left}, вровень (< FACE_MIN) — {flush_left}; пар вровень (с запасом): было {flush_before}, стало "
+      f"{flush_after}; по порогам FaceCheck — {flush_strict}",
       flush=True)
-for ex in flush_examples:
-    print("KING_FLUSH", ex, flush=True)
+for ex, n in sorted(flush_examples.items(), key=lambda x: -x[1]):
+    print("KING_FLUSH", ex, "поз:", n, flush=True)
 for name in RIG:
     print(f"KING_PART {name}: {len(parts[name])}", flush=True)
 

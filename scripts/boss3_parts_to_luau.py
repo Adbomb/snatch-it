@@ -14,8 +14,8 @@ SRC = os.path.join(REPO, "assets", "models", "Boss3_RatKing.parts.json")
 DST = os.path.join(REPO, "src", "shared", "Config", "Boss3RatKingParts.luau")
 
 
-def num(v):
-    s = f"{v:.4f}".rstrip("0").rstrip(".")
+def num(v, digits=4):
+    s = f"{v:.{digits}f}".rstrip("0").rstrip(".")
     return "0" if s in ("-0", "") else s
 
 
@@ -39,7 +39,8 @@ def main():
             fields = [f"V({', '.join(num(c) for c in e['c'])})", f"V({', '.join(num(c) for c in e['s'])})",
                       f"\"{e['col']}\""]
             if "r" in e:
-                fields.append("{ " + ", ".join(num(c) for c in e["r"]) + " }")
+                # поворот — как в JSON (5 знаков): иначе наклонённые детали расходятся с проверкой граней
+                fields.append("{ " + ", ".join(num(c, 5) for c in e["r"]) + " }")
             lines.append("\t\t{ " + ", ".join(fields) + " },")
         lines.append("\t},")
     lines += ["}", ""]
