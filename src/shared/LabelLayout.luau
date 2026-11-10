@@ -100,9 +100,30 @@ function LabelLayout.Arrange(
 	local placed = {}
 	local lifts = table.create(#entries, 0)
 	local hidden = table.create(#entries, false)
+	-- перекрывает ли подпись при подъёме lift препятствие ближе неё
+	local function onObstacle(e: Entry, lift: number): boolean
+		local top, bottom = e.y - e.h / 2 - lift, e.y + e.h / 2 - lift
+		for _, o in obstacles do
+			if
+				o.depth < e.depth
+				and e.x + e.w / 2 > o.x0 - obstacleGap
+				and e.x - e.w / 2 < o.x1 + obstacleGap
+				and bottom > o.y0 - obstacleGap
+				and top < o.y1 + obstacleGap
+			then
+				return true
+			end
+		end
+		return false
+	end
 	for _, i in order do
 		local e = entries[i]
 		local lift, blocked = 0, false
+		if e.depth < 0 then
+			-- неподвижные («Z z z», глубина −1): на месте, другие поднимаются над ними
+			table.insert(placed, { x = e.x, w = e.w, top = e.y - e.h / 2, bottom = e.y + e.h / 2 })
+			continue
+		end
 		for _ = 1, #placed + #obstacles + 1 do
 			local moved = false
 			for _, p in placed do
@@ -127,12 +148,17 @@ function LabelLayout.Arrange(
 				break
 			end
 		end
+		if not blocked and lift > maxLift then
+			-- подписям мало предела: подпись остаётся на maxLift (как Place), но если там фигура босса — прячется
+			lift = maxLift
+			blocked = onObstacle(e, lift)
+			if blocked then
+				lift = math.huge
+			end
+		end
 		if blocked and lift > maxObstacleLift then
 			hidden[i] = true
 		else
-			if not blocked then
-				lift = math.min(lift, maxLift)
-			end
 			lifts[i] = lift
 			table.insert(placed, { x = e.x, w = e.w, top = e.y - e.h / 2 - lift, bottom = e.y + e.h / 2 - lift })
 		end

@@ -277,6 +277,26 @@ do
 			and pair[2].y + pair[2].h / 2 - pl[2] <= king.y0 - 6 + 1e-6,
 		"две подписи над королём — без наложения"
 	)
+	-- подпись, которую ближняя высокая подпись перекинула через узкую фигуру выше предела, опускается на предел —
+	-- там фигура: прячется (а не рисуется поверх неё)
+	local thin = { x0 = 250, x1 = 380, y0 = 400, y1 = 450, depth = 25 }
+	local stackOver = {
+		{ x = 315, y = 500, w = 180, h = 300, depth = 10 },
+		{ x = 315, y = 600, w = 180, h = 46, depth = 50 },
+	}
+	local sl, sh = LabelLayout.Arrange(stackOver, 4, 150, { thin }, 6, 400)
+	check(
+		sh[2] and not sh[1] and sl[1] == 0,
+		"подпись на пределе подъёма над фигурой — спрятана"
+	)
+	local free = LabelLayout.Arrange(stackOver, 4, 150, {}, 6, 400)
+	check(free[2] == 150, "без фигуры — на пределе подъёма (как Place)")
+	local zz = { { x = 300, y = 100, w = 90, h = 60, depth = -1 }, { x = 310, y = 110, w = 90, h = 60, depth = -1 } }
+	local zzl, zzh = LabelLayout.Arrange(zz, 4, 200, { king }, 6, 400)
+	check(
+		zzl[1] == 0 and zzl[2] == 0 and not zzh[1] and not zzh[2],
+		"два «Z z z» — на месте, не прячутся"
+	)
 	local hl, hh = LabelLayout.Arrange(pair, 4, 200, { king }, 6, 50)
 	check(
 		hh[1] and hh[2] and hl[1] == 0,
@@ -358,22 +378,60 @@ do
 	end
 end
 
--- Токены интерфейса, которые читают клиентские модули: `local x = UITokens.Раздел` и дальше `x.Имя` — каждое имя
--- есть в разделе (визуальный QA босса 3: пропавший ItemLabel.Update ронял раскладку подписей каждый кадр).
+-- Токены интерфейса во всём src (кроме самого UITokens): `local x = UITokens.Раздел[.Подраздел]` и дальше `x.Имя`,
+-- а также прямые `UITokens.Раздел.Имя` — раздел есть, и каждое имя в нём есть (визуальный QA босса 3: пропавший
+-- ItemLabel.Update ронял раскладку подписей каждый кадр, LovibumRow читались не из того раздела). Псевдоним,
+-- объявленный в файле больше одного раза, не проверяется (неоднозначно).
 do
 	local fs = require("@lune/fs")
 	local missing, used = {}, 0
+	local function resolve(path: string): any
+		local node: any = UITokens
+		for key in string.gmatch(path, "[^%.]+") do
+			if type(node) ~= "table" then
+				return nil
+			end
+			node = node[key]
+		end
+		return node
+	end
 	local function scan(dir: string)
 		for _, name in fs.readDir(dir) do
 			local path = dir .. "/" .. name
 			if fs.isDir(path) then
 				scan(path)
-			elseif string.match(name, "%.luau$") then
+			elseif string.match(name, "%.luau$") and name ~= "UITokens.luau" then
 				local source = fs.readFile(path)
-				for alias, section in string.gmatch(source, "local%s+([%a_][%w_]*)%s*=%s*UITokens%.([%a_][%w_]*)%s*\n") do
-					local tokens = UITokens[section]
-					if type(tokens) == "table" then
-						for field in string.gmatch(source, "%f[%w_]" .. alias .. "%.(%u[%w_]*)") do
+				-- псевдонимы: сколько раз объявлен вообще и к каким разделам UITokens (раздел, а не элемент: не «[…]»)
+				local declared: { [string]: number } = {}
+				for alias in string.gmatch(source, "local%s+([%a_][%w_]*)%s*=") do
+					declared[alias] = (declared[alias] or 0) + 1
+				end
+				local aliases: { [string]: { [string]: number } } = {}
+				for alias, section, after in
+					string.gmatch(source, "local%s+([%a_][%w_]*)%s*=%s*UITokens%.([%a_][%w_%.]*)([^%w_%.]?)")
+				do
+					if after ~= "[" and after ~= "(" and after ~= ":" then
+						section = string.gsub(section, "%.$", "")
+						aliases[alias] = aliases[alias] or {}
+						aliases[alias][section] = (aliases[alias][section] or 0) + 1
+					end
+				end
+				for alias, sections in aliases do
+					local section, count = next(sections)
+					-- одно и то же объявление (в разных функциях) — проверяем; иначе неоднозначно
+					if next(sections, section) ~= nil or count ~= declared[alias] then
+						continue
+					end
+					local tokens = resolve(section)
+					if tokens == nil then
+						used += 1
+						table.insert(
+							missing,
+							("%s: %s = UITokens.%s (нет раздела)"):format(path, alias, section)
+						)
+					elseif type(tokens) == "table" then
+						for field in string.gmatch(source, "%f[%w_]" .. alias .. "%.([%a_][%w_]*)") do
 							used += 1
 							if tokens[field] == nil then
 								table.insert(missing, ("%s: %s.%s (UITokens.%s)"):format(path, alias, field, section))
@@ -381,13 +439,22 @@ do
 						end
 					end
 				end
+				for section, field in string.gmatch(source, "%f[%w_]UITokens%.([%a_][%w_]*)%.([%a_][%w_]*)") do
+					used += 1
+					local tokens = UITokens[section]
+					if tokens == nil then
+						table.insert(missing, ("%s: UITokens.%s (нет раздела)"):format(path, section))
+					elseif type(tokens) == "table" and tokens[field] == nil then
+						table.insert(missing, ("%s: UITokens.%s.%s"):format(path, section, field))
+					end
+				end
 			end
 		end
 	end
-	scan("src/client")
+	scan("src")
 	check(
 		#missing == 0,
-		("токены интерфейса в клиентских модулях: %d обращений, нет в UITokens: %s"):format(
+		("токены интерфейса в src: %d обращений, нет в UITokens: %s"):format(
 			used,
 			if #missing == 0 then "—" else table.concat(missing, ", ")
 		)

@@ -329,6 +329,12 @@ function ItemLabelController.Init()
 	end
 	Workspace.DescendantAdded:Connect(track)
 	Workspace.DescendantRemoving:Connect(function(instance)
+		local state = tracked[instance :: any]
+		if state and state.fades and state.alpha < 1 then
+			-- вернуть исходные прозрачности: если подпись вернётся в мир, она не останется погашенной
+			state.alpha = 1
+			applyAlpha(instance :: any, state)
+		end
 		tracked[instance :: any] = nil
 	end)
 	local sinceLayout = 0
