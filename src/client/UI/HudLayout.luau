@@ -32,7 +32,7 @@ end
 -- Левый край колонки меню + gap, px от правого края экрана.
 function HudLayout.LeftOfMenu(gap: number): number
 	local m = UITokens.MenuHud
-	return m.Margin + (m.Icon + m.Margin) * Motion.ScreenScale() + gap
+	return m.Margin + (m.Icon + m.Margin + m.IconOverflow) * Motion.ScreenScale() + gap
 end
 
 -- Вызвать place сейчас и при каждом изменении размера экрана (поворот телефона, окно ПК).

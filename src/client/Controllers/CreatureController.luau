@@ -7,8 +7,14 @@
 -- Экспонат на постаменте (атрибут Slot) — спокойно на месте: только суставы и лёгкое покачивание меша (D55: без
 -- перемещения, корень не трогается — презентация и сервер двигают его сами); в руках — «трепыхание». Дальние (дальше
 -- Catch.Creature.ViewRadius от камеры) не считаются, средние — через кадр. Пойманное (Hidden) спрятано до конца боя.
--- Зависит от Shared/CreatureMotion, Shared/CreatureAnim, Config/Items, Config/CreatureRigs, Config/GameConfig.
+-- У ближайших существ у боссов — тонкая светлая обводка (UITokens.CreatureOutline: силуэт не сливается с подушкой);
+-- во время своей поимки обводок нет. Highlight на детали обводит только её саму, а блоки существа — дети невидимого
+-- корня: на время обводки блоки у этого клиента лежат в модели «Outline» внутри корня (её и обводит Highlight), потом
+-- возвращаются в корень — копия экспоната (PresentationController) и сервер видят прежнее устройство.
+-- Зависит от Shared/CreatureMotion, Shared/CreatureAnim, Config/Items, Config/CreatureRigs, Config/GameConfig,
+-- Config/UITokens.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -19,8 +25,10 @@ local CreatureMotion = require(Shared:WaitForChild("CreatureMotion"))
 local CreatureRigs = require(Config:WaitForChild("CreatureRigs"))
 local GameConfig = require(Config:WaitForChild("GameConfig"))
 local Items = require(Config:WaitForChild("Items"))
+local UITokens = require(Config:WaitForChild("UITokens"))
 
 local C = GameConfig.Catch.Creature
+local OUTLINE = UITokens.CreatureOutline
 local NEAR = 60 -- ближе — каждый кадр, дальше — через кадр
 
 local CreatureController = {}
@@ -38,10 +46,98 @@ type Entry = {
 	hidden: boolean,
 	odd: boolean,
 	looks: boolean, -- есть части, которые поворачиваются к зрителю (стражи сейфа)
+	outline: Highlight?,
+	group: Model?, -- модель «Outline» с блоками на время обводки
 }
 
 local tracked: { [BasePart]: Entry } = {}
 local frame = 0
+local sinceOutline = math.huge
+
+-- Включить или снять обводку существа: Highlight только контуром на меше «Visual» или на модели «Outline», куда на это
+-- время переложены блоки корня; снятие возвращает блоки в корень.
+local function setOutline(entry: Entry, on: boolean)
+	local root = entry.root
+	if on and not entry.outline then
+		local adornee: Instance
+		local visual = root:FindFirstChild("Visual")
+		if visual and visual:IsA("BasePart") then
+			adornee = visual
+		else
+			local blocks = {}
+			for _, child in root:GetChildren() do
+				if child:IsA("BasePart") then
+					table.insert(blocks, child)
+				end
+			end
+			local group = Instance.new("Model")
+			group.Name = "Outline"
+			group.Archivable = false
+			group.Parent = root
+			for _, b in blocks do
+				b.Parent = group
+			end
+			entry.group = group
+			adornee = group
+		end
+		local h = Instance.new("Highlight")
+		h.Name = "Outline"
+		h.FillTransparency = 1
+		h.OutlineColor = OUTLINE.Color
+		h.OutlineTransparency = OUTLINE.Transparency
+		h.DepthMode = Enum.HighlightDepthMode.Occluded
+		h.Adornee = adornee
+		h.Parent = root
+		entry.outline = h
+	elseif not on and entry.outline then
+		entry.outline:Destroy()
+		entry.outline = nil
+		local group = entry.group
+		entry.group = nil
+		if group then
+			for _, child in group:GetChildren() do
+				child.Parent = root
+			end
+			group:Destroy()
+		end
+	end
+end
+
+-- Обводка у ближайших существ у боссов (не больше OUTLINE.Max в OUTLINE.Distance), кроме спрятанных и во время своей
+-- поимки.
+local function updateOutlines(eye: Vector3)
+	local catching = Players.LocalPlayer:GetAttribute("Catching") ~= nil
+	local near: { { entry: Entry, dist: number } } = {}
+	if not catching then
+		for root, entry in tracked do
+			-- чужое учебное существо (TutorialOwner — другой ученик) у меня спрятано: без обводки
+			local owner = root:GetAttribute("TutorialOwner")
+			local foreign = owner ~= nil and owner ~= Players.LocalPlayer.UserId
+			if
+				root.Parent
+				and root.Anchored
+				and typeof(root:GetAttribute("Home")) == "CFrame"
+				and not entry.hidden
+				and not foreign
+			then
+				local dist = (root.Position - eye).Magnitude
+				if dist < OUTLINE.Distance then
+					table.insert(near, { entry = entry, dist = dist })
+				end
+			end
+		end
+		table.sort(near, function(a, b)
+			return a.dist < b.dist
+		end)
+	end
+	local on: { [Entry]: boolean } = {}
+	for i = 1, math.min(#near, OUTLINE.Max) do
+		on[near[i].entry] = true
+	end
+	for _, entry in tracked do
+		setOutline(entry, on[entry] == true)
+	end
+end
 
 local function track(root: BasePart)
 	if tracked[root] then
@@ -115,7 +211,7 @@ local function attrNumber(root: BasePart, name: string): number?
 	return if type(v) == "number" then v else nil
 end
 
-local function step()
+local function step(dt: number)
 	frame += 1
 	local camera = workspace.CurrentCamera
 	if not camera then
@@ -123,6 +219,11 @@ local function step()
 	end
 	local eye = camera.CFrame.Position
 	local now = workspace:GetServerTimeNow()
+	sinceOutline += dt
+	if sinceOutline >= OUTLINE.Every then
+		sinceOutline = 0
+		updateOutlines(eye)
+	end
 	for root, entry in tracked do
 		if not root.Parent then
 			tracked[root] = nil
