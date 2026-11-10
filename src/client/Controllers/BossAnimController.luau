@@ -1,5 +1,5 @@
 -- Анимации боссов на клиенте (D18, D40): у каждой модели с тегом Boss каждый кадр ставит Transform суставов
--- (Motor6D) по состоянию с сервера — атрибуты State/StateAt, Moving, AttackSeq/AttackKind/AttackAt, HitAt — через
+-- (Motor6D) по состоянию с сервера — атрибуты State/StateAt, FromState/FromAt, Moving/MovingAt, AttackKind/AttackAt, HitAt — через
 -- Shared/BossAnim. Все клиенты считают одинаково, поэтому анимации видны всем игрокам, а по сети идут только
 -- атрибуты. Спящий босс выпускает «Z z z». Зависит от Shared/BossAnim, Config/Boss1DogRig, Config/Boss2TraderRig, Config/Boss3RatKingRig (D55).
 
@@ -73,6 +73,15 @@ local function since(model: Model, attribute: string): number?
 	return workspace:GetServerTimeNow() - at
 end
 
+-- Сколько длилось прошлое состояние к началу нынешнего (FromAt → StateAt), секунд.
+local function lasted(model: Model): number?
+	local from, at = model:GetAttribute("FromAt"), model:GetAttribute("StateAt")
+	if type(from) ~= "number" or type(at) ~= "number" then
+		return nil
+	end
+	return at - from
+end
+
 local function update()
 	local camera = workspace.CurrentCamera
 	local clock = workspace:GetServerTimeNow()
@@ -90,6 +99,9 @@ local function update()
 			state = state,
 			t = since(model, "StateAt") or 0,
 			moving = model:GetAttribute("Moving") == true,
+			movingT = since(model, "MovingAt"),
+			fromState = model:GetAttribute("FromState"),
+			fromT = lasted(model),
 			attackKind = model:GetAttribute("AttackKind"),
 			attackT = since(model, "AttackAt"),
 			hitT = since(model, "HitAt"),

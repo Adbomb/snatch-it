@@ -1,8 +1,9 @@
 -- Боссы на карте (D40, D42): модель из частей на Motor6D (скелет Config/Boss<N>…Rig, меши и карты Config/BossModels) на
 -- своём месте в центре зоны (MapLayout.BossSpot), лицом ко входу. Движение — физикой: невидимый корень с
 -- AlignPosition и AlignOrientation, владелец — сервер, поэтому все клиенты видят плавное движение. Состояние для
--- анимаций — атрибуты модели: State и StateAt (время сервера начала), Moving, AttackSeq/AttackKind/AttackAt,
--- HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
+-- анимаций — атрибуты модели: State и StateAt (время сервера начала), FromState и FromAt (прошлое состояние и его
+-- начало), Moving и MovingAt (когда начал или перестал идти — шаг в анимации включается и гаснет плавно),
+-- AttackSeq/AttackKind/AttackAt, HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
 -- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета; у Крысиного короля — Part-версия по
 -- утверждённой модели D54 (Config/Boss3RatKingParts: невидимый сустав части и её детали на сварке, позы те же).
 -- Карты — копии шаблонов Server/Looks
@@ -196,6 +197,7 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 	model:SetAttribute("State", "Sleep")
 	model:SetAttribute("StateAt", now())
 	model:SetAttribute("Moving", false)
+	model:SetAttribute("MovingAt", now())
 	model:SetAttribute("AttackSeq", 0)
 	model:SetAttribute("HitSeq", 0)
 	model.Parent = parent
@@ -254,6 +256,7 @@ function BossService.Init(world: Instance)
 			)).Magnitude > 0.6
 			if boss.model:GetAttribute("Moving") ~= moving then
 				boss.model:SetAttribute("Moving", moving)
+				boss.model:SetAttribute("MovingAt", now())
 			end
 		end
 	end)
@@ -266,6 +269,9 @@ function BossService.Get(zone: number): Boss?
 end
 
 function BossService.SetState(boss: Boss, state: string)
+	-- прошлое состояние и его начало — анимация продолжит с позы, где застали (разбудили, пока засыпал)
+	boss.model:SetAttribute("FromState", boss.state)
+	boss.model:SetAttribute("FromAt", boss.model:GetAttribute("StateAt"))
 	boss.state = state
 	boss.model:SetAttribute("State", state)
 	boss.model:SetAttribute("StateAt", now())
@@ -301,6 +307,11 @@ end
 
 function BossService.Position(boss: Boss): Vector3
 	return boss.root.Position
+end
+
+-- Идёт ли босс (как атрибут Moving: до цели больше 0.6 стада; считается в Heartbeat).
+function BossService.IsMoving(boss: Boss): boolean
+	return boss.model:GetAttribute("Moving") == true
 end
 
 -- Расстояние по земле до места босса.

@@ -259,6 +259,12 @@ local function goHome(boss: BossService.Boss, after: string?, afterTime: number?
 		BossService.SnapHome(boss) -- застрял — на место без ожидания
 	end
 	BossService.FaceHome(boss)
+	-- Засыпать, когда остановился: «дома» — уже с ArriveDistance, а идёт он до 0.6 стада от места; иначе засыпание
+	-- начиналось на ходу и поза шага сменялась позой засыпания скачком.
+	local stopping = os.clock()
+	while BossService.IsMoving(boss) and os.clock() - stopping < Battle.StopWait do
+		task.wait()
+	end
 	BossService.SetState(boss, "FallAsleep")
 	returning[zone] = nil
 	BossLootService.SetOpen(zone, true) -- дома: можно сразу начинать новый бой

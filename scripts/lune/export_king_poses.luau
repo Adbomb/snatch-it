@@ -62,7 +62,7 @@ local function add(name: string, input, keep: boolean?)
 end
 
 for i, clock in { 0, 0.8, 1.6, 2.4, 4.0, 5.3 } do
-	add("sleep" .. i, { state = "Sleep", clock = clock }, true)
+	add("sleep" .. i, { state = "Sleep", t = 30, clock = clock }, true) -- спит давно: дыхание в полную силу
 end
 for i, f in { 0.3, 0.6, 1 } do
 	add("wake" .. i, { state = "Wake", t = tl.Wake * f })
