@@ -23,6 +23,7 @@ require(Controllers:WaitForChild("ItemLabelController")).Init()
 require(Controllers:WaitForChild("PvpController")).Init()
 require(Controllers:WaitForChild("DefenseController")).Init()
 require(Controllers:WaitForChild("ShopController")).Init() -- D55: магазин Ловибумов
+require(Controllers:WaitForChild("MuseumUpgradeController")).Init() -- D56: улучшение музея
 require(Controllers:WaitForChild("CreatureController")).Init() -- D55: живые существа
 require(Controllers:WaitForChild("CatchController")).Init() -- D55: мини-игра поимки (ловящий)
 require(Controllers:WaitForChild("LovibumFxController")).Init() -- D55: эффекты поимки у всех рядом

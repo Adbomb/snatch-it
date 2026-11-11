@@ -153,8 +153,19 @@ local function renderDefense()
 				)
 		end
 		local priceText = if price then money(price) else "цена не утверждена"
-		local frame =
-			row(order, DefenseRules.Names[kind], ("%s · куплено: %d%s"):format(priceText, owned, where))
+		-- D56: устройства этого вида, купленные для музея другого уровня (подробно — строка внизу списка)
+		local old = 0
+		for _, entry in (type(state.stale) == "table" and state.stale[kind]) or {} do
+			old += entry.count
+		end
+		local oldText = if old > 0
+			then (' · <font color="#%s">прежних уровней: %d</font>'):format(T.StaleColor:ToHex(), old)
+			else ""
+		local frame = row(
+			order,
+			DefenseRules.Names[kind],
+			("%s · куплено: %d%s%s"):format(priceText, owned, oldText, where)
+		)
 		-- «Купить» левее мест расстановки: у лазера их два, у остальных — одна кнопка
 		local buyX = if kind == "Laser" then -415 else -255
 		button(frame, "Купить", "cash", buyX, prep and price ~= nil, function()

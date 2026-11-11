@@ -5,14 +5,24 @@
 -- (плашка зоны, «Бросить», «Удар») показаны все сразу — худший случай. Уведомления: перед запуском вызвать пару
 -- настоящих (например DefenseAction BuyHack ночью). Возвращает пересечения прямоугольников. Убрать — удалить
 -- PlayerGui.__PhoneSim. Ни от чего в репозитории не зависит (читает PlayerGui).
+-- D56: меню HUD на невысоком экране — сетка в два столбца (UI/MenuHud считает её по экрану): модель ставит атрибуты
+-- игрока DevViewport и DevTouch (Studio + DevMode), чтобы меню и его соседи встали как на таком экране; ширина меню
+-- берётся настоящая. После проверки сбросить: оба атрибута — nil.
 local W, H, NOTCH, LABEL = 844, 390, 47, "iPhone 14" -- SE 667×375/0, Android 740×360/0, iPad 1024×768/0
 -- плашка зоны видна (худший случай: уведомления на это время ниже неё, D50); false — обычное состояние без плашки
 local BANNER = true
-local pg = game.Players.LocalPlayer.PlayerGui
+local player = game.Players.LocalPlayer
+local pg = player.PlayerGui
 local old = pg:FindFirstChild("__PhoneSim")
 if old then
 	old:Destroy()
 end
+player:SetAttribute("DevViewport", Vector2.new(W, H))
+player:SetAttribute("DevTouch", true)
+task.wait(0.2)
+-- ширина меню при масштабе 1: столбцы кнопок и выступ наклонной иконки (UITokens.MenuHud.IconOverflow = 14)
+local menuColumn = pg.MenuHud.Colonne
+local menuWidth = menuColumn.AbsoluteSize.X / menuColumn.WindowScale.Scale + 14
 local TOP = 58
 local function screenScale(x, y)
 	return math.clamp(math.min(x / 1050, y / 620), 0.52, 1.18)
@@ -115,13 +125,18 @@ for _, name in { "GymHud", "MenuHud", "TimeHud", if BANNER then "LevelBanner" el
 				-- уведомлений 26 % ширины (180…360 px) левее меню; заходит под видимую плашку — спрятана (D50)
 				local below = 6 + 96 * s
 				if name == "Toasts" then
-					local right = 18 + 110 * s + 12
+					local right = 18 + menuWidth * s + 12
 					local left = safeW - right - math.clamp(0.26 * safeW, 180, 360)
 					c.Position = UDim2.new(1, -right, 0, below + 10)
 					c.Visible = not (BANNER and left < safeW / 2 + 190 * s)
 				end
 				if name == "PvpHud" then -- левее колонки меню (client/UI/HudLayout.LeftOfMenu, отступ 8)
-					c.Position = UDim2.new(1, -(18 + 110 * s + 8), 0, 4)
+					-- один столбец меню — левее него; сетка в два столбца — над ней у правого края (PvpController, D56)
+					local grid = menuColumn:FindFirstChildOfClass("UIGridLayout")
+					local columns = if grid then grid.FillDirectionMaxCells else 1
+					c.Position = if columns > 1
+						then UDim2.new(1, -18, 0, 4)
+						else UDim2.new(1, -(18 + menuWidth * s + 8), 0, 4)
 				end
 				if name == "LevelBanner" then
 					c.Position = UDim2.new(0.5, 0, 0, below + 12)

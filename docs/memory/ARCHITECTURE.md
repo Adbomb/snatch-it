@@ -472,6 +472,16 @@
   выставлении), `GymController` (табличка «Улучшение» — SurfaceGui в PlayerGui на UpgradeBoard каждого участка,
   текст владельцу/гостю свой; «+N» над головой; временные надписи силы и монет внизу слева).
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
+- D56: `MuseumUpgradeController` — окно «Улучшение музея» (Stud-UI, золотая шапка): карточки «Сейчас» и «После
+  улучшения» (уровень, мест, устройств защиты, галереи), полоса из 20 мест, цена, состояние, кнопка. Данные — атрибуты
+  игрока MuseumLevel и Coins, цена и места — `Shared/MuseumRules`, запрет и отсчёт — `GameTime.UpgradeLock`; шлёт
+  только номер следующего уровня (MuseumUpgrade), показывает ответ (MuseumUpgradeResult). Размер — по экрану, как
+  «Магазин» (`measure`, атрибуты DevViewport / DevTouch в Studio). Кнопка «Музей» — четвёртая в `UI/MenuHud`, скрыта в
+  обучении.
+- `UI/MenuHud` (D56): UIGridLayout; `ColumnsFor` — один столбик, если он умещается между кнопками Roblox и низом
+  экрана (на касании — кнопкой прыжка), иначе сетка в два столбца между местом «Удара» и прыжком; число столбцов —
+  в `UI/HudLayout.SetMenuColumns` (соседи из `HudLayout.Track` переставляются; «Удар» при сетке — над ней).
+  Замеры: `scripts/studio/museum_upgrade_ui_probe.luau` (окно) и `scripts/studio/hud_phone_sim.luau` (весь HUD).
 
 ## Общее (`src/shared`)
 - Config: `GameConfig` (баланс, 10 зон D22, лимиты `MaxOnMap`; `GameConfig.Progression` = `Progression.luau` — числа D29–D31,

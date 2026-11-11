@@ -269,7 +269,13 @@ local function buildButton()
 	scale:SetAttribute("MinScale", floor) -- для моделирования телефона (scripts/studio/hud_phone_sim)
 	HudLayout.Track(function()
 		scale.Scale = math.max(Motion.ScreenScale(), floor)
-		holder.Position = UDim2.new(1, -HudLayout.LeftOfMenu(T.MenuGap), 0, T.ButtonTop) -- левее колонки меню
+		if HudLayout.MenuColumns() > 1 then
+			-- меню — сетка в два столбца (невысокий экран, D56): левее него кнопка упёрлась бы в таймер — над сеткой у
+			-- правого края (D49), сетка стоит ниже (UI/MenuHud)
+			holder.Position = UDim2.new(1, -UITokens.MenuHud.Margin, 0, T.ButtonTop)
+		else
+			holder.Position = UDim2.new(1, -HudLayout.LeftOfMenu(T.MenuGap), 0, T.ButtonTop) -- левее колонки меню
+		end
 	end)
 	button = UI.Button(holder, {
 		Name = "Frapper",

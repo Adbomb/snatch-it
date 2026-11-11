@@ -296,6 +296,12 @@ UITokens.HudIcons = {
 	Inventory = "Item/Backpack/Backpack 1st Outline", -- до загрузки портфеля (icon_briefcase.png)
 	Defense = "Item/Shield/Shield 1st Outline",
 	Shop = "Main/Shopping Cart/Red Shopping Cart 1st Outline", -- «Магазин» Ловибумов (D55): красный — магазин (Stud-UI)
+	-- «Музей» (D56): кнопка меню и шапка окна «Улучшение музея»; стрелка «станет», замок запрета, кубок максимума
+	Museum = "Main/House/Blue House 1st Outline",
+	MuseumNext = "Main/House/Green House 1st Outline", -- музей следующего уровня в карточке «После улучшения»
+	Upgrade = "Main/Upgrade/Golden Upgrade 1st Outline",
+	Lock = "Item/Lock/Lock 1st Outline",
+	Trophy = "Item/Trophy/Golden Trophy 1st Outline",
 	Lovibum = "Currency/Crystal/Crystal Blue Outline", -- раздел «Ловибумы» в инвентаре: кристалл — знак Ловибумов
 	Day = "Main/Star/Golden Star 1st Outline",
 	Preparation = "UI/Warning/Warning 1st Outline",
@@ -354,6 +360,66 @@ UITokens.MenuHud = {
 	-- наклонная иконка-наклейка выступает левее кнопки: уведомления и «Удар» держатся левее и этого (визуальный QA:
 	-- второе уведомление в Судную ночь наезжало на «Инвентарь»)
 	IconOverflow = 14, -- px при масштабе 1
+	-- D56 (четвёртая кнопка «Музей»): столбик стоит по центру экрана и должен уместиться между кнопками Roblox сверху
+	-- (TopReserve, px экрана) и низом экрана (BottomReserve), а на касании — верхом кнопки прыжка (Jump — от низа
+	-- экрана с запасом; JumpSmall — на экране с меньшей стороной ≤ SmallSide: там кнопки Roblox мельче). Не умещается —
+	-- кнопки встают сеткой в два столбца (ColumnGap между ними, px при масштабе 1).
+	ColumnGap = 4,
+	SlotGap = 6, -- px экрана: между кнопкой «Удар» (над сеткой, только касание и Судная ночь) и сеткой меню
+	TopReserve = 48,
+	BottomReserve = 16,
+	Jump = 218,
+	JumpSmall = 98,
+	SmallSide = 500,
+}
+
+-- Окно «Улучшение музея» (D56, Stud-UI: золотая шапка — рост и награда). Слева карточка «Сейчас», справа — «После
+-- улучшения» (уровень, мест, устройств защиты), между ними стрелка; ниже полоса из 20 мест (открытые, новые,
+-- закрытые), цена, состояние и кнопка «Улучшить». Окно — по экрану, как «Магазин»: наибольшее Window, на маленьком
+-- экране — по экрану без Margin, не меньше MinWindow; на касании масштаб не меньше PhoneScale, кнопка не ниже MinTouch
+-- px. Окно ниже CompactHeight — тесная раскладка (телефон): отступы и шрифты меньше.
+UITokens.MuseumUpgrade = {
+	Window = Vector2.new(820, 480),
+	MinWindow = Vector2.new(640, 360),
+	Margin = 16,
+	PhoneScale = 0.78,
+	MinTouch = 52,
+	Header = "gold",
+	Pad = 16,
+	PadCompact = 10,
+	Gap = 12,
+	GapCompact = 8,
+	CompactHeight = 430,
+	Arrow = 76, -- стрелка между карточками (наклейка, заходит на обе)
+	Tilt = -8, -- наклон иконок-наклеек (Stud-UI)
+	IconGap = 8, -- от заголовка «Уровень N» до иконки карточки
+	ArrowCompact = 56,
+	CaptionText = 20, -- «Сейчас» / «После улучшения»
+	LevelText = 54, -- «Уровень 4»
+	LevelCompact = 38,
+	LineText = 23, -- «Мест: 8», «Защита: до 4 устройств»
+	LineCompact = 18,
+	Pip = 24, -- квадратик места в полосе
+	PipCompact = 18,
+	PipGap = 6,
+	PipOpen = Color3.fromHex("5AC8FF"), -- место открыто
+	PipNew = Color3.fromHex("B4FF19"), -- откроется после улучшения
+	PipClosed = Color3.fromHex("232833"), -- закрыто
+	PipsLabel = 150, -- ширина подписи слева от полосы
+	Button = Vector2.new(260, 66), -- «Улучшить» (на касании — не ниже MinTouch px экрана)
+	ButtonCompact = Vector2.new(220, 56),
+	PriceText = 30,
+	PriceCompact = 24,
+	StatusText = 20,
+	StatusCompact = 17,
+	MinText = 13, -- мельче текст не сжимается
+	Current = Color3.fromHex("9FE3FF"), -- подпись карточки «Сейчас»
+	Next = Color3.fromHex("B4FF19"), -- подпись карточки «После улучшения» и прибавки
+	Max = Color3.fromHex("FFD23F"), -- максимальный уровень
+	Warn = Color3.fromHex("FFD23F"), -- временный запрет
+	Wait = 1.5, -- секунд: после «Улучшить» ждём ответа сервера, повторное нажатие не шлём
+	MessageTime = 4, -- секунд: сколько показывается ответ сервера об отказе
+	Refresh = 0.25, -- секунд: как часто обновляется отсчёт запрета, пока окно открыто
 }
 
 -- Статистика HUD v2 (D48 v2): слева посередине — иконка + число, без рамок; доход зелёный, сила с подписью.
@@ -583,7 +649,9 @@ UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
 	MinTouch = 52, -- px: на телефоне кнопка не ниже (D32) — масштаб не меньше MinTouch / Button.Y
 	-- справа вверху сразу под кнопками Roblox (CoreUISafeInsets), левее колонки меню HUD v2 (D50: кнопка 52 px над
-	-- колонкой задевала её на узких телефонах); только телефон. Отступы: сверху и до колонки меню
+	-- колонкой задевала её на узких телефонах); только телефон. Отступы: сверху и до колонки меню. D56: когда меню
+	-- стоит сеткой в два столбца (невысокий экран), левее меню кнопка упёрлась бы в таймер — она встаёт над сеткой у
+	-- правого края (как в D49), сетка стоит ниже неё (UI/MenuHud)
 	ButtonTop = 4,
 	MenuGap = 8,
 	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
