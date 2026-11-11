@@ -26,13 +26,17 @@ end
 
 local cfg = GameConfig.Defense
 
-print("Цены (D37):")
+print("Цены (D37; уровни 7–10 — D56):")
 do
-	check(DefenseRules.HackPrice(cfg, 1) == 1e3 and DefenseRules.HackPrice(cfg, 10) == 1e12, "взлом: 1K … 1T")
+	local hackOk = true
+	for level, price in { 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 3e10, 8e10 } do
+		hackOk = hackOk and DefenseRules.HackPrice(cfg, level) == price
+	end
+	check(hackOk, "взлом: 1K … 100M (D37), уровни 7–10 — 1B / 10B / 30B / 80B (D56)")
 	check(DefenseRules.Price(cfg, "Trap", 1) == 100, "ловушка ур. 1 — 10 % от 1K")
 	check(DefenseRules.Price(cfg, "Laser", 2) == 1500, "лазер ур. 2 — 15 % от 10K")
 	check(DefenseRules.Price(cfg, "Door", 3) == 20000, "дверь ур. 3 — 20 % от 100K")
-	check(DefenseRules.Price(cfg, "Robot", 10) == 3e11, "робот ур. 10 — 30 % от 1T")
+	check(DefenseRules.Price(cfg, "Robot", 10) == 2.4e10, "робот ур. 10 — 30 % от 80B")
 	check(
 		DefenseRules.Price(cfg, "Snare", 1) == nil,
 		"капкан без утверждённой цены не продаётся"

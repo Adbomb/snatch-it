@@ -1,18 +1,19 @@
-"""Цены Ловибумов (D55): расчёт, по которому владелец утвердил цены боссов 1–3 (2026-11-09); 4–10 — предварительно.
+"""Цены Ловибумов (D55, D56): цены боссов 1–3 владелец утвердил 2026-11-09, боссов 4–10 — 2026-11-11 (D56, из
+согласованной модели экономики на 84 ч). Этот файл показывает утверждённые цены рядом с доходами и сверяет конфиг.
 
 Модель (вывод — таблица Markdown):
-  • доход существа — Config/Items (income) для боссов 1–3; 4–10 — продолжение роста 1 → 3 по каждой редкости,
-    Legendary = 4 × Epic, Secret = 4 × Legendary (ПРЕДВАРИТЕЛЬНО: коллекций 4–10 ещё нет);
+  • доход существа — Config/Items (income) для боссов 1–3; 4–10 — утверждённое правило D56: среднее босса 3 × 3.2 за
+    уровень (Common, Rare, Epic), Legendary = 3 × Epic, Secret = 3 × Legendary (Progression.CreatureIncome);
   • средний слот — шансы редкостей Progression.BossLoot; витрин — max(6, 2 × уровень) (GameConfig.Museum);
   • «новичок уровня» — только дошёл до босса L: витрины из существ уровня L − 1 (на боссе 1 — одно учебное Common);
     «прокачанный» — витрины из существ уровня L;
-  • Бум уровня 1 = 1K (новичок после обучения копит ~1 мин); уровня L ≥ 2 — 35 с «среднего» дохода
-    √(новичок × прокачанный), округлено; Турбо = 2 Бума, Мега = 3 Бума (бонусы к шансу ×1 / ×1.5 / ×2 — D55);
+  • цены Бума — утверждённые (APPROVED: 1–3 продаются; UPCOMING: 4–10 утверждены D56, не продаются, пока нет боссов);
+    Турбо = 2 Бума, Мега = 3 Бума (бонусы к шансу ×1 / ×1.5 / ×2 — D55);
   • стоимость поимки — цена / (0.7 попаданий × шанс), шансы D55.
 
   python scripts/sim/lovibum_prices.py           — таблица
-  python scripts/sim/lovibum_prices.py --check   — сверить Config/Catch: Prices 1–3 — с утверждёнными числами (APPROVED),
-                                                  PreliminaryPrices 4–10 — с расчётом; Турбо = 2 Бума, Мега = 3 Бума
+  python scripts/sim/lovibum_prices.py --check   — сверить Config/Catch: Prices 1–3 — с APPROVED, PreliminaryPrices
+                                                  4–10 — с UPCOMING (D56); Турбо = 2 Бума, Мега = 3 Бума
 """
 
 import math
@@ -35,7 +36,10 @@ TIERS = [
     (8, 10, {"Common": 32.5, "Rare": 35, "Epic": 20, "Legendary": 11.25, "Secret": 1.25}),
 ]
 NICE = (1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10)
-APPROVED = {1: 1000, 2: 10000, 3: 30000}  # Бум, утверждено владельцем 2026-11-09 (не пересчитывается моделью)
+APPROVED = {1: 1000, 2: 10000, 3: 30000}  # Бум, утверждено владельцем 2026-11-09 (продаются)
+# Бум боссов 4–10, утверждено владельцем 2026-11-11 (D56); не продаются, пока нет самих боссов
+UPCOMING = {4: 300_000, 5: 4_000_000, 6: 20_000_000, 7: 80_000_000, 8: 400_000_000, 9: 2_000_000_000, 10: 8_000_000_000}
+GROWTH, LEGENDARY_OF_EPIC, SECRET_OF_LEGENDARY = 3.2, 3, 3  # D56: доходы существ боссов 4–10
 
 
 def incomes():
@@ -47,11 +51,10 @@ def incomes():
     for m in re.finditer(r'\ncreature\("(\w+)", "(\w+)", "[^"]*", "\w+", (\d+(?:\.\d+)?)', text):
         out.setdefault(3, {}).setdefault(m.group(2), []).append(float(m.group(3)))
     mean = {L: {r: statistics.mean(v) for r, v in out[L].items()} for L in (1, 2, 3)}
-    growth = {r: math.sqrt(mean[3][r] / mean[1][r]) for r in ("Common", "Rare", "Epic")}
     for L in range(4, 11):
-        mean[L] = {r: mean[3][r] * growth[r] ** (L - 3) for r in growth}
-        mean[L]["Legendary"] = 4 * mean[L]["Epic"]
-        mean[L]["Secret"] = 4 * mean[L]["Legendary"]
+        mean[L] = {r: mean[3][r] * GROWTH ** (L - 3) for r in ("Common", "Rare", "Epic")}
+        mean[L]["Legendary"] = LEGENDARY_OF_EPIC * mean[L]["Epic"]
+        mean[L]["Secret"] = SECRET_OF_LEGENDARY * mean[L]["Legendary"]
     return mean
 
 
@@ -72,10 +75,7 @@ def model():
     for L in range(2, 11):
         fresh[L] = slots[L] * slot[L - 1]
     adv = {L: slots[L] * slot[L] for L in range(1, 11)}
-    boom = dict(APPROVED)
-    for L in range(2, 11):
-        if L not in APPROVED:
-            boom[L] = int(nice(35 * math.sqrt(fresh[L] * adv[L])))
+    boom = dict(APPROVED) | UPCOMING  # цены не пересчитываются: все утверждены владельцем
     return mean, slot, fresh, adv, boom
 
 
@@ -114,11 +114,12 @@ def main():
     if "--check" in sys.argv:
         final, pre = config_prices()
         bad = [L for L, b in APPROVED.items() if final.get(L) != (b, 2 * b, 3 * b)]
-        bad += [L for L in range(4, 11) if pre.get(L) != boom[L]]
-        bad += [L for L in final if L not in APPROVED]  # в Prices — только утверждённые
-        print("Config/Catch совпадает: 1–3 — утверждённые, 4–10 — расчёт" if not bad else f"РАСХОЖДЕНИЕ на уровнях {bad}")
+        bad += [L for L in range(4, 11) if pre.get(L) != UPCOMING[L]]
+        bad += [L for L in final if L not in APPROVED]  # в Prices — только уровни готовых боссов
+        print("Config/Catch совпадает: 1–3 — продаются, 4–10 — утверждены D56 (не продаются)" if not bad
+              else f"РАСХОЖДЕНИЕ на уровнях {bad}")
         sys.exit(1 if bad else 0)
-    print("## Цены Ловибумов (D55): 1–3 утверждены 2026-11-09, 4–10 — ⚠ предварительно\n")
+    print("## Цены Ловибумов: 1–3 утверждены 2026-11-09 (D55), 4–10 — 2026-11-11 (D56; ⚠ не продаются: боссов ещё нет)\n")
     print("| Босс | Бум | Турбо | Мега | Средний доход существа, /с | Новичок: 1 / 3 Бума | Прокачанный: 1 / 3 Бума |")
     print("|---|---|---|---|---|---|---|")
     for L in range(1, 11):

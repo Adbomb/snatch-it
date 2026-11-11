@@ -461,6 +461,138 @@ do
 	)
 end
 
+-- Экономика D56 (утверждено владельцем 2026-11-11): числа конфигов совпадают с утверждёнными; неизменяемое (мощность
+-- гантелей, формула бонуса музея, доли цен защиты, боссы 1–3 и гантели 2–3) не тронуто.
+print("Экономика D56:")
+do
+	local function same(got: { number }, want: { number }): boolean
+		if type(got) ~= "table" or #got ~= #want then
+			return false
+		end
+		for i, value in want do
+			if got[i] ~= value then
+				return false
+			end
+		end
+		return true
+	end
+	local function rising(list: { number }): boolean
+		for i = 2, #list do
+			if list[i] < list[i - 1] then
+				return false
+			end
+		end
+		return true
+	end
+	check(
+		same(Progression.Bosses, { 0, 140, 1100, 150e3, 2.9e6, 33e6, 300e6, 5.3e9, 82e9, 560e9 }),
+		"сила боссов 1–10: 0, 140, 1.1K, 150K, 2.9M, 33M, 300M, 5.3B, 82B, 560B"
+	)
+	check(
+		same(Progression.Dumbbell.Power, { 1, 6, 36, 210, 1200, 7700, 46000, 270000, 1600000, 10000000 }),
+		"мощность гантелей не менялась"
+	)
+	check(
+		same(Progression.Dumbbell.Prices, { 37e3, 520e3, 16e6, 420e6, 3e9, 33e9, 630e9, 3.2e12, 5.5e12 }),
+		"цены гантелей 2–10: 37K, 520K, 16M, 420M, 3B, 33B, 630B, 3.2T, 5.5T"
+	)
+	check(
+		same(Progression.Museum.Prices, { 10e3, 100e3, 610e3, 94e6, 680e6, 3.7e9, 46e9, 630e9, 3.2e12 }),
+		"цены уровней музея 2–10: 10K, 100K, 610K, 94M, 680M, 3.7B, 46B, 630B, 3.2T"
+	)
+	check(
+		rising(Progression.Museum.Prices) and rising(Progression.Dumbbell.Prices) and rising(Progression.Bosses),
+		"цены и сила боссов не убывают с уровнем"
+	)
+	local slotsOk = #GameConfig.Museum.SlotsByLevel == 10 and #Progression.Museum.Slots == 10
+	for level = 1, 10 do
+		local want = math.min(20, math.max(6, 2 * level))
+		slotsOk = slotsOk and GameConfig.Museum.SlotsByLevel[level] == want and Progression.Museum.Slots[level] == want
+	end
+	check(
+		slotsOk,
+		"мест в музее: max(6, 2 × уровень), не больше 20 (игра и симулятор одинаково)"
+	)
+	check(
+		same(GameConfig.Defense.HackPrices, { 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 3e10, 8e10 }),
+		"цены взлома: уровни 1–6 — D37, 7–10 — 1B / 10B / 30B / 80B"
+	)
+	local share = GameConfig.Defense.Share
+	check(
+		share.Trap == 0.10 and share.Laser == 0.15 and share.Door == 0.20 and share.Robot == 0.30 and share.Snare == nil,
+		"доли цен защиты не менялись (10 / 15 / 20 / 30 %, капкан не продаётся)"
+	)
+	local power = Progression.MuseumPower
+	check(
+		power.cap == 3
+			and power.Rarity.Common == 0.01
+			and power.Rarity.Rare == 0.05
+			and power.Rarity.Epic == 0.08
+			and power.Rarity.Legendary == 0.12
+			and power.Rarity.Secret == 0.3,
+		"формула бонуса музея не менялась (потолок +300 %)"
+	)
+	-- боссы 1–3 (утверждены раньше): силы и цены гантелей 2–3 прежние; босса 2 берут гантелью 1, босса 3 — гантелью 2
+	-- за минуты тренировки даже без бонуса музея, босса 4 — гантелью 3: гантель 4 (16M) для боссов 1–4 не нужна
+	local p = Progression.Dumbbell.Power
+	local toBoss2 = Progression.Bosses[2] / p[1]
+	local toBoss3 = (Progression.Bosses[3] - Progression.Bosses[2]) / p[2]
+	local toBoss4 = (Progression.Bosses[4] - Progression.Bosses[3]) / p[3]
+	check(
+		toBoss2 <= 300 and toBoss3 <= 300,
+		("боссы 2 и 3 — гантелями 1 и 2: %d с и %d с тренировки без бонуса"):format(
+			toBoss2,
+			toBoss3
+		)
+	)
+	check(
+		toBoss4 <= 1.5 * 3600,
+		("босс 4 — гантелью 3 (гантель 4 не нужна): %.2f ч тренировки без бонуса"):format(
+			toBoss4 / 3600
+		)
+	)
+	-- доходы существ боссов 4–10: правило (×Growth за уровень от среднего босса 3) и таблица совпадают
+	local income = Progression.CreatureIncome
+	local base, count = {}, {}
+	for _, def in Items do
+		if type(def) == "table" and def.boss == 3 and not def.legacy then
+			base[def.rarity] = (base[def.rarity] or 0) + def.income
+			count[def.rarity] = (count[def.rarity] or 0) + 1
+		end
+	end
+	local incomeOk = income.Growth == 3.2 and income.LegendaryOfEpic == 3 and income.SecretOfLegendary == 3
+	for boss = 1, 3 do
+		incomeOk = incomeOk and next(income.ByBoss[boss]) == nil
+	end
+	local worst = 0
+	for boss = 4, 10 do
+		local row = income.ByBoss[boss]
+		local k = income.Growth ^ (boss - 3)
+		local epic = base.Epic / count.Epic * k
+		local want = {
+			Common = base.Common / count.Common * k,
+			Rare = base.Rare / count.Rare * k,
+			Epic = epic,
+			Legendary = epic * income.LegendaryOfEpic,
+			Secret = if boss >= 8 then epic * income.LegendaryOfEpic * income.SecretOfLegendary else nil,
+		}
+		for _, rarity in { "Common", "Rare", "Epic", "Legendary", "Secret" } do
+			local got, need = row[rarity], want[rarity]
+			if (got == nil) ~= (need == nil) then
+				incomeOk = false
+			elseif got and need then
+				worst = math.max(worst, math.abs(got - need) / need)
+			end
+		end
+	end
+	check(
+		incomeOk and worst < 0.002,
+		("доходы существ боссов 4–10 — по правилу ×3.2 за уровень (расхождение с таблицей ≤ %.3f %%)"):format(
+			worst * 100
+		)
+	)
+end
+
 if failed > 0 then
 	print(("Проверок не прошло: %d"):format(failed))
 	process.exit(1)
