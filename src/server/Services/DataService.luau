@@ -7,8 +7,10 @@
 -- незавершённые передачи решает Util/TransferJournal.
 -- D55: schema 3 → 4 (Ловибумы и обучение, Shared/TutorialRules.Migrate) — после разбора журнала и проверки записей;
 -- покупка и трата Ловибумов — атомарно (монеты и запас в одном кадре, без yield).
+-- D56: schema 4 → 5 — запас защиты по уровням музея (Shared/DefenseRules.Normalize: старым устройствам — сохранённый
+-- уровень музея, ничего не удаляется).
 -- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Shared/CatchRules,
--- Shared/TutorialRules, Util/TransferJournal, Util/Log.
+-- Shared/DefenseRules, Shared/TutorialRules, Util/TransferJournal, Util/Log.
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
@@ -18,6 +20,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local Inventory = require(ReplicatedStorage.Shared.Inventory)
 local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
@@ -165,8 +168,8 @@ finishLoad = function(player: Player, profile: any): boolean
 		)
 	end
 	-- schema 3 → 4 (D55): обучение — по своим предметам (pending не считается), Ловибумы — пусто; затем проверка
-	-- Ловибумов и записи обучения при каждой загрузке.
-	if TutorialRules.Migrate(profile.Data, ProfileTemplate.schema) then
+	-- Ловибумов и записи обучения при каждой загрузке. Схема обучения — своя (TutorialRules.Schema), не шаблона.
+	if TutorialRules.Migrate(profile.Data, TutorialRules.Schema) then
 		Log.Debug(
 			"DataService",
 			("%s: миграция v3 → v4, обучение — %s"):format(player.Name, profile.Data.tutorial.step)
@@ -174,6 +177,26 @@ finishLoad = function(player: Player, profile: any): boolean
 	end
 	profile.Data.lovibums = CatchRules.Normalize(profile.Data.lovibums)
 	TutorialRules.Normalize(profile.Data)
+	-- schema 4 → 5 (D56): запас защиты — по уровням музея. Устройствам прежнего формата (без уровня) и стоявшим на
+	-- момент выхода назначается сохранённый уровень музея игрока; ничего не удаляется. Проверка — при каждой загрузке
+	-- (до любых действий игрока: позже уровень музея мог бы измениться).
+	if type(profile.Data.defense) ~= "table" then
+		profile.Data.defense = { owned = {}, hacks = {}, installed = {} }
+	end
+	local devices = DefenseRules.Normalize(profile.Data.defense, profile.Data.museumLevel)
+	if devices > 0 then
+		Log.Debug(
+			"DataService",
+			("%s: миграция v4 → v5, устройств защиты привязано к музею уровня %s: %d"):format(
+				player.Name,
+				tostring(profile.Data.museumLevel),
+				devices
+			)
+		)
+	end
+	if profile.Data.schema == ProfileTemplate.schema - 1 then
+		profile.Data.schema = ProfileTemplate.schema
+	end
 	if profile.Data.schema ~= ProfileTemplate.schema then
 		Log.Warn(
 			"DataService",
@@ -796,17 +819,18 @@ function DataService.SetTutorial(player: Player, fields: { [string]: any }): boo
 	return TutorialRules.Apply(TutorialRules.Normalize(data), data.items, fields)
 end
 
--- Защита музея в профиле (D37): { owned = { вид → n }, hacks = { L<уровень> → n } }.
+-- Защита музея в профиле (D37, D56): { owned = { вид → { L<уровень покупки> → n } }, hacks = { L<уровень> → n },
+-- installed = { вид → { cycle, level } } } — проверенная (DefenseRules.Normalize: запись прежнего формата
+-- закрепляется за уровнем музея в профиле). Менять запас — функциями DefenseRules (Add, Take).
 function DataService.Defense(player: Player): any
 	local data = DataService.GetData(player)
 	if not data then
 		return nil
 	end
 	if type(data.defense) ~= "table" then
-		data.defense = { owned = {}, hacks = {} }
+		data.defense = { owned = {}, hacks = {}, installed = {} }
 	end
-	data.defense.owned = if type(data.defense.owned) == "table" then data.defense.owned else {}
-	data.defense.hacks = if type(data.defense.hacks) == "table" then data.defense.hacks else {}
+	DefenseRules.Normalize(data.defense, data.museumLevel)
 	return data.defense
 end
 

@@ -252,16 +252,21 @@ do
 	local nightStart = function(cycle)
 		return cycle * 100 + 90
 	end
-	local before = { owned = { Trap = 0, Robot = 1 }, installed = { Trap = 3, Laser = 3 } }
+	-- D56: запас — по уровням покупки; устройство возвращается в запас своего уровня
+	local before = {
+		owned = { Robot = { L2 = 1 } },
+		installed = { Trap = { cycle = 3, level = 2 }, Laser = { cycle = 3, level = 1 } },
+	}
 	check(
-		DefenseRules.Settle(before, 3 * 100 + 50, nightStart) == 2
-			and before.owned.Trap == 1
-			and before.owned.Laser == 1,
-		"до Судной ночи — устройства вернулись в запас"
+		DefenseRules.Settle(before, 3 * 100 + 50, nightStart, 2) == 2
+			and before.owned.Trap.L2 == 1
+			and before.owned.Laser.L1 == 1
+			and before.owned.Robot.L2 == 1,
+		"до Судной ночи — устройства вернулись в запас своего уровня покупки"
 	)
-	local during = { owned = { Trap = 0 }, installed = { Trap = 3 } }
+	local during = { owned = {}, installed = { Trap = { cycle = 3, level = 2 } } }
 	check(
-		DefenseRules.Settle(during, 3 * 100 + 95, nightStart) == 0 and during.owned.Trap == 0,
+		DefenseRules.Settle(during, 3 * 100 + 95, nightStart, 2) == 0 and during.owned.Trap == nil,
 		"вышел посреди ночи и вернулся — запас не вернулся"
 	)
 	check(
@@ -269,6 +274,141 @@ do
 		"отметки об установке очищены"
 	)
 	check(cfg.Snare.Seconds == 10 and cfg.HackSeconds == 5, "капкан 10 с, взлом 5 с — D37")
+end
+
+print("Защита привязана к уровню музея (D56):")
+do
+	local owned = {}
+	DefenseRules.Add(owned, "Trap", 1, 2)
+	DefenseRules.Add(owned, "Trap", 3)
+	DefenseRules.Add(owned, "Robot", 3, 1)
+	check(
+		owned.Trap.L1 == 2 and owned.Trap.L3 == 1 and owned.Robot.L3 == 1,
+		"покупка записывается за уровнем музея"
+	)
+	check(
+		DefenseRules.Stock(owned, "Trap", 1) == 2
+			and DefenseRules.Stock(owned, "Trap", 3) == 1
+			and DefenseRules.Stock(owned, "Trap", 2) == 0
+			and DefenseRules.Stock(owned, "Door", 1) == 0,
+		"запас считается отдельно по каждому уровню"
+	)
+	check(
+		DefenseRules.OtherStock(owned, "Trap", 3) == 2 and DefenseRules.OtherStock(owned, "Robot", 3) == 0,
+		"устройства других уровней считаются отдельно"
+	)
+	-- установка: только устройством своего уровня
+	check(
+		DefenseRules.CanInstall(
+			cfg,
+			"Trap",
+			"Preparation",
+			3,
+			{},
+			DefenseRules.Stock(owned, "Trap", 3),
+			DefenseRules.OtherStock(owned, "Trap", 3)
+		) == nil,
+		"устройство уровня 3 на музей уровня 3 — можно"
+	)
+	local refusal = DefenseRules.CanInstall(
+		cfg,
+		"Trap",
+		"Preparation",
+		2,
+		{},
+		DefenseRules.Stock(owned, "Trap", 2),
+		DefenseRules.OtherStock(owned, "Trap", 2)
+	)
+	check(
+		refusal ~= nil and string.find(refusal, "другого уровня", 1, true) ~= nil,
+		"на музей уровня 2 устройства уровней 1 и 3 не ставятся (причина — другой уровень)"
+	)
+	check(
+		DefenseRules.CanInstall(cfg, "Door", "Preparation", 2, {}, 0, 0) == "Сначала купите это устройство",
+		"нет устройства никакого уровня — «сначала купите»"
+	)
+	check(
+		DefenseRules.Take(owned, "Trap", 1) and owned.Trap.L1 == 1 and owned.Trap.L3 == 1,
+		"списание — только из запаса своего уровня"
+	)
+	check(
+		not DefenseRules.Take(owned, "Trap", 2) and owned.Trap.L1 == 1 and owned.Trap.L3 == 1,
+		"списать устройство другого уровня нельзя"
+	)
+	check(DefenseRules.Take(owned, "Trap", 1) and owned.Trap.L1 == nil, "последнее списано — ключ уровня убран")
+	local stale = DefenseRules.Stale({ Trap = { L1 = 2, L5 = 1, L4 = 3 }, Door = { L4 = 1 }, Laser = {} }, 4)
+	check(
+		#stale.Trap == 2
+			and stale.Trap[1].level == 1
+			and stale.Trap[1].count == 2
+			and stale.Trap[2].level == 5
+			and stale.Door == nil
+			and stale.Laser == nil,
+		"список прежних уровней: без своего уровня, по возрастанию"
+	)
+	local at = DefenseRules.StockAt({ Trap = { L1 = 2, L4 = 3 }, Door = { L4 = 1 }, Robot = { L2 = 1 } }, 4)
+	check(at.Trap == 3 and at.Door == 1 and at.Robot == nil, "запас музея этого уровня: вид → количество")
+
+	-- миграция прежнего формата: сохранённый уровень музея игрока (не обязательно 1), ничего не теряется
+	for _, level in { 1, 3, 7, 10 } do
+		local old = {
+			owned = { Trap = 2, Robot = 1, Snare = 0, Laser = 3.9, Door = -1 },
+			hacks = { L2 = 1 },
+			installed = { Door = 12 },
+		}
+		local key = "L" .. level
+		local moved = DefenseRules.Normalize(old, level)
+		check(
+			moved == 7
+				and old.owned.Trap[key] == 2
+				and old.owned.Robot[key] == 1
+				and old.owned.Laser[key] == 3
+				and next(old.owned.Snare) == nil
+				and next(old.owned.Door) == nil
+				and old.hacks.L2 == 1
+				and old.installed.Door.cycle == 12
+				and old.installed.Door.level == level,
+			("прежний формат → музей уровня %d: количества сохранены, взлом не тронут"):format(level)
+		)
+		local again = DefenseRules.Normalize(old, if level < 10 then level + 1 else 1)
+		check(
+			again == 0 and old.owned.Trap[key] == 2 and old.installed.Door.level == level,
+			("повторная проверка (уровень музея уже другой) ничего не переносит: уровень %d"):format(level)
+		)
+	end
+	local mixed = { owned = { Trap = { L2 = 1, L11 = 5, junk = 2, L3 = 0 }, Bomb = 4, Robot = "x" } }
+	DefenseRules.Normalize(mixed, 5)
+	check(
+		mixed.owned.Trap.L2 == 1
+			and mixed.owned.Trap.L11 == nil
+			and mixed.owned.Trap.junk == nil
+			and mixed.owned.Trap.L3 == nil
+			and mixed.owned.Bomb.L5 == 4
+			and next(mixed.owned.Robot) == nil
+			and type(mixed.hacks) == "table"
+			and type(mixed.installed) == "table",
+		"мусор убран, неизвестный вид с количеством сохранён, недостающие поля созданы"
+	)
+	local empty = {}
+	check(
+		DefenseRules.Normalize(empty, nil) == 0 and next(empty.owned) == nil and next(empty.installed) == nil,
+		"пустая запись и уровень не числом — без ошибок"
+	)
+	-- прежняя запись об установке без уровня: при возврате — сохранённый уровень музея
+	local nightStart = function(cycle)
+		return cycle * 100 + 90
+	end
+	local legacy = { owned = { Trap = 1 }, installed = { Trap = 3, Laser = 3 } }
+	check(
+		DefenseRules.Settle(legacy, 3 * 100 + 50, nightStart, 6) == 2
+			and legacy.owned.Trap.L6 == 2
+			and legacy.owned.Laser.L6 == 1,
+		"прежний формат установленного: вернулось на сохранённый уровень музея 6"
+	)
+	check(
+		DefenseRules.LevelKey(4) == "L4" and DefenseRules.KeyLevel("L10") == 10 and DefenseRules.KeyLevel("L0") == nil,
+		"ключи уровней L1…L10"
+	)
 end
 
 print(("Проверок: %d, не прошло: %d"):format(passed + failed, failed))

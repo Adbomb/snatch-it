@@ -56,6 +56,7 @@ local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
+local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
 local CreatureMotion = require(ReplicatedStorage.Shared.CreatureMotion)
 local CreatureRigs = require(ReplicatedStorage.Shared.Config.CreatureRigs)
@@ -244,6 +245,11 @@ end)
 -- Пауза между вызовами одного входа: ограничитель частоты (GameConfig.RateLimits) режет лишние.
 local function settle()
 	task.wait(0.3)
+end
+
+-- Сколько устройств kind в запасе игрока для музея его нынешнего уровня (D56: запас — по уровням покупки).
+local function defenseStock(player: any, kind: string): number
+	return DefenseRules.Stock(DataService.Defense(player).owned, kind, DataService.GetData(player).museumLevel)
 end
 
 -- Несёт новый предмет и сдаёт его в сундук своего музея (Carried → Stored).
@@ -1430,10 +1436,9 @@ end)
 
 test("Защита: покупка и установка только в подготовку, min(уровень, 5), места, после ночи списано", function(A)
 	DataService.AddCoins(A, 1e6)
-	local owned = DataService.Defense(A).owned
 	local museum = DefenseService.Handlers.Museum(A.UserId)
 	DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
-	check((owned.Trap or 0) == 0, "защиту купили днём")
+	check(defenseStock(A, "Trap") == 0, "защиту купили днём")
 	TimeService.SkipTo("Preparation", -5)
 	settle()
 	DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
@@ -1441,8 +1446,8 @@ test("Защита: покупка и установка только в под�
 	DefenseService.Handlers.Action(A, "BuyDefense", "Laser")
 	settle()
 	DefenseService.Handlers.Action(A, "BuyDefense", "Snare")
-	check(owned.Trap == 1 and owned.Laser == 1, "в подготовку не купилось")
-	check((owned.Snare or 0) == 0, "капкан без утверждённой цены продан")
+	check(defenseStock(A, "Trap") == 1 and defenseStock(A, "Laser") == 1, "в подготовку не купилось")
+	check(defenseStock(A, "Snare") == 0, "капкан без утверждённой цены продан")
 	settle()
 	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(13.4, 0, -2)) -- место 1 (D48-C)
 	check(museum.installed.Trap == nil, "ловушку поставили на постамент")
@@ -1454,7 +1459,7 @@ test("Защита: покупка и установка только в под�
 	check(museum.installed.Laser == nil and A:WasNotified("Больше устройств"), "музей ур. 1 принял второе устройство")
 	TimeService.SkipTo("DoomNight", -2)
 	DefenseService.Handlers.EndNight()
-	check(owned.Trap == 0 and owned.Laser == 1, "после ночи списано не то")
+	check(defenseStock(A, "Trap") == 0 and defenseStock(A, "Laser") == 1, "после ночи списано не то")
 	check(next(museum.installed) == nil, "установленное не исчезло")
 end)
 
@@ -1585,7 +1590,7 @@ test("Ревью: миграция через настоящую загрузк�
 	ctx.track(again)
 	check(join(again), "A не вошёл после миграции")
 	local items = DataService.GetData(again).items
-	check(DataService.GetData(again).schema == 4, "схема не 4 (D55: v2 → v3 → v4)")
+	check(DataService.GetData(again).schema == 5, "схема не 5 (v2 → v3 → v4 D55 → v5 D56)")
 	check(ItemRegistry.Get(keep).state == "Displayed" and ItemRegistry.Get(keep).slot == 1, "старший экспонат не на месте")
 	check(items["dup-late"].place == "storage" and ItemRegistry.Get("dup-late").state == "Stored", "второй на постаменте 1")
 	check(items["far"].place == "storage", "экспонат вне музея не в инвентаре")
@@ -1689,14 +1694,19 @@ test("Ревью: защита списывается при установке,
 	settle()
 	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
 	local defense = DataService.Defense(A)
-	check((defense.owned.Trap or 0) == 0 and type(defense.installed.Trap) == "number", "установка не списала ловушку")
+	local placed = defense.installed.Trap
+	check(defenseStock(A, "Trap") == 0, "установка не списала ловушку")
+	check(
+		type(placed) == "table" and placed.cycle == GameTime.Current().cycle and placed.level == 1,
+		"запись об установке — не { круг, уровень покупки }"
+	)
 	settle()
 	DefenseService.Handlers.Action(A, "Remove", "Trap")
-	check(defense.owned.Trap == 1 and defense.installed.Trap == nil, "снятие не вернуло ловушку")
+	check(defenseStock(A, "Trap") == 1 and defense.installed.Trap == nil, "снятие не вернуло ловушку")
 	settle()
 	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
 	DefenseService.OnPlayerLeaving(A) -- вышел в подготовку
-	check(defense.owned.Trap == 1, "выход до ночи не вернул ловушку")
+	check(defenseStock(A, "Trap") == 1, "выход до ночи не вернул ловушку")
 	DataService.AddCoins(B, 1e6)
 	DefenseService.Handlers.HackBegin(B, A, plotOf(A))
 	check(DefenseService.Handlers.Museum(A.UserId).hackBegan[B] == nil, "взлом начался в подготовку")
@@ -3939,6 +3949,175 @@ test("D55 обучение: выход и вход на каждом шаге, �
 	check(TutorialService.Handlers.Personal(S) == nil and personalCount() == 0, "после Done — учебные объекты")
 	check(count == 1 and data.items[uid] and ItemRegistry.Get(uid).state == "Displayed", "предметов в профиле: " .. count)
 	check(TutorialRules.IsProtected(data, uid), "у стартового нет защиты")
+end)
+
+-- D56: защита привязана к уровню музея ───────────────────────────────────────────────────────────────────────
+
+-- Последнее состояние защиты, отправленное игроку (DefenseChanged).
+local function lastDefense(player: any): any
+	local payload = nil
+	for _, event in player.Sent do
+		if event.name == "DefenseChanged" then
+			payload = event.args[1]
+		end
+	end
+	return payload
+end
+
+test("D56 защита: устройство привязано к уровню музея при покупке — на другом уровне не ставится и не пропадает", function(A)
+	local cfg = GameConfig.Defense
+	local data = DataService.GetData(A)
+	local museum = DefenseService.Handlers.Museum(A.UserId)
+	local spot = Vector3.new(5, 0, 5)
+	DataService.AddCoins(A, 1e9)
+	TimeService.SkipTo("Preparation", -5)
+	-- музей уровня 1: две ловушки по цене уровня 1, запас записан за уровнем 1
+	local before = data.coins
+	for _ = 1, 2 do
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+	end
+	local defense = DataService.Defense(A)
+	check(defense.owned.Trap.L1 == 2, "покупка на уровне 1 не записана за уровнем 1")
+	check(data.coins == before - 2 * DefenseRules.Price(cfg, "Trap", 1), "цена — не уровня 1")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+	check(museum.installed.Trap ~= nil and defense.owned.Trap.L1 == 1, "до повышения ловушка не встала")
+	check(defense.installed.Trap.level == 1, "у установленной не записан уровень покупки")
+	settle()
+	DefenseService.Handlers.Action(A, "Remove", "Trap")
+	check(museum.installed.Trap == nil and defense.owned.Trap.L1 == 2, "снятая не вернулась в запас уровня 1")
+	-- музей стал уровня 2 (в игре — покупкой уровня днём; здесь — как после неё): старые не ставятся и не пропадают
+	setMuseumLevel(A, 2)
+	A:ClearSent()
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+	check(museum.installed.Trap == nil, "ловушка уровня 1 встала на музей уровня 2")
+	check(A:WasNotified("другого уровня"), "нет причины отказа про другой уровень")
+	defense = DataService.Defense(A)
+	check(defense.owned.Trap.L1 == 2 and defense.owned.Trap.L2 == nil, "старые устройства изменились")
+	DefenseService.Sync(A)
+	local sent = lastDefense(A)
+	check(sent and sent.level == 2 and sent.max == 2, "окну не пришёл уровень 2")
+	check(sent.owned.Trap == nil, "окно считает ловушки уровня 1 годными")
+	check(
+		sent.stale.Trap and #sent.stale.Trap == 1 and sent.stale.Trap[1].level == 1 and sent.stale.Trap[1].count == 2,
+		"окну не пришли устройства прежнего уровня"
+	)
+	-- покупка на уровне 2: цена уровня 2, запас уровня 2; ставится
+	before = data.coins
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+	check(data.coins == before - DefenseRules.Price(cfg, "Trap", 2), "цена — не уровня 2")
+	check(defense.owned.Trap.L2 == 1 and defense.owned.Trap.L1 == 2, "покупка на уровне 2 смешалась с уровнем 1")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+	check(museum.installed.Trap ~= nil and defense.installed.Trap.level == 2, "ловушка уровня 2 не встала")
+	check(defense.owned.Trap.L2 == nil and defense.owned.Trap.L1 == 2, "списано не из запаса уровня 2")
+	-- прежние ограничения действуют: каждого вида одно, не больше min(уровень, 5)
+	for _, kind in { "Trap", "Laser", "Door" } do
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", kind)
+	end
+	A:ClearSent()
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(-5, 0, 5))
+	check(A:WasNotified("уже стоит") and defense.owned.Trap.L2 == 1, "вторая ловушка встала")
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Laser", "Entrance")
+	check(museum.installed.Laser ~= nil, "второе устройство на уровне 2 не встало")
+	A:ClearSent()
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Door", "Entrance")
+	check(museum.installed.Door == nil and A:WasNotified("Больше устройств"), "третье устройство на уровне 2 встало")
+	-- вышел до ночи: каждое возвращается в запас своего уровня покупки, даже если уровень музея уже другой
+	data.museumLevel = 3
+	DefenseService.OnPlayerLeaving(A)
+	defense = DataService.Defense(A)
+	check(defense.owned.Trap.L2 == 2 and defense.owned.Laser.L2 == 1, "вернулось не в запас уровня покупки")
+	check(defense.owned.Trap.L1 == 2 and defense.owned.Trap.L3 == nil, "возврат задел другие уровни")
+	check(next(defense.installed) == nil, "запись об установке осталась")
+end)
+
+test("D56 защита: после Судной ночи установленное исчезает, запас прежних уровней остаётся", function(A)
+	DataService.AddCoins(A, 1e9)
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(A, "BuyDefense", "Trap") -- уровень 1
+	setMuseumLevel(A, 2)
+	for _ = 1, 2 do
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", "Trap") -- уровень 2
+	end
+	settle()
+	DefenseService.Handlers.Action(A, "Install", "Trap", Vector3.new(5, 0, 5))
+	local museum = DefenseService.Handlers.Museum(A.UserId)
+	check(museum.installed.Trap ~= nil, "ловушка уровня 2 не встала")
+	TimeService.SkipTo("DoomNight", -2)
+	DefenseService.Handlers.EndNight()
+	local defense = DataService.Defense(A)
+	check(next(museum.installed) == nil and next(defense.installed) == nil, "после ночи защита осталась")
+	check(defense.owned.Trap.L2 == 1, "после ночи запас уровня 2 — не 1")
+	check(defense.owned.Trap.L1 == 1, "после ночи пропало устройство уровня 1")
+end)
+
+test("D56 миграция: защита прежнего формата получает сохранённый уровень музея, ничего не теряется", function(_A, _B, ctx)
+	-- профиль v4 сохранён прежним сервером: запас — числа без уровня, установленное — номер круга; музей уровня 3
+	local store = ProfileStore.New(GameConfig.Data.StoreName, ProfileTemplate).Mock
+	local C = TestPlayer.new("Тест_C_v4")
+	ctx.track(C)
+	local cycle = GameTime.Current().cycle
+	local old = store:StartSessionAsync(GameConfig.Data.KeyPrefix .. C.UserId)
+	check(old ~= nil, "сессия прежнего профиля не открылась")
+	old.Data.schema = 4
+	old.Data.coins = 5000
+	old.Data.museumLevel = 3
+	old.Data.tutorial = { step = "Done", migrated = true }
+	old.Data.defense = {
+		owned = { Trap = 2, Robot = 1, Snare = 0 },
+		hacks = { L2 = 1 },
+		-- дверь стояла к ещё не наступившей ночи (вернётся), лазер — к прошедшей (отработал)
+		installed = { Door = cycle, Laser = cycle - 1 },
+	}
+	old:EndSession()
+	check(join(C), "игрок со старым профилем не вошёл")
+	local data = DataService.GetData(C)
+	local defense = data.defense
+	check(data.schema == 5, "схема не 5")
+	check(data.museumLevel == 3 and data.coins == 5000, "уровень музея или монеты изменились")
+	check(type(defense.owned.Trap) == "table" and defense.owned.Trap.L3 == 2, "ловушки не привязаны к уровню 3")
+	check(defense.owned.Robot.L3 == 1, "робот не привязан к уровню 3")
+	check(defense.owned.Trap.L1 == nil, "устройства записаны за уровнем 1")
+	check(defense.owned.Door and defense.owned.Door.L3 == 1, "дверь, стоявшая до ночи, не вернулась на уровень 3")
+	check(defense.owned.Laser == nil or defense.owned.Laser.L3 == nil, "лазер, отработавший ночь, вернулся")
+	check(defense.hacks.L2 == 1, "устройство взлома потеряно")
+	check(next(defense.installed) == nil, "запись об установке осталась")
+	local sent = lastDefense(C)
+	check(sent and sent.level == 3 and sent.owned.Trap == 2 and sent.owned.Door == 1, "окну пришёл не запас уровня 3")
+	check(next(sent.stale) == nil, "у мигрировавшего профиля есть «чужие» уровни")
+	-- повторный вход ничего не меняет (миграция один раз)
+	local userId = C.UserId
+	leave(C)
+	local again = TestPlayer.new("Тест_C_v5")
+	again.UserId = userId
+	ctx.track(again)
+	check(join(again), "повторный вход не удался")
+	defense = DataService.Defense(again)
+	check(DataService.GetData(again).schema == 5, "схема после повторного входа")
+	check(defense.owned.Trap.L3 == 2 and defense.owned.Robot.L3 == 1 and defense.owned.Door.L3 == 1, "запас изменился")
+	check(defense.hacks.L2 == 1, "взлом изменился после повторного входа")
+	-- на музее уровня 3 мигрировавшие устройства ставятся; после повышения до 4 — уже нет
+	TimeService.SkipTo("Preparation", -5)
+	settle()
+	DefenseService.Handlers.Action(again, "Install", "Trap", Vector3.new(5, 0, 5))
+	local museum = DefenseService.Handlers.Museum(again.UserId)
+	check(museum.installed.Trap ~= nil and defense.owned.Trap.L3 == 1, "мигрировавшая ловушка не встала на уровне 3")
+	settle()
+	DefenseService.Handlers.Action(again, "Remove", "Trap")
+	setMuseumLevel(again, 4)
+	settle()
+	DefenseService.Handlers.Action(again, "Install", "Trap", Vector3.new(5, 0, 5))
+	check(museum.installed.Trap == nil and DataService.Defense(again).owned.Trap.L3 == 2, "ловушка уровня 3 встала на уровне 4")
 end)
 
 local ServerTests = {}

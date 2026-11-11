@@ -17,6 +17,10 @@ local TutorialRules = {}
 -- поставить на постамент; Income — ждём первое начисление дохода за него; Done — обучение пройдено.
 TutorialRules.Steps = { "Intro", "Catch", "Battle", "Carry", "Income", "Done" }
 
+-- Схема профиля, с которой пришло обучение: Migrate переводит профили схемы Schema − 1. Номер — свой, а не шаблона
+-- профиля: шаблон идёт дальше (D56 — схема 5), а миграция обучения остаётся «3 → 4».
+TutorialRules.Schema = 4
+
 local index: { [string]: number } = {}
 for i, step in TutorialRules.Steps do
 	index[step] = i

@@ -17,7 +17,9 @@ Remotes.Names = {
 	GymUpgrade = "GymUpgrade", -- клиент → сервер: «улучши мою гантель» (без аргументов)
 	GymGain = "GymGain", -- сервер → владельцу: прибавка силы за такт качания (число)
 	DefenseAction = "DefenseAction", -- клиент → сервер: ("BuyDefense", вид) | ("BuyHack", уровень) | ("Install", вид, место) | ("Remove", вид)
-	DefenseChanged = "DefenseChanged", -- сервер → владельцу: { owned, hacks, installed, level, max, coins }
+	-- сервер → владельцу: { owned (вид → n для музея этого уровня), stale (вид → { { level, count } } — прежние
+	-- уровни, D56), hacks, installed, level, max, hacked }
+	DefenseChanged = "DefenseChanged",
 	PvpAttack = "PvpAttack", -- клиент → сервер: «ударь» (без аргументов, цель выбирает сервер), D46
 	PvpEffect = "PvpEffect", -- сервер → игрокам рядом: { kind = "Swing" | "Hit" | "Knock", attacker, target?, damage }
 	OpenWindow = "OpenWindow", -- сервер → владельцу: открыть окно ("Inventory" | "Defense") — подсказки хранилища D48-C
@@ -28,6 +30,9 @@ Remotes.Names = {
 	CatchState = "CatchState", -- сервер → ловящему: { state, boss, slot, uid, since, throws, max, face, … } | nil
 	CatchEffect = "CatchEffect", -- сервер → игрокам рядом: { kind = "Throw" | "Result" | …, … } (видят все рядом)
 	TutorialChanged = "TutorialChanged", -- сервер → ученику: { step, target?, … }
+	-- D56: улучшение музея
+	MuseumUpgrade = "MuseumUpgrade", -- клиент → сервер: (уровень, который хочу купить, — только следующий)
+	MuseumUpgradeResult = "MuseumUpgradeResult", -- сервер → владельцу: { ok, code?, message?, level, slots, coins }
 }
 
 function Remotes.CreateAll()

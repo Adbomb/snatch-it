@@ -3,6 +3,8 @@
 -- только в подготовку. Ловушка, робот и капкан ставятся свободно: полупрозрачный образец следует за курсором или
 -- касанием по полу своего зала, зелёный — можно, красный — нельзя с причиной (Shared/DefenseRules — те же правила, что
 -- на сервере); «Поставить» на панели внизу или ЛКМ. Дверь — на вход, лазер — на одно из размеченных мест прохода.
+-- D56: устройство привязано к уровню музея, для которого куплено: «куплено» — запас для музея нынешнего уровня;
+-- устройства прежних уровней остаются в запасе и показаны отдельной строкой внизу списка (сюда не ставятся).
 -- Вкладка «Взлом»: устройства взлома для музеев уровней 1–10, покупка днём. Всё проверяет сервер (DefenseAction).
 -- Кнопка «Защита» в HUD под «Инвентарём». Зависит от Shared/StudUI, Shared/DefenseRules, Shared/GameTime,
 -- Shared/NumberFormat, Remotes, Config/GameConfig, Config/UITokens.
@@ -31,7 +33,7 @@ local player = Players.LocalPlayer
 
 local DefenseController = {}
 
-local state: any = { owned = {}, hacks = {}, installed = {}, level = 1, max = 1 }
+local state: any = { owned = {}, stale = {}, hacks = {}, installed = {}, level = 1, max = 1 }
 local tab = "Defense" -- "Defense" | "Hack"
 local gui: ScreenGui
 local win: any
@@ -179,6 +181,54 @@ local function renderDefense()
 			end)
 		end
 	end
+	-- D56: устройства, купленные для музея другого уровня: остаются в запасе, на этот музей не ставятся
+	local kept = {}
+	for _, kind in DefenseRules.Types do
+		local levels = type(state.stale) == "table" and state.stale[kind]
+		if type(levels) == "table" and #levels > 0 then
+			local texts = {}
+			for _, entry in levels do
+				table.insert(texts, ("ур. %d ×%d"):format(entry.level, entry.count))
+			end
+			table.insert(kept, ("%s — %s"):format(DefenseRules.Names[kind], table.concat(texts, ", ")))
+		end
+	end
+	if #kept > 0 then
+		local frame = UI.InsetBox(list, {
+			Name = "Anciens",
+			Size = UDim2.fromOffset(T.Row.X, T.Row.Y),
+			LayoutOrder = #DefenseRules.Types + 1,
+		})
+		UI.Text(
+			frame,
+			("Прежние уровни музея — на уровень %d не ставятся"):format(
+				state.level
+			),
+			{
+				Name = "Nom",
+				Size = UDim2.fromOffset(T.Row.X - 36, 34),
+				Position = UDim2.fromOffset(18, 28),
+				AnchorPoint = Vector2.new(0, 0.5),
+				AlignX = Enum.TextXAlignment.Left,
+				Max = T.NameText,
+				Min = T.StaleMinText,
+				Color = T.StaleColor,
+				ZIndex = 5,
+			}
+		)
+		UI.Text(frame, table.concat(kept, " · ") .. " · остаются в запасе", {
+			Name = "Infos",
+			Font = "Bold",
+			Size = UDim2.fromOffset(T.Row.X - 36, 28),
+			Position = UDim2.fromOffset(18, 64),
+			AnchorPoint = Vector2.new(0, 0.5),
+			AlignX = Enum.TextXAlignment.Left,
+			Max = T.InfoText,
+			Min = T.StaleMinText,
+			Color = UI.Colors.Secondary,
+			ZIndex = 5,
+		})
+	end
 end
 
 local function renderHack()
@@ -213,7 +263,8 @@ local function render()
 		elseif phase == "Preparation" then "Подготовка: покупайте и ставьте защиту"
 		else "Защиту покупают и ставят только в подготовку к Судной ночи"
 	info.Text = hint
-	counter.Text = ('Устройств: <font color="%s">%d/%d</font>'):format(
+	counter.Text = ('Музей ур. %d · устройств: <font color="%s">%d/%d</font>'):format(
+		state.level or 1,
 		UI.Colors.HighlightHex,
 		count,
 		state.max

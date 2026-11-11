@@ -2,6 +2,10 @@
 -- Правила защиты музея и взлома (D37, D46) без Instance: цены, когда покупать и ставить, сколько устройств, где
 -- можно ставить, годится ли устройство взлома. Читают сервер (DefenseService — проверка) и клиент (окно «Защита» —
 -- образец зелёный или красный); проверяет scripts/lune/check_defense.luau. Координаты — в осях участка.
+-- D56: купленное устройство привязано к уровню музея на момент покупки и ставится только на музей этого уровня.
+-- Запас в профиле — owned = { вид → { "L<уровень покупки>" → количество } }, установленное — installed = { вид →
+-- { cycle, level } }; прежний формат (вид → количество, вид → круг) переводит Normalize: устройствам назначается
+-- сохранённый уровень музея игрока, ничего не удаляется.
 -- Зависит только от переданного конфига (GameConfig.Defense).
 
 local DefenseRules = {}
@@ -79,14 +83,176 @@ function DefenseRules.CanBuyHack(cfg: any, level: any, phase: string, coins: num
 	return nil
 end
 
--- Можно ли поставить устройство kind. installed — уже стоящие в музее (вид → true), owned — сколько куплено.
+-- ── Запас по уровням музея (D56) ──────────────────────────────────────────────────────────────────────────
+
+-- Количество в порядке: целое ≥ 0 (не число, NaN, отрицательное — 0).
+local function whole(value: any): number
+	if type(value) ~= "number" or value ~= value or value < 1 then
+		return 0
+	end
+	return math.floor(math.min(value, 1e9))
+end
+
+-- Ключ запаса устройств, купленных для музея уровня level.
+function DefenseRules.LevelKey(level: any): string
+	return "L" .. levelOf(level)
+end
+
+-- Уровень из ключа запаса ("L3" → 3); nil — это не ключ уровня.
+function DefenseRules.KeyLevel(key: any): number?
+	if type(key) ~= "string" then
+		return nil
+	end
+	local level = tonumber(string.match(key, "^L(%d+)$"))
+	if level and level >= 1 and level <= 10 then
+		return level
+	end
+	return nil
+end
+
+-- Запись защиты профиля в порядке (при каждой загрузке и перед каждым изменением). Прежний формат (schema ≤ 4):
+-- owned[вид] = количество и installed[вид] = круг — без уровня; таким устройствам назначается museumLevel —
+-- сохранённый уровень музея игрока. Ничего не удаляется: количества сохраняются, неизвестные виды тоже. Убирается
+-- только то, что устройством не является: нулевые и нечисловые количества, ключи не вида "L<1…10>". Повторный вызов
+-- ничего не меняет. Возвращает, сколько устройств переведено из прежнего формата.
+function DefenseRules.Normalize(defense: any, museumLevel: any): number
+	local key = DefenseRules.LevelKey(museumLevel)
+	local migrated = 0
+	if type(defense.owned) ~= "table" then
+		defense.owned = {}
+	end
+	if type(defense.hacks) ~= "table" then
+		defense.hacks = {}
+	end
+	if type(defense.installed) ~= "table" then
+		defense.installed = {}
+	end
+	for kind, value in defense.owned do
+		if type(value) == "table" then
+			for levelKey, count in value do
+				local n = if DefenseRules.KeyLevel(levelKey) then whole(count) else 0
+				value[levelKey] = if n > 0 then n else nil
+			end
+		else
+			local n = whole(value)
+			defense.owned[kind] = if n > 0 then { [key] = n } else {}
+			migrated += n
+		end
+	end
+	for kind, entry in defense.installed do
+		if type(entry) == "number" then
+			defense.installed[kind] = { cycle = entry, level = levelOf(museumLevel) }
+			migrated += 1
+		elseif type(entry) == "table" and type(entry.cycle) == "number" then
+			entry.level = levelOf(if entry.level == nil then museumLevel else entry.level)
+		else
+			defense.installed[kind] = nil -- не запись об установке: устройства за ней нет
+		end
+	end
+	return migrated
+end
+
+-- Сколько устройств kind куплено для музея уровня level.
+function DefenseRules.Stock(owned: any, kind: string, level: any): number
+	local byLevel = type(owned) == "table" and owned[kind]
+	if type(byLevel) ~= "table" then
+		return 0
+	end
+	return whole(byLevel[DefenseRules.LevelKey(level)])
+end
+
+-- Сколько устройств kind куплено для музеев других уровней (на музей уровня level они не ставятся).
+function DefenseRules.OtherStock(owned: any, kind: string, level: any): number
+	local byLevel = type(owned) == "table" and owned[kind]
+	if type(byLevel) ~= "table" then
+		return 0
+	end
+	local own = DefenseRules.LevelKey(level)
+	local total = 0
+	for key, count in byLevel do
+		if key ~= own and DefenseRules.KeyLevel(key) then
+			total += whole(count)
+		end
+	end
+	return total
+end
+
+-- Запас для музея уровня level: вид → количество (только виды, которых больше нуля).
+function DefenseRules.StockAt(owned: any, level: any): { [string]: number }
+	local out = {}
+	if type(owned) == "table" then
+		for kind in owned do
+			local n = DefenseRules.Stock(owned, kind, level)
+			if n > 0 then
+				out[kind] = n
+			end
+		end
+	end
+	return out
+end
+
+-- Устройства других уровней: вид → список { level, count } по возрастанию уровня (окно «Защита» показывает их как
+-- «не подходят к этому музею»; списком — чтобы таблица без потерь доходила до клиента).
+function DefenseRules.Stale(owned: any, level: any): { [string]: { { level: number, count: number } } }
+	local out = {}
+	local own = DefenseRules.LevelKey(level)
+	if type(owned) ~= "table" then
+		return out
+	end
+	for kind, byLevel in owned do
+		if type(byLevel) == "table" then
+			local list = {}
+			for key, count in byLevel do
+				local other = DefenseRules.KeyLevel(key)
+				if other and key ~= own and whole(count) > 0 then
+					table.insert(list, { level = other, count = whole(count) })
+				end
+			end
+			if #list > 0 then
+				table.sort(list, function(a, b)
+					return a.level < b.level
+				end)
+				out[kind] = list
+			end
+		end
+	end
+	return out
+end
+
+-- Положить в запас count устройств kind, купленных для музея уровня level.
+function DefenseRules.Add(owned: any, kind: string, level: any, count: number?)
+	local byLevel = owned[kind]
+	if type(byLevel) ~= "table" then
+		-- прежний формат, не прошедший Normalize: количество не теряется — закрепляется за этим же уровнем
+		local old = whole(byLevel)
+		byLevel = if old > 0 then { [DefenseRules.LevelKey(level)] = old } else {}
+		owned[kind] = byLevel
+	end
+	local key = DefenseRules.LevelKey(level)
+	byLevel[key] = whole(byLevel[key]) + whole(count or 1)
+end
+
+-- Взять из запаса одно устройство kind уровня level. false — такого нет (ничего не меняется).
+function DefenseRules.Take(owned: any, kind: string, level: any): boolean
+	local have = DefenseRules.Stock(owned, kind, level)
+	if have < 1 then
+		return false
+	end
+	local key = DefenseRules.LevelKey(level)
+	owned[kind][key] = if have > 1 then have - 1 else nil
+	return true
+end
+
+-- Можно ли поставить устройство kind. installed — уже стоящие в музее (вид → true), owned — сколько куплено для
+-- музея этого уровня, other — сколько куплено для музеев других уровней (D56: они не ставятся).
 function DefenseRules.CanInstall(
 	cfg: any,
 	kind: string,
 	phase: string,
 	level: number,
 	installed: { [string]: any },
-	owned: number
+	owned: number,
+	other: number?
 ): string?
 	if not DefenseRules.IsType(kind) then
 		return "Нет такого устройства"
@@ -108,6 +274,11 @@ function DefenseRules.CanInstall(
 		)
 	end
 	if owned < 1 then
+		if (other or 0) > 0 then
+			return ("Это устройство куплено для музея другого уровня — на музей уровня %d купите новое"):format(
+				levelOf(level)
+			)
+		end
 		return "Сначала купите это устройство"
 	end
 	return nil
@@ -285,13 +456,14 @@ end
 -- Установленное устройство списано при установке и привязано к Судной ночи круга cycle (data.defense.installed).
 -- При загрузке и выходе: эта ночь ещё не началась (игрок вышел или сервер упал до неё) — вернуть в запас; началась —
 -- устройство отработало (выход посреди ночи и вход обратно запас не возвращают). nightStart(cycle) — начало Судной
--- ночи круга.
-function DefenseRules.Settle(defense: any, now: number, nightStart: (number) -> number): number
+-- ночи круга. D56: устройство возвращается в запас своего уровня покупки (installed[вид].level); museumLevel —
+-- сохранённый уровень музея для записей прежнего формата (без уровня).
+function DefenseRules.Settle(defense: any, now: number, nightStart: (number) -> number, museumLevel: any?): number
 	local returned = 0
-	defense.owned = defense.owned or {}
-	for kind, cycle in defense.installed or {} do
-		if type(cycle) == "number" and now < nightStart(cycle) then
-			defense.owned[kind] = (defense.owned[kind] or 0) + 1
+	DefenseRules.Normalize(defense, museumLevel)
+	for kind, entry in defense.installed do
+		if now < nightStart(entry.cycle) then
+			DefenseRules.Add(defense.owned, kind, entry.level, 1)
 			returned += 1
 		end
 	end

@@ -439,6 +439,9 @@ UITokens.Defense = {
 	RowGap = 10,
 	NameText = 26,
 	InfoText = 20,
+	-- строка «Прежние уровни музея» (D56): устройства, которые на музей нынешнего уровня не ставятся
+	StaleColor = Color3.fromHex("FFD23F"),
+	StaleMinText = 14, -- длинный список уровней сжимается не мельче этого
 	Button = Vector2.new(150, 52),
 	Bar = Vector2.new(560, 120), -- панель расстановки внизу экрана
 	Ghost = {

@@ -25,8 +25,13 @@ local function check(ok: boolean, message: string)
 	end
 end
 
-local SCHEMA = ProfileTemplate.schema
-check(SCHEMA == 4, "схема профиля 4")
+-- обучение пришло со схемой 4 (TutorialRules.Schema); шаблон профиля мог уйти дальше (D56 — схема 5): миграция
+-- обучения привязана к своей схеме, а не к номеру шаблона (иначе профили v4 «мигрировали» бы обучение заново)
+local SCHEMA = TutorialRules.Schema
+check(
+	SCHEMA == 4 and ProfileTemplate.schema >= SCHEMA,
+	"обучение — схема 4, шаблон профиля не старше"
+)
 check(
 	ProfileTemplate.tutorial.step == "Intro" and type(ProfileTemplate.lovibums) == "table",
 	"шаблон: обучение и Ловибумы"
@@ -118,8 +123,15 @@ check(
 	"новый профиль: сразу v4, обучение с начала"
 )
 check(
-	Inventory.Normalize(fresh, 6, Items, 45) and fresh.schema == 4,
-	"Inventory.Normalize не откатывает схему 4"
+	Inventory.Normalize(fresh, 6, Items, 45) and fresh.schema == ProfileTemplate.schema,
+	"Inventory.Normalize не откатывает схему нового профиля"
+)
+-- профиль v4 с начатым с нуля обучением и своим предметом: при схеме шаблона 5 миграция обучения не повторяется
+local v4intro =
+	{ schema = 4, items = { a = { id = "Moai", place = "storage" } }, tutorial = { step = "Intro" }, stats = {} }
+check(
+	not load(v4intro) and v4intro.tutorial.step == "Intro" and v4intro.schema == 4,
+	"профиль v4 миграцию обучения второй раз не проходит (схема шаблона новее)"
 )
 
 print("· старый сервер сохранил профиль v4 со схемой 3")

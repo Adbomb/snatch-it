@@ -104,6 +104,25 @@ function GameTime.ExhibitLock(t: number): string?
 	return nil
 end
 
+-- Можно ли покупать уровень музея в момент t (D56): в подготовку к Судной ночи, в Судную ночь и ещё DeliveryGrace
+-- секунд после неё — нельзя. nil — можно; иначе причина для игрока и общее время, когда запрет кончится (окно
+-- «Улучшение музея» показывает отсчёт; решает сервер — MuseumUpgradeService).
+function GameTime.UpgradeLock(t: number): (string?, number?)
+	local state = GameTime.At(t)
+	if state.phase == "Preparation" then
+		return "Подготовка к Судной ночи: музей улучшать нельзя",
+			state.endsAt + cfg.DoomNightLength + cfg.DeliveryGrace
+	elseif state.phase == "DoomNight" then
+		return "Судная ночь: музей улучшать нельзя", state.endsAt + cfg.DeliveryGrace
+	end
+	local windowEnd = GameTime.DeliveryWindowEnd(t)
+	if windowEnd then
+		return "Судная ночь только что закончилась: улучшение откроется через несколько секунд",
+			windowEnd
+	end
+	return nil, nil
+end
+
 -- Идёт ли кража (D37): Судная ночь — можно начинать; окно доставки — только донести начатое.
 function GameTime.TheftPhase(t: number): "Open" | "Delivery" | nil
 	if GameTime.At(t).phase == "DoomNight" then

@@ -166,7 +166,7 @@ function DevTools.Init()
 	end
 	-- Команды атрибутом (MCP, проверка несколькими клиентами): folder.Command = "TimeSkip DoomNight 5" |
 	-- "TimeScale 10" | "TimeReset" | "GiveCoins <userId> <сумма>" | "MuseumLevel <userId> <1..10>" |
-	-- "GiveDefense <userId> <вид> <сколько>" | "Exhibit <userId> <место> [предмет]" |
+	-- "GiveDefense <userId> <вид> <сколько> [уровень музея]" | "Exhibit <userId> <место> [предмет]" |
 	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53) |
 	-- D55: "Lovibums <userId> <уровень> <вид> <n>" | "Tutorial <userId> <шаг>" | "CatchRoll <0…1 | off>" |
 	-- "BossSlot <босс> <место> <предмет>".
@@ -225,9 +225,16 @@ function DevTools.Init()
 					end
 					InventoryService.Sync(player)
 				else
+					-- «GiveDefense <userId> <вид> <сколько> [уровень]»: в запас музея этого уровня (D56; без уровня —
+					-- текущий уровень музея игрока)
+					local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 					local defense = DataService.Defense(player)
 					local kind = words[3]
-					defense.owned[kind] = (defense.owned[kind] or 0) + math.max(0, math.floor(tonumber(words[4]) or 1))
+					if not DefenseRules.IsType(kind) then
+						return "виды: " .. table.concat(DefenseRules.Types, ", ")
+					end
+					local count = math.max(0, math.floor(tonumber(words[4]) or 1))
+					DefenseRules.Add(defense.owned, kind, tonumber(words[5]) or data.museumLevel, count)
 				end
 				DefenseService.Sync(player)
 				return "ок"

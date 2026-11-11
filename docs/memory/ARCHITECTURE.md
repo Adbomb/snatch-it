@@ -227,8 +227,16 @@
   `scripts/install-textures.ps1` копирует их в content установленной Studio (запасной путь `rbxasset://`).
 
 ## Данные
-- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 3; миграции в
-  `DataService.LoadAsync`: v1 → v2 — strength, dumbbellLevel; v2 → v3 — единый инвентарь D46).
+- Профиль — ProfileStore (`Server/Vendor`), шаблон `Config/ProfileTemplate` (schema 5; миграции в
+  `DataService.LoadAsync` по порядку: v1 → v2 — strength, dumbbellLevel; v2 → v3 — единый инвентарь D46; v3 → v4 —
+  Ловибумы и обучение D55 (`TutorialRules.Migrate` — по своей схеме `TutorialRules.Schema = 4`, не по номеру
+  шаблона); v4 → v5 — защита по уровням музея D56).
+- Защита в профиле (D56, schema 5): `defense.owned[вид] = { ["L<уровень музея при покупке>"] = количество }`,
+  `defense.installed[вид] = { cycle, level }`, `defense.hacks["L<уровень цели>"]`. Прежний формат (вид → число, вид →
+  круг) переводит `Shared/DefenseRules.Normalize(defense, museumLevel)` — при каждой загрузке и в
+  `DataService.Defense`: устройствам назначается сохранённый уровень музея игрока, количества и неизвестные виды не
+  теряются. Менять запас — только `DefenseRules.Add / Take`, читать — `Stock` (свой уровень), `OtherStock`, `StockAt`,
+  `Stale` (прежние уровни списком `{ level, count }` для окна).
 - Кража (D46, D37): `Services/TheftService` — подсказка «Украсть» на каждом постаменте (удержание
   `GameConfig.Theft.HoldSeconds`; клиент показывает её чужим в Судную ночь), начало удержания резервирует экспонат,
   музей и вора (`Util/TheftLedger` — чистые правила: фаза, свой/чужой, Displayed, руки, лимиты события по профилю
@@ -248,7 +256,11 @@
   подготовку, цена — `Shared/DefenseRules.Price`: доля цены взлома уровня своего музея, капкан без цены не продаётся;
   BuyHack — днём, по уровню музея-цели; Install / Remove — в подготовку: свободно по `CheckFreeSpot` для ловушки, робота,
   капкана, дверь — «Entrance», лазер — места `GameConfig.Defense.Lasers`), событие DefenseChanged; купленное — в профиле
-  `data.defense` (owned, hacks L1…L10), установленное — нет. Модели — `World/Models/Defense` (ModelBuilder) в папке
+  `data.defense` (owned, hacks L1…L10), установленное — нет. D56: купленное устройство привязано к уровню музея на
+  момент покупки и ставится только на музей этого уровня (`CanInstall` получает запас своего уровня и «чужих»
+  уровней — причина отказа «куплено для музея другого уровня»); снятое и не отработавшее возвращается в запас
+  своего уровня покупки; DefenseChanged несёт `owned` (вид → n для нынешнего уровня) и `stale` (прежние уровни),
+  окно «Защита» показывает их строкой «Прежние уровни музея». Модели — `World/Models/Defense` (ModelBuilder) в папке
   Defense участка. Такт `Defense.Tick` в Судную ночь: дверь выставляет чужих из зала, ловушка (урон и вариант
   эффекта), капкан (10 с, одноразовый), лазер (урон и тревога владельцу), робот (бьёт воров в радиусе, его ломают
   ударами — `PvpService.AddTargetProvider`). Лазер, ловушка и капкан смотрят путь вора за такт (`museum.last` →

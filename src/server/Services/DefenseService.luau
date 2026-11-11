@@ -10,6 +10,9 @@
 -- устройство расходуется, дверь открыта для всех до конца ночи. Устройство списывается при установке (из data.defense.owned)
 -- и записывается в data.defense.installed с номером круга Судной ночи: снял в подготовку или вышел до ночи — вернётся
 -- (DefenseRules.Settle при входе), отработало ночь — исчезает; купленное и не установленное остаётся.
+-- D56: купленное устройство привязано к уровню музея на момент покупки (запас — по уровням, DefenseRules.Add / Take /
+-- Stock) и ставится только на музей этого уровня; устройства других уровней остаются в запасе и не удаляются; снятое
+-- и не отработавшее возвращается в запас своего уровня покупки.
 -- Зависит от MoveGuard (D52), DataService, PlotService, PvpService, TimeService, Shared/DefenseRules, Shared/GameTime, World/Models/Defense,
 -- World/ModelBuilder, Util/*, Remotes, GameConfig.
 
@@ -43,6 +46,7 @@ local FOLDER = "Defense"
 
 type Device = {
 	kind: string,
+	level: number, -- уровень музея, для которого устройство куплено (D56): в запас возвращается на этот уровень
 	spot: any, -- имя фиксированного места или Vector3 (оси участка)
 	model: Model,
 	at: Vector3, -- центр в осях участка
@@ -171,7 +175,8 @@ function DefenseService.Sync(player: any)
 		end)()
 	)
 	Remotes.FireClient(Remotes.Names.DefenseChanged, player, {
-		owned = table.clone(defense.owned),
+		owned = DefenseRules.StockAt(defense.owned, level), -- вид → сколько куплено для музея этого уровня (D56)
+		stale = DefenseRules.Stale(defense.owned, level), -- вид → { { level, count } }: прежние уровни, не ставятся
 		hacks = table.clone(defense.hacks),
 		installed = installed,
 		level = level,
@@ -384,7 +389,16 @@ local function install(player: any, kind: any, spot: any)
 		return
 	end
 	local m = museumOf(player.UserId)
-	local reason = DefenseRules.CanInstall(cfg, kind, phase(), levelOf(player), m.installed, defense.owned[kind] or 0)
+	local level = levelOf(player)
+	local reason = DefenseRules.CanInstall(
+		cfg,
+		kind,
+		phase(),
+		level,
+		m.installed,
+		DefenseRules.Stock(defense.owned, kind, level), -- только купленные для музея этого уровня (D56)
+		DefenseRules.OtherStock(defense.owned, kind, level)
+	)
 	if not reason then
 		if DefenseRules.Placement[kind] == "Free" then
 			if typeof(spot) ~= "Vector3" then
@@ -412,7 +426,12 @@ local function install(player: any, kind: any, spot: any)
 		return
 	end
 	local model, center = buildDevice(plot, kind, spot)
-	local device: Device = { kind = kind, spot = spot, model = model, at = center }
+	-- списание из запаса своего уровня (D56) — в том же кадре, что и проверка CanInstall выше (между ними нет yield)
+	if not DefenseRules.Take(defense.owned, kind, level) then
+		model:Destroy()
+		return
+	end
+	local device: Device = { kind = kind, level = level, spot = spot, model = model, at = center }
 	if kind == "Robot" then
 		device.hp = cfg.Robot.HP
 		robotBar(device)
@@ -420,9 +439,8 @@ local function install(player: any, kind: any, spot: any)
 		addDoorPrompt(device, player, plot)
 	end
 	m.installed[kind] = device
-	defense.owned[kind] = math.max((defense.owned[kind] or 0) - 1, 0)
-	defense.installed = defense.installed or {}
-	defense.installed[kind] = GameTime.At(GameTime.Now()).cycle -- ночь этого круга (подготовка — его 10-й день)
+	-- ночь этого круга (подготовка — его 10-й день); level — в запас какого уровня вернуть, если ночь не наступит
+	defense.installed[kind] = { cycle = GameTime.At(GameTime.Now()).cycle, level = level }
 	DataService.RequestSave(player)
 	DefenseService.Sync(player)
 	Notify.Send(player, ("Установлено: %s"):format(DefenseRules.Names[kind]), "Go")
@@ -447,11 +465,12 @@ local function tryAction(player: any, action: any, a: any, b: any)
 			Notify.Send(player, reason, "Stop")
 			return
 		end
-		local price = DefenseRules.Price(cfg, a, levelOf(player)) :: number
+		local level = levelOf(player)
+		local price = DefenseRules.Price(cfg, a, level) :: number
 		if not DataService.Spend(player, price) then
 			return
 		end
-		defense.owned[a] = (defense.owned[a] or 0) + 1
+		DefenseRules.Add(defense.owned, a, level, 1) -- D56: устройство привязано к уровню музея на момент покупки
 		coinsChanged(player)
 		DataService.RequestSave(player)
 		DefenseService.Sync(player)
@@ -483,12 +502,14 @@ local function tryAction(player: any, action: any, a: any, b: any)
 			return
 		end
 		local m = museumOf(player.UserId)
-		if m.installed[a] then
+		local device = m.installed[a]
+		if device then
+			-- в запас своего уровня покупки (D56): по записи профиля, а без неё — по самому устройству
+			local entry = defense.installed[a]
+			local level = if type(entry) == "table" then entry.level else device.level
 			removeDevice(m, a)
-			defense.owned[a] = (defense.owned[a] or 0) + 1
-			if type(defense.installed) == "table" then
-				defense.installed[a] = nil
-			end
+			DefenseRules.Add(defense.owned, a, level, 1)
+			defense.installed[a] = nil
 			DataService.RequestSave(player)
 		end
 		DefenseService.Sync(player)
@@ -670,7 +691,7 @@ end
 -- Вход: устройства, поставленные к ещё не прошедшей ночи (вышел или упал сервер до неё), — снова в запасе.
 function DefenseService.OnPlayerLoaded(player: any)
 	local defense = DataService.Defense(player)
-	if defense and DefenseRules.Settle(defense, GameTime.Now(), nightStart) > 0 then
+	if defense and DefenseRules.Settle(defense, GameTime.Now(), nightStart, levelOf(player)) > 0 then
 		DataService.RequestSave(player)
 	end
 end
@@ -679,7 +700,7 @@ end
 function DefenseService.OnPlayerLeaving(player: any)
 	local defense = DataService.Defense(player)
 	if defense and not doomOpen() then
-		DefenseRules.Settle(defense, GameTime.Now(), nightStart)
+		DefenseRules.Settle(defense, GameTime.Now(), nightStart, levelOf(player))
 	end
 	local m = museums[player.UserId]
 	if m then
