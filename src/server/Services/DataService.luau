@@ -8,9 +8,9 @@
 -- D55: schema 3 → 4 (Ловибумы и обучение, Shared/TutorialRules.Migrate) — после разбора журнала и проверки записей;
 -- покупка и трата Ловибумов — атомарно (монеты и запас в одном кадре, без yield).
 -- D56: schema 4 → 5 — запас защиты по уровням музея (Shared/DefenseRules.Normalize: старым устройствам — сохранённый
--- уровень музея, ничего не удаляется).
+-- уровень музея, ничего не удаляется); покупка уровня музея — UpgradeMuseum (монеты и уровень в одном кадре).
 -- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Shared/CatchRules,
--- Shared/DefenseRules, Shared/TutorialRules, Util/TransferJournal, Util/Log.
+-- Shared/DefenseRules, Shared/MuseumRules, Shared/TutorialRules, Util/TransferJournal, Util/Log.
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
@@ -22,6 +22,7 @@ local Items = require(ReplicatedStorage.Shared.Config.Items)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
 local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local Inventory = require(ReplicatedStorage.Shared.Inventory)
+local MuseumRules = require(ReplicatedStorage.Shared.MuseumRules)
 local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
 local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
 local ProfileStore = require(ServerScriptService.Server.Vendor.ProfileStore)
@@ -147,6 +148,19 @@ finishLoad = function(player: Player, profile: any): boolean
 	end
 	if type(profile.Data.items) ~= "table" then
 		profile.Data.items = {} -- нечитаемое поле предметов (Inventory.Normalize сделал бы то же)
+	end
+	-- Уровень музея — целое 1…10 (D56: от него зависят места, цена следующего уровня и запас защиты).
+	local savedLevel = profile.Data.museumLevel
+	profile.Data.museumLevel = MuseumRules.Level(GameConfig, savedLevel)
+	if profile.Data.museumLevel ~= savedLevel then
+		Log.Warn(
+			"DataService",
+			("%s: уровень музея %s исправлен на %d"):format(
+				player.Name,
+				tostring(savedLevel),
+				profile.Data.museumLevel
+			)
+		)
 	end
 	-- Незавершённые передачи украденного (DESIGN §6): до проверки записей; подтверждение — после загрузки.
 	local confirmLater, waitLater = DataService.ResolveTransfers(player, profile.Data)
@@ -868,6 +882,29 @@ function DataService.UpgradeDumbbell(player: Player, price: number, maxLevel: nu
 	data.coins -= price
 	data.dumbbellLevel += 1
 	return true
+end
+
+-- Улучшение музея за монеты (D56): списывает цену и поднимает уровень с fromLevel на следующий — одно действие, без
+-- yield (либо и монеты списаны, и уровень выше, либо не изменилось ничего). Фазу, обучение и частоту запросов
+-- проверяет MuseumUpgradeService; здесь — последняя защита данных: уровень в профиле должен быть ровно fromLevel
+-- (повторный или одновременный запрос того же уровня второй раз не списывает), цена берётся из конфига по уровню
+-- профиля, а не от вызывающего. Запись защиты перед сменой уровня проверяется: всё, что без уровня, закрепляется за
+-- прежним уровнем (на новом уровне не ставится). true — куплено; возвращает ещё новую сумму монет и новый уровень.
+function DataService.UpgradeMuseum(player: Player, fromLevel: number): (boolean, number?, number?)
+	local data = DataService.GetData(player)
+	if not data or data.museumLevel ~= fromLevel then
+		return false
+	end
+	local price = MuseumRules.Price(GameConfig, fromLevel)
+	if not price or type(data.coins) ~= "number" or data.coins ~= data.coins or data.coins < price then
+		return false
+	end
+	if type(data.defense) == "table" then
+		DefenseRules.Normalize(data.defense, fromLevel)
+	end
+	data.coins -= price
+	data.museumLevel = fromLevel + 1
+	return true, data.coins, data.museumLevel
 end
 
 -- Монеты (только DevTools в Studio, пока нет экономики шага 7).

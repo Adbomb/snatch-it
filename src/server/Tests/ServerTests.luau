@@ -68,7 +68,8 @@ local TutorialService = require(Server.Services.TutorialService)
 local TEST_ITEM = "Moai" -- Common из коллекции босса 1 (D40)
 local ITEMS_FOLDER = "__TestItems"
 
-type Context = { track: (any) -> (), items: { string } }
+-- note — строка с конкретным результатом теста: печатается в отчёте под строкой теста (D56)
+type Context = { track: (any) -> (), items: { string }, note: (string) -> () }
 
 local tests: { { name: string, fn: (any, any, Context) -> () } } = {}
 
@@ -4120,6 +4121,378 @@ test("D56 миграция: защита прежнего формата пол�
 	check(museum.installed.Trap == nil and DataService.Defense(again).owned.Trap.L3 == 2, "ловушка уровня 3 встала на уровне 4")
 end)
 
+-- D56: покупка уровней музея 2–10 ────────────────────────────────────────────────────────────────────────────
+do
+	local MuseumRules = require(ReplicatedStorage.Shared.MuseumRules)
+	local MuseumUpgradeService = require(Server.Services.MuseumUpgradeService)
+	local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
+	local prices = GameConfig.Progression.Museum.Prices
+	local Upgrade = MuseumUpgradeService.Handlers.Upgrade
+
+	-- Последний ответ сервера на «Улучшить музей» (MuseumUpgradeResult).
+	local function lastUpgrade(player: any): any
+		local payload = nil
+		for _, event in player.Sent do
+			if event.name == "MuseumUpgradeResult" then
+				payload = event.args[1]
+			end
+		end
+		return payload
+	end
+
+	-- Открытых мест и стоящих постаментов на участке.
+	local function places(plot: PlotService.Plot): (number, number)
+		local open, standing = 0, 0
+		for _, showcase in plot.showcases do
+			if showcase.Parent then
+				standing += 1
+			end
+			if showcase:GetAttribute("Open") then
+				open += 1
+			end
+		end
+		return open, standing
+	end
+
+	local function money(n: number): string
+		return "$" .. NumberFormat.Short(n)
+	end
+
+	test("D56 музей: уровни 1 → 10 по одному — цена списана ровно, места открыты, здание одно; на 10 покупки нет", function(A, B, ctx)
+		local data = DataService.GetData(A)
+		local plot = plotOf(A)
+		local total = 0
+		for _, price in prices do
+			total += price
+		end
+		DataService.AddCoins(A, total + 12345)
+		check(data.museumLevel == 1 and A:GetAttribute("MuseumLevel") == 1, "новый игрок не на уровне 1")
+		for level = 1, 9 do
+			local before = data.coins
+			local openBefore = places(plot)
+			A:ClearSent()
+			Upgrade(A, level + 1)
+			local open, standing = places(plot)
+			check(data.museumLevel == level + 1, ("уровень %d не куплен"):format(level + 1))
+			check(before - data.coins == prices[level], ("ур. %d: списано %s, цена %s"):format(level + 1, before - data.coins, prices[level]))
+			check(open == math.min(20, math.max(6, 2 * (level + 1))), ("ур. %d: открыто %d мест"):format(level + 1, open))
+			check(open >= openBefore, ("ур. %d: мест стало меньше"):format(level + 1))
+			check(MuseumService.SlotCount(A) == open, ("ур. %d: сервер считает другое число мест"):format(level + 1))
+			check(
+				A:GetAttribute("MuseumSlots") == open and A:GetAttribute("MuseumLevel") == level + 1,
+				("ур. %d: атрибуты игрока не обновлены"):format(level + 1)
+			)
+			check(A:GetAttribute("Coins") == data.coins, ("ур. %d: атрибут монет отстал"):format(level + 1))
+			check(
+				plot.level == level + 1 and plot.model:GetAttribute("MuseumLevel") == level + 1,
+				("ур. %d: участок не перестроен"):format(level + 1)
+			)
+			local buildings, galleries = 0, 0
+			for _, child in plot.model:GetChildren() do
+				if child.Name == "Building" then
+					buildings += 1
+				end
+			end
+			for _, module in plot.model.Building:GetChildren() do
+				local name = module:GetAttribute("Module")
+				if name == "D48_Gallery_L" or name == "D48_Gallery_R" then
+					galleries += 1
+				end
+			end
+			check(buildings == 1, ("ур. %d: зданий %d"):format(level + 1, buildings))
+			check(
+				galleries == (if level + 1 >= MuseumLayout.Gallery.Level then 2 else 0),
+				("ур. %d: галерей %d"):format(level + 1, galleries)
+			)
+			local sent = lastUpgrade(A)
+			check(
+				sent and sent.ok == true and sent.level == level + 1 and sent.slots == open and sent.coins == data.coins,
+				("ур. %d: ответ окну не совпал с профилем"):format(level + 1)
+			)
+			check(A:WasNotified("Музей улучшен"), ("ур. %d: нет уведомления"):format(level + 1))
+			ctx.note(
+				("ур. %d → %d: −%s, мест %d → %d, постаментов стоит %d"):format(
+					level,
+					level + 1,
+					money(prices[level]),
+					openBefore,
+					open,
+					standing
+				)
+			)
+		end
+		check(data.coins == 12345, "после всех покупок остаток не 12345: " .. tostring(data.coins))
+		ctx.note(("всего списано %s, остаток $12 345 — до монеты"):format(money(total)))
+		-- чужой музей не затронут
+		check(DataService.GetData(B).museumLevel == 1 and plotOf(B).level == 1, "музей B изменился")
+		-- максимум: покупки нет, монеты на месте
+		for _, requested in { 11, 10, 2 } do
+			A:ClearSent()
+			Upgrade(A, requested)
+			local sent = lastUpgrade(A)
+			check(data.museumLevel == 10 and data.coins == 12345, "на уровне 10 что-то списано")
+			check(sent and sent.ok == false and sent.code == MuseumRules.Codes.Max, "на уровне 10 нет отказа «Max»")
+		end
+		check(A:WasNotified("максимального уровня"), "нет сообщения о максимальном уровне")
+		ctx.note("уровень 10: запросы 11, 10 и 2 — отказ «максимальный уровень», монеты не тронуты")
+	end)
+
+	test("D56 музей: не хватает монет — ничего не меняется; ровно цена — покупается; в обучении — закрыто", function(A)
+		local data = DataService.GetData(A)
+		local plot = plotOf(A)
+		local building = plot.model:FindFirstChild("Building")
+		check(data.coins == 0, "у нового игрока есть монеты")
+		for _, coins in { 0, 1, prices[1] - 1 } do
+			DataService.AddCoins(A, coins - data.coins)
+			A:ClearSent()
+			Upgrade(A, 2)
+			local sent = lastUpgrade(A)
+			check(data.museumLevel == 1 and data.coins == coins, ("с %d монетами что-то изменилось"):format(coins))
+			check(sent and sent.ok == false and sent.code == MuseumRules.Codes.Coins, "нет отказа «Coins»")
+			check(sent.level == 1 and sent.coins == coins, "ответ окну — не из профиля")
+			check(A:WasNotified("Не хватает монет"), "нет сообщения о нехватке монет")
+			check(plot.model:FindFirstChild("Building") == building, "здание перестроилось без покупки")
+		end
+		DataService.AddCoins(A, 1) -- ровно цена
+		Upgrade(A, 2)
+		check(data.museumLevel == 2 and data.coins == 0, "ровно цена: уровень 2 не куплен или монеты не списаны")
+		-- обучение: закрыто, как «Защита» и «Магазин»
+		DataService.AddCoins(A, prices[2])
+		A:SetAttribute("Tutorial", "Catch")
+		A:ClearSent()
+		Upgrade(A, 3)
+		local sent = lastUpgrade(A)
+		check(data.museumLevel == 2 and data.coins == prices[2], "в обучении уровень куплен")
+		check(sent and sent.code == MuseumRules.Codes.Tutorial and A:WasNotified("после обучения"), "нет отказа обучения")
+		A:SetAttribute("Tutorial", nil)
+		Upgrade(A, 3)
+		check(data.museumLevel == 3 and data.coins == 0, "после обучения уровень 3 не куплен")
+	end)
+
+	test("D56 музей: повторные, одновременные и поддельные запросы — одно списание; лимит запросов", function(A, B)
+		local data = DataService.GetData(A)
+		DataService.AddCoins(A, 1e9)
+		local start = data.coins
+		-- двойное нажатие: два запроса уровня 2 в одном кадре
+		Upgrade(A, 2)
+		Upgrade(A, 2)
+		check(data.museumLevel == 2 and start - data.coins == prices[1], "двойное нажатие списало дважды или купило два уровня")
+		A:ClearSent()
+		Upgrade(A, 2)
+		local sent = lastUpgrade(A)
+		check(sent and sent.ok == false and sent.code == MuseumRules.Codes.Stale and sent.level == 2, "повтор не отклонён как устаревший")
+		check(#A:Notices() == 0, "на повторное нажатие игроку пришло лишнее уведомление")
+		-- три запроса уровня 3 одновременно (разные потоки, один кадр)
+		for _ = 1, 3 do
+			task.spawn(Upgrade, A, 3)
+		end
+		check(
+			data.museumLevel == 3 and start - data.coins == prices[1] + prices[2],
+			"одновременные запросы: уровень " .. tostring(data.museumLevel)
+		)
+		-- подделки: через уровень, текущий, ниже, дробь, строка, NaN, таблица, огромное, отрицательное, ничего
+		local before = data.coins
+		for _, forged in { 5, 3, 1, 3.5, "4", 0 / 0, {}, 1e9, -1, math.huge, true } do
+			Upgrade(A, forged)
+		end
+		Upgrade(A, nil)
+		check(data.museumLevel == 3 and data.coins == before, "поддельный запрос изменил уровень или монеты")
+		-- клиент не задаёт цену и монеты: лишние аргументы не читаются, цена — из конфига
+		local withExtra: any = Upgrade
+		withExtra(A, 4, 0, 1e15)
+		check(data.museumLevel == 4 and before - data.coins == prices[3], "цена взята не из конфига")
+		-- запрос игрока B меняет только музей B (чужой музей запросом не указать)
+		local dataB = DataService.GetData(B)
+		Upgrade(B, 2)
+		check(dataB.museumLevel == 1 and data.museumLevel == 4, "запрос B без монет что-то изменил")
+		DataService.AddCoins(B, prices[1])
+		Upgrade(B, 2)
+		check(dataB.museumLevel == 2 and dataB.coins == 0 and data.museumLevel == 4, "покупка B задела A")
+		-- лимит запросов (вход RemoteEvent): 10 запросов подряд — проходят не больше лимита в секунду
+		task.wait(1.1) -- полное «ведро» лимита
+		before = data.coins
+		local level = data.museumLevel
+		for _ = 1, 10 do
+			MuseumUpgradeService.Handlers.Request(A, data.museumLevel + 1)
+		end
+		local bought = data.museumLevel - level
+		check(bought == GameConfig.RateLimits.MuseumUpgrade, ("лимит запросов: куплено %d уровней за кадр"):format(bought))
+		check(before - data.coins == prices[4] + prices[5], "лимит запросов: списано не за два уровня")
+	end)
+
+	test("D56 музей: в подготовку, Судную ночь и 10 с после неё покупки нет (сервер); днём и обычной ночью — есть", function(A, _B, ctx)
+		local data = DataService.GetData(A)
+		local time = GameConfig.Time
+		DataService.AddCoins(A, 1e9)
+		local function locked(label: string, word: string)
+			local before = data.coins
+			local level = data.museumLevel
+			A:ClearSent()
+			Upgrade(A, level + 1)
+			local sent = lastUpgrade(A)
+			check(data.museumLevel == level and data.coins == before, label .. ": уровень куплен")
+			check(sent and sent.ok == false and sent.code == MuseumRules.Codes.Locked, label .. ": нет отказа «Locked»")
+			check(A:WasNotified(word), label .. ": нет причины для игрока")
+			ctx.note(("%s (%s) — отказ: «%s»"):format(label, GameTime.Current().phase, sent.message))
+		end
+		local function open(label: string)
+			local before = data.coins
+			local level = data.museumLevel
+			Upgrade(A, level + 1)
+			check(data.museumLevel == level + 1 and before - data.coins == prices[level], label .. ": уровень не куплен")
+			ctx.note(("%s (%s) — куплен уровень %d"):format(label, GameTime.Current().phase, level + 1))
+		end
+		TimeService.SkipTo("Preparation", 1)
+		check(GameTime.Current().phase == "Day", "за секунду до подготовки — не день")
+		open("за 1 с до подготовки")
+		TimeService.SkipTo("Preparation", -1)
+		locked("1-я секунда подготовки", "Подготовка")
+		TimeService.SkipTo("Preparation", -(time.PreparationLength - 1))
+		locked("последняя секунда подготовки", "Подготовка")
+		TimeService.SkipTo("DoomNight", -1)
+		locked("1-я секунда Судной ночи", "Судная ночь")
+		TimeService.SkipTo("DoomNight", -(time.DoomNightLength - 1))
+		locked("последняя секунда Судной ночи", "Судная ночь")
+		TimeService.SkipTo("Day", -1)
+		check(GameTime.Current().phase == "Day" and GameTime.DeliveryWindowEnd(GameTime.Now()), "не окно 10 с после ночи")
+		locked("1-я секунда после Судной ночи", "закончилась")
+		TimeService.SkipTo("DoomNight", -1)
+		TimeService.SkipTo("Day", -(time.DeliveryGrace - 1))
+		locked("9-я секунда после Судной ночи", "закончилась")
+		TimeService.SkipTo("DoomNight", -1)
+		TimeService.SkipTo("Day", -(time.DeliveryGrace + 1))
+		open("11-я секунда после Судной ночи")
+		TimeService.SkipTo("Night", -5)
+		check(GameTime.Current().phase == "Night", "не обычная ночь")
+		open("обычная ночь")
+		check(data.museumLevel == 4, "итог: уровень " .. tostring(data.museumLevel))
+		TimeService.SkipTo("Day", -5)
+	end)
+
+	test("D56 музей: уровень, монеты, экспонаты и доход переживают выход и вход — без потерь и дублей", function(A, _B, ctx)
+		local plot = plotOf(A)
+		local a1 = displayOwn(ctx, A, 1)
+		local a6 = displayOwn(ctx, A, 6)
+		local stored = toInventory(ctx, A)
+		local data = DataService.GetData(A)
+		local income = IncomeService.TotalFor(A.UserId)
+		local power = GymService.MuseumPower(A)
+		check(income == 2 * Items[TEST_ITEM].income, "доход двух экспонатов до улучшения")
+		DataService.AddCoins(A, prices[1] + prices[2] + prices[3] + prices[4] + 500 - data.coins)
+		for level = 1, 4 do
+			Upgrade(A, level + 1)
+			-- после каждой покупки: те же предметы на тех же местах, доход и бонус силы те же
+			local e1, e6, es = ItemRegistry.Get(a1), ItemRegistry.Get(a6), ItemRegistry.Get(stored)
+			check(e1 and e1.state == "Displayed" and e1.slot == 1, ("ур. %d: экспонат места 1 сдвинулся"):format(level + 1))
+			check(e6 and e6.state == "Displayed" and e6.slot == 6, ("ур. %d: экспонат места 6 сдвинулся"):format(level + 1))
+			check(es and es.state == "Stored", ("ур. %d: предмет инвентаря изменился"):format(level + 1))
+			check(countUid(a1) == 1 and countUid(a6) == 1 and countUid(stored) == 0, ("ур. %d: дубль или потеря"):format(level + 1))
+			check(#plot.exhibits:GetChildren() == 2, ("ур. %d: экспонатов на участке не 2"):format(level + 1))
+			check(IncomeService.TotalFor(A.UserId) == income, ("ур. %d: доход изменился"):format(level + 1))
+			check(GymService.MuseumPower(A) == power, ("ур. %d: бонус силы изменился"):format(level + 1))
+			check(DataService.CountItems(A) == 3, ("ур. %d: предметов в профиле не 3"):format(level + 1))
+			check(
+				plot.showcases[1]:GetAttribute("Occupied") and plot.showcases[6]:GetAttribute("Occupied"),
+				("ур. %d: места 1 и 6 не заняты"):format(level + 1)
+			)
+		end
+		check(data.museumLevel == 5 and data.coins == 500, "после четырёх покупок: уровень или остаток")
+		-- доход начисляется как прежде
+		IncomeService.Handlers.Tick({ A })
+		check(data.coins == 500 + income, "такт дохода после улучшения начислил не доход экспонатов")
+		-- новое место 9 (галерея) открыто: выставляется, доход вырос ровно на один экспонат
+		near(A, plot.showcases[9])
+		local a9 = carry(ctx, A)
+		MuseumService.Handlers.Display(A, plot, 9)
+		check(ItemRegistry.Get(a9).state == "Displayed" and ItemRegistry.Get(a9).slot == 9, "на новое место 9 не выставилось")
+		check(IncomeService.TotalFor(A.UserId) == 3 * Items[TEST_ITEM].income, "доход с новым местом")
+		local coins, userId = data.coins, A.UserId
+		ctx.note(("до выхода: уровень 5, монеты %d, экспонаты на местах 1, 6, 9, в инвентаре 1, доход %d/с"):format(coins, 3 * Items[TEST_ITEM].income))
+		leave(A)
+		local again = TestPlayer.new("Тест_A_снова")
+		again.UserId = userId
+		ctx.track(again)
+		check(join(again), "повторный вход не удался")
+		local saved = DataService.GetData(again)
+		local plotAgain = plotOf(again)
+		local open = places(plotAgain)
+		check(saved.museumLevel == 5 and saved.coins == coins, "уровень или монеты не сохранились")
+		check(plotAgain.level == 5 and open == 10, "после входа музей не уровня 5 (10 мест)")
+		check(again:GetAttribute("MuseumLevel") == 5 and again:GetAttribute("MuseumSlots") == 10, "атрибуты после входа")
+		for uid, slot in { [a1] = 1, [a6] = 6, [a9] = 9 } do
+			local entry = ItemRegistry.Get(uid)
+			check(entry and entry.state == "Displayed" and entry.slot == slot, ("после входа экспонат не на месте %d"):format(slot))
+			check(countUid(uid) == 1, ("после входа дубль экспоната места %d"):format(slot))
+		end
+		check(ItemRegistry.Get(stored) and ItemRegistry.Get(stored).state == "Stored", "после входа предмет инвентаря пропал")
+		check(DataService.CountItems(again) == 4, "после входа предметов в профиле не 4")
+		check(#plotAgain.exhibits:GetChildren() == 3, "после входа экспонатов на участке не 3")
+		check(IncomeService.TotalFor(again.UserId) == 3 * Items[TEST_ITEM].income, "после входа доход другой")
+		ctx.note(("после входа: уровень %d, монеты %d, мест %d, экспонаты на местах 1, 6, 9, доход %d/с"):format(saved.museumLevel, saved.coins, open, IncomeService.TotalFor(again.UserId)))
+		-- следующий уровень покупается по своей цене и после входа
+		DataService.AddCoins(again, prices[5])
+		Upgrade(again, 6)
+		check(saved.museumLevel == 6 and saved.coins == coins, "после входа уровень 6 не куплен по своей цене")
+	end)
+
+	test("D56 музей и защита: покупка уровня днём — старая защита остаётся в запасе и не ставится, новая ставится", function(A, _B, ctx)
+		local cfg = GameConfig.Defense
+		local data = DataService.GetData(A)
+		local museum = DefenseService.Handlers.Museum(A.UserId)
+		local spot = Vector3.new(5, 0, 5)
+		DataService.AddCoins(A, 1e9)
+		-- подготовка на музее уровня 1: две ловушки, одна стоит
+		TimeService.SkipTo("Preparation", -5)
+		for _ = 1, 2 do
+			settle()
+			DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+		end
+		settle()
+		DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+		check(museum.installed.Trap ~= nil, "до повышения ловушка уровня 1 не встала")
+		-- пока защита стоит (подготовка и ночь), уровень купить нельзя
+		Upgrade(A, 2)
+		check(data.museumLevel == 1, "уровень куплен в подготовку")
+		TimeService.SkipTo("DoomNight", -2)
+		Upgrade(A, 2)
+		check(data.museumLevel == 1, "уровень куплен в Судную ночь")
+		DefenseService.Handlers.EndNight()
+		local defense = DataService.Defense(A)
+		check(next(museum.installed) == nil and defense.owned.Trap.L1 == 1, "после ночи: установленная не исчезла или запас не 1")
+		-- днём после ночи: покупка уровня 2
+		TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 1))
+		A:ClearSent()
+		Upgrade(A, 2)
+		check(data.museumLevel == 2, "днём уровень 2 не куплен")
+		defense = DataService.Defense(A)
+		check(defense.owned.Trap.L1 == 1, "покупка уровня удалила старое устройство")
+		local sent = lastDefense(A)
+		check(sent and sent.level == 2 and sent.max == 2, "окну «Защита» не пришёл уровень 2")
+		check(sent.owned.Trap == nil and sent.stale.Trap[1].level == 1 and sent.stale.Trap[1].count == 1, "старое устройство не показано как прежнего уровня")
+		ctx.note("после покупки уровня 2: ловушка ур. 1 ×1 — в запасе как «прежний уровень», к установке — 0")
+		-- следующая подготовка на музее уровня 2
+		TimeService.SkipTo("Preparation", -5)
+		A:ClearSent()
+		settle()
+		DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+		check(museum.installed.Trap == nil and A:WasNotified("другого уровня"), "ловушка уровня 1 встала на музей уровня 2")
+		local before = data.coins
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", "Trap")
+		check(before - data.coins == DefenseRules.Price(cfg, "Trap", 2), "новая ловушка — не по цене уровня 2")
+		settle()
+		DefenseService.Handlers.Action(A, "Install", "Trap", spot)
+		check(museum.installed.Trap ~= nil and defense.installed.Trap.level == 2, "ловушка уровня 2 не встала")
+		settle()
+		DefenseService.Handlers.Action(A, "BuyDefense", "Laser")
+		settle()
+		DefenseService.Handlers.Action(A, "Install", "Laser", "Entrance")
+		check(museum.installed.Laser ~= nil, "на уровне 2 второе устройство не встало")
+		check(defense.owned.Trap.L1 == 1 and defense.owned.Trap.L2 == nil, "запас после установки")
+		ctx.note(("музей ур. 2: ловушка ур. 1 не ставится («другого уровня»), новая за %s встала, второе устройство (лазер) встало"):format(money(DefenseRules.Price(cfg, "Trap", 2))))
+	end)
+end
+
 local ServerTests = {}
 
 -- Прогоняет все тесты по очереди: свежие игроки A и B на каждый, после — выход и уборка. Отчёт строкой.
@@ -4141,11 +4514,15 @@ function ServerTests.Run(filter: string?): string
 		total += 1
 		local A, B = TestPlayer.new("Тест_A"), TestPlayer.new("Тест_B")
 		local tracked = { A, B }
+		local notes: { string } = {}
 		local ctx: Context = {
 			track = function(player)
 				table.insert(tracked, player)
 			end,
 			items = {},
+			note = function(text)
+				table.insert(notes, text)
+			end,
 		}
 		local started = DateTime.now().UnixTimestampMillis
 		local ok, err = pcall(function()
@@ -4176,6 +4553,9 @@ function ServerTests.Run(filter: string?): string
 		local reason = if ok then "" else ": " .. tostring(err)
 		local seconds = (DateTime.now().UnixTimestampMillis - started) / 1000
 		table.insert(lines, ("%s %s (%.1f с)%s"):format(mark, case.name, seconds, reason))
+		for _, text in notes do
+			table.insert(lines, "       · " .. text)
+		end
 	end
 	table.insert(lines, 1, ("Серверные тесты: %d из %d пройдено"):format(passed, total))
 	return table.concat(lines, "\n")

@@ -96,7 +96,7 @@ end
 
 -- Отправляет владельцу весь инвентарь: { uid, itemId, slot?, pending? } (slot — постамент, если выставлен; pending —
 -- украденное ещё передаётся по журналу, выставить нельзя) и атрибуты для подсказок и интерфейса: StorageCount
--- (в инвентаре), MuseumSlots (постаментов в музее).
+-- (в инвентаре), MuseumSlots (постаментов в музее), MuseumLevel (уровень музея, D56).
 local syncCount: { [Player]: number } = {} -- сколько раз слали инвентарь (отложенный Sync не повторяет прямой)
 
 function InventoryService.Sync(player: Player)
@@ -131,6 +131,7 @@ function InventoryService.Sync(player: Player)
 	end)
 	player:SetAttribute("StorageCount", stored)
 	player:SetAttribute("MuseumSlots", MuseumService.SlotCount(player))
+	player:SetAttribute("MuseumLevel", if data then data.museumLevel else nil) -- окно «Улучшение музея» (D56)
 	Remotes.FireClient(Remotes.Names.InventoryChanged, player, list)
 end
 
