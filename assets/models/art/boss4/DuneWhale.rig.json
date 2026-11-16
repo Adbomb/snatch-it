@@ -1,0 +1,171 @@
+{
+ "id": "DuneWhale",
+ "order": [
+  "Stand",
+  "Dune",
+  "Whale",
+  "Flipper",
+  "Spout",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1996,
+    0.0
+   ],
+   "size": [
+    3.44,
+    0.3992,
+    3.44
+   ]
+  },
+  "Dune": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.34,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.202,
+    -0.03
+   ],
+   "size": [
+    2.84,
+    1.076,
+    2.66
+   ]
+  },
+  "Whale": {
+   "parent": "Dune",
+   "pivot": [
+    0.019,
+    0.9093,
+    -0.1226
+   ],
+   "center": [
+    -0.1503,
+    0.1507,
+    0.0852
+   ],
+   "size": [
+    2.4807,
+    2.0572,
+    2.1041
+   ]
+  },
+  "Flipper": {
+   "parent": "Whale",
+   "pivot": [
+    -0.0795,
+    0.8084,
+    0.5274
+   ],
+   "center": [
+    -0.0319,
+    -0.0115,
+    0.136
+   ],
+   "size": [
+    0.4118,
+    0.4393,
+    0.3973
+   ]
+  },
+  "Spout": {
+   "parent": "Whale",
+   "pivot": [
+    -0.3966,
+    1.905,
+    0.1357
+   ],
+   "center": [
+    0.0248,
+    0.45,
+    0.0
+   ],
+   "size": [
+    0.6103,
+    0.92,
+    0.6345
+   ]
+  },
+  "Tail": {
+   "parent": "Dune",
+   "pivot": [
+    0.82,
+    0.84,
+    -0.74
+   ],
+   "center": [
+    0.1618,
+    0.4601,
+    -0.1582
+   ],
+   "size": [
+    0.8629,
+    0.991,
+    0.8629
+   ]
+  }
+ },
+ "demo_pose": {
+  "Whale": {
+   "rot_xyz_blender_deg": [
+    0,
+    -12,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Spout": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.15
+   ]
+  },
+  "Flipper": {
+   "rot_xyz_blender_deg": [
+    25,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

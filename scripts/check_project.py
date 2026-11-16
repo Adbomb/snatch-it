@@ -18,6 +18,7 @@
 библиотеки Python.
 """
 
+import json
 import os
 import re
 import sys
@@ -166,6 +167,15 @@ for p in walk("src"):
 im = open(os.path.join(ROOT, "src/shared/Config/ItemModels.luau"), encoding="utf-8").read()
 models = dict((k, (c, n)) for k, c, n in re.findall(r"^\s*(\w+) = model\((\d+), (\d+),", im, re.M))
 meshes = dict(re.findall(r"^\s*(\w+) = (\d{9,}),", im.split("local MESHES")[1], re.M)) if "local MESHES" in im else {}
+# живые существа (боссы 3–4, D55, D57): FBX — по индексу коллекции, меши частей — CREATURE_MESHES (<id>_<Часть>)
+creature_fbx = {}
+for _idx in ("assets/models/art/Boss3Creatures.index.json", "assets/models/art/boss4/Boss4Creatures.index.json"):
+    if os.path.isfile(os.path.join(ROOT, _idx)):
+        for _it in json.load(open(os.path.join(ROOT, _idx), encoding="utf-8"))["items"]:
+            creature_fbx[_it["id"]] = _it["fbx"]
+_cm = im.split("local CREATURE_MESHES")[1].split("\n}")[0] if "local CREATURE_MESHES" in im else ""
+creature_meshed = {k.split("_")[0] for k, _id in re.findall(r"^\s*(\w+?_\w+) = (\d{9,}),", _cm, re.M)}
+creatures_waiting = []
 for item, (color, normal) in models.items():
     look = os.path.join(ROOT, "src/server/Looks", f"{item}.model.json")
     if not os.path.isfile(look):
@@ -174,6 +184,12 @@ for item, (color, normal) in models.items():
         t = open(look, encoding="utf-8").read()
         if color not in t or normal not in t:
             errors.append(f"Looks/{item}: карты не совпадают с ItemModels")
+    if item in creature_fbx:  # существо: свой FBX частей; меши — после импорта (до него — Part-версия)
+        if not os.path.isfile(os.path.join(ROOT, creature_fbx[item])):
+            errors.append(f"{item}: нет исходника {creature_fbx[item]}")
+        if item not in creature_meshed:
+            creatures_waiting.append(item)
+        continue
     if item not in meshes:
         errors.append(f"{item}: нет MeshId в ItemModels")
     if not os.path.isfile(os.path.join(ROOT, "assets/models/art", f"{item}.fbx")):
@@ -181,11 +197,13 @@ for item, (color, normal) in models.items():
 
 bm = open(os.path.join(ROOT, "src/shared/Config/BossModels.luau"), encoding="utf-8").read()
 for boss, body in re.findall(r"^\t\[(\d+)\] = \{(.*?)^\t\} :: BossModel", bm, re.M | re.S):
-    for group, color, normal in re.findall(r'(\w+) = \{ color = "rbxassetid://(\d+)", normal = "rbxassetid://(\d+)" \}', body):
+    # карта группы — в одну строку или в несколько; кроме color и normal бывают metal, rough, glow (босс 10)
+    for group, entry in re.findall(r"(\w+) = \{([^{}]*\bcolor = [^{}]*)\}", body):
+        fields = dict(re.findall(r'(\w+) = "rbxassetid://(\d+)"', entry))
         look = os.path.join(ROOT, "src/server/Looks", f"Boss{boss}_{group}.model.json")
         if not os.path.isfile(look):
             errors.append(f"нет шаблона Looks/Boss{boss}_{group}.model.json")
-        elif color not in open(look, encoding="utf-8").read() or normal not in open(look, encoding="utf-8").read():
+        elif any(v not in open(look, encoding="utf-8").read() for v in fields.values()):
             errors.append(f"Looks/Boss{boss}_{group}: карты не совпадают с BossModels")
 
 # ── 4. Коллекция босса 2 ─────────────────────────────────────────────────────────────────────────────────────
@@ -218,6 +236,8 @@ if extra:
     errors.append("в Config/Items у босса 2 лишние предметы: " + ", ".join(extra))
 if waiting:
     notes.append(f"ожидают импорта мешей и карт (показываются заготовкой): {len(waiting)} предметов босса 2")
+if creatures_waiting:
+    notes.append(f"карты есть, меши частей ждут импорта (показываются Part-версией): {len(creatures_waiting)} существ")
 
 # ── 5. Подключение босса 2 ───────────────────────────────────────────────────────────────────────────────────
 
@@ -247,6 +267,105 @@ if not re.search(r"\[3\] = \{\s*top = ", src("src/server/World/MapLayout.luau"))
     errors.append("нет площадки босса 3 (MapLayout.Arenas[3])")
 if "SubwayStation.Zone()" not in src("src/server/World/WorldBuilder.luau"):
     errors.append("декор «Подземки» (SubwayStation) не подключён в WorldBuilder")
+# Босс 4 «Сфинкс-лежебока» (интеграция 2026-11-12): скелет с клипами, сила D56; с коллекцией (D57–D59) открыт
+strength4 = re.search(r"\[4\] = \{[^}]*?Strength = (\d+)", battle)
+want4 = bosses.group(1).split(",")[3].strip() if bosses else None
+if not strength4 or strength4.group(1) != want4:
+    errors.append(f"Battle.Bosses[4].Strength ({strength4 and strength4.group(1)}) ≠ Progression.Bosses[4] ({want4})")
+_boss4_items = len(re.findall(r'^creature4\("', src("src/shared/Config/Items.luau"), re.M))
+_closed4 = re.search(r"\[4\] = \{[^}]*?Closed = true", battle) is not None
+if _boss4_items == 30 and _closed4:
+    errors.append("босс 4 закрыт, хотя коллекция из 30 существ есть (D59)")
+if _boss4_items != 30 and not _closed4:
+    errors.append(f"босс 4 открыт, а существ в коллекции {_boss4_items} (нужно 30, D57)")
+for path in ("src/server/Services/BossService.luau", "src/client/Controllers/BossAnimController.luau"):
+    if not re.search(r"\[4\] = Boss4SphinxRig", src(path)):
+        errors.append(f"{path}: скелет босса 4 не подключён")
+if "Clips = require(script.Parent.Boss4SphinxClips)" not in src("src/shared/Config/Boss4SphinxRig.luau"):
+    errors.append("у скелета босса 4 нет клипов (Config/Boss4SphinxClips)")
+for clip in ("SleepIdle", "Wake", "CombatIdle", "Walk", "HeavyPaw", "TailStrike", "Hit", "Victory", "Defeat", "FallAsleep"):
+    path = f"src/shared/Config/Boss4SphinxClips/{clip}.luau"
+    if not os.path.exists(os.path.join(ROOT, path)):
+        errors.append(f"нет клипа {path}")
+    elif os.path.getsize(os.path.join(ROOT, path)) > 200_000:
+        errors.append(f"{path}: больше 200 000 знаков")
+# Босс 10 «Король-дракон» (этап B интеграции, 2026-11-15): закрыт до коллекции и импорта модели; сила D56; свои
+# правила боя только у него (дальность до тела, без погони, залп); скелет и 15 клипов из Blender
+battle10 = re.search(r"\[10\] = \{(.*?)\n\t\t\},\n\t\},", battle, re.S)
+b10 = battle10.group(1) if battle10 else ""
+strength10 = re.search(r"Strength = (\d+)", b10)
+want10 = bosses.group(1).split(",")[9].strip() if bosses else None
+if not strength10 or strength10.group(1) != want10:
+    errors.append(f"Battle.Bosses[10].Strength ({strength10 and strength10.group(1)}) ≠ Progression.Bosses[10] ({want10})")
+for field, rx in (("Closed = true", r"Closed = true"), ("BodyRange = true", r"BodyRange = true"),
+                  ("Leash = 0", r"Leash = 0,"), ("Volley", r"Volley = \{"), ("HP = 140", r"HP = 140,"),
+                  ("Damage = 8", r"Damage = 8,"), ("AttackInterval = 1.4", r"AttackInterval = 1\.4,")):
+    if not re.search(rx, b10):
+        errors.append(f"Battle.Bosses[10]: нет {field}")
+for path in ("src/server/Services/BossService.luau", "src/client/Controllers/BossAnimController.luau"):
+    if not re.search(r"\[10\] = Boss10DragonRig", src(path)):
+        errors.append(f"{path}: скелет босса 10 не подключён")
+if "Clips = require(script.Parent.Boss10DragonClips)" not in src("src/shared/Config/Boss10DragonRig.luau"):
+    errors.append("у скелета босса 10 нет клипов (Config/Boss10DragonClips)")
+for clip in ("SleepIdle", "Wake", "CombatIdle", "Walk", "ClawSwipe", "Bite", "TailStrike", "WingBuffet", "MagicVolley",
+             "Hit", "Victory", "Defeat", "FallAsleep", "TurnStepLeft", "TurnStepRight"):
+    path = f"src/shared/Config/Boss10DragonClips/{clip}.luau"
+    if not os.path.exists(os.path.join(ROOT, path)):
+        errors.append(f"нет клипа {path}")
+    elif os.path.getsize(os.path.join(ROOT, path)) > 200_000 * 2:  # кириллица в комментариях — 2 байта на знак
+        errors.append(f"{path}: слишком большой модуль")
+# этап C (2026-11-15): меши всех 52 частей, Body_2, глаз и перепонок; 6 групп карт с шаблонами Looks; кости перепонок
+models_src = src("src/shared/Config/BossModels.luau")
+dragon = re.search(r"local DRAGON_MESHES: \{ \[string\]: number \} = \{(.*?)\n\}", models_src, re.S)
+rig10 = src("src/shared/Config/Boss10DragonRig.luau")
+if dragon:
+    have = set(re.findall(r"(\w+) = \d+,", dragon.group(1)))
+    order10 = re.findall(r'"(\w+)"', re.search(r"Order = \{(.*?)\}", rig10).group(1))
+    need = set(order10) | {"Body_2", "EyeL", "EyeR", "WingMembranes"}
+    if need - have:
+        errors.append(f"босс 10: нет мешей {sorted(need - have)}")
+    entry10 = re.search(r"\t\[10\] = \{(.*?)\n\t\} :: BossModel,", models_src, re.S)
+    groups10 = re.findall(r"(\w+) = \{\s*color = ", entry10.group(1)) if entry10 else []
+    for g in ("BodyA", "BodyB", "Head", "Front", "Hind", "Tail"):
+        if g not in groups10:
+            errors.append(f"босс 10: нет карт группы {g}")
+        elif not os.path.exists(os.path.join(ROOT, f"src/server/Looks/Boss10_{g}.model.json")):
+            errors.append(f"босс 10: нет шаблона Looks/Boss10_{g} (python scripts/make_looks.py)")
+    if "MembraneMesh = {" not in rig10 or "WingArmL = { parent" not in rig10:
+        errors.append("босс 10: у скелета нет перепонок с костями (python scripts/boss10_to_luau.py)")
+    notes.append(f"босс 10: мешей {len(have)} (части, Body_2, глаза, перепонки), групп карт {len(groups10)}")
+elif re.search(r"\[10\] = \{[^}]*?meshes = \{\s*\w", models_src):
+    notes.append("у босса 10 есть меши — этап C начат (нужно разрешение владельца)")
+for ctl in ("BossVolleyController", "PlayerSwingController"):
+    if f'WaitForChild("{ctl}")' not in src("src/client/Main.client.luau"):
+        errors.append(f"контроллер {ctl} не запущен в Main.client.luau")
+
+# ── Тестовый режим владельца (решение владельца 2026-11-16): изоляция ─────────────────────────────────────────
+# Резервные серверы создаёт только OwnerTestService (по ним Util/OwnerTest узнаёт тестовый сервер), тестовый сервер
+# пускает только владельца и грузит профиль в памяти, закрытые боссы — Studio или тестовый сервер.
+for p in walk("src"):
+    if not p.endswith(".luau"):
+        continue
+    text = open(p, encoding="utf-8", errors="ignore").read()
+    if re.search(r"ReserveServer|ShouldReserveServer|ReservedServerAccessCode", text) and not p.endswith(
+        "OwnerTestService.luau"
+    ):
+        errors.append(f"резервный сервер создаётся не тестовым режимом владельца: {rel(p)}")
+main_src = src("src/server/Main.server.luau")
+if not re.search(r"IsTestServer\(\) then\s+if not OwnerTest\.IsOwner\(player\) then\s+player:Kick", main_src):
+    errors.append("Main: тестовый сервер владельца не выгоняет чужих игроков")
+if "PlayerSession.Join(player, { mock = true, veteran = true })" not in main_src:
+    errors.append("Main: на тестовом сервере владельца профиль не в памяти")
+if "(RunService:IsStudio() and GameConfig.DevMode == true) or OwnerTest.IsTestServer()" not in src(
+    "src/server/Services/BossService.luau"
+):
+    errors.append("BossService.ClosedAllowed: закрытые боссы не только в Studio и на тестовом сервере")
+owner_cfg = re.search(r"GameConfig\.OwnerTest = \{(.*?)\n\}", src("src/shared/Config/GameConfig.luau"), re.S)
+if not owner_cfg or "UniverseId = 10776417796" not in owner_cfg.group(1) or "PlaceId = 81392528393796" not in owner_cfg.group(1):
+    errors.append("GameConfig.OwnerTest: не подтверждённое DEV-место (10776417796 / 81392528393796)")
+else:
+    on = re.search(r"Enabled = (true|false)", owner_cfg.group(1))
+    notes.append(f"тестовый режим владельца: {'включён' if on and on.group(1) == 'true' else 'выключен'} (DEV-место)")
 
 print(f"require проверено: {checked}; предметов с моделями (ItemModels): {len(models)}; коллекция босса 2: "
       f"{len(boss2_ids)} в игре, исключено из каталога {len(excluded)}")

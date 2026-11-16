@@ -28,8 +28,17 @@ local function check(ok: boolean, message: string)
 	end
 end
 
-local index = serde.decode("json", fs.readFile("assets/models/art/Boss3Creatures.index.json"))
-check(#index.items == 30, "в индексе 30 существ")
+-- боссы 3 (D54) и 4 (D57, D58): общие проверки — для обоих индексов
+local index3 = serde.decode("json", fs.readFile("assets/models/art/Boss3Creatures.index.json"))
+local index4 = serde.decode("json", fs.readFile("assets/models/art/boss4/Boss4Creatures.index.json"))
+check(#index3.items == 30 and #index4.items == 30, "в индексах по 30 существ (боссы 3 и 4)")
+local index = { items = {} }
+for boss, src in { [3] = index3, [4] = index4 } do
+	for _, item in src.items do
+		item.boss = boss
+		table.insert(index.items, item)
+	end
+end
 
 print("· скелеты и коллекция")
 local byRarity = {}
@@ -40,7 +49,7 @@ for _, item in index.items do
 	if not rig then
 		continue
 	end
-	local file = serde.decode("json", fs.readFile(("assets/models/art/%s.rig.json"):format(id)))
+	local file = serde.decode("json", fs.readFile(item.rig or ("assets/models/art/%s.rig.json"):format(id)))
 	check(#rig.Order == #file.order, id .. ": части = rig.json")
 	local blocks = 0
 	for _, name in rig.Order do
@@ -51,6 +60,12 @@ for _, item in index.items do
 			id .. "." .. name .. ": родитель"
 		)
 		check(CreatureAnim.Roles[spec.role] ~= nil, id .. "." .. name .. ": роль " .. tostring(spec.role))
+		-- у босса 4 части упорядочены «родитель раньше детей» (у босса 3 ноги раньше туловища — крепятся к корню, как
+		-- утверждено; не менялось)
+		check(
+			item.boss ~= 4 or spec.parent == nil or table.find(rig.Order, spec.parent) < table.find(rig.Order, name),
+			id .. "." .. name .. ": родитель раньше в Order (ItemFactory.buildCreature)"
+		)
 		blocks += #spec.blocks
 		if spec.hidden then
 			check(#spec.blocks == 0, id .. "." .. name .. ": скрытая часть без блоков")
@@ -71,20 +86,33 @@ for _, item in index.items do
 	check(rig.Yaw == (item.yaw_deg or 0), id .. ": yaw")
 	local def = Items[id]
 	check(
-		def ~= nil and def.boss == 3 and not def.legacy and def.kind == "Creature",
-		id .. ": в коллекции босса 3"
+		def ~= nil and def.boss == item.boss and not def.legacy and def.kind == "Creature",
+		id .. ": в коллекции босса " .. item.boss
 	)
 	if def then
 		check(def.rarity == item.rarity, id .. ": редкость")
 		check(def.income > 0, id .. ": доход")
+		if item.boss == 4 then
+			check(def.income == item.income, id .. ": доход = каталог (D57)")
+			check(def.weight == item.weight, id .. ": вес = каталог (D58)")
+		end
 		check(
 			(def.size - rig.Size).Magnitude < 1e-3,
 			id .. ": размер = габариты живого существа"
 		)
-		byRarity[def.rarity] = (byRarity[def.rarity] or 0) + 1
+		byRarity[item.boss] = byRarity[item.boss] or {}
+		byRarity[item.boss][def.rarity] = (byRarity[item.boss][def.rarity] or 0) + 1
 	end
 end
-check(byRarity.Common == 12 and byRarity.Rare == 10 and byRarity.Epic == 8, "12 Common, 10 Rare, 8 Epic")
+local b3, b4 = byRarity[3] or {}, byRarity[4] or {}
+check(b3.Common == 12 and b3.Rare == 10 and b3.Epic == 8, "босс 3: 12 Common, 10 Rare, 8 Epic")
+check(
+	b4.Common == 12 and b4.Rare == 9 and b4.Epic == 6 and b4.Legendary == 3,
+	"босс 4: 12 Common, 9 Rare, 6 Epic, 3 Legendary (D57)"
+)
+for _, id in { "CanopicJar", "ScarabAmulet", "BastetCat", "GoldenAnkh", "Nefertiti" } do
+	check(Items[id].legacy == true, id .. ": черновик «Египта» — только для старых сохранений")
+end
 for _, id in { "CratedVase", "PlasterBust", "KnightArmor", "BronzeHorse" } do
 	check(
 		Items[id].legacy == true,
@@ -98,6 +126,13 @@ for _, def in Items do
 	end
 end
 check(active == 30, "у босса 3 появляются только 30 существ")
+local active4 = 0
+for _, def in Items do
+	if def.boss == 4 and not def.legacy then
+		active4 += 1
+	end
+end
+check(active4 == 30, "у босса 4 появляются только 30 существ")
 
 print("· сборка ItemFactory")
 local function close(a, b, eps)

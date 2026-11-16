@@ -1,0 +1,297 @@
+{
+ "id": "AquariumCamel",
+ "order": [
+  "Stand",
+  "Body",
+  "LegFL",
+  "LegFR",
+  "LegBL",
+  "LegBR",
+  "TankA",
+  "FishA",
+  "TankB",
+  "FishB",
+  "Head",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.24,
+    0.0
+   ],
+   "center": [
+    -0.2093,
+    0.676,
+    0.0
+   ],
+   "size": [
+    2.0585,
+    1.4319,
+    0.92
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    -0.58,
+    1.24,
+    0.22
+   ],
+   "center": [
+    0.0,
+    -0.48,
+    0.01
+   ],
+   "size": [
+    0.26,
+    1.08,
+    0.26
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    -0.58,
+    1.24,
+    -0.22
+   ],
+   "center": [
+    0.0,
+    -0.48,
+    0.01
+   ],
+   "size": [
+    0.26,
+    1.08,
+    0.26
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    0.56,
+    1.24,
+    0.22
+   ],
+   "center": [
+    0.0,
+    -0.48,
+    0.01
+   ],
+   "size": [
+    0.26,
+    1.08,
+    0.26
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    0.56,
+    1.24,
+    -0.22
+   ],
+   "center": [
+    0.0,
+    -0.48,
+    0.01
+   ],
+   "size": [
+    0.26,
+    1.08,
+    0.26
+   ]
+  },
+  "TankA": {
+   "parent": "Body",
+   "pivot": [
+    -0.46,
+    1.84,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.29,
+    0.0
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.6
+   ]
+  },
+  "FishA": {
+   "parent": "TankA",
+   "pivot": [
+    -0.46,
+    2.09,
+    0.28
+   ],
+   "center": [
+    0.0075,
+    0.03,
+    0.01
+   ],
+   "size": [
+    0.315,
+    0.26,
+    0.04
+   ]
+  },
+  "TankB": {
+   "parent": "Body",
+   "pivot": [
+    0.48,
+    1.84,
+    0.0
+   ],
+   "center": [
+    -0.0,
+    0.29,
+    0.0
+   ],
+   "size": [
+    0.6,
+    0.6,
+    0.6
+   ]
+  },
+  "FishB": {
+   "parent": "TankB",
+   "pivot": [
+    0.48,
+    2.09,
+    0.28
+   ],
+   "center": [
+    -0.2825,
+    0.03,
+    0.01
+   ],
+   "size": [
+    0.335,
+    0.26,
+    0.04
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    -1.06,
+    2.54,
+    0.1
+   ],
+   "center": [
+    -0.2083,
+    0.2562,
+    0.1496
+   ],
+   "size": [
+    1.1171,
+    0.5985,
+    1.039
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.8,
+    1.68,
+    0.0
+   ],
+   "center": [
+    0.102,
+    -0.2746,
+    -0.02
+   ],
+   "size": [
+    0.276,
+    0.5708,
+    0.2
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FishA": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0.08,
+    0,
+    0.05
+   ]
+  },
+  "FishB": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    -0.08,
+    0,
+    -0.04
+   ]
+  },
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -14,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

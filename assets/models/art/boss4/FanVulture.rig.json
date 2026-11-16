@@ -1,0 +1,259 @@
+{
+ "id": "FanVulture",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Tail",
+  "Head",
+  "FanL",
+  "BladesL",
+  "FanR",
+  "BladesR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.22,
+    0.72,
+    0.0
+   ],
+   "center": [
+    -0.01,
+    -0.24,
+    0.06
+   ],
+   "size": [
+    0.22,
+    0.52,
+    0.36
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.22,
+    0.72,
+    0.0
+   ],
+   "center": [
+    -0.01,
+    -0.24,
+    0.06
+   ],
+   "size": [
+    0.22,
+    0.52,
+    0.36
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    0.527,
+    0.01
+   ],
+   "size": [
+    1.3217,
+    1.214,
+    1.28
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.02,
+    -0.55
+   ],
+   "center": [
+    0.0,
+    -0.11,
+    -0.1695
+   ],
+   "size": [
+    0.5339,
+    0.14,
+    0.4697
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.78,
+    0.0
+   ],
+   "center": [
+    -0.01,
+    0.3344,
+    0.23
+   ],
+   "size": [
+    0.7,
+    0.6912,
+    0.86
+   ]
+  },
+  "FanL": {
+   "parent": "Body",
+   "pivot": [
+    -0.55,
+    1.27,
+    0.0
+   ],
+   "center": [
+    -0.4,
+    0.05,
+    0.12
+   ],
+   "size": [
+    0.963,
+    1.0466,
+    0.5415
+   ]
+  },
+  "BladesL": {
+   "parent": "FanL",
+   "pivot": [
+    -0.95,
+    1.32,
+    0.12
+   ],
+   "center": [
+    0.0266,
+    0.0298,
+    0.0196
+   ],
+   "size": [
+    0.7876,
+    0.8528,
+    0.442
+   ]
+  },
+  "FanR": {
+   "parent": "Body",
+   "pivot": [
+    0.55,
+    1.27,
+    0.0
+   ],
+   "center": [
+    0.4,
+    0.05,
+    0.12
+   ],
+   "size": [
+    0.963,
+    1.0466,
+    0.5415
+   ]
+  },
+  "BladesR": {
+   "parent": "FanR",
+   "pivot": [
+    0.95,
+    1.32,
+    0.12
+   ],
+   "center": [
+    0.0215,
+    -0.0321,
+    -0.0274
+   ],
+   "size": [
+    0.7741,
+    0.8702,
+    0.4296
+   ]
+  }
+ },
+ "demo_pose": {
+  "BladesL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    40
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "BladesR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -40
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FanL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

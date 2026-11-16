@@ -1,0 +1,221 @@
+{
+ "id": "CactusAcrobats",
+ "order": [
+  "Stand",
+  "Base",
+  "BaseArmL",
+  "BaseArmR",
+  "Mid",
+  "MidArm",
+  "Top",
+  "TopArm"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Base": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.22,
+    0.0
+   ],
+   "center": [
+    0.0057,
+    0.48,
+    0.0206
+   ],
+   "size": [
+    1.309,
+    0.96,
+    1.3388
+   ]
+  },
+  "BaseArmL": {
+   "parent": "Base",
+   "pivot": [
+    -0.56,
+    0.72,
+    0.0
+   ],
+   "center": [
+    0.0283,
+    0.2943,
+    0.025
+   ],
+   "size": [
+    0.4432,
+    0.6289,
+    0.2391
+   ]
+  },
+  "BaseArmR": {
+   "parent": "Base",
+   "pivot": [
+    0.56,
+    0.72,
+    0.0
+   ],
+   "center": [
+    -0.0283,
+    0.2943,
+    0.025
+   ],
+   "size": [
+    0.4432,
+    0.6289,
+    0.2391
+   ]
+  },
+  "Mid": {
+   "parent": "Base",
+   "pivot": [
+    0.0,
+    1.18,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.5,
+    0.04
+   ],
+   "size": [
+    0.84,
+    1.04,
+    0.34
+   ]
+  },
+  "MidArm": {
+   "parent": "Mid",
+   "pivot": [
+    0.36,
+    1.72,
+    0.0
+   ],
+   "center": [
+    -0.2902,
+    0.1917,
+    0.0251
+   ],
+   "size": [
+    1.2645,
+    0.5234,
+    0.2984
+   ]
+  },
+  "Top": {
+   "parent": "Mid",
+   "pivot": [
+    -0.12,
+    2.2,
+    0.0
+   ],
+   "center": [
+    0.0698,
+    0.5246,
+    0.035
+   ],
+   "size": [
+    0.5289,
+    1.0778,
+    0.41
+   ]
+  },
+  "TopArm": {
+   "parent": "Top",
+   "pivot": [
+    0.0,
+    2.82,
+    0.0
+   ],
+   "center": [
+    0.3317,
+    0.3374,
+    0.02
+   ],
+   "size": [
+    0.7142,
+    0.7267,
+    0.1324
+   ]
+  }
+ },
+ "demo_pose": {
+  "Mid": {
+   "rot_xyz_blender_deg": [
+    0,
+    8,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Top": {
+   "rot_xyz_blender_deg": [
+    0,
+    -14,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TopArm": {
+   "rot_xyz_blender_deg": [
+    0,
+    -25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "MidArm": {
+   "rot_xyz_blender_deg": [
+    0,
+    15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "BaseArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

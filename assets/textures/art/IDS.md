@@ -53,3 +53,45 @@ MeshId — `assets/models/Boss1_meshids.json`, в игре — `Config/ItemModel
 
 **Запрещены навсегда** (Roblox: «sexual content», бан аккаунта): 115188607358965 — карта «Сотворения Адама»,
 91016959329136 — карта «Рождения Венеры». Обе картины исключены из проекта.
+
+## Босс 4 «Сфинкс-лежебока» (модель v2, D39)
+
+Загружены через Studio MCP `upload_image` по одной 2026-11-12, после просмотра каждой карты (развёртки из цветных
+блоков, без изображений). Меши загружены 2026-11-13 через Open Cloud (`assets/models/Boss4_Sphinx_game.fbx`,
+7 916 треугольников) — модель-источник 99439807545957, 27 MeshId частей — `assets/models/Boss4_meshids.json`
+и `Config/BossModels` (`SPHINX_MESHES`).
+
+| Группа частей | color | normal |
+|---|---|---|
+| Head (голова, челюсть, веки, брови, уши, платок) | 70978354612891 | 100113950885464 |
+| Body (туловище, хвост, кисть) | 137503317136619 | 130409217850998 |
+| Limbs (лапы) | 79180327028035 | 130003429663958 |
+
+## Босс 4 — 30 существ коллекции (D57, D58)
+
+Загружены через Studio MCP `upload_image` 2026-11-13 пачками после просмотра каждой из 60 карт (развёртки цветных
+блоков и кольца D39, карты нормалей — ровный фон с контурами; без изображений, текста и фигур). ID — в
+`assets/textures/art/boss4/Boss4_maps.json` (`{id: {color, normal}}`), привязаны `scripts/bind_maps.py` (Config/ItemModels)
+и `scripts/make_looks.py` (Server/Looks). №20 — карты `FennecRiddler_v2_*` (id в игре `FennecRiddler`), №20 и №21 —
+после выноса точки «?» и марева в свои части (D58). Меши частей загружены 2026-11-13 через Open Cloud
+(`assets/models/Boss4Creatures_all.fbx`, 218 частей) — модель-источник 133682008797203, MeshId частей —
+`assets/models/Boss4_meshids.json` и `Config/ItemModels` (`CREATURE_MESHES`).
+
+## 2026-11-14 — босс 2, Крысиный король и коллекции боссов 2–3 загружены (просьба владельца «добавь второго босса и все модельки, которые мы не добавляли»)
+
+Нынешним аккаунтом (создатель места), после просмотра каждой карты: листы `assets/concepts/map_fixes_2026-11-14/10_boss2_maps_checked.jpg`
+и `11_boss3_creature_maps_checked.jpg`. Наготы, романтики и людей нет; две картины коллекции босса 2 (Мона Лиза,
+автопортрет Ван Гога, утверждены в D42) — одетые портреты. Карты нормалей — ровный сиреневый фон.
+
+| Что | Где ID | Сколько |
+|---|---|---|
+| Карты 30 предметов босса 2 | `assets/textures/art/Boss2_maps.json` | 60 |
+| Карты Крысиного короля (Head, Body, Limbs) | `assets/textures/art/Boss3_maps.json`, `Config/BossModels[3]` | 6 |
+| Карты 30 существ босса 3 | `assets/textures/art/Boss3Creatures_maps.json` | 60 |
+| Меши торговца — модель 134330107033271 (`Boss2_Trader.fbx`) | `assets/models/Boss2_meshids.json`, `TRADER_MESHES` | 12 |
+| Меши 30 предметов босса 2 — модель 106186140879448 (`Art_Boss2_MadFinds.fbx`) | `assets/models/Boss2_meshids.json`, `MESHES` | 30 |
+| Меши Крысиного короля — модель 113666622053915 (`Boss3_RatKing.fbx`) | `assets/models/Boss3_meshids.json`, `RATKING_MESHES` | 21 |
+| Меши существ босса 3 — модель 106620490195736 (`Boss3Creatures_all.fbx`, собран `scripts/blender/pack_boss3_fbx.py`) | `assets/models/Boss3Creatures_meshids.json`, `CREATURE_MESHES` | 291 (263 видимых частей; скрытые подставки не привязаны) |
+
+Карты торговца, загруженные до бана (таблица выше), открываются и нынешним аккаунтом (проверено 2026-11-14 загрузкой
+в ImageLabel) — не перезагружались. Все четыре модели прошли модерацию (Approved). Встроенных картинок в FBX нет.

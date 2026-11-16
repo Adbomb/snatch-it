@@ -1,0 +1,233 @@
+{
+ "id": "TornadoKing",
+ "order": [
+  "Stand",
+  "TierA",
+  "TierB",
+  "TierC",
+  "ArmL",
+  "ArmR",
+  "Head",
+  "Crown"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.32,
+    0.4354,
+    3.32
+   ]
+  },
+  "TierA": {
+   "parent": "Stand",
+   "pivot": [
+    0.08,
+    0.48,
+    0.0
+   ],
+   "center": [
+    -0.0226,
+    0.43,
+    -0.1192
+   ],
+   "size": [
+    0.9099,
+    0.86,
+    0.8656
+   ]
+  },
+  "TierB": {
+   "parent": "TierA",
+   "pivot": [
+    -0.0613,
+    1.32,
+    -0.0386
+   ],
+   "center": [
+    -0.008,
+    0.43,
+    0.1206
+   ],
+   "size": [
+    1.18,
+    0.86,
+    1.2841
+   ]
+  },
+  "TierC": {
+   "parent": "TierB",
+   "pivot": [
+    0.0139,
+    2.16,
+    0.0591
+   ],
+   "center": [
+    -0.0139,
+    -0.0753,
+    -0.0988
+   ],
+   "size": [
+    2.2349,
+    1.8897,
+    2.2392
+   ]
+  },
+  "ArmL": {
+   "parent": "TierC",
+   "pivot": [
+    -0.8,
+    2.46,
+    0.0
+   ],
+   "center": [
+    -0.2817,
+    0.0745,
+    0.0146
+   ],
+   "size": [
+    0.887,
+    0.7083,
+    0.6253
+   ]
+  },
+  "ArmR": {
+   "parent": "TierC",
+   "pivot": [
+    0.8,
+    2.46,
+    0.0
+   ],
+   "center": [
+    0.2951,
+    0.0745,
+    0.0146
+   ],
+   "size": [
+    0.9137,
+    0.7083,
+    0.6253
+   ]
+  },
+  "Head": {
+   "parent": "TierC",
+   "pivot": [
+    0.0,
+    3.0,
+    0.0
+   ],
+   "center": [
+    0.01,
+    0.48,
+    0.0475
+   ],
+   "size": [
+    1.94,
+    0.9,
+    1.087
+   ]
+  },
+  "Crown": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    3.96,
+    -0.06
+   ],
+   "center": [
+    0.0052,
+    0.27,
+    0.0084
+   ],
+   "size": [
+    0.762,
+    0.58,
+    0.7367
+   ]
+  }
+ },
+ "demo_pose": {
+  "TierA": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    35
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TierB": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -40
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TierC": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    25
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Crown": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.12
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

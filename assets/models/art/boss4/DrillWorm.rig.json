@@ -1,0 +1,171 @@
+{
+ "id": "DrillWorm",
+ "order": [
+  "Stand",
+  "Mound",
+  "Body",
+  "Head",
+  "Drill",
+  "TailTip"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Mound": {
+   "parent": "Stand",
+   "pivot": [
+    -0.3,
+    0.22,
+    -0.12
+   ],
+   "center": [
+    0.42,
+    0.1235,
+    -0.11
+   ],
+   "size": [
+    2.0,
+    0.247,
+    1.38
+   ]
+  },
+  "Body": {
+   "parent": "Mound",
+   "pivot": [
+    -0.3,
+    0.42,
+    0.12
+   ],
+   "center": [
+    0.2268,
+    0.6942,
+    -0.0845
+   ],
+   "size": [
+    1.1684,
+    1.6524,
+    0.9458
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.28,
+    1.44,
+    0.24
+   ],
+   "center": [
+    -0.0,
+    -0.1,
+    0.05
+   ],
+   "size": [
+    0.87,
+    0.72,
+    0.94
+   ]
+  },
+  "Drill": {
+   "parent": "Head",
+   "pivot": [
+    0.28,
+    1.32,
+    0.6
+   ],
+   "center": [
+    0.0206,
+    0.1345,
+    0.1889
+   ],
+   "size": [
+    0.3689,
+    0.5289,
+    0.5695
+   ]
+  },
+  "TailTip": {
+   "parent": "Mound",
+   "pivot": [
+    0.72,
+    0.42,
+    -0.52
+   ],
+   "center": [
+    0.1107,
+    0.2237,
+    0.0513
+   ],
+   "size": [
+    0.5462,
+    0.6931,
+    0.4317
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Drill": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TailTip": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    -8,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

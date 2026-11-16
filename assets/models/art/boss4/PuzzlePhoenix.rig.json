@@ -1,0 +1,240 @@
+{
+ "id": "PuzzlePhoenix",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Head",
+  "WingL",
+  "WingR",
+  "Tail",
+  "Piece"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.32,
+    0.4354,
+    3.32
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.2,
+    0.98,
+    0.0
+   ],
+   "center": [
+    -0.0524,
+    -0.2974,
+    0.1
+   ],
+   "size": [
+    0.2553,
+    0.6452,
+    0.4
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.2,
+    0.98,
+    0.0
+   ],
+   "center": [
+    0.02,
+    -0.2974,
+    0.1
+   ],
+   "size": [
+    0.24,
+    0.6452,
+    0.4
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.3993,
+    0.015
+   ],
+   "size": [
+    0.86,
+    1.1815,
+    0.75
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.98,
+    0.04
+   ],
+   "center": [
+    0.0,
+    0.54,
+    0.18
+   ],
+   "size": [
+    0.56,
+    1.06,
+    0.88
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    -0.42,
+    1.56,
+    0.0
+   ],
+   "center": [
+    -0.4064,
+    0.4134,
+    -0.075
+   ],
+   "size": [
+    1.1233,
+    1.2293,
+    0.21
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    0.42,
+    1.56,
+    0.0
+   ],
+   "center": [
+    0.4064,
+    0.4134,
+    -0.075
+   ],
+   "size": [
+    1.1233,
+    1.2293,
+    0.21
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.16,
+    -0.32
+   ],
+   "center": [
+    -0.0019,
+    -0.2265,
+    -0.578
+   ],
+   "size": [
+    0.9689,
+    0.862,
+    1.1354
+   ]
+  },
+  "Piece": {
+   "parent": "Stand",
+   "pivot": [
+    1.0,
+    2.06,
+    0.3
+   ],
+   "center": [
+    -0.0164,
+    0.0164,
+    0.0045
+   ],
+   "size": [
+    0.6124,
+    0.6124,
+    0.169
+   ]
+  }
+ },
+ "demo_pose": {
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Piece": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    -0.2,
+    0,
+    -0.1
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,171 @@
+{
+ "id": "StrawSnake",
+ "order": [
+  "Stand",
+  "Coconut",
+  "Body",
+  "TailTip",
+  "Neck",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    0.28,
+    2.8978
+   ]
+  },
+  "Coconut": {
+   "parent": "Stand",
+   "pivot": [
+    0.62,
+    0.22,
+    0.18
+   ],
+   "center": [
+    -0.0,
+    0.435,
+    0.0
+   ],
+   "size": [
+    1.0809,
+    0.87,
+    1.0809
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    -0.45,
+    0.34,
+    -0.1
+   ],
+   "center": [
+    0.023,
+    0.6314,
+    -0.0238
+   ],
+   "size": [
+    1.0079,
+    1.461,
+    1.0529
+   ]
+  },
+  "TailTip": {
+   "parent": "Body",
+   "pivot": [
+    -0.8447,
+    0.34,
+    0.0236
+   ],
+   "center": [
+    -0.04,
+    0.06,
+    0.13
+   ],
+   "size": [
+    0.2629,
+    0.2659,
+    0.3622
+   ]
+  },
+  "Neck": {
+   "parent": "Body",
+   "pivot": [
+    -0.42,
+    1.67,
+    -0.22
+   ],
+   "center": [
+    0.459,
+    -0.0538,
+    0.1898
+   ],
+   "size": [
+    1.1844,
+    0.8851,
+    0.6808
+   ]
+  },
+  "Head": {
+   "parent": "Neck",
+   "pivot": [
+    0.5,
+    1.18,
+    0.18
+   ],
+   "center": [
+    0.02,
+    -0.245,
+    0.025
+   ],
+   "size": [
+    0.52,
+    0.55,
+    0.53
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.08
+   ]
+  },
+  "Neck": {
+   "rot_xyz_blender_deg": [
+    0,
+    -12,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TailTip": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Coconut": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

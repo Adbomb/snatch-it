@@ -1,0 +1,221 @@
+{
+ "id": "GiantCactus",
+ "order": [
+  "Stand",
+  "Trunk",
+  "OwlA",
+  "OwlB",
+  "ArmA",
+  "ArmB",
+  "ArmC",
+  "Crown"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.23,
+    0.0
+   ],
+   "size": [
+    3.2,
+    0.46,
+    3.2
+   ]
+  },
+  "Trunk": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.44,
+    0.0
+   ],
+   "center": [
+    0.0,
+    1.59,
+    0.0106
+   ],
+   "size": [
+    0.98,
+    3.22,
+    0.9988
+   ]
+  },
+  "OwlA": {
+   "parent": "Trunk",
+   "pivot": [
+    0.16,
+    1.54,
+    0.44
+   ],
+   "center": [
+    -0.1985,
+    0.3335,
+    0.015
+   ],
+   "size": [
+    0.6372,
+    0.9472,
+    0.15
+   ]
+  },
+  "OwlB": {
+   "parent": "Trunk",
+   "pivot": [
+    -0.2,
+    2.19,
+    0.44
+   ],
+   "center": [
+    0.0,
+    0.0149,
+    0.03
+   ],
+   "size": [
+    0.2402,
+    0.3101,
+    0.12
+   ]
+  },
+  "ArmA": {
+   "parent": "Trunk",
+   "pivot": [
+    -0.4,
+    1.44,
+    0.0
+   ],
+   "center": [
+    -0.3029,
+    0.43,
+    -0.0074
+   ],
+   "size": [
+    0.6542,
+    1.1,
+    0.2748
+   ]
+  },
+  "ArmB": {
+   "parent": "Trunk",
+   "pivot": [
+    0.4,
+    2.09,
+    0.0
+   ],
+   "center": [
+    0.3082,
+    0.385,
+    -0.0072
+   ],
+   "size": [
+    0.6636,
+    0.99,
+    0.2544
+   ]
+  },
+  "ArmC": {
+   "parent": "Trunk",
+   "pivot": [
+    -0.4,
+    2.89,
+    0.0
+   ],
+   "center": [
+    -0.2257,
+    0.2225,
+    -0.0067
+   ],
+   "size": [
+    0.4986,
+    0.615,
+    0.2034
+   ]
+  },
+  "Crown": {
+   "parent": "Trunk",
+   "pivot": [
+    0.0,
+    3.64,
+    -0.02
+   ],
+   "center": [
+    -0.0001,
+    0.0423,
+    0.0008
+   ],
+   "size": [
+    0.8272,
+    0.2095,
+    0.8159
+   ]
+  }
+ },
+ "demo_pose": {
+  "ArmA": {
+   "rot_xyz_blender_deg": [
+    0,
+    10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmB": {
+   "rot_xyz_blender_deg": [
+    0,
+    -12,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "OwlA": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    -0.08,
+    0
+   ]
+  },
+  "OwlB": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Crown": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.05
+   ]
+  }
+ }
+}

@@ -23,11 +23,14 @@ local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
 local SubwayStation = Env.Require("ServerScriptService.Server.World.Models.SubwayStation")
+local DesertOasis = Env.Require("ServerScriptService.Server.World.Models.DesertOasis")
+local CreatureRigs = Env.Require("ReplicatedStorage.Shared.Config.CreatureRigs")
 
 local RIGS = {
 	[1] = Env.Require("ReplicatedStorage.Shared.Config.Boss1DogRig"),
 	[2] = Env.Require("ReplicatedStorage.Shared.Config.Boss2TraderRig"),
 	[3] = Env.Require("ReplicatedStorage.Shared.Config.Boss3RatKingRig"),
+	[4] = Env.Require("ReplicatedStorage.Shared.Config.Boss4SphinxRig"),
 }
 local signs = {}
 -- Декор с надписями: кирпичи, а надписи — в общий список для рендера.
@@ -48,11 +51,12 @@ local DECOR = {
 	[1] = Junkyard.Zone,
 	[2] = withSigns(FleaMarket.Zone),
 	[3] = withSigns(SubwayStation.Zone),
+	[4] = withSigns(DesertOasis.Zone), -- D59
 }
 
 local zone = tonumber(process.args[1] or "2") or 2
 local target = process.args[2] or "zone.json"
-assert(DECOR[zone], "Выгрузка есть только для зон 1–3")
+assert(DECOR[zone], "Выгрузка есть только для зон 1–4")
 
 local out = {}
 
@@ -134,8 +138,9 @@ for _, s in { -1, 1 } do
 end
 -- Голограмма: как в игре — светящийся текст названия без фона и рамки (World/Hologram): невидимая деталь с надписью.
 local holo = frame * CFrame.new(0, MapLayout.HologramHeight, -half + MapLayout.HologramInset)
+local holoScale = MapLayout.HologramScale[cfg.id] or 1
 add(
-	Vector3.new(MapLayout.HologramSize.X, MapLayout.HologramSize.Y, 0.2),
+	Vector3.new(MapLayout.HologramSize.X * holoScale, MapLayout.HologramSize.Y * holoScale, 0.2),
 	holo,
 	Color3.fromHex(cfg.accent),
 	"Block",
@@ -163,8 +168,9 @@ end
 -- Босс в стойке: части-заготовки по скелету (как BossService до импорта мешей).
 local rig = RIGS[zone]
 local spot = MapLayout.BossSpot
-local home = CFrame.new((frame * CFrame.new(spot.X, 0, spot.Y)).Position)
-local stand = rig.Poses.stand
+local arenaZ = MapLayout.Arenas[zone]
+local home = CFrame.new((frame * CFrame.new(spot.X, if arenaZ and arenaZ.floor then arenaZ.floor else 0, spot.Y)).Position)
+local stand = (process.args[4] and rig.Poses[process.args[4]]) or rig.Poses.stand -- 4-й аргумент — поза (sleep…)
 local world = {}
 for _, name in rig.Order do
 	local info = rig.Parts[name]
@@ -205,7 +211,19 @@ for _, point in MapLayout.ArtSlotPoints() do
 		slot += 1
 		local def = Items[ids[slot]]
 		local color = if typeof(def.color) == "Color3" then def.color else Color3.fromHex(def.color)
-		add(def.size, point.cframe * CFrame.new(0, def.size.Y / 2, 0), color)
+		local crig = CreatureRigs[ids[slot]]
+		if crig then
+			-- живое существо — блоки Part-версии, как ItemFactory.buildCreature: низ на месте, лицо вперёд
+			local base = point.cframe * CFrame.Angles(0, math.pi, 0) * CFrame.new(-crig.Center.X, -crig.Lift, -crig.Center.Z)
+			for _, name in crig.Order do
+				local spec = crig.Parts[name]
+				for _, b in spec.blocks do
+					add(b[2], base * CFrame.new(spec.pivot) * CFrame.new(b[1]), Color3.fromHex(b[3]))
+				end
+			end
+		else
+			add(def.size, point.cframe * CFrame.new(0, def.size.Y / 2, 0), color)
+		end
 		local anchor = point.cframe.Position + Vector3.new(0, def.size.Y + labelCfg.Gap, 0)
 		local rarity = UITokens.RarityColor(def.rarity)
 		local width = utf8.len(def.displayName) * labelCfg.CharWidth + labelCfg.Padding

@@ -126,7 +126,7 @@ do
 		return DefenseRules.CheckFreeSpot(cfg, Vector3.new(x, 0, z), showcases, chest, others or {}, galleries)
 	end
 	check(spot(7, 5) == nil, "боковой проход у павильона — можно")
-	check(spot(0, 15) == nil, "за павильоном — можно")
+	check(spot(0, 17) == nil, "за павильоном — можно") -- C.2: павильон до z 14.6, задний проход 15.2…18.8
 	check(spot(0, 0) ~= nil and spot(0, 7) ~= nil, "на дорожке и в павильоне — нельзя")
 	check(spot(5, -1) ~= nil, "у открытой двери сейфа — нельзя")
 	check(spot(-14, 18) ~= nil, "угол у ниши — нельзя (постамент или урна)")

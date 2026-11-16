@@ -95,13 +95,16 @@ def _face_coords(nt):
     return u, v, top
 
 
-def _ring_material(name, code, z0):
-    """Сплошной цвет + отдельные скруглённые квадраты-контуры D39 одной сеткой на весь объект (ряд по центру z0)."""
+def _ring_material(name, code, z0, ring=None):
+    """Сплошной цвет + отдельные скруглённые квадраты-контуры D39 одной сеткой на весь объект (ряд по центру z0).
+    ring — свои числа контура вместо RING (те же ключи); ring["core"] — доля ширины контура с полной глубиной
+    (профиль «полка с коротким скатом»: край чётче при той же ширине). Без core — прежний плавный профиль."""
+    ring = ring or RING
     mat = _flat_material(name, code)
     nt = mat.node_tree
     bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
     u, v, top = _face_coords(nt)
-    step, inner = RING["step"], RING["size"] / 2 - RING["rad"]
+    step, inner = ring["step"], ring["size"] / 2 - ring["rad"]
     off_v = _math(nt, "SUBTRACT", step / 2, _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", 1.0, top), z0))
     d2 = None
     for coord, off in ((u, step / 2), (v, off_v)):
@@ -110,17 +113,19 @@ def _ring_material(name, code, z0):
         a = _math(nt, "MAXIMUM", _math(nt, "SUBTRACT", q, inner), 0.0)
         sq = _math(nt, "MULTIPLY", a, a)
         d2 = sq if d2 is None else _math(nt, "ADD", d2, sq)
-    dist = _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", _math(nt, "SQRT", d2), RING["rad"]))
+    dist = _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", _math(nt, "SQRT", d2), ring["rad"]))
     groove = nt.nodes.new("ShaderNodeMapRange")
     groove.interpolation_type = "SMOOTHSTEP"
     nt.links.new(dist, groove.inputs["Value"])
-    groove.inputs["From Min"].default_value, groove.inputs["From Max"].default_value = RING["width"] / 2, 0.0
+    groove.inputs["From Min"].default_value = ring["width"] / 2
+    groove.inputs["From Max"].default_value = ring["width"] / 2 * ring.get("core", 0.0)
     g = groove.outputs["Result"]
     shade = nt.nodes.new("ShaderNodeMixRGB")
+    shade.name = "RingShade"
     shade.blend_type = "MULTIPLY"
     shade.inputs["Fac"].default_value = 1.0
     shade.inputs["Color1"].default_value = (*lin(code), 1)
-    nt.links.new(_math(nt, "SUBTRACT", 1.0, _math(nt, "MULTIPLY", g, RING["dark"])), shade.inputs["Color2"])
+    nt.links.new(_math(nt, "SUBTRACT", 1.0, _math(nt, "MULTIPLY", g, ring["dark"])), shade.inputs["Color2"])
     nt.links.new(shade.outputs["Color"], bsdf.inputs["Base Color"])
     nt.links.new(shade.outputs["Color"], bsdf.inputs["Emission Color"])
     bump = nt.nodes.new("ShaderNodeBump")
@@ -254,6 +259,7 @@ class Art:
         self.parts = []  # (bmesh, ключ, тело, группа)
         self.group = None  # подвижная часть, к которой идут следующие детали (у предметов — одна, None)
         self.transform = None  # Matrix: сдвиг всех следующих деталей (поднять голову, не переписывая координаты)
+        self.ring = None  # свои числа контура D39 для этого произведения (None — общий RING)
 
     def paint(self, key, code, rings=False):
         self.colors[key] = (code, rings)
@@ -421,7 +427,7 @@ class Art:
             if key in self.images:
                 mats.append(_image_material(f"{self.name}_{key}", *self.images[key]))
             else:
-                mats.append(_ring_material(f"{self.name}_{key}", code, self.ring_z0) if rings
+                mats.append(_ring_material(f"{self.name}_{key}", code, self.ring_z0, self.ring) if rings
                             else _flat_material(f"{self.name}_{key}", code))
         whole = bmesh.new()
         owner = []  # номер детали у каждой грани итогового меша
@@ -519,9 +525,82 @@ def _boost_islands(obj, art):
     bmesh.update_edit_mesh(obj.data)
 
 
-def bake(obj, art, texdir, prefix):
+def _align_islands(obj):
+    """Каждый остров развёртки поворачивается так, чтобы осевые рёбра модели легли вдоль строк и столбцов текселей:
+    прямые стороны квадратов D39 в карте — ровные линии, а не «лесенка» под углом. Угол острова — среднее (по длине)
+    отклонение его осевых рёбер от осей карты по модулю 90°. Остров без осевых рёбер (диски, бруски) не трогается."""
+    bm = bmesh.from_edit_mesh(obj.data)
+    uvl = bm.loops.layers.uv.active
+    faces = list(bm.faces)
+    parent = {f.index: f.index for f in faces}
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    seen = {}
+    for f in faces:
+        for loop in f.loops:
+            key = (loop.vert.index, round(loop[uvl].uv.x, 5), round(loop[uvl].uv.y, 5))
+            if key in seen:
+                parent[root(f.index)] = root(seen[key])
+            else:
+                seen[key] = f.index
+    islands = {}
+    for f in faces:
+        islands.setdefault(root(f.index), []).append(f)
+    turned = 0
+    for group in islands.values():
+        c4 = s4 = 0.0
+        for f in group:
+            for loop in f.loops:
+                d = loop.link_loop_next.vert.co - loop.vert.co
+                du = loop.link_loop_next[uvl].uv - loop[uvl].uv
+                if d.length < 0.02 or du.length < 1e-7 or max(abs(x) for x in d.normalized()) < 0.999:
+                    continue
+                a = math.atan2(du.y, du.x)
+                c4 += d.length * math.cos(4 * a)
+                s4 += d.length * math.sin(4 * a)
+        if c4 == 0 and s4 == 0:
+            continue
+        ang = math.atan2(s4, c4) / 4
+        if abs(ang) < 1e-5:
+            continue
+        loops = [loop for f in group for loop in f.loops]
+        center = sum((loop[uvl].uv for loop in loops), Vector((0.0, 0.0))) / len(loops)
+        ca, sa = math.cos(-ang), math.sin(-ang)
+        for loop in loops:
+            p = loop[uvl].uv - center
+            loop[uvl].uv = center + Vector((p.x * ca - p.y * sa, p.x * sa + p.y * ca))
+        turned += 1
+    bmesh.update_edit_mesh(obj.data)
+    return turned
+
+
+def _downsample(arr, ss, unit=False):
+    """Среднее по блокам ss × ss (сглаживание запекания с запасом); unit — карта нормалей: среднее направление."""
+    if ss == 1:
+        return arr
+    h, w = arr.shape[0] // ss, arr.shape[1] // ss
+    if unit:
+        n = arr * 2 - 1
+        n = n.reshape(h, ss, w, ss, 3).mean(axis=(1, 3))
+        n /= np.maximum(np.linalg.norm(n, axis=-1, keepdims=True), 1e-6)
+        return (n + 1) / 2
+    return arr.reshape(h, ss, w, ss, 3).mean(axis=(1, 3))
+
+
+def bake(obj, art, texdir, prefix, ss=1, pack_margin=0.004, margin_type=None, align=False, project_angle=50):
     """Развёртка, запекание цвета (эмиссия), окклюзии и нормалей, итоговые карты и материал для превью и FBX.
-    Пишет <prefix>_color.png и <prefix>_normal.png; возвращает статистику развёртки."""
+    Пишет <prefix>_color.png и <prefix>_normal.png; возвращает статистику развёртки.
+    ss > 1 — цвет и нормали запекаются в карту в ss раз крупнее и сжимаются до TEX усреднением (Cycles берёт одну точку
+    на тексель, без сглаживания: тонкий контур выходит «лесенкой»); окклюзия плавная — сразу TEX.
+    pack_margin — зазор между островами (доля карты); margin_type — как заполнять зазор ("ADJACENT_FACES": цветом
+    соседней по модели грани, а не соседнего острова карты); align — острова по сетке текселей (_align_islands), при
+    упаковке поворот только на 90°; project_angle — предел угла Smart UV Project (при 50° часть крупных граней
+    проецируется вдоль нормали фасок, под 45°, и сжимается по одной оси на ~30 %). По умолчанию — как раньше."""
     scene = bpy.context.scene
     others = [o for o in scene.objects if o is not obj and o.type == "MESH"]
     for o in others:
@@ -529,19 +608,29 @@ def bake(obj, art, texdir, prefix):
     _select_only(obj)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.uv.smart_project(angle_limit=math.radians(50), island_margin=0.0, area_weight=0.0, scale_to_bounds=False)
+    bpy.ops.uv.smart_project(angle_limit=math.radians(project_angle), island_margin=0.0, area_weight=0.0,
+                             scale_to_bounds=False)
     if art.uv_boost:
         _boost_islands(obj, art)
-    bpy.ops.uv.pack_islands(rotate=True, margin_method="FRACTION", margin=0.004, shape_method="CONCAVE")
+    if align:
+        _align_islands(obj)
+        bpy.ops.uv.pack_islands(rotate=True, rotate_method="CARDINAL", margin_method="FRACTION", margin=pack_margin,
+                                shape_method="CONCAVE")
+    else:
+        bpy.ops.uv.pack_islands(rotate=True, margin_method="FRACTION", margin=pack_margin, shape_method="CONCAVE")
     bpy.ops.object.mode_set(mode="OBJECT")
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.render.bake.margin = 8
+    if margin_type:
+        scene.render.bake.margin_type = margin_type
     scene.world = scene.world or bpy.data.worlds.new("Bake")
     scene.world.light_settings.distance = 0.5
 
     def run(kind):
-        img = bpy.data.images.new(f"{prefix}_{kind}", TEX, TEX, alpha=False, float_buffer=True)
+        k = 1 if kind == "ao" else ss
+        size = TEX * k
+        scene.render.bake.margin = 8 * k
+        img = bpy.data.images.new(f"{prefix}_{kind}", size, size, alpha=False, float_buffer=True)
         for m in art.materials:
             target = m.node_tree.nodes["BakeTarget"]
             target.image = img
@@ -553,9 +642,10 @@ def bake(obj, art, texdir, prefix):
             bpy.ops.object.bake(type="NORMAL", normal_space="TANGENT")
         else:
             bpy.ops.object.bake(type="EMIT" if kind == "color" else "AO")
-        arr = np.empty(TEX * TEX * 4, np.float32)
+        arr = np.empty(size * size * 4, np.float32)
         img.pixels.foreach_get(arr)
-        return arr.reshape(TEX, TEX, 4)[::-1, :, :3]
+        bpy.data.images.remove(img)
+        return _downsample(arr.reshape(size, size, 4)[::-1, :, :3], k, unit=kind == "normal")
 
     color, ao, normal = run("color"), run("ao"), run("normal")
     maps = {"color": to_srgb(color * (AO_MIX + (1 - AO_MIX) * ao[..., :1])), "normal": normal}

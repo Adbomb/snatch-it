@@ -1,0 +1,2043 @@
+"""Анимации Короля-дракона v7, третья итерация (перед экспортом в Roblox): точная покадровая доводка оставшихся
+касаний — рога ↔ крылья, хвост ↔ задние лапы, лапы ↔ пол — и шире поставленные передние лапы (наручи ↔ лопатки).
+Риг v7_rig.py (53 кости, утверждён). Прежние итерации — v7_anim.py (boss10_v7_anim) и v7_anim2.py (boss10_v7_anim2)
+не меняются; залп, сценарии уклонения и эффекты — те же (volley_sim.py, v7_volley_vfx.py).
+
+Как устроено движение (как у Сфинкса, scripts/blender/boss4_sphinx_anim.py):
+- Каждый клип — ключевые позы каналов (тело, шея, голова, челюсть, хвост, крылья, лапы, скипетр, глаза). Между ключами
+  монотонный кубический сплайн: без остановок в проходных ключах и без перелётов.
+- Шея, хвост и пальцы крыльев идут с запаздыванием по звеньям: волна, а не механический поворот.
+- Лапы задаются в мире: место запястья или лодыжки и поворот стопы. Суставы считает обратная кинематика на каждом
+  кадре, поэтому опорная лапа стоит и не скользит.
+- Наплечник следует за плечом на 40 %; полосы мантии — маятник от движения тела.
+- Длительности состояний и время удара — как в Config/Battle: Wake + StandUp + ToCombat = 2.4 с, Victory 2.2,
+  Defeat 2.4, FallAsleep 1.6, выпад — HitDelay 0.25 с после начала в игре (замах раньше, по плану атаки, ≤ 0.75 с).
+  Шаг — под Speed 10 стадов/с.
+
+Режимы (аргумент после папки вывода):
+- poses — кадры опорных поз;
+- check — проверки всех клипов (anim_report.json);
+- render — кадры превью в <папка>/frames/<клип>;
+- blend — boss10_v7_rig.blend с действиями;
+- all — всё подряд.
+Запуск:
+  blender --background --factory-startup --python scripts/blender/dragon10/v7_anim3.py -- <репо> <папка> <режим> [клипы]
+"""
+
+import json
+import math
+import os
+import sys
+import time
+
+import bpy
+import numpy as np
+from mathutils import Matrix, Quaternion, Vector
+from mathutils.bvhtree import BVHTree
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "concepts510"))
+import ck  # noqa: E402
+import v7_rig as R  # noqa: E402
+
+# Наруч не меняется: проба тоньше (×0.8 у локтя) убрала касания с лопаткой, но на рендере наруч ушёл внутрь
+# предплечья и пропал — анатомию под ним менять нельзя. Касания убираются только позой (FORE_WIDE, отвод локтя).
+
+argv = sys.argv[sys.argv.index("--") + 1:]
+REPO, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
+MODE = argv[2] if len(argv) > 2 else "check"
+ONLY = [c for c in (argv[3].split(",") if len(argv) > 3 else []) if c]
+os.makedirs(OUT, exist_ok=True)
+
+FPS = 30
+V = Vector
+S2 = R.S2
+SIDE = R.SIDE
+STUDS = R.SCALE
+ARENA_R = 31.0 / STUDS  # радиус арены 62 стада в единицах модели
+SAFE_R = (31.0 - 1.0) / STUDS  # запас 1 стад до края
+WALK_SPEED = 10.0 / STUDS  # Config/Battle.Bosses Speed = 10 стадов/с
+HIT_DELAY = 0.25
+
+
+# ── повороты ─────────────────────────────────────────────────────────────────────────────────────────────────
+def rx(d):
+    return Matrix.Rotation(math.radians(d), 4, "X")
+
+
+def ry(d):
+    return Matrix.Rotation(math.radians(d), 4, "Y")
+
+
+def rz(d):
+    return Matrix.Rotation(math.radians(d), 4, "Z")
+
+
+def raxis(axis, d):
+    return Matrix.Rotation(math.radians(d), 4, V(axis).normalized())
+
+
+def about(p, m):
+    """Поворот m вокруг точки p."""
+    return Matrix.Translation(p) @ m @ Matrix.Translation(-V(p))
+
+
+def tr(v):
+    return Matrix.Translation(V(v))
+
+
+# ── кривые ───────────────────────────────────────────────────────────────────────────────────────────────────
+class Curve:
+    """Монотонный кубический сплайн по ключам [(t, v)]: проходит через ключи, не перелетает, в экстремумах плавно
+    тормозит. period — цикл (касательные замкнуты)."""
+
+    def __init__(self, keys, period=None):
+        keys = sorted(keys)
+        if period:
+            keys = [(t - period, v) for t, v in keys[-2:]] + keys + [(t + period, v) for t, v in keys[:2]]
+        self.t = [k[0] for k in keys]
+        self.v = [k[1] for k in keys]
+        self.period = period
+        n = len(keys)
+        d = [(self.v[i + 1] - self.v[i]) / max(self.t[i + 1] - self.t[i], 1e-6) for i in range(n - 1)]
+        m = [0.0] * n
+        for i in range(1, n - 1):
+            if d[i - 1] * d[i] > 0:
+                w1 = 2 * (self.t[i + 1] - self.t[i]) + (self.t[i] - self.t[i - 1])
+                w2 = (self.t[i + 1] - self.t[i]) + 2 * (self.t[i] - self.t[i - 1])
+                m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+        self.m = m
+
+    def __call__(self, t):
+        if self.period:
+            t0 = self.t[2]
+            t = t0 + (t - t0) % self.period
+        if t <= self.t[0]:
+            return self.v[0]
+        if t >= self.t[-1]:
+            return self.v[-1]
+        i = max(k for k in range(len(self.t) - 1) if self.t[k] <= t)
+        h = self.t[i + 1] - self.t[i]
+        s = (t - self.t[i]) / h
+        h00, h10, h01, h11 = 2 * s ** 3 - 3 * s ** 2 + 1, s ** 3 - 2 * s ** 2 + s, -2 * s ** 3 + 3 * s ** 2, s ** 3 - s ** 2
+        return h00 * self.v[i] + h10 * h * self.m[i] + h01 * self.v[i + 1] + h11 * h * self.m[i + 1]
+
+
+def smooth(x):
+    x = min(max(x, 0.0), 1.0)
+    return x * x * x * (x * (6 * x - 15) + 10)
+
+
+def bump(t, t0, t1):
+    """0 → 1 → 0 на отрезке [t0, t1] (синус)."""
+    if t <= t0 or t >= t1:
+        return 0.0
+    return math.sin(math.pi * (t - t0) / (t1 - t0))
+
+
+# ── каналы поз ───────────────────────────────────────────────────────────────────────────────────────────────
+WING_CH = ("raise", "sweep", "twist", "elbow", "fan", "fold", "cup")
+LEG_CH = ("x", "y", "z", "yaw", "pitch", "heel", "bend", "rel")  # rel — доля цели в осях тела (лапа идёт с телом)  # bend — локоть/колено наружу (градусы вокруг оси лапы)
+FEET = {}
+for _s in S2:
+    _sh, _el, _wr, _ = R.fore(_s)
+    FEET["F" + SIDE[_s]] = _wr
+    _hip, _kn, _hk, _an, _ = R.hind(_s)
+    FEET["H" + SIDE[_s]] = _an
+
+
+def stand_pose():
+    p = {k: 0.0 for k in ("root_x", "root_y", "root_yaw", "body_x", "body_y", "body_z", "body_p", "body_r", "body_yaw",
+                          "neck_p", "neck_y", "neck_curl", "head_p", "head_y", "head_r", "jaw", "tail_p", "tail_y",
+                          "tail_curl", "tail_lift", "tail_wave", "mantle_out", "sc_x", "sc_y", "sc_z", "sc_spin",
+                          "sc_tilt", "sc_tilt_dir", "shards")}
+    p.update(eyes=1.0, glow=1.0, tail_freq=0.0, tail_ground=0.0)
+    for s in S2:
+        for c in WING_CH:
+            p[f"w{SIDE[s]}_{c}"] = 0.0
+    for leg, pos in FEET.items():
+        p.update({f"{leg}_x": pos.x, f"{leg}_y": pos.y, f"{leg}_z": pos.z, f"{leg}_yaw": 0.0, f"{leg}_pitch": 0.0,
+                  f"{leg}_heel": 0.0, f"{leg}_bend": 0.0, f"{leg}_rel": 0.0})
+    return p
+
+
+STAND = stand_pose()
+
+
+def P(base, **kw):
+    """Новая поза: base + изменения. w_… — оба крыла сразу, feet_dy/feet_dz — сдвиг всех лап."""
+    p = dict(base)
+    for k, v in kw.items():
+        if k.startswith("w_"):
+            for x in "LR":
+                p[f"w{x}_{k[2:]}"] = v
+        elif k in ("F_dy", "H_dy", "F_dz", "H_dz", "F_dx", "H_dx"):
+            for x in "LR":
+                p[f"{k[0]}{x}_{k[-1]}"] = base[f"{k[0]}{x}_{k[-1]}"] + v
+        else:
+            assert k in p, k
+            p[k] = v
+    return p
+
+
+def D(base, **kw):
+    """Как P, но значения — прибавки к base."""
+    p = dict(base)
+    for k, v in kw.items():
+        if k.startswith("w_"):
+            for x in "LR":
+                p[f"w{x}_{k[2:]}"] += v
+        else:
+            p[k] += v
+    return p
+
+
+# Боевая стойка: присела, грудь ниже, голова вперёд-вниз, крылья приоткрыты, хвост выше.
+COMBAT = P(STAND, body_z=float(os.environ.get("CROUCH", "-0.25")), body_p=2.5, neck_p=6.0, neck_curl=4.0, head_p=-4.0, jaw=4.0, tail_p=7.0, tail_lift=1.5,
+           tail_y=-8.0,
+           w_raise=12.0, w_sweep=-6.0, w_fan=6.0, w_elbow=6.0, F_dx=0.0)
+FORE_WIDE = float(os.environ.get("FORE_WIDE", "0.2"))  # передние лапы шире: наруч не прижат к лопатке
+for _x, _s in (("L", 1), ("R", -1)):
+    COMBAT[f"F{_x}_x"] += _s * (0.15 + FORE_WIDE)
+    COMBAT[f"H{_x}_x"] += _s * 0.1
+# Сон: лежит на животе, передние лапы вытянуты вперёд, голова на лапах, крылья сложены, хвост обвивает бок.
+SLEEP = P(STAND, body_z=-1.85, body_p=-1.5, body_y=0.7, neck_p=100.0, neck_curl=55.0, head_p=-90.0, head_y=8.0, jaw=-14.0,
+          tail_p=-6.0, tail_curl=0.0, tail_y=-40.0, tail_ground=1.0, w_fold=1.0, mantle_out=48.0, eyes=0.0)
+for _x, _s in (("L", 1), ("R", -1)):
+    SLEEP.update({f"F{_x}_x": _s * 2.35, f"F{_x}_y": -3.9 if _s > 0 else -3.6, f"F{_x}_z": 1.3,
+                  f"F{_x}_pitch": -40.0, f"H{_x}_x": _s * 2.5, f"H{_x}_y": 3.6, f"H{_x}_z": 0.6, f"H{_x}_heel": 30.0,
+                  f"H{_x}_yaw": -_s * 10.0, f"H{_x}_bend": 50.0})
+
+
+# ── позы → суставы ───────────────────────────────────────────────────────────────────────────────────────────
+NECK_W = (0.3, 0.3, 0.24, 0.16)  # доля наклона и поворота шеи по звеньям
+NECK_CURL = (1.0, 0.3, -0.6, -0.7)  # изгиб: низ шеи вперёд-вниз, верх назад-вверх
+TAIL_W = (0.24, 0.2, 0.16, 0.13, 0.11, 0.09, 0.07)
+TAIL_R = (1.02, 0.87, 0.72, 0.6, 0.48, 0.38, 0.3, 0.23)  # полутолщина хвоста в точках (v7: ws / 2)
+FOLD = {"raise": 0.0, "sweep": 60.0, "twist": -50.0, "elbow": -45.0}  # сложенное крыло: вдоль спины, без пересечений
+FINGER_FAN = (1.0, 0.45, -0.15, -0.6)  # раскрытие пальцев от w_fan
+FINGER_FOLD = (-62.0, -38.0, -14.0, 6.0)  # сложенное крыло: пальцы сходятся к предплечью
+PAULDRON_FOLLOW = 0.55
+FORE_BEND = float(os.environ.get("FORE_BEND", "10"))  # локти чуть наружу во всех позах: наручи не уходят в грудь
+COLLAR_FOLLOW = 0.8  # воротник на 80 % идёт с нижней шеей (Neck2): кольцо остаётся вокруг шеи
+
+
+def blend_tr(a, b, k, c):
+    """Промежуточное жёсткое преобразование между a и b (доля k): точка покоя c идёт между a(c) и b(c), поворот —
+    между поворотами a и b."""
+    qa, qb = a.to_quaternion(), b.to_quaternion()
+    return tr((a @ c).lerp(b @ c, k)) @ qa.slerp(qb, k).to_matrix().to_4x4() @ tr(-c)
+
+
+class Rig:
+    def __init__(self, arm):
+        self.arm = arm
+        self.L = {b.name: b.matrix_local.copy() for b in arm.data.bones}
+        self.Li = {k: m.inverted() for k, m in self.L.items()}
+        self.parent = {b.name: (b.parent.name if b.parent else None) for b in arm.data.bones}
+        self.head = {b.name: b.head_local.copy() for b in arm.data.bones}
+        self.wing = {s: R.wing_frame(s) for s in S2}
+        self.fore = {s: R.fore(s) for s in S2}
+        self.hind = {s: R.hind(s) for s in S2}
+        self.clamps = 0
+        self.tail_lift = 0
+
+    # ── ноги ──
+    def two_bone(self, S, T, l1, l2, pole):
+        """Колено/локоть для цепи S → ? → T с длинами l1, l2, сгиб в сторону pole. Недотяг — выпрямить."""
+        d = T - S
+        dist = d.length
+        u = d / max(dist, 1e-6)
+        if dist > l1 + l2 - 1e-3:
+            self.clamps += 1
+            dist = l1 + l2 - 1e-3
+        a = (l1 * l1 - l2 * l2 + dist * dist) / (2 * dist)
+        h = math.sqrt(max(l1 * l1 - a * a, 0.0))
+        pp = pole - u * pole.dot(u)
+        pp = pp.normalized() if pp.length > 1e-6 else V((0, 0, 1))
+        return S + u * a + pp * h, S + u * dist
+
+    @staticmethod
+    def frame(d, n):
+        d = d.normalized()
+        n = (n - d * n.dot(d)).normalized()
+        return Matrix((d, n, d.cross(n))).transposed()
+
+    def aim(self, a0, b0, n0, a1, b1, n1):
+        """Перенос кости a0→b0 в a1→b1, плоскость сгиба n0 → n1."""
+        R3 = self.frame(b1 - a1, n1) @ self.frame(b0 - a0, n0).inverted()
+        return tr(a1) @ R3.to_4x4() @ tr(-a0)
+
+    def leg_front(self, X, s, p):
+        sh, el, wr, _ = self.fore[s]
+        x = SIDE[s]
+        Xb = X["Body"]
+        S = Xb @ sh
+        T = V((p[f"F{x}_x"], p[f"F{x}_y"], p[f"F{x}_z"]))
+        rel = p[f"F{x}_rel"]
+        if rel:  # цель лапы в осях тела: на дыбах лапа поднимается вместе с корпусом, а не тянется к земле
+            T = T.lerp(Xb @ T, rel)
+        n0 = (el - sh).cross(wr - el)
+        pole = Xb.to_3x3() @ (el - (sh + wr) / 2)
+        bend = p[f"F{x}_bend"] + FORE_BEND
+        if bend:
+            pole = raxis(T - S, s * bend).to_3x3() @ pole
+        E, T = self.two_bone(S, T, (el - sh).length, (wr - el).length, pole)
+        n1 = (E - S).cross(T - E)
+        if n1.length < 1e-6:
+            n1 = Xb.to_3x3() @ n0
+        X[f"UpperArm.{x}"] = self.aim(sh, el, n0, S, E, n1)
+        X[f"Forearm.{x}"] = self.aim(el, wr, n0, E, T, n1)
+        foot = rz(p[f"F{x}_yaw"]) @ rx(p[f"F{x}_pitch"])
+        if rel:
+            foot = Quaternion().slerp(Xb.to_quaternion(), rel).to_matrix().to_4x4() @ foot
+        X[f"Paw.{x}"] = tr(T) @ foot @ tr(-wr)
+
+    def leg_hind(self, X, s, p):
+        hip, knee, hock, ankle, _ = self.hind[s]
+        x = SIDE[s]
+        Xb = X["Body"]
+        A = V((p[f"H{x}_x"], p[f"H{x}_y"], p[f"H{x}_z"]))
+        foot = rz(p[f"H{x}_yaw"]) @ rx(p[f"H{x}_pitch"])
+        meta = foot @ rx(-p[f"H{x}_heel"])  # пятка вверх и назад: плюсна ложится
+        Hk = A + meta.to_3x3() @ (hock - ankle)
+        S = Xb @ hip
+        n0 = (knee - hip).cross(hock - knee)
+        pole = Xb.to_3x3() @ (knee - (hip + hock) / 2)
+        if p[f"H{x}_bend"]:
+            pole = raxis(Hk - S, -s * p[f"H{x}_bend"]).to_3x3() @ pole
+        Kn, Hk2 = self.two_bone(S, Hk, (knee - hip).length, (hock - knee).length, pole)
+        n1 = (Kn - S).cross(Hk2 - Kn)
+        X[f"Thigh.{x}"] = self.aim(hip, knee, n0, S, Kn, n1)
+        X[f"Shin.{x}"] = self.aim(knee, hock, n0, Kn, Hk2, n1)
+        X[f"Meta.{x}"] = tr(Hk2) @ meta @ tr(-hock)
+        X[f"HindPaw.{x}"] = tr(A + (Hk2 - Hk)) @ foot @ tr(-ankle)
+
+    # ── крылья ──
+    def plane(self, s, d):
+        """Поворот в плоскости крыла на d градусов (против часовой в осях u — наружу, v — вверх)."""
+        M3 = self.wing[s][0].to_3x3()
+        return (M3 @ ry(-d).to_3x3() @ M3.inverted()).to_4x4()
+
+    def wings(self, X, p, lag):
+        for s in S2:
+            x = SIDE[s]
+            M, pts = self.wing[s]
+            g = {c: p[f"w{x}_{c}"] for c in WING_CH}
+            fold = g["fold"]
+            arm_dir = pts["E"] - pts["root"]
+            D_arm = (rz(s * (g["sweep"] + fold * FOLD["sweep"])) @ ry(-s * (g["raise"] + fold * FOLD["raise"]))
+                     @ raxis(arm_dir, s * (g["twist"] + fold * FOLD["twist"])))
+            X[f"WingArm.{x}"] = X["Body"] @ about(pts["root"], D_arm)
+            X[f"WingFore.{x}"] = X[f"WingArm.{x}"] @ about(pts["E"], self.plane(s, g["elbow"] + fold * FOLD["elbow"]))
+            for i in range(4):
+                lg = lag[f"w{x}_fan"][i]
+                fan = lg * FINGER_FAN[i] + fold * FINGER_FOLD[i]
+                cup = raxis(pts[f"F{i + 1}"] - pts["W"], s * g["cup"] * (0.4 + 0.2 * i))
+                X[f"Finger{i + 1}.{x}"] = X[f"WingFore.{x}"] @ about(pts["W"], self.plane(s, fan) @ cup)
+
+    # ── вся поза ──
+    def solve(self, p, lag=None):
+        """Поза (каналы) → преобразования костей X (мир покоя → мир) в осях арматуры."""
+        lag = lag or {}
+        X = {}
+        X["Root"] = tr((p["root_x"], p["root_y"], 0)) @ rz(p["root_yaw"])
+        Rb = rz(p["body_yaw"]) @ rx(p["body_p"]) @ ry(-p["body_r"])
+        X["Body"] = X["Root"] @ tr((p["body_x"], p["body_y"], p["body_z"])) @ about(R.BODY_C, Rb)
+        nk = lag.get("neck") or [(p["neck_p"], p["neck_y"], p["neck_curl"])] * 4
+        prev = "Body"
+        for i in range(4):
+            npit, nyaw, ncurl = nk[i]
+            m = rz(nyaw * NECK_W[i]) @ rx(npit * NECK_W[i] + ncurl * NECK_CURL[i])
+            X[f"Neck{i + 1}"] = X[prev] @ about(R.NECK[i], m)
+            prev = f"Neck{i + 1}"
+        X["Head"] = X["Neck4"] @ about(R.NECK[4], rz(p["head_y"]) @ rx(p["head_p"]) @ ry(p["head_r"]))
+        X["Jaw"] = X["Head"] @ about(R.JAW_HINGE, raxis(R.JAW_AXIS, p["jaw"]))
+        X["Collar"] = blend_tr(X["Body"], X["Neck2"], COLLAR_FOLLOW, self.head["Collar"])
+        tl = lag.get("tail") or [(p["tail_p"], p["tail_y"], p["tail_curl"], p["tail_lift"], 0.0)] * 7
+        prev = "Body"
+        for i in range(7):
+            tp, ty, tc, tlift, wave = tl[i]
+            m = rz(ty * TAIL_W[i] + tc + wave) @ rx(tp * TAIL_W[i] + tlift)
+            Xi = X[prev] @ about(R.TAIL[i], m)
+            # хвост не уходит под землю: звено, конец которого ниже земли, приподнимается у своего начала
+            Hd, En = Xi @ R.TAIL[i], Xi @ R.TAIL[i + 1]
+            need = TAIL_R[i + 1] + 0.08 - En.z
+            if need < 0:  # лёжа (tail_ground) лежащая часть хвоста (звенья 3–7) опускается на землю
+                need = need * p["tail_ground"] if i >= 2 else 0.0
+            v = En - Hd
+            if abs(need) > 1e-4 and v.length > 1e-6:
+                ln = v.length
+                want = max(-1.0, min(1.0, (En.z + need - Hd.z) / ln))
+                delta = math.asin(want) - math.asin(max(-1.0, min(1.0, v.z / ln)))
+                axis = v.cross(V((0, 0, 1)))
+                if axis.length > 1e-6:
+                    Xi = about(Hd, Matrix.Rotation(delta, 4, axis.normalized())) @ Xi
+                    self.tail_lift += 1
+            X[f"Tail{i + 1}"] = Xi
+            prev = f"Tail{i + 1}"
+        for s in S2:
+            self.leg_front(X, s, p)
+            self.leg_hind(X, s, p)
+        if "wL_fan" not in lag:
+            lag.update({f"w{x}_fan": [p[f"w{x}_fan"]] * 4 for x in "LR"})
+        self.wings(X, p, lag)
+        for s in S2:
+            x = SIDE[s]
+            sh = self.fore[s][0]
+            rel = (X["Body"].inverted() @ X[f"UpperArm.{x}"]).to_quaternion()
+            part = Quaternion().slerp(rel, PAULDRON_FOLLOW).to_matrix().to_4x4()
+            X[f"Pauldron.{x}"] = X["Body"] @ about(sh, part)
+            for k in range(3):
+                name = f"Mantle.{x}{k + 1}"
+                out, swing = (lag.get("mantle") or {}).get(name, (0.0, 0.0))
+                m = ry(-s * (p["mantle_out"] + out)) @ rx(swing)
+                X[name] = X["Body"] @ about(self.head[name], m)
+        sc = tr((p["sc_x"], p["sc_y"], p["sc_z"]))
+        tilt = rz(p["sc_tilt_dir"]) @ rx(-p["sc_tilt"]) @ rz(-p["sc_tilt_dir"])
+        X["ScepterCircle"] = X["Root"]
+        X["Scepter"] = X["Root"] @ sc @ about(self.head["Scepter"], tilt @ rz(p["sc_spin"]))
+        X["ScepterShards"] = X["Scepter"] @ about(self.head["ScepterShards"], rz(p["shards"]))
+        return X
+
+    def apply(self, X):
+        for pb in self.arm.pose.bones:
+            n = pb.name
+            par = self.parent[n]
+            Xp = X[par] if par else Matrix.Identity(4)
+            pb.matrix_basis = self.Li[n] @ Xp.inverted() @ X[n] @ self.L[n]
+
+
+# ── клипы ────────────────────────────────────────────────────────────────────────────────────────────────────
+class Clip:
+    def __init__(self, name, title, duration, keys, loop=False, events=None, start=None, end=None, layers=None,
+                 note=""):
+        self.name, self.title, self.duration, self.loop = name, title, duration, loop
+        self.events = events or {}
+        self.start, self.end = start, end
+        self.layers = layers or []
+        self.note = note
+        chans = keys[0][1].keys()
+        per = duration if loop else None
+        self.curves = {c: Curve([(t, k[c]) for t, k in keys], per) for c in chans}
+
+    def base(self, t):
+        return {c: f(t) for c, f in self.curves.items()}
+
+    def frames(self):
+        n = int(round(self.duration * FPS))
+        return n if self.loop else n + 1
+
+
+def lagged(clip, t, chans, lags):
+    """Значения каналов в моменты t − lag (для звеньев)."""
+    out = []
+    for lg in lags:
+        tt = t - lg
+        if not clip.loop:
+            tt = max(tt, 0.0)
+        out.append(tuple(clip.curves[c](tt) for c in chans))
+    return out
+
+
+NECK_LAG = (0.0, 0.035, 0.07, 0.1)
+TAIL_LAG = tuple(0.045 * i for i in range(7))
+FAN_LAG = (0.03, 0.06, 0.09, 0.12)
+
+
+def pose_at(clip, t):
+    """Поза клипа в момент t: ключи + слои (дыхание, волна хвоста…) + запаздывание звеньев. Прибавка слоёв к шее,
+    хвосту и пальцам идёт без запаздывания (слои и так плавные)."""
+    base = clip.base(t)
+    p = dict(base)
+    for layer in clip.layers:
+        layer(p, t, clip)
+
+    def plus(c):
+        return p[c] - base[c]
+
+    lag = {"neck": [(a + plus("neck_p"), b + plus("neck_y"), c + plus("neck_curl"))
+                    for a, b, c in lagged(clip, t, ("neck_p", "neck_y", "neck_curl"), NECK_LAG)]}
+    tail = []
+    for i, (tp, ty, tc, tlift) in enumerate(lagged(clip, t, ("tail_p", "tail_y", "tail_curl", "tail_lift"), TAIL_LAG)):
+        ph = 2 * math.pi * p["tail_freq"] * (t - TAIL_LAG[i]) - 0.6 * i
+        wave = p["tail_wave"] * (0.45 + 0.12 * i) * math.sin(ph)
+        tail.append((tp + plus("tail_p"), ty + plus("tail_y"), tc + plus("tail_curl"), tlift + plus("tail_lift"), wave))
+    lag["tail"] = tail
+    for x in "LR":
+        lag[f"w{x}_fan"] = [v[0] + plus(f"w{x}_fan") for v in lagged(clip, t, (f"w{x}_fan",), FAN_LAG)]
+    return p, lag
+
+
+# ── сцена ────────────────────────────────────────────────────────────────────────────────────────────────────
+def setup():
+    col = ck.reset_scene()
+    rig = R.build(col)
+    scene = bpy.context.scene
+    scene.render.fps = FPS
+    return col, rig
+
+
+def eval_points(obj):
+    deps = bpy.context.evaluated_depsgraph_get()
+    ev = obj.evaluated_get(deps)
+    me = ev.to_mesh()
+    co = np.empty(len(me.vertices) * 3, dtype=np.float64)
+    me.vertices.foreach_get("co", co)
+    ev.to_mesh_clear()
+    return co.reshape(-1, 3)
+
+
+def stage(col):
+    """Сцена превью: широкий пол, тёмный фон, круг арены 62 стада (радиус 31) и центр, свет как у листов v7."""
+    scene = bpy.context.scene
+    ck.engine(scene, samples=int(os.environ.get("SAMPLES", "24")))
+    world = bpy.data.worlds.new("Stage")
+    world.use_nodes = True
+    bg = next(n for n in world.node_tree.nodes if n.type == "BACKGROUND")
+    bg.inputs["Color"].default_value = (0.03, 0.033, 0.045, 1)
+    bg.inputs["Strength"].default_value = 1.0
+    scene.world = world
+    me = bpy.data.meshes.new("Floor")
+    me.from_pydata([(-900, -900, 0), (900, -900, 0), (900, 900, 0), (-900, 900, 0)], [], [(0, 1, 2, 3)])
+    fm = bpy.data.materials.new("FloorM")
+    fm.use_nodes = True
+    fb = next(n for n in fm.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    fb.inputs["Base Color"].default_value = (0.11, 0.115, 0.14, 1)
+    fb.inputs["Roughness"].default_value = 0.8
+    me.materials.append(fm)
+    col.objects.link(bpy.data.objects.new("Floor", me))
+    am = bpy.data.materials.new("ArenaM")
+    am.use_nodes = True
+    ab = next(n for n in am.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    ab.inputs["Base Color"].default_value = (0.9, 0.75, 0.3, 1)
+    ab.inputs["Emission Color"].default_value = (1.0, 0.78, 0.3, 1)
+    ab.inputs["Emission Strength"].default_value = 1.2
+    for name, r0, r1 in (("ArenaRing", ARENA_R - 0.06, ARENA_R + 0.06), ("SafeRing", SAFE_R - 0.025, SAFE_R + 0.025)):
+        n = 128
+        verts = [(r * math.cos(2 * math.pi * i / n), r * math.sin(2 * math.pi * i / n), 0.012) for r in (r0, r1)
+                 for i in range(n)]
+        faces = [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+        rm = bpy.data.meshes.new(name)
+        rm.from_pydata(verts, [], faces)
+        rm.materials.append(am)
+        col.objects.link(bpy.data.objects.new(name, rm))
+    for name, kind, loc, energy, size in (("Key", "AREA", (-14, -20, 22), 9000, 14), ("Fill", "AREA", (18, -12, 9), 3500, 14),
+                                          ("Rim", "AREA", (6, 22, 16), 6000, 12)):
+        data = bpy.data.lights.new(name, kind)
+        data.energy, data.size = energy, size
+        light = bpy.data.objects.new(name, data)
+        light.location = loc
+        light.rotation_euler = (V(loc) - V((0, 0, 4))).to_track_quat("Z", "Y").to_euler()
+        scene.collection.objects.link(light)
+    cam = bpy.data.objects.new("Cam", bpy.data.cameras.new("Cam"))
+    scene.collection.objects.link(cam)
+    scene.camera = cam
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.exposure = -0.2
+    return cam
+
+
+VIEWS = {  # камера: (глаз, цель, объектив)
+    "34": ((-22.0, -31.0, 13.0), (0.0, -0.5, 4.6), 42),
+    "34r": ((24.0, -30.0, 12.0), (0.0, -0.5, 4.6), 42),
+    "side": ((-38.0, -1.0, 9.0), (0.0, 0.0, 4.6), 45),
+    "front": ((0.0, -38.0, 10.0), (0.0, 0.0, 5.0), 42),
+    "back": ((16.0, 30.0, 14.0), (0.0, 0.0, 4.6), 42),
+    "top": ((0.0, -6.0, 46.0), (0.0, 0.0, 0.0), 35),
+    "sideL": ((40.0, -2.0, 10.0), (0.0, -0.3, 5.2), 36),
+    "wide": ((-25.0, -36.0, 15.0), (0.0, -0.5, 6.2), 36),
+    "wide_r": ((26.0, -35.0, 14.0), (0.0, -0.5, 6.0), 38),
+}
+
+
+def show(rg, rig, pose, lag=None):
+    rg.apply(rg.solve(dict(pose), lag))
+    rig["arm"]["eyes"] = pose["eyes"]
+    rig["arm"]["glow"] = pose["glow"]
+    bpy.context.view_layer.update()
+
+
+def jaw_point(local):
+    L, H = R.HL, R.HH
+    h = V((0, -0.12 * L, 0))
+    J = tr(h) @ rx(17) @ tr(-h)
+    return R.HEAD_M @ J @ V(local)
+
+
+JAW_LOW = jaw_point((0, -0.42 * R.HL, -0.58 * R.HH))
+NOSE_DIR = (R.HEAD_M.to_3x3() @ V((0, -1, 0))).normalized()
+
+
+SNOUT = R.HEAD_M @ V((0, -1.08 * R.HL, 0.28 * R.HH))
+
+
+def head_fit(rg, base, jaw_z=0.35, level=4.0, y_range=(-8.2, -5.2), reach=10.0, neck1=48.0):
+    """Шея и голова так, чтобы челюсть легла на землю (jaw_z), голова почти ровно (level — нос вверх, градусы)."""
+    best = None
+    for npit in range(20, 181, 5):
+        for curl in range(-30, 61, 5):
+            for hp in range(-110, 41, 5):
+                p = dict(base, neck_p=float(npit), neck_curl=float(curl), head_p=float(hp))
+                X = rg.solve(p)
+                low = X["Jaw"] @ JAW_LOW
+                nose = X["Head"].to_3x3() @ NOSE_DIR
+                pitch = math.degrees(math.asin(max(-1.0, min(1.0, nose.z))))  # плюс — нос вверх
+                org = X["Head"] @ R.HEAD_ORIGIN
+                necks = [X[f"Neck{i + 1}"] @ R.NECK[i + 1] for i in range(4)]
+                pen = sum(max(0.0, 1.6 - q.z) for q in necks)
+                yb = max(0.0, y_range[0] - org.y) + max(0.0, org.y - y_range[1])
+                tip = X["Head"] @ SNOUT
+                far = max(0.0, math.hypot(tip.x, tip.y) - reach)
+                n1 = max(0.0, npit * NECK_W[0] + curl * NECK_CURL[0] - neck1)
+                cost = (abs(low.z - jaw_z) * 3 + abs(pitch - level) / 15 + pen * 4 + yb * 3 + abs(curl) / 200
+                        + far * 6 + n1 / 10)
+                if best is None or cost < best[0]:
+                    best = (cost, npit, curl, hp, round(low.z, 2), round(pitch, 1), tuple(round(c, 2) for c in org))
+    return best
+
+
+def main_poses(col, rig, rg, poses, views=("34", "side")):
+    """Кадры опорных поз (самопроверка рига)."""
+    cam = stage(col)
+    for name, pose in poses:
+        show(rg, rig, pose)
+        for view in views:
+            eye, target, lens = VIEWS[view]
+            ck.shot(cam, os.path.join(OUT, f"pose_{name}_{view}.png"), eye, target, lens, (960, 640))
+    print("POSES", rg.clamps, flush=True)
+
+
+# ── слои движения ───────────────────────────────────────────────────────────────────────────────────────────
+def scepter_idle(p, t, clip):
+    """Скипетр парит: покачивание и медленный поворот. В игре это делает скрипт постоянно, здесь — для превью."""
+    d = clip.duration
+    if clip.loop:
+        spin = 90 * max(0, round(d * 22 / 90)) * t / d
+        shards = 120 * max(1, round(d * 30 / 120)) * t / d
+        bob = math.sin(2 * math.pi * max(1, round(d / 2.4)) * t / d)
+    else:
+        spin, shards, bob = 22 * t, 30 * t, math.sin(2 * math.pi * t / 2.4)
+    p["sc_z"] += 0.14 * bob
+    p["sc_spin"] += spin
+    p["shards"] += shards
+
+
+def breath(period, z=0.05, pitch=0.7, wing=2.5, fan=1.5, jaw=1.2, neck=-0.8, head=0.6, until=None):
+    """Дыхание: грудь и спина поднимаются, крылья и пальцы чуть раскрываются, пасть приоткрывается на вдохе."""
+    def layer(p, t, clip):
+        if until is not None and t > until:
+            return
+        w = math.sin(2 * math.pi * t / period)
+        p["body_z"] += z * w
+        p["body_p"] -= pitch * w
+        p["neck_p"] += neck * w
+        p["head_p"] += head * w
+        p["jaw"] += jaw * max(w, 0.0)
+        for x in "LR":
+            p[f"w{x}_raise"] += wing * w
+            p[f"w{x}_fan"] += fan * w
+    return layer
+
+
+def idle_look(p, t, clip):
+    """Боевая стойка: оглядывается, переносит вес, раз моргает."""
+    a = 2 * math.pi * t / clip.duration
+    p["head_y"] += 9 * math.sin(a)
+    p["neck_y"] += 5 * math.sin(a - 0.6)
+    p["head_p"] += 2.5 * math.sin(2 * a + 1.0)
+    p["head_r"] += 2.0 * math.sin(a + 0.3)
+    p["body_r"] += 1.3 * math.sin(a + 0.4)
+    p["body_x"] += 0.07 * math.sin(a + 0.4)
+    blink = max(0.0, 1 - abs(t - 2.65) / 0.09)
+    p["eyes"] = min(p["eyes"], 1 - 0.92 * blink)
+
+
+WALK_T = float(os.environ.get("WALK_T", "0.95"))  # цикл шага, с: при скорости 10 стадов/с шаг 10·T стадов
+WALK_DUTY = 0.62  # доля опоры
+WALK_PHASE = {"HL": 0.0, "FL": 0.25, "HR": 0.5, "FR": 0.75}  # латеральная последовательность: тяжёлый шаг
+WALK_LIFT = float(os.environ.get("WALK_LIFT", "0.5"))
+LEG_RU = {"FL": "левая передняя", "FR": "правая передняя", "HL": "левая задняя", "HR": "правая задняя"}
+WALK_HOME = {"FL": (2.45 + FORE_WIDE, -3.05), "FR": (-2.45 - FORE_WIDE, -3.05), "HL": (2.15, 3.1), "HR": (-2.15, 3.1)}
+
+
+def walk_layer(p, t, clip):
+    """Шаг на месте под скорость 10 стадов/с: опорная лапа уходит назад со скоростью босса и не скользит по земле
+    (босс в игре движется вперёд), переносимая — по дуге. Тело покачивается к опорной стороне, голова держит взгляд."""
+    S = WALK_SPEED * WALK_DUTY * WALK_T
+    for leg, ph0 in WALK_PHASE.items():
+        ph = (t / WALK_T - ph0) % 1.0
+        x0, y0 = WALK_HOME[leg]
+        z0 = FEET[leg].z
+        front = leg[0] == "F"
+        if ph < WALK_DUTY:
+            u = ph / WALK_DUTY
+            y, z = y0 - S / 2 + S * u, z0
+            pitch = 0.0
+            heel = -16 * smooth((u - 0.55) / 0.45)
+        else:
+            u = (ph - WALK_DUTY) / (1 - WALK_DUTY)
+            y = y0 + S / 2 - S * smooth(u)
+            z = z0 + (WALK_LIFT if front else 0.62) * math.sin(math.pi * u)
+            pitch = 22 * math.sin(math.pi * u) * (1 - u) - 6 * math.sin(math.pi * u) * u
+            heel = -16 * (1 - smooth(u * 2.5)) + 8 * math.sin(math.pi * u)
+        p[f"{leg}_x"], p[f"{leg}_y"], p[f"{leg}_z"], p[f"{leg}_pitch"] = x0, y, z, pitch
+        if not front:
+            p[f"{leg}_heel"] = heel
+    a = 2 * math.pi * t / WALK_T
+    p["body_z"] += -0.08 * (0.5 - 0.5 * math.cos(2 * a))
+    p["body_r"] += 1.8 * math.sin(a)
+    p["body_p"] += 0.8 * math.sin(2 * a + 0.5)
+    p["body_yaw"] += 1.6 * math.sin(a + math.pi / 2)
+    p["body_x"] += 0.06 * math.sin(a)
+    p["head_p"] -= 0.8 * math.sin(2 * a + 0.5)
+    p["head_y"] -= 1.6 * math.sin(a + math.pi / 2)
+    p["neck_p"] += 1.5 * math.sin(2 * a - 0.4)
+    for x in "LR":
+        p[f"w{x}_raise"] += 2.5 * math.sin(2 * a - 0.9)
+
+
+def rot2(x, y, deg):
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    return x * c - y * s, x * s + y * c
+
+
+TURN_STEPS = {"FL": ((0.2, 0.55), (0.8, 1.15)), "HR": ((0.26, 0.6), (0.86, 1.2)),
+              "FR": ((0.45, 0.8), (1.05, 1.4)), "HL": ((0.5, 0.85), (1.1, 1.45))}
+
+
+def turn_layer(p, t, clip):
+    """Разворот на месте на 90° влево: тело поворачивается плавно, лапы переступают дважды (45° и 90°) и между
+    шагами стоят на земле."""
+    for leg, steps in TURN_STEPS.items():
+        x0, y0, z0 = COMBAT[f"{leg}_x"], COMBAT[f"{leg}_y"], COMBAT[f"{leg}_z"]
+        ang, lift, pitch = 0.0, 0.0, 0.0
+        for k, (t0, t1) in enumerate(steps):
+            u = min(max((t - t0) / (t1 - t0), 0.0), 1.0)
+            ang += 45.0 * smooth(u)
+            lift += (0.75 if leg[0] == "F" else 0.6) * math.sin(math.pi * u)
+            pitch += 18 * math.sin(math.pi * u)
+        x, y = rot2(x0, y0, ang)
+        p[f"{leg}_x"], p[f"{leg}_y"], p[f"{leg}_z"] = x, y, z0 + lift
+        p[f"{leg}_yaw"], p[f"{leg}_pitch"] = ang, pitch
+
+
+# ── клипы ────────────────────────────────────────────────────────────────────────────────────────────────────
+def K(base, **kw):
+    return P(base, **kw)
+
+
+def clip_sleep():
+    return Clip("sleep_idle", "Сон", 6.4, [(0.0, SLEEP), (6.4, SLEEP)], loop=True,
+                layers=[breath(3.2, z=0.06, pitch=0.5, wing=1.5, fan=1.0, jaw=0.6, neck=0.0, head=0.0), scepter_idle],
+                note="цикл: два вдоха по 3.2 с, хвост и крылья дышат вместе с грудью")
+
+
+def clip_wake():
+    # хвост сначала разворачивается из-под левой задней лапы назад (лёжа), лапы двигаются только после этого
+    lie_up = P(SLEEP, neck_p=38.0, neck_curl=22.0, head_p=-36.0, head_y=-6.0, jaw=-6.0, eyes=1.0, tail_curl=0.0,
+               tail_y=-22.0, w_fold=0.9)
+    look = P(lie_up, neck_p=22.0, neck_curl=8.0, head_p=-16.0, head_y=-12.0, w_fold=0.75,
+             tail_y=float(os.environ.get("WAKE_LOOK_TY", "-2.0")), tail_p=float(os.environ.get("WAKE_LOOK_TP", "4.0")),
+             tail_ground=0.6)
+    # при подъёме хвост уходит вправо и чуть выше: левая задняя лапа встаёт, не наступая на него
+    rise = P(STAND, body_z=-1.0, body_p=3.0, neck_p=8.0, head_p=-10.0, head_y=-4.0, w_fold=0.4, w_raise=6.0,
+             mantle_out=20.0, tail_y=float(os.environ.get("WAKE_RISE_TY", "8.0")),
+             tail_p=float(os.environ.get("WAKE_RISE_TP", "8.0")))
+    for x, s in (("L", 1), ("R", -1)):
+        rise.update({f"F{x}_x": s * 2.4, f"F{x}_y": -3.6, f"F{x}_z": 1.3, f"F{x}_pitch": -18.0,
+                     f"H{x}_heel": 18.0, f"H{x}_x": s * 2.3, f"H{x}_y": 3.2, f"H{x}_z": 0.48, f"H{x}_bend": 20.0})
+    stood = P(STAND, body_z=-0.12, w_fold=0.08, w_raise=16.0, neck_p=3.0, head_p=-8.0)
+    roar = P(COMBAT, w_raise=32.0, w_fan=16.0, w_elbow=10.0, w_sweep=10.0, jaw=12.0, head_p=-10.0, neck_p=-4.0,
+             body_p=-2.0)
+    keys = [(0.0, SLEEP), (0.18, P(SLEEP, eyes=0.0)), (0.42, P(SLEEP, eyes=1.0, neck_p=82.0, neck_curl=46.0, head_p=-76.0)),
+            (0.72, lie_up), (1.0, look), (1.45, rise), (1.9, stood), (2.15, roar), (2.4, COMBAT)]
+    return Clip("wake", "Пробуждение", 2.4, keys, events={"открыл глаза": 0.3, "лёжа (конец Wake)": 1.0,
+                                                           "стойка (конец StandUp)": 1.9, "рык (ToCombat)": 2.15},
+                start="sleep", end="combat", layers=[scepter_idle],
+                note="Wake 1.0 + StandUp 0.9 + ToCombat 0.5 с, как Config/Battle.Timeline")
+
+
+def clip_combat():
+    return Clip("combat_idle", "Боевая стойка", 3.6, [(0.0, COMBAT), (3.6, COMBAT)], loop=True,
+                layers=[breath(1.8), idle_look, scepter_idle],
+                note="цикл: два вдоха, взгляд по сторонам, перенос веса, моргание")
+
+
+def clip_walk():
+    base = P(COMBAT, body_z=float(os.environ.get("WALK_Z", "0.0")), w_raise=6.0, w_fold=0.12, head_p=-2.0, jaw=2.0, tail_wave=4.0,
+             tail_freq=1 / WALK_T)
+    return Clip("walk", "Ходьба", WALK_T, [(0.0, base), (WALK_T, base)], loop=True,
+                layers=[walk_layer, breath(WALK_T / 2, z=0.0, pitch=0.0, wing=0.0, fan=1.0, jaw=1.0, neck=0.0,
+                                           head=0.0), scepter_idle],
+                events={f"{LEG_RU[leg]} на земле": round(ph * WALK_T, 3) for leg, ph in WALK_PHASE.items()},
+                note=f"шаг на месте под 10 стадов/с (босс идёт вперёд в игре): цикл {WALK_T} с, шаг 12 стадов")
+
+
+def clip_turn():
+    keys = [(0.0, COMBAT), (0.1, P(COMBAT, head_y=8.0)),
+            (0.42, P(COMBAT, root_yaw=12.0, head_y=24.0, neck_y=14.0, body_yaw=7.0, tail_y=6.0)),
+            (0.9, P(COMBAT, root_yaw=50.0, head_y=14.0, neck_y=10.0, body_yaw=6.0, tail_y=20.0, body_z=-0.42)),
+            (1.35, P(COMBAT, root_yaw=84.0, head_y=2.0, neck_y=2.0, body_yaw=1.0, tail_y=14.0)),
+            (1.8, P(COMBAT, root_yaw=90.0))]
+    return Clip("turn_left", "Разворот на месте", 1.8, keys, layers=[turn_layer, scepter_idle],
+                events={"конец поворота корня": 1.5}, start="combat", end="combat",
+                note="поворот корня на 90° влево (в игре — поворот модели), лапы переступают дважды")
+
+
+def clip_claw():
+    wind = P(COMBAT, body_y=0.35, body_x=-0.2, body_r=4.0, body_p=-5.0, body_z=-0.24, neck_p=-8.0, neck_y=6.0,
+             head_p=-10.0, head_y=10.0, jaw=10.0, w_raise=30.0, w_fan=10.0, w_sweep=10.0, tail_p=12.0,
+             tail_y=-10.0, FL_x=3.5, FL_y=-2.55, FL_z=3.7, FL_pitch=40.0, FL_bend=50.0)
+    peak = P(wind, body_y=0.45, body_p=-8.0, head_p=-14.0, jaw=12.0, w_raise=36.0, FL_x=3.8, FL_y=-2.25, FL_z=4.5,
+             FL_pitch=60.0, FL_bend=62.0)
+    hit = P(COMBAT, body_y=-0.55, body_p=10.0, body_z=-0.62, body_r=-3.0, body_yaw=-6.0, neck_p=18.0, head_p=6.0,
+            head_y=4.0, jaw=12.0, w_raise=14.0, w_sweep=-14.0, tail_y=10.0, tail_p=2.0,
+            FL_x=2.25, FL_y=-5.15, FL_z=1.35, FL_pitch=-6.0, FL_bend=28.0, FR_x=-2.9, FR_bend=6.0)
+    press = P(hit, body_z=-0.7, body_p=11.0, neck_p=20.0, jaw=12.0, FL_pitch=0.0)
+    back = P(COMBAT, body_y=-0.1, body_z=-0.38, FL_x=2.6, FL_y=-4.1, FL_z=1.9, FL_pitch=10.0, jaw=6.0, w_raise=16.0)
+    keys = [(0.0, COMBAT), (0.3, wind), (0.55, peak), (0.8, hit), (0.92, press), (1.15, back), (1.4, COMBAT)]
+    return Clip("claw_swipe", "Удар лапой", 1.4, keys, layers=[scepter_idle], start="combat", end="combat",
+                events={"начало выпада в игре (AttackAt)": 0.55, "контакт: удар лапы": 0.8},
+                note="замах 0.55 с (по плану атаки), удар через HitDelay 0.25 с")
+
+
+def clip_bite():
+    coil = P(COMBAT, neck_p=-16.0, neck_curl=-10.0, head_p=-12.0, jaw=8.0, body_y=0.3, body_p=-4.0, w_raise=26.0,
+             w_fan=8.0, w_sweep=10.0, tail_p=10.0)
+    peak = P(coil, neck_p=-22.0, neck_curl=-14.0, head_p=-18.0, jaw=12.0, body_y=0.4, body_p=-6.0, body_z=-0.36)
+    snap = P(COMBAT, neck_p=26.0, neck_curl=12.0, head_p=12.0, jaw=-9.0, body_y=-0.5, body_p=8.0, body_z=-0.55,
+             w_raise=12.0, w_sweep=-10.0, tail_p=2.0)
+    shake = [P(snap, neck_p=28.0, head_y=10.0, head_r=8.0), P(snap, neck_p=27.0, head_y=-9.0, head_r=-7.0),
+             P(snap, neck_p=26.0, head_y=5.0, head_r=4.0)]
+    release = P(COMBAT, neck_p=14.0, head_p=4.0, jaw=6.0, body_y=-0.25, body_z=-0.42)
+    keys = [(0.0, COMBAT), (0.3, coil), (0.5, peak), (0.75, snap), (0.86, shake[0]), (0.96, shake[1]),
+            (1.05, shake[2]), (1.18, release), (1.4, COMBAT)]
+    return Clip("bite", "Укус", 1.4, keys, layers=[scepter_idle], start="combat", end="combat",
+                events={"начало выпада в игре (AttackAt)": 0.5, "контакт: пасть смыкается": 0.75})
+
+
+def clip_tail():
+    wind = P(COMBAT, body_yaw=7.0, body_x=-0.15, tail_y=30.0, tail_curl=-2.0, tail_p=14.0, head_y=14.0, neck_y=8.0, jaw=6.0,
+             w_raise=20.0, w_sweep=8.0)
+    peak = P(wind, body_yaw=9.0, tail_y=40.0, tail_curl=-2.0, tail_p=18.0)
+    hit = P(COMBAT, body_yaw=-12.0, body_x=0.25, body_z=-0.45, tail_y=-80.0, tail_curl=2.0, tail_p=10.0,
+            head_y=20.0, neck_y=12.0, jaw=12.0, wR_raise=30.0, wL_raise=10.0, w_sweep=8.0, body_r=3.0)
+    follow = P(hit, body_yaw=-14.0, tail_y=-90.0, tail_curl=3.0, tail_p=8.0)
+    keys = [(0.0, COMBAT), (0.32, wind), (0.5, peak), (0.75, hit), (0.9, follow), (1.15, P(COMBAT, tail_y=-30.0)),
+            (1.4, COMBAT)]
+    return Clip("tail_strike", "Удар хвостом", 1.4, keys, layers=[scepter_idle], start="combat", end="combat",
+                events={"начало выпада в игре (AttackAt)": 0.5, "контакт: хвост по левому боку": 0.75})
+
+
+def clip_tail_right():
+    """Прежний вариант удара хвостом вправо — только для сравнения сторон (в клипы не входит)."""
+    wind = P(COMBAT, body_yaw=-9.0, body_x=0.15, tail_y=-30.0, tail_p=12.0, head_y=-14.0, neck_y=-8.0, jaw=6.0,
+             w_raise=20.0)
+    peak = P(wind, body_yaw=-12.0, tail_y=-40.0, tail_curl=-3.0, tail_p=16.0)
+    hit = P(COMBAT, body_yaw=12.0, body_x=-0.25, body_z=-0.45, tail_y=44.0, tail_curl=8.0, tail_p=18.0, tail_lift=6.0,
+            head_y=-20.0, neck_y=-12.0, jaw=12.0, wL_raise=30.0, wR_raise=10.0, body_r=-3.0)
+    follow = P(hit, body_yaw=14.0, tail_y=50.0, tail_curl=9.0, tail_p=12.0)
+    keys = [(0.0, COMBAT), (0.32, wind), (0.5, peak), (0.75, hit), (0.9, follow), (1.15, P(COMBAT, tail_y=30.0)),
+            (1.4, COMBAT)]
+    return Clip("tail_strike_right", "Удар хвостом вправо (прежний)", 1.4, keys, layers=[scepter_idle],
+                events={"начало выпада в игре (AttackAt)": 0.5, "контакт: хвост справа": 0.75})
+
+
+def clip_wings():
+    up = P(COMBAT, w_raise=48.0, w_sweep=16.0, w_elbow=12.0, w_fan=12.0, w_twist=-10.0, body_p=-6.0, body_z=-0.22,
+           neck_p=2.0, head_p=-4.0, jaw=8.0, tail_p=12.0)
+    peak = P(up, w_raise=55.0, w_fan=16.0, w_sweep=20.0, body_p=-8.0, head_p=-6.0, jaw=12.0)
+    down = P(COMBAT, w_raise=-12.0, w_sweep=-22.0, w_twist=18.0, w_cup=25.0, w_fan=4.0, body_p=6.0, body_z=-0.5,
+             body_y=-0.3, neck_p=16.0, head_p=-2.0, jaw=10.0, tail_p=-4.0)
+    low = P(down, w_raise=-17.0, w_cup=30.0, w_sweep=-18.0)
+    keys = [(0.0, COMBAT), (0.35, up), (0.55, peak), (0.8, down), (0.95, low),
+            (1.15, P(COMBAT, w_raise=24.0, w_fan=10.0, jaw=6.0)), (1.4, COMBAT)]
+    return Clip("wing_buffet", "Взмах крыльями", 1.4, keys, layers=[scepter_idle], start="combat", end="combat",
+                events={"начало выпада в игре (AttackAt)": 0.55, "контакт: порыв ветра": 0.8})
+
+
+SC_FRONT = (1.4, -3.4, 2.2)  # скипетр справа-спереди на высоте груди: (−3.0, −7.4), центр на высоте 5.4  # скипетр справа-спереди: от места покоя (−5, −4.6) к (−2.0, −8.0), центр на высоте 4.2
+
+
+def clip_magic():
+    fx, fy, fz = SC_FRONT
+    keys = [
+        (0.0, COMBAT),
+        (0.3, P(COMBAT, neck_p=-6.0, head_p=-12.0, jaw=10.0, w_raise=30.0, w_fan=10.0, w_sweep=10.0, sc_z=1.3,
+                glow=1.5,
+                sc_spin=40.0, shards=60.0)),
+        (0.8, P(COMBAT, neck_p=-2.0, head_p=-6.0, head_y=-12.0, jaw=6.0, w_raise=36.0, w_fan=12.0, w_sweep=10.0,
+                sc_x=0.4, sc_y=-1.8, sc_z=3.0, glow=2.0, sc_spin=160.0, shards=240.0)),
+        (1.2, P(COMBAT, neck_p=2.0, head_p=2.0, head_y=-20.0, neck_y=-6.0, jaw=4.0, w_raise=42.0, w_fan=16.0,
+                w_elbow=10.0,
+                w_sweep=10.0,
+                sc_x=fx, sc_y=fy, sc_z=fz, glow=2.4, sc_spin=270.0, shards=420.0)),
+        (1.6, P(COMBAT, neck_p=-2.0, head_p=0.0, head_y=-18.0, neck_y=-6.0, jaw=8.0, body_p=-5.0, body_y=0.3,
+                w_raise=48.0,
+                w_fan=18.0, w_elbow=12.0, w_sweep=12.0, sc_x=fx, sc_y=fy, sc_z=fz + 0.3, glow=3.0, sc_spin=360.0, shards=720.0)),
+        (1.95, P(COMBAT, neck_p=12.0, head_p=4.0, head_y=-8.0, jaw=12.0, body_p=6.0, body_y=-0.4, body_z=-0.5, w_raise=26.0,
+                 w_sweep=-12.0, sc_x=fx, sc_y=fy - 0.25, sc_z=fz + 0.2, sc_tilt=20.0, sc_tilt_dir=180.0, glow=3.0,
+                 sc_spin=405.0, shards=900.0)),
+        (2.3, P(COMBAT, neck_p=6.0, jaw=6.0, w_raise=20.0, sc_x=fx * 0.8, sc_y=fy * 0.8, sc_z=2.6, sc_tilt=10.0,
+                sc_tilt_dir=180.0, glow=1.6, sc_spin=470.0, shards=1020.0)),
+        (2.9, P(COMBAT, sc_spin=540.0, shards=1080.0, glow=1.0)),
+        (3.0, P(COMBAT, sc_spin=540.0, shards=1080.0, glow=1.0)),
+    ]
+    return Clip("magic_scepter", "Магия скипетра", 3.0, keys, start="combat", end="combat",
+                events={"призыв скипетра": 0.3, "скипетр перед драконом": 1.2, "заклинание": 1.95,
+                        "скипетр на месте": 2.9},
+                note="нового выпада в игре нет: клип готов, как он встанет в бой — решает владелец")
+
+
+VOLLEY_SC = (3.39, -3.37, 0.08)  # скипетр перед драконом на время залпа: кристалл позади магического круга (LAUNCH)
+
+
+def clip_volley():
+    """«Королевский магический залп» на основе прежнего magic_scepter (3.0 с): величественная поза и поднятая голова,
+    скипетр встаёт перед драконом, круг формируется к 1.0 с, слежение за целью 0.6–1.45, фиксация 1.45, выстрел 1.95,
+    скипетр возвращается к 2.9. Тайминги совпадают с volley_sim.PARAMS."""
+    fx, fy, fz = VOLLEY_SC
+    keys = [
+        (0.0, COMBAT),
+        (0.3, P(COMBAT, neck_p=-4.0, head_p=-10.0, jaw=8.0, w_raise=26.0, w_fan=10.0, w_sweep=16.0, sc_z=1.3, glow=1.5,
+                sc_spin=40.0, shards=60.0, body_p=-3.0)),
+        (0.8, P(COMBAT, neck_p=-4.0, head_p=-10.0, jaw=6.0, w_raise=32.0, w_fan=12.0, w_sweep=16.0, sc_x=1.6,
+                sc_y=-1.6, sc_z=2.0, glow=2.0, sc_spin=160.0, shards=240.0, body_p=-3.0)),
+        (1.2, P(COMBAT, neck_p=-2.0, head_p=-4.0, jaw=4.0, w_raise=38.0, w_fan=16.0, w_elbow=10.0, w_sweep=16.0,
+                sc_x=fx, sc_y=fy, sc_z=fz, sc_tilt=20.0, sc_tilt_dir=180.0, glow=2.4, sc_spin=270.0, shards=420.0,
+                body_p=-4.0)),
+        (1.45, P(COMBAT, neck_p=-2.0, head_p=-2.0, jaw=8.0, body_p=-5.0, body_y=0.3, w_raise=44.0, w_fan=18.0,
+                 w_elbow=12.0, w_sweep=18.0, sc_x=fx, sc_y=fy, sc_z=fz, sc_tilt=20.0, sc_tilt_dir=180.0, glow=3.0,
+                 sc_spin=330.0, shards=600.0)),
+        (1.8, P(COMBAT, neck_p=0.0, head_p=0.0, jaw=6.0, body_p=-6.0, body_y=0.35, w_raise=44.0, w_fan=18.0,
+                w_elbow=12.0, w_sweep=18.0, sc_x=fx, sc_y=fy + 0.15, sc_z=fz, sc_tilt=16.0, sc_tilt_dir=180.0,
+                glow=3.0, sc_spin=380.0, shards=780.0)),
+        (1.95, P(COMBAT, neck_p=12.0, head_p=4.0, jaw=12.0, body_p=5.0, body_y=-0.35, body_z=-0.45, w_raise=26.0,
+                 w_sweep=-10.0, sc_x=fx, sc_y=fy - 0.2, sc_z=fz, sc_tilt=28.0, sc_tilt_dir=180.0, glow=3.0,
+                 sc_spin=405.0, shards=900.0)),
+        (2.3, P(COMBAT, neck_p=6.0, jaw=6.0, w_raise=20.0, sc_x=fx * 0.7, sc_y=fy * 0.7, sc_z=1.6, sc_tilt=8.0,
+                sc_tilt_dir=180.0, glow=1.6, sc_spin=470.0, shards=1020.0)),
+        (2.9, P(COMBAT, sc_spin=540.0, shards=1080.0, glow=1.0)),
+        (3.0, P(COMBAT, sc_spin=540.0, shards=1080.0, glow=1.0)),
+    ]
+    return Clip("magic_volley", "Королевский магический залп", 3.0, keys, start="combat", end="combat",
+                events={"призыв скипетра": 0.3, "слежение за целью": 0.6, "круг готов": 1.0,
+                        "фиксация направления": 1.45, "выстрел: три снаряда": 1.95, "скипетр на месте": 2.9},
+                note="на основе magic_scepter; числа залпа — предложение, в бою пока нет")
+
+
+def clip_hit():
+    peak = P(COMBAT, neck_p=-14.0, neck_y=8.0, head_p=-16.0, head_y=16.0, head_r=-10.0, jaw=10.0, body_y=0.3,
+             body_p=-4.0, body_r=3.0, w_raise=26.0, w_fan=12.0, w_sweep=10.0, tail_y=12.0, eyes=0.55)
+    keys = [(0.0, COMBAT), (0.1, peak), (0.26, P(COMBAT, neck_p=3.0, head_y=-3.0, jaw=6.0, eyes=1.0)),
+            (0.6, COMBAT)]
+    return Clip("hit", "Получение урона", 0.6, keys, layers=[scepter_idle], start="combat", end="combat",
+                events={"пик реакции": 0.1})
+
+
+def clip_victory():
+    rear = P(COMBAT, body_p=-16.0, body_z=0.42, body_y=0.25, w_raise=32.0, w_fan=16.0, w_elbow=10.0, w_sweep=22.0,
+             neck_p=-4.0, head_p=-16.0, jaw=12.0, tail_p=16.0, tail_wave=6.0, tail_freq=1.6)
+    for x, s in (("L", 1), ("R", -1)):
+        rear.update({f"F{x}_x": s * 2.9, f"F{x}_y": -3.75, f"F{x}_z": 2.3, f"F{x}_pitch": 30.0, f"F{x}_rel": 1.0,
+                     f"F{x}_bend": 24.0})
+    top = P(rear, body_p=-20.0, head_p=-19.0)
+    for x in "LR":
+        top[f"F{x}_z"] = 2.55
+        top[f"F{x}_y"] = -3.65
+        top[f"F{x}_pitch"] = 50.0
+    slam = P(COMBAT, body_p=5.0, body_z=-0.56, w_raise=30.0, w_sweep=-10.0, neck_p=12.0, head_p=6.0, jaw=12.0,
+             tail_wave=3.0, tail_freq=1.6)
+    proud = P(STAND, neck_p=-8.0, head_p=-12.0, w_raise=18.0, w_fan=6.0, body_z=-0.1)
+    keys = [(0.0, COMBAT), (0.6, rear), (0.95, top), (1.3, slam), (1.45, P(slam, body_z=-0.62)), (1.9, proud),
+            (2.2, STAND)]
+    return Clip("victory", "Победа", 2.2, keys, layers=[scepter_idle], start="combat", end="stand",
+                events={"встал на дыбы": 0.6, "удар лапами о землю": 1.3},
+                note="Victory 2.2 с; дальше в игре — возвращение домой шагом")
+
+
+def lying(base, **kw):
+    p = P(base, body_z=-1.68, body_r=-3.0, body_p=2.0, body_y=0.75, neck_p=94.0, neck_curl=50.0, head_p=-88.0,
+          head_y=14.0,
+          w_raise=-12.0, w_fold=0.55, w_fan=-10.0, jaw=-6.0, eyes=0.25, tail_p=-10.0, tail_curl=0.0, tail_y=-30.0, tail_ground=1.0,
+          mantle_out=40.0)
+    for x, s in (("L", 1), ("R", -1)):
+        p.update({f"F{x}_x": s * 2.55, f"F{x}_y": -3.9, f"F{x}_z": 1.3 if s > 0 else 1.6, f"F{x}_pitch": -40.0,
+                  f"H{x}_x": s * 2.5, f"H{x}_y": 3.6, f"H{x}_z": 0.6, f"H{x}_heel": 30.0, f"H{x}_yaw": -s * 10.0,
+                  f"H{x}_bend": 50.0})
+    p.update(kw)
+    return p
+
+
+def clip_defeat():
+    stagger = P(COMBAT, neck_p=-10.0, head_p=-10.0, head_y=14.0, jaw=12.0, body_y=0.35, body_r=5.0, w_raise=26.0,
+                w_sweep=12.0, eyes=0.6)
+    buckle = P(COMBAT, body_z=-1.2, body_r=-6.0, body_p=4.0, body_y=0.8, neck_p=20.0, neck_curl=14.0, head_p=-16.0,
+               w_raise=-10.0, w_fold=0.3, w_fan=-10.0, eyes=0.3, jaw=8.0, mantle_out=20.0)
+    for x in "LR":
+        buckle[f"F{x}_y"] = -4.0
+    down = lying(COMBAT)
+    dazed = lying(COMBAT, neck_p=84.0, head_p=-72.0, eyes=0.35)
+    lift = lying(COMBAT, neck_p=50.0, neck_curl=26.0, head_p=-40.0, head_y=4.0, eyes=0.8, body_r=-4.0)
+    rising = P(STAND, body_z=-0.75, body_r=-2.0, neck_p=14.0, head_p=-12.0, w_fold=0.25, mantle_out=10.0)
+    for x, s in (("L", 1), ("R", -1)):
+        rising.update({f"F{x}_x": s * 2.45, f"F{x}_y": -3.5, f"F{x}_z": 0.9 + 0.3 * (s > 0), f"F{x}_pitch": -12.0,
+                       f"H{x}_heel": 16.0})
+    keys = [(0.0, COMBAT), (0.2, stagger), (0.55, buckle), (0.95, down), (1.3, dazed), (1.62, lift), (2.0, rising),
+            (2.4, STAND)]
+    return Clip("defeat", "Поражение", 2.4, keys, layers=[breath(0.7, z=0.04, pitch=0.6, wing=1.5, until=1.62),
+                                                         scepter_idle],
+                start="combat", end="stand", events={"лежит": 0.95, "начинает вставать": 1.62},
+                note="Defeat 2.4 с: повалился и встаёт; дальше в игре — домой шагом и «Засыпание»")
+
+
+def clip_fall_asleep():
+    sit = P(STAND, body_z=-0.6, body_p=-4.0, neck_p=5.0, w_fold=0.5, tail_curl=-4.0)
+    lie = P(SLEEP, neck_p=40.0, neck_curl=20.0, head_p=-40.0, head_y=4.0, eyes=0.7, jaw=-4.0)
+    lower = P(SLEEP, neck_p=86.0, neck_curl=45.0, head_p=-80.0, eyes=0.2, jaw=-10.0)
+    keys = [(0.0, STAND), (0.3, sit), (0.88, lie), (1.25, lower), (1.6, SLEEP)]
+    return Clip("fall_asleep", "Засыпание", 1.6, keys, layers=[scepter_idle], start="stand", end="sleep",
+                events={"лёг (поза «лёжа»)": 0.88, "закрыл глаза": 1.4},
+                note="FallAsleep 1.6 с: лёг, голова на землю, глаза закрылись")
+
+
+CLIPS = [clip_sleep, clip_wake, clip_combat, clip_walk, clip_turn, clip_claw, clip_bite, clip_tail, clip_wings,
+         clip_volley, clip_hit, clip_victory, clip_defeat, clip_fall_asleep]
+
+
+# ── мантия: маятник ──────────────────────────────────────────────────────────────────────────────────────────
+SWING_LIMIT = ((-1.0, 20.0), (-10.0, 10.0), (-20.0, 1.0))  # полоса 1 не вперёд (локоть), 3 не назад (бедро)
+G = 9.81 / 0.28 / STUDS  # ускорение свободного падения в единицах модели (1 стад ≈ 0.28 м)
+MANTLE_W, MANTLE_Z = 6.5, 0.38  # собственная частота (рад/с) и затухание тяжёлой ткани
+
+
+LEG_BONES = ("UpperArm", "Forearm", "Paw", "Thigh", "Shin", "Meta", "HindPaw")
+STRIP_REST = 13.0  # полосы и так отходят от бока к подолу на ~13°
+
+
+def leg_samples(rig):
+    """Точки поверхности лап (покой) для расчёта мантии: не больше 160 на кость."""
+    obj = rig["dragon"]
+    out = {}
+    for s in S2:
+        for b in LEG_BONES:
+            name = f"{b}.{SIDE[s]}"
+            g = obj.vertex_groups[name].index
+            pts = [v.co[:] for v in obj.data.vertices if any(x.group == g and x.weight > 0.5 for x in v.groups)]
+            step = max(1, len(pts) // 160)
+            out[name] = np.array(pts[::step])
+    return out
+
+
+PUSH_OUT = float(os.environ.get("PUSH_OUT", "30"))  # наружу лапа отводит полосу не больше; остальное — качание
+
+
+def mantle_push(rg, X):
+    """Для каждой полосы: (угол наружу, качание), при которых лапы остаются между боком и тканью. Передняя лапа
+    отводит полосу назад, задняя — вперёд: ткань не взлетает горизонтально."""
+    Bi = np.array(X["Body"].inverted())
+    res = {}
+    for x, s in (("L", 1), ("R", -1)):
+        sets = {}
+        for kind, bones in (("F", ("UpperArm", "Forearm", "Paw")), ("H", ("Thigh", "Shin", "Meta", "HindPaw"))):
+            pts = []
+            for b in bones:
+                M = Bi @ np.array(X[f"{b}.{x}"])
+                pts.append(rg.samples[f"{b}.{x}"] @ M[:3, :3].T + M[:3, 3])
+            sets[kind] = np.vstack(pts)
+        for k, (y0, y1, zh, dxs) in enumerate(R.D.STRIPS):
+            name = f"Mantle.{x}{k + 1}"
+            piv = rg.head[name]
+            ln = piv.z - zh
+            need = {}
+            for kind, pts in sets.items():
+                sel = pts[(pts[:, 1] > y0 - 0.15) & (pts[:, 1] < y1 + 0.15) & (pts[:, 2] < piv.z + 0.05)]
+                dx = (sel[:, 0] - s * (1.98 + dxs)) * s
+                dz = piv.z - sel[:, 2]
+                near = np.hypot(dx, dz) < ln + 0.35
+                need[kind] = 0.0 if not near.any() else float(
+                    max(np.degrees(np.arctan2(dx[near] + 0.14, np.maximum(dz[near], 0.05))).max() - STRIP_REST + 3.0, 0.0))
+            out = min(max(need.values()), PUSH_OUT)
+            swing = 0.9 * max(need["F"] - PUSH_OUT, 0.0) - 0.9 * max(need["H"] - PUSH_OUT, 0.0)
+            res[name] = (out, max(min(swing, 35.0), -35.0))
+    return res
+
+
+def mantle_track(rg, clip, poses):
+    """Полосы мантии висят: компенсируют наклон тела (на 85 %) и раскачиваются от ускорений; внутрь к боку не
+    заходят. Цикл — три прогона, берётся последний."""
+    n = len(poses)
+    dt = 1.0 / FPS
+    names = [(f"Mantle.{x}{k + 1}", s) for x, s in (("L", 1), ("R", -1)) for k in range(3)]
+    info = []
+    pushes = []
+    for p, lag in poses:
+        X = rg.solve(p, dict(lag))
+        Rb = X["Body"].to_3x3()
+        info.append((Rb, {nm: X["Body"] @ rg.head[nm] for nm, _ in names}, p))
+        pushes.append(mantle_push(rg, X))
+    out = [{} for _ in range(n)]
+    for nm, s in names:
+        th = [0.0, 0.0]  # наружу, вперёд-назад
+        om = [0.0, 0.0]
+        runs = 3 if clip.loop else 1
+        for run in range(runs):
+            for f in range(n):
+                Rb, piv, p = info[f]
+                fp, fn = info[(f - 1) % n] if clip.loop else info[max(f - 1, 0)], \
+                    info[(f + 1) % n] if clip.loop else info[min(f + 1, n - 1)]
+                acc = (fn[1][nm] - 2 * piv[nm] + fp[1][nm]) / (dt * dt)
+                local = Rb.transposed() @ acc
+                tgt = [-s * p["body_r"] * 0.85 - s * math.degrees(local.x / G),
+                       -p["body_p"] * 0.85 - math.degrees(local.y / G)]
+                if run == 0 and f == 0 and not clip.loop:
+                    th = [tgt[0], tgt[1]]
+                for k in range(2):
+                    for _ in range(4):
+                        h = dt / 4
+                        a = MANTLE_W ** 2 * (tgt[k] - th[k]) - 2 * MANTLE_Z * MANTLE_W * om[k]
+                        om[k] += a * h
+                        th[k] += om[k] * h
+                th[0] = max(th[0], -2.0 - p["mantle_out"])
+                pout, pswing = pushes[f][nm]
+                push = pout - p["mantle_out"]
+                if th[0] < push:  # лапа толкает ткань наружу; дальше она опускается сама
+                    th[0] = push
+                    om[0] = max(om[0], 0.0)
+                lo, hi = SWING_LIMIT[int(nm[-1]) - 1]
+                th[1] = max(min(th[1], hi), lo)
+                if pswing > 0 and th[1] < pswing:  # передняя лапа отводит полосу назад
+                    th[1], om[1] = pswing, max(om[1], 0.0)
+                elif pswing < 0 and th[1] > pswing:  # задняя — вперёд
+                    th[1], om[1] = pswing, min(om[1], 0.0)
+                if run == runs - 1:
+                    out[f][nm] = (th[0], th[1])
+    return out
+
+
+HORN_CLEAR = 0.8  # кончик рога не ближе к передней кромке крыла (плечо, предплечье, первый палец)
+HORN_TIPS = {s: [R.HEAD_M @ V((s * 2.32, 3.3, 2.8)), R.HEAD_M @ V((s * 2.2, 3.05, 2.25)),
+                 R.HEAD_M @ V((s * 1.82, 1.55, 2.35)), R.HEAD_M @ V((s * 1.42, 0.55, 2.45))] for s in S2}
+
+
+def seg_dist(p, a, b):
+    ab = b - a
+    t = max(0.0, min(1.0, (p - a).dot(ab) / max(ab.length_squared, 1e-9)))
+    return (a + ab * t - p).length
+
+
+def horn_gap(rg, X, s):
+    x = SIDE[s]
+    _, pts = rg.wing[s]
+    segs = [(X[f"WingArm.{x}"] @ pts["root"], X[f"WingArm.{x}"] @ pts["E"]),
+            (X[f"WingFore.{x}"] @ pts["E"], X[f"WingFore.{x}"] @ pts["W"]),
+            (X[f"Finger1.{x}"] @ pts["W"], X[f"Finger1.{x}"] @ pts["F1"])]
+    return min(seg_dist(X["Head"] @ t, a, b) for t in HORN_TIPS[s] for a, b in segs)
+
+
+def horn_clearance(rg, clip, poses):
+    """Рога не касаются поднятого крыла: на кадрах, где кончик рога ближе HORN_CLEAR к передней кромке, крыло этой
+    стороны чуть отводится (взмах и подъём, наименьшая поправка из сетки), поправки сглаживаются по времени."""
+    n = len(poses)
+    corr = {x: [(0.0, 0.0)] * n for x in "LR"}
+    grid = [(ds, dr) for ds in (-25.0, -20.0, -15.0, -10.0, -5.0, 0.0, 5.0, 10.0, 15.0, 20.0, 25.0)
+            for dr in (-20.0, -15.0, -10.0, -5.0, 0.0, 5.0, 10.0, 15.0)]
+    for f, (p, lag) in enumerate(poses):
+        X = rg.solve(p, dict(lag))
+        for s in S2:
+            x = SIDE[s]
+            if horn_gap(rg, X, s) >= HORN_CLEAR:
+                continue
+            best = None
+            for ds, dr in grid:
+                q = dict(p)
+                q[f"w{x}_sweep"] += ds
+                q[f"w{x}_raise"] += dr
+                g = horn_gap(rg, rg.solve(q, dict(lag)), s)
+                cost = max(0.0, HORN_CLEAR - g) * 100 + abs(ds) + abs(dr)
+                if best is None or cost < best[0]:
+                    best = (cost, ds, dr)
+            corr[x][f] = (best[1], best[2])
+    for x in "LR":
+        raw = corr[x]
+        if not any(c != (0.0, 0.0) for c in raw):
+            continue
+        wide = []
+        for f in range(n):  # окно ±3 кадра: берём наибольшую по модулю поправку, затем сглаживаем
+            idx = [(f + k) % n if clip.loop else min(max(f + k, 0), n - 1) for k in range(-3, 4)]
+            wide.append(tuple(max((raw[i][j] for i in idx), key=abs) for j in range(2)))
+        for f, (p, lag) in enumerate(poses):
+            idx = [(f + k) % n if clip.loop else min(max(f + k, 0), n - 1) for k in range(-3, 4)]
+            ds = sum(wide[i][0] for i in idx) / len(idx)
+            dr = sum(wide[i][1] for i in idx) / len(idx)
+            p[f"w{x}_sweep"] += ds
+            p[f"w{x}_raise"] += dr
+
+
+MANTLE_TRY = [(0.0, 0.0), (5.0, 0.0), (0.0, 8.0), (0.0, -8.0), (-5.0, 0.0), (10.0, 0.0), (0.0, 16.0), (0.0, -16.0),
+              (10.0, 10.0), (10.0, -10.0), (15.0, 0.0), (-8.0, 0.0), (20.0, 0.0), (0.0, 24.0), (0.0, -24.0),
+              (20.0, 16.0), (20.0, -16.0), (28.0, 0.0), (28.0, 24.0), (28.0, -24.0), (36.0, 0.0), (44.0, 0.0)]
+
+
+def mantle_resolve(rg, clip, poses):
+    """Точная проверка на кадрах: полоса мантии, которая по треугольникам пересекает лапу (с наручем или кольцом),
+    получает наименьшую поправку из MANTLE_TRY (наружу/внутрь и вперёд/назад), при которой пересечения нет.
+    Поправки сглаживаются по времени (окно ±3 кадра), на самом кадре — не меньше найденной."""
+    rig = getattr(rg, "rig", None)
+    if rig is None:
+        return
+    me = rig["dragon"].data
+    polys = [list(pl.vertices) for pl in me.polygons]
+    groups = rig["art"].face_groups
+    strips = {g: [polys[i] for i, b in enumerate(groups) if b == g] for g in sorted(set(groups))
+              if g and g.startswith("Mantle.")}
+    legs = {x: [polys[i] for t in ("foreleg" + x, "hindleg" + x, "bracer" + x, "greave" + x) for i in rig["tags"][t]]
+            for x in "LR"}
+    n = len(poses)
+    extra = {g: [(0.0, 0.0)] * n for g in strips}
+    if not hasattr(rg, "mantle_base"):  # касания полос с лапами в покое (утверждённая модель) — допустимы
+        show(rg, rig, dict(STAND))
+        co = eval_points(rig["dragon"]).tolist()
+        rg.mantle_base = {g: len(BVHTree.FromPolygons(co, strips[g]).overlap(BVHTree.FromPolygons(co, legs[g[7]])))
+                          for g in strips}
+
+    def hits(p, lag, add):
+        m = dict(lag["mantle"])
+        for g, (do, dsw) in add.items():
+            o, sw = m[g]
+            m[g] = (o + do, sw + dsw)
+        show(rg, rig, p, dict(lag, mantle=m))
+        co = eval_points(rig["dragon"]).tolist()
+        bad = set()
+        score.clear()
+        for x in "LR":
+            lt = BVHTree.FromPolygons(co, legs[x])
+            for g in (f"Mantle.{x}1", f"Mantle.{x}2", f"Mantle.{x}3"):
+                k = len(BVHTree.FromPolygons(co, strips[g]).overlap(lt))
+                score[g] = k
+                if k > rg.mantle_base[g] + 1:
+                    bad.add(g)
+        return bad
+
+    score = {}
+    for f, (p, lag) in enumerate(poses):
+        add = {g: (0.0, 0.0) for g in strips}
+        bad = hits(p, lag, add)
+        tries = {g: 0 for g in strips}
+        best = {g: (score[g], (0.0, 0.0)) for g in strips}
+        while bad:
+            for g in bad:
+                tries[g] += 1
+                add[g] = MANTLE_TRY[min(tries[g], len(MANTLE_TRY) - 1)]
+            if all(tries[g] >= len(MANTLE_TRY) - 1 for g in bad):
+                for g in bad:  # чистого варианта нет — лучший из опробованных
+                    add[g] = best[g][1]
+                break
+            bad = hits(p, lag, add)
+            for g in strips:
+                if score[g] < best[g][0]:
+                    best[g] = (score[g], add[g])
+        for g in strips:
+            extra[g][f] = add[g]
+    for g, raw in extra.items():
+        if not any(v != (0.0, 0.0) for v in raw):
+            continue
+        idx = lambda f, k: (f + k) % n if clip.loop else min(max(f + k, 0), n - 1)  # noqa: E731
+        wide = [tuple(max((raw[idx(f, k)][c] for k in range(-3, 4)), key=abs) for c in range(2)) for f in range(n)]
+        for f, (p, lag) in enumerate(poses):
+            o, sw = lag["mantle"][g]
+            do = sum(wide[idx(f, k)][0] for k in range(-2, 3)) / 5
+            dsw = sum(wide[idx(f, k)][1] for k in range(-2, 3)) / 5
+            if raw[f] != (0.0, 0.0):  # на самом кадре — найденная чистая поправка
+                do, dsw = raw[f]
+            lag["mantle"][g] = (o + do, sw + dsw)
+
+
+BEND_TRY = [0.0, 8.0, 16.0, 24.0, 32.0, 40.0, 50.0]
+
+
+def bracer_resolve(rg, clip, poses):
+    """Наручи не уходят в лопатку и корпус глубже, чем в покое (утверждённая модель): на таких кадрах локоть этой
+    лапы отводится наружу (F_bend) на наименьший угол из BEND_TRY, поправка сглаживается по времени."""
+    rig = getattr(rg, "rig", None)
+    if rig is None:
+        return
+    me = rig["dragon"].data
+    polys = [list(pl.vertices) for pl in me.polygons]
+    tags = rig["tags"]
+    arm = {x: [polys[i] for i in tags["bracer" + x]] for x in "LR"}
+    body = [polys[i] for i in tags["body"]]
+    if not hasattr(rg, "bracer_base"):
+        show(rg, rig, dict(STAND))
+        co = eval_points(rig["dragon"]).tolist()
+        bt = BVHTree.FromPolygons(co, body)
+        rg.bracer_base = {x: len(BVHTree.FromPolygons(co, arm[x]).overlap(bt)) for x in "LR"}
+    n = len(poses)
+    raw = {x: [0.0] * n for x in "LR"}
+    for f, (p, lag) in enumerate(poses):
+        k = {x: 0 for x in "LR"}
+        while True:
+            q = dict(p)
+            for x in "LR":
+                q[f"F{x}_bend"] += BEND_TRY[k[x]]
+            show(rg, rig, q, lag)
+            co = eval_points(rig["dragon"]).tolist()
+            bt = BVHTree.FromPolygons(co, body)
+            bad = [x for x in "LR" if len(BVHTree.FromPolygons(co, arm[x]).overlap(bt)) > rg.bracer_base[x] + 2
+                   and k[x] < len(BEND_TRY) - 1]
+            if not bad:
+                break
+            for x in bad:
+                k[x] += 1
+        for x in "LR":
+            raw[x][f] = BEND_TRY[k[x]]
+    if os.environ.get("DEBUG_BRACER"):
+        print("BRACERRAW", clip.name, rg.bracer_base, {x: raw[x] for x in "LR"}, flush=True)
+    for x in "LR":
+        if not any(raw[x]):
+            continue
+        idx = lambda f, j: (f + j) % n if clip.loop else min(max(f + j, 0), n - 1)  # noqa: E731
+        wide = [max(raw[x][idx(f, j)] for j in range(-3, 4)) for f in range(n)]
+        for f, (p, lag) in enumerate(poses):
+            p[f"F{x}_bend"] += max(sum(wide[idx(f, j)] for j in range(-2, 3)) / 5, raw[x][f])
+
+
+# ── точная доводка по треугольникам (третья итерация) ────────────────────────────────────────────────────────
+# После всех проходов каждый кадр проверяется по настоящей геометрии. Где касание есть, перебираются малые поправки
+# каналов (крыло, хвост, высота лапы), берётся первая, что убирает касание; поправки сглаживаются по времени.
+_TP = {}
+_LV = {}
+FIX_FLOOR = -0.065  # ниже пола не глубже (единицы модели; −0.18 стада — подушечки опорной лапы, как в стойке)
+
+
+def tpolys(rig, t):
+    if not _TP:
+        polys = [list(pl.vertices) for pl in rig["dragon"].data.polygons]
+        for k, idx in rig["tags"].items():
+            _TP[k] = [polys[i] for i in idx]
+    return _TP[t]
+
+
+def tverts(rig, t):
+    if t not in _LV:
+        _LV[t] = np.unique(np.array([v for pl in tpolys(rig, t) for v in pl]))
+    return _LV[t]
+
+
+def pair_count(rig, co, a, b):
+    cl = co.tolist() if hasattr(co, "tolist") else co
+    return len(BVHTree.FromPolygons(cl, tpolys(rig, a)).overlap(BVHTree.FromPolygons(cl, tpolys(rig, b))))
+
+
+FIX_TAIL_W = [1.0, 0.8, 0.6, 0.4, 0.2, 0.0, 0.0]  # поправка хвоста при доводке: в основном у корня
+
+
+def _add(p, lag, k, v):
+    """Прибавить v к каналу k позы (на месте). lagtail_p / lagtail_y — звенья хвоста с запаздыванием."""
+    if k.startswith("lagtail_"):
+        j = {"lagtail_p": 0, "lagtail_y": 1}[k]
+        tl = lag.get("tail") or [(p["tail_p"], p["tail_y"], p["tail_curl"], p["tail_lift"], 0.0)] * 7
+        lag["tail"] = [tuple(val + (v * FIX_TAIL_W[i] if jj == j else 0.0) for jj, val in enumerate(seg))
+                       for i, seg in enumerate(tl)]
+    else:
+        p[k] += v
+
+
+def _smooth_apply(clip, poses, raw):
+    n = len(poses)
+    idx = lambda f, j: (f + j) % n if clip.loop else min(max(f + j, 0), n - 1)  # noqa: E731
+    keys = sorted({k for c in raw if c for k in c})
+    for k in keys:
+        r = [(c or {}).get(k, 0.0) for c in raw]
+        if not any(r):
+            continue
+        wide = [max((r[idx(f, j)] for j in range(-3, 4)), key=abs) for f in range(n)]
+        sm = [sum(wide[idx(f, j)] for j in range(-2, 3)) / 5 for f in range(n)]
+        for f, (p, lag) in enumerate(poses):
+            _add(p, lag, k, sm[f] if abs(sm[f]) >= abs(r[f]) else r[f])
+
+
+def exact_fix(rg, clip, poses, measure, cands, label, smooth=True):
+    """measure(co) → «насколько плохо» (0 — хорошо); cands(p, bad) → поправки каналов по порядку предпочтения."""
+    rig = rg.rig
+    raw = [None] * len(poses)
+    left = 0
+    for f, (p, lag) in enumerate(poses):
+        show(rg, rig, p, lag)
+        bad0 = measure(eval_points(rig["dragon"]))
+        if bad0 <= 0:
+            continue
+        best = (bad0, None)
+        for c in cands(p, bad0):
+            q, lg = dict(p), dict(lag)
+            for k, v in c.items():
+                _add(q, lg, k, v)
+            show(rg, rig, q, lg)
+            b = measure(eval_points(rig["dragon"]))
+            if b < best[0]:
+                best = (b, c)
+            if b <= 0:
+                break
+        raw[f] = best[1]
+        left += best[0] > 0
+    if any(raw) and smooth:
+        _smooth_apply(clip, poses, raw)
+    elif any(raw):
+        for (p, lag), c in zip(poses, raw):
+            for k, v in (c or {}).items():
+                _add(p, lag, k, v)
+    if os.environ.get("DEBUG_EXACT"):
+        print("EXACT", clip.name, label, sum(1 for c in raw if c), "кадров поправлено, не вышло", left, flush=True)
+
+
+def exact_fixes(rg, clip, poses, smooth=True):
+    rig = rg.rig
+    if not hasattr(rg, "exact_base"):
+        show(rg, rig, dict(STAND))
+        c1 = eval_points(rig["dragon"])
+        show(rg, rig, dict(COMBAT))
+        c2 = eval_points(rig["dragon"])
+        rg.exact_base = {f"{a}|{b}": max(pair_count(rig, c1, a, b), pair_count(rig, c2, a, b))
+                         for a, b in (("horns", "wingL"), ("horns", "wingR"), ("tail", "hindlegL"), ("tail", "hindlegR"))}
+    for x, away in (("L", 1.0), ("R", -1.0)):
+        allow = rg.exact_base[f"horns|wing{x}"]
+        exact_fix(rg, clip, poses, lambda co, x=x, allow=allow: max(0, pair_count(rig, co, "horns", "wing" + x) - allow),
+                  lambda p, bad, x=x: [{f"w{x}_sweep": 5.0}, {f"w{x}_sweep": -5.0}, {f"w{x}_raise": -5.0},
+                                       {f"w{x}_raise": 5.0}, {f"w{x}_sweep": 10.0}, {f"w{x}_sweep": -10.0},
+                                       {f"w{x}_raise": -10.0}, {f"w{x}_sweep": 10.0, f"w{x}_raise": -8.0},
+                                       {f"w{x}_sweep": 16.0}, {f"w{x}_raise": -16.0}], "horns|wing" + x, smooth)
+    for leg, keyz in (("forelegL", "FL_z"), ("forelegR", "FR_z"), ("hindlegL", "HL_z"), ("hindlegR", "HR_z")):
+        exact_fix(rg, clip, poses,
+                  lambda co, leg=leg: max(0.0, FIX_FLOOR - float(co[tverts(rig, leg), 2].min())),
+                  lambda p, bad, keyz=keyz: [{keyz: bad + 0.01}, {keyz: 2 * bad + 0.02}, {"body_z": bad + 0.01},
+                                             {keyz: bad + 0.01, "body_z": bad + 0.01}], "floor " + leg, smooth)
+
+
+
+def clip_frames(rg, clip):
+    """Позы клипа по кадрам: (p, lag) с зазором рогов, мантией и её точной проверкой."""
+    times = [i / FPS for i in range(clip.frames())]
+    poses = [pose_at(clip, t) for t in times]
+    horn_clearance(rg, clip, poses)
+    bracer_resolve(rg, clip, poses)
+    for (p, lag), m in zip(poses, mantle_track(rg, clip, poses)):
+        lag["mantle"] = m
+    mantle_resolve(rg, clip, poses)
+    if not os.environ.get("NO_EXACT"):
+        for k in range(int(os.environ.get("EXACT_PASSES", "2"))):
+            exact_fixes(rg, clip, poses)
+        mantle_resolve(rg, clip, poses)  # второй проход мантии: касания, сдвинутые сглаживанием первого
+        exact_fixes(rg, clip, poses, smooth=False)  # последний проход точный: касание, сдвинутое сглаживанием
+    return times, poses
+
+
+# ── проверки ─────────────────────────────────────────────────────────────────────────────────────────────────
+PAIRS = [("crown", "horns"), ("crown", "spines"), ("horns", "spines"), ("horns", "wingL"), ("horns", "wingR"),
+         ("crown", "wingL"), ("crown", "wingR"),
+         ("pauldronL", "foreleg" + "L"), ("pauldronR", "foreleg" + "R"), ("bracerL", "body"), ("bracerR", "body"),
+         ("chest", "foreleg" + "L"), ("chest", "foreleg" + "R"), ("chest", "neck"), ("collar", "jaw"),
+         ("collar", "skull"), ("collar", "drapeL"), ("collar", "drapeR"), ("greaveL", "tail"), ("greaveR", "tail"),
+         ("tailarmor", "hindlegL"), ("tailarmor", "hindlegR"), ("spineplates", "wingL"), ("spineplates", "wingR"),
+         ("drapeL", "wingL"), ("drapeR", "wingR"), ("pauldronL", "wingL"), ("pauldronR", "wingR"),
+         ("mantleL", "foreleg" + "L"), ("mantleL", "hindlegL"), ("mantleL", "wingL"),
+         ("mantleR", "foreleg" + "R"), ("mantleR", "hindlegR"), ("mantleR", "wingR"),
+         ("yokeL", "wingL"), ("yokeR", "wingR"),
+         ("jaw", "neck"), ("jaw", "chest"), ("jaw", "foreleg" + "L"), ("jaw", "foreleg" + "R"),
+         ("skull", "foreleg" + "L"), ("skull", "foreleg" + "R"),
+         ("tail", "hindlegL"), ("tail", "hindlegR"), ("tail", "wingL"), ("tail", "wingR"),
+         ("wingL", "body"), ("wingR", "body"), ("wingL", "skull"), ("wingR", "skull"), ("wingL", "wingR"),
+         ("foreleg" + "L", "foreleg" + "R"), ("hindlegL", "hindlegR"), ("wingL", "hindlegL"), ("wingR", "hindlegR")]
+
+
+class Checker:
+    def __init__(self, rig):
+        self.obj, self.sobj = rig["dragon"], rig["scepter"]
+        me = self.obj.data
+        polys = [list(pl.vertices) for pl in me.polygons]
+        self.sets = {t: [polys[i] for i in idx] for t, idx in rig["tags"].items()}
+        self.all = polys
+        self.spolys = [list(pl.vertices) for pl in self.sobj.data.polygons]
+        self.base = None
+        self.vtag = {}
+        for t in ("tail", "wingL", "wingR", "skull", "jaw", "horns", "crown", "mantleL", "mantleR", "body", "neck",
+                  "foreleg" + "L", "foreleg" + "R", "hindlegL", "hindlegR"):
+            for pl in self.sets[t]:
+                for v in pl:
+                    self.vtag[v] = t
+        self.low_sets = {t: np.unique(np.array([v for pl in self.sets[t] for v in pl]))
+                         for t in ("tail", "wingL", "wingR", "skull", "jaw", "mantleL", "mantleR", "body", "neck",
+                                   "chest", "collar", "foreleg" + "L", "foreleg" + "R", "hindlegL", "hindlegR")}
+
+    def measure(self):
+        co = eval_points(self.obj)
+        sco = eval_points(self.sobj)
+        cl = co.tolist()
+        trees = {}
+
+        def tree(name):
+            if name not in trees:
+                trees[name] = BVHTree.FromPolygons(cl, self.sets[name])
+            return trees[name]
+
+        res = {f"{a}|{b}": len(tree(a).overlap(tree(b))) for a, b in PAIRS}
+        sc_tree = BVHTree.FromPolygons(sco.tolist(), self.spolys)
+        res["scepter|dragon"] = len(sc_tree.overlap(BVHTree.FromPolygons(cl, self.all)))
+        both = np.vstack([co, sco])
+        rad = np.sqrt(both[:, 0] ** 2 + both[:, 1] ** 2)
+        res["_radius"] = float(rad.max())
+        far = int(rad.argmax())
+        res["_far"] = "scepter" if far >= len(co) else self.vtag.get(far, "?")
+        res["_top"] = float(both[:, 2].max())
+        res["_low"] = float(co[:, 2].min())
+        res["_low_scepter"] = float(sco[:, 2].min())
+        for t, idx in self.low_sets.items():
+            res["_low_" + t] = float(co[idx, 2].min())
+        return res
+
+
+def flagged(base, val):
+    return val > base + max(4, 0.5 * base)
+
+
+def run_check(rig, rg, clips, every=2):
+    ch = Checker(rig)
+    show(rg, rig, STAND)
+    base = ch.measure()
+    show(rg, rig, COMBAT)
+    base_c = ch.measure()
+    base = {k: max(base[k], base_c[k]) for k in base}
+    report = {"baseline": {k: v for k, v in base.items() if not k.startswith("_")}, "clips": {}}
+    for make in clips:
+        clip = make()
+        times, poses = clip_frames(rg, clip)
+        rg.clamps = 0  # недотяг считается только на проверяемых кадрах (подбор зазоров решает позы много раз)
+        worst = {}
+        ext = {"radius": 0.0, "top": 0.0, "low": 9.0, "low_scepter": 9.0}
+        lows = {}
+        frames_bad = {}
+        for f in range(0, len(times), every):
+            show(rg, rig, *poses[f])
+            m = ch.measure()
+            if m["_radius"] > ext["radius"]:
+                ext["far"] = (m["_far"], round(times[f], 2))
+            ext["radius"] = max(ext["radius"], m["_radius"])
+            ext["top"] = max(ext["top"], m["_top"])
+            ext["low"] = min(ext["low"], m["_low"])
+            ext["low_scepter"] = min(ext["low_scepter"], m["_low_scepter"])
+            for k, v in m.items():
+                if k.startswith("_low_") and k != "_low_scepter" and v < -0.08:
+                    if v < lows.get(k[5:], (0.0, 0.0))[0]:
+                        lows[k[5:]] = (round(v * STUDS, 2), round(times[f], 2))
+            for k, v in m.items():
+                if k.startswith("_"):
+                    continue
+                if v > worst.get(k, (-1, 0))[0]:
+                    worst[k] = (v, round(times[f], 2))
+                if flagged(base[k], v):
+                    frames_bad.setdefault(k, []).append(round(times[f], 2))
+        report["clips"][clip.name] = {
+            "title": clip.title, "duration": clip.duration, "loop": clip.loop, "events": clip.events,
+            "ik_clamps": rg.clamps, "below_ground": lows,
+            "radius_studs": round(ext["radius"] * STUDS, 1), "arena_ok": ext["radius"] <= SAFE_R,
+            "farthest": ext.get("far"),
+            "top_studs": round(ext["top"] * STUDS, 1), "low_studs": round(ext["low"] * STUDS, 2),
+            "flags": {k: {"base": base[k], "max": worst[k][0], "at": worst[k][1], "frames": len(v),
+                          "from": v[0], "to": v[-1]} for k, v in frames_bad.items()},
+        }
+        print("CHECK", clip.name, json.dumps(report["clips"][clip.name], ensure_ascii=False), flush=True)
+    path = os.path.join(OUT, "anim_report.json")
+    if ONLY and MODE in ("check", "all") and os.path.exists(path):
+        old = json.load(open(path, encoding="utf-8"))
+        old["clips"].update(report["clips"])
+        report = old
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=1)
+    return report
+
+
+# ── кадры превью ─────────────────────────────────────────────────────────────────────────────────────────────
+CLIP_VIEW = {"sleep_idle": "34", "wake": "wide", "combat_idle": "34", "walk": "sideL", "turn_left": "wide",
+             "claw_swipe": "wide_r", "bite": "34r", "tail_strike": "wide_r", "wing_buffet": "front",
+             "magic_volley": "wide", "hit": "34r", "victory": "wide", "defeat": "34", "fall_asleep": "34"}
+RES = tuple(int(v) for v in os.environ.get("RES", "1280x720").split("x"))
+
+
+def ground_marks(col):
+    """Метки на земле для ходьбы на месте: бегут назад со скоростью босса — видно, что опорная лапа не скользит."""
+    mat = bpy.data.materials.new("MarkM")
+    mat.use_nodes = True
+    b = next(n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    b.inputs["Base Color"].default_value = (0.35, 0.37, 0.45, 1)
+    marks = []
+    for x in (-4.6, 4.6):
+        for i in range(14):
+            me = bpy.data.meshes.new("Mark")
+            me.from_pydata([(-0.5, -0.15, 0.01), (0.5, -0.15, 0.01), (0.5, 0.15, 0.01), (-0.5, 0.15, 0.01)], [],
+                           [(0, 1, 2, 3)])
+            me.materials.append(mat)
+            o = bpy.data.objects.new("Mark", me)
+            col.objects.link(o)
+            o.location = (x, -21 + i * 3.0, 0)
+            o.hide_render = True
+            marks.append(o)
+    return marks
+
+
+def render_clips(col, rig, rg, clips):
+    cam = stage(col)
+    marks = ground_marks(col)
+    mpath = os.path.join(OUT, "frames", "meta.json")
+    meta = json.load(open(mpath, encoding="utf-8")) if ONLY and os.path.exists(mpath) else {}
+    for make in clips:
+        clip = make()
+        times, poses = clip_frames(rg, clip)
+        view = CLIP_VIEW.get(clip.name, "34")
+        eye, target, lens = VIEWS[view]
+        folder = os.path.join(OUT, "frames", clip.name)
+        os.makedirs(folder, exist_ok=True)
+        for f, (p, lag) in enumerate(poses):
+            show(rg, rig, p, lag)
+            for i, m in enumerate(marks):
+                m.hide_render = clip.name != "walk"
+                if clip.name == "walk":
+                    m.location.y = (-21 + (i % 14) * 3.0 + WALK_SPEED * times[f] + 21) % 42 - 21
+            ck.shot(cam, os.path.join(folder, f"{f:04d}.png"), eye, target, lens, RES)
+        meta[clip.name] = {"title": clip.title, "duration": clip.duration, "loop": clip.loop, "events": clip.events,
+                           "frames": len(poses), "view": view, "note": clip.note}
+        print("RENDERED", clip.name, len(poses), flush=True)
+        with open(os.path.join(OUT, "frames", "meta.json"), "w", encoding="utf-8") as fh:
+            json.dump(meta, fh, ensure_ascii=False, indent=1)
+
+
+# ── .blend с действиями ──────────────────────────────────────────────────────────────────────────────────────
+def bake_blend(col, rig, rg, clips, path):
+    """Каждый клип — действие Dragon_<клип> (ключ на каждом кадре, 30 в секунду) и все клипы подряд в действии
+    Dragon_AllClips с маркерами начала клипов."""
+    arm = rig["arm"]
+    bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
+    arm.animation_data_create()
+    scene = bpy.context.scene
+    allact = bpy.data.actions.new("Dragon_AllClips")
+    allact.use_fake_user = True
+    start = 0
+    per_clip = []
+    for make in clips:
+        clip = make()
+        times, poses = clip_frames(rg, clip)
+        per_clip.append((clip, poses))
+    for clip, poses in per_clip:
+        act = bpy.data.actions.new("Dragon_" + clip.name)
+        act.use_fake_user = True
+        for a, offset in ((act, 0), (allact, start)):
+            arm.animation_data.action = a
+            for f, (p, lag) in enumerate(poses):
+                rg.apply(rg.solve(dict(p), lag))
+                arm["eyes"], arm["glow"] = p["eyes"], p["glow"]
+                for pb in arm.pose.bones:
+                    pb.keyframe_insert("location", frame=f + offset, group=pb.name)
+                    pb.keyframe_insert("rotation_quaternion", frame=f + offset, group=pb.name)
+                arm.keyframe_insert('["eyes"]', frame=f + offset)
+                arm.keyframe_insert('["glow"]', frame=f + offset)
+        scene.timeline_markers.new(clip.title, frame=start)
+        start += len(poses) + 10
+        print("BAKED", clip.name, len(poses), flush=True)
+    arm.animation_data.action = allact
+    scene.frame_start, scene.frame_end = 0, start
+    scene.render.fps = FPS
+    bpy.context.preferences.filepaths.save_version = 0
+    bpy.ops.wm.save_as_mainfile(filepath=path, compress=True)
+
+
+def strips(col, rig, rg, clips, n=8, res=(480, 270)):
+    """Раскадровки для самопроверки: n кадров каждого клипа (с событиями) с его камеры."""
+    cam = stage(col)
+    for make in clips:
+        clip = make()
+        times, poses = clip_frames(rg, clip)
+        idx = sorted(set([round(i * (len(times) - 1) / (n - 1)) for i in range(n)] +
+                         [min(len(times) - 1, round(t * FPS)) for t in clip.events.values()]))
+        eye, target, lens = VIEWS[os.environ.get("VIEW") or CLIP_VIEW.get(clip.name, "34")]
+        folder = os.path.join(OUT, "strips", clip.name)
+        os.makedirs(folder, exist_ok=True)
+        for f in idx:
+            show(rg, rig, *poses[f])
+            ck.shot(cam, os.path.join(folder, f"{f:04d}.png"), eye, target, lens, res)
+        print("STRIP", clip.name, len(idx), flush=True)
+
+
+# ── демонстрация рига ───────────────────────────────────────────────────────────────────────────────────────
+CHAIN_COLOR = {"Body": (0.95, 0.85, 0.3), "Neck": (0.4, 0.85, 1.0), "Head": (1.0, 0.55, 0.25), "Jaw": (1.0, 0.35, 0.2),
+               "Collar": (1.0, 1.0, 1.0), "Pauldron": (1.0, 0.8, 0.1), "UpperArm": (0.35, 1.0, 0.5),
+               "Forearm": (0.2, 0.8, 0.35), "Paw": (0.15, 0.6, 0.25), "Thigh": (0.5, 0.6, 1.0),
+               "Shin": (0.35, 0.45, 0.95), "Meta": (0.25, 0.3, 0.8), "HindPaw": (0.2, 0.2, 0.65),
+               "WingArm": (1.0, 0.4, 0.85), "WingFore": (0.9, 0.3, 0.75), "Finger": (0.75, 0.25, 0.65),
+               "Membrane": (0.55, 0.2, 0.5), "Tail": (0.95, 0.55, 0.15), "Mantle": (0.9, 0.15, 0.2),
+               "Scepter": (0.2, 1.0, 0.95), "Root": (0.6, 0.6, 0.6)}
+
+
+def chain_of(name):
+    for k in sorted(CHAIN_COLOR, key=len, reverse=True):
+        if name.startswith(k):
+            return k
+    return "Root"
+
+
+def flat(name, col, emit=0.0):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    b.inputs["Base Color"].default_value = (*col, 1)
+    b.inputs["Roughness"].default_value = 0.7
+    if emit:
+        b.inputs["Emission Color"].default_value = (*col, 1)
+        b.inputs["Emission Strength"].default_value = emit
+    return m
+
+
+def segmentation(rig):
+    """Копия дракона и скипетра (с той же арматурой): грани окрашены по костям — видно, какая часть к какой кости."""
+    out = []
+    for obj, art in ((rig["dragon"], rig["art"]), (rig["scepter"], rig["sart"])):
+        cp = obj.copy()
+        cp.data = obj.data.copy()
+        bpy.context.scene.collection.objects.link(cp)
+        cp.data.materials.clear()
+        names = sorted({g or "Root" for g in art.face_groups})
+        for n in names:
+            base = CHAIN_COLOR[chain_of(n)]
+            side = 0.82 if n.endswith(".R") or n[-2:-1] == "R" else 1.0
+            k = 0.85 + 0.15 * ((hash(n) % 7) / 6)
+            cp.data.materials.append(flat("seg_" + n, tuple(min(1.0, c * side * k) for c in base)))
+        idx = [names.index(g or "Root") for g in art.face_groups]
+        cp.data.polygons.foreach_set("material_index", idx)
+        cp.hide_render = True
+        out.append(cp)
+    return out
+
+
+def skeleton(rg, X):
+    """Скелет в позе X: суставы — октаэдры, кости — тонкие бруски от сустава к суставу-ребёнку (или к хвосту кости)."""
+    import bmesh as _bm
+    bm = _bm.new()
+    mats = {}
+    me = bpy.data.meshes.new("Skeleton")
+    faces_mat = []
+    bones = rg.arm.data.bones
+    for b in bones:
+        if b.name == "Root":
+            continue
+        col = chain_of(b.name)
+        if col not in mats:
+            mats[col] = len(mats)
+            me.materials.append(flat("sk_" + col, CHAIN_COLOR[col], emit=0.9))
+        h = X[b.name] @ b.head_local
+        kids = [c for c in b.children if c.name != "Root"]
+        ends = [X[c.name] @ c.head_local for c in kids if (c.head_local - b.head_local).length > 0.2] or                [X[b.name] @ b.tail_local]
+        r = 0.2 if col in ("Finger", "Mantle", "Collar", "Scepter") else 0.3
+        for e in ends:
+            d = e - h
+            if d.length < 1e-3:
+                continue
+            m = Matrix.Translation(h) @ d.to_track_quat("Z", "Y").to_matrix().to_4x4()
+            w = r * 0.45
+            vs = [bm.verts.new(m @ V(c)) for c in ((-w, -w, 0), (w, -w, 0), (w, w, 0), (-w, w, 0),
+                                                   (-w * 0.5, -w * 0.5, d.length), (w * 0.5, -w * 0.5, d.length),
+                                                   (w * 0.5, w * 0.5, d.length), (-w * 0.5, w * 0.5, d.length))]
+            for f in ((0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)):
+                bm.faces.new([vs[i] for i in f])
+                faces_mat.append(mats[col])
+        vs = [bm.verts.new(h + V(c) * r) for c in ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))]
+        for f in ((0, 2, 4), (2, 1, 4), (1, 3, 4), (3, 0, 4), (2, 0, 5), (1, 2, 5), (3, 1, 5), (0, 3, 5)):
+            bm.faces.new([vs[i] for i in f])
+            faces_mat.append(mats[col])
+    bm.to_mesh(me)
+    bm.free()
+    me.polygons.foreach_set("material_index", faces_mat)
+    o = bpy.data.objects.new("Skeleton", me)
+    bpy.context.scene.collection.objects.link(o)
+    return o
+
+
+def rig_demo(col, rig, rg):
+    """Кадры демонстрации рига: раскраска по костям, скелет поверх модели (два прохода), контрольные позы."""
+    cam = stage(col)
+    folder = os.path.join(OUT, "rigdemo")
+    os.makedirs(folder, exist_ok=True)
+    scene = bpy.context.scene
+    segs = segmentation(rig)
+    clips = {c().name: c for c in CLIPS}
+
+    def at(name, t):
+        clip = clips[name]()
+        times, poses = clip_frames(rg, clip)
+        return poses[min(len(times) - 1, round(t * FPS))]
+
+    shots = [("stand", (dict(STAND), None), ("wide", "sideL")),
+             ("claw", at("claw_swipe", 0.55), ("wide_r",)),
+             ("wings", at("wing_buffet", 0.55), ("front",)),
+             ("sleep", (dict(SLEEP), None), ("wide",))]
+    for name, (pose, lag), views in shots:
+        show(rg, rig, pose, lag)
+        X = rg.solve(dict(pose), lag)
+        for o in (rig["dragon"], rig["scepter"]):
+            o.hide_render = False
+        for o in segs:
+            o.hide_render = True
+        for view in views:
+            eye, target, lens = VIEWS[view]
+            ck.shot(cam, os.path.join(folder, f"{name}_{view}_model.png"), eye, target, lens, (960, 640))
+        for o in (rig["dragon"], rig["scepter"]):
+            o.hide_render = True
+        for o in segs:
+            o.hide_render = False
+        for view in views:
+            eye, target, lens = VIEWS[view]
+            ck.shot(cam, os.path.join(folder, f"{name}_{view}_seg.png"), eye, target, lens, (960, 640))
+        for o in segs:
+            o.hide_render = True
+        sk = skeleton(rg, X)
+        floor = [o for o in scene.objects if o.name.startswith(("Floor", "ArenaRing", "SafeRing"))]
+        for o in floor:
+            o.hide_render = True
+        scene.render.film_transparent = True
+        for view in views:
+            eye, target, lens = VIEWS[view]
+            ck.shot(cam, os.path.join(folder, f"{name}_{view}_skel.png"), eye, target, lens, (960, 640))
+        scene.render.film_transparent = False
+        for o in floor:
+            o.hide_render = False
+        bpy.data.objects.remove(sk)
+        for o in (rig["dragon"], rig["scepter"]):
+            o.hide_render = False
+    info = {"bones": [], "parts": rig["info"]["parts_per_bone"], "membrane": rig["info"]["membrane"]}
+    for b in rig["arm"].data.bones:
+        info["bones"].append({"name": b.name, "parent": b.parent.name if b.parent else None,
+                              "deform": b.use_deform, "chain": chain_of(b.name)})
+    with open(os.path.join(folder, "rig_info.json"), "w", encoding="utf-8") as fh:
+        json.dump(info, fh, ensure_ascii=False, indent=1)
+    print("RIGDEMO", len(info["bones"]), flush=True)
+
+
+# ── демонстрации залпа ───────────────────────────────────────────────────────────────────────────────────────
+VIEWS["volley"] = ((-17.0, -21.0, 11.0), (-1.2, -9.5, 4.2), 34)
+VIEWS["dodge"] = ((19.0, -28.0, 11.0), (-1.8, -12.6, 2.4), 26)
+VIEWS["volley_wide"] = ((24.0, -24.0, 9.0), (-1.5, -6.5, 6.5), 28)  # общий план: весь дракон, круг, полосы и цель
+VIEWS["player"] = ((-0.6, -26.5, 5.2), (-1.6, -8.0, 4.0), 17)  # камера за спиной игрока, как в игре
+VIEWS["dodge_top"] = ((-1.6, -14.5, 34.0), (-1.6, -14.4, 0.0), 30)
+
+
+def volley_scenes(col, rig, rg, which, view, res, distance=20.0):
+    """Залп против движущейся тестовой цели: кадры в <папка>/frames/<имя>, данные в volley_<имя>.json."""
+    import volley_sim as VS
+    import v7_volley_vfx as VX
+    cam = stage(col)
+    vfx = VX.Volley(col)
+    clip = clip_volley()
+    times, poses = clip_frames(rg, clip)
+    tail = (dict(poses[-1][0]), poses[-1][1])
+    sc, p0, t_arr = VS.scenario_set(distance)
+    if which == "cinematic":
+        sc = {"cinematic": sc["1_stand"]}
+    else:
+        sc = {k: v for k, v in sc.items() if not which or k in which.split(",")}
+    out = {}
+    for name, (path, end_at, text) in sc.items():
+        obst = VS.COVER() if name == "7_cover" else []
+        vfx.set_obstacles(obst)
+        r = VS.simulate(path, end_at=end_at, obstacles=obst, t_end=3.6)
+        folder = os.path.join(OUT, "frames", ("volley_" + name) if name != "cinematic" else "volley_cinematic")
+        os.makedirs(folder, exist_ok=True)
+        sel = [int(v) for v in os.environ.get("FRAMESEL", "").split(",") if v]
+        for f, fr in enumerate(r.frames):
+            if sel and f not in sel:
+                continue
+            p, lag = poses[f] if f < len(poses) else tail
+            show(rg, rig, p, lag)
+            vfx.update(fr["t"], fr, VS.LAUNCH, show_target=name != "cinematic" or True, ended_at=end_at)
+            eye, target, lens = VIEWS[view]
+            ck.shot(cam, os.path.join(folder, f"{f:04d}.png"), eye, target, lens, res)
+        out[name] = {"text": text, "end_at": end_at, "hits": r.hits, "damage": r.damage_events,
+                     "canceled": r.canceled, "closest": {str(k): round(v, 2) for k, v in r.closest.items()},
+                     "ends": [(pp.side, None if pp.end_t is None else round(pp.end_t, 3), pp.end_why)
+                              for pp in r.projectiles],
+                     "frames": len(r.frames), "distance": distance, "arrive": round(t_arr, 2),
+                     "obstacles": [(o.x, o.y, o.r) for o in obst], "launch": VS.LAUNCH, "params": VS.PARAMS,
+                     "track": [{"t": fr["t"], "feet": fr["feet"], "aim": fr["aim"], "locked": fr["locked"],
+                                "canceled": fr["canceled"], "proj": [(q[0], q[1], q[2], q[3], q[4]) for q in fr["proj"]]}
+                               for fr in r.frames]}
+        print("VOLLEY", name, r.hits, r.canceled, flush=True)
+    vfx.hide_all()
+    with open(os.path.join(OUT, f"volley_{which or 'all'}.json".replace(",", "_")), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, ensure_ascii=False, indent=1)
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    col, rig = setup()
+    rg = Rig(rig["arm"])
+    rg.samples = leg_samples(rig)
+    rg.rig = rig
+    print("RIG", json.dumps(rig["info"], ensure_ascii=False), flush=True)
+    chosen = [c for c in CLIPS if not ONLY or c.__name__[5:] in ONLY or c().name in ONLY]
+    if MODE == "foldtest":
+        cam = stage(col)
+        variants = {"A": (0, 30, -35, -45), "B": (0, 60, -50, -45), "C": (0, 50, -50, -45), "D": (10, 60, -50, -45)}
+        for name, (ra, sw, tw, el) in variants.items():
+            FOLD.update({"raise": ra, "sweep": sw, "twist": tw, "elbow": el})
+            show(rg, rig, SLEEP)
+            for view in ("back", "side", "34"):
+                eye, target, lens = VIEWS[view]
+                ck.shot(cam, os.path.join(OUT, f"fold_{name}_{view}.png"), eye, target, lens, (720, 480))
+    if MODE == "hornprobe":
+        clips = {c().name: c for c in CLIPS}
+        tips = {s: [R.HEAD_M @ V((s * 2.32, 3.3, 2.8)), R.HEAD_M @ V((s * 2.2, 3.05, 2.25)),
+                    R.HEAD_M @ V((s * 1.82, 1.55, 2.35))] for s in S2}
+
+        def seg_d(p, a, b):
+            ab = b - a
+            t = max(0.0, min(1.0, (p - a).dot(ab) / ab.length_squared))
+            return (a + ab * t - p).length
+
+        def gap(X, s):
+            x = SIDE[s]
+            _, pts = rg.wing[s]
+            segs = [(X[f"WingArm.{x}"] @ pts["root"], X[f"WingArm.{x}"] @ pts["E"]),
+                    (X[f"WingFore.{x}"] @ pts["E"], X[f"WingFore.{x}"] @ pts["W"]),
+                    (X[f"Finger1.{x}"] @ pts["W"], X[f"Finger1.{x}"] @ pts["F1"])]
+            return min(seg_d(X["Head"] @ t, a, b) for t in tips[s] for a, b in segs)
+
+        for name, t in (("claw_swipe", 0.5), ("victory", 0.8), ("magic_scepter", 0.3), ("wing_buffet", 0.4),
+                        ("bite", 0.45), ("wake", 2.2)):
+            clip = clips[name]()
+            times, poses = clip_frames(rg, clip)
+            p, lag = poses[min(len(times) - 1, round(t * FPS))]
+            row = []
+            for ds in (-10.0, 0.0, 10.0, 20.0):
+                for dr in (0.0, -10.0):
+                    q = dict(p)
+                    for x in "LR":
+                        q[f"w{x}_sweep"] += ds
+                        q[f"w{x}_raise"] += dr
+                    X = rg.solve(q, dict(lag))
+                    row.append((ds, dr, round(gap(X, 1), 2), round(gap(X, -1), 2)))
+            print("HORN", name, row, flush=True)
+    if MODE == "bracerprobe":
+        clips = {c().name: c for c in CLIPS}
+        ch = Checker(rig)
+        me = rig["dragon"].data
+        pid = np.zeros(len(me.polygons), dtype=np.int32)
+        me.attributes["pid"].data.foreach_get("value", pid)
+        polys = [list(pl.vertices) for pl in me.polygons]
+        body_parts = rig["art"].tags["body"]
+        for name in ("walk", "claw_swipe", "combat_idle"):
+            clip = clips[name]()
+            times, poses = clip_frames(rg, clip)
+            worst = None
+            for f in range(0, len(times), 2):
+                show(rg, rig, *poses[f])
+                co = eval_points(rig["dragon"]).tolist()
+                for x in "LR":
+                    bt = BVHTree.FromPolygons(co, ch.sets["bracer" + x])
+                    per = {}
+                    for k, part in enumerate(body_parts):
+                        pp = [polys[i] for i in np.nonzero(pid == part)[0]]
+                        if pp:
+                            c = len(bt.overlap(BVHTree.FromPolygons(co, pp)))
+                            if c:
+                                per[k] = c
+                    tot = sum(per.values())
+                    if worst is None or tot > worst[0]:
+                        worst = (tot, x, round(times[f], 2), per)
+            print("BRACER", name, worst, flush=True)
+    if MODE == "fit":
+        for jz, reach, n1 in ((0.9, 10.3, 60.0), (0.6, 10.3, 60.0), (0.9, 10.5, 70.0)):
+            print("FIT sleep", jz, reach, n1, head_fit(rg, SLEEP, jaw_z=jz, reach=reach, neck1=n1), flush=True)
+            print("FIT lying", jz, reach, n1, head_fit(rg, lying(COMBAT), jaw_z=jz, level=2.0, reach=reach, neck1=n1),
+                  flush=True)
+    if MODE == "legscan":
+        ch = Checker(rig)
+        rows = []
+        for bz in (-1.85, -1.75, -1.65, -1.55):
+            for fz in (0.9, 1.1, 1.3):
+                for fp in (-52.0, -40.0):
+                    for hz in (0.35, 0.6, 0.85):
+                        for heel in (15.0, 30.0):
+                            for bend in (30.0, 50.0):
+                                pose = dict(SLEEP, body_z=bz)
+                                for x in "LR":
+                                    pose[f"F{x}_z"], pose[f"F{x}_pitch"] = fz, fp
+                                    pose[f"H{x}_z"], pose[f"H{x}_heel"], pose[f"H{x}_bend"] = hz, heel, bend
+                                show(rg, rig, pose)
+                                m = ch.measure()
+                                low = min(m["_low_foreleg" + "L"], m["_low_foreleg" + "R"], m["_low_hindlegL"],
+                                          m["_low_hindlegR"])
+                                belly = m["_low_body"]
+                                cost = max(0.0, -0.04 - low) * 20 + max(0.0, belly - 0.25) * 2 + (fz + hz) * 0.2
+                                rows.append((round(cost, 3), round(low * STUDS, 2), round(belly * STUDS, 2), bz, fz, fp,
+                                             hz, heel, bend))
+        rows.sort()
+        for r in rows[:6]:
+            print("LEGS", r, flush=True)
+    if MODE == "foldscan":
+        ch = Checker(rig)
+        rows = []
+        pairs = ("wingL|body", "wingR|body", "spineplates|wingL", "spineplates|wingR", "wingL|wingR",
+                 "wingL|hindlegL", "wingR|hindlegR", "mantleL|wingL", "mantleR|wingR", "tail|wingL", "tail|wingR")
+        for ra in (0, 10, 20, 30):
+            for sw in (30, 40, 50, 60):
+                for tw in (-50, -35, -20, -5):
+                    for el in (-15, -30, -45):
+                        FOLD.update({"raise": ra, "sweep": sw, "twist": tw, "elbow": el})
+                        show(rg, rig, SLEEP)
+                        m = ch.measure()
+                        hits = sum(m[k] for k in pairs)
+                        rows.append((hits + 8 * max(0.0, m["_top"] - 8.6), hits, round(m["_top"], 2), ra, sw, tw, el))
+        rows.sort()
+        for r in rows[:12]:
+            print("FOLD", r, flush=True)
+        FOLD.update({"raise": rows[0][3], "sweep": rows[0][4], "twist": rows[0][5], "elbow": rows[0][6]})
+        show(rg, rig, SLEEP)
+        m = ch.measure()
+        print("FOLDBEST", {k: m[k] for k in pairs}, flush=True)
+    if MODE == "poses":
+        main_poses(col, rig, rg, [("stand", STAND), ("combat", COMBAT), ("sleep", SLEEP)],
+                   ("34", "side", "back", "top"))
+    if MODE in ("check", "all"):
+        run_check(rig, rg, chosen, every=int(os.environ.get("EVERY", "1")))
+    if MODE == "tailcompare":
+        cam = stage(col)
+        res = {}
+        for make in (clip_tail, clip_tail_right):
+            clip = make()
+            times, poses = clip_frames(rg, clip)
+            f = round(0.8 * FPS)
+            show(rg, rig, *poses[f])
+            X = rg.solve(dict(poses[f][0]), poses[f][1])
+            tip = X["Tail7"] @ R.TAIL[7]
+            for view in ("top", "wide_r" if make is clip_tail else "wide"):
+                eye, target, lens = VIEWS[view]
+                ck.shot(cam, os.path.join(OUT, f"tailcmp_{clip.name}_{view}.png"), eye, target, lens, (900, 600))
+            res[clip.name] = {"tip_0.8": [round(c * STUDS, 1) for c in tip]}
+        rep = run_check(rig, rg, [clip_tail, clip_tail_right], every=1)
+        for k in res:
+            c = rep["clips"][k]
+            res[k].update(radius=c["radius_studs"], arena_ok=c["arena_ok"],
+                          flags={kk: (v["base"], v["max"], v["frames"]) for kk, v in c["flags"].items()})
+        with open(os.path.join(OUT, "tail_compare.json"), "w", encoding="utf-8") as fh:
+            json.dump(res, fh, ensure_ascii=False, indent=1)
+        print("TAILCMP", json.dumps(res, ensure_ascii=False), flush=True)
+    if MODE == "volley":
+        volley_scenes(col, rig, rg, "cinematic", os.environ.get("VIEW", "volley_wide"), RES)
+    if MODE == "dodge":
+        volley_scenes(col, rig, rg, ",".join(ONLY), os.environ.get("VIEW", "dodge"), RES)
+    if MODE == "rigdemo":
+        rig_demo(col, rig, rg)
+    if MODE == "strips":
+        strips(col, rig, rg, chosen)
+    if MODE in ("render", "all"):
+        render_clips(col, rig, rg, chosen)
+    if MODE in ("blend", "all"):
+        bake_blend(col, rig, rg, CLIPS, os.path.join(OUT, "boss10_v7_rig.blend"))
+    print("DONE", round(time.time() - t0, 1), flush=True)

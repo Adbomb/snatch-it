@@ -1,0 +1,252 @@
+{
+ "id": "BlazeOstrich",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "WingL",
+  "WingR",
+  "Fan",
+  "Neck",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1996,
+    0.0
+   ],
+   "size": [
+    3.2,
+    0.3992,
+    3.2
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.22,
+    1.76,
+    -0.05
+   ],
+   "center": [
+    -0.0238,
+    -0.6995,
+    0.055
+   ],
+   "size": [
+    0.2124,
+    1.441,
+    0.75
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.22,
+    1.76,
+    -0.05
+   ],
+   "center": [
+    0.0243,
+    -0.5356,
+    0.135
+   ],
+   "size": [
+    0.2115,
+    1.1288,
+    0.91
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.76,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    0.24,
+    -0.02
+   ],
+   "size": [
+    1.04,
+    0.72,
+    1.1
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    -0.5,
+    2.09,
+    -0.05
+   ],
+   "center": [
+    -0.0792,
+    -0.0606,
+    -0.01
+   ],
+   "size": [
+    0.3138,
+    0.4118,
+    0.76
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    0.5,
+    2.09,
+    -0.05
+   ],
+   "center": [
+    0.0792,
+    -0.0606,
+    -0.01
+   ],
+   "size": [
+    0.3138,
+    0.4118,
+    0.76
+   ]
+  },
+  "Fan": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.04,
+    -0.58
+   ],
+   "center": [
+    0.0037,
+    0.7631,
+    -0.4418
+   ],
+   "size": [
+    2.3928,
+    1.9387,
+    1.2014
+   ]
+  },
+  "Neck": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.32,
+    0.28
+   ],
+   "center": [
+    0.0,
+    0.4538,
+    0.0633
+   ],
+   "size": [
+    0.1872,
+    0.9834,
+    0.2964
+   ]
+  },
+  "Head": {
+   "parent": "Neck",
+   "pivot": [
+    0.0,
+    3.26,
+    0.38
+   ],
+   "center": [
+    0.0,
+    0.23,
+    0.14
+   ],
+   "size": [
+    0.4689,
+    0.5,
+    0.68
+   ]
+  }
+ },
+ "demo_pose": {
+  "Fan": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    -30,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Neck": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

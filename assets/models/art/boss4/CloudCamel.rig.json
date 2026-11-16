@@ -1,0 +1,278 @@
+{
+ "id": "CloudCamel",
+ "order": [
+  "Stand",
+  "Puddle",
+  "Body",
+  "LegFL",
+  "LegFR",
+  "LegBL",
+  "LegBR",
+  "Tail",
+  "Head",
+  "Cloud",
+  "Rain"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1996,
+    0.0
+   ],
+   "size": [
+    3.4,
+    0.3992,
+    3.4
+   ]
+  },
+  "Puddle": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.34,
+    0.0
+   ],
+   "center": [
+    -0.025,
+    0.0275,
+    -0.05
+   ],
+   "size": [
+    2.45,
+    0.055,
+    1.7
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.34,
+    0.0
+   ],
+   "center": [
+    -0.1677,
+    0.54,
+    0.0
+   ],
+   "size": [
+    1.9353,
+    1.16,
+    0.76
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    -0.56,
+    1.34,
+    0.22
+   ],
+   "center": [
+    0.0,
+    -0.46,
+    0.03
+   ],
+   "size": [
+    0.3,
+    1.04,
+    0.34
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    -0.56,
+    1.34,
+    -0.22
+   ],
+   "center": [
+    0.0,
+    -0.46,
+    0.03
+   ],
+   "size": [
+    0.3,
+    1.04,
+    0.34
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    0.54,
+    1.34,
+    0.22
+   ],
+   "center": [
+    -0.0,
+    -0.46,
+    0.03
+   ],
+   "size": [
+    0.3,
+    1.04,
+    0.34
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    0.54,
+    1.34,
+    -0.22
+   ],
+   "center": [
+    -0.0,
+    -0.46,
+    0.03
+   ],
+   "size": [
+    0.3,
+    1.04,
+    0.34
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.78,
+    1.78,
+    0.0
+   ],
+   "center": [
+    0.102,
+    -0.2746,
+    -0.02
+   ],
+   "size": [
+    0.276,
+    0.5708,
+    0.2
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    -0.98,
+    2.36,
+    0.06
+   ],
+   "center": [
+    -0.1488,
+    0.3041,
+    0.1139
+   ],
+   "size": [
+    1.1208,
+    0.9531,
+    1.0653
+   ]
+  },
+  "Cloud": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    3.24,
+    0.0
+   ],
+   "center": [
+    -0.03,
+    0.238,
+    0.021
+   ],
+   "size": [
+    1.78,
+    0.796,
+    0.718
+   ]
+  },
+  "Rain": {
+   "parent": "Cloud",
+   "pivot": [
+    0.0,
+    3.04,
+    0.0
+   ],
+   "center": [
+    -0.0391,
+    -0.495,
+    0.0225
+   ],
+   "size": [
+    1.7941,
+    0.83,
+    0.8668
+   ]
+  }
+ },
+ "demo_pose": {
+  "Cloud": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0.1,
+    0,
+    0.1
+   ]
+  },
+  "Rain": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    -0.15
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -14,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

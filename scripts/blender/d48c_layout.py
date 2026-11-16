@@ -20,11 +20,13 @@ import sys
 HW, FZ, BZ, T = 18.0, -12.7, 20.7, 1.4
 IX, IZ0, IZ1 = HW - T, FZ + T, BZ - T  # −16.6…16.6, −11.3…19.3
 CEIL, DOOR, DOORH = 16.0, 6.0, 10.0
-PV_X, PV_Z0, PV_Z1, PV_H = 4.4, 2.4, 11.6, 9.0  # павильон над лестницей
+# Этап C.2 (крупные аватары): проём портала 7.1 → 9.5, павильон 9 → 11.4 и длиннее на 3 (z1 11.6 → 14.6)
+PV_X, PV_Z0, PV_Z1, PV_H = 4.4, 2.4, 14.6, 11.4  # павильон над лестницей
+PV_OPEN = 9.5  # высота проёма портала павильона
 ST0, STW, STEPS = 3.0, 2.6, 12  # лестница: верх у z 3, полуширина, ступеней по 1 × 1 вниз к +z
 G, SLAB = -1.3, 1.4  # трава от пола зала; толщина плиты пола зала (она же потолок хранилища)
 VF, VCEIL = -13.0, -1.8  # пол хранилища; низ потолка хранилища
-WELL_X, WELL_Z1 = 2.8, 11.0  # проём лестницы в полу зала: |x| < 2.8, z ST0…11
+WELL_X, WELL_Z1 = 2.8, 14.0  # проём лестницы в полу зала: |x| < 2.8, z ST0…14 (C.2: было 11)
 PORTICO_Z = -23.0  # передний край портика (нижняя ступень)
 
 # ── Места ───────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -50,7 +52,7 @@ PLANTER_BUSH = 2.0
 ARCH_Z0, ARCH_Z1, ARCH_H = -10.8, -6.0, 8.0  # арка в боковой стене входного зала
 
 CHEST = {"center": (-9.0, -9.7), "size": (4.0, 3.0, 3.0), "face": (0, 0, 1)}  # было x −12: освобождает арку
-STAND = {"center": (9.0, -9.6)}
+STAND = {"center": (9.0, -9.6)}  # стойка у входа — в игре не ставится (C.2, просьба владельца: пустая табличка); для d48c_museum.py
 LASERS = {"Entrance": {"z": -8.6, "length": 12.0, "y": 2.4}, "Gallery": {"z": -6.4, "length": 9.2, "y": 2.4}}
 
 
@@ -90,7 +92,7 @@ def defense_zones(level):
     Итоговая проверка в игре — DefenseRules (ShowcaseClear 4.6 от центра постамента, DeviceGap 4)."""
     allowed = [
         (-10.2, -5.0, -4.5, 18.8), (5.0, 10.2, -4.5, 18.8),  # боковые проходы вдоль павильона
-        (-4.6, 4.6, 12.2, 18.8),  # задний проход за павильоном
+        (-4.6, 4.6, PV_Z1 + 0.6, 18.8),  # задний проход за павильоном (C.2: павильон длиннее, был от 12.2)
     ]
     forbidden = [
         (-3.6, 3.6, IZ0, PV_Z0), (-4.8, 4.8, PV_Z0 - 0.4, PV_Z1 + 0.4),  # дорожка и павильон
@@ -113,14 +115,14 @@ def layout():
         "units": "studs, plot axes (y up, entrance −Z)",
         "hall": {"half_width": HW, "front": FZ, "back": BZ, "ceiling": CEIL, "door": [2 * DOOR, DOORH],
                  "wall": T, "ground": G, "slab": SLAB, "portico": PORTICO_Z},
-        "pavilion": {"half_x": PV_X, "z0": PV_Z0, "z1": PV_Z1, "height": PV_H},
+        "pavilion": {"half_x": PV_X, "z0": PV_Z0, "z1": PV_Z1, "height": PV_H, "opening": PV_OPEN},
         "stair": {"top_z": ST0, "half_width": STW, "steps": STEPS, "well_x": WELL_X, "well_z1": WELL_Z1},
         "vault": {"floor": VF, "ceiling": VCEIL},
         "gallery": {"x_in": GAL_IN, "x_out": GAL_OUT, "z0": GAL_Z0, "z1": GAL_Z1, "height": GAL_H,
                     "eave": GAL_EAVE, "planter": list(PLANTER), "arch": [ARCH_Z0, ARCH_Z1, ARCH_H],
                     "level": GALLERY_LEVEL},
         "showcase": {"top": TOP, "base": BASE, "height": 3.0},
-        "places": places(), "chest": CHEST, "stand": STAND, "lasers": LASERS,
+        "places": places(), "chest": CHEST, "lasers": LASERS,
         "slots": {"d37": [slots_d37(level) for level in range(1, 11)],
                   "compat": [slots_compat(level) for level in range(1, 11)]},
         "defense": {str(level): defense_zones(level) for level in (1, 10)},

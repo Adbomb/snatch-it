@@ -1,0 +1,152 @@
+{
+ "id": "DustDevil",
+ "order": [
+  "Stand",
+  "TierLow",
+  "Body",
+  "TierHigh",
+  "Loot"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.4,
+    2.9944
+   ]
+  },
+  "TierLow": {
+   "parent": "Stand",
+   "pivot": [
+    0.09,
+    0.3,
+    0.0
+   ],
+   "center": [
+    -0.1462,
+    0.46,
+    -0.0503
+   ],
+   "size": [
+    0.9019,
+    0.92,
+    0.8406
+   ]
+  },
+  "Body": {
+   "parent": "TierLow",
+   "pivot": [
+    -0.0869,
+    1.2,
+    0.0
+   ],
+   "center": [
+    0.0693,
+    0.31,
+    0.0217
+   ],
+   "size": [
+    1.1639,
+    0.62,
+    1.2034
+   ]
+  },
+  "TierHigh": {
+   "parent": "Body",
+   "pivot": [
+    0.0737,
+    1.8,
+    0.0
+   ],
+   "center": [
+    0.0208,
+    0.06,
+    0.0
+   ],
+   "size": [
+    1.6131,
+    1.12,
+    1.58
+   ]
+  },
+  "Loot": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.52,
+    0.0
+   ],
+   "center": [
+    -0.0124,
+    0.1734,
+    -0.0398
+   ],
+   "size": [
+    2.6032,
+    1.9773,
+    2.196
+   ]
+  }
+ },
+ "demo_pose": {
+  "TierLow": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    30
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "TierHigh": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -35
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Loot": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    60
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

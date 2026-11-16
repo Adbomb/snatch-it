@@ -58,6 +58,7 @@ G, VF, SLAB, VCEIL = L.G, L.VF, L.SLAB, L.VCEIL  # числа — в d48c_layout
 ST0, STW = L.ST0, L.STW
 WELL_X, WELL_Z1 = L.WELL_X, L.WELL_Z1
 PV_X, PV_Z0, PV_Z1, PV_H = L.PV_X, L.PV_Z0, L.PV_Z1, L.PV_H
+PV_OPEN = L.PV_OPEN  # высота проёма портала (C.2: 7.1 → 9.5)
 PORTICO_Z = L.PORTICO_Z
 B1 = 0.12  # фаска крупных деталей
 B2 = 0.06  # фаска мелких деталей
@@ -236,13 +237,15 @@ def build_urn():
 # ── 4. Павильон хранилища: портал, круглая дверь (открыта, декор), решётка доступа (створки), сканер ─────────────
 def build_pavilion():
     m = model("D48_Pavilion")
-    for x0, x1, y0, y1 in ((-PV_X, -STW, 0, 7.2), (STW, PV_X, 0, 7.2), (-PV_X, PV_X, 7.2, PV_H)):
+    top = PV_OPEN + 0.1  # низ перемычки
+    for x0, x1, y0, y1 in ((-PV_X, -STW, 0, top), (STW, PV_X, 0, top), (-PV_X, PV_X, top, PV_H)):
         bx(m, "d48steel", x0, x1, y0, y1, PV_Z0, PV_Z0 + 0.6, bevel=0.08)
-    for x0, x1, y0, y1 in ((-STW - 0.3, -STW, 0, 7.5), (STW, STW + 0.3, 0, 7.5), (-STW - 0.3, STW + 0.3, 7.2, 7.5)):
+    for x0, x1, y0, y1 in ((-STW - 0.3, -STW, 0, top + 0.3), (STW, STW + 0.3, 0, top + 0.3),
+                           (-STW - 0.3, STW + 0.3, top, top + 0.3)):
         bx(m, "d48gold", x0, x1, y0, y1, PV_Z0 - 0.15, PV_Z0 + 0.1, bevel=B2)
     for sx in (-1, 1):
-        glow(m, "d48cyan", sx * 3.3 - 0.1, sx * 3.3 + 0.1, 0.5, 6.8, PV_Z0 - 0.1, PV_Z0)
-    bx(m, "d48navydark", -3.3, 3.3, 7.75, 8.75, PV_Z0 - 0.15, PV_Z0, bevel=B2)
+        glow(m, "d48cyan", sx * 3.3 - 0.1, sx * 3.3 + 0.1, 0.5, PV_OPEN - 0.3, PV_Z0 - 0.1, PV_Z0)
+    bx(m, "d48navydark", -3.3, 3.3, PV_OPEN + 0.65, PV_OPEN + 1.65, PV_Z0 - 0.15, PV_Z0, bevel=B2)
     bx(m, "d48steel", -PV_X, -PV_X + 0.6, 0, PV_H, PV_Z0 + 0.6, PV_Z1 - 0.6, bevel=0.08)
     bx(m, "d48steel", PV_X - 0.6, PV_X, 0, PV_H, PV_Z0 + 0.6, PV_Z1 - 0.6, bevel=0.08)
     bx(m, "d48steel", -PV_X, PV_X, 0, PV_H, PV_Z1 - 0.6, PV_Z1, bevel=0.08)
@@ -277,7 +280,7 @@ def build_gate_leaf():
     """Створка дневной решётки хранилища (одна на обе стороны, вторая повёрнута на 180°): рама, прутья, эмблема.
     Начало — нижний внутренний угол у середины проёма; закрыта — стоит в проёме, открыта — уезжает в стену."""
     m = model("D48_GateLeaf")
-    w, h = STW - 0.05, 7.1
+    w, h = STW - 0.05, PV_OPEN
     bx(m, "d48steeldark", 0, w, 0, 0.3, -0.1, 0.1, bevel=0.04)
     bx(m, "d48steeldark", 0, w, h - 0.3, h, -0.1, 0.1, bevel=0.04)
     bx(m, "d48steeldark", 0, 0.25, 0, h, -0.1, 0.1, bevel=0.04)
@@ -331,13 +334,8 @@ def build_chest():
             bx(m, "d48gold", cxx - 0.18, cxx + 0.18, 0, 0.5, czz - 0.18, czz + 0.18, bevel=0.04)
 
 
-def build_stand():
-    m = model("D48_Stand")
-    bx(m, "d48navy", -0.9, 0.9, 0, 0.6, -0.7, 0.7, bevel=0.08)
-    m.cylinder("Body", (0, 1.8, 0), 0.3, 2.4, "d48gold", segments=16, bevel=0.04)
-    rot = Matrix.Rotation(math.radians(-20), 4, "X")
-    m.box("Body", (0, 3.8, 0.1), (3.2, 2.0, 0.25), "d48navydark", bevel=0.06, rotation=rot)
-    m.box("Glow", (0, 3.85, 0.27), (2.9, 1.7, 0.05), "d48screen", bevel=0, rotation=rot)
+# D48_Stand (стойка с пустым экраном у входа) убрана — этап C.2, решение владельца 2026-11-16: модуль не строится
+# и не ставится (в уже выгруженном Pack3_d48 его меш остаётся до пересборки пакета, но раскладка его не ставит).
 
 
 # ── 7. Галереи (с уровня 5): оболочка, 6 ниш у наружной стены, клумба снаружи ──────────────────────────────────
@@ -513,7 +511,6 @@ build_gate_leaf()
 build_scanner()
 build_stair()
 build_chest()
-build_stand()
 build_vault()
 
 lib = K.coll("Library")
@@ -563,7 +560,7 @@ def placements(level):
            ("D48_Archive", (-IX + 0.25, VF, -6.0), 0), ("D48_Archive", (-IX + 0.25, VF, 9.0), 0),
            ("D48_Lockers", (-11.9, VF, IZ0), 0), ("D48_Lockers", (4.0, VF, IZ0), 0),
            ("D48_Chest", (L.CHEST["center"][0], 0, L.CHEST["center"][1]), 0),
-           ("D48_Stand", (L.STAND["center"][0], 0, L.STAND["center"][1]), 0),
+           # D48_Stand (стойка с пустой табличкой у входа) не ставится — этап C.2, просьба владельца
            ("D48_GateLeaf", (-STW + 0.02, 0, PV_Z0 + 0.3), 0), ("D48_GateLeaf", (STW - 0.02, 0, PV_Z0 + 0.3), 180),
            ("D48_Scanner", (-PV_X + 0.95, 2.6, PV_Z0 - 0.15), 0)]
     for sx, tag in ((-1, "L"), (1, "R")):
@@ -661,7 +658,7 @@ GROUP_OF = {"D48_VaultShell": "Vault", "D48_Safe": "Vault", "D48_Terminal": "Vau
             "D48_Archive": "Vault", "D48_Lockers": "VaultFront", "D48_Stair": "Stair", "D48_Hall": "Hall",
             "D48_Pavilion": "Pavilion", "D48_GateLeaf": "Gate", "D48_Scanner": "Pavilion", "D48_Roof": "Roof",
             "D48_GalleryRoof_L": "Roof", "D48_GalleryRoof_R": "Roof",
-            "D48_Chest": "Hall", "D48_Stand": "Hall"}
+            "D48_Chest": "Hall"}
 
 
 def place_scene(level):

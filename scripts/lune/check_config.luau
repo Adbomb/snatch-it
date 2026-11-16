@@ -36,7 +36,11 @@ local POSES = {
 	"bark2",
 	"dizzy",
 }
-local COLLECTIONS = { [1] = { Common = 8, Rare = 8, Epic = 4 }, [2] = { Common = 12, Rare = 10, Epic = 8 } }
+local COLLECTIONS = {
+	[1] = { Common = 8, Rare = 8, Epic = 4 },
+	[2] = { Common = 12, Rare = 10, Epic = 8 },
+	[4] = { Common = 12, Rare = 9, Epic = 6, Legendary = 3 }, -- D57
+}
 
 local failed = 0
 local function check(ok: boolean, message: string)
@@ -66,14 +70,16 @@ for boss, want in COLLECTIONS do
 	end
 	check(
 		same,
-		("босс %d: Common %d, Rare %d, Epic %d (нужно %d/%d/%d)"):format(
+		("босс %d: Common %d, Rare %d, Epic %d, Legendary %d (нужно %d/%d/%d/%d)"):format(
 			boss,
 			got.Common or 0,
 			got.Rare or 0,
 			got.Epic or 0,
+			got.Legendary or 0,
 			want.Common,
 			want.Rare,
-			want.Epic
+			want.Epic,
+			want.Legendary or 0
 		)
 	)
 	check(
@@ -585,6 +591,19 @@ do
 			end
 		end
 	end
+	-- D57: средние доходы 30 существ босса 4 по редкостям = утверждённые средние D56 (ByBoss[4])
+	local sum4, n4 = {}, {}
+	for _, def in Items do
+		if type(def) == "table" and def.boss == 4 and not def.legacy then
+			sum4[def.rarity] = (sum4[def.rarity] or 0) + def.income
+			n4[def.rarity] = (n4[def.rarity] or 0) + 1
+		end
+	end
+	local mean4Ok = true
+	for rarity, want4 in income.ByBoss[4] do
+		mean4Ok = mean4Ok and n4[rarity] ~= nil and math.abs(sum4[rarity] / n4[rarity] - want4) < 0.5
+	end
+	check(mean4Ok, "босс 4: средние доходы существ по редкостям = D56 (349 / 1 130 / 4 620 / 13 860, D57)")
 	check(
 		incomeOk and worst < 0.002,
 		("доходы существ боссов 4–10 — по правилу ×3.2 за уровень (расхождение с таблицей ≤ %.3f %%)"):format(

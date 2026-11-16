@@ -1,0 +1,171 @@
+{
+ "id": "CobraFountain",
+ "order": [
+  "Stand",
+  "Bowl",
+  "Body",
+  "Hood",
+  "Head",
+  "Stream"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Bowl": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.22,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.34,
+    0.0
+   ],
+   "size": [
+    2.08,
+    0.68,
+    2.08
+   ]
+  },
+  "Body": {
+   "parent": "Bowl",
+   "pivot": [
+    0.0,
+    0.86,
+    -0.15
+   ],
+   "center": [
+    0.0136,
+    0.4374,
+    -0.0179
+   ],
+   "size": [
+    1.4892,
+    1.2034,
+    1.3386
+   ]
+  },
+  "Hood": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.82,
+    -0.02
+   ],
+   "center": [
+    0.0,
+    0.2584,
+    -0.0225
+   ],
+   "size": [
+    1.2361,
+    1.1168,
+    0.195
+   ]
+  },
+  "Head": {
+   "parent": "Hood",
+   "pivot": [
+    0.0,
+    1.92,
+    0.1
+   ],
+   "center": [
+    0.0,
+    0.265,
+    0.145
+   ],
+   "size": [
+    0.48,
+    0.39,
+    0.45
+   ]
+  },
+  "Stream": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    2.08,
+    0.42
+   ],
+   "center": [
+    0.4304,
+    -0.4798,
+    0.2661
+   ],
+   "size": [
+    0.8591,
+    1.4429,
+    0.6277
+   ]
+  }
+ },
+ "demo_pose": {
+  "Hood": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    8,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Stream": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    6
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

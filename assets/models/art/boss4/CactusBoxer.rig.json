@@ -1,0 +1,202 @@
+{
+ "id": "CactusBoxer",
+ "order": [
+  "Stand",
+  "Body",
+  "LegL",
+  "LegR",
+  "ArmL",
+  "ArmR",
+  "Flower"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    0.28,
+    2.8978
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.62,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.84,
+    0.0897
+   ],
+   "size": [
+    1.8188,
+    1.76,
+    1.7481
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    -0.32,
+    0.62,
+    0.0
+   ],
+   "center": [
+    -0.0,
+    -0.19,
+    0.09
+   ],
+   "size": [
+    0.38,
+    0.42,
+    0.58
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    0.32,
+    0.62,
+    0.0
+   ],
+   "center": [
+    -0.0,
+    -0.19,
+    0.09
+   ],
+   "size": [
+    0.38,
+    0.42,
+    0.58
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.74,
+    1.47,
+    0.1
+   ],
+   "center": [
+    -0.2268,
+    0.17,
+    0.5076
+   ],
+   "size": [
+    0.7264,
+    0.58,
+    1.1647
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.74,
+    1.47,
+    0.1
+   ],
+   "center": [
+    0.075,
+    0.3394,
+    0.4698
+   ],
+   "size": [
+    0.67,
+    0.8611,
+    1.0603
+   ]
+  },
+  "Flower": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.32,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.132,
+    -0.0
+   ],
+   "size": [
+    0.7391,
+    0.3039,
+    0.7391
+   ]
+  }
+ },
+ "demo_pose": {
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -18
+   ],
+   "offset_blender": [
+    0,
+    -0.12,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Flower": {
+   "rot_xyz_blender_deg": [
+    0,
+    18,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.1
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    -14,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

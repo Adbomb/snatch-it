@@ -1,0 +1,202 @@
+{
+ "id": "MeerkatLookout",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head",
+  "ArmR",
+  "Spyglass",
+  "ArmL"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.608,
+    0.28,
+    2.608
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.42,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    0.58,
+    0.1
+   ],
+   "size": [
+    0.66,
+    1.56,
+    0.74
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.62,
+    -0.24
+   ],
+   "center": [
+    0.1256,
+    -0.1706,
+    -0.4833
+   ],
+   "size": [
+    0.4181,
+    0.4413,
+    1.0663
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.76,
+    0.02
+   ],
+   "center": [
+    0.0,
+    0.27,
+    0.155
+   ],
+   "size": [
+    0.72,
+    0.5,
+    0.75
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    0.26,
+    1.58,
+    0.04
+   ],
+   "center": [
+    0.0447,
+    0.1739,
+    0.1338
+   ],
+   "size": [
+    0.2305,
+    0.4121,
+    0.3725
+   ]
+  },
+  "Spyglass": {
+   "parent": "ArmR",
+   "pivot": [
+    0.2,
+    2.06,
+    0.36
+   ],
+   "center": [
+    0.3984,
+    0.026,
+    0.2597
+   ],
+   "size": [
+    0.8636,
+    0.2504,
+    0.6328
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    -0.26,
+    1.58,
+    0.04
+   ],
+   "center": [
+    -0.0041,
+    0.3321,
+    0.1566
+   ],
+   "size": [
+    0.3797,
+    0.7118,
+    0.4489
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Spyglass": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.12
+   ]
+  }
+ }
+}

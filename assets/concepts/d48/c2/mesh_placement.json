@@ -125,15 +125,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -371,15 +362,6 @@
       -9.0,
       0,
       -9.7
-     ],
-     "yaw": 0
-    },
-    {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
      ],
      "yaw": 0
     },
@@ -625,15 +607,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -875,15 +848,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -1121,15 +1085,6 @@
       -9.0,
       0,
       -9.7
-     ],
-     "yaw": 0
-    },
-    {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
      ],
      "yaw": 0
     },
@@ -1519,15 +1474,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -1909,15 +1855,6 @@
       -9.0,
       0,
       -9.7
-     ],
-     "yaw": 0
-    },
-    {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
      ],
      "yaw": 0
     },
@@ -2307,15 +2244,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -2701,15 +2629,6 @@
      "yaw": 0
     },
     {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
-     ],
-     "yaw": 0
-    },
-    {
      "model": "D48_GateLeaf",
      "position": [
       -2.58,
@@ -3091,15 +3010,6 @@
       -9.0,
       0,
       -9.7
-     ],
-     "yaw": 0
-    },
-    {
-     "model": "D48_Stand",
-     "position": [
-      9.0,
-      0,
-      -9.6
      ],
      "yaw": 0
     },

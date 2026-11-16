@@ -17,6 +17,7 @@ local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
 local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
 local SubwayStation = Env.Require("ServerScriptService.Server.World.Models.SubwayStation")
+local DesertOasis = Env.Require("ServerScriptService.Server.World.Models.DesertOasis")
 
 local Battle = Env.Require("ReplicatedStorage.Shared.Config.Battle")
 
@@ -56,19 +57,33 @@ local fleaBricks, fleaSigns = FleaMarket.Zone()
 local flea = placed(2, fleaBricks)
 local subwayBricks, subwaySigns = SubwayStation.Zone()
 local subway = placed(3, subwayBricks)
+local desertBricks, desertSigns = DesertOasis.Zone()
+local desert = placed(4, desertBricks)
 
 print("Грани (D36):")
 local groups = {
 	{ name = "Junk", bricks = junk },
 	{ name = "Flea", bricks = flea },
 	{ name = "Subway", bricks = subway },
-	{ name = "Floor", bricks = { floorOf(1), floorOf(2), floorOf(3) } },
+	{ name = "Desert", bricks = desert },
+	{ name = "Floor", bricks = { floorOf(1), floorOf(2), floorOf(3), floorOf(4) } },
 }
 local pairsCount, found = FaceCheck.Scan(Env.FakeRoot(groups))
 for key, group in found do
 	print(("    %s: %d (%s)"):format(key, group.n, group.example))
 end
 check(pairsCount == 0, ("видимых пар совпадающих граней: %d"):format(pairsCount))
+-- то же для повёрнутых брусков, клиньев и торцов цилиндров (вывески под наклоном, ромбы, диски)
+local anyCount, anyFound = FaceCheck.ScanAny(Env.FakeRoot(groups))
+for key, group in anyFound do
+	print(("    ∠ %s: %d (%s)"):format(key, group.n, group.example))
+end
+check(
+	anyCount == 0,
+	("видимых пар совпадающих граней под углом и у дисков: %d"):format(
+		anyCount
+	)
+)
 
 -- Проверки зоны с площадкой босса: zone — номер, flea — кирпичи в мировых координатах, fleaBricks — в координатах
 -- зоны, signs — надписи (имена переменных — от первой такой зоны, «Барахолки»).
@@ -82,7 +97,10 @@ local function checkArenaZone(zone: number, title: string, flea: { any }, fleaBr
 			lights += 1
 		end
 	end
-	check(lights <= ZONE_LIGHTS, ("источников света: %d (не больше %d)"):format(lights, ZONE_LIGHTS))
+	check(
+		lights <= ZONE_LIGHTS,
+		("источников света: %d (не больше %d)"):format(lights, ZONE_LIGHTS)
+	)
 
 	-- Круг площадки — только плоский пол: бою ничего не мешает. Локальные координаты зоны: начало — центр пола.
 	local arena = MapLayout.Arenas[zone]
@@ -318,13 +336,145 @@ local function checkArenaZone(zone: number, title: string, flea: { any }, fleaBr
 	end
 	check(
 		#points == 4 and onArena,
-		("слотов босса %d на площадке (высота %.2f): %d из 4"):format(zone, arena.top, #points)
+		("слотов босса %d на площадке (высота %.2f): %d из 4"):format(
+			zone,
+			arena.top,
+			#points
+		)
 	)
 	check(distinct == 4, ("разных поворотов предметов: %d из 4"):format(distinct))
 end
 
 checkArenaZone(2, "Барахолка", flea, fleaBricks, fleaSigns)
 checkArenaZone(3, "Подземка", subway, subwayBricks, subwaySigns)
+checkArenaZone(4, "Пустыня", desert, desertBricks, desertSigns)
+
+-- «Храм спящего Сфинкса» (D60): по обе стороны от арены и храма — свободный путь к следующей зоне вдоль всей зоны
+-- (полосы |x| DesertOasis.Lane): ни одной твёрдой детали выше пола (0.3 — мощение) и ниже 7 (листья пальм выше
+-- головы не мешают) и обход храма за его крыльями (DesertOasis.Bypass); храм и всё высокое — вне круга боя.
+do
+	local lane, bypass = DesertOasis.Lane, DesertOasis.Bypass
+	local frame = MapLayout.ZoneCFrame(4) -- кирпичи уже в мировых координатах (placed): обратно в координаты зоны
+	local blocked, around = {}, {}
+	for _, brick in desert do
+		if brick.collide ~= false then
+			local cf, size = frame:ToObjectSpace(brick.cframe), brick.size
+			local function half(axis: string): number
+				return (
+					math.abs(cf.RightVector[axis]) * size.X
+					+ math.abs(cf.UpVector[axis]) * size.Y
+					+ math.abs(cf.LookVector[axis]) * size.Z
+				) / 2
+			end
+			local p = cf.Position
+			-- |x| детали — от lo до hi (у детали через ось lo < 0)
+			local lo, hi = math.abs(p.X) - half("X"), math.abs(p.X) + half("X")
+			local solid = p.Y - half("Y") < 7 and p.Y + half("Y") > 0.3
+			if solid and hi > lane[1] and lo < lane[2] then
+				table.insert(blocked, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+			end
+			-- обход храма: полоса за крыльями до выхода зоны
+			if
+				solid
+				and hi > bypass[1]
+				and lo < bypass[2]
+				and p.Z + half("Z") > bypass[3]
+				and p.Z - half("Z") < bypass[4]
+			then
+				table.insert(around, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+			end
+		end
+	end
+	check(
+		#blocked == 0,
+		("Пустыня: путь |x| %d–%d вдоль зоны свободен"):format(lane[1], lane[2])
+			.. (if #blocked > 0 then ": " .. table.concat(blocked, "; ", 1, math.min(#blocked, 5)) else "")
+	)
+	check(
+		#around == 0,
+		("Пустыня: обход храма |x| %.1f–%d (z %d–%.1f) к следующей зоне свободен"):format(
+			bypass[1],
+			bypass[2],
+			bypass[3],
+			bypass[4]
+		) .. (if #around > 0 then ": " .. table.concat(around, "; ", 1, math.min(#around, 5)) else "")
+	)
+end
+
+-- Пути от босса к следующему уровню (запрос владельца 2026-11-14): на видимых дорожках «Барахолки» (в обход горы
+-- сокровищ к выходу) и «Подземки» (по бокам: от входа к площадке и от неё к выходу в обход киоска) нет твёрдых деталей
+-- выше пола (0.3) и ниже 7.
+local function pathFree(zone: number, title: string, bricks: { any }, u0: number, u1: number, z0: number, z1: number)
+	local frame = MapLayout.ZoneCFrame(zone)
+	local blocked = {}
+	for _, brick in bricks do
+		if brick.collide ~= false then
+			local cf, size = frame:ToObjectSpace(brick.cframe), brick.size
+			local function half(axis: string): number
+				return (
+					math.abs(cf.RightVector[axis]) * size.X
+					+ math.abs(cf.UpVector[axis]) * size.Y
+					+ math.abs(cf.LookVector[axis]) * size.Z
+				) / 2
+			end
+			local p = cf.Position
+			local lo, hi = math.abs(p.X) - half("X"), math.abs(p.X) + half("X")
+			local solid = p.Y - half("Y") < 7 and p.Y + half("Y") > 0.3
+			if solid and hi > u0 and lo < u1 and p.Z + half("Z") > z0 and p.Z - half("Z") < z1 then
+				table.insert(blocked, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+			end
+		end
+	end
+	check(
+		#blocked == 0,
+		("%s: путь |x| %.1f–%.1f (z %.1f–%.1f) к следующему уровню свободен"):format(
+			title,
+			u0,
+			u1,
+			z0,
+			z1
+		) .. (if #blocked > 0 then ": " .. table.concat(blocked, "; ", 1, math.min(#blocked, 5)) else "")
+	)
+end
+do
+	local exit = FleaMarket.Exit
+	local back = MapLayout.BossSpot.Y + MapLayout.Arenas[2].radius + 3
+	pathFree(2, "Барахолка", flea, exit.inner, exit.outer, back + 2, MapLayout.ZoneSize / 2)
+	pathFree(2, "Барахолка", flea, 0, exit.inner, back, back + 6)
+	local way = SubwayStation.Way
+	pathFree(3, "Подземка", subway, way.inner, way.outer, -MapLayout.ZoneSize / 2, MapLayout.ZoneSize / 2)
+end
+
+-- Скалы у стен обрыва (D60): с твёрдой детали у стен (|x| > 76) не допрыгнуть до кромки обрыва (верх травы 32.7 над
+-- полом зоны, прыжок ≈ 6.4) — верх твёрдой детали не выше 24; верхние ярусы скал — без столкновений.
+do
+	local frame = MapLayout.ZoneCFrame(4)
+	local high = {}
+	for _, brick in desert do
+		if brick.collide ~= false then
+			local cf, size = frame:ToObjectSpace(brick.cframe), brick.size
+			local halfX = (
+				math.abs(cf.RightVector.X) * size.X
+				+ math.abs(cf.UpVector.X) * size.Y
+				+ math.abs(cf.LookVector.X) * size.Z
+			) / 2
+			local halfY = (
+				math.abs(cf.RightVector.Y) * size.X
+				+ math.abs(cf.UpVector.Y) * size.Y
+				+ math.abs(cf.LookVector.Y) * size.Z
+			) / 2
+			local p = cf.Position
+			if math.abs(p.X) + halfX > 76 and p.Y + halfY > 24 then
+				table.insert(high, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y + halfY, p.Z))
+			end
+		end
+	end
+	check(
+		#high == 0,
+		"Пустыня: у стен нет твёрдых уступов выше 24 (за кромку обрыва не запрыгнуть)"
+			.. (if #high > 0 then ": " .. table.concat(high, "; ", 1, math.min(#high, 5)) else "")
+	)
+end
 
 if failed > 0 then
 	print(("Проверок не прошло: %d"):format(failed))

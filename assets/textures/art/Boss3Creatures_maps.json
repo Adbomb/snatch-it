@@ -1,0 +1,122 @@
+{
+ "LiveCheeseMonster": {
+  "normal": 128049784807675,
+  "color": 85541086388529
+ },
+ "PizzaRat": {
+  "color": 123530245809974,
+  "normal": 109561945481253
+ },
+ "RunawayTicket": {
+  "color": 90745006713363,
+  "normal": 132089327603460
+ },
+ "RatKnight": {
+  "normal": 114983401517739,
+  "color": 127447414760689
+ },
+ "MutantSoda": {
+  "normal": 107641403884518,
+  "color": 137451112667416
+ },
+ "SubwaySnail": {
+  "normal": 117097283188093,
+  "color": 107686900629363
+ },
+ "WalkingSuitcase": {
+  "normal": 112125157445716,
+  "color": 70757450054522
+ },
+ "AngryAlarmClock": {
+  "normal": 71054109435360,
+  "color": 83652812477505
+ },
+ "SneakerTenant": {
+  "normal": 83366388919430,
+  "color": 131897987560916
+ },
+ "DuckInspector": {
+  "normal": 95127254396532,
+  "color": 100146567351757
+ },
+ "PanicCone": {
+  "color": 128240546718910,
+  "normal": 138837725366269
+ },
+ "CheeseSkater": {
+  "normal": 76023909336280,
+  "color": 97665603716916
+ },
+ "DevourerVending": {
+  "color": 122839601986186,
+  "normal": 92881501289379
+ },
+ "RoyalRatTrain": {
+  "normal": 80616969360433,
+  "color": 86891332228537
+ },
+ "BuffRat": {
+  "normal": 126079130478342,
+  "color": 127753714980659
+ },
+ "TrashGobbler": {
+  "color": 72986519874714,
+  "normal": 119185008044588
+ },
+ "RatWizard": {
+  "color": 74507734420382,
+  "normal": 74387902021263
+ },
+ "RatMimic": {
+  "normal": 79362620507429,
+  "color": 81911801762645
+ },
+ "ThreeHeadedRat": {
+  "color": 96802194207169,
+  "normal": 78996360076172
+ },
+ "TurnstileTerminator": {
+  "color": 110215031454935,
+  "normal": 122887421605694
+ },
+ "PizzaUfo": {
+  "normal": 79032070326442,
+  "color": 84493883873766
+ },
+ "RubyThief": {
+  "color": 118163490235346,
+  "normal": 103013071976159
+ },
+ "RatThrone": {
+  "normal": 95365564619045,
+  "color": 116682050530532
+ },
+ "MonsterTrain": {
+  "color": 71581083946275,
+  "normal": 138868446387081
+ },
+ "CheeseDragon": {
+  "normal": 135603115845991,
+  "color": 87236231661435
+ },
+ "GoldenRatMech": {
+  "color": 91903570346310,
+  "normal": 92599445952627
+ },
+ "SubwayOctopus": {
+  "normal": 112271921197797,
+  "color": 113111685057162
+ },
+ "ClockGolem": {
+  "color": 106963839201324,
+  "normal": 123678932584232
+ },
+ "CheeseVaultHeart": {
+  "color": 78695374177171,
+  "normal": 107909788391318
+ },
+ "ThreeTailEmperor": {
+  "normal": 75122153611230,
+  "color": 130089977053639
+ }
+}

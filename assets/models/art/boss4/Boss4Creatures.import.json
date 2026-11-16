@@ -1,0 +1,2541 @@
+{
+ "CactusBoxer": {
+  "n": 1,
+  "name": "Кактус-боксёр",
+  "rarity": "Common",
+  "tris": 2939,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegL",
+   "LegR",
+   "ArmL",
+   "ArmR",
+   "Flower"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegL",
+   "LegR",
+   "ArmL",
+   "ArmR",
+   "Flower"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.48,
+    2.384,
+    1.974
+   ],
+   "lift": 0.22,
+   "center": [
+    -0.09,
+    0.203
+   ]
+  },
+  "model_size": [
+   2.898,
+   2.604,
+   2.898
+  ],
+  "objects": [
+   "Art_CactusBoxer_ArmL",
+   "Art_CactusBoxer_ArmR",
+   "Art_CactusBoxer_Body",
+   "Art_CactusBoxer_Flower",
+   "Art_CactusBoxer_LegL",
+   "Art_CactusBoxer_LegR",
+   "Art_CactusBoxer_Stand"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.429,
+     0.552,
+     0.332
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 110,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "FloppyFennec": {
+  "n": 2,
+  "name": "Фенек-лопоух",
+  "rarity": "Common",
+  "tris": 1804,
+  "parts": [
+   "Stand",
+   "Body",
+   "Head",
+   "EarR",
+   "EarL",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Body",
+   "Head",
+   "EarR",
+   "EarL",
+   "Tail"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.92,
+    3.083,
+    1.369
+   ],
+   "lift": 0.244,
+   "center": [
+    -0.058,
+    0.184
+   ]
+  },
+  "model_size": [
+   2.608,
+   3.326,
+   2.608
+  ],
+  "objects": [
+   "Art_FloppyFennec_Body",
+   "Art_FloppyFennec_EarL",
+   "Art_FloppyFennec_EarR",
+   "Art_FloppyFennec_Head",
+   "Art_FloppyFennec_Stand",
+   "Art_FloppyFennec_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.682,
+     0.594,
+     0.409
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 80,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "TumbleweedRunner": {
+  "n": 3,
+  "name": "Перекати-поле-бегун",
+  "rarity": "Common",
+  "tris": 2654,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegR",
+   "LegL",
+   "Ball"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegR",
+   "LegL",
+   "Ball"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.966,
+    2.448,
+    2.017
+   ],
+   "lift": 0.22,
+   "center": [
+    -0.004,
+    -0.008
+   ]
+  },
+  "model_size": [
+   2.801,
+   2.668,
+   2.801
+  ],
+  "objects": [
+   "Art_TumbleweedRunner_Ball",
+   "Art_TumbleweedRunner_Body",
+   "Art_TumbleweedRunner_LegL",
+   "Art_TumbleweedRunner_LegR",
+   "Art_TumbleweedRunner_Stand"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.522,
+     0.419,
+     0.256
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 106,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "CanteenCamel": {
+  "n": 4,
+  "name": "Верблюжонок-фляга",
+  "rarity": "Common",
+  "tris": 2153,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Canteen",
+   "Cork",
+   "Head",
+   "Jaw",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Canteen",
+   "Cork",
+   "Head",
+   "Jaw",
+   "Tail"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.384,
+    2.58,
+    1.023
+   ],
+   "lift": 0.22,
+   "center": [
+    -0.352,
+    0.131
+   ]
+  },
+  "model_size": [
+   2.993,
+   2.8,
+   2.898
+  ],
+  "objects": [
+   "Art_CanteenCamel_Body",
+   "Art_CanteenCamel_Canteen",
+   "Art_CanteenCamel_Cork",
+   "Art_CanteenCamel_Head",
+   "Art_CanteenCamel_Jaw",
+   "Art_CanteenCamel_LegBL",
+   "Art_CanteenCamel_LegBR",
+   "Art_CanteenCamel_LegFL",
+   "Art_CanteenCamel_LegFR",
+   "Art_CanteenCamel_Stand",
+   "Art_CanteenCamel_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.549,
+     0.482,
+     0.357
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 103,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "DuneTurtle": {
+  "n": 5,
+  "name": "Черепаха-бархан",
+  "rarity": "Common",
+  "tris": 1969,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Tail",
+   "Head"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Tail",
+   "Head"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.12,
+    1.392,
+    2.389
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    0.063
+   ]
+  },
+  "model_size": [
+   2.994,
+   1.612,
+   2.994
+  ],
+  "objects": [
+   "Art_DuneTurtle_Body",
+   "Art_DuneTurtle_Head",
+   "Art_DuneTurtle_LegBL",
+   "Art_DuneTurtle_LegBR",
+   "Art_DuneTurtle_LegFL",
+   "Art_DuneTurtle_LegFR",
+   "Art_DuneTurtle_Stand",
+   "Art_DuneTurtle_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.573,
+     0.43,
+     0.292
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 85,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "UmbrellaLizard": {
+  "n": 6,
+  "name": "Ящерка-зонтик",
+  "rarity": "Common",
+  "tris": 2132,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegL",
+   "LegR",
+   "ArmL",
+   "ArmR",
+   "Tail",
+   "Head",
+   "Frill"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegL",
+   "LegR",
+   "ArmL",
+   "ArmR",
+   "Tail",
+   "Head",
+   "Frill"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.217,
+    2.511,
+    1.741
+   ],
+   "lift": 0.22,
+   "center": [
+    0.092,
+    -0.17
+   ]
+  },
+  "model_size": [
+   2.801,
+   2.731,
+   2.801
+  ],
+  "objects": [
+   "Art_UmbrellaLizard_ArmL",
+   "Art_UmbrellaLizard_ArmR",
+   "Art_UmbrellaLizard_Body",
+   "Art_UmbrellaLizard_Frill",
+   "Art_UmbrellaLizard_Head",
+   "Art_UmbrellaLizard_LegL",
+   "Art_UmbrellaLizard_LegR",
+   "Art_UmbrellaLizard_Stand",
+   "Art_UmbrellaLizard_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.688,
+     0.429,
+     0.362
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 99,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "MelonArmadillo": {
+  "n": 7,
+  "name": "Арбуз-броненосец",
+  "rarity": "Common",
+  "tris": 1526,
+  "parts": [
+   "Stand",
+   "Body",
+   "Tail",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Head"
+  ],
+  "visible_parts": [
+   "Body",
+   "Tail",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Head"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.76,
+    1.36,
+    2.66
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    0.07
+   ]
+  },
+  "model_size": [
+   2.898,
+   1.58,
+   2.898
+  ],
+  "objects": [
+   "Art_MelonArmadillo_Body",
+   "Art_MelonArmadillo_Head",
+   "Art_MelonArmadillo_LegBL",
+   "Art_MelonArmadillo_LegBR",
+   "Art_MelonArmadillo_LegFL",
+   "Art_MelonArmadillo_LegFR",
+   "Art_MelonArmadillo_Stand",
+   "Art_MelonArmadillo_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.388,
+     0.52,
+     0.328
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 74,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "StrawSnake": {
+  "n": 8,
+  "name": "Змейка-соломинка",
+  "rarity": "Common",
+  "tris": 1743,
+  "parts": [
+   "Stand",
+   "Coconut",
+   "Body",
+   "TailTip",
+   "Neck",
+   "Head"
+  ],
+  "visible_parts": [
+   "Coconut",
+   "Body",
+   "TailTip",
+   "Neck",
+   "Head"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.177,
+    1.839,
+    1.371
+   ],
+   "lift": 0.22,
+   "center": [
+    0.072,
+    0.035
+   ]
+  },
+  "model_size": [
+   2.898,
+   2.059,
+   2.898
+  ],
+  "objects": [
+   "Art_StrawSnake_Body",
+   "Art_StrawSnake_Coconut",
+   "Art_StrawSnake_Head",
+   "Art_StrawSnake_Neck",
+   "Art_StrawSnake_Stand",
+   "Art_StrawSnake_TailTip"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.586,
+     0.464,
+     0.409
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 84,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "DropBeetle": {
+  "n": 9,
+  "name": "Жук-капелька",
+  "rarity": "Common",
+  "tris": 2204,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegsL",
+   "LegsR",
+   "Head",
+   "AntennaL",
+   "AntennaR",
+   "Drop"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegsL",
+   "LegsR",
+   "Head",
+   "AntennaL",
+   "AntennaR",
+   "Drop"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.521,
+    2.047,
+    1.53
+   ],
+   "lift": 0.207,
+   "center": [
+    0.0,
+    0.045
+   ]
+  },
+  "model_size": [
+   2.608,
+   2.254,
+   2.608
+  ],
+  "objects": [
+   "Art_DropBeetle_AntennaL",
+   "Art_DropBeetle_AntennaR",
+   "Art_DropBeetle_Body",
+   "Art_DropBeetle_Drop",
+   "Art_DropBeetle_Head",
+   "Art_DropBeetle_LegsL",
+   "Art_DropBeetle_LegsR",
+   "Art_DropBeetle_Stand"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.207,
+     0.465,
+     0.577
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 94,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "MeerkatLookout": {
+  "n": 10,
+  "name": "Сурикат-часовой",
+  "rarity": "Common",
+  "tris": 1742,
+  "parts": [
+   "Stand",
+   "Body",
+   "Tail",
+   "Head",
+   "ArmR",
+   "Spyglass",
+   "ArmL"
+  ],
+  "visible_parts": [
+   "Body",
+   "Tail",
+   "Head",
+   "ArmR",
+   "Spyglass",
+   "ArmL"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.484,
+    2.06,
+    2.193
+   ],
+   "lift": 0.22,
+   "center": [
+    0.288,
+    -0.16
+   ]
+  },
+  "model_size": [
+   2.608,
+   2.28,
+   2.608
+  ],
+  "objects": [
+   "Art_MeerkatLookout_ArmL",
+   "Art_MeerkatLookout_ArmR",
+   "Art_MeerkatLookout_Body",
+   "Art_MeerkatLookout_Head",
+   "Art_MeerkatLookout_Spyglass",
+   "Art_MeerkatLookout_Stand",
+   "Art_MeerkatLookout_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.565,
+     0.468,
+     0.315
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 82,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "CanScorpion": {
+  "n": 11,
+  "name": "Скорпион-лейка",
+  "rarity": "Common",
+  "tris": 2615,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegsL",
+   "LegsR",
+   "ClawL",
+   "ClawR",
+   "Tail",
+   "Can"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegsL",
+   "LegsR",
+   "ClawL",
+   "ClawR",
+   "Tail",
+   "Can"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.0,
+    2.151,
+    2.197
+   ],
+   "lift": 0.209,
+   "center": [
+    -0.04,
+    -0.016
+   ]
+  },
+  "model_size": [
+   2.994,
+   2.36,
+   2.994
+  ],
+  "objects": [
+   "Art_CanScorpion_Body",
+   "Art_CanScorpion_Can",
+   "Art_CanScorpion_ClawL",
+   "Art_CanScorpion_ClawR",
+   "Art_CanScorpion_LegsL",
+   "Art_CanScorpion_LegsR",
+   "Art_CanScorpion_Stand",
+   "Art_CanScorpion_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.593,
+     0.422,
+     0.24
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 110,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "SandChick": {
+  "n": 12,
+  "name": "Страусёнок-песочник",
+  "rarity": "Common",
+  "tris": 2212,
+  "parts": [
+   "Stand",
+   "LegL",
+   "LegR",
+   "Body",
+   "WingL",
+   "WingR",
+   "Neck",
+   "Head"
+  ],
+  "visible_parts": [
+   "LegL",
+   "LegR",
+   "Body",
+   "WingL",
+   "WingR",
+   "Neck",
+   "Head"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.427,
+    3.1,
+    1.66
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    0.15
+   ]
+  },
+  "model_size": [
+   2.608,
+   3.32,
+   2.608
+  ],
+  "objects": [
+   "Art_SandChick_Body",
+   "Art_SandChick_Head",
+   "Art_SandChick_LegL",
+   "Art_SandChick_LegR",
+   "Art_SandChick_Neck",
+   "Art_SandChick_Stand",
+   "Art_SandChick_WingL",
+   "Art_SandChick_WingR"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.704,
+     0.602,
+     0.338
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 92,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "порядок частей: LegL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegR раньше родителя Body — генератор CreatureRigs должен упорядочить"
+  ]
+ },
+ "AquariumCamel": {
+  "n": 13,
+  "name": "Верблюд-аквариум",
+  "rarity": "Rare",
+  "tris": 2596,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "TankA",
+   "FishA",
+   "TankB",
+   "FishB",
+   "Head",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "TankA",
+   "FishA",
+   "TankB",
+   "FishB",
+   "Head",
+   "Tail"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.867,
+    2.875,
+    1.229
+   ],
+   "lift": 0.22,
+   "center": [
+    -0.393,
+    0.155
+   ]
+  },
+  "model_size": [
+   3.421,
+   3.095,
+   3.188
+  ],
+  "objects": [
+   "Art_AquariumCamel_Body",
+   "Art_AquariumCamel_FishA",
+   "Art_AquariumCamel_FishB",
+   "Art_AquariumCamel_Head",
+   "Art_AquariumCamel_LegBL",
+   "Art_AquariumCamel_LegBR",
+   "Art_AquariumCamel_LegFL",
+   "Art_AquariumCamel_LegFR",
+   "Art_AquariumCamel_Stand",
+   "Art_AquariumCamel_Tail",
+   "Art_AquariumCamel_TankA",
+   "Art_AquariumCamel_TankB"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.606,
+     0.507,
+     0.362
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 117,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "CactusAcrobats": {
+  "n": 14,
+  "name": "Кактусы-акробаты",
+  "rarity": "Rare",
+  "tris": 2888,
+  "parts": [
+   "Stand",
+   "Base",
+   "BaseArmL",
+   "BaseArmR",
+   "Mid",
+   "MidArm",
+   "Top",
+   "TopArm"
+  ],
+  "visible_parts": [
+   "Base",
+   "BaseArmL",
+   "BaseArmR",
+   "Mid",
+   "MidArm",
+   "Top",
+   "TopArm"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    1.507,
+    3.301,
+    1.339
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    0.021
+   ]
+  },
+  "model_size": [
+   2.994,
+   3.521,
+   2.994
+  ],
+  "objects": [
+   "Art_CactusAcrobats_Base",
+   "Art_CactusAcrobats_BaseArmL",
+   "Art_CactusAcrobats_BaseArmR",
+   "Art_CactusAcrobats_Mid",
+   "Art_CactusAcrobats_MidArm",
+   "Art_CactusAcrobats_Stand",
+   "Art_CactusAcrobats_Top",
+   "Art_CactusAcrobats_TopArm"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.356,
+     0.541,
+     0.309
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 119,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "DrillWorm": {
+  "n": 15,
+  "name": "Песчаный червь-бурильщик",
+  "rarity": "Rare",
+  "tris": 2324,
+  "parts": [
+   "Stand",
+   "Mound",
+   "Body",
+   "Head",
+   "Drill",
+   "TailTip"
+  ],
+  "visible_parts": [
+   "Mound",
+   "Body",
+   "Head",
+   "Drill",
+   "TailTip"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.0,
+    1.72,
+    1.994
+   ],
+   "lift": 0.22,
+   "center": [
+    0.12,
+    0.077
+   ]
+  },
+  "model_size": [
+   3.091,
+   1.94,
+   3.091
+  ],
+  "objects": [
+   "Art_DrillWorm_Body",
+   "Art_DrillWorm_Drill",
+   "Art_DrillWorm_Head",
+   "Art_DrillWorm_Mound",
+   "Art_DrillWorm_Stand",
+   "Art_DrillWorm_TailTip"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.621,
+     0.411,
+     0.249
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 98,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "FanVulture": {
+  "n": 16,
+  "name": "Гриф-вентилятор",
+  "rarity": "Rare",
+  "tris": 2880,
+  "parts": [
+   "Stand",
+   "LegL",
+   "LegR",
+   "Body",
+   "Tail",
+   "Head",
+   "FanL",
+   "BladesL",
+   "FanR",
+   "BladesR"
+  ],
+  "visible_parts": [
+   "LegL",
+   "LegR",
+   "Body",
+   "Tail",
+   "Head",
+   "FanL",
+   "BladesL",
+   "FanR",
+   "BladesR"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.863,
+    2.24,
+    1.614
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    -0.147
+   ]
+  },
+  "model_size": [
+   2.994,
+   2.46,
+   2.994
+  ],
+  "objects": [
+   "Art_FanVulture_BladesL",
+   "Art_FanVulture_BladesR",
+   "Art_FanVulture_Body",
+   "Art_FanVulture_FanL",
+   "Art_FanVulture_FanR",
+   "Art_FanVulture_Head",
+   "Art_FanVulture_LegL",
+   "Art_FanVulture_LegR",
+   "Art_FanVulture_Stand",
+   "Art_FanVulture_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.561,
+     0.47,
+     0.582
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 121,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "порядок частей: LegL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegR раньше родителя Body — генератор CreatureRigs должен упорядочить"
+  ]
+ },
+ "CobraFountain": {
+  "n": 17,
+  "name": "Кобра-фонтан",
+  "rarity": "Rare",
+  "tris": 2505,
+  "parts": [
+   "Stand",
+   "Bowl",
+   "Body",
+   "Hood",
+   "Head",
+   "Stream"
+  ],
+  "visible_parts": [
+   "Bowl",
+   "Body",
+   "Hood",
+   "Head",
+   "Stream"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.08,
+    2.417,
+    2.08
+   ],
+   "lift": 0.22,
+   "center": [
+    0.0,
+    0.0
+   ]
+  },
+  "model_size": [
+   3.091,
+   2.637,
+   3.091
+  ],
+  "objects": [
+   "Art_CobraFountain_Body",
+   "Art_CobraFountain_Bowl",
+   "Art_CobraFountain_Head",
+   "Art_CobraFountain_Hood",
+   "Art_CobraFountain_Stand",
+   "Art_CobraFountain_Stream"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.399,
+     0.543,
+     0.431
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 103,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "DustDevil": {
+  "n": 18,
+  "name": "Смерч-озорник",
+  "rarity": "Rare",
+  "tris": 2040,
+  "parts": [
+   "Stand",
+   "TierLow",
+   "Body",
+   "TierHigh",
+   "Loot"
+  ],
+  "visible_parts": [
+   "TierLow",
+   "Body",
+   "TierHigh",
+   "Loot"
+  ],
+  "stand_top": 0.4,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.603,
+    2.382,
+    2.196
+   ],
+   "lift": 0.3,
+   "center": [
+    -0.012,
+    -0.04
+   ]
+  },
+  "model_size": [
+   2.994,
+   2.682,
+   2.994
+  ],
+  "objects": [
+   "Art_DustDevil_Body",
+   "Art_DustDevil_Loot",
+   "Art_DustDevil_Stand",
+   "Art_DustDevil_TierHigh",
+   "Art_DustDevil_TierLow"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.693,
+     0.533,
+     0.368
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 85,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "низ существа на 0.10 стада ниже верха подставки: без подставки его низ — эта часть (проверить вид)"
+  ]
+ },
+ "KaleidoChameleon": {
+  "n": 19,
+  "name": "Хамелеон-калейдоскоп",
+  "rarity": "Rare",
+  "tris": 2287,
+  "parts": [
+   "Stand",
+   "Branch",
+   "Body",
+   "LegsF",
+   "LegsB",
+   "Head",
+   "Eye",
+   "EyeB",
+   "Tongue",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Branch",
+   "Body",
+   "LegsF",
+   "LegsB",
+   "Head",
+   "Eye",
+   "EyeB",
+   "Tongue",
+   "Tail"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.673,
+    1.947,
+    0.82
+   ],
+   "lift": 0.183,
+   "center": [
+    -0.164,
+    0.07
+   ]
+  },
+  "model_size": [
+   3.091,
+   2.13,
+   3.091
+  ],
+  "objects": [
+   "Art_KaleidoChameleon_Body",
+   "Art_KaleidoChameleon_Branch",
+   "Art_KaleidoChameleon_Eye",
+   "Art_KaleidoChameleon_EyeB",
+   "Art_KaleidoChameleon_Head",
+   "Art_KaleidoChameleon_LegsB",
+   "Art_KaleidoChameleon_LegsF",
+   "Art_KaleidoChameleon_Stand",
+   "Art_KaleidoChameleon_Tail",
+   "Art_KaleidoChameleon_Tongue"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.453,
+     0.414,
+     0.407
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.997
+    ]
+   }
+  },
+  "fbx_kb": 104,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "низ существа на 0.10 стада ниже верха подставки: без подставки его низ — эта часть (проверить вид)"
+  ]
+ },
+ "FennecRiddler_v2": {
+  "n": 20,
+  "name": "Фенек-загадочник",
+  "rarity": "Rare",
+  "tris": 2956,
+  "parts": [
+   "Stand",
+   "Dot",
+   "Body",
+   "Head",
+   "EyeL",
+   "EyeR",
+   "EarL",
+   "EarR",
+   "ArmL",
+   "Cube",
+   "ArmR",
+   "Tail",
+   "TailTip"
+  ],
+  "visible_parts": [
+   "Dot",
+   "Body",
+   "Head",
+   "EyeL",
+   "EyeR",
+   "EarL",
+   "EarR",
+   "ArmL",
+   "Cube",
+   "ArmR",
+   "Tail",
+   "TailTip"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    3.066,
+    3.893,
+    1.979
+   ],
+   "lift": 0.22,
+   "center": [
+    0.188,
+    0.046
+   ]
+  },
+  "model_size": [
+   3.218,
+   4.113,
+   2.994
+  ],
+  "objects": [
+   "Art_FennecRiddler_ArmL",
+   "Art_FennecRiddler_ArmR",
+   "Art_FennecRiddler_Body",
+   "Art_FennecRiddler_Cube",
+   "Art_FennecRiddler_Dot",
+   "Art_FennecRiddler_EarL",
+   "Art_FennecRiddler_EarR",
+   "Art_FennecRiddler_EyeL",
+   "Art_FennecRiddler_EyeR",
+   "Art_FennecRiddler_Head",
+   "Art_FennecRiddler_Stand",
+   "Art_FennecRiddler_Tail",
+   "Art_FennecRiddler_TailTip"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.755,
+     0.58,
+     0.314
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 131,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "MirageFish": {
+  "n": 21,
+  "name": "Рыба-мираж",
+  "rarity": "Rare",
+  "tris": 1595,
+  "parts": [
+   "Stand",
+   "Haze",
+   "Cube",
+   "Head",
+   "Tail",
+   "Fin",
+   "Bubbles"
+  ],
+  "visible_parts": [
+   "Haze",
+   "Cube",
+   "Head",
+   "Tail",
+   "Fin",
+   "Bubbles"
+  ],
+  "stand_top": 0.28,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.14,
+    2.552,
+    1.12
+   ],
+   "lift": 0.22,
+   "center": [
+    0.03,
+    0.06
+   ]
+  },
+  "model_size": [
+   2.898,
+   2.772,
+   2.898
+  ],
+  "objects": [
+   "Art_MirageFish_Bubbles",
+   "Art_MirageFish_Cube",
+   "Art_MirageFish_Fin",
+   "Art_MirageFish_Haze",
+   "Art_MirageFish_Head",
+   "Art_MirageFish_Stand",
+   "Art_MirageFish_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.582,
+     0.566,
+     0.505
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 75,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "DuneWhale": {
+  "n": 22,
+  "name": "Кит-бархан",
+  "rarity": "Epic",
+  "tris": 2115,
+  "parts": [
+   "Stand",
+   "Dune",
+   "Whale",
+   "Flipper",
+   "Spout",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Dune",
+   "Whale",
+   "Flipper",
+   "Spout",
+   "Tail"
+  ],
+  "stand_top": 0.399,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.84,
+    2.811,
+    2.66
+   ],
+   "lift": 0.004,
+   "center": [
+    0.0,
+    -0.03
+   ]
+  },
+  "model_size": [
+   3.44,
+   2.815,
+   3.44
+  ],
+  "objects": [
+   "Art_DuneWhale_Dune",
+   "Art_DuneWhale_Flipper",
+   "Art_DuneWhale_Spout",
+   "Art_DuneWhale_Stand",
+   "Art_DuneWhale_Tail",
+   "Art_DuneWhale_Whale"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.762,
+     0.616,
+     0.409
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 95,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "низ существа на 0.40 стада ниже верха подставки: без подставки его низ — эта часть (проверить вид)"
+  ]
+ },
+ "IslandTurtle": {
+  "n": 23,
+  "name": "Черепаха-остров",
+  "rarity": "Epic",
+  "tris": 2203,
+  "parts": [
+   "Stand",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Body",
+   "PalmA",
+   "PalmB",
+   "Boat",
+   "Head",
+   "Tail"
+  ],
+  "visible_parts": [
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Body",
+   "PalmA",
+   "PalmB",
+   "Boat",
+   "Head",
+   "Tail"
+  ],
+  "stand_top": 0.399,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.62,
+    2.07,
+    2.97
+   ],
+   "lift": 0.34,
+   "center": [
+    0.13,
+    0.155
+   ]
+  },
+  "model_size": [
+   3.52,
+   2.41,
+   3.52
+  ],
+  "objects": [
+   "Art_IslandTurtle_Boat",
+   "Art_IslandTurtle_Body",
+   "Art_IslandTurtle_Head",
+   "Art_IslandTurtle_LegBL",
+   "Art_IslandTurtle_LegBR",
+   "Art_IslandTurtle_LegFL",
+   "Art_IslandTurtle_LegFR",
+   "Art_IslandTurtle_PalmA",
+   "Art_IslandTurtle_PalmB",
+   "Art_IslandTurtle_Stand",
+   "Art_IslandTurtle_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.456,
+     0.5,
+     0.407
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 106,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "порядок частей: LegFL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegFR раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegBL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegBR раньше родителя Body — генератор CreatureRigs должен упорядочить"
+  ]
+ },
+ "BlazeOstrich": {
+  "n": 24,
+  "name": "Жар-страус",
+  "rarity": "Epic",
+  "tris": 2656,
+  "parts": [
+   "Stand",
+   "LegL",
+   "LegR",
+   "Body",
+   "WingL",
+   "WingR",
+   "Fan",
+   "Neck",
+   "Head"
+  ],
+  "visible_parts": [
+   "LegL",
+   "LegR",
+   "Body",
+   "WingL",
+   "WingR",
+   "Fan",
+   "Neck",
+   "Head"
+  ],
+  "stand_top": 0.399,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.393,
+    3.432,
+    2.483
+   ],
+   "lift": 0.34,
+   "center": [
+    0.004,
+    -0.381
+   ]
+  },
+  "model_size": [
+   3.2,
+   3.772,
+   3.223
+  ],
+  "objects": [
+   "Art_BlazeOstrich_Body",
+   "Art_BlazeOstrich_Fan",
+   "Art_BlazeOstrich_Head",
+   "Art_BlazeOstrich_LegL",
+   "Art_BlazeOstrich_LegR",
+   "Art_BlazeOstrich_Neck",
+   "Art_BlazeOstrich_Stand",
+   "Art_BlazeOstrich_WingL",
+   "Art_BlazeOstrich_WingR"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.674,
+     0.4,
+     0.239
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 118,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "порядок частей: LegL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegR раньше родителя Body — генератор CreatureRigs должен упорядочить"
+  ]
+ },
+ "CloudCamel": {
+  "n": 25,
+  "name": "Верблюд-туча",
+  "rarity": "Epic",
+  "tris": 2496,
+  "parts": [
+   "Stand",
+   "Puddle",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Tail",
+   "Head",
+   "Cloud",
+   "Rain"
+  ],
+  "visible_parts": [
+   "Puddle",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Tail",
+   "Head",
+   "Cloud",
+   "Rain"
+  ],
+  "stand_top": 0.399,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.889,
+    3.536,
+    1.7
+   ],
+   "lift": 0.34,
+   "center": [
+    -0.245,
+    -0.05
+   ]
+  },
+  "model_size": [
+   3.4,
+   3.876,
+   3.4
+  ],
+  "objects": [
+   "Art_CloudCamel_Body",
+   "Art_CloudCamel_Cloud",
+   "Art_CloudCamel_Head",
+   "Art_CloudCamel_LegBL",
+   "Art_CloudCamel_LegBR",
+   "Art_CloudCamel_LegFL",
+   "Art_CloudCamel_LegFR",
+   "Art_CloudCamel_Puddle",
+   "Art_CloudCamel_Rain",
+   "Art_CloudCamel_Stand",
+   "Art_CloudCamel_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.584,
+     0.532,
+     0.474
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 113,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "CrystalScorpion": {
+  "n": 26,
+  "name": "Кристальный скорпион",
+  "rarity": "Epic",
+  "tris": 2491,
+  "parts": [
+   "Stand",
+   "Body",
+   "LegsL",
+   "LegsR",
+   "ClawL",
+   "ClawR",
+   "Tail",
+   "Gem"
+  ],
+  "visible_parts": [
+   "Body",
+   "LegsL",
+   "LegsR",
+   "ClawL",
+   "ClawR",
+   "Tail",
+   "Gem"
+  ],
+  "stand_top": 0.399,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.12,
+    2.544,
+    2.055
+   ],
+   "lift": 0.328,
+   "center": [
+    0.0,
+    -0.107
+   ]
+  },
+  "model_size": [
+   3.32,
+   2.872,
+   3.32
+  ],
+  "objects": [
+   "Art_CrystalScorpion_Body",
+   "Art_CrystalScorpion_ClawL",
+   "Art_CrystalScorpion_ClawR",
+   "Art_CrystalScorpion_Gem",
+   "Art_CrystalScorpion_LegsL",
+   "Art_CrystalScorpion_LegsR",
+   "Art_CrystalScorpion_Stand",
+   "Art_CrystalScorpion_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.664,
+     0.565,
+     0.247
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 110,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "GiantCactus": {
+  "n": 27,
+  "name": "Кактус-великан",
+  "rarity": "Epic",
+  "tris": 2216,
+  "parts": [
+   "Stand",
+   "Trunk",
+   "OwlA",
+   "OwlB",
+   "ArmA",
+   "ArmB",
+   "ArmC",
+   "Crown"
+  ],
+  "visible_parts": [
+   "Trunk",
+   "OwlA",
+   "OwlB",
+   "ArmA",
+   "ArmB",
+   "ArmC",
+   "Crown"
+  ],
+  "stand_top": 0.46,
+  "stand_policy": "decide",
+  "living": {
+   "size": [
+    2.07,
+    3.367,
+    1.019
+   ],
+   "lift": 0.42,
+   "center": [
+    0.005,
+    0.021
+   ]
+  },
+  "model_size": [
+   3.2,
+   3.787,
+   3.2
+  ],
+  "objects": [
+   "Art_GiantCactus_ArmA",
+   "Art_GiantCactus_ArmB",
+   "Art_GiantCactus_ArmC",
+   "Art_GiantCactus_Crown",
+   "Art_GiantCactus_OwlA",
+   "Art_GiantCactus_OwlB",
+   "Art_GiantCactus_Stand",
+   "Art_GiantCactus_Trunk"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.354,
+     0.493,
+     0.231
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 96,
+  "errors": [],
+  "decisions": [
+   "в Stand кроме подставки есть детали (верх 0.46 стада): при скрытой подставке они пропадут — оставить подставку, скрывать вместе с ней или вынести их в свою часть"
+  ],
+  "warnings": []
+ },
+ "SpringAntelope": {
+  "n": 28,
+  "name": "Антилопа-родник",
+  "rarity": "Legendary",
+  "tris": 2798,
+  "parts": [
+   "Stand",
+   "Spring",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Head",
+   "Mane",
+   "Tail"
+  ],
+  "visible_parts": [
+   "Spring",
+   "Body",
+   "LegFL",
+   "LegFR",
+   "LegBL",
+   "LegBR",
+   "Head",
+   "Mane",
+   "Tail"
+  ],
+  "stand_top": 0.435,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.679,
+    3.409,
+    1.74
+   ],
+   "lift": 0.36,
+   "center": [
+    -0.215,
+    0.01
+   ]
+  },
+  "model_size": [
+   3.32,
+   3.769,
+   3.32
+  ],
+  "objects": [
+   "Art_SpringAntelope_Body",
+   "Art_SpringAntelope_Head",
+   "Art_SpringAntelope_LegBL",
+   "Art_SpringAntelope_LegBR",
+   "Art_SpringAntelope_LegFL",
+   "Art_SpringAntelope_LegFR",
+   "Art_SpringAntelope_Mane",
+   "Art_SpringAntelope_Spring",
+   "Art_SpringAntelope_Stand",
+   "Art_SpringAntelope_Tail"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.535,
+     0.674,
+     0.605
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 127,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ },
+ "PuzzlePhoenix": {
+  "n": 29,
+  "name": "Феникс-головоломка",
+  "rarity": "Legendary",
+  "tris": 2407,
+  "parts": [
+   "Stand",
+   "LegL",
+   "LegR",
+   "Body",
+   "Head",
+   "WingL",
+   "WingR",
+   "Tail",
+   "Piece"
+  ],
+  "visible_parts": [
+   "LegL",
+   "LegR",
+   "Body",
+   "Head",
+   "WingL",
+   "WingR",
+   "Tail",
+   "Piece"
+  ],
+  "stand_top": 0.435,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    2.776,
+    2.69,
+    2.126
+   ],
+   "lift": 0.36,
+   "center": [
+    0.0,
+    -0.403
+   ]
+  },
+  "model_size": [
+   3.32,
+   3.05,
+   3.32
+  ],
+  "objects": [
+   "Art_PuzzlePhoenix_Body",
+   "Art_PuzzlePhoenix_Head",
+   "Art_PuzzlePhoenix_LegL",
+   "Art_PuzzlePhoenix_LegR",
+   "Art_PuzzlePhoenix_Piece",
+   "Art_PuzzlePhoenix_Stand",
+   "Art_PuzzlePhoenix_Tail",
+   "Art_PuzzlePhoenix_WingL",
+   "Art_PuzzlePhoenix_WingR"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.415,
+     0.348,
+     0.244
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.999
+    ]
+   }
+  },
+  "fbx_kb": 106,
+  "errors": [],
+  "decisions": [],
+  "warnings": [
+   "порядок частей: LegL раньше родителя Body — генератор CreatureRigs должен упорядочить",
+   "порядок частей: LegR раньше родителя Body — генератор CreatureRigs должен упорядочить"
+  ]
+ },
+ "TornadoKing": {
+  "n": 30,
+  "name": "Царь-смерч",
+  "rarity": "Legendary",
+  "tris": 2474,
+  "parts": [
+   "Stand",
+   "TierA",
+   "TierB",
+   "TierC",
+   "ArmL",
+   "ArmR",
+   "Head",
+   "Crown"
+  ],
+  "visible_parts": [
+   "TierA",
+   "TierB",
+   "TierC",
+   "ArmL",
+   "ArmR",
+   "Head",
+   "Crown"
+  ],
+  "stand_top": 0.435,
+  "stand_policy": "hide",
+  "living": {
+   "size": [
+    3.077,
+    4.04,
+    2.239
+   ],
+   "lift": 0.48,
+   "center": [
+    0.013,
+    -0.04
+   ]
+  },
+  "model_size": [
+   3.32,
+   4.52,
+   3.32
+  ],
+  "objects": [
+   "Art_TornadoKing_ArmL",
+   "Art_TornadoKing_ArmR",
+   "Art_TornadoKing_Crown",
+   "Art_TornadoKing_Head",
+   "Art_TornadoKing_Stand",
+   "Art_TornadoKing_TierA",
+   "Art_TornadoKing_TierB",
+   "Art_TornadoKing_TierC"
+  ],
+  "materials": 1,
+  "maps": {
+   "color": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.514,
+     0.435,
+     0.445
+    ]
+   },
+   "normal": {
+    "size": [
+     1024,
+     1024
+    ],
+    "mean": [
+     0.502,
+     0.502,
+     0.998
+    ]
+   }
+  },
+  "fbx_kb": 105,
+  "errors": [],
+  "decisions": [],
+  "warnings": []
+ }
+}

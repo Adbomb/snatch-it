@@ -10,7 +10,8 @@ rig.json, анимация та же, что будет у мешей. Подс�
 размеру (у каждой хотя бы один), у каждой — самый мелкий воксель, при котором она укладывается в свою долю; лишнее
 (округления) — самые маленькие блоки (у части остаётся хотя бы один). Пишет assets/models/art/Boss3Creatures.parts.json (оси Roblox, центр блока — от точки вращения части) и кадры
 <рендеры>/<id>.png (FBX с картой и блоки рядом) для листа scripts/d55_creature_sheets.py.
-Запуск: blender --background --factory-startup --python scripts/blender/creature_parts.py -- <репо> <рендеры> [id…]
+Запуск: blender --background --factory-startup --python scripts/blender/creature_parts.py -- <репо> <рендеры> [--boss 4] [id…]
+С --boss 4 — существа босса 4: assets/models/art/boss4/Boss4Creatures.index.json → Boss4Creatures.parts.json.
 Зависит от art_style.py (студия кадров).
 """
 
@@ -29,10 +30,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import art_style as S  # noqa: E402
 
 argv = sys.argv[sys.argv.index("--") + 1 :]
+BOSS = 3  # --boss 4 — существа босса 4 (assets/models/art/boss4/, Boss4Creatures.*.json), иначе босса 3
+if "--boss" in argv:
+    i = argv.index("--boss")
+    BOSS = int(argv[i + 1])
+    argv = argv[:i] + argv[i + 2:]
 REPO, OUT = os.path.abspath(argv[0]), os.path.abspath(argv[1])
 os.makedirs(OUT, exist_ok=True)
-ART = os.path.join(REPO, "assets", "models", "art")
-INDEX = json.load(open(os.path.join(ART, "Boss3Creatures.index.json"), encoding="utf-8"))
+ART = os.path.join(REPO, "assets", "models", "art", *([] if BOSS == 3 else [f"boss{BOSS}"]))
+INDEX = json.load(open(os.path.join(ART, f"Boss{BOSS}Creatures.index.json"), encoding="utf-8"))
 ONLY = set(argv[2:])
 BUDGET = 40
 VOXELS = (0.1, 0.12, 0.15, 0.18, 0.22, 0.27, 0.33, 0.4, 0.5, 0.65, 0.8)
@@ -282,7 +288,7 @@ for item in INDEX["items"]:
     render_pair(item, objs, parts, out)
     print("CREATURE_OK", item["id"], json.dumps(report[item["id"]]), flush=True)
 
-path = os.path.join(ART, "Boss3Creatures.parts.json")
+path = os.path.join(ART, f"Boss{BOSS}Creatures.parts.json")
 if ONLY and os.path.exists(path):
     old = json.load(open(path, encoding="utf-8"))
     old.update(allparts)

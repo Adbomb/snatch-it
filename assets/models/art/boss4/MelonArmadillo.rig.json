@@ -1,0 +1,209 @@
+{
+ "id": "MelonArmadillo",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "LegFL",
+  "LegFR",
+  "LegBL",
+  "LegBR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    0.28,
+    2.8978
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.52,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.53,
+    0.01
+   ],
+   "size": [
+    1.76,
+    1.06,
+    1.62
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.67,
+    -0.86
+   ],
+   "center": [
+    0.0,
+    0.0186,
+    -0.2
+   ],
+   "size": [
+    0.2353,
+    0.216,
+    0.4
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    -0.5,
+    0.52,
+    0.36
+   ],
+   "center": [
+    0.0,
+    -0.13,
+    0.03
+   ],
+   "size": [
+    0.26,
+    0.34,
+    0.32
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    0.5,
+    0.52,
+    0.36
+   ],
+   "center": [
+    0.0,
+    -0.13,
+    0.03
+   ],
+   "size": [
+    0.26,
+    0.34,
+    0.32
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    -0.5,
+    0.52,
+    -0.46
+   ],
+   "center": [
+    0.0,
+    -0.13,
+    0.03
+   ],
+   "size": [
+    0.26,
+    0.34,
+    0.32
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    0.5,
+    0.52,
+    -0.46
+   ],
+   "center": [
+    0.0,
+    -0.13,
+    0.03
+   ],
+   "size": [
+    0.26,
+    0.34,
+    0.32
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.64,
+    0.62
+   ],
+   "center": [
+    0.0,
+    0.0909,
+    0.38
+   ],
+   "size": [
+    0.7326,
+    0.5818,
+    0.8
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0.14,
+    -0.02
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    25
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    -20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegBR": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

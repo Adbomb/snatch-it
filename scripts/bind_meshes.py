@@ -3,7 +3,8 @@ Config/BossModels (DOG_MESHES — пёс, TRADER_MESHES — торговец), �
 (CREATURE_MESHES, ключ <id>_<Часть>). Вход — JSON {имя объекта импорта: MeshId}, который
 собирает сценарий в Studio по импортированным MeshPart: Art_<id> → предмет <id>, Art_<id>_<Часть> → часть существа
 (id из Config/CreatureRigs), Boss1_Dog{Head,Body}_<Часть> → часть
-пса, Boss2_Trader{Head,Body,Limbs}_<Часть> → часть торговца. Новые ID добавляются к уже вписанным (прежние не
+пса, Boss2_Trader{Head,Body,Limbs}_<Часть> → часть торговца, Boss3_RatKing{Head,Body,Limbs}_<Часть> → часть
+Крысиного короля, Boss4_Sphinx{Head,Body,Limbs}_<Часть> → часть Сфинкса. Новые ID добавляются к уже вписанным (прежние не
 теряются). Меш предмета и части существа вписывается, только если у предмета уже есть запись с картами
 (scripts/bind_maps.py), иначе он пропускается с предупреждением; у существа части сверяются со скелетом. turn — поворот после импорта (градусы вокруг Y), если меши повёрнуты
 относительно Blender.
@@ -20,7 +21,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ITEMS = os.path.join(ROOT, "src", "shared", "Config", "ItemModels.luau")
 BOSSES = os.path.join(ROOT, "src", "shared", "Config", "BossModels.luau")
 RIGS = os.path.join(ROOT, "src", "shared", "Config", "CreatureRigs.luau")
-BOSS_PARTS = {"Boss1_Dog": "DOG_MESHES", "Boss2_Trader": "TRADER_MESHES"}  # префикс объекта импорта → блок
+BOSS_PARTS = {"Boss1_Dog": "DOG_MESHES", "Boss2_Trader": "TRADER_MESHES", "Boss3_RatKing": "RATKING_MESHES",
+              "Boss4_Sphinx": "SPHINX_MESHES"}  # префикс объекта импорта → блок
 
 
 def table(entries):

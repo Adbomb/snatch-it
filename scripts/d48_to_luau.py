@@ -91,12 +91,16 @@ def build():
         f"\tPortico = {num(hall['portico'])},",
         "}",
         "",
-        "-- Павильон над лестницей (портал спереди, z0) и лестница: верх у TopZ, ступени 1 × 1 вниз к +z, проём в полу.",
+        "-- Павильон над лестницей (портал спереди, z0; Opening — высота проёма портала) и лестница: верх у TopZ, ступени",
+        "-- 1 × 1 вниз к +z, проём в полу до WellZ1. Этап C.2 (крупные аватары): проём портала 7.1 → 9.5 (павильон 9 → 11.4),",
+        "-- проём в полу и павильон длиннее на 3 (WellZ1 11 → 14, Z1 11.6 → 14.6) — голова персонажа высотой до ~9 стадов",
+        "-- не упирается ни в перемычку, ни в край потолка хранилища внизу лестницы.",
         "MuseumLayout.Pavilion = {",
         f"\tHalfX = {num(pav['half_x'])},",
         f"\tZ0 = {num(pav['z0'])},",
         f"\tZ1 = {num(pav['z1'])},",
         f"\tHeight = {num(pav['height'])},",
+        f"\tOpening = {num(pav['opening'])},",
         "}",
         "MuseumLayout.Stair = {",
         f"\tTopZ = {num(stair['top_z'])},",
@@ -150,14 +154,13 @@ def build():
         zone = "Hall" if p["zone"] == "hall" else "Gallery"
         lines.append(f'\t{{ slot = {p["slot"]}, zone = "{zone}", center = {vec((x, 0, z))}, face = {vec(p["face"])}, '
                      f'unlock = {p["unlock_compat"]} }},')
-    chest, stand = lay["chest"], lay["stand"]
+    chest = lay["chest"]
     lines += [
         "} :: { Place }",
         "",
-        "-- Сундук (центр на полу, замок смотрит в Face) и стенд музея у входа.",
+        "-- Сундук (центр на полу, замок смотрит в Face).",
         f"MuseumLayout.Chest = {{ Center = {vec((chest['center'][0], 0, chest['center'][1]))}, "
         f"Face = {vec(chest['face'])} }}",
-        f"MuseumLayout.Stand = {{ Center = {vec((stand['center'][0], 0, stand['center'][1]))} }}",
         "",
         "-- Лазеры поперёк прохода: z, длина луча, высота.",
         "MuseumLayout.Lasers = {",

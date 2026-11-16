@@ -1,0 +1,221 @@
+{
+ "id": "CrystalScorpion",
+ "order": [
+  "Stand",
+  "Body",
+  "LegsL",
+  "LegsR",
+  "ClawL",
+  "ClawR",
+  "Tail",
+  "Gem"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1996,
+    0.0
+   ],
+   "size": [
+    3.32,
+    0.3992,
+    3.32
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.69,
+    -0.15
+   ],
+   "center": [
+    0.0,
+    0.4398,
+    0.065
+   ],
+   "size": [
+    1.16,
+    1.1397,
+    1.27
+   ]
+  },
+  "LegsL": {
+   "parent": "Body",
+   "pivot": [
+    -0.52,
+    0.64,
+    -0.15
+   ],
+   "center": [
+    -0.2018,
+    -0.1359,
+    -0.0644
+   ],
+   "size": [
+    0.4286,
+    0.3518,
+    0.8377
+   ]
+  },
+  "LegsR": {
+   "parent": "Body",
+   "pivot": [
+    0.52,
+    0.64,
+    -0.15
+   ],
+   "center": [
+    0.2018,
+    -0.1359,
+    -0.0644
+   ],
+   "size": [
+    0.4286,
+    0.3518,
+    0.8377
+   ]
+  },
+  "ClawL": {
+   "parent": "Body",
+   "pivot": [
+    -0.42,
+    0.82,
+    0.36
+   ],
+   "center": [
+    -0.2797,
+    0.7912,
+    0.2344
+   ],
+   "size": [
+    0.7206,
+    1.6821,
+    0.6512
+   ]
+  },
+  "ClawR": {
+   "parent": "Body",
+   "pivot": [
+    0.42,
+    0.82,
+    0.36
+   ],
+   "center": [
+    0.2797,
+    0.7912,
+    0.2344
+   ],
+   "size": [
+    0.7206,
+    1.6821,
+    0.6512
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.94,
+    -0.68
+   ],
+   "center": [
+    0.0,
+    0.7517,
+    -0.0458
+   ],
+   "size": [
+    0.2704,
+    1.6383,
+    0.8176
+   ]
+  },
+  "Gem": {
+   "parent": "Tail",
+   "pivot": [
+    0.0,
+    2.4,
+    -0.36
+   ],
+   "center": [
+    0.0,
+    0.1515,
+    0.1741
+   ],
+   "size": [
+    0.5543,
+    0.641,
+    0.6092
+   ]
+  }
+ },
+ "demo_pose": {
+  "ClawL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ClawR": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    -12,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Gem": {
+   "rot_xyz_blender_deg": [
+    0,
+    30,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegsL": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

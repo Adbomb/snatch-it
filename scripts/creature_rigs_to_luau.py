@@ -1,11 +1,15 @@
-"""Скелеты и Part-версия существ босса 3 (D55, этап D) → src/shared/Config/CreatureRigs.luau и строки коллекции для
-src/shared/Config/Items.luau (между метками «-- D55: коллекция босса 3 (сгенерировано…)»).
+"""Скелеты и Part-версия живых существ боссов 3 (D54, D55) и 4 (D57, D58) → src/shared/Config/CreatureRigs.luau и
+строки коллекций для src/shared/Config/Items.luau (между метками «-- D55: коллекция босса 3 (сгенерировано…)» и
+«-- D57: коллекция босса 4 (сгенерировано…)»).
 
-Берёт assets/models/art/Boss3Creatures.index.json (части, роли, пробные позы, поворот yaw, правила подставки D54),
-<id>.rig.json (родители и точки вращения), Boss3Creatures.parts.json (блоки, scripts/blender/creature_parts.py) и
-docs/CATALOG.md (названия, редкости и доход, предварительный). Оси Roblox; модель собирается в осях скелета (лицо к +Z,
-низ подставки на y = 0), игра поворачивает её на 180°, чтобы лицо смотрело вперёд (−Z). Lift — низ живого существа
-(без скрытой подставки), Size — его габариты в покое.
+Босс 3: assets/models/art/Boss3Creatures.index.json (части, роли, пробные позы, поворот yaw, правила подставки D54),
+<id>.rig.json, Boss3Creatures.parts.json (блоки, scripts/blender/creature_parts.py) и docs/CATALOG.md (названия,
+редкости и доход); вес — по наибольшему габариту (> 3.2 — Heavy, > 2.2 — Medium, иначе Light).
+Босс 4: то же из assets/models/art/boss4/ (Boss4Creatures.index.json — scripts/build_boss4_index.py,
+Boss4Creatures.parts.json — creature_parts.py --boss 4); доход (D57) и вес (D58) — из каталога, вес не
+пересчитывается; части упорядочены «родитель раньше детей» (ItemFactory.buildCreature идёт по Order).
+Оси Roblox; модель собирается в осях скелета (лицо к +Z, низ подставки на y = 0), игра поворачивает её на 180°,
+чтобы лицо смотрело вперёд (−Z). Lift — низ живого существа (без скрытой подставки), Size — его габариты в покое.
 Роль части (строка D54) → ключ анимации (Shared/CreatureAnim).
 Запуск: python scripts/creature_rigs_to_luau.py
 """
@@ -22,6 +26,8 @@ ITEMS = os.path.join(REPO, "src", "shared", "Config", "Items.luau")
 CATALOG = os.path.join(REPO, "docs", "CATALOG.md")
 BEGIN = "-- D55: коллекция босса 3 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)"
 END = "-- D55: конец коллекции босса 3"
+BEGIN4 = "-- D57: коллекция босса 4 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)"
+END4 = "-- D57: конец коллекции босса 4"
 
 ROLES = [  # подстрока роли D54 → ключ анимации
     ("подставка", "stand"), ("нога", "leg"), ("рука или лапа", "arm"), ("лапка", "paw"), ("туловище", "body"),
@@ -85,24 +91,42 @@ def v3(v):
     return f"Vector3.new({', '.join(num(c) for c in v)})"
 
 
-def catalog():
+def catalog(start="## Босс 3", end="## Босс 4"):
     text = open(CATALOG, encoding="utf-8").read()
-    part = text[text.index("## Босс 3"):text.index("## Боссы 4–10")]
+    part = text[text.index(start):text.index(end)]
     out = {}
     for line in part.splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) == 6 and cells[0].isdigit():
+        if len(cells) in (6, 7) and cells[0].isdigit():
             out[cells[3]] = {"n": int(cells[0]), "rarity": cells[1], "name": cells[2],
-                             "income": float(cells[5].replace(" ", ""))}
+                             "income": float(cells[5].replace(" ", "")),
+                             "weight": cells[6] if len(cells) == 7 else None}
     return out
 
 
+def parents_first(order, parts):
+    """Порядок частей «родитель раньше детей» с сохранением исходного порядка (у босса 3 он уже такой)."""
+    done, out = set(), []
+    while len(out) < len(order):
+        for name in order:
+            par = parts[name]["parent"]
+            if name not in done and (par is None or par in done):
+                done.add(name)
+                out.append(name)
+                break
+    return out
+
+
+COLLECTIONS = [  # босс, папка моделей, раздел каталога, метки строк Items, функция каталога в Items
+    (3, ART, ("## Босс 3", "## Босс 4"), (BEGIN, END), "creature"),
+    (4, os.path.join(ART, "boss4"), ("## Босс 4", "## Боссы 5–10"), (BEGIN4, END4), "creature4"),
+]
+
+
 def main():
-    index = json.load(open(os.path.join(ART, "Boss3Creatures.index.json"), encoding="utf-8"))
-    blocks = json.load(open(os.path.join(ART, "Boss3Creatures.parts.json"), encoding="utf-8"))
-    cat = catalog()
     lines = [
-        "-- Живые существа босса 3 «Крысиный король» (D55, данные D54): скелет, роли частей и Part-версия до импорта",
+        "-- Живые существа боссов 3 «Крысиный король» (D55, данные D54) и 4 «Сфинкс-лежебока» (D57, D58): скелет, роли",
+        "-- частей и Part-версия до импорта",
         "-- мешей. Сгенерировано scripts/creature_rigs_to_luau.py — руками не править. Оси Roblox, стады; модель в осях",
         "-- скелета: лицо к +Z, низ подставки на y = 0 (игра поворачивает на 180°: лицо вперёд, −Z). Parts: родитель,",
         "-- точка вращения (pivot), роль (ключ Shared/CreatureAnim), пробная поза D54 (demo — градусы XYZ в осях модели,",
@@ -117,10 +141,28 @@ def main():
         "",
         "return {",
     ]
-    item_lines = [BEGIN]
+    items_text = open(ITEMS, encoding="utf-8").read()
+    total = 0
+    for boss, art, (c0, c1), (begin, end), fn in COLLECTIONS:
+        items_text = collection(boss, art, catalog(c0, c1), begin, end, fn, lines, items_text)
+        total += 1
+    lines += ["}", ""]
+    with open(DST, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines))
+    with open(ITEMS, "w", encoding="utf-8", newline="\n") as f:
+        f.write(items_text)
+
+
+def collection(boss, art, cat, begin, end, fn, lines, items_text):
+    index = json.load(open(os.path.join(art, f"Boss{boss}Creatures.index.json"), encoding="utf-8"))
+    blocks = json.load(open(os.path.join(art, f"Boss{boss}Creatures.parts.json"), encoding="utf-8"))
+    item_lines = [begin]
     for item in index["items"]:
         item_id = item["id"]
-        rig = json.load(open(os.path.join(ART, f"{item_id}.rig.json"), encoding="utf-8"))
+        rig = json.load(open(os.path.join(REPO, item.get("rig") or os.path.join(art, f"{item_id}.rig.json")),
+                             encoding="utf-8"))
+        if boss != 3:
+            rig["order"] = parents_first(rig["order"], rig["parts"])
         parts_blocks = blocks[item_id]["parts"]
         hidden = set(item.get("hide_with_stand") or [])
         if item.get("stand_policy") != "keep":
@@ -128,6 +170,7 @@ def main():
         roles = {p["name"]: p for p in item["parts"]}
         special = SPECIAL_ROLES.get(item_id, {})
         axes = spin_axes(item)
+        axes.update({p["name"]: tuple(p["axis"]) for p in item["parts"] if p.get("axis")})
         lo, hi = [1e9] * 3, [-1e9] * 3
         colors = {}
         for name, entries in parts_blocks.items():
@@ -174,22 +217,14 @@ def main():
         lines.append("\t\t},")
         lines.append("\t},")
         c = cat[item_id]
-        weight = "Heavy" if max(size) > 3.2 else "Medium" if max(size) > 2.2 else "Light"
+        weight = c["weight"] or ("Heavy" if max(size) > 3.2 else "Medium" if max(size) > 2.2 else "Light")
         item_lines.append(
-            f"creature(\"{item_id}\", \"{c['rarity']}\", \"{c['name']}\", \"{weight}\", {num(c['income'])}, "
+            f"{fn}(\"{item_id}\", \"{c['rarity']}\", \"{c['name']}\", \"{weight}\", {num(c['income'])}, "
             f"\"{main_color}\", V({', '.join(num(v) for v in size)}))")
-    lines += ["}", ""]
-    with open(DST, "w", encoding="utf-8", newline="\n") as f:
-        f.write("\n".join(lines))
-    item_lines.append(END)
-    text = open(ITEMS, encoding="utf-8").read()
-    if BEGIN in text:
-        text = text[:text.index(BEGIN)] + "\n".join(item_lines) + text[text.index(END) + len(END):]
-    else:
-        raise SystemExit("В Items.luau нет метки начала коллекции босса 3")
-    with open(ITEMS, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-    print("CreatureRigs:", len(index["items"]))
-
+    item_lines.append(end)
+    if begin not in items_text or end not in items_text:
+        raise SystemExit(f"В Items.luau нет меток коллекции босса {boss}")
+    print(f"CreatureRigs: босс {boss} — {len(index['items'])}")
+    return items_text[:items_text.index(begin)] + "\n".join(item_lines) + items_text[items_text.index(end) + len(end):]
 
 main()
