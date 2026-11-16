@@ -6124,6 +6124,49 @@ test(
 	end
 )
 
+test(
+	"Тестовый режим владельца: /fight и /win на драконе — HP только этого боя, числа боя и сила прежние, победа",
+	function(A, _B, ctx)
+		local OwnerTestService = require(Server.Services.OwnerTestService)
+		local cfg = GameConfig.OwnerTest
+		prepareFight(A, cfg.Slot, cfg.Zone)
+		local data = DataService.GetData(A)
+		local strength = data and data.strength
+		local bossHp, bossDamage = BattleService.BossStats(cfg.Zone)
+		OwnerTestService.Handlers.StartFight(A)
+		local fight = BattleService.Handlers.FightOf(A)
+		check(fight ~= nil, "/fight не начал бой: " .. table.concat(A:Notices(), "; "))
+		if not fight then
+			return
+		end
+		check(
+			fight.zone == cfg.Zone and fight.slot == cfg.Slot,
+			"бой не с драконом за свой слот"
+		)
+		check(
+			fight.maxHp == cfg.FightHp and fight.bossMax == cfg.BossHp and A:GetAttribute("BattleMaxHP") == cfg.FightHp,
+			"HP боя не из GameConfig.OwnerTest"
+		)
+		local hp2, dmg2 = BattleService.BossStats(cfg.Zone)
+		check(hp2 == bossHp and dmg2 == bossDamage, "числа боя дракона изменились")
+		check(DataService.GetData(A).strength == strength, "сила игрока изменилась")
+		check(
+			waitUntil(function()
+				return fight.phase == "Fight"
+			end, 6),
+			"дракон не проснулся"
+		)
+		OwnerTestService.Handlers.Win(A)
+		check(fight.bossHp == 1 and fight.bossMax == 1, "/win не поставил HP босса 1")
+		check(fightTo(fight, 25), "бой после /win не закончился")
+		check(
+			fight.result == "win",
+			"результат " .. tostring(fight.result) .. ": " .. table.concat(fight.log, ", ")
+		)
+		ctx.note(("бой: %d записей, итог %s"):format(#fight.log, tostring(fight.result)))
+	end
+)
+
 local ServerTests = {}
 
 -- Прогоняет все тесты по очереди: свежие игроки A и B на каждый, после — выход и уборка. Отчёт строкой.

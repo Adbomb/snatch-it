@@ -579,3 +579,19 @@ ojo-serve.ps1`).
 - В опубликованном месте закрытые боссы (4–10) и тестовая площадка босса 10 не появляются (`ClosedAllowed` = Studio +
   DevMode) — для проверки дракона на настоящем клиенте нужен отдельный DEV-переключатель.
 - Меши дракона появляются у клиента через ~8–13 с после старта Play (снимки раньше — без дракона).
+
+## Публикация и обычный клиент (2026-11-16, C.2.4)
+- **Roblox Player на этом ПК не входит в игру**: Norton («Web/Mail Shield», сканирование SSL/TLS) подписывает HTTPS
+  своим корнем «Norton Web/Mail Shield Root»; Windows и Studio его принимают, клиент Roblox — нет: в журнале
+  `TlsVerificationFail` на `clientsettingscdn.roblox.com` → «Critical failure fetching flags», клиент закрывается.
+  Настройки защиты не трогать — решение владельца (исключение для Roblox или проверка с телефона).
+- Studio MCP публиковать не умеет (`save_place` только сохраняет). Публикация — File → Publish to Roblox (Alt+P) в окне
+  Studio; итог — строка Output «Published new changes … to Roblox» и номер версии в «Add publish notes to vN».
+  Open Cloud-публикация требует двоичного тела и API-ключа — через `open_cloud_invoke` нельзя.
+- `game.PlaceVersion` в Edit не меняется после сохранения и публикации (показывал 86 при версии 104).
+- Open Cloud Luau Execution — нужно право `universe.place.luau-execution-session:write`; скрипты места в задаче не
+  запускаются.
+- Место в Team Create, `ChatVersion = LegacyChatService`: команды владельца читаются через `Player.Chatted`.
+- В Studio ProfileStore пишет ошибку «StudioAccessToApisNotAllowed … ____PS» — DataStore в Studio выключен, ожидаемо.
+- Локальная папка `src/server/Tests/MeshFixture` (в .gitignore) синхронизируется Rojo в Studio и уходит в
+  опубликованное место (только сервер, на игру не влияет).

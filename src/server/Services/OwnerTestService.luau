@@ -176,6 +176,8 @@ end
 -- Для серверных тестов.
 OwnerTestService.Handlers = {
 	OnChat = onChat,
+	StartFight = startFight,
+	Win = win,
 }
 
 return OwnerTestService
