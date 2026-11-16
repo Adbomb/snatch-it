@@ -1,0 +1,54 @@
+{
+ "DuneTurtle": {
+  "title": "Черепаха-бархан",
+  "rarity": "Common",
+  "tris": 2432,
+  "parts": 55,
+  "hidden_faces": 108,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.525,
+  "texels_per_stud": 90.796,
+  "size_blender_xyz": [
+   2.99,
+   2.99,
+   1.61
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 219,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 917,
+   "LegFL": 74,
+   "LegFR": 74,
+   "LegBL": 44,
+   "LegBR": 44,
+   "Tail": 44,
+   "Head": 416
+  },
+  "tris_without_stand": 1613,
+  "enclosed_faces": 4,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\DuneTurtle\\DuneTurtle_ingame_phone.png"
+  }
+ }
+}

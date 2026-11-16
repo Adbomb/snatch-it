@@ -1,0 +1,52 @@
+{
+ "DrillWorm": {
+  "title": "Песчаный червь-бурильщик",
+  "rarity": "Rare",
+  "tris": 2374,
+  "parts": 52,
+  "hidden_faces": 260,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.567,
+  "texels_per_stud": 116.279,
+  "size_blender_xyz": [
+   3.09,
+   3.09,
+   1.94
+  ],
+  "rig_parts": 6,
+  "materials": 1,
+  "dropped_enclosed_faces": 30,
+  "meshes": 6,
+  "tris_by_part": {
+   "Stand": 356,
+   "Mound": 352,
+   "Body": 476,
+   "Head": 512,
+   "Drill": 360,
+   "TailTip": 268
+  },
+  "tris_without_stand": 1968,
+  "enclosed_faces": 5,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\DrillWorm\\DrillWorm_ingame_phone.png"
+  }
+ }
+}

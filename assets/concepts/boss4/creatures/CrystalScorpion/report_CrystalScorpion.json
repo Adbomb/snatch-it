@@ -1,0 +1,54 @@
+{
+ "CrystalScorpion": {
+  "title": "Кристальный скорпион",
+  "rarity": "Epic",
+  "tris": 2544,
+  "parts": 74,
+  "hidden_faces": 306,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.601,
+  "texels_per_stud": 108.072,
+  "size_blender_xyz": [
+   3.32,
+   3.32,
+   2.87
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 24,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 204,
+   "Body": 891,
+   "LegsL": 336,
+   "LegsR": 336,
+   "ClawL": 186,
+   "ClawR": 186,
+   "Tail": 178,
+   "Gem": 174
+  },
+  "tris_without_stand": 2287,
+  "enclosed_faces": 4,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CrystalScorpion\\CrystalScorpion_ingame_phone.png"
+  }
+ }
+}

@@ -1,0 +1,223 @@
+{
+ "weights": {
+  "L": {
+   "max_influences": 2,
+   "weight_sum_not_1": 0,
+   "bones": [
+    "Body",
+    "Finger1.L",
+    "Finger2.L",
+    "Finger3.L",
+    "Finger4.L",
+    "WingArm.L",
+    "WingFore.L"
+   ],
+   "verts": 36,
+   "tris": 56
+  },
+  "R": {
+   "max_influences": 2,
+   "weight_sum_not_1": 0,
+   "bones": [
+    "Body",
+    "Finger1.R",
+    "Finger2.R",
+    "Finger3.R",
+    "Finger4.R",
+    "WingArm.R",
+    "WingFore.R"
+   ],
+   "verts": 36,
+   "tris": 56
+  }
+ },
+ "deform": {
+  "sleep_idle": {
+   "min_ratio": 0.027,
+   "max_ratio": 1.189,
+   "collapsed": 8,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "wake": {
+   "min_ratio": 0.004,
+   "max_ratio": 1.499,
+   "collapsed": 10,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "combat_idle": {
+   "min_ratio": 0.881,
+   "max_ratio": 1.218,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "walk": {
+   "min_ratio": 0.877,
+   "max_ratio": 1.064,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "turn_left": {
+   "min_ratio": 0.908,
+   "max_ratio": 1.175,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "claw_swipe": {
+   "min_ratio": 0.818,
+   "max_ratio": 1.5,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "bite": {
+   "min_ratio": 0.869,
+   "max_ratio": 1.277,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "tail_strike": {
+   "min_ratio": 0.901,
+   "max_ratio": 1.359,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "wing_buffet": {
+   "min_ratio": 0.756,
+   "max_ratio": 1.979,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "magic_volley": {
+   "min_ratio": 0.722,
+   "max_ratio": 1.699,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "hit": {
+   "min_ratio": 0.86,
+   "max_ratio": 1.326,
+   "collapsed": 0,
+   "flipped_frames": 0,
+   "flipped_max": 0
+  },
+  "victory": {
+   "min_ratio": 0.78,
+   "max_ratio": 1.46,
+   "collapsed": 0,
+   "flipped_frames": 3,
+   "flipped_max": 28
+  },
+  "defeat": {
+   "min_ratio": 0.009,
+   "max_ratio": 1.274,
+   "collapsed": 6,
+   "flipped_frames": 1,
+   "flipped_max": 28
+  },
+  "fall_asleep": {
+   "min_ratio": 0.001,
+   "max_ratio": 1.186,
+   "collapsed": 10,
+   "flipped_frames": 1,
+   "flipped_max": 28
+  }
+ },
+ "fbx": {
+  "file": "wing_membrane_test.fbx",
+  "mesh_verts": 72,
+  "imported_verts": 72,
+  "imported_bones": 53,
+  "imported_groups": 13,
+  "max_deviation_studs": 0.0,
+  "frames_compared": 15,
+  "wing_tip_travel_studs": 21.49,
+  "per_frame": [
+   [
+    0,
+    0.0
+   ],
+   [
+    3,
+    0.0
+   ],
+   [
+    6,
+    0.0
+   ],
+   [
+    9,
+    0.0
+   ],
+   [
+    12,
+    0.0
+   ],
+   [
+    15,
+    0.0
+   ],
+   [
+    18,
+    0.0
+   ],
+   [
+    21,
+    0.0
+   ],
+   [
+    24,
+    0.0
+   ],
+   [
+    27,
+    0.0
+   ],
+   [
+    30,
+    0.0
+   ],
+   [
+    33,
+    0.0
+   ],
+   [
+    36,
+    0.0
+   ],
+   [
+    39,
+    0.0
+   ],
+   [
+    42,
+    0.0
+   ]
+  ]
+ },
+ "fbx_scale_dev": 0.0,
+ "fbx_import_frame_offset": 1,
+ "keyed_vs_direct_studs": 0.0,
+ "fbx_full": {
+  "file": "dragon_full_test.fbx",
+  "verts": 3650,
+  "imported_verts": 3650,
+  "bones": 53,
+  "imported_bones": 53,
+  "groups": 49,
+  "imported_groups": 49,
+  "weights_identical_verts": 3650,
+  "rigid_verts_single_bone": 3634,
+  "max_deviation_studs": 0.0002,
+  "deviation_compared": true,
+  "imported_meshes": 2
+ }
+}

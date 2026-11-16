@@ -1,0 +1,51 @@
+{
+ "TumbleweedRunner": {
+  "title": "Перекати-поле-бегун",
+  "rarity": "Common",
+  "tris": 2741,
+  "parts": 58,
+  "hidden_faces": 257,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.471,
+  "texels_per_stud": 99.889,
+  "size_blender_xyz": [
+   2.8,
+   2.8,
+   2.67
+  ],
+  "rig_parts": 5,
+  "materials": 1,
+  "dropped_enclosed_faces": 54,
+  "meshes": 5,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 820,
+   "LegR": 145,
+   "LegL": 142,
+   "Ball": 1191
+  },
+  "tris_without_stand": 2298,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\TumbleweedRunner\\TumbleweedRunner_ingame_phone.png"
+  }
+ }
+}

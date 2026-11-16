@@ -1,0 +1,54 @@
+{
+ "GiantCactus": {
+  "title": "Кактус-великан",
+  "rarity": "Epic",
+  "tris": 2220,
+  "parts": 87,
+  "hidden_faces": 240,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.646,
+  "texels_per_stud": 108.802,
+  "size_blender_xyz": [
+   3.2,
+   3.2,
+   3.79
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 2,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 295,
+   "Trunk": 598,
+   "OwlA": 276,
+   "OwlB": 184,
+   "ArmA": 172,
+   "ArmB": 172,
+   "ArmC": 167,
+   "Crown": 352
+  },
+  "tris_without_stand": 1921,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\GiantCactus\\GiantCactus_ingame_phone.png"
+  }
+ }
+}

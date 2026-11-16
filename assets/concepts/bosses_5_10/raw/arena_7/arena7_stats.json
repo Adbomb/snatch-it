@@ -1,0 +1,10 @@
+{
+ "primitives": {
+  "Ground": 47,
+  "Platform": 20,
+  "Vault": 24,
+  "Gold": 63,
+  "Lasers": 20
+ },
+ "total": 174
+}

@@ -1,0 +1,1974 @@
+{
+ "scale": 3.0,
+ "head_scale": 1.13,
+ "checks": {
+  "poses": {
+   "sleep": {
+    "source": "sleep",
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0
+     ],
+     "FPawR+Torso": [
+      1.6,
+      0.76
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81
+     ],
+     "FLowerR+FUpperR": [
+      1.41,
+      0.61
+     ],
+     "FPawR+FUpperR": [
+      1.39,
+      0.05
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05
+     ],
+     "Head+NemesR": [
+      0.45,
+      0.07
+     ],
+     "Head+NemesL": [
+      0.42,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.1,
+     "FPawR": 1.01,
+     "BPawL": 0.12,
+     "BPawR": 0.12
+    },
+    "size": [
+     16.37,
+     21.25,
+     14.82
+    ]
+   },
+   "alert": {
+    "source": "alert",
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05
+     ],
+     "FPawR+FUpperR": [
+      0.99,
+      0.05
+     ],
+     "Head+NemesL": [
+      0.45,
+      0.07
+     ],
+     "Head+NemesR": [
+      0.45,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     14.15,
+     20.75,
+     14.99
+    ]
+   },
+   "stand": {
+    "source": "stand",
+    "clash": {},
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.29,
+     23.47,
+     16.77
+    ]
+   },
+   "combat": {
+    "source": "combat",
+    "clash": {
+     "FLowerL+Torso": [
+      2.22,
+      1.32
+     ],
+     "FLowerR+Torso": [
+      2.22,
+      1.32
+     ],
+     "FPawL+Torso": [
+      1.55,
+      0.76
+     ],
+     "FPawR+Torso": [
+      1.55,
+      0.76
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "FPawL+FUpperL": [
+      0.86,
+      0.05
+     ],
+     "FPawR+FUpperR": [
+      0.86,
+      0.05
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.29,
+     30.6,
+     15.17
+    ]
+   },
+   "combat2": {
+    "source": "combat2",
+    "clash": {
+     "FLowerL+Torso": [
+      2.18,
+      1.32
+     ],
+     "FLowerR+Torso": [
+      2.18,
+      1.32
+     ],
+     "FPawL+Torso": [
+      1.76,
+      0.76
+     ],
+     "FPawR+Torso": [
+      1.76,
+      0.76
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "FPawL+FUpperL": [
+      1.05,
+      0.05
+     ],
+     "FPawR+FUpperR": [
+      1.05,
+      0.05
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.29,
+     30.33,
+     14.77
+    ]
+   },
+   "walkA": {
+    "source": "walkA",
+    "clash": {
+     "FLowerR+Torso": [
+      2.06,
+      1.32
+     ],
+     "FPawR+Torso": [
+      2.03,
+      0.76
+     ],
+     "FLowerL+Torso": [
+      1.76,
+      1.32
+     ],
+     "FLowerR+FUpperR": [
+      1.37,
+      0.61
+     ],
+     "FPawR+FUpperR": [
+      1.26,
+      0.05
+     ],
+     "BLowerL+Torso": [
+      1.22,
+      0.81
+     ],
+     "BPawL+Torso": [
+      1.21,
+      0.0
+     ],
+     "FPawL+Torso": [
+      1.19,
+      0.76
+     ],
+     "BLowerL+BUpperL": [
+      1.14,
+      0.54
+     ],
+     "FLowerL+FUpperL": [
+      1.06,
+      0.61
+     ],
+     "BLowerR+BUpperR": [
+      0.9,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      0.79,
+      0.0
+     ],
+     "BPawR+Torso": [
+      0.39,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.37,
+      0.05
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.03,
+     "BPawL": 0.08,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.3,
+     25.23,
+     16.19
+    ]
+   },
+   "walkB": {
+    "source": "walkB",
+    "clash": {
+     "FLowerL+Torso": [
+      2.06,
+      1.32
+     ],
+     "FPawL+Torso": [
+      2.03,
+      0.76
+     ],
+     "FLowerR+Torso": [
+      1.76,
+      1.32
+     ],
+     "FLowerL+FUpperL": [
+      1.37,
+      0.61
+     ],
+     "FPawL+FUpperL": [
+      1.26,
+      0.05
+     ],
+     "BLowerR+Torso": [
+      1.22,
+      0.81
+     ],
+     "BPawR+Torso": [
+      1.21,
+      0.0
+     ],
+     "FPawR+Torso": [
+      1.19,
+      0.76
+     ],
+     "BLowerR+BUpperR": [
+      1.14,
+      0.54
+     ],
+     "FLowerR+FUpperR": [
+      1.06,
+      0.61
+     ],
+     "BLowerL+BUpperL": [
+      0.9,
+      0.54
+     ],
+     "BPawR+BUpperR": [
+      0.79,
+      0.0
+     ],
+     "BPawL+Torso": [
+      0.39,
+      0.0
+     ],
+     "FPawR+FUpperR": [
+      0.37,
+      0.05
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.03,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.08
+    },
+    "size": [
+     13.3,
+     25.24,
+     16.19
+    ]
+   },
+   "hit": {
+    "source": "hit",
+    "clash": {
+     "FLowerR+Torso": [
+      2.22,
+      1.32
+     ],
+     "FLowerL+Torso": [
+      2.2,
+      1.32
+     ],
+     "FPawR+Torso": [
+      1.61,
+      0.76
+     ],
+     "FPawL+Torso": [
+      1.39,
+      0.76
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "BPawL+Torso": [
+      1.12,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.12,
+      0.0
+     ],
+     "BLowerL+BUpperL": [
+      1.05,
+      0.54
+     ],
+     "BLowerR+BUpperR": [
+      1.05,
+      0.54
+     ],
+     "FPawR+FUpperR": [
+      0.89,
+      0.05
+     ],
+     "BPawL+BUpperL": [
+      0.68,
+      0.0
+     ],
+     "BPawR+BUpperR": [
+      0.68,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.67,
+      0.05
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07
+     ],
+     "Head+NemesR": [
+      0.44,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.63,
+     "FPawR": 0.73,
+     "BPawL": 0.0,
+     "BPawR": 0.0
+    },
+    "size": [
+     13.67,
+     22.69,
+     18.47
+    ]
+   },
+   "dizzy": {
+    "source": "dizzy",
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "Head+Torso": [
+      1.28,
+      0.98
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05
+     ],
+     "FPawR+FUpperR": [
+      0.99,
+      0.05
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07
+     ],
+     "Jaw+Torso": [
+      0.3,
+      0.0
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     18.57,
+     23.28,
+     14.31
+    ]
+   },
+   "bite": {
+    "source": "pawSlam",
+    "clash": {
+     "FPawL+Torso": [
+      2.39,
+      0.76
+     ],
+     "FLowerL+Torso": [
+      2.3,
+      1.32
+     ],
+     "FPawL+FUpperL": [
+      1.4,
+      0.05
+     ],
+     "FLowerL+FUpperL": [
+      1.19,
+      0.61
+     ],
+     "BLowerR+BUpperR": [
+      1.05,
+      0.54
+     ],
+     "FLowerR+FUpperR": [
+      0.95,
+      0.61
+     ],
+     "FPawR+FUpperR": [
+      0.72,
+      0.05
+     ],
+     "Head+NemesR": [
+      0.5,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.53,
+     30.6,
+     14.06
+    ]
+   },
+   "swipe": {
+    "source": "tailWhip",
+    "clash": {
+     "FLowerL+Torso": [
+      2.12,
+      1.32
+     ],
+     "FLowerR+Torso": [
+      1.93,
+      1.32
+     ],
+     "FPawL+Torso": [
+      1.87,
+      0.76
+     ],
+     "FPawR+Torso": [
+      1.87,
+      0.76
+     ],
+     "Tail1+Torso": [
+      1.34,
+      0.99
+     ],
+     "FLowerL+FUpperL": [
+      1.26,
+      0.61
+     ],
+     "FLowerR+FUpperR": [
+      1.1,
+      0.61
+     ],
+     "BLowerL+BUpperL": [
+      0.98,
+      0.54
+     ],
+     "BLowerR+BUpperR": [
+      0.98,
+      0.54
+     ],
+     "FPawL+FUpperL": [
+      0.97,
+      0.05
+     ],
+     "FPawR+FUpperR": [
+      0.91,
+      0.05
+     ],
+     "BPawL+Torso": [
+      0.64,
+      0.0
+     ],
+     "BPawR+Torso": [
+      0.64,
+      0.0
+     ],
+     "Jaw+Torso": [
+      0.55,
+      0.0
+     ],
+     "BPawL+BUpperL": [
+      0.46,
+      0.0
+     ],
+     "BPawR+BUpperR": [
+      0.45,
+      0.0
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     22.42,
+     17.68,
+     16.08
+    ]
+   },
+   "bark": {
+    "source": "proud",
+    "clash": {
+     "BLowerL+BUpperL": [
+      1.04,
+      0.54
+     ],
+     "BLowerR+BUpperR": [
+      1.04,
+      0.54
+     ],
+     "BPawL+Torso": [
+      0.77,
+      0.0
+     ],
+     "BPawR+Torso": [
+      0.77,
+      0.0
+     ],
+     "BPawL+BUpperL": [
+      0.48,
+      0.0
+     ],
+     "BPawR+BUpperR": [
+      0.48,
+      0.0
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.55,
+     25.4,
+     18.09
+    ]
+   },
+   "bark2": {
+    "source": "proud2",
+    "clash": {
+     "BLowerL+BUpperL": [
+      1.04,
+      0.54
+     ],
+     "BLowerR+BUpperR": [
+      1.04,
+      0.54
+     ],
+     "BPawL+Torso": [
+      0.77,
+      0.0
+     ],
+     "BPawR+Torso": [
+      0.77,
+      0.0
+     ],
+     "BPawL+BUpperL": [
+      0.48,
+      0.0
+     ],
+     "BPawR+BUpperR": [
+      0.48,
+      0.0
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 0.0,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     13.55,
+     25.15,
+     17.95
+    ]
+   },
+   "pawUp": {
+    "source": "pawUp",
+    "clash": {
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61
+     ],
+     "BPawL+Torso": [
+      1.26,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.22,
+      0.0
+     ],
+     "BLowerL+Torso": [
+      1.21,
+      0.81
+     ],
+     "BLowerR+BUpperR": [
+      1.14,
+      0.54
+     ],
+     "BLowerL+BUpperL": [
+      1.03,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      0.86,
+      0.0
+     ],
+     "FPawR+FUpperR": [
+      0.82,
+      0.05
+     ],
+     "BPawR+BUpperR": [
+      0.82,
+      0.0
+     ],
+     "Head+NemesR": [
+      0.71,
+      0.07
+     ],
+     "FPawR+NemesR": [
+      0.43,
+      0.0
+     ],
+     "FPawR+Head": [
+      0.42,
+      0.0
+     ],
+     "FUpperL+NemesL": [
+      0.39,
+      0.05
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.0,
+     "FPawR": 5.6,
+     "BPawL": 0.02,
+     "BPawR": 0.02
+    },
+    "size": [
+     16.42,
+     26.57,
+     17.36
+    ]
+   },
+   "lazy": {
+    "source": "lazy",
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0
+     ],
+     "FPawR+Torso": [
+      1.6,
+      0.76
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81
+     ],
+     "FLowerR+FUpperR": [
+      1.41,
+      0.61
+     ],
+     "FPawR+FUpperR": [
+      1.39,
+      0.05
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05
+     ],
+     "Head+NemesR": [
+      0.45,
+      0.07
+     ],
+     "Head+NemesL": [
+      0.42,
+      0.07
+     ]
+    },
+    "paws_above_ground": {
+     "FPawL": 0.1,
+     "FPawR": 1.01,
+     "BPawL": 0.12,
+     "BPawR": 0.12
+    },
+    "size": [
+     16.37,
+     21.25,
+     14.82
+    ]
+   }
+  },
+  "transitions": {
+   "sleep>alert": {
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0,
+      10
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0,
+      10
+     ],
+     "FPawR+Torso": [
+      1.55,
+      0.76,
+      10
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "FPawR+FUpperR": [
+      1.36,
+      0.05,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.38,
+      0.61,
+      90
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      10
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      10
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05,
+      10
+     ],
+     "Head+NemesR": [
+      0.47,
+      0.07,
+      50
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07,
+      90
+     ],
+     "FPawR+NemesR": [
+      0.35,
+      0.0,
+      50
+     ]
+    },
+    "sinks": 1.1,
+    "floats": 0.08,
+    "sinks_at": "FPawR на 60%"
+   },
+   "alert>stand": {
+    "clash": {
+     "BPawL+Torso": [
+      1.66,
+      0.0,
+      10
+     ],
+     "BPawR+Torso": [
+      1.66,
+      0.0,
+      10
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      10
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      10
+     ],
+     "FPawL+FUpperL": [
+      0.96,
+      0.05,
+      10
+     ],
+     "FPawR+FUpperR": [
+      0.96,
+      0.05,
+      10
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07,
+      10
+     ],
+     "Head+NemesR": [
+      0.44,
+      0.07,
+      10
+     ],
+     "FPawL+Torso": [
+      1.43,
+      0.76,
+      40
+     ],
+     "FPawR+Torso": [
+      1.43,
+      0.76,
+      40
+     ]
+    },
+    "sinks": 0.36,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "stand>combat": {
+    "clash": {
+     "FLowerL+Torso": [
+      2.22,
+      1.32,
+      90
+     ],
+     "FLowerR+Torso": [
+      2.22,
+      1.32,
+      90
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      70
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      70
+     ],
+     "FPawL+Torso": [
+      1.53,
+      0.76,
+      90
+     ],
+     "FPawR+Torso": [
+      1.53,
+      0.76,
+      90
+     ],
+     "FPawL+FUpperL": [
+      0.81,
+      0.05,
+      90
+     ],
+     "FPawR+FUpperR": [
+      0.81,
+      0.05,
+      90
+     ]
+    },
+    "sinks": 0.15,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "combat>bite": {
+    "clash": {
+     "FLowerL+Torso": [
+      2.32,
+      1.32,
+      70
+     ],
+     "FLowerR+Torso": [
+      2.19,
+      1.32,
+      10
+     ],
+     "FPawL+Torso": [
+      2.37,
+      0.76,
+      90
+     ],
+     "FPawR+Torso": [
+      1.56,
+      0.76,
+      50
+     ],
+     "FLowerR+FUpperR": [
+      1.41,
+      0.61,
+      20
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FPawL+FUpperL": [
+      1.39,
+      0.05,
+      70
+     ],
+     "FPawR+FUpperR": [
+      0.84,
+      0.05,
+      10
+     ],
+     "Head+NemesR": [
+      0.51,
+      0.07,
+      90
+     ],
+     "FUpperR+NemesR": [
+      0.39,
+      0.05,
+      40
+     ],
+     "BLowerR+BUpperR": [
+      1.05,
+      0.54,
+      90
+     ]
+    },
+    "sinks": 0.43,
+    "floats": 0.0,
+    "sinks_at": "FPawR на 50%"
+   },
+   "combat>swipe": {
+    "clash": {
+     "FLowerR+Torso": [
+      2.27,
+      1.32,
+      30
+     ],
+     "FLowerL+Torso": [
+      2.29,
+      1.32,
+      40
+     ],
+     "FPawL+Torso": [
+      1.85,
+      0.76,
+      90
+     ],
+     "FPawR+Torso": [
+      1.85,
+      0.76,
+      90
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.34,
+      0.61,
+      10
+     ],
+     "FPawR+FUpperR": [
+      0.9,
+      0.05,
+      90
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05,
+      80
+     ],
+     "Tail1+Torso": [
+      1.36,
+      0.99,
+      70
+     ],
+     "Head+NemesL": [
+      0.47,
+      0.07,
+      60
+     ],
+     "Jaw+Torso": [
+      0.56,
+      0.0,
+      70
+     ],
+     "BPawL+Torso": [
+      0.62,
+      0.0,
+      90
+     ],
+     "BPawR+Torso": [
+      0.62,
+      0.0,
+      90
+     ],
+     "BLowerR+BUpperR": [
+      0.97,
+      0.54,
+      90
+     ],
+     "BLowerL+BUpperL": [
+      0.97,
+      0.54,
+      90
+     ],
+     "BPawR+BUpperR": [
+      0.48,
+      0.0,
+      90
+     ],
+     "BPawL+BUpperL": [
+      0.48,
+      0.0,
+      90
+     ],
+     "FUpperL+NemesL": [
+      0.35,
+      0.05,
+      90
+     ]
+    },
+    "sinks": 0.28,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "combat>hit": {
+    "clash": {
+     "FLowerL+Torso": [
+      2.22,
+      1.32,
+      10
+     ],
+     "FLowerR+Torso": [
+      2.22,
+      1.32,
+      10
+     ],
+     "FPawR+Torso": [
+      1.61,
+      0.76,
+      80
+     ],
+     "FPawL+Torso": [
+      1.55,
+      0.76,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FPawR+FUpperR": [
+      0.88,
+      0.05,
+      90
+     ],
+     "FPawL+FUpperL": [
+      0.85,
+      0.05,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.05,
+      0.54,
+      70
+     ],
+     "BLowerR+BUpperR": [
+      1.05,
+      0.54,
+      70
+     ],
+     "BPawL+Torso": [
+      1.08,
+      0.0,
+      90
+     ],
+     "BPawR+Torso": [
+      1.08,
+      0.0,
+      90
+     ],
+     "BPawL+BUpperL": [
+      0.63,
+      0.0,
+      90
+     ],
+     "BPawR+BUpperR": [
+      0.63,
+      0.0,
+      90
+     ],
+     "Head+NemesL": [
+      0.47,
+      0.07,
+      80
+     ],
+     "Head+NemesR": [
+      0.47,
+      0.07,
+      80
+     ]
+    },
+    "sinks": 0.08,
+    "floats": 0.01,
+    "sinks_at": "BPawL на 50%"
+   },
+   "combat>bark": {
+    "clash": {
+     "FLowerL+Torso": [
+      2.22,
+      1.32,
+      10
+     ],
+     "FLowerR+Torso": [
+      2.22,
+      1.32,
+      10
+     ],
+     "FPawL+Torso": [
+      1.53,
+      0.76,
+      10
+     ],
+     "FPawR+Torso": [
+      1.53,
+      0.76,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FPawL+FUpperL": [
+      0.82,
+      0.05,
+      10
+     ],
+     "FPawR+FUpperR": [
+      0.82,
+      0.05,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.03,
+      0.54,
+      90
+     ],
+     "BLowerR+BUpperR": [
+      1.03,
+      0.54,
+      90
+     ],
+     "BPawL+Torso": [
+      0.74,
+      0.0,
+      90
+     ],
+     "BPawR+Torso": [
+      0.74,
+      0.0,
+      90
+     ],
+     "BPawL+BUpperL": [
+      0.48,
+      0.0,
+      90
+     ],
+     "BPawR+BUpperR": [
+      0.48,
+      0.0,
+      90
+     ]
+    },
+    "sinks": 0.1,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "hit>dizzy": {
+    "clash": {
+     "FLowerR+Torso": [
+      2.21,
+      1.32,
+      10
+     ],
+     "FLowerL+Torso": [
+      2.18,
+      1.32,
+      10
+     ],
+     "FPawR+Torso": [
+      1.6,
+      0.76,
+      10
+     ],
+     "FPawL+Torso": [
+      1.54,
+      0.76,
+      50
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      10
+     ],
+     "BPawL+Torso": [
+      1.7,
+      0.0,
+      70
+     ],
+     "BPawR+Torso": [
+      1.7,
+      0.0,
+      70
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      80
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      80
+     ],
+     "FPawR+FUpperR": [
+      1.0,
+      0.05,
+      80
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      50
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      50
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05,
+      90
+     ],
+     "Head+NemesR": [
+      0.47,
+      0.07,
+      20
+     ],
+     "Head+NemesL": [
+      0.47,
+      0.07,
+      40
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      80
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      80
+     ]
+    },
+    "sinks": 0.05,
+    "floats": 0.0,
+    "sinks_at": "FPawR на 70%"
+   },
+   "dizzy>stand": {
+    "clash": {
+     "BPawL+Torso": [
+      1.66,
+      0.0,
+      10
+     ],
+     "BPawR+Torso": [
+      1.66,
+      0.0,
+      10
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      10
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      10
+     ],
+     "FPawL+FUpperL": [
+      0.96,
+      0.05,
+      10
+     ],
+     "FPawR+FUpperR": [
+      0.96,
+      0.05,
+      10
+     ],
+     "Head+NemesL": [
+      0.47,
+      0.07,
+      20
+     ],
+     "FPawL+Torso": [
+      1.29,
+      0.76,
+      40
+     ],
+     "FPawR+Torso": [
+      1.29,
+      0.76,
+      40
+     ]
+    },
+    "sinks": 0.42,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "walkA>walkB": {
+    "clash": {
+     "FLowerR+Torso": [
+      2.23,
+      1.32,
+      50
+     ],
+     "FPawR+Torso": [
+      1.99,
+      0.76,
+      10
+     ],
+     "FLowerL+Torso": [
+      2.23,
+      1.32,
+      50
+     ],
+     "FLowerR+FUpperR": [
+      1.37,
+      0.61,
+      10
+     ],
+     "FPawR+FUpperR": [
+      1.23,
+      0.05,
+      10
+     ],
+     "BLowerL+Torso": [
+      1.2,
+      0.81,
+      10
+     ],
+     "FPawL+Torso": [
+      1.99,
+      0.76,
+      90
+     ],
+     "BPawL+Torso": [
+      1.17,
+      0.0,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.14,
+      0.54,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.37,
+      0.61,
+      80
+     ],
+     "BLowerR+BUpperR": [
+      1.14,
+      0.54,
+      90
+     ],
+     "BPawL+BUpperL": [
+      0.77,
+      0.0,
+      10
+     ],
+     "BPawR+Torso": [
+      1.17,
+      0.0,
+      90
+     ],
+     "FPawL+FUpperL": [
+      1.23,
+      0.05,
+      90
+     ],
+     "BPawR+BUpperR": [
+      0.77,
+      0.0,
+      90
+     ],
+     "BLowerR+Torso": [
+      1.2,
+      0.81,
+      90
+     ]
+    },
+    "sinks": 0.25,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "stand>alert": {
+    "clash": {
+     "FPawL+Torso": [
+      1.43,
+      0.76,
+      60
+     ],
+     "FPawR+Torso": [
+      1.43,
+      0.76,
+      60
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      60
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      60
+     ],
+     "BPawL+Torso": [
+      1.66,
+      0.0,
+      90
+     ],
+     "BPawR+Torso": [
+      1.66,
+      0.0,
+      90
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      70
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      70
+     ],
+     "FPawL+FUpperL": [
+      0.96,
+      0.05,
+      90
+     ],
+     "FPawR+FUpperR": [
+      0.96,
+      0.05,
+      90
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      80
+     ],
+     "FLowerR+FUpperR": [
+      1.35,
+      0.61,
+      80
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      90
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      90
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07,
+      90
+     ],
+     "Head+NemesR": [
+      0.44,
+      0.07,
+      90
+     ]
+    },
+    "sinks": 0.36,
+    "floats": 0.0,
+    "sinks_at": "FPawL на 50%"
+   },
+   "alert>sleep": {
+    "clash": {
+     "BPawL+Torso": [
+      1.69,
+      0.0,
+      10
+     ],
+     "BPawR+Torso": [
+      1.69,
+      0.0,
+      10
+     ],
+     "BLowerL+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "BLowerR+Torso": [
+      1.44,
+      0.81,
+      10
+     ],
+     "FLowerR+FUpperR": [
+      1.38,
+      0.61,
+      10
+     ],
+     "FLowerL+FUpperL": [
+      1.35,
+      0.61,
+      10
+     ],
+     "BLowerL+BUpperL": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawL+BUpperL": [
+      1.08,
+      0.0,
+      10
+     ],
+     "BLowerR+BUpperR": [
+      1.08,
+      0.54,
+      10
+     ],
+     "BPawR+BUpperR": [
+      1.08,
+      0.0,
+      10
+     ],
+     "FPawR+FUpperR": [
+      1.36,
+      0.05,
+      90
+     ],
+     "FPawL+FUpperL": [
+      0.99,
+      0.05,
+      10
+     ],
+     "Head+NemesL": [
+      0.44,
+      0.07,
+      10
+     ],
+     "Head+NemesR": [
+      0.47,
+      0.07,
+      50
+     ],
+     "FPawR+Torso": [
+      1.55,
+      0.76,
+      90
+     ],
+     "FPawR+NemesR": [
+      0.35,
+      0.0,
+      50
+     ]
+    },
+    "sinks": 1.1,
+    "floats": 0.08,
+    "sinks_at": "FPawR на 40%"
+   }
+  }
+ },
+ "Boss4_SphinxHead": {
+  "tris": 2727,
+  "parts": 89,
+  "hidden_faces": 205,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.347,
+  "texels_per_stud": 15.5
+ },
+ "tris": {
+  "Head": 1783,
+  "Jaw": 126,
+  "EyelidL": 36,
+  "BrowL": 24,
+  "EarL": 69,
+  "NemesL": 280,
+  "EyelidR": 36,
+  "BrowR": 24,
+  "EarR": 69,
+  "NemesR": 280,
+  "Torso": 1777,
+  "Tail1": 42,
+  "Tail2": 42,
+  "Tail3": 108,
+  "Tassel": 522,
+  "FUpperL": 178,
+  "FLowerL": 44,
+  "FPawL": 518,
+  "BUpperL": 178,
+  "BLowerL": 44,
+  "BPawL": 438,
+  "FUpperR": 178,
+  "FLowerR": 44,
+  "FPawR": 518,
+  "BUpperR": 178,
+  "BLowerR": 44,
+  "BPawR": 438
+ },
+ "Boss4_SphinxBody": {
+  "tris": 2491,
+  "parts": 55,
+  "hidden_faces": 162,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.437,
+  "texels_per_stud": 18.8
+ },
+ "Boss4_SphinxLimbs": {
+  "tris": 2800,
+  "parts": 100,
+  "hidden_faces": 56,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.419,
+  "texels_per_stud": 17.8
+ },
+ "tris_total": 8018,
+ "size_studs": [
+  13.29,
+  23.47,
+  16.77
+ ]
+}

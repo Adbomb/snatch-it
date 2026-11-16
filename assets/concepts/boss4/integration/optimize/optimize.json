@@ -1,0 +1,251 @@
+{
+ "budget": 8000,
+ "parts": {
+  "Tail1": {
+   "before": 42,
+   "after": 42,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "Tail2": {
+   "before": 42,
+   "after": 42,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "Tail3": {
+   "before": 108,
+   "after": 108,
+   "hidden_faces": 0,
+   "blocks": 5,
+   "open_blocks": 2
+  },
+  "Tassel": {
+   "before": 522,
+   "after": 522,
+   "hidden_faces": 0,
+   "blocks": 6,
+   "open_blocks": 5
+  },
+  "Torso": {
+   "before": 1777,
+   "after": 1758,
+   "hidden_faces": 11,
+   "blocks": 40,
+   "open_blocks": 31
+  },
+  "BrowL": {
+   "before": 24,
+   "after": 24,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 0
+  },
+  "BrowR": {
+   "before": 24,
+   "after": 24,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 0
+  },
+  "EarL": {
+   "before": 69,
+   "after": 69,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "EarR": {
+   "before": 69,
+   "after": 69,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "EyelidL": {
+   "before": 36,
+   "after": 36,
+   "hidden_faces": 0,
+   "blocks": 3,
+   "open_blocks": 0
+  },
+  "EyelidR": {
+   "before": 36,
+   "after": 36,
+   "hidden_faces": 0,
+   "blocks": 3,
+   "open_blocks": 0
+  },
+  "Head": {
+   "before": 1783,
+   "after": 1700,
+   "hidden_faces": 46,
+   "blocks": 57,
+   "open_blocks": 45
+  },
+  "Jaw": {
+   "before": 126,
+   "after": 126,
+   "hidden_faces": 0,
+   "blocks": 4,
+   "open_blocks": 1
+  },
+  "NemesL": {
+   "before": 280,
+   "after": 280,
+   "hidden_faces": 0,
+   "blocks": 7,
+   "open_blocks": 4
+  },
+  "NemesR": {
+   "before": 280,
+   "after": 280,
+   "hidden_faces": 0,
+   "blocks": 7,
+   "open_blocks": 4
+  },
+  "BLowerL": {
+   "before": 44,
+   "after": 44,
+   "hidden_faces": 0,
+   "blocks": 1,
+   "open_blocks": 0
+  },
+  "BLowerR": {
+   "before": 44,
+   "after": 44,
+   "hidden_faces": 0,
+   "blocks": 1,
+   "open_blocks": 0
+  },
+  "BPawL": {
+   "before": 438,
+   "after": 438,
+   "hidden_faces": 0,
+   "blocks": 18,
+   "open_blocks": 9
+  },
+  "BPawR": {
+   "before": 438,
+   "after": 438,
+   "hidden_faces": 0,
+   "blocks": 18,
+   "open_blocks": 9
+  },
+  "BUpperL": {
+   "before": 178,
+   "after": 178,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "BUpperR": {
+   "before": 178,
+   "after": 178,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "FLowerL": {
+   "before": 44,
+   "after": 44,
+   "hidden_faces": 0,
+   "blocks": 1,
+   "open_blocks": 0
+  },
+  "FLowerR": {
+   "before": 44,
+   "after": 44,
+   "hidden_faces": 0,
+   "blocks": 1,
+   "open_blocks": 0
+  },
+  "FPawL": {
+   "before": 518,
+   "after": 518,
+   "hidden_faces": 0,
+   "blocks": 26,
+   "open_blocks": 17
+  },
+  "FPawR": {
+   "before": 518,
+   "after": 518,
+   "hidden_faces": 0,
+   "blocks": 26,
+   "open_blocks": 17
+  },
+  "FUpperL": {
+   "before": 178,
+   "after": 178,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  },
+  "FUpperR": {
+   "before": 178,
+   "after": 178,
+   "hidden_faces": 0,
+   "blocks": 2,
+   "open_blocks": 1
+  }
+ },
+ "before": 8018,
+ "after": 7916,
+ "bounds_changed": [],
+ "render_diff": [
+  {
+   "view": "before_00.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_01.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_02.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_03.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_04.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_05.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_06.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_07.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  },
+  {
+   "view": "before_08.png",
+   "max": 0.01961,
+   "changed_pixels": 3
+  },
+  {
+   "view": "before_09.png",
+   "max": 0.00392,
+   "changed_pixels": 0
+  }
+ ],
+ "render_diff_max": 0.01961,
+ "render_changed_pixels": 3
+}

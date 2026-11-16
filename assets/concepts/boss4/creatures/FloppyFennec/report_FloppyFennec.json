@@ -1,0 +1,52 @@
+{
+ "FloppyFennec": {
+  "title": "Фенек-лопоух",
+  "rarity": "Common",
+  "tris": 1868,
+  "parts": 44,
+  "hidden_faces": 194,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.585,
+  "texels_per_stud": 129.734,
+  "size_blender_xyz": [
+   2.61,
+   2.61,
+   3.33
+  ],
+  "rig_parts": 6,
+  "materials": 1,
+  "dropped_enclosed_faces": 38,
+  "meshes": 6,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 394,
+   "Head": 702,
+   "EarR": 74,
+   "EarL": 146,
+   "Tail": 132
+  },
+  "tris_without_stand": 1448,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\FloppyFennec\\FloppyFennec_ingame_phone.png"
+  }
+ }
+}

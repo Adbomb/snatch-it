@@ -1,0 +1,52 @@
+{
+ "DuneWhale": {
+  "title": "Кит-бархан",
+  "rarity": "Epic",
+  "tris": 2190,
+  "parts": 74,
+  "hidden_faces": 250,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.633,
+  "texels_per_stud": 79.043,
+  "size_blender_xyz": [
+   3.44,
+   3.44,
+   2.81
+  ],
+  "rig_parts": 6,
+  "materials": 1,
+  "dropped_enclosed_faces": 41,
+  "meshes": 6,
+  "tris_by_part": {
+   "Stand": 204,
+   "Dune": 422,
+   "Whale": 841,
+   "Flipper": 44,
+   "Spout": 424,
+   "Tail": 180
+  },
+  "tris_without_stand": 1911,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\DuneWhale\\DuneWhale_ingame_phone.png"
+  }
+ }
+}

@@ -1,0 +1,53 @@
+{
+ "CactusBoxer": {
+  "title": "Кактус-боксёр",
+  "rarity": "Common",
+  "tris": 2990,
+  "parts": 96,
+  "hidden_faces": 488,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.618,
+  "texels_per_stud": 113.37,
+  "size_blender_xyz": [
+   2.9,
+   2.9,
+   2.6
+  ],
+  "rig_parts": 7,
+  "materials": 1,
+  "dropped_enclosed_faces": 32,
+  "meshes": 7,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 1724,
+   "LegL": 84,
+   "LegR": 84,
+   "ArmL": 202,
+   "ArmR": 207,
+   "Flower": 282
+  },
+  "tris_without_stand": 2583,
+  "enclosed_faces": 4,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CactusBoxer\\CactusBoxer_ingame_phone.png"
+  }
+ }
+}

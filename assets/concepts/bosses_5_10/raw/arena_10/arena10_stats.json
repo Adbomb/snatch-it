@@ -1,0 +1,10 @@
+{
+ "primitives": {
+  "Ground": 30,
+  "Platform": 19,
+  "Keep": 33,
+  "Walls": 67,
+  "Treasure": 88
+ },
+ "total": 237
+}

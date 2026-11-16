@@ -1,0 +1,57 @@
+{
+ "IslandTurtle": {
+  "title": "Черепаха-остров",
+  "rarity": "Epic",
+  "tris": 2237,
+  "parts": 77,
+  "hidden_faces": 319,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.589,
+  "texels_per_stud": 88.611,
+  "size_blender_xyz": [
+   3.52,
+   3.52,
+   2.41
+  ],
+  "rig_parts": 11,
+  "materials": 1,
+  "dropped_enclosed_faces": 19,
+  "meshes": 11,
+  "tris_by_part": {
+   "Stand": 204,
+   "LegFL": 74,
+   "LegFR": 74,
+   "LegBL": 44,
+   "LegBR": 44,
+   "Body": 459,
+   "PalmA": 352,
+   "PalmB": 348,
+   "Boat": 62,
+   "Head": 498,
+   "Tail": 44
+  },
+  "tris_without_stand": 1999,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\IslandTurtle\\IslandTurtle_ingame_phone.png"
+  }
+ }
+}

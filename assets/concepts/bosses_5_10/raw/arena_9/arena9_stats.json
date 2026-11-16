@@ -1,0 +1,11 @@
+{
+ "primitives": {
+  "Ground": 48,
+  "Platform": 16,
+  "Hangar": 9,
+  "Rockets": 36,
+  "Cargo": 12,
+  "Stars": 40
+ },
+ "total": 161
+}

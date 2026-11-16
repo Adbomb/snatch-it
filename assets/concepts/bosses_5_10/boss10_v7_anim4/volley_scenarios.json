@@ -1,0 +1,464 @@
+{
+ "1_stand": {
+  "text": "стоит на месте",
+  "end_at": null,
+  "hits": [
+   [
+    2.483,
+    0,
+    2.61
+   ]
+  ],
+  "damage": 1,
+  "canceled": "",
+  "closest": {
+   "0": -0.14,
+   "-1": 5.7,
+   "1": 5.7
+  },
+  "ends": [
+   [
+    0,
+    0.533,
+    "попал в игрока"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "2_left": {
+  "text": "уходит влево через 0.35 с после фиксации, на 4.7 ст. — между полосами",
+  "end_at": null,
+  "hits": [],
+  "damage": 0,
+  "canceled": "",
+  "closest": {
+   "0": 1.91,
+   "-1": 9.97,
+   "1": 1.48
+  },
+  "ends": [
+   [
+    0,
+    0.75,
+    "земля"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "3_right": {
+  "text": "уходит вправо через 0.35 с после фиксации, на 4.7 ст.",
+  "end_at": null,
+  "hits": [],
+  "damage": 0,
+  "canceled": "",
+  "closest": {
+   "0": 1.91,
+   "-1": 1.48,
+   "1": 9.97
+  },
+  "ends": [
+   [
+    0,
+    0.75,
+    "земля"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "4_late": {
+  "text": "начинает уходить за 0.12 с до прилёта снаряда",
+  "end_at": null,
+  "hits": [
+   [
+    2.483,
+    0,
+    2.63
+   ]
+  ],
+  "damage": 1,
+  "canceled": "",
+  "closest": {
+   "0": -0.12,
+   "-1": 5.91,
+   "1": 3.78
+  },
+  "ends": [
+   [
+    0,
+    0.533,
+    "попал в игрока"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "5_end_prep": {
+  "text": "бой кончается во время подготовки (1.2 с)",
+  "end_at": 1.2,
+  "hits": [],
+  "damage": 0,
+  "canceled": "до выстрела",
+  "closest": {},
+  "ends": [],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "6_end_flight": {
+  "text": "бой кончается через 0.2 с после выстрела",
+  "end_at": 2.15,
+  "hits": [],
+  "damage": 0,
+  "canceled": "во время полёта",
+  "closest": {
+   "0": 12.37,
+   "-1": 13.16,
+   "1": 13.16
+  },
+  "ends": [
+   [
+    0,
+    0.217,
+    "бой окончен"
+   ],
+   [
+    -1,
+    0.217,
+    "бой окончен"
+   ],
+   [
+    1,
+    0.217,
+    "бой окончен"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "7_cover": {
+  "text": "стоит за колонной: центральный снаряд разбивается о неё",
+  "end_at": null,
+  "hits": [],
+  "damage": 0,
+  "canceled": "",
+  "closest": {
+   "0": 9.62,
+   "-1": 5.7,
+   "1": 5.7
+  },
+  "ends": [
+   [
+    0,
+    0.283,
+    "препятствие"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [
+   [
+    -4.5,
+    -40.5,
+    1.6
+   ]
+  ],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "cinematic": {
+  "text": "стоит на месте",
+  "end_at": null,
+  "hits": [
+   [
+    2.483,
+    0,
+    2.61
+   ]
+  ],
+  "damage": 1,
+  "canceled": "",
+  "closest": {
+   "0": -0.14,
+   "-1": 5.7,
+   "1": 5.7
+  },
+  "ends": [
+   [
+    0,
+    0.533,
+    "попал в игрока"
+   ],
+   [
+    -1,
+    0.75,
+    "земля"
+   ],
+   [
+    1,
+    0.75,
+    "земля"
+   ]
+  ],
+  "frames": 109,
+  "distance": 20.0,
+  "arrive": 2.56,
+  "obstacles": [],
+  "launch": [
+   -4.5,
+   -28.5,
+   14.5
+  ],
+  "params": {
+   "track_from": 0.6,
+   "lock": 1.45,
+   "fire": 1.95,
+   "speed": 38.0,
+   "spread": 25.0,
+   "radius": 1.5,
+   "player_radius": 1.25,
+   "player_height": 5.0,
+   "range": 60.0,
+   "server_hz": 60.0,
+   "aim_height": 2.6
+  }
+ },
+ "_reaction_table": [
+  {
+   "distance": 12.0,
+   "speed": 14.0,
+   "time_after_lock": 0.94,
+   "pocket_width": 0.1,
+   "move_needed": 8.65,
+   "latest_reaction": 0.33
+  },
+  {
+   "distance": 12.0,
+   "speed": 20.0,
+   "time_after_lock": 0.94,
+   "pocket_width": 0.1,
+   "move_needed": 8.65,
+   "latest_reaction": 0.51
+  },
+  {
+   "distance": 20.0,
+   "speed": 14.0,
+   "time_after_lock": 1.11,
+   "pocket_width": 3.83,
+   "move_needed": 3.05,
+   "latest_reaction": 0.89
+  },
+  {
+   "distance": 20.0,
+   "speed": 20.0,
+   "time_after_lock": 1.11,
+   "pocket_width": 3.83,
+   "move_needed": 3.05,
+   "latest_reaction": 0.96
+  },
+  {
+   "distance": 30.0,
+   "speed": 14.0,
+   "time_after_lock": 1.35,
+   "pocket_width": 8.49,
+   "move_needed": 3.05,
+   "latest_reaction": 1.13
+  },
+  {
+   "distance": 30.0,
+   "speed": 20.0,
+   "time_after_lock": 1.35,
+   "pocket_width": 8.49,
+   "move_needed": 3.05,
+   "latest_reaction": 1.2
+  }
+ ]
+}

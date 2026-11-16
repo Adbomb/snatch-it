@@ -1,0 +1,17 @@
+{
+ "tris": 3256,
+ "size_model": [
+  16.73,
+  16.2,
+  12.52
+ ],
+ "export_scale": 2.795,
+ "size_studs": [
+  46.8,
+  45.3,
+  35.0
+ ],
+ "wingspan_studs": 46.8,
+ "arena_diameter": 62.0,
+ "tris_v5": 2862
+}

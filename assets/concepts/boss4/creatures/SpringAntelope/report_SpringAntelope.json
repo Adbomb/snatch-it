@@ -1,0 +1,56 @@
+{
+ "SpringAntelope": {
+  "title": "Антилопа-родник",
+  "rarity": "Legendary",
+  "tris": 2904,
+  "parts": 109,
+  "hidden_faces": 241,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.567,
+  "texels_per_stud": 90.131,
+  "size_blender_xyz": [
+   3.32,
+   3.32,
+   3.77
+  ],
+  "rig_parts": 10,
+  "materials": 1,
+  "dropped_enclosed_faces": 59,
+  "meshes": 10,
+  "tris_by_part": {
+   "Stand": 282,
+   "Spring": 406,
+   "Body": 411,
+   "LegFL": 158,
+   "LegFR": 170,
+   "LegBL": 164,
+   "LegBR": 170,
+   "Head": 590,
+   "Mane": 257,
+   "Tail": 190
+  },
+  "tris_without_stand": 2516,
+  "enclosed_faces": 2,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\SpringAntelope\\SpringAntelope_ingame_phone.png"
+  }
+ }
+}

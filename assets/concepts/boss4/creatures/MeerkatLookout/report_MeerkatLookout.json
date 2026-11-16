@@ -1,0 +1,53 @@
+{
+ "MeerkatLookout": {
+  "title": "Сурикат-часовой",
+  "rarity": "Common",
+  "tris": 1842,
+  "parts": 42,
+  "hidden_faces": 174,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.591,
+  "texels_per_stud": 152.94,
+  "size_blender_xyz": [
+   2.61,
+   2.61,
+   2.28
+  ],
+  "rig_parts": 7,
+  "materials": 1,
+  "dropped_enclosed_faces": 64,
+  "meshes": 7,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 412,
+   "Tail": 145,
+   "Head": 361,
+   "ArmR": 84,
+   "Spyglass": 300,
+   "ArmL": 84
+  },
+  "tris_without_stand": 1386,
+  "enclosed_faces": 3,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\MeerkatLookout\\MeerkatLookout_ingame_phone.png"
+  }
+ }
+}

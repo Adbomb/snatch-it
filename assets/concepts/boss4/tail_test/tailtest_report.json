@@ -1,0 +1,429 @@
+{
+ "approved": {
+  "player_ahead": 8.5,
+  "gap_to_figure_at_contact": 8.9,
+  "gap_to_figure_min": 7.08,
+  "contact_time": 0.75,
+  "tassel_to_player_at_contact": 12.65,
+  "gap_at_contact": 9.91,
+  "tassel_at_contact_roblox": [
+   12.03,
+   4.14,
+   4.61
+  ],
+  "closest": [
+   10.82,
+   0.83
+  ],
+  "torso_yaw_at_contact": -58.0,
+  "head_yaw_at_contact": -11.6,
+  "body_to_player_min": [
+   -0.16,
+   "FUpperL на 0.87 с"
+  ]
+ },
+ "tests": {
+  "step65": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.0,
+   "sink_at": "",
+   "slide": {
+    "FL": 0.052,
+    "FR": 0.04,
+    "BL": 0.068,
+    "BR": 0.0
+   },
+   "contact_share": {
+    "FL": 0.6,
+    "FR": 0.62,
+    "BL": 0.62,
+    "BR": 0.57
+   },
+   "step_max_deg": 29.6,
+   "step_at": "FLowerR на 1.17 с",
+   "clash_real": {
+    "BUpperL+Tail2": [
+     0.36,
+     0.0,
+     0.8
+    ]
+   },
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.39,
+     0.99,
+     1.07
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.67
+    ],
+    "Jaw+Torso": [
+     0.62,
+     0.0,
+     0.73
+    ],
+    "Head+NemesR": [
+     0.42,
+     0.07,
+     0.73
+    ]
+   },
+   "clash_fold_max": 2.42,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.79,
+     6.647
+    ],
+    "Jaw": [
+     5.172,
+     6.346
+    ],
+    "EyelidL": [
+     8.739,
+     10.101
+    ],
+    "BrowL": [
+     9.0,
+     11.116
+    ],
+    "EarL": [
+     9.0,
+     13.382
+    ],
+    "NemesL": [
+     1.65,
+     5.809
+    ],
+    "EyelidR": [
+     8.918,
+     9.695
+    ],
+    "BrowR": [
+     9.0,
+     10.935
+    ],
+    "EarR": [
+     9.0,
+     12.59
+    ],
+    "NemesR": [
+     2.082,
+     2.678
+    ],
+    "Torso": [
+     0.796,
+     1.33
+    ],
+    "Tail1": [
+     3.87,
+     4.788
+    ],
+    "Tail2": [
+     2.845,
+     4.48
+    ],
+    "Tail3": [
+     2.616,
+     5.639
+    ],
+    "Tassel": [
+     1.83,
+     7.666
+    ],
+    "FUpperL": [
+     1.313,
+     1.915
+    ],
+    "FLowerL": [
+     0.087,
+     1.097
+    ],
+    "FPawL": [
+     -0.0,
+     0.649
+    ],
+    "BUpperL": [
+     1.885,
+     2.678
+    ],
+    "BLowerL": [
+     0.796,
+     1.678
+    ],
+    "BPawL": [
+     0.018,
+     0.977
+    ],
+    "FUpperR": [
+     1.19,
+     1.974
+    ],
+    "FLowerR": [
+     0.289,
+     1.117
+    ],
+    "FPawR": [
+     -0.0,
+     0.656
+    ],
+    "BUpperR": [
+     1.849,
+     2.678
+    ],
+    "BLowerR": [
+     0.697,
+     1.56
+    ],
+    "BPawR": [
+     0.018,
+     0.911
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: удар кисти": 0.75
+   },
+   "ends": {
+    "start": [
+     0.0,
+     0.0
+    ],
+    "end": [
+     0.0,
+     0.0
+    ]
+   },
+   "player": {
+    "player_ahead": 8.5,
+    "gap_to_figure_at_contact": 2.14,
+    "gap_to_figure_min": 1.74,
+    "contact_time": 0.75,
+    "tassel_to_player_at_contact": 5.29,
+    "gap_at_contact": 2.55,
+    "tassel_at_contact_roblox": [
+     3.29,
+     3.79,
+     4.35
+    ],
+    "closest": [
+     4.72,
+     0.87
+    ],
+    "torso_yaw_at_contact": -65.0,
+    "head_yaw_at_contact": -15.0,
+    "body_to_player_min": [
+     -0.95,
+     "NemesL на 1.10 с"
+    ]
+   },
+   "title": "Хвост-кистень — проба: 65° и шаг вбок"
+  },
+  "step82": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.0,
+   "sink_at": "",
+   "slide": {
+    "FL": 0.062,
+    "FR": 0.046,
+    "BL": 0.088,
+    "BR": 0.0
+   },
+   "contact_share": {
+    "FL": 0.6,
+    "FR": 0.62,
+    "BL": 0.62,
+    "BR": 0.57
+   },
+   "step_max_deg": 35.6,
+   "step_at": "FLowerR на 1.17 с",
+   "clash_real": {
+    "BUpperL+Tail3": [
+     0.38,
+     0.0,
+     0.87
+    ]
+   },
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.42,
+     0.99,
+     1.0
+    ],
+    "Head+NemesL": [
+     0.49,
+     0.07,
+     0.73
+    ],
+    "Jaw+Torso": [
+     0.62,
+     0.0,
+     0.73
+    ],
+    "Head+NemesR": [
+     0.46,
+     0.07,
+     0.73
+    ]
+   },
+   "clash_fold_max": 2.4,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.79,
+     6.647
+    ],
+    "Jaw": [
+     5.172,
+     6.347
+    ],
+    "EyelidL": [
+     8.739,
+     10.102
+    ],
+    "BrowL": [
+     9.0,
+     11.116
+    ],
+    "EarL": [
+     9.0,
+     13.382
+    ],
+    "NemesL": [
+     1.65,
+     5.798
+    ],
+    "EyelidR": [
+     8.918,
+     9.696
+    ],
+    "BrowR": [
+     9.0,
+     10.937
+    ],
+    "EarR": [
+     9.0,
+     12.59
+    ],
+    "NemesR": [
+     2.082,
+     2.677
+    ],
+    "Torso": [
+     0.796,
+     1.33
+    ],
+    "Tail1": [
+     3.55,
+     4.803
+    ],
+    "Tail2": [
+     3.033,
+     4.488
+    ],
+    "Tail3": [
+     2.313,
+     5.598
+    ],
+    "Tassel": [
+     1.336,
+     7.666
+    ],
+    "FUpperL": [
+     1.306,
+     1.945
+    ],
+    "FLowerL": [
+     0.087,
+     1.131
+    ],
+    "FPawL": [
+     -0.0,
+     0.649
+    ],
+    "BUpperL": [
+     1.919,
+     2.678
+    ],
+    "BLowerL": [
+     0.742,
+     1.692
+    ],
+    "BPawL": [
+     0.018,
+     0.977
+    ],
+    "FUpperR": [
+     1.164,
+     1.954
+    ],
+    "FLowerR": [
+     0.268,
+     1.148
+    ],
+    "FPawR": [
+     -0.0,
+     0.656
+    ],
+    "BUpperR": [
+     1.863,
+     2.678
+    ],
+    "BLowerR": [
+     0.697,
+     1.571
+    ],
+    "BPawR": [
+     0.018,
+     0.911
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: удар кисти": 0.75
+   },
+   "ends": {
+    "start": [
+     0.0,
+     0.0
+    ],
+    "end": [
+     0.0,
+     0.0
+    ]
+   },
+   "player": {
+    "player_ahead": 8.5,
+    "gap_to_figure_at_contact": -0.27,
+    "gap_to_figure_min": -0.49,
+    "contact_time": 0.75,
+    "tassel_to_player_at_contact": 2.66,
+    "gap_at_contact": -0.08,
+    "tassel_at_contact_roblox": [
+     1.78,
+     3.31,
+     6.53
+    ],
+    "closest": [
+     2.09,
+     0.87
+    ],
+    "torso_yaw_at_contact": -82.0,
+    "head_yaw_at_contact": -32.0,
+    "body_to_player_min": [
+     -0.95,
+     "NemesL на 1.13 с"
+    ]
+   },
+   "title": "Хвост-кистень — проба: 82° и шаг вбок"
+  }
+ }
+}

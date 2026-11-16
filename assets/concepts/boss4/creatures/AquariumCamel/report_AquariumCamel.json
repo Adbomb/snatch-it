@@ -1,0 +1,58 @@
+{
+ "AquariumCamel": {
+  "title": "Верблюд-аквариум",
+  "rarity": "Rare",
+  "tris": 2724,
+  "parts": 101,
+  "hidden_faces": 290,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.544,
+  "texels_per_stud": 110.665,
+  "size_blender_xyz": [
+   3.42,
+   3.19,
+   3.1
+  ],
+  "rig_parts": 12,
+  "materials": 1,
+  "dropped_enclosed_faces": 78,
+  "meshes": 12,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 374,
+   "LegFL": 134,
+   "LegFR": 134,
+   "LegBL": 134,
+   "LegBR": 134,
+   "TankA": 210,
+   "FishA": 112,
+   "TankB": 210,
+   "FishB": 112,
+   "Head": 608,
+   "Tail": 78
+  },
+  "tris_without_stand": 2240,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\AquariumCamel\\AquariumCamel_ingame_phone.png"
+  }
+ }
+}

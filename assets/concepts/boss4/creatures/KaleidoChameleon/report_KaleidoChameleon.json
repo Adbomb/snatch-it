@@ -1,0 +1,56 @@
+{
+ "KaleidoChameleon": {
+  "title": "Хамелеон-калейдоскоп",
+  "rarity": "Rare",
+  "tris": 2325,
+  "parts": 72,
+  "hidden_faces": 207,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.572,
+  "texels_per_stud": 138.979,
+  "size_blender_xyz": [
+   3.09,
+   3.09,
+   2.13
+  ],
+  "rig_parts": 10,
+  "materials": 1,
+  "dropped_enclosed_faces": 25,
+  "meshes": 10,
+  "tris_by_part": {
+   "Stand": 356,
+   "Branch": 317,
+   "Body": 486,
+   "LegsF": 196,
+   "LegsB": 196,
+   "Head": 78,
+   "Eye": 254,
+   "EyeB": 92,
+   "Tongue": 74,
+   "Tail": 238
+  },
+  "tris_without_stand": 1931,
+  "enclosed_faces": 2,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\KaleidoChameleon\\KaleidoChameleon_ingame_phone.png"
+  }
+ }
+}

@@ -1,0 +1,42 @@
+{
+ "tris": 10825,
+ "parts": 27,
+ "hidden_faces": 985,
+ "flipped": 0,
+ "degenerate": 0,
+ "coplanar": [],
+ "per_part": {
+  "Head": 2734,
+  "Jaw": 106,
+  "Neck": 330,
+  "Pelvis": 774,
+  "Torso": 1062,
+  "Cape": 1702,
+  "UpperArmL": 415,
+  "ForearmL": 100,
+  "HandL": 82,
+  "ThighL": 148,
+  "ShinL": 80,
+  "FootL": 246,
+  "WingHandL": 207,
+  "WingArmL": 118,
+  "UpperArmR": 410,
+  "ForearmR": 112,
+  "HandR": 82,
+  "ThighR": 148,
+  "ShinR": 80,
+  "FootR": 246,
+  "WingHandR": 207,
+  "WingArmR": 118,
+  "Scepter": 828,
+  "Tail1": 92,
+  "Tail2": 90,
+  "Tail3": 46,
+  "Tail4": 262
+ },
+ "size": [
+  12.28,
+  7.88,
+  11.75
+ ]
+}

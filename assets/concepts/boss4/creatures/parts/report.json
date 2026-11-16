@@ -1,0 +1,122 @@
+{
+ "CactusBoxer": {
+  "blocks": 32,
+  "parts": 7
+ },
+ "FloppyFennec": {
+  "blocks": 34,
+  "parts": 6
+ },
+ "TumbleweedRunner": {
+  "blocks": 36,
+  "parts": 5
+ },
+ "CanteenCamel": {
+  "blocks": 31,
+  "parts": 11
+ },
+ "DuneTurtle": {
+  "blocks": 25,
+  "parts": 8
+ },
+ "UmbrellaLizard": {
+  "blocks": 31,
+  "parts": 9
+ },
+ "MelonArmadillo": {
+  "blocks": 32,
+  "parts": 8
+ },
+ "StrawSnake": {
+  "blocks": 30,
+  "parts": 6
+ },
+ "DropBeetle": {
+  "blocks": 27,
+  "parts": 8
+ },
+ "MeerkatLookout": {
+  "blocks": 28,
+  "parts": 7
+ },
+ "CanScorpion": {
+  "blocks": 28,
+  "parts": 8
+ },
+ "SandChick": {
+  "blocks": 36,
+  "parts": 8
+ },
+ "AquariumCamel": {
+  "blocks": 40,
+  "parts": 12
+ },
+ "CactusAcrobats": {
+  "blocks": 33,
+  "parts": 8
+ },
+ "DrillWorm": {
+  "blocks": 29,
+  "parts": 6
+ },
+ "FanVulture": {
+  "blocks": 32,
+  "parts": 10
+ },
+ "CobraFountain": {
+  "blocks": 28,
+  "parts": 6
+ },
+ "DustDevil": {
+  "blocks": 29,
+  "parts": 5
+ },
+ "KaleidoChameleon": {
+  "blocks": 29,
+  "parts": 10
+ },
+ "FennecRiddler": {
+  "blocks": 35,
+  "parts": 13
+ },
+ "MirageFish": {
+  "blocks": 30,
+  "parts": 7
+ },
+ "DuneWhale": {
+  "blocks": 30,
+  "parts": 6
+ },
+ "IslandTurtle": {
+  "blocks": 36,
+  "parts": 11
+ },
+ "BlazeOstrich": {
+  "blocks": 34,
+  "parts": 9
+ },
+ "CloudCamel": {
+  "blocks": 31,
+  "parts": 11
+ },
+ "CrystalScorpion": {
+  "blocks": 32,
+  "parts": 8
+ },
+ "GiantCactus": {
+  "blocks": 34,
+  "parts": 8
+ },
+ "SpringAntelope": {
+  "blocks": 30,
+  "parts": 10
+ },
+ "PuzzlePhoenix": {
+  "blocks": 25,
+  "parts": 9
+ },
+ "TornadoKing": {
+  "blocks": 38,
+  "parts": 8
+ }
+}

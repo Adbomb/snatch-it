@@ -1,0 +1,55 @@
+{
+ "BlazeOstrich": {
+  "title": "Жар-страус",
+  "rarity": "Epic",
+  "tris": 2707,
+  "parts": 86,
+  "hidden_faces": 156,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.531,
+  "texels_per_stud": 91.611,
+  "size_blender_xyz": [
+   3.2,
+   3.22,
+   3.77
+  ],
+  "rig_parts": 9,
+  "materials": 1,
+  "dropped_enclosed_faces": 30,
+  "meshes": 9,
+  "tris_by_part": {
+   "Stand": 209,
+   "LegL": 116,
+   "LegR": 112,
+   "Body": 226,
+   "WingL": 46,
+   "WingR": 46,
+   "Fan": 1253,
+   "Neck": 142,
+   "Head": 506
+  },
+  "tris_without_stand": 2447,
+  "enclosed_faces": 7,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\BlazeOstrich\\BlazeOstrich_ingame_phone.png"
+  }
+ }
+}

@@ -1,0 +1,2562 @@
+{
+ "tests": {
+  "c58": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.013,
+   "sink_at": "FPawL на 0.50 с",
+   "slide": {
+    "FL": 0.0,
+    "FR": 0.0,
+    "BL": 0.041,
+    "BR": 0.006
+   },
+   "contact_share": {
+    "FL": 0.62,
+    "FR": 0.74,
+    "BL": 0.64,
+    "BR": 0.62
+   },
+   "step_max_deg": 48.7,
+   "step_at": "FLowerR на 0.13 с",
+   "clash_real": {},
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.39,
+     0.99,
+     1.13
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.37
+    ],
+    "Jaw+Torso": [
+     0.63,
+     0.0,
+     0.73
+    ]
+   },
+   "clash_fold_max": 2.43,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.653,
+     6.418
+    ],
+    "Jaw": [
+     5.357,
+     6.447
+    ],
+    "EyelidL": [
+     9.0,
+     10.96
+    ],
+    "BrowL": [
+     9.0,
+     11.429
+    ],
+    "EarL": [
+     9.0,
+     13.729
+    ],
+    "NemesL": [
+     1.881,
+     5.864
+    ],
+    "EyelidR": [
+     8.773,
+     10.333
+    ],
+    "BrowR": [
+     9.0,
+     11.18
+    ],
+    "EarR": [
+     9.0,
+     12.768
+    ],
+    "NemesR": [
+     1.483,
+     2.691
+    ],
+    "Torso": [
+     0.315,
+     1.202
+    ],
+    "Tail1": [
+     3.976,
+     4.45
+    ],
+    "Tail2": [
+     3.653,
+     4.117
+    ],
+    "Tail3": [
+     3.38,
+     5.027
+    ],
+    "Tassel": [
+     1.656,
+     6.213
+    ],
+    "FUpperL": [
+     1.135,
+     2.062
+    ],
+    "FLowerL": [
+     0.353,
+     2.657
+    ],
+    "FPawL": [
+     -0.013,
+     1.553
+    ],
+    "BUpperL": [
+     1.612,
+     2.678
+    ],
+    "BLowerL": [
+     0.539,
+     1.561
+    ],
+    "BPawL": [
+     0.018,
+     0.975
+    ],
+    "FUpperR": [
+     1.119,
+     1.881
+    ],
+    "FLowerR": [
+     0.115,
+     0.76
+    ],
+    "FPawR": [
+     -0.0,
+     0.3
+    ],
+    "BUpperR": [
+     1.798,
+     2.678
+    ],
+    "BLowerR": [
+     0.502,
+     1.508
+    ],
+    "BPawR": [
+     0.018,
+     0.852
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "взмах хвоста: кисть на дуге": 0.57,
+    "контакт: удар лапы": 0.75
+   },
+   "ends": {
+    "start": [
+     0.0,
+     0.0
+    ],
+    "end": [
+     0.0,
+     0.0
+    ]
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": -0.41,
+      "striker_side_depth": 0.6,
+      "other_parts_min_gap": 0.07,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        -0.18,
+        1.0
+       ],
+       "FLowerL": [
+        0.19,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": -0.34,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.38,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.32,
+        1.0
+       ],
+       "FLowerL": [
+        0.54,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": -0.21,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.38,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.82,
+        1.0
+       ],
+       "FLowerL": [
+        0.89,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.75,
+    "striker_gap_at_contact": -0.34,
+    "striker_side_depth_at_contact": 0.4,
+    "striker_side_depth_frames": {
+     "0.667": -1.72,
+     "0.700": -0.75,
+     "0.733": 0.11,
+     "0.767": 0.58,
+     "0.800": 0.65,
+     "0.833": 0.56
+    },
+    "striker_side_depth_max": 0.65,
+    "striker_gap_frames": {
+     "0.667": 1.29,
+     "0.700": 0.49,
+     "0.733": -0.11,
+     "0.767": -0.43,
+     "0.800": -0.42,
+     "0.833": -0.47
+    },
+    "striker_gap_min": [
+     -0.47,
+     0.83
+    ],
+    "strike_leg_gaps_at_contact": {
+     "FUpperL": 0.45,
+     "FLowerL": 0.73,
+     "FPawL": -0.34
+    },
+    "other_parts_min_gap": [
+     0.38,
+     "Jaw",
+     1.33
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      0.49,
+      "Jaw"
+     ],
+     [
+      0.97,
+      "Torso"
+     ],
+     [
+      1.25,
+      "NemesL"
+     ],
+     [
+      1.39,
+      "Head"
+     ]
+    ],
+    "tassel_min_gap": [
+     8.42,
+     0.6
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      -8.9,
+      8.2,
+      -10.4
+     ],
+     "0.27": [
+      -6.4,
+      8.1,
+      -11.4
+     ],
+     "0.33": [
+      -0.7,
+      8.0,
+      -14.6
+     ],
+     "0.40": [
+      8.2,
+      7.9,
+      -14.6
+     ],
+     "0.47": [
+      16.5,
+      6.8,
+      -7.1
+     ],
+     "0.53": [
+      15.1,
+      5.1,
+      1.6
+     ],
+     "0.60": [
+      11.1,
+      4.4,
+      3.5
+     ],
+     "0.67": [
+      11.3,
+      4.3,
+      3.6
+     ],
+     "0.73": [
+      12.3,
+      3.7,
+      3.8
+     ],
+     "0.80": [
+      12.4,
+      3.4,
+      4.1
+     ]
+    },
+    "tassel_speed_max": [
+     176.0,
+     0.47
+    ],
+    "torso_yaw_at_contact": -56.5,
+    "torso_yaw_range": [
+     -58.9,
+     6.9
+    ],
+    "torso_yaw_speed_max": 253.0,
+    "torso_centre_shift_max": 3.92,
+    "torso_centre_shift_at_contact": [
+     3.52,
+     -1.27,
+     -0.59
+    ],
+    "torso_speed_max": [
+     17.3,
+     1.1
+    ],
+    "head_shift_max": 1.95,
+    "head_shift_at_contact": [
+     -1.05,
+     1.11,
+     -0.03
+    ],
+    "head_speed_max": [
+     9.3,
+     0.3
+    ],
+    "head_off_player_deg": 44.0,
+    "paws_on_ground_min": 2,
+    "time_no_paws": 0.0,
+    "time_one_paw": 0.0,
+    "air_spans": {
+     "FL": [
+      [
+       0.5,
+       1.0
+      ]
+     ],
+     "FR": [
+      [
+       0.03,
+       0.2
+      ],
+      [
+       1.27,
+       1.4
+      ]
+     ],
+     "BL": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.03,
+       1.23
+      ]
+     ],
+     "BR": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.0,
+       1.23
+      ]
+     ]
+    },
+    "wrists_at_contact": {
+     "FL": [
+      3.05,
+      -7.0,
+      3.05
+     ],
+     "FR": [
+      -2.61,
+      -1.83,
+      1.52
+     ],
+     "BL": [
+      9.05,
+      -0.84,
+      1.4
+     ],
+     "BR": [
+      4.41,
+      5.28,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": [
+     52.5,
+     0.57
+    ]
+   },
+   "title": "Проба: взмах хвостом и удар лапой, 58°",
+   "half_rate": {
+    "toe_error": 0.663,
+    "sink": 0.216
+   }
+  },
+  "c52": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.013,
+   "sink_at": "FPawL на 0.50 с",
+   "slide": {
+    "FL": 0.0,
+    "FR": 0.0,
+    "BL": 0.036,
+    "BR": 0.007
+   },
+   "contact_share": {
+    "FL": 0.62,
+    "FR": 0.74,
+    "BL": 0.64,
+    "BR": 0.62
+   },
+   "step_max_deg": 53.6,
+   "step_at": "FLowerL на 0.87 с",
+   "clash_real": {},
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.39,
+     0.99,
+     1.13
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.37
+    ],
+    "Jaw+Torso": [
+     0.58,
+     0.0,
+     0.5
+    ]
+   },
+   "clash_fold_max": 2.41,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.708,
+     6.396
+    ],
+    "Jaw": [
+     5.367,
+     6.423
+    ],
+    "EyelidL": [
+     9.0,
+     10.942
+    ],
+    "BrowL": [
+     9.0,
+     11.405
+    ],
+    "EarL": [
+     9.0,
+     13.725
+    ],
+    "NemesL": [
+     1.881,
+     5.845
+    ],
+    "EyelidR": [
+     8.805,
+     10.316
+    ],
+    "BrowR": [
+     9.0,
+     11.155
+    ],
+    "EarR": [
+     9.0,
+     12.768
+    ],
+    "NemesR": [
+     1.526,
+     2.691
+    ],
+    "Torso": [
+     0.315,
+     1.202
+    ],
+    "Tail1": [
+     3.977,
+     4.45
+    ],
+    "Tail2": [
+     3.653,
+     4.117
+    ],
+    "Tail3": [
+     3.38,
+     5.027
+    ],
+    "Tassel": [
+     1.656,
+     6.213
+    ],
+    "FUpperL": [
+     1.119,
+     2.481
+    ],
+    "FLowerL": [
+     0.353,
+     2.694
+    ],
+    "FPawL": [
+     -0.013,
+     1.553
+    ],
+    "BUpperL": [
+     1.621,
+     2.679
+    ],
+    "BLowerL": [
+     0.591,
+     1.555
+    ],
+    "BPawL": [
+     0.018,
+     0.975
+    ],
+    "FUpperR": [
+     1.181,
+     1.881
+    ],
+    "FLowerR": [
+     0.121,
+     0.875
+    ],
+    "FPawR": [
+     -0.0,
+     0.3
+    ],
+    "BUpperR": [
+     1.844,
+     2.678
+    ],
+    "BLowerR": [
+     0.53,
+     1.496
+    ],
+    "BPawR": [
+     0.018,
+     0.852
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "взмах хвоста: кисть на дуге": 0.57,
+    "контакт: удар лапы": 0.75
+   },
+   "ends": {
+    "start": [
+     0.0,
+     0.0
+    ],
+    "end": [
+     0.0,
+     0.0
+    ]
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": -0.41,
+      "striker_side_depth": 0.6,
+      "other_parts_min_gap": 0.19,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.02,
+        1.0
+       ],
+       "FLowerL": [
+        0.09,
+        0.77
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": -0.34,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.34,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.52,
+        1.0
+       ],
+       "FLowerL": [
+        0.45,
+        0.77
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": -0.21,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.38,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        1.02,
+        1.0
+       ],
+       "FLowerL": [
+        0.84,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.75,
+    "striker_gap_at_contact": -0.34,
+    "striker_side_depth_at_contact": 0.4,
+    "striker_side_depth_frames": {
+     "0.667": -1.72,
+     "0.700": -0.75,
+     "0.733": 0.11,
+     "0.767": 0.58,
+     "0.800": 0.65,
+     "0.833": 0.56
+    },
+    "striker_side_depth_max": 0.65,
+    "striker_gap_frames": {
+     "0.667": 1.29,
+     "0.700": 0.49,
+     "0.733": -0.11,
+     "0.767": -0.43,
+     "0.800": -0.42,
+     "0.833": -0.47
+    },
+    "striker_gap_min": [
+     -0.47,
+     0.83
+    ],
+    "strike_leg_gaps_at_contact": {
+     "FUpperL": 0.9,
+     "FLowerL": 0.66,
+     "FPawL": -0.34
+    },
+    "other_parts_min_gap": [
+     0.34,
+     "Jaw",
+     0.77
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      0.41,
+      "Jaw"
+     ],
+     [
+      1.06,
+      "Torso"
+     ],
+     [
+      1.29,
+      "NemesL"
+     ],
+     [
+      1.35,
+      "Head"
+     ]
+    ],
+    "tassel_min_gap": [
+     8.94,
+     0.6
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      -9.0,
+      8.2,
+      -10.4
+     ],
+     "0.27": [
+      -6.6,
+      8.1,
+      -11.3
+     ],
+     "0.33": [
+      -1.4,
+      8.0,
+      -14.5
+     ],
+     "0.40": [
+      7.1,
+      7.9,
+      -15.1
+     ],
+     "0.47": [
+      15.6,
+      6.8,
+      -8.5
+     ],
+     "0.53": [
+      14.9,
+      5.1,
+      0.2
+     ],
+     "0.60": [
+      11.1,
+      4.4,
+      2.5
+     ],
+     "0.67": [
+      11.3,
+      4.3,
+      2.5
+     ],
+     "0.73": [
+      12.3,
+      3.7,
+      2.5
+     ],
+     "0.80": [
+      12.5,
+      3.4,
+      2.8
+     ]
+    },
+    "tassel_speed_max": [
+     170.1,
+     0.47
+    ],
+    "torso_yaw_at_contact": -50.7,
+    "torso_yaw_range": [
+     -52.8,
+     6.9
+    ],
+    "torso_yaw_speed_max": 227.0,
+    "torso_centre_shift_max": 3.58,
+    "torso_centre_shift_at_contact": [
+     3.29,
+     -0.95,
+     -0.59
+    ],
+    "torso_speed_max": [
+     15.5,
+     1.1
+    ],
+    "head_shift_max": 1.79,
+    "head_shift_at_contact": [
+     -0.92,
+     0.98,
+     -0.03
+    ],
+    "head_speed_max": [
+     8.7,
+     0.3
+    ],
+    "head_off_player_deg": 44.0,
+    "paws_on_ground_min": 2,
+    "time_no_paws": 0.0,
+    "time_one_paw": 0.0,
+    "air_spans": {
+     "FL": [
+      [
+       0.5,
+       1.0
+      ]
+     ],
+     "FR": [
+      [
+       0.03,
+       0.2
+      ],
+      [
+       1.27,
+       1.4
+      ]
+     ],
+     "BL": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.03,
+       1.23
+      ]
+     ],
+     "BR": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.0,
+       1.23
+      ]
+     ]
+    },
+    "wrists_at_contact": {
+     "FL": [
+      3.05,
+      -7.0,
+      3.05
+     ],
+     "FR": [
+      -2.73,
+      -1.91,
+      1.52
+     ],
+     "BL": [
+      8.77,
+      -0.02,
+      1.4
+     ],
+     "BR": [
+      3.65,
+      5.69,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": [
+     52.5,
+     0.57
+    ]
+   },
+   "title": "Проба: взмах хвостом и удар лапой, 52°",
+   "half_rate": {
+    "toe_error": 0.682,
+    "sink": 0.257
+   }
+  },
+  "c64": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.013,
+   "sink_at": "FPawL на 0.50 с",
+   "slide": {
+    "FL": 0.0,
+    "FR": 0.0,
+    "BL": 0.046,
+    "BR": 0.006
+   },
+   "contact_share": {
+    "FL": 0.62,
+    "FR": 0.74,
+    "BL": 0.64,
+    "BR": 0.62
+   },
+   "step_max_deg": 55.4,
+   "step_at": "FLowerR на 0.13 с",
+   "clash_real": {},
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.39,
+     0.99,
+     1.13
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.37
+    ],
+    "Jaw+Torso": [
+     0.74,
+     0.0,
+     0.73
+    ]
+   },
+   "clash_fold_max": 2.4,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.599,
+     6.421
+    ],
+    "Jaw": [
+     5.35,
+     6.471
+    ],
+    "EyelidL": [
+     9.0,
+     10.979
+    ],
+    "BrowL": [
+     9.0,
+     11.451
+    ],
+    "EarL": [
+     9.0,
+     13.732
+    ],
+    "NemesL": [
+     1.881,
+     5.908
+    ],
+    "EyelidR": [
+     8.744,
+     10.352
+    ],
+    "BrowR": [
+     9.0,
+     11.205
+    ],
+    "EarR": [
+     9.0,
+     12.768
+    ],
+    "NemesR": [
+     1.441,
+     2.691
+    ],
+    "Torso": [
+     0.315,
+     1.202
+    ],
+    "Tail1": [
+     3.976,
+     4.449
+    ],
+    "Tail2": [
+     3.653,
+     4.117
+    ],
+    "Tail3": [
+     3.38,
+     5.027
+    ],
+    "Tassel": [
+     1.656,
+     6.213
+    ],
+    "FUpperL": [
+     1.151,
+     2.161
+    ],
+    "FLowerL": [
+     0.353,
+     2.649
+    ],
+    "FPawL": [
+     -0.013,
+     1.553
+    ],
+    "BUpperL": [
+     1.609,
+     2.678
+    ],
+    "BLowerL": [
+     0.49,
+     1.571
+    ],
+    "BPawL": [
+     0.018,
+     0.975
+    ],
+    "FUpperR": [
+     1.077,
+     1.881
+    ],
+    "FLowerR": [
+     0.122,
+     0.844
+    ],
+    "FPawR": [
+     -0.0,
+     0.3
+    ],
+    "BUpperR": [
+     1.756,
+     2.678
+    ],
+    "BLowerR": [
+     0.366,
+     1.522
+    ],
+    "BPawR": [
+     0.018,
+     0.852
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "взмах хвоста: кисть на дуге": 0.57,
+    "контакт: удар лапы": 0.75
+   },
+   "ends": {
+    "start": [
+     0.0,
+     0.0
+    ],
+    "end": [
+     0.0,
+     0.0
+    ]
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": -0.41,
+      "striker_side_depth": 0.6,
+      "other_parts_min_gap": -0.0,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        -0.37,
+        1.0
+       ],
+       "FLowerL": [
+        0.28,
+        0.77
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": -0.34,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.38,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.08,
+        0.8
+       ],
+       "FLowerL": [
+        0.59,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": -0.21,
+      "striker_side_depth": 0.4,
+      "other_parts_min_gap": 0.38,
+      "strike_arm_min_gap": {
+       "FUpperL": [
+        0.57,
+        0.83
+       ],
+       "FLowerL": [
+        0.9,
+        0.8
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.75,
+    "striker_gap_at_contact": -0.34,
+    "striker_side_depth_at_contact": 0.4,
+    "striker_side_depth_frames": {
+     "0.667": -1.72,
+     "0.700": -0.75,
+     "0.733": 0.11,
+     "0.767": 0.58,
+     "0.800": 0.65,
+     "0.833": 0.56
+    },
+    "striker_side_depth_max": 0.65,
+    "striker_gap_frames": {
+     "0.667": 1.29,
+     "0.700": 0.49,
+     "0.733": -0.11,
+     "0.767": -0.43,
+     "0.800": -0.42,
+     "0.833": -0.47
+    },
+    "striker_gap_min": [
+     -0.47,
+     0.83
+    ],
+    "strike_leg_gaps_at_contact": {
+     "FUpperL": 0.15,
+     "FLowerL": 0.82,
+     "FPawL": -0.34
+    },
+    "other_parts_min_gap": [
+     0.38,
+     "Jaw",
+     1.33
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      0.58,
+      "Jaw"
+     ],
+     [
+      0.9,
+      "Torso"
+     ],
+     [
+      1.25,
+      "NemesL"
+     ],
+     [
+      1.46,
+      "Head"
+     ]
+    ],
+    "tassel_min_gap": [
+     7.89,
+     0.63
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      -8.9,
+      8.2,
+      -10.4
+     ],
+     "0.27": [
+      -6.2,
+      8.1,
+      -11.5
+     ],
+     "0.33": [
+      -0.0,
+      8.0,
+      -14.6
+     ],
+     "0.40": [
+      9.2,
+      7.9,
+      -14.1
+     ],
+     "0.47": [
+      17.2,
+      6.8,
+      -5.7
+     ],
+     "0.53": [
+      15.1,
+      5.1,
+      3.0
+     ],
+     "0.60": [
+      10.9,
+      4.4,
+      4.6
+     ],
+     "0.67": [
+      11.1,
+      4.3,
+      4.7
+     ],
+     "0.73": [
+      12.1,
+      3.7,
+      5.0
+     ],
+     "0.80": [
+      12.2,
+      3.4,
+      5.4
+     ]
+    },
+    "tassel_speed_max": [
+     181.8,
+     0.47
+    ],
+    "torso_yaw_at_contact": -62.4,
+    "torso_yaw_range": [
+     -65.0,
+     6.9
+    ],
+    "torso_yaw_speed_max": 279.0,
+    "torso_centre_shift_max": 4.26,
+    "torso_centre_shift_at_contact": [
+     3.73,
+     -1.61,
+     -0.59
+    ],
+    "torso_speed_max": [
+     19.1,
+     1.1
+    ],
+    "head_shift_max": 2.1,
+    "head_shift_at_contact": [
+     -1.16,
+     1.25,
+     -0.03
+    ],
+    "head_speed_max": [
+     9.9,
+     0.3
+    ],
+    "head_off_player_deg": 44.0,
+    "paws_on_ground_min": 2,
+    "time_no_paws": 0.0,
+    "time_one_paw": 0.0,
+    "air_spans": {
+     "FL": [
+      [
+       0.5,
+       1.0
+      ]
+     ],
+     "FR": [
+      [
+       0.03,
+       0.2
+      ],
+      [
+       1.27,
+       1.4
+      ]
+     ],
+     "BL": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.03,
+       1.23
+      ]
+     ],
+     "BR": [
+      [
+       0.23,
+       0.47
+      ],
+      [
+       1.0,
+       1.23
+      ]
+     ]
+    },
+    "wrists_at_contact": {
+     "FL": [
+      3.05,
+      -7.0,
+      3.05
+     ],
+     "FR": [
+      -2.48,
+      -1.77,
+      1.52
+     ],
+     "BL": [
+      9.26,
+      -1.67,
+      1.4
+     ],
+     "BR": [
+      5.12,
+      4.8,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": [
+     52.5,
+     0.57
+    ]
+   },
+   "title": "Проба: взмах хвостом и удар лапой, 64°",
+   "half_rate": {
+    "toe_error": 0.692,
+    "sink": 0.198
+   }
+  }
+ },
+ "compare": {
+  "A_tail_strike": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.0,
+   "sink_at": "",
+   "slide": {
+    "FL": 0.0,
+    "FR": 0.001,
+    "BL": 0.085,
+    "BR": 0.027
+   },
+   "contact_share": {
+    "FL": 0.71,
+    "FR": 0.69,
+    "BL": 0.6,
+    "BR": 0.6
+   },
+   "step_max_deg": 38.3,
+   "step_at": "FLowerR на 0.30 с",
+   "clash_real": {
+    "BUpperL+Tassel": [
+     0.36,
+     0.0,
+     0.83
+    ]
+   },
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.38,
+     0.99,
+     1.07
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.6
+    ],
+    "Jaw+Torso": [
+     0.59,
+     0.0,
+     0.97
+    ]
+   },
+   "clash_fold_max": 2.41,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.921,
+     6.276
+    ],
+    "Jaw": [
+     5.294,
+     6.321
+    ],
+    "EyelidL": [
+     8.87,
+     10.067
+    ],
+    "BrowL": [
+     9.0,
+     11.091
+    ],
+    "EarL": [
+     9.0,
+     13.344
+    ],
+    "NemesL": [
+     1.765,
+     5.36
+    ],
+    "EyelidR": [
+     9.0,
+     9.541
+    ],
+    "BrowR": [
+     9.0,
+     10.855
+    ],
+    "EarR": [
+     9.0,
+     12.455
+    ],
+    "NemesR": [
+     2.045,
+     2.251
+    ],
+    "Torso": [
+     0.828,
+     1.202
+    ],
+    "Tail1": [
+     4.173,
+     4.581
+    ],
+    "Tail2": [
+     3.827,
+     4.238
+    ],
+    "Tail3": [
+     3.729,
+     5.122
+    ],
+    "Tassel": [
+     1.942,
+     6.163
+    ],
+    "FUpperL": [
+     1.259,
+     1.881
+    ],
+    "FLowerL": [
+     0.34,
+     1.132
+    ],
+    "FPawL": [
+     -0.0,
+     0.356
+    ],
+    "BUpperL": [
+     1.906,
+     2.685
+    ],
+    "BLowerL": [
+     0.553,
+     1.674
+    ],
+    "BPawL": [
+     0.018,
+     1.098
+    ],
+    "FUpperR": [
+     1.155,
+     1.881
+    ],
+    "FLowerR": [
+     0.124,
+     0.873
+    ],
+    "FPawR": [
+     -0.0,
+     0.417
+    ],
+    "BUpperR": [
+     1.849,
+     2.678
+    ],
+    "BLowerR": [
+     0.589,
+     1.497
+    ],
+    "BPawR": [
+     0.018,
+     0.917
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: удар кисти": 0.75
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": 8.48,
+      "striker_side_depth": -99.0,
+      "other_parts_min_gap": -0.44,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        9.0,
+        0.0
+       ],
+       "Tail2": [
+        9.0,
+        0.0
+       ],
+       "Tail3": [
+        9.0,
+        0.0
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": 8.62,
+      "striker_side_depth": -99.0,
+      "other_parts_min_gap": 0.06,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        9.0,
+        0.0
+       ],
+       "Tail2": [
+        9.0,
+        0.0
+       ],
+       "Tail3": [
+        9.0,
+        0.0
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": 8.76,
+      "striker_side_depth": -99.0,
+      "other_parts_min_gap": 0.09,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        9.0,
+        0.0
+       ],
+       "Tail2": [
+        9.0,
+        0.0
+       ],
+       "Tail3": [
+        9.0,
+        0.0
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.75,
+    "striker_gap_at_contact": 8.62,
+    "striker_side_depth_at_contact": -99.0,
+    "striker_side_depth_frames": {
+     "0.667": -99.0,
+     "0.700": -99.0,
+     "0.733": -99.0,
+     "0.767": -99.0,
+     "0.800": -99.0,
+     "0.833": -99.0
+    },
+    "striker_side_depth_max": -99.0,
+    "striker_gap_frames": {
+     "0.667": 17.69,
+     "0.700": 12.87,
+     "0.733": 9.15,
+     "0.767": 8.29,
+     "0.800": 6.9,
+     "0.833": 6.56
+    },
+    "striker_gap_min": [
+     6.56,
+     0.83
+    ],
+    "strike_leg_gaps_at_contact": {
+     "Tail1": 11.36,
+     "Tail2": 12.8,
+     "Tail3": 11.32,
+     "Tassel": 8.62
+    },
+    "other_parts_min_gap": [
+     0.06,
+     "FUpperL",
+     0.93
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      0.05,
+      "FUpperL"
+     ],
+     [
+      0.06,
+      "FPawL"
+     ],
+     [
+      0.53,
+      "Torso"
+     ],
+     [
+      1.25,
+      "NemesL"
+     ]
+    ],
+    "tassel_min_gap": [
+     7.08,
+     0.83
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      -6.0,
+      7.9,
+      -14.8
+     ],
+     "0.27": [
+      -8.1,
+      8.1,
+      -12.6
+     ],
+     "0.33": [
+      -9.3,
+      8.2,
+      -10.5
+     ],
+     "0.40": [
+      -9.6,
+      8.2,
+      -9.2
+     ],
+     "0.47": [
+      -8.8,
+      8.2,
+      -10.3
+     ],
+     "0.53": [
+      -3.8,
+      8.2,
+      -14.2
+     ],
+     "0.60": [
+      5.6,
+      8.0,
+      -15.6
+     ],
+     "0.67": [
+      16.3,
+      6.3,
+      -5.5
+     ],
+     "0.73": [
+      12.5,
+      4.2,
+      4.4
+     ],
+     "0.80": [
+      10.5,
+      3.8,
+      4.8
+     ]
+    },
+    "tassel_speed_max": [
+     259.2,
+     0.67
+    ],
+    "torso_yaw_at_contact": -58.0,
+    "torso_yaw_range": [
+     -60.8,
+     7.9
+    ],
+    "torso_yaw_speed_max": 282.0,
+    "torso_centre_shift_max": 3.91,
+    "torso_centre_shift_at_contact": [
+     3.31,
+     -1.83,
+     -0.48
+    ],
+    "torso_speed_max": [
+     18.9,
+     0.67
+    ],
+    "head_shift_max": 1.92,
+    "head_shift_at_contact": [
+     -1.46,
+     0.91,
+     0.14
+    ],
+    "head_speed_max": [
+     9.2,
+     0.67
+    ],
+    "head_off_player_deg": 53.0,
+    "paws_on_ground_min": 1,
+    "time_no_paws": 0.0,
+    "time_one_paw": 0.367,
+    "air_spans": {
+     "FL": [
+      [
+       0.47,
+       0.63
+      ],
+      [
+       1.03,
+       1.2
+      ]
+     ],
+     "FR": [
+      [
+       0.17,
+       0.4
+      ],
+      [
+       1.2,
+       1.33
+      ]
+     ],
+     "BL": [
+      [
+       0.5,
+       0.73
+      ],
+      [
+       1.03,
+       1.3
+      ]
+     ],
+     "BR": [
+      [
+       0.47,
+       0.7
+      ],
+      [
+       1.0,
+       1.27
+      ]
+     ]
+    },
+    "wrists_at_contact": {
+     "FL": [
+      2.75,
+      -4.08,
+      1.52
+     ],
+     "FR": [
+      -2.61,
+      -1.83,
+      1.52
+     ],
+     "BL": [
+      9.27,
+      -1.73,
+      1.4
+     ],
+     "BR": [
+      5.17,
+      4.76,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": null
+   }
+  },
+  "B_step82": {
+   "frames": 43,
+   "duration": 1.4,
+   "short": 0.0,
+   "sink": 0.0,
+   "sink_at": "",
+   "slide": {
+    "FL": 0.062,
+    "FR": 0.046,
+    "BL": 0.088,
+    "BR": 0.0
+   },
+   "contact_share": {
+    "FL": 0.6,
+    "FR": 0.62,
+    "BL": 0.62,
+    "BR": 0.57
+   },
+   "step_max_deg": 35.6,
+   "step_at": "FLowerR на 1.17 с",
+   "clash_real": {
+    "BUpperL+Tail3": [
+     0.38,
+     0.0,
+     0.87
+    ],
+    "FPawL+FPawR": [
+     0.36,
+     0.0,
+     1.17
+    ]
+   },
+   "clash_joint": {
+    "Tail1+Torso": [
+     1.44,
+     0.99,
+     0.7
+    ],
+    "Head+NemesL": [
+     0.49,
+     0.07,
+     0.7
+    ],
+    "Jaw+Torso": [
+     0.63,
+     0.0,
+     0.77
+    ],
+    "Head+NemesR": [
+     0.46,
+     0.07,
+     0.73
+    ]
+   },
+   "clash_fold_max": 2.4,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     5.79,
+     6.647
+    ],
+    "Jaw": [
+     5.172,
+     6.347
+    ],
+    "EyelidL": [
+     8.739,
+     10.102
+    ],
+    "BrowL": [
+     9.0,
+     11.116
+    ],
+    "EarL": [
+     9.0,
+     13.382
+    ],
+    "NemesL": [
+     1.65,
+     5.798
+    ],
+    "EyelidR": [
+     8.918,
+     9.696
+    ],
+    "BrowR": [
+     9.0,
+     10.937
+    ],
+    "EarR": [
+     9.0,
+     12.59
+    ],
+    "NemesR": [
+     2.082,
+     2.677
+    ],
+    "Torso": [
+     0.796,
+     1.33
+    ],
+    "Tail1": [
+     3.55,
+     4.803
+    ],
+    "Tail2": [
+     3.033,
+     4.488
+    ],
+    "Tail3": [
+     2.313,
+     5.598
+    ],
+    "Tassel": [
+     1.336,
+     7.666
+    ],
+    "FUpperL": [
+     1.306,
+     1.945
+    ],
+    "FLowerL": [
+     0.087,
+     1.131
+    ],
+    "FPawL": [
+     -0.0,
+     0.649
+    ],
+    "BUpperL": [
+     1.919,
+     2.678
+    ],
+    "BLowerL": [
+     0.742,
+     1.692
+    ],
+    "BPawL": [
+     0.018,
+     0.977
+    ],
+    "FUpperR": [
+     1.164,
+     1.954
+    ],
+    "FLowerR": [
+     0.268,
+     1.148
+    ],
+    "FPawR": [
+     -0.0,
+     0.656
+    ],
+    "BUpperR": [
+     1.863,
+     2.678
+    ],
+    "BLowerR": [
+     0.697,
+     1.571
+    ],
+    "BPawR": [
+     0.018,
+     0.911
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: удар кисти": 0.75
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": -0.5,
+      "striker_side_depth": 2.1,
+      "other_parts_min_gap": -0.45,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        6.94,
+        0.87
+       ],
+       "Tail2": [
+        4.74,
+        0.87
+       ],
+       "Tail3": [
+        1.96,
+        0.87
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": -0.5,
+      "striker_side_depth": 2.01,
+      "other_parts_min_gap": -0.5,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        7.42,
+        0.87
+       ],
+       "Tail2": [
+        5.21,
+        0.87
+       ],
+       "Tail3": [
+        2.41,
+        0.87
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": -0.12,
+      "striker_side_depth": 1.45,
+      "other_parts_min_gap": -0.5,
+      "strike_arm_min_gap": {
+       "Tail1": [
+        7.9,
+        0.87
+       ],
+       "Tail2": [
+        5.68,
+        0.87
+       ],
+       "Tail3": [
+        2.87,
+        0.87
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.75,
+    "striker_gap_at_contact": -0.5,
+    "striker_side_depth_at_contact": 2.01,
+    "striker_side_depth_frames": {
+     "0.667": -99.0,
+     "0.700": -99.0,
+     "0.733": 1.28,
+     "0.767": 2.08,
+     "0.800": 2.47,
+     "0.833": 2.63
+    },
+    "striker_side_depth_max": 2.89,
+    "striker_gap_frames": {
+     "0.667": 11.95,
+     "0.700": 4.01,
+     "0.733": -0.5,
+     "0.767": -0.5,
+     "0.800": -0.5,
+     "0.833": -0.5
+    },
+    "striker_gap_min": [
+     -0.5,
+     0.9
+    ],
+    "strike_leg_gaps_at_contact": {
+     "Tail1": 7.92,
+     "Tail2": 5.76,
+     "Tail3": 3.03,
+     "Tassel": -0.5
+    },
+    "other_parts_min_gap": [
+     -0.5,
+     "NemesL",
+     0.6
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      3.22,
+      "NemesL"
+     ],
+     [
+      3.57,
+      "BPawL"
+     ],
+     [
+      3.98,
+      "BUpperL"
+     ],
+     [
+      3.98,
+      "FPawL"
+     ]
+    ],
+    "tassel_min_gap": [
+     -0.49,
+     0.83
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      -6.2,
+      8.8,
+      -14.2
+     ],
+     "0.27": [
+      -8.1,
+      9.3,
+      -11.5
+     ],
+     "0.33": [
+      -8.8,
+      9.6,
+      -9.0
+     ],
+     "0.40": [
+      -8.8,
+      9.7,
+      -7.7
+     ],
+     "0.47": [
+      -8.5,
+      9.6,
+      -9.1
+     ],
+     "0.53": [
+      -4.4,
+      9.1,
+      -14.2
+     ],
+     "0.60": [
+      5.5,
+      8.4,
+      -15.0
+     ],
+     "0.67": [
+      12.5,
+      5.8,
+      -1.0
+     ],
+     "0.73": [
+      2.5,
+      3.4,
+      6.6
+     ],
+     "0.80": [
+      1.5,
+      3.2,
+      6.7
+     ]
+    },
+    "tassel_speed_max": [
+     284.4,
+     0.67
+    ],
+    "torso_yaw_at_contact": -82.0,
+    "torso_yaw_range": [
+     -85.5,
+     11.9
+    ],
+    "torso_yaw_speed_max": 397.0,
+    "torso_centre_shift_max": 3.11,
+    "torso_centre_shift_at_contact": [
+     -3.0,
+     0.0,
+     -0.48
+    ],
+    "torso_speed_max": [
+     15.2,
+     0.67
+    ],
+    "head_shift_max": 10.14,
+    "head_shift_at_contact": [
+     -8.56,
+     4.94,
+     0.14
+    ],
+    "head_speed_max": [
+     48.7,
+     0.67
+    ],
+    "head_off_player_deg": 77.0,
+    "paws_on_ground_min": 0,
+    "time_no_paws": 0.4,
+    "time_one_paw": 0.0,
+    "air_spans": {
+     "FL": [
+      [
+       0.43,
+       0.7
+      ],
+      [
+       1.0,
+       1.23
+      ]
+     ],
+     "FR": [
+      [
+       0.5,
+       0.73
+      ],
+      [
+       0.97,
+       1.2
+      ]
+     ],
+     "BL": [
+      [
+       0.5,
+       0.73
+      ],
+      [
+       0.97,
+       1.2
+      ]
+     ],
+     "BR": [
+      [
+       0.43,
+       0.7
+      ],
+      [
+       1.0,
+       1.27
+      ]
+     ]
+    },
+    "wrists_at_contact": {
+     "FL": [
+      -5.05,
+      -2.58,
+      1.52
+     ],
+     "FR": [
+      -6.98,
+      2.66,
+      1.52
+     ],
+     "BL": [
+      2.33,
+      -2.18,
+      1.4
+     ],
+     "BR": [
+      0.81,
+      5.26,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": null
+   }
+  },
+  "heavy_paw": {
+   "frames": 40,
+   "duration": 1.3,
+   "short": 0.003,
+   "sink": 0.018,
+   "sink_at": "Torso на 0.87 с",
+   "slide": {
+    "FL": 0.0,
+    "FR": 0.002,
+    "BL": 0.0,
+    "BR": 0.003
+   },
+   "contact_share": {
+    "FL": 1.0,
+    "FR": 0.33,
+    "BL": 1.0,
+    "BR": 1.0
+   },
+   "step_max_deg": 33.4,
+   "step_at": "FLowerR на 0.67 с",
+   "clash_real": {},
+   "clash_joint": {
+    "Head+NemesR": [
+     0.51,
+     0.07,
+     0.83
+    ],
+    "Head+NemesL": [
+     0.47,
+     0.07,
+     0.33
+    ]
+   },
+   "clash_fold_max": 2.38,
+   "sink_parts": {},
+   "short_by": {},
+   "low_range": {
+    "Head": [
+     4.746,
+     7.146
+    ],
+    "Jaw": [
+     4.146,
+     7.741
+    ],
+    "EyelidL": [
+     7.679,
+     12.263
+    ],
+    "BrowL": [
+     8.54,
+     12.616
+    ],
+    "EarL": [
+     9.0,
+     13.204
+    ],
+    "NemesL": [
+     0.922,
+     4.091
+    ],
+    "EyelidR": [
+     7.738,
+     12.886
+    ],
+    "BrowR": [
+     8.563,
+     12.857
+    ],
+    "EarR": [
+     9.0,
+     14.56
+    ],
+    "NemesR": [
+     2.211,
+     8.143
+    ],
+    "Torso": [
+     -0.018,
+     1.633
+    ],
+    "Tail1": [
+     2.792,
+     4.76
+    ],
+    "Tail2": [
+     2.27,
+     4.382
+    ],
+    "Tail3": [
+     2.072,
+     4.874
+    ],
+    "Tassel": [
+     1.068,
+     5.285
+    ],
+    "FUpperL": [
+     0.913,
+     2.635
+    ],
+    "FLowerL": [
+     0.235,
+     1.076
+    ],
+    "FPawL": [
+     -0.0,
+     0.0
+    ],
+    "BUpperL": [
+     1.696,
+     2.678
+    ],
+    "BLowerL": [
+     0.695,
+     1.259
+    ],
+    "BPawL": [
+     0.018,
+     0.018
+    ],
+    "FUpperR": [
+     0.537,
+     3.607
+    ],
+    "FLowerR": [
+     0.357,
+     4.295
+    ],
+    "FPawR": [
+     -0.0,
+     4.179
+    ],
+    "BUpperR": [
+     1.867,
+     2.722
+    ],
+    "BLowerR": [
+     0.885,
+     1.266
+    ],
+    "BPawR": [
+     0.018,
+     0.021
+    ]
+   },
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.45,
+    "контакт: удар лапы": 0.7
+   },
+   "combo": {
+    "by_distance": {
+     "8.0": {
+      "striker_gap": -0.39,
+      "striker_side_depth": 7.46,
+      "other_parts_min_gap": -0.44,
+      "strike_arm_min_gap": {
+       "FUpperR": [
+        0.89,
+        0.87
+       ],
+       "FLowerR": [
+        0.26,
+        0.7
+       ]
+      },
+      "other_parts_gap_in_stance": 0.54
+     },
+     "8.5": {
+      "striker_gap": -0.36,
+      "striker_side_depth": 7.4,
+      "other_parts_min_gap": -0.38,
+      "strike_arm_min_gap": {
+       "FUpperR": [
+        1.39,
+        0.87
+       ],
+       "FLowerR": [
+        0.73,
+        0.7
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     },
+     "9.0": {
+      "striker_gap": -0.36,
+      "striker_side_depth": 7.23,
+      "other_parts_min_gap": -0.49,
+      "strike_arm_min_gap": {
+       "FUpperR": [
+        1.89,
+        0.87
+       ],
+       "FLowerR": [
+        1.22,
+        0.93
+       ]
+      },
+      "other_parts_gap_in_stance": 0.41
+     }
+    },
+    "contact_time": 0.7,
+    "striker_gap_at_contact": -0.36,
+    "striker_side_depth_at_contact": 7.4,
+    "striker_side_depth_frames": {
+     "0.600": 7.97,
+     "0.633": 7.56,
+     "0.667": 7.5,
+     "0.700": 7.4,
+     "0.733": 7.4,
+     "0.767": 7.4,
+     "0.800": 7.4
+    },
+    "striker_side_depth_max": 8.5,
+    "striker_gap_frames": {
+     "0.600": -0.04,
+     "0.633": -0.41,
+     "0.667": -0.2,
+     "0.700": -0.36,
+     "0.733": -0.36,
+     "0.767": -0.36,
+     "0.800": -0.36
+    },
+    "striker_gap_min": [
+     -0.5,
+     1.07
+    ],
+    "strike_leg_gaps_at_contact": {
+     "FUpperR": 1.4,
+     "FLowerR": 0.73,
+     "FPawR": -0.36
+    },
+    "other_parts_min_gap": [
+     -0.38,
+     "Jaw",
+     0.8
+    ],
+    "other_parts_gap_at_contact": [
+     [
+      -0.2,
+      "Jaw"
+     ],
+     [
+      0.08,
+      "Torso"
+     ],
+     [
+      0.16,
+      "Head"
+     ],
+     [
+      1.04,
+      "FPawL"
+     ]
+    ],
+    "tassel_min_gap": [
+     22.17,
+     0.87
+    ],
+    "tassel_path_roblox": {
+     "0.20": [
+      0.8,
+      6.3,
+      -17.2
+     ],
+     "0.27": [
+      1.2,
+      5.3,
+      -17.4
+     ],
+     "0.33": [
+      1.5,
+      4.1,
+      -17.5
+     ],
+     "0.40": [
+      1.8,
+      3.1,
+      -17.5
+     ],
+     "0.47": [
+      1.8,
+      2.9,
+      -17.4
+     ],
+     "0.53": [
+      1.3,
+      3.8,
+      -17.2
+     ],
+     "0.60": [
+      0.3,
+      4.7,
+      -16.8
+     ],
+     "0.67": [
+      -0.8,
+      5.6,
+      -16.2
+     ],
+     "0.73": [
+      -1.1,
+      5.6,
+      -16.0
+     ],
+     "0.80": [
+      -1.1,
+      5.6,
+      -16.0
+     ]
+    },
+    "tassel_speed_max": [
+     27.7,
+     0.67
+    ],
+    "torso_yaw_at_contact": 4.0,
+    "torso_yaw_range": [
+     -5.6,
+     4.2
+    ],
+    "torso_yaw_speed_max": 62.0,
+    "torso_centre_shift_max": 1.09,
+    "torso_centre_shift_at_contact": [
+     0.0,
+     -0.9,
+     -0.51
+    ],
+    "torso_speed_max": [
+     10.3,
+     0.67
+    ],
+    "head_shift_max": 2.03,
+    "head_shift_at_contact": [
+     0.43,
+     -1.3,
+     -1.34
+    ],
+    "head_speed_max": [
+     21.9,
+     0.67
+    ],
+    "head_off_player_deg": 52.0,
+    "paws_on_ground_min": 3,
+    "time_no_paws": 0.0,
+    "time_one_paw": 0.0,
+    "air_spans": {
+     "FL": [],
+     "FR": [
+      [
+       0.17,
+       0.7
+      ],
+      [
+       0.93,
+       1.2
+      ]
+     ],
+     "BL": [],
+     "BR": []
+    },
+    "wrists_at_contact": {
+     "FL": [
+      2.94,
+      -3.0,
+      1.52
+     ],
+     "FR": [
+      -3.24,
+      -6.9,
+      1.52
+     ],
+     "BL": [
+      3.3,
+      5.34,
+      1.4
+     ],
+     "BR": [
+      -3.3,
+      5.34,
+      1.4
+     ]
+    },
+    "striker_toe_speed_max": [
+     53.1,
+     0.57
+    ]
+   }
+  }
+ }
+}

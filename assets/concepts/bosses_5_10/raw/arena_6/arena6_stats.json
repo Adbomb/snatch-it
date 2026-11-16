@@ -1,0 +1,10 @@
+{
+ "primitives": {
+  "Ground": 18,
+  "Platform": 21,
+  "Temple": 11,
+  "Water": 6,
+  "Plants": 168
+ },
+ "total": 224
+}

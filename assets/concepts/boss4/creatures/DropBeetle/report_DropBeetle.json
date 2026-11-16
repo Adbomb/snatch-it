@@ -1,0 +1,54 @@
+{
+ "DropBeetle": {
+  "title": "Жук-капелька",
+  "rarity": "Common",
+  "tris": 2242,
+  "parts": 47,
+  "hidden_faces": 271,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.621,
+  "texels_per_stud": 138.441,
+  "size_blender_xyz": [
+   2.61,
+   2.61,
+   2.25
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 25,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 288,
+   "LegsL": 255,
+   "LegsR": 255,
+   "Head": 322,
+   "AntennaL": 74,
+   "AntennaR": 74,
+   "Drop": 580
+  },
+  "tris_without_stand": 1848,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\DropBeetle\\DropBeetle_ingame_phone.png"
+  }
+ }
+}

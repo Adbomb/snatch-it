@@ -1,0 +1,105 @@
+{
+ "tris": 5782,
+ "tris_scepter": 864,
+ "tris_total": 6646,
+ "tris_v6": 3256,
+ "hidden_faces": 118,
+ "coplanar": [],
+ "flipped": 0,
+ "degenerate": 0,
+ "group_tris": {
+  "Torso": 1894,
+  "Neck": 140,
+  "Head": 1332,
+  "Jaw": 136,
+  "ForeLegL": 290,
+  "HindLegL": 326,
+  "WingL": 236,
+  "ForeLegR": 290,
+  "HindLegR": 326,
+  "WingR": 236,
+  "Tail": 368,
+  "MantleL1": 24,
+  "MantleL2": 56,
+  "MantleL3": 24,
+  "MantleR1": 24,
+  "MantleR2": 56,
+  "MantleR3": 24
+ },
+ "groups": [
+  "ForeLegL",
+  "ForeLegR",
+  "Head",
+  "HindLegL",
+  "HindLegR",
+  "Jaw",
+  "MantleL1",
+  "MantleL2",
+  "MantleL3",
+  "MantleR1",
+  "MantleR2",
+  "MantleR3",
+  "Neck",
+  "Tail",
+  "Torso",
+  "WingL",
+  "WingR"
+ ],
+ "size_v6_model": [
+  16.73,
+  16.2,
+  12.52
+ ],
+ "export_scale": 2.795,
+ "size_v6_studs": [
+  46.8,
+  45.3,
+  35.0
+ ],
+ "size_dragon_model": [
+  16.73,
+  16.2,
+  13.25
+ ],
+ "size_dragon_studs": [
+  46.8,
+  45.3,
+  37.0
+ ],
+ "size_with_scepter_studs": [
+  46.8,
+  45.3,
+  37.0
+ ],
+ "top_v6": 12.47,
+ "top_v7": 13.19,
+ "wingspan_studs": 46.8,
+ "arena_diameter": 62.0,
+ "scepter_model": [
+  2.84,
+  2.84,
+  6.93
+ ],
+ "scepter_studs": 19.4,
+ "palette": {
+  "scale": "5E36C4",
+  "scaleD": "43258F",
+  "belly": "7E2C72",
+  "wing": "B03CB0",
+  "bone": "43258F",
+  "ivory": "F3E9D2",
+  "gold": "F5B21C",
+  "goldS": "F5B21C",
+  "goldD": "C27E0E",
+  "goldL": "FFD966",
+  "neonCrystal": "2FE6D8",
+  "crystalD": "1596A8",
+  "neonEye": "FFB020",
+  "pupil": "2A1036",
+  "mouth": "3A1440",
+  "mantle": "C42136",
+  "mantleD": "8E1426",
+  "ermine": "F7F5EF",
+  "spot": "1E1A24"
+ }
+}

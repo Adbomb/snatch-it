@@ -1,0 +1,52 @@
+{
+ "CobraFountain": {
+  "title": "Кобра-фонтан",
+  "rarity": "Rare",
+  "tris": 2610,
+  "parts": 61,
+  "hidden_faces": 277,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.592,
+  "texels_per_stud": 106.673,
+  "size_blender_xyz": [
+   3.09,
+   3.09,
+   2.64
+  ],
+  "rig_parts": 6,
+  "materials": 1,
+  "dropped_enclosed_faces": 61,
+  "meshes": 6,
+  "tris_by_part": {
+   "Stand": 356,
+   "Bowl": 240,
+   "Body": 974,
+   "Hood": 258,
+   "Head": 432,
+   "Stream": 245
+  },
+  "tris_without_stand": 2149,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CobraFountain\\CobraFountain_ingame_phone.png"
+  }
+ }
+}

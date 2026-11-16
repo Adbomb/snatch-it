@@ -1,0 +1,11 @@
+{
+ "primitives": {
+  "Ground": 16,
+  "Platform": 73,
+  "Volcano": 5,
+  "Smoke": 15,
+  "Columns": 128,
+  "Lava": 28
+ },
+ "total": 265
+}

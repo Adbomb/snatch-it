@@ -1,0 +1,38 @@
+{
+ "parts": 27,
+ "triangles": 7984,
+ "per_part": {
+  "Head": 1796,
+  "Jaw": 112,
+  "Neck": 172,
+  "Torso": 788,
+  "Pelvis": 504,
+  "Cape": 852,
+  "UpperArmL": 316,
+  "UpperArmR": 316,
+  "ForearmL": 136,
+  "ForearmR": 136,
+  "HandL": 140,
+  "HandR": 140,
+  "Scepter": 376,
+  "ThighL": 212,
+  "ThighR": 212,
+  "ShinL": 104,
+  "ShinR": 104,
+  "FootL": 192,
+  "FootR": 192,
+  "Tail1": 108,
+  "Tail2": 92,
+  "Tail3": 92,
+  "Tail4": 164,
+  "WingArmL": 140,
+  "WingArmR": 140,
+  "WingHandL": 224,
+  "WingHandR": 224
+ },
+ "size": [
+  13.11,
+  7.6,
+  11.03
+ ]
+}

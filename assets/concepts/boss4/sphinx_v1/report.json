@@ -1,0 +1,63 @@
+{
+ "scale": 3.0,
+ "Boss4_SphinxHead": {
+  "tris": 2727,
+  "parts": 89,
+  "hidden_faces": 205,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.355,
+  "texels_per_stud": 17.7
+ },
+ "tris": {
+  "Head": 1783,
+  "Jaw": 126,
+  "EyelidL": 36,
+  "BrowL": 24,
+  "EarL": 69,
+  "NemesL": 280,
+  "EyelidR": 36,
+  "BrowR": 24,
+  "EarR": 69,
+  "NemesR": 280,
+  "Torso": 1725,
+  "Tail1": 42,
+  "Tail2": 42,
+  "Tail3": 108,
+  "Tassel": 522,
+  "FUpperL": 178,
+  "FLowerL": 44,
+  "FPawL": 498,
+  "BUpperL": 178,
+  "BLowerL": 44,
+  "BPawL": 448,
+  "FUpperR": 178,
+  "FLowerR": 44,
+  "FPawR": 498,
+  "BUpperR": 178,
+  "BLowerR": 44,
+  "BPawR": 448
+ },
+ "Boss4_SphinxBody": {
+  "tris": 2439,
+  "parts": 55,
+  "hidden_faces": 157,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.433,
+  "texels_per_stud": 19.1
+ },
+ "Boss4_SphinxLimbs": {
+  "tris": 2780,
+  "parts": 98,
+  "hidden_faces": 54,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.477,
+  "texels_per_stud": 20.2
+ },
+ "tris_total": 7946
+}

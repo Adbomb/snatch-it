@@ -1,0 +1,56 @@
+{
+ "FanVulture": {
+  "title": "Гриф-вентилятор",
+  "rarity": "Rare",
+  "tris": 2962,
+  "parts": 68,
+  "hidden_faces": 229,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.543,
+  "texels_per_stud": 113.882,
+  "size_blender_xyz": [
+   2.99,
+   2.99,
+   2.46
+  ],
+  "rig_parts": 10,
+  "materials": 1,
+  "dropped_enclosed_faces": 47,
+  "meshes": 10,
+  "tris_by_part": {
+   "Stand": 356,
+   "LegL": 80,
+   "LegR": 80,
+   "Body": 734,
+   "Tail": 130,
+   "Head": 548,
+   "FanL": 252,
+   "BladesL": 224,
+   "FanR": 252,
+   "BladesR": 224
+  },
+  "tris_without_stand": 2524,
+  "enclosed_faces": 4,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\FanVulture\\FanVulture_ingame_phone.png"
+  }
+ }
+}

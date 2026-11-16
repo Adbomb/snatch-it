@@ -1,0 +1,311 @@
+{
+ "sleep_idle": {
+  "title": "Сон",
+  "mantle": {
+   "jump4": 0.2,
+   "jump5": 0.2,
+   "frames_over20_4": 0,
+   "diff": 0.2
+  },
+  "elbow": {
+   "jump4": 0.2,
+   "jump5": 0.2,
+   "diff": 0.2
+  },
+  "contacts_changed": []
+ },
+ "wake": {
+  "title": "Пробуждение",
+  "mantle": {
+   "jump4": 37.3,
+   "jump5": 5.5,
+   "frames_over20_4": 4,
+   "diff": 16.5
+  },
+  "elbow": {
+   "jump4": 27.5,
+   "jump5": 18.4,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "23/8",
+    "24/10"
+   ],
+   [
+    "bracerR|body",
+    "13/3",
+    "13/4"
+   ],
+   [
+    "mantleR|wingR",
+    "8/3",
+    "8/2"
+   ]
+  ]
+ },
+ "combat_idle": {
+  "title": "Боевая стойка",
+  "mantle": {
+   "jump4": 42.0,
+   "jump5": 5.9,
+   "frames_over20_4": 4,
+   "diff": 18.3
+  },
+  "elbow": {
+   "jump4": 32.4,
+   "jump5": 14.8,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "12/8",
+    "14/11"
+   ]
+  ]
+ },
+ "walk": {
+  "title": "Ходьба",
+  "mantle": {
+   "jump4": 52.5,
+   "jump5": 10.1,
+   "frames_over20_4": 10,
+   "diff": 33.2
+  },
+  "elbow": {
+   "jump4": 16.8,
+   "jump5": 16.8,
+   "diff": 0.2
+  },
+  "contacts_changed": [
+   [
+    "mantleR|forelegR",
+    "5/1",
+    "—"
+   ]
+  ]
+ },
+ "turn_left": {
+  "title": "Разворот на месте",
+  "mantle": {
+   "jump4": 47.9,
+   "jump5": 7.7,
+   "frames_over20_4": 28,
+   "diff": 30.5
+  },
+  "elbow": {
+   "jump4": 20.0,
+   "jump5": 20.0,
+   "diff": 0.2
+  },
+  "contacts_changed": [
+   [
+    "mantleL|forelegL",
+    "7/1",
+    "10/4"
+   ],
+   [
+    "mantleL|hindlegL",
+    "15/12",
+    "14/18"
+   ],
+   [
+    "mantleR|forelegR",
+    "9/1",
+    "11/3"
+   ],
+   [
+    "mantleR|hindlegR",
+    "6/8",
+    "7/8"
+   ]
+  ]
+ },
+ "claw_swipe": {
+  "title": "Удар лапой",
+  "mantle": {
+   "jump4": 43.4,
+   "jump5": 5.6,
+   "frames_over20_4": 2,
+   "diff": 20.3
+  },
+  "elbow": {
+   "jump4": 17.2,
+   "jump5": 17.2,
+   "diff": 0.2
+  },
+  "contacts_changed": []
+ },
+ "bite": {
+  "title": "Укус",
+  "mantle": {
+   "jump4": 46.5,
+   "jump5": 5.8,
+   "frames_over20_4": 1,
+   "diff": 22.0
+  },
+  "elbow": {
+   "jump4": 33.7,
+   "jump5": 13.0,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "12/6",
+    "13/6"
+   ]
+  ]
+ },
+ "tail_strike": {
+  "title": "Удар хвостом",
+  "mantle": {
+   "jump4": 44.9,
+   "jump5": 6.2,
+   "frames_over20_4": 6,
+   "diff": 33.9
+  },
+  "elbow": {
+   "jump4": 35.6,
+   "jump5": 17.4,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "10/1",
+    "11/2"
+   ],
+   [
+    "mantleR|forelegR",
+    "6/3",
+    "12/2"
+   ],
+   [
+    "mantleR|hindlegR",
+    "—",
+    "6/2"
+   ]
+  ]
+ },
+ "wing_buffet": {
+  "title": "Взмах крыльями",
+  "mantle": {
+   "jump4": 33.7,
+   "jump5": 7.1,
+   "frames_over20_4": 3,
+   "diff": 14.1
+  },
+  "elbow": {
+   "jump4": 15.2,
+   "jump5": 15.2,
+   "diff": 0.2
+  },
+  "contacts_changed": []
+ },
+ "magic_volley": {
+  "title": "Королевский магический залп",
+  "mantle": {
+   "jump4": 40.5,
+   "jump5": 7.1,
+   "frames_over20_4": 2,
+   "diff": 17.7
+  },
+  "elbow": {
+   "jump4": 28.9,
+   "jump5": 20.5,
+   "diff": 24.0
+  },
+  "contacts_changed": []
+ },
+ "hit": {
+  "title": "Получение урона",
+  "mantle": {
+   "jump4": 15.9,
+   "jump5": 3.9,
+   "frames_over20_4": 0,
+   "diff": 8.9
+  },
+  "elbow": {
+   "jump4": 15.8,
+   "jump5": 15.8,
+   "diff": 0.2
+  },
+  "contacts_changed": []
+ },
+ "victory": {
+  "title": "Победа",
+  "mantle": {
+   "jump4": 34.9,
+   "jump5": 7.1,
+   "frames_over20_4": 3,
+   "diff": 16.1
+  },
+  "elbow": {
+   "jump4": 18.3,
+   "jump5": 13.7,
+   "diff": 16.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "21/14",
+    "22/14"
+   ]
+  ]
+ },
+ "defeat": {
+  "title": "Поражение",
+  "mantle": {
+   "jump4": 35.5,
+   "jump5": 6.7,
+   "frames_over20_4": 13,
+   "diff": 30.3
+  },
+  "elbow": {
+   "jump4": 27.0,
+   "jump5": 16.6,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "23/7",
+    "24/7"
+   ],
+   [
+    "bracerR|body",
+    "—",
+    "5/1"
+   ],
+   [
+    "mantleL|forelegL",
+    "5/1",
+    "—"
+   ]
+  ]
+ },
+ "fall_asleep": {
+  "title": "Засыпание",
+  "mantle": {
+   "jump4": 6.8,
+   "jump5": 4.3,
+   "frames_over20_4": 0,
+   "diff": 6.7
+  },
+  "elbow": {
+   "jump4": 34.0,
+   "jump5": 10.3,
+   "diff": 24.0
+  },
+  "contacts_changed": [
+   [
+    "bracerL|body",
+    "24/7",
+    "25/8"
+   ]
+  ]
+ }
+}

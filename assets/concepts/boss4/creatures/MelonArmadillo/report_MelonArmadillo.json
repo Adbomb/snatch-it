@@ -1,0 +1,54 @@
+{
+ "MelonArmadillo": {
+  "title": "Арбуз-броненосец",
+  "rarity": "Common",
+  "tris": 1564,
+  "parts": 44,
+  "hidden_faces": 182,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.646,
+  "texels_per_stud": 129.466,
+  "size_blender_xyz": [
+   2.9,
+   2.9,
+   1.58
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 26,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 414,
+   "Tail": 44,
+   "LegFL": 64,
+   "LegFR": 64,
+   "LegBL": 64,
+   "LegBR": 64,
+   "Head": 456
+  },
+  "tris_without_stand": 1170,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\MelonArmadillo\\MelonArmadillo_ingame_phone.png"
+  }
+ }
+}

@@ -1,0 +1,54 @@
+{
+ "CanScorpion": {
+  "title": "Скорпион-лейка",
+  "rarity": "Common",
+  "tris": 2675,
+  "parts": 67,
+  "hidden_faces": 220,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.567,
+  "texels_per_stud": 129.596,
+  "size_blender_xyz": [
+   2.99,
+   2.99,
+   2.36
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 37,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 504,
+   "LegsL": 336,
+   "LegsR": 336,
+   "ClawL": 458,
+   "ClawR": 158,
+   "Tail": 143,
+   "Can": 324
+  },
+  "tris_without_stand": 2259,
+  "enclosed_faces": 6,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CanScorpion\\CanScorpion_ingame_phone.png"
+  }
+ }
+}

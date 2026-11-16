@@ -1,0 +1,55 @@
+{
+ "PuzzlePhoenix": {
+  "title": "Феникс-головоломка",
+  "rarity": "Legendary",
+  "tris": 2483,
+  "parts": 80,
+  "hidden_faces": 207,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.455,
+  "texels_per_stud": 80.5,
+  "size_blender_xyz": [
+   3.32,
+   3.32,
+   3.05
+  ],
+  "rig_parts": 9,
+  "materials": 1,
+  "dropped_enclosed_faces": 45,
+  "meshes": 9,
+  "tris_by_part": {
+   "Stand": 282,
+   "LegL": 80,
+   "LegR": 80,
+   "Body": 478,
+   "Head": 526,
+   "WingL": 229,
+   "WingR": 229,
+   "Tail": 235,
+   "Piece": 268
+  },
+  "tris_without_stand": 2125,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\PuzzlePhoenix\\PuzzlePhoenix_ingame_phone.png"
+  }
+ }
+}

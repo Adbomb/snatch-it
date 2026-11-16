@@ -1,0 +1,57 @@
+{
+ "CloudCamel": {
+  "title": "Верблюд-туча",
+  "rarity": "Epic",
+  "tris": 2522,
+  "parts": 77,
+  "hidden_faces": 341,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.654,
+  "texels_per_stud": 97.621,
+  "size_blender_xyz": [
+   3.4,
+   3.4,
+   3.88
+  ],
+  "rig_parts": 11,
+  "materials": 1,
+  "dropped_enclosed_faces": 11,
+  "meshes": 11,
+  "tris_by_part": {
+   "Stand": 204,
+   "Puddle": 148,
+   "Body": 286,
+   "LegFL": 132,
+   "LegFR": 132,
+   "LegBL": 132,
+   "LegBR": 132,
+   "Tail": 78,
+   "Head": 538,
+   "Cloud": 494,
+   "Rain": 220
+  },
+  "tris_without_stand": 2292,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CloudCamel\\CloudCamel_ingame_phone.png"
+  }
+ }
+}

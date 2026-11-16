@@ -1,0 +1,53 @@
+{
+ "MirageFish": {
+  "title": "Рыба-мираж",
+  "rarity": "Rare",
+  "tris": 1636,
+  "parts": 46,
+  "hidden_faces": 179,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.651,
+  "texels_per_stud": 144.45,
+  "size_blender_xyz": [
+   2.9,
+   2.9,
+   2.77
+  ],
+  "rig_parts": 7,
+  "materials": 1,
+  "dropped_enclosed_faces": 28,
+  "meshes": 7,
+  "tris_by_part": {
+   "Stand": 356,
+   "Haze": 250,
+   "Cube": 94,
+   "Head": 435,
+   "Tail": 140,
+   "Fin": 44,
+   "Bubbles": 276
+  },
+  "tris_without_stand": 1239,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\MirageFish\\MirageFish_ingame_phone.png"
+  }
+ }
+}

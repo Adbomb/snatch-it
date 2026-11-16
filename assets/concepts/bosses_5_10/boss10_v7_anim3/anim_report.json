@@ -1,0 +1,675 @@
+{
+ "baseline": {
+  "crown|horns": 0,
+  "crown|spines": 0,
+  "horns|spines": 0,
+  "horns|wingL": 0,
+  "horns|wingR": 0,
+  "crown|wingL": 0,
+  "crown|wingR": 0,
+  "pauldronL|forelegL": 20,
+  "pauldronR|forelegR": 18,
+  "bracerL|body": 4,
+  "bracerR|body": 0,
+  "chest|forelegL": 0,
+  "chest|forelegR": 0,
+  "chest|neck": 22,
+  "collar|jaw": 0,
+  "collar|skull": 0,
+  "collar|drapeL": 72,
+  "collar|drapeR": 72,
+  "greaveL|tail": 0,
+  "greaveR|tail": 0,
+  "tailarmor|hindlegL": 0,
+  "tailarmor|hindlegR": 0,
+  "spineplates|wingL": 0,
+  "spineplates|wingR": 0,
+  "drapeL|wingL": 0,
+  "drapeR|wingR": 0,
+  "pauldronL|wingL": 0,
+  "pauldronR|wingR": 0,
+  "mantleL|forelegL": 0,
+  "mantleL|hindlegL": 0,
+  "mantleL|wingL": 0,
+  "mantleR|forelegR": 0,
+  "mantleR|hindlegR": 0,
+  "mantleR|wingR": 0,
+  "yokeL|wingL": 0,
+  "yokeR|wingR": 0,
+  "jaw|neck": 61,
+  "jaw|chest": 0,
+  "jaw|forelegL": 0,
+  "jaw|forelegR": 0,
+  "skull|forelegL": 0,
+  "skull|forelegR": 0,
+  "tail|hindlegL": 6,
+  "tail|hindlegR": 7,
+  "tail|wingL": 0,
+  "tail|wingR": 0,
+  "wingL|body": 6,
+  "wingR|body": 6,
+  "wingL|skull": 0,
+  "wingR|skull": 0,
+  "wingL|wingR": 0,
+  "forelegL|forelegR": 0,
+  "hindlegL|hindlegR": 0,
+  "wingL|hindlegL": 0,
+  "wingR|hindlegR": 0,
+  "scepter|dragon": 0
+ },
+ "clips": {
+  "sleep_idle": {
+   "title": "Сон",
+   "duration": 6.4,
+   "loop": true,
+   "events": {},
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 27.9,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.77
+   ],
+   "top_studs": 23.5,
+   "low_studs": 0.02,
+   "flags": {
+    "chest|neck": {
+     "base": 22,
+     "max": 36,
+     "at": 0.0,
+     "frames": 192,
+     "from": 0.0,
+     "to": 6.37
+    }
+   }
+  },
+  "wake": {
+   "title": "Пробуждение",
+   "duration": 2.4,
+   "loop": false,
+   "events": {
+    "открыл глаза": 0.3,
+    "лёжа (конец Wake)": 1.0,
+    "стойка (конец StandUp)": 1.9,
+    "рык (ToCombat)": 2.15
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 29.5,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.5
+   ],
+   "top_studs": 41.3,
+   "low_studs": -0.17,
+   "flags": {
+    "chest|neck": {
+     "base": 22,
+     "max": 60,
+     "at": 0.6,
+     "frames": 26,
+     "from": 0.0,
+     "to": 1.1
+    },
+    "mantleR|wingR": {
+     "base": 0,
+     "max": 8,
+     "at": 0.87,
+     "frames": 3,
+     "from": 0.87,
+     "to": 1.17
+    },
+    "bracerL|body": {
+     "base": 4,
+     "max": 26,
+     "at": 1.5,
+     "frames": 19,
+     "from": 1.1,
+     "to": 1.7
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 17,
+     "at": 1.47,
+     "frames": 14,
+     "from": 1.2,
+     "to": 1.63
+    },
+    "tail|hindlegL": {
+     "base": 6,
+     "max": 13,
+     "at": 1.5,
+     "frames": 7,
+     "from": 1.37,
+     "to": 1.57
+    },
+    "tail|hindlegR": {
+     "base": 7,
+     "max": 13,
+     "at": 1.47,
+     "frames": 3,
+     "from": 1.47,
+     "to": 1.53
+    }
+   }
+  },
+  "combat_idle": {
+   "title": "Боевая стойка",
+   "duration": 3.6,
+   "loop": true,
+   "events": {},
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 25.6,
+   "arena_ok": true,
+   "farthest": [
+    "tail",
+    1.1
+   ],
+   "top_studs": 36.1,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 15,
+     "at": 3.43,
+     "frames": 40,
+     "from": 1.03,
+     "to": 3.53
+    }
+   }
+  },
+  "walk": {
+   "title": "Ходьба",
+   "duration": 0.95,
+   "loop": true,
+   "events": {
+    "левая задняя на земле": 0.0,
+    "левая передняя на земле": 0.237,
+    "правая задняя на земле": 0.475,
+    "правая передняя на земле": 0.712
+   },
+   "ik_clamps": 4,
+   "below_ground": {},
+   "radius_studs": 26.1,
+   "arena_ok": true,
+   "farthest": [
+    "tail",
+    0.5
+   ],
+   "top_studs": 35.6,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 23,
+     "at": 0.07,
+     "frames": 7,
+     "from": 0.0,
+     "to": 0.9
+    },
+    "mantleR|forelegR": {
+     "base": 0,
+     "max": 5,
+     "at": 0.4,
+     "frames": 1,
+     "from": 0.4,
+     "to": 0.4
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 5,
+     "at": 0.53,
+     "frames": 2,
+     "from": 0.53,
+     "to": 0.57
+    }
+   }
+  },
+  "turn_left": {
+   "title": "Разворот на месте",
+   "duration": 1.8,
+   "loop": false,
+   "events": {
+    "конец поворота корня": 1.5
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 27.7,
+   "arena_ok": true,
+   "farthest": [
+    "tail",
+    1.0
+   ],
+   "top_studs": 34.9,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 25,
+     "at": 0.27,
+     "frames": 10,
+     "from": 0.23,
+     "to": 0.93
+    },
+    "mantleL|hindlegL": {
+     "base": 0,
+     "max": 13,
+     "at": 0.63,
+     "frames": 15,
+     "from": 0.43,
+     "to": 1.3
+    },
+    "mantleR|forelegR": {
+     "base": 0,
+     "max": 32,
+     "at": 1.07,
+     "frames": 4,
+     "from": 0.47,
+     "to": 1.17
+    },
+    "mantleR|hindlegR": {
+     "base": 0,
+     "max": 12,
+     "at": 0.5,
+     "frames": 7,
+     "from": 0.47,
+     "to": 1.17
+    },
+    "mantleL|forelegL": {
+     "base": 0,
+     "max": 10,
+     "at": 1.1,
+     "frames": 1,
+     "from": 1.1,
+     "to": 1.1
+    }
+   }
+  },
+  "claw_swipe": {
+   "title": "Удар лапой",
+   "duration": 1.4,
+   "loop": false,
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.55,
+    "контакт: удар лапы": 0.8
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 29.6,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.9
+   ],
+   "top_studs": 38.8,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 21,
+     "at": 1.17,
+     "frames": 11,
+     "from": 0.03,
+     "to": 1.37
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 11,
+     "at": 0.8,
+     "frames": 9,
+     "from": 0.77,
+     "to": 1.03
+    }
+   }
+  },
+  "bite": {
+   "title": "Укус",
+   "duration": 1.4,
+   "loop": false,
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: пасть смыкается": 0.75
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 29.8,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.87
+   ],
+   "top_studs": 38.7,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 15,
+     "at": 0.73,
+     "frames": 23,
+     "from": 0.63,
+     "to": 1.37
+    },
+    "chest|neck": {
+     "base": 22,
+     "max": 40,
+     "at": 0.73,
+     "frames": 14,
+     "from": 0.7,
+     "to": 1.13
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 5,
+     "at": 1.1,
+     "frames": 1,
+     "from": 1.1,
+     "to": 1.1
+    }
+   }
+  },
+  "tail_strike": {
+   "title": "Удар хвостом",
+   "duration": 1.4,
+   "loop": false,
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.5,
+    "контакт: хвост по левому боку": 0.75
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 29.0,
+   "arena_ok": true,
+   "farthest": [
+    "tail",
+    0.53
+   ],
+   "top_studs": 36.7,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 12,
+     "at": 0.63,
+     "frames": 4,
+     "from": 0.6,
+     "to": 1.1
+    },
+    "tailarmor|hindlegL": {
+     "base": 0,
+     "max": 7,
+     "at": 0.83,
+     "frames": 11,
+     "from": 0.7,
+     "to": 1.03
+    },
+    "tail|hindlegL": {
+     "base": 6,
+     "max": 17,
+     "at": 0.8,
+     "frames": 10,
+     "from": 0.7,
+     "to": 1.0
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 11,
+     "at": 0.8,
+     "frames": 8,
+     "from": 0.77,
+     "to": 1.0
+    }
+   }
+  },
+  "wing_buffet": {
+   "title": "Взмах крыльями",
+   "duration": 1.4,
+   "loop": false,
+   "events": {
+    "начало выпада в игре (AttackAt)": 0.55,
+    "контакт: порыв ветра": 0.8
+   },
+   "ik_clamps": 3,
+   "below_ground": {},
+   "radius_studs": 28.1,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.9
+   ],
+   "top_studs": 42.1,
+   "low_studs": -0.16,
+   "flags": {
+    "wingL|wingR": {
+     "base": 0,
+     "max": 8,
+     "at": 0.4,
+     "frames": 1,
+     "from": 0.4,
+     "to": 0.4
+    },
+    "bracerL|body": {
+     "base": 4,
+     "max": 14,
+     "at": 0.73,
+     "frames": 14,
+     "from": 0.7,
+     "to": 1.13
+    }
+   }
+  },
+  "magic_volley": {
+   "title": "Королевский магический залп",
+   "duration": 3.0,
+   "loop": false,
+   "events": {
+    "призыв скипетра": 0.3,
+    "слежение за целью": 0.6,
+    "круг готов": 1.0,
+    "фиксация направления": 1.45,
+    "выстрел: три снаряда": 1.95,
+    "скипетр на месте": 2.9
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 28.7,
+   "arena_ok": true,
+   "farthest": [
+    "scepter",
+    1.97
+   ],
+   "top_studs": 42.0,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 15,
+     "at": 2.1,
+     "frames": 12,
+     "from": 1.9,
+     "to": 2.27
+    }
+   }
+  },
+  "hit": {
+   "title": "Получение урона",
+   "duration": 0.6,
+   "loop": false,
+   "events": {
+    "пик реакции": 0.1
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 26.6,
+   "arena_ok": true,
+   "farthest": [
+    "tail",
+    0.17
+   ],
+   "top_studs": 39.1,
+   "low_studs": -0.16,
+   "flags": {}
+  },
+  "victory": {
+   "title": "Победа",
+   "duration": 2.2,
+   "loop": false,
+   "events": {
+    "встал на дыбы": 0.6,
+    "удар лапами о землю": 1.3
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 26.6,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    1.4
+   ],
+   "top_studs": 42.7,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 22,
+     "at": 1.63,
+     "frames": 34,
+     "from": 0.5,
+     "to": 1.73
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 5,
+     "at": 1.53,
+     "frames": 1,
+     "from": 1.53,
+     "to": 1.53
+    }
+   }
+  },
+  "defeat": {
+   "title": "Поражение",
+   "duration": 2.4,
+   "loop": false,
+   "events": {
+    "лежит": 0.95,
+    "начинает вставать": 1.62
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 30.0,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    0.77
+   ],
+   "top_studs": 39.0,
+   "low_studs": -0.16,
+   "flags": {
+    "chest|neck": {
+     "base": 22,
+     "max": 60,
+     "at": 1.57,
+     "frames": 26,
+     "from": 0.43,
+     "to": 1.87
+    },
+    "mantleL|hindlegL": {
+     "base": 0,
+     "max": 6,
+     "at": 0.53,
+     "frames": 2,
+     "from": 0.53,
+     "to": 0.57
+    },
+    "mantleL|forelegL": {
+     "base": 0,
+     "max": 7,
+     "at": 0.6,
+     "frames": 1,
+     "from": 0.6,
+     "to": 0.6
+    },
+    "bracerL|body": {
+     "base": 4,
+     "max": 22,
+     "at": 1.97,
+     "frames": 11,
+     "from": 1.8,
+     "to": 2.13
+    },
+    "tail|hindlegL": {
+     "base": 6,
+     "max": 13,
+     "at": 1.83,
+     "frames": 3,
+     "from": 1.8,
+     "to": 1.87
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 11,
+     "at": 1.87,
+     "frames": 3,
+     "from": 1.87,
+     "to": 1.93
+    }
+   }
+  },
+  "fall_asleep": {
+   "title": "Засыпание",
+   "duration": 1.6,
+   "loop": false,
+   "events": {
+    "лёг (поза «лёжа»)": 0.88,
+    "закрыл глаза": 1.4
+   },
+   "ik_clamps": 0,
+   "below_ground": {},
+   "radius_studs": 29.7,
+   "arena_ok": true,
+   "farthest": [
+    "skull",
+    1.13
+   ],
+   "top_studs": 36.9,
+   "low_studs": -0.16,
+   "flags": {
+    "bracerL|body": {
+     "base": 4,
+     "max": 27,
+     "at": 0.67,
+     "frames": 16,
+     "from": 0.3,
+     "to": 0.8
+    },
+    "bracerR|body": {
+     "base": 0,
+     "max": 21,
+     "at": 0.57,
+     "frames": 12,
+     "from": 0.37,
+     "to": 0.73
+    },
+    "tail|hindlegL": {
+     "base": 6,
+     "max": 14,
+     "at": 0.57,
+     "frames": 5,
+     "from": 0.53,
+     "to": 0.67
+    },
+    "chest|neck": {
+     "base": 22,
+     "max": 60,
+     "at": 1.03,
+     "frames": 19,
+     "from": 0.57,
+     "to": 1.6
+    }
+   }
+  }
+ }
+}

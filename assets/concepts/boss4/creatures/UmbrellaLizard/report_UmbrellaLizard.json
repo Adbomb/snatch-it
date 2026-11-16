@@ -1,0 +1,55 @@
+{
+ "UmbrellaLizard": {
+  "title": "Ящерка-зонтик",
+  "rarity": "Common",
+  "tris": 2204,
+  "parts": 63,
+  "hidden_faces": 171,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.53,
+  "texels_per_stud": 122.259,
+  "size_blender_xyz": [
+   2.8,
+   2.8,
+   2.73
+  ],
+  "rig_parts": 9,
+  "materials": 1,
+  "dropped_enclosed_faces": 46,
+  "meshes": 9,
+  "tris_by_part": {
+   "Stand": 356,
+   "Body": 184,
+   "LegL": 108,
+   "LegR": 108,
+   "ArmL": 73,
+   "ArmR": 73,
+   "Tail": 200,
+   "Head": 458,
+   "Frill": 572
+  },
+  "tris_without_stand": 1776,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\UmbrellaLizard\\UmbrellaLizard_ingame_phone.png"
+  }
+ }
+}

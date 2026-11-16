@@ -1,0 +1,74 @@
+{
+ "tail_strike": {
+  "tip_0.8": [
+   14.2,
+   2.2,
+   0.9
+  ],
+  "radius": 29.0,
+  "arena_ok": true,
+  "flags": {
+   "bracerR|body": [
+    0,
+    11,
+    10
+   ],
+   "tailarmor|hindlegL": [
+    0,
+    7,
+    11
+   ],
+   "tail|hindlegL": [
+    6,
+    17,
+    10
+   ],
+   "mantleR|hindlegR": [
+    0,
+    6,
+    2
+   ]
+  }
+ },
+ "tail_strike_right": {
+  "tip_0.8": [
+   -3.3,
+   32.2,
+   3.2
+  ],
+  "radius": 39.8,
+  "arena_ok": false,
+  "flags": {
+   "tail|hindlegL": [
+    6,
+    12,
+    6
+   ],
+   "tailarmor|hindlegL": [
+    0,
+    5,
+    5
+   ],
+   "bracerL|body": [
+    10,
+    19,
+    4
+   ],
+   "tailarmor|hindlegR": [
+    0,
+    8,
+    11
+   ],
+   "tail|hindlegR": [
+    7,
+    15,
+    10
+   ],
+   "mantleL|hindlegL": [
+    0,
+    5,
+    7
+   ]
+  }
+ }
+}

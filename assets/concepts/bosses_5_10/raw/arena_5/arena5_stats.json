@@ -1,0 +1,11 @@
+{
+ "primitives": {
+  "Ground": 19,
+  "Platform": 24,
+  "Palace": 21,
+  "Aurora": 12,
+  "Forest": 110,
+  "Drifts": 81
+ },
+ "total": 267
+}

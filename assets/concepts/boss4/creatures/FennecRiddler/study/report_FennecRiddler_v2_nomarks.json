@@ -1,0 +1,58 @@
+{
+ "FennecRiddler_v2_nomarks": {
+  "title": "Фенек-загадочник (v2 без отметин, для сравнения)",
+  "rarity": "Rare",
+  "tris": 3058,
+  "parts": 110,
+  "hidden_faces": 285,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.629,
+  "texels_per_stud": 92.285,
+  "size_blender_xyz": [
+   3.22,
+   2.99,
+   4.11
+  ],
+  "rig_parts": 12,
+  "materials": 1,
+  "dropped_enclosed_faces": 61,
+  "meshes": 12,
+  "tris_by_part": {
+   "Stand": 464,
+   "Body": 632,
+   "Head": 401,
+   "EyeL": 94,
+   "EyeR": 96,
+   "EarL": 196,
+   "EarR": 196,
+   "ArmL": 158,
+   "Cube": 266,
+   "ArmR": 159,
+   "Tail": 148,
+   "TailTip": 146
+  },
+  "tris_without_stand": 2492,
+  "enclosed_faces": 1,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\FennecRiddler\\FennecRiddler_v2_nomarks_ingame_phone.png"
+  }
+ }
+}

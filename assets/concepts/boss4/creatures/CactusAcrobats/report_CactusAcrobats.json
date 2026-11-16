@@ -1,0 +1,54 @@
+{
+ "CactusAcrobats": {
+  "title": "Кактусы-акробаты",
+  "rarity": "Rare",
+  "tris": 2950,
+  "parts": 78,
+  "hidden_faces": 450,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.63,
+  "texels_per_stud": 135.981,
+  "size_blender_xyz": [
+   2.99,
+   2.99,
+   3.52
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 37,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "Base": 1007,
+   "BaseArmL": 84,
+   "BaseArmR": 84,
+   "Mid": 276,
+   "MidArm": 336,
+   "Top": 652,
+   "TopArm": 93
+  },
+  "tris_without_stand": 2532,
+  "enclosed_faces": 2,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\CactusAcrobats\\CactusAcrobats_ingame_phone.png"
+  }
+ }
+}

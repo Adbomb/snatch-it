@@ -1,0 +1,54 @@
+{
+ "TornadoKing": {
+  "title": "Царь-смерч",
+  "rarity": "Legendary",
+  "tris": 2548,
+  "parts": 52,
+  "hidden_faces": 332,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.541,
+  "texels_per_stud": 79.636,
+  "size_blender_xyz": [
+   3.32,
+   3.32,
+   4.52
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 39,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 282,
+   "TierA": 178,
+   "TierB": 174,
+   "TierC": 460,
+   "ArmL": 278,
+   "ArmR": 278,
+   "Head": 624,
+   "Crown": 200
+  },
+  "tris_without_stand": 2192,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\TornadoKing\\TornadoKing_ingame_phone.png"
+  }
+ }
+}

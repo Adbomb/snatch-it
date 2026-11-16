@@ -1,0 +1,54 @@
+{
+ "SandChick": {
+  "title": "Страусёнок-песочник",
+  "rarity": "Common",
+  "tris": 2278,
+  "parts": 52,
+  "hidden_faces": 262,
+  "flipped": 0,
+  "degenerate": 0,
+  "coplanar": [],
+  "uv_fill": 0.647,
+  "texels_per_stud": 144.687,
+  "size_blender_xyz": [
+   2.61,
+   2.61,
+   3.32
+  ],
+  "rig_parts": 8,
+  "materials": 1,
+  "dropped_enclosed_faces": 35,
+  "meshes": 8,
+  "tris_by_part": {
+   "Stand": 356,
+   "LegL": 137,
+   "LegR": 137,
+   "Body": 534,
+   "WingL": 44,
+   "WingR": 44,
+   "Neck": 198,
+   "Head": 762
+  },
+  "tris_without_stand": 1856,
+  "enclosed_faces": 0,
+  "uv_layers": [
+   1
+  ],
+  "uv_in_0_1": true,
+  "texture": "1024×1024, color + normal (шероховатость общая 0.5)",
+  "shots": {
+   "hero": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_hero.png",
+   "front": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_front.png",
+   "side": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_side.png",
+   "side_r": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_side_r.png",
+   "back": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_back.png",
+   "top": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_top.png",
+   "face": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_face.png",
+   "texture": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_texture.png",
+   "pose": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_pose.png",
+   "scale": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_scale.png",
+   "vase_close": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_vase_close.png",
+   "ingame_phone": "assets\\concepts\\boss4\\creatures\\SandChick\\SandChick_ingame_phone.png"
+  }
+ }
+}
