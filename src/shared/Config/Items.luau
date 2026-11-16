@@ -223,6 +223,18 @@ local function creature(
 )
 	collectible(3, id, rarity, displayName, "Creature", weight, income, color, size, "существо Подземки")
 end
+-- Живое существо босса 4 «Сфинкс-лежебока» (D57, D58): доход и вес утверждены, модель — Config/CreatureRigs.
+local function creature4(
+	id: string,
+	rarity: string,
+	displayName: string,
+	weight: string,
+	income: number,
+	color: string,
+	size: Vector3
+)
+	collectible(4, id, rarity, displayName, "Creature", weight, income, color, size, "существо Пустыни")
+end
 
 -- D55: коллекция босса 3 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)
 creature("LiveCheeseMonster", "Common", "Живой сыр-монстр", "Medium", 110, "E8AC2C", V(3.081, 2.234, 1.954))
@@ -266,13 +278,50 @@ for _, id in { "CratedVase", "PlasterBust", "KnightArmor", "BronzeHorse" } do
 	Items[id].legacy = true
 end
 
--- 4. Пустыня — «Сфинкс»: Древний Египет.
+-- 4. Пустыня — «Сфинкс-лежебока»: 30 живых существ (D57 — каталог и доходы, D58 — веса и подставки).
+-- D57: коллекция босса 4 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)
+creature4("CactusBoxer", "Common", "Кактус-боксёр", "Medium", 386, "3BA245", V(2.48, 2.384, 1.975))
+creature4("FloppyFennec", "Common", "Фенек-лопоух", "Medium", 328, "DCB365", V(1.921, 3.083, 1.369))
+creature4("TumbleweedRunner", "Common", "Перекати-поле-бегун", "Medium", 312, "B18437", V(1.967, 2.448, 2.017))
+creature4("CanteenCamel", "Common", "Верблюжонок-фляга", "Medium", 376, "D5A05C", V(2.384, 2.58, 1.023))
+creature4("DuneTurtle", "Common", "Черепаха-бархан", "Medium", 336, "E79F61", V(2.12, 1.392, 2.389))
+creature4("UmbrellaLizard", "Common", "Ящерка-зонтик", "Medium", 352, "FCFAF1", V(2.218, 2.511, 1.74))
+creature4("MelonArmadillo", "Common", "Арбуз-броненосец", "Medium", 304, "489C3F", V(1.76, 1.361, 2.66))
+creature4("StrawSnake", "Common", "Змейка-соломинка", "Light", 344, "6D4122", V(2.177, 1.839, 1.371))
+creature4("DropBeetle", "Common", "Жук-капелька", "Light", 320, "3FC0D0", V(1.521, 2.046, 1.53))
+creature4("MeerkatLookout", "Common", "Сурикат-часовой", "Light", 360, "CB9C56", V(1.484, 2.06, 2.193))
+creature4("CanScorpion", "Common", "Скорпион-лейка", "Light", 402, "E87B26", V(2, 2.151, 2.198))
+creature4("SandChick", "Common", "Страусёнок-песочник", "Medium", 368, "EDC553", V(1.426, 3.1, 1.66))
+creature4("AquariumCamel", "Rare", "Верблюд-аквариум", "Medium", 1220, "E0A351", V(2.868, 2.876, 1.228))
+creature4("CactusAcrobats", "Rare", "Кактусы-акробаты", "Heavy", 1160, "399E3F", V(1.507, 3.301, 1.34))
+creature4("DrillWorm", "Rare", "Песчаный червь-бурильщик", "Light", 1040, "BE5932", V(2, 1.721, 1.994))
+creature4("FanVulture", "Rare", "Гриф-вентилятор", "Medium", 1190, "8147B7", V(2.863, 2.24, 1.615))
+creature4("CobraFountain", "Rare", "Кобра-фонтан", "Medium", 1130, "D8C090", V(2.08, 2.416, 2.08))
+creature4("DustDevil", "Rare", "Смерч-озорник", "Medium", 1070, "F6DDA8", V(2.603, 2.383, 2.196))
+creature4("KaleidoChameleon", "Rare", "Хамелеон-калейдоскоп", "Medium", 1100, "D4AF35", V(2.673, 1.948, 0.82))
+creature4("FennecRiddler", "Rare", "Фенек-загадочник", "Heavy", 1250, "E29736", V(3.066, 3.894, 1.98))
+creature4("MirageFish", "Rare", "Рыба-мираж", "Light", 1010, "37C4CF", V(2.139, 2.362, 1.12))
+creature4("DuneWhale", "Epic", "Кит-бархан", "Medium", 4100, "E6CE98", V(2.841, 2.81, 2.66))
+creature4("IslandTurtle", "Epic", "Черепаха-остров", "Medium", 5200, "349CCD", V(2.621, 2.07, 2.97))
+creature4("BlazeOstrich", "Epic", "Жар-страус", "Heavy", 4500, "D83B2B", V(2.393, 3.433, 2.483))
+creature4("CloudCamel", "Epic", "Верблюд-туча", "Heavy", 4900, "E2A355", V(2.889, 3.536, 1.7))
+creature4("CrystalScorpion", "Epic", "Кристальный скорпион", "Medium", 4720, "D59931", V(2.12, 2.544, 2.055))
+creature4("GiantCactus", "Epic", "Кактус-великан", "Heavy", 4300, "287B33", V(2.07, 3.367, 1.019))
+creature4("SpringAntelope", "Legendary", "Антилопа-родник", "Heavy", 12700, "E4E1DA", V(2.679, 3.409, 1.741))
+creature4("PuzzlePhoenix", "Legendary", "Феникс-головоломка", "Medium", 13880, "F1A533", V(2.776, 2.69, 2.126))
+creature4("TornadoKing", "Legendary", "Царь-смерч", "Heavy", 15000, "5349A1", V(3.077, 4.04, 2.24))
+-- D57: конец коллекции босса 4
+
+-- Черновик «Древнего Египта» зоны 4 до D57 (заготовки без дохода): только для старых сохранений.
 art("CanopicJar", 4, "Common", "Канопа", "Vase", "Light", "Cylinder", "D9C7A1", V(2.2, 1.3, 1.3))
 art("ScarabAmulet", 4, "Common", "Амулет-скарабей", "Jewel", "Light", "Ball", "1F8A70", V(1.6, 1.6, 1.6))
 art("BastetCat", 4, "Rare", "Статуэтка кошки Бастет", "Sculpture", "Medium", "Block", "23262B", V(1.2, 2.8, 1.6))
 art("GoldenAnkh", 4, "Rare", "Золотой анх", "Jewel", "Light", "Block", "E3B341", V(1.6, 2.6, 0.5))
 art("Nefertiti", 4, "Legendary", "Бюст Нефертити", "Sculpture", "Medium", "Block", "2C6EB5", V(1.6, 3, 1.8),
 	"Тутмос, ок. 1345 до н. э.")
+for _, id in { "CanopicJar", "ScarabAmulet", "BastetCat", "GoldenAnkh", "Nefertiti" } do
+	Items[id].legacy = true
+end
 
 -- 5. Ледник — «Полярный медведь»: северное искусство.
 art("VikingFigure", 5, "Common", "Фигурка викинга", "Sculpture", "Light", "Block", "8D6E63", V(1.2, 2.2, 1.2))

@@ -27,6 +27,26 @@ function ZoneDecor.Pedestal(accent: Color3): { ModelBuilder.Brick }
 	}
 end
 
+-- Путь к следующему уровню (запрос владельца 2026-11-14) в зонах без своего оформления (5–10): светлая дорожка
+-- по середине прохода (|x| < 8 свободен) от входа к выходу, кромка цвета зоны, ромбы. Верх дорожки 0.3 — выше плиток
+-- «Банка» (0.2), кромки и ромбов — 0.36; ширина 6.6 — края не совпадают с плитками 6 × 6; концы — за полосой
+-- границы зоны (её полуширина 0.5).
+function ZoneDecor.Path(size: number, accent: Color3): { ModelBuilder.Brick }
+	local half = size / 2
+	local out = {
+		B(Vector3.new(6.6, 0.3, size - 1.2), Vector3.new(0, 0.15, 0), Palette.Stone:Lerp(Palette.White, 0.55), DECOR),
+	}
+	for _, s in { -1, 1 } do
+		table.insert(out, B(Vector3.new(0.5, 0.36, size - 1.4), Vector3.new(s * 3.55, 0.18, 0), accent, DECOR))
+	end
+	for k = 1, 5 do
+		local z = -half + k * size / 6
+		local at = CFrame.new(0, 0.18, z) * CFrame.Angles(0, math.rad(45), 0)
+		table.insert(out, B(Vector3.new(1.8, 0.36, 1.8), at, accent:Lerp(Palette.White, 0.25), DECOR))
+	end
+	return out
+end
+
 -- Свалка (уровень 1) — World/Models/Junkyard (D41).
 
 -- Барахолка (уровень 2) — World/Models/FleaMarket (D43).

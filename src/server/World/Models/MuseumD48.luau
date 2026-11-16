@@ -23,6 +23,7 @@ local CEIL, DOOR, DOORH = L.Hall.Ceiling, L.Hall.DoorHalf, L.Hall.DoorHeight
 local G, SLAB, PZ = L.Hall.Ground, L.Hall.Slab, L.Hall.Portico
 local TOP = CEIL + 1.4 -- верх стен зала
 local PV_X, PV_Z0, PV_Z1, PV_H = L.Pavilion.HalfX, L.Pavilion.Z0, L.Pavilion.Z1, L.Pavilion.Height
+local PV_OPEN = L.Pavilion.Opening -- высота проёма портала
 local ST0, STW, WX, WZ1 = L.Stair.TopZ, L.Stair.HalfWidth, L.Stair.WellX, L.Stair.WellZ1
 local VF, VCEIL = L.Vault.Floor, L.Vault.Ceiling
 local GAL = L.Gallery
@@ -388,7 +389,7 @@ local function pavilion(): { Brick }
 	local b: { Brick } = {}
 	box(b, -PV_X, -STW, 0, PV_H, PV_Z0, PV_Z0 + 0.6, C.steel, SHELL)
 	box(b, STW, PV_X, 0, PV_H, PV_Z0, PV_Z0 + 0.6, C.steel, SHELL)
-	box(b, -STW, STW, 7.2, PV_H, PV_Z0, PV_Z0 + 0.6, C.steel, SHELL)
+	box(b, -STW, STW, PV_OPEN + 0.1, PV_H, PV_Z0, PV_Z0 + 0.6, C.steel, SHELL)
 	box(b, -PV_X, -PV_X + 0.6, 0, PV_H, PV_Z0 + 0.6, PV_Z1 - 0.6, C.steel, SHELL)
 	box(b, PV_X - 0.6, PV_X, 0, PV_H, PV_Z0 + 0.6, PV_Z1 - 0.6, C.steel, SHELL)
 	box(b, -PV_X, PV_X, 0, PV_H, PV_Z1 - 0.6, PV_Z1, C.steel, SHELL)
@@ -396,13 +397,13 @@ local function pavilion(): { Brick }
 	box(b, -PV_X - 0.6, PV_X + 0.6, PV_H + 0.6, PV_H + 0.9, PV_Z0 - 0.6, PV_Z1 + 0.6, C.gold)
 	box(b, -3.4, 3.4, PV_H + 0.9, PV_H + 1.7, PV_Z0 + 0.6, PV_Z1 - 0.6, C.navy)
 	-- золотая рама портала (стойки и перекладина встык), бирюзовые полосы, табло
-	box(b, -STW - 0.3, -STW + 0.05, 0, 7.1, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold)
-	box(b, STW - 0.05, STW + 0.3, 0, 7.1, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold)
-	box(b, -STW - 0.3, STW + 0.3, 7.1, 7.5, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold) -- ниже перемычки на 0.1
+	box(b, -STW - 0.3, -STW + 0.05, 0, PV_OPEN, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold)
+	box(b, STW - 0.05, STW + 0.3, 0, PV_OPEN, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold)
+	box(b, -STW - 0.3, STW + 0.3, PV_OPEN, PV_OPEN + 0.4, PV_Z0 - 0.15, PV_Z0 + 0.1, C.gold) -- ниже перемычки на 0.1
 	for _, sx in { -1, 1 } do
-		glow(b, sx * 3.3 - 0.1, sx * 3.3 + 0.1, 0.5, 6.8, PV_Z0 - 0.1, PV_Z0, C.cyan)
+		glow(b, sx * 3.3 - 0.1, sx * 3.3 + 0.1, 0.5, PV_OPEN - 0.3, PV_Z0 - 0.1, PV_Z0, C.cyan)
 	end
-	box(b, -3.3, 3.3, 7.75, 8.75, PV_Z0 - 0.15, PV_Z0, C.navyDark, { name = "VaultSign" })
+	box(b, -3.3, 3.3, PV_OPEN + 0.65, PV_OPEN + 1.65, PV_Z0 - 0.15, PV_Z0, C.navyDark, { name = "VaultSign" })
 	-- круглая дверь сейфа, распахнута на 90° (как в утверждённом v2): диск — оболочка, кольцо и штурвал — вид
 	local dr = 3.5
 	local dcx, dcz, dcy = PV_X + 0.45, PV_Z0 - dr - 0.1, 0.35 + dr
@@ -416,7 +417,7 @@ end
 -- Створка решётки: начало — нижний внутренний угол у середины проёма, створка — к +x; вторая повёрнута на 180°.
 local function gateLeaf(): { Brick }
 	local b: { Brick } = {}
-	local w, h = STW - 0.05, 7.1
+	local w, h = STW - 0.05, PV_OPEN
 	box(b, 0, 0.25, 0, h, -0.1, 0.1, C.steelDark, { name = "Gate" })
 	box(b, w - 0.25, w, 0, h, -0.1, 0.1, C.steelDark, { name = "Gate" })
 	box(b, 0.25, w - 0.25, 0, 0.3, -0.1, 0.1, C.steelDark, { name = "Gate" })
@@ -455,7 +456,9 @@ local function stair(): { Brick }
 	-- проёмом). Ось — на RAIL выше линии середин ступеней, от START за решёткой (z ≥ ST0) до середины нижней ступени.
 	local RAIL, START = 1.2, 0.6
 	local tilt = CFrame.Angles(math.rad(45), 0, 0)
-	local z0, z1 = ST0 + START, ST0 + L.Stair.Steps - 0.5
+	-- низ перил — над предпоследней ступенью (этап C.2: было до последней; широкому аватару негде развернуться между
+	-- концом перил и задней стеной хранилища, до пола там 1–2 стада)
+	local z0, z1 = ST0 + START, ST0 + L.Stair.Steps - 2
 	local length = (z1 - z0) * math.sqrt(2)
 	local midZ = (z0 + z1) / 2
 	local midY = -(midZ - ST0 + 0.5) + RAIL
@@ -494,22 +497,6 @@ local function chest(): { Brick }
 	end
 	box(b, -0.45, 0.45, 1.2, 2.2, 1.5, 1.8, C.gold)
 	glow(b, -1.0, 1.0, 2.3, 2.4, 1.6, 1.68, C.cyan)
-	return b
-end
-
-local function stand(): { Brick }
-	local b: { Brick } = {}
-	box(b, -0.9, 0.9, 0, 0.6, -0.7, 0.7, C.navy, SHELL)
-	cylinder(b, Vector3.new(0, 1.8, 0), 0.3, 2.4, "y", C.gold)
-	local tilt = CFrame.Angles(math.rad(20), 0, 0) -- экран смотрит ко входу (−z) и чуть вверх
-	table.insert(
-		b,
-		ModelBuilder.Brick(Vector3.new(3.2, 2.0, 0.25), CFrame.new(0, 3.8, 0) * tilt, C.navyDark, {
-			name = "StandBoard",
-			collide = false,
-			material = Enum.Material.SmoothPlastic, -- табличка с текстом
-		})
-	)
 	return b
 end
 
@@ -627,7 +614,7 @@ local BUILDERS: { [string]: () -> { Brick } } = {
 	D48_Scanner = scanner,
 	D48_Stair = stair,
 	D48_Chest = chest,
-	D48_Stand = stand,
+	-- D48_Stand (стойка с пустой табличкой у входа) убрана — этап C.2, просьба владельца
 	D48_VaultShell = vaultShell,
 	D48_Safe = safe,
 	D48_Terminal = terminal,

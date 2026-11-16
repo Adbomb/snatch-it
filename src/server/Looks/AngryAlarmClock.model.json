@@ -1,0 +1,8 @@
+{
+	"ClassName": "SurfaceAppearance",
+	"Properties": {
+		"ColorMap": "rbxassetid://83652812477505",
+		"NormalMap": "rbxassetid://71054109435360",
+		"RoughnessMap": "rbxassetid://120633114716941"
+	}
+}

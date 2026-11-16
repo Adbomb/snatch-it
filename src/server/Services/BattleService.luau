@@ -12,15 +12,24 @@
 -- снаружи. Побега по расстоянию нет; босс не уходит дальше Leash от своего места (площадка без декора, D43).
 -- D55: бой начинается после поимки «Ловибумом» (CatchService): слот уже закреплён за ловящим (Begin с caught = true);
 -- пока идёт поимка, босс занят (IsCatchBusy задаёт CatchService) — бой с ним не начать.
+-- Босс 10 «Король-дракон» (этап B, решения владельца 2026-11-15) — только по полям своей записи Battle.Bosses[10], у
+-- боссов 1–9 их нет и бой идёт прежним путём: BodyRange — дальность ближнего боя до контура тела (rig.Body), одна на
+-- двоих (D52); Leash 0 — не преследует, стоит на месте и поворачивается к бойцу; AttackSides — вид выпада по стороне
+-- бойца (урон и интервал те же); Volley — магический залп против дальнего бойца: сервер решает начало, фиксирует
+-- направление, ведёт снаряды по прямым (Shared/BossVolley, шаг Heartbeat), гасит их о препятствия (Spherecast) и землю,
+-- засчитывает не больше одного попадания за залп и убирает залп, когда бой кончился. Удары бойца отмечаются для
+-- анимации автоудара (атрибуты BattleSwingSeq/BattleSwingAt; анимации пока нет).
 -- Зависит от MoveGuard (D52), BossService, BossLootService, CarryService, DataService, TimeService, Config/Battle, Shared/GameTime,
--- World/MapLayout, Util/CharacterGroups, Util/Notify, Util/Validate, Util/Log.
+-- Shared/BossVolley, World/MapLayout, Util/CharacterGroups, Util/Notify, Util/Validate, Util/Log.
 
 local PhysicsService = game:GetService("PhysicsService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
+local BossVolley = require(ReplicatedStorage.Shared.BossVolley)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
@@ -53,6 +62,11 @@ export type Fight = {
 	nextPlayer: number,
 	nextBoss: number,
 	attacks: number,
+	plan: { at: number, canceled: boolean, kind: string? }?, -- план следующего выпада (только у босса с клипами)
+	volley: any?, -- идущий залп (босс 10): времена, направления, снаряды
+	volleyAt: number?, -- объявленный залп (план атаки): начнётся в этот момент os.clock()
+	nextVolley: number?, -- раньше этого (os.clock) нового залпа нет
+	volleys: number?, -- сколько залпов было (для тестов)
 	result: string?,
 	log: { string },
 	health: { max: number, value: number }?, -- здоровье персонажа до боя (вернуть после)
@@ -63,6 +77,8 @@ local byPlayer: { [any]: Fight } = {}
 local returning: { [number]: boolean } = {} -- босс ещё идёт на место после боя
 local random = Random.new()
 local BAR_ABOVE_BOSS = 3.2 -- полоска HP над макушкой босса, стадов
+local FIRST_PLAYER, FIRST_BOSS = 0.3, 0.6 -- первые удары игрока и босса после начала боя, секунд
+local endVolley: (fight: any, canceled: boolean) -> () -- залп босса 10 (ниже; finish гасит залп)
 
 local BattleService = {}
 
@@ -156,7 +172,11 @@ local function setBar(gui: BillboardGui?, title: string, hp: number, maxHp: numb
 	local fill = back:FindFirstChild("Fill") :: Frame
 	fill.Size = UDim2.fromScale(math.clamp(hp / maxHp, 0, 1), 1)
 	local label = gui:FindFirstChild("Text") :: TextLabel
-	label.Text = ("%s  %s / %s"):format(title, NumberFormat.Short(math.max(math.ceil(hp), 0)), NumberFormat.Short(math.ceil(maxHp)))
+	label.Text = ("%s  %s / %s"):format(
+		title,
+		NumberFormat.Short(math.max(math.ceil(hp), 0)),
+		NumberFormat.Short(math.ceil(maxHp))
+	)
 end
 
 -- HP бойца — в здоровье персонажа (стандартная полоса Roblox): не меньше 1, чтобы персонаж не погиб.
@@ -288,6 +308,13 @@ local function finish(fight: Fight, result: string)
 	fight.player:SetAttribute("BattleHP", nil)
 	fight.player:SetAttribute("BattleMaxHP", nil)
 	fight.boss.model:SetAttribute("TargetUserId", nil)
+	if fight.volley then
+		endVolley(fight, true) -- предупреждения и снаряды у клиентов исчезают
+	end
+	if fight.plan then
+		BossService.CancelPlan(fight.boss) -- начатый замах доигрывает и гаснет в победу или поражение
+		fight.plan = nil
+	end
 	local boss = fight.boss
 	local tl = Battle.Timeline
 	Log.Debug("BattleService", ("Бой %s с боссом %d: %s"):format(fight.player.Name, fight.zone, result))
@@ -302,7 +329,11 @@ local function finish(fight: Fight, result: string)
 	elseif result == "lose" then
 		knockback(fight.player, BossService.Position(boss))
 		BossLootService.Release(fight.zone, fight.slot)
-		Notify.Send(fight.player, ("%s победил! Набери силы и попробуй снова"):format(bossName(fight.zone)), "Stop")
+		Notify.Send(
+			fight.player,
+			("%s победил! Набери силы и попробуй снова"):format(bossName(fight.zone)),
+			"Stop"
+		)
 		task.spawn(goHome, boss, "Victory", tl.Victory)
 	else
 		BossLootService.Release(fight.zone, fight.slot)
@@ -361,6 +392,273 @@ function BattleService.CanStart(player: any, zone: number, slot: number, caught:
 	return nil
 end
 
+-- Вид выпада с номером n в бою: каждый третий — особый.
+local function attackKind(n: number): string
+	return if n % 3 == 0 then "swipe" else "bite"
+end
+
+-- Расстояние по земле от точки pos до контура тела босса (rig.Body: многоугольник X–Z в осях модели); внутри — 0.
+local function bodyDistance(boss: BossService.Boss, pos: Vector3): number
+	local poly = BossService.Rig(boss).Body
+	local p = boss.root.CFrame:PointToObjectSpace(pos)
+	local x, z = p.X, p.Z
+	local n = #poly
+	local sign, inside, best = 0, true, math.huge
+	for i = 1, n do
+		local a, b = poly[i], poly[i % n + 1]
+		local ex, ez = b.X - a.X, b.Y - a.Y
+		local cross = ex * (z - a.Y) - ez * (x - a.X)
+		local s = if cross > 0 then 1 elseif cross < 0 then -1 else 0
+		if s ~= 0 then
+			if sign == 0 then
+				sign = s
+			elseif s ~= sign then
+				inside = false
+			end
+		end
+		local len2 = ex * ex + ez * ez
+		local t = if len2 > 0 then math.clamp(((x - a.X) * ex + (z - a.Y) * ez) / len2, 0, 1) else 0
+		local dx, dz = x - (a.X + ex * t), z - (a.Y + ez * t)
+		best = math.min(best, math.sqrt(dx * dx + dz * dz))
+	end
+	return if inside then 0 else best
+end
+
+-- Дистанция ближнего боя: у босса с BodyRange — до контура тела, у остальных — по земле до центра (как раньше).
+local function meleeDistance(fight: Fight, pos: Vector3): number
+	local cfg = Battle.Bosses[fight.zone]
+	if cfg.BodyRange then
+		return bodyDistance(fight.boss, pos)
+	end
+	return flat(pos - BossService.Position(fight.boss)).Magnitude
+end
+
+-- Угол бойца от направления морды босса, градусов: плюс — слева от босса (+X модели), минус — справа.
+local function sideAngle(boss: BossService.Boss, pos: Vector3): number
+	local p = boss.root.CFrame:PointToObjectSpace(pos)
+	return math.deg(math.atan2(p.X, p.Z))
+end
+
+-- Вид выпада с номером n: у босса с AttackSides — по стороне бойца (только анимация), у остальных — как раньше.
+local function kindFor(fight: Fight, n: number): string
+	local sides = Battle.Bosses[fight.zone].AttackSides
+	if not sides then
+		return attackKind(n)
+	end
+	local root = Validate.GetLiveRoot(fight.player)
+	local ang = if root then sideAngle(fight.boss, root.Position) else 0
+	if ang > sides.SideAngle then
+		return sides.Left
+	elseif ang < -sides.SideAngle then
+		return sides.Right
+	end
+	return sides.Front[(n - 1) % #sides.Front + 1]
+end
+
+-- Ступни бойца (низ капсулы) по корню персонажа.
+local function feetOf(root: BasePart, humanoid: Humanoid?): Vector3
+	local hip = if humanoid then humanoid.HipHeight else 2
+	return root.Position - Vector3.new(0, root.Size.Y / 2 + hip, 0)
+end
+
+local function serverNow(): number
+	return workspace:GetServerTimeNow()
+end
+
+-- Залп кончился (все снаряды погасли) или отменён: перезарядка, выпады снова по плану.
+function endVolley(fight: Fight, canceled: boolean)
+	local v = fight.volley
+	if not v then
+		return
+	end
+	if v.conn then
+		v.conn:Disconnect()
+		v.conn = nil
+	end
+	fight.volley = nil
+	if canceled then
+		BossService.CancelVolley(fight.boss)
+	end
+	local cfg = Battle.Bosses[fight.zone].Volley
+	fight.nextVolley = os.clock() + cfg.Cooldown
+end
+
+-- Шаг залпа (Heartbeat): фиксация, выстрел, полёт и попадания. Время — сервера, от начала клипа.
+local function volleyTick(fight: Fight)
+	local v = fight.volley
+	if not v or not fight.active then
+		return
+	end
+	local cfg = Battle.Bosses[fight.zone].Volley
+	local boss = fight.boss
+	local t = serverNow() - v.startAt
+	local root, humanoid = Validate.GetLiveRoot(fight.player)
+	if not root then
+		endVolley(fight, true) -- цель пропала: залп гаснет (бой прервёт step)
+		return
+	end
+	local feet = feetOf(root, humanoid)
+	if not v.dirs and t >= cfg.Lock then
+		v.dirs = BossVolley.Directions(v.origin, feet, cfg)
+		BossService.VolleyLock(boss, v.dirs[0], v.startAt + cfg.Lock)
+	end
+	if v.dirs and not v.shots and t >= cfg.Fire then
+		v.shots = {}
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		local ignore: { Instance } = { boss.model }
+		for _, other in Players:GetPlayers() do
+			if other.Character then
+				table.insert(ignore, other.Character)
+			end
+		end
+		params.FilterDescendantsInstances = ignore
+		params.RespectCanCollide = true
+		for _, side in BossVolley.Sides do
+			local dir = v.dirs[side]
+			-- препятствие на пути — один раз при выстреле (площадка неподвижна); землю считает BossVolley
+			local hit = workspace:Spherecast(v.origin, cfg.Radius, dir * cfg.Range, params)
+			local obstacle = nil
+			if hit and hit.Position.Y > v.groundY + cfg.Radius * 0.5 then
+				obstacle = hit.Distance
+			end
+			local limit, why = BossVolley.Limit(v.origin, dir, cfg, v.groundY, obstacle)
+			v.shots[side] = { dir = dir, limit = limit, why = why, alive = true }
+			table.insert(
+				fight.log,
+				("снаряд %d: путь %.1f ст. (%s%s)"):format(
+					side,
+					limit,
+					why,
+					if why == "obstacle" and hit then " — " .. hit.Instance:GetFullName() else ""
+				)
+			)
+		end
+		v.lastAge = 0
+		v.prevFeet = feet
+		BossService.VolleyFire(boss, v.startAt + cfg.Fire)
+	end
+	if v.shots then
+		local age1 = t - cfg.Fire
+		local age0 = math.max(v.lastAge, 0)
+		local alive = 0
+		for side, shot in v.shots do
+			if not shot.alive then
+				continue
+			end
+			local a = BossVolley.Position(v.origin, shot.dir, cfg, age0, shot.limit)
+			local b = BossVolley.Position(v.origin, shot.dir, cfg, age1, shot.limit)
+			if v.hits < cfg.MaxHits then
+				local overlap = BossVolley.Overlap(a, b, v.prevFeet, feet, cfg)
+				if BossVolley.Hits(overlap, cfg) then
+					shot.alive, shot.why = false, "hit"
+					v.hits += 1
+					BossService.VolleyEnd(boss, side, serverNow())
+					local damage = roll(fight.bossDamage) * cfg.DamageScale
+					fight.hp -= damage
+					table.insert(
+						fight.log,
+						("залп −%.1f (снаряд %d, вошёл на %.2f)"):format(damage, side, overlap)
+					)
+					refreshBars(fight)
+					if fight.hp <= 0 then
+						finish(fight, "lose")
+						return
+					end
+					continue
+				end
+			end
+			if age1 * cfg.Speed >= shot.limit then
+				shot.alive = false
+				BossService.VolleyEnd(boss, side, v.startAt + cfg.Fire + shot.limit / cfg.Speed)
+				continue
+			end
+			alive += 1
+		end
+		v.lastAge = age1
+		v.prevFeet = feet
+		if alive == 0 then
+			endVolley(fight, false)
+		end
+	end
+end
+
+-- Начать залп: дракон стоит лицом к бойцу; центр круга — из скелета (VolleyOrigin) в мире. plannedAt — время
+-- сервера из объявления (клип у клиентов идёт от него).
+local function startVolley(fight: Fight, plannedAt: number?)
+	local boss = fight.boss
+	local rig = BossService.Rig(boss)
+	BossService.HoldFacing(boss) -- до конца залпа не поворачивается (Face в step пропущен)
+	local origin = boss.root.CFrame:PointToWorldSpace(rig.VolleyOrigin)
+	local at = serverNow()
+	local v = {
+		startAt = at,
+		origin = origin,
+		groundY = boss.home.Position.Y,
+		dirs = nil :: { [number]: Vector3 }?,
+		shots = nil :: { [number]: any }?,
+		hits = 0,
+		lastAge = 0,
+		prevFeet = nil :: Vector3?,
+		conn = nil :: RBXScriptConnection?,
+	}
+	fight.volley = v
+	fight.volleys = (fight.volleys or 0) + 1
+	if fight.plan and fight.plan.kind ~= "volley" then
+		BossService.CancelPlan(boss) -- замах выпада гаснет: идёт залп
+	end
+	fight.plan = nil -- объявленный залп начинается (Attack ниже с его временем)
+	local cfg = Battle.Bosses[fight.zone].Volley
+	fight.nextBoss = math.max(fight.nextBoss, os.clock() + cfg.Duration) -- выпадов во время залпа нет
+	BossService.Volley(boss, at, origin)
+	BossService.Attack(boss, "volley", plannedAt) -- клип залпа у клиентов
+	table.insert(fight.log, "залп")
+	v.conn = RunService.Heartbeat:Connect(function()
+		volleyTick(fight)
+	end)
+end
+
+-- Можно ли начать залп: есть залп у босса, перезарядка прошла, боец вне ближнего боя, дальше MinDistance от центра
+-- круга и перед мордой (дракон развернулся к нему).
+local function volleyReady(fight: Fight, root: BasePart, melee: number, reach: number): boolean
+	local cfg = Battle.Bosses[fight.zone].Volley
+	if not cfg or fight.volley or fight.volleyAt or os.clock() < (fight.nextVolley or 0) or melee <= reach then
+		return false
+	end
+	local boss = fight.boss
+	local origin = boss.root.CFrame:PointToWorldSpace(BossService.Rig(boss).VolleyOrigin)
+	if flat(root.Position - origin).Magnitude <= cfg.MinDistance then
+		return false
+	end
+	return math.abs(sideAngle(boss, root.Position)) <= cfg.FacingAngle
+end
+
+-- План атаки (только у босса с клипами, Battle.AttackPlan): следующий выпад — его вид и время сервера, когда он
+-- начнётся (вместе со средней задержкой цикла). Время выпада и урон от плана не зависят.
+local function plan(fight: Fight, startsIn: number)
+	if not BossService.HasClips(fight.boss) then
+		return
+	end
+	local at = workspace:GetServerTimeNow() + startsIn + Battle.AttackPlan.ExpectedDelay
+	local kind = kindFor(fight, fight.attacks + 1)
+	fight.plan = { at = at, canceled = false, kind = kind }
+	BossService.Plan(fight.boss, kind, at)
+end
+
+-- Выпад сейчас не начнётся (вне дальности): план отменяется; вернулся в дальность заранее — план снова.
+local function keepPlan(fight: Fight, inReach: boolean, now: number)
+	local current = fight.plan
+	if not current then
+		return
+	end
+	if not inReach and not current.canceled then
+		current.canceled = true
+		BossService.CancelPlan(fight.boss)
+	elseif inReach and current.canceled and fight.nextBoss - now >= Battle.AttackPlan.Freeze then
+		plan(fight, fight.nextBoss - now)
+	end
+end
+
 local function step(fight: Fight)
 	if not fight.active then
 		return
@@ -375,15 +673,19 @@ local function step(fight: Fight)
 	local bossCfg = Battle.Bosses[fight.zone]
 	local bossPos = BossService.Position(boss)
 	local toPlayer = flat(root.Position - bossPos)
-	local dist = toPlayer.Magnitude
+	local dist = meleeDistance(fight, root.Position) -- у босса с BodyRange — до контура тела
 	keepInZone(fight, root) -- D49: из зоны босса до конца боя не выйти
 	mirrorHealth(fight) -- стандартная полоса не «отрастает» между ударами
-	BossService.Face(boss, root.Position)
+	if not fight.volley then
+		BossService.Face(boss, root.Position) -- во время залпа направление держится (круг и полосы не уезжают)
+	end
 	if fight.phase ~= "Fight" then
 		return
 	end
-	-- Босс держит дистанцию атаки: далеко — бежит к игроку.
-	if dist > bossCfg.AttackRange - 0.5 then
+	if bossCfg.Leash == 0 then
+		BossService.MoveTo(boss, boss.home.Position) -- не преследует: стоит на своём месте и только поворачивается
+	elseif dist > bossCfg.AttackRange - 0.5 then
+		-- Босс держит дистанцию атаки: далеко — бежит к игроку.
 		local stopAt = root.Position - toPlayer.Unit * (bossCfg.AttackRange - 1.5)
 		-- дальше Leash от своего места босс не идёт (его площадка свободна от декора, D43): ждёт на краю
 		local fromHome = flat(stopAt - boss.home.Position)
@@ -404,6 +706,9 @@ local function step(fight: Fight)
 		local hit = roll(fight.damage)
 		fight.bossHp -= hit
 		BossService.Hit(boss)
+		-- для анимации автоудара у клиента (Controllers/PlayerSwingController): номер — последним
+		player:SetAttribute("BattleSwingAt", workspace:GetServerTimeNow())
+		player:SetAttribute("BattleSwingSeq", (player:GetAttribute("BattleSwingSeq") or 0) + 1)
 		table.insert(fight.log, ("игрок −%.1f"):format(hit))
 		refreshBars(fight)
 		if fight.bossHp <= 0 then
@@ -413,10 +718,16 @@ local function step(fight: Fight)
 	end
 	-- Выпад босса: начатый в дальности — попадает через HitDelay (D52: отскок сразу после своего удара не спасает —
 	-- иначе «ударил и отошёл» бил бы босса без ответа; бой автоматический, уворотов нет).
-	if now >= fight.nextBoss and dist <= reach then
+	if now >= fight.nextBoss and dist <= reach and not fight.volley then
 		fight.nextBoss = now + bossCfg.AttackInterval
 		fight.attacks += 1
-		BossService.Attack(boss, if fight.attacks % 3 == 0 then "swipe" else "bite")
+		local planned = fight.plan
+		BossService.Attack(
+			boss,
+			if planned and planned.kind then planned.kind else kindFor(fight, fight.attacks),
+			if planned and not planned.canceled then planned.at else nil
+		)
+		plan(fight, bossCfg.AttackInterval)
 		task.delay(Battle.HitDelay, function()
 			if not fight.active then
 				return
@@ -433,6 +744,31 @@ local function step(fight: Fight)
 				finish(fight, "lose")
 			end
 		end)
+	else
+		keepPlan(fight, dist <= reach and not fight.volley, now)
+		-- после залпа (босс 10) плана нет: следующий выпад объявляется заранее, замах не сокращается
+		if
+			not fight.plan
+			and not fight.volley
+			and not fight.volleyAt
+			and dist <= reach
+			and fight.nextBoss - now >= Battle.AttackPlan.Freeze
+		then
+			plan(fight, fight.nextBoss - now)
+		end
+		-- Залп (босс 10): дальний боец перед мордой, перезарядка прошла — объявляется планом (стойка у клиентов гаснет),
+		-- через Announce секунд начинается
+		local vcfg = bossCfg.Volley
+		if fight.volleyAt and now >= fight.volleyAt then
+			fight.volleyAt = nil
+			startVolley(fight, if fight.plan then fight.plan.at else nil)
+		elseif not fight.volleyAt and volleyReady(fight, root, dist, reach) then
+			fight.volleyAt = now + vcfg.Announce
+			fight.nextBoss = math.max(fight.nextBoss, fight.volleyAt + vcfg.Duration) -- выпадов до конца залпа нет
+			local at = workspace:GetServerTimeNow() + vcfg.Announce
+			fight.plan = { at = at, canceled = false, kind = "volley" }
+			BossService.Plan(boss, "volley", at)
+		end
 	end
 end
 
@@ -486,8 +822,18 @@ function BattleService.Begin(player: any, zone: number, slot: number, opts: Begi
 	end
 	refreshBars(fight)
 	Notify.Send(player, ("%s проснулся! Бой начался"):format(bossName(zone)), "Go")
-	Log.Debug("BattleService", ("%s будит босса %d (слот %d): HP %.0f, урон %.1f против HP %.0f, урон %.1f"):format(
-		player.Name, zone, slot, maxHp, damage, bossMax, bossDamage))
+	Log.Debug(
+		"BattleService",
+		("%s будит босса %d (слот %d): HP %.0f, урон %.1f против HP %.0f, урон %.1f"):format(
+			player.Name,
+			zone,
+			slot,
+			maxHp,
+			damage,
+			bossMax,
+			bossDamage
+		)
+	)
 
 	task.spawn(function()
 		local tl = Battle.Timeline
@@ -496,6 +842,10 @@ function BattleService.Begin(player: any, zone: number, slot: number, opts: Begi
 				return
 			end
 			BossService.SetState(boss, entry[1])
+			if entry[1] == "ToCombat" then
+				-- первый выпад объявляется заранее: у клиентов замах начнётся вовремя и при большой задержке сети
+				plan(fight, tl.ToCombat + FIRST_BOSS)
+			end
 			task.wait(entry[2])
 		end
 		if not fight.active then
@@ -504,8 +854,8 @@ function BattleService.Begin(player: any, zone: number, slot: number, opts: Begi
 		BossService.SetState(boss, "Combat")
 		fight.phase = "Fight"
 		local now = os.clock()
-		fight.nextPlayer = now + 0.3
-		fight.nextBoss = now + 0.6
+		fight.nextPlayer = now + FIRST_PLAYER
+		fight.nextBoss = now + FIRST_BOSS
 	end)
 	task.spawn(function()
 		while fight.active do
@@ -580,6 +930,11 @@ BattleService.Handlers = {
 	end,
 	Step = step,
 	ZoneBounds = zoneBounds,
+	BodyDistance = bodyDistance,
+	MeleeDistance = meleeDistance,
+	KindFor = kindFor,
+	StartVolley = startVolley,
+	EndVolley = endVolley,
 }
 
 return BattleService

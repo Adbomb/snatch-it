@@ -43,7 +43,7 @@ local function eave(
 	if side > 0 then
 		at *= FleaKit.TURN
 	end
-	table.insert(out, B(V(width, 0.8, depth), at, color, WEDGE))
+	table.insert(out, B(V(width + 0.2, 0.8, depth), at, color, WEDGE)) -- торцы свеса — не в плоскости ската крыши (D36)
 	local edge = z + side * (depth - inside)
 	table.insert(
 		out,
@@ -357,7 +357,13 @@ function FleaStalls.Vault(): { Brick }
 	for k = 0, 2 do
 		table.insert(
 			out,
-			B(V(7, 0.45, 0.4), door * CFrame.new(0, 0, 0.9) * CFrame.Angles(0, 0, math.rad(k * 60)), C.goldDark, DECOR)
+			-- спицы штурвала — на разной глубине (по 0.06): лицевые грани не в одной плоскости (D36)
+			B(
+				V(7, 0.45, 0.4),
+				door * CFrame.new(0, 0, 0.9 + k * 0.06) * CFrame.Angles(0, 0, math.rad(k * 60)),
+				C.goldDark,
+				DECOR
+			)
 		)
 	end
 	for k = 0, 5 do
@@ -418,7 +424,7 @@ function FleaStalls.PrizeTerminal(): { Brick }
 		Box(-12, 12, 15, 18.6, 3.6, 16.4, C.graphiteDark),
 		Neon(V(23.6, 0.3, 0.3), V(0, 18.35, 3.45), C.orange),
 		Board(V(14, 2.6, 0.3), V(0, 16.7, 3.45), C.orange, Label("ПРИЗЫ")),
-		Box(-0.3, 0.3, 18.6, 19.6, 9.7, 10.3, C.gold, DECOR),
+		Box(-0.3, 0.3, 18.6, 19.6, 9.85, 10.15, C.gold, DECOR), -- тоньше ромба: грани не совпадают
 		B(V(3.4, 3.4, 0.5), V(0, 21.2, 10), C.gold, DECOR),
 		B(V(3.4, 3.4, 0.6), CFrame.new(0, 21.2, 10) * CFrame.Angles(0, 0, math.rad(45)), C.goldLight, DECOR),
 	}
@@ -553,9 +559,11 @@ function FleaStalls.TreasureHoard(): { Brick }
 	local lid = CFrame.new(0, 8.7, 8.5) * CFrame.Angles(math.rad(100), 0, 0) * CFrame.new(0, 0.7, -4.5)
 	table.insert(chest, B(V(20.4, 1.4, 9), lid, C.tealDeep))
 	table.insert(chest, B(V(17.6, 1.2, 6.6), lid * CFrame.new(0, 1.2, 0), C.teal))
-	table.insert(chest, B(V(20.8, 1.6, 1.2), lid * CFrame.new(0, 0, -3.9), C.gold, DECOR))
+	-- кромки выступают ступенями по 0.1: плита −4.5, боковые −4.6, передняя −4.7 (грани не совпадают, D36); боковые
+	-- шире оковки корпуса (её грани — на x ±8.8 и ±10.4)
+	table.insert(chest, B(V(20.8, 1.8, 1.2), lid * CFrame.new(0, 0, -4.1), C.gold, DECOR)) -- выше боковых на 0.1
 	for _, x in { -9.6, 9.6 } do
-		table.insert(chest, B(V(1.6, 1.6, 9.2), lid * CFrame.new(x, 0, 0), C.gold, DECOR))
+		table.insert(chest, B(V(1.8, 1.6, 9.2), lid * CFrame.new(x, 0, 0), C.gold, DECOR))
 	end
 	-- Сверху: стопки монет, монеты на ребре, слитки, самоцветы, корона.
 	for _, stack in { { -6.2, 2.4, 1.2 }, { 5.6, 2.2, 1 }, { -2, 5.6, 0.8 }, { 6.6, 5.8, 0.7 } } do
@@ -608,7 +616,7 @@ function FleaStalls.PocketWatch(): { Brick }
 		Round(12.4, 2.2, CFrame.new(), C.goldDark, SOLID),
 		Round(11.6, 0.6, CFrame.new(0, 0, -1), C.gold),
 		Round(10, 0.4, CFrame.new(0, 0, -1.35), C.cream),
-		Round(0.9, 0.5, CFrame.new(0, 0, -1.9), C.gold),
+		Round(0.9, 0.7, CFrame.new(0, 0, -1.8), C.gold), -- задний торец оси — в циферблате (не у стрелки)
 		Disc(1.6, 6, 7.4, 0, 0, C.gold),
 		Disc(2.6, 7.4, 8.6, 0, 0, C.goldDark),
 		Round(3.6, 0.6, CFrame.new(0, 10.1, 0), C.gold),
@@ -673,7 +681,8 @@ function FleaStalls.CoinStack(): { Brick }
 	end
 	table.insert(out, Disc(5.6, y, y + 0.15, 0, -0.1, C.goldLight))
 	table.insert(out, Gem(1.6, V(0, y + 1, -0.1), C.teal))
-	local edge = CFrame.new(-6.8, 4.3, -0.8) * CFrame.Angles(0, math.rad(-20), math.rad(-12))
+	-- монета на ребре — с внешней стороны стопки (+x), не на дорожке к выходу между горой сокровищ и стопкой
+	local edge = CFrame.new(6.8, 4.3, -0.8) * CFrame.Angles(0, math.rad(20), math.rad(12))
 	table.insert(out, Round(8.6, 1.2, edge, C.gold, SOLID))
 	table.insert(out, Round(6, 1.4, edge, C.goldLight))
 	table.insert(out, Gem(1.6, (edge * CFrame.new(0, 0, -1)).Position, C.purple))
@@ -698,7 +707,8 @@ function FleaStalls.SymbolMast(text: string?): { Brick }
 		table.insert(out, Board(V(0.4, 5.4, 3.8), tag, C.orange, Label(text, SIDES)))
 		table.insert(
 			out,
-			B(V(0.4, 2.69, 2.69), tag * CFrame.new(0, 2.7, 0) * CFrame.Angles(math.rad(45), 0, 0), C.orange, DECOR)
+			-- ромб тоньше таблички: его грани не в плоскости надписи (раньше обе 0.4 — «−50%» мерцала)
+			B(V(0.3, 2.69, 2.69), tag * CFrame.new(0, 2.7, 0) * CFrame.Angles(math.rad(45), 0, 0), C.orange, DECOR)
 		)
 		table.insert(out, B(V(0.6, 0.9, 0.9), tag * CFrame.new(0, 3.2, 0), C.cream, FleaKit.ROUND))
 		table.insert(out, B(V(0.3, 5.9, 4.4), tag * CFrame.new(0, -0.35, 0), C.goldDark, DECOR))
@@ -815,17 +825,6 @@ function FleaStalls.ContainerStack(colors: { Color3 }, turn: number): { Brick }
 	return out
 end
 
--- Рекламный щит на обрыве (24 × 9, низ на высоте 19): рама, табличка с надписью text цвета color, неоновые полосы
--- сверху и снизу, кронштейны в стену обрыва (сторона +Z).
-function FleaStalls.Billboard(text: string, color: Color3): { Brick }
-	return {
-		Box(-12.6, 12.6, 19.4, 27.8, 0, 0.6, C.graphiteDark),
-		Board(V(24, 7.2, 0.4), V(0, 23.6, -0.1), color, Label(text)),
-		Neon(V(25.2, 0.4, 0.4), V(0, 28, -0.1), C.goldLight),
-		Neon(V(25.2, 0.4, 0.4), V(0, 19.2, -0.1), C.goldLight),
-		Box(-9, -8, 18, 19.4, 0, 1.4, C.graphite, DECOR),
-		Box(8, 9, 18, 19.4, 0, 1.4, C.graphite, DECOR),
-	}
-end
+-- (Рекламные щиты на обрывах — FleaStalls.Billboard — убраны на этапе C.2: их закрывала свисающая трава.)
 
 return FleaStalls

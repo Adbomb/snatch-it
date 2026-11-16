@@ -60,7 +60,7 @@ function CatchRules.IsPreliminary(level: number): boolean
 	return not (Catch.Prices and Catch.Prices[level])
 end
 
--- Цена одного Ловибума вида kind уровня level или nil.
+-- Цена одной покупки (набор из Catch.PerBuy штук, D61) вида kind уровня level или nil.
 function CatchRules.Price(prices: { [number]: { [string]: number } }?, level: number, kind: string): number?
 	local byKind = prices and prices[level]
 	local price = byKind and byKind[kind]
@@ -86,12 +86,12 @@ function CatchRules.StockOfLevel(lovibums: any, level: number): number
 	return total
 end
 
--- Проверка покупки (все аргументы — от клиента, им не верим). Возвращает итог в монетах или nil и причину отказа.
+-- Проверка покупки (уровень и вид — от клиента, им не верим; количество клиент не выбирает: всегда Catch.PerBuy,
+-- D61). Возвращает цену покупки в монетах (списывается один раз) или nil и причину отказа.
 function CatchRules.CheckBuy(
 	prices: { [number]: { [string]: number } }?,
 	level: any,
 	kind: any,
-	count: any,
 	coins: number,
 	lovibums: any
 ): (number?, string?)
@@ -101,24 +101,17 @@ function CatchRules.CheckBuy(
 	if not CatchRules.IsKind(kind) then
 		return nil, "Нет такого Ловибума"
 	end
-	if not CatchRules.IsWhole(count) or count < 1 or count > Catch.MaxBuy then
-		return nil, ("Можно купить от 1 до %d за раз"):format(Catch.MaxBuy)
-	end
 	local price = CatchRules.Price(prices, level, kind)
 	if not price then
 		return nil, "Ловибумы пока не продаются"
 	end
-	local total = price * count
-	if total > MAX_SAFE then
-		return nil, "Слишком дорого"
-	end
-	if CatchRules.Stock(lovibums, level, kind) + count > Catch.MaxStock then
+	if CatchRules.Stock(lovibums, level, kind) + Catch.PerBuy > Catch.MaxStock then
 		return nil, ("Больше %d штук одного вида не поместится"):format(Catch.MaxStock)
 	end
-	if type(coins) ~= "number" or coins ~= coins or coins < total then
+	if type(coins) ~= "number" or coins ~= coins or coins < price then
 		return nil, "Не хватает монет"
 	end
-	return total, nil
+	return price, nil
 end
 
 -- Запас Ловибумов из профиля в порядке: только L1…L10 и известные виды, целые 1…MaxStock (остальное — убрать).

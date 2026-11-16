@@ -21,8 +21,8 @@ local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 
 export type JoinOptions = {
-	mock: boolean?, -- профиль в памяти (ProfileStore.Mock), только серверные тесты
-	veteran: boolean?, -- серверные тесты: обучение D55 уже пройдено (как у старого профиля), если в профиле не начато
+	mock: boolean?, -- профиль в памяти (ProfileStore.Mock): серверные тесты и тестовый сервер владельца (Util/OwnerTest)
+	veteran: boolean?, -- обучение D55 уже пройдено (как у старого профиля), если в профиле не начато; только с mock
 }
 
 local PlayerSession = {}

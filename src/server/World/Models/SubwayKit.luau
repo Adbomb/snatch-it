@@ -154,8 +154,9 @@ end
 -- Мелкий мусор на полу: газеты, банки, бутылка, коробка — лежат, а не «натыканы».
 function SubwayKit.Litter(): { Brick }
 	return {
-		B(V(1.6, 0.06, 1.1), CFrame.new(0, 0.03, 0) * CFrame.Angles(0, 0.4, 0), C.paper, DECOR),
-		B(V(1.4, 0.05, 1), CFrame.new(0.8, 0.075, 0.5) * CFrame.Angles(0, -0.3, 0), C.creamDark, DECOR),
+		-- газеты — выше плитки пола (верх 0.1) на 0.07 и 0.12: верх не в плоскости пола и плиток (D36)
+		B(V(1.6, 0.05, 1.1), CFrame.new(0, 0.145, 0) * CFrame.Angles(0, 0.4, 0), C.paper, DECOR),
+		B(V(1.4, 0.05, 1), CFrame.new(0.8, 0.195, 0.5) * CFrame.Angles(0, -0.3, 0), C.creamDark, DECOR),
 		B(V(0.9, 0.5, 0.5), CFrame.new(-1.4, 0.25, 0.6) * CFrame.Angles(0, 0.9, 0), C.pipeRed, ROUND),
 		B(V(0.9, 0.5, 0.5), CFrame.new(1.8, 0.25, -0.9) * CFrame.Angles(0, -0.5, 0), C.pipeTeal, ROUND),
 		B(V(1.3, 0.45, 0.45), CFrame.new(-0.6, 0.225, -1.3) * CFrame.Angles(0, 0.2, 0), C.green, ROUND),

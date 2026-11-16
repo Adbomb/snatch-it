@@ -7,6 +7,8 @@ local Controllers = script.Parent:WaitForChild("Controllers")
 
 -- LEGO-пупырышки на всём Plastic (D13): замена материала действует только у того, кто её включил.
 task.spawn(require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("LegoMaterial")).Apply)
+-- Порядок загрузки ассетов (материалы мира → рядом с игроком → остальное), без ожидания: отдельный поток.
+require(Controllers:WaitForChild("AssetLoaderController")).Start()
 
 require(Controllers:WaitForChild("NotifyController")).Init()
 require(Controllers:WaitForChild("CarryController")).Init()
@@ -17,6 +19,9 @@ require(Controllers:WaitForChild("GymController")).Init()
 require(Controllers:WaitForChild("TrainingController")).Init()
 require(Controllers:WaitForChild("TimeController")).Init()
 require(Controllers:WaitForChild("BossAnimController")).Init()
+require(Controllers:WaitForChild("BossVolleyController")).Init() -- босс 10: эффекты магического залпа
+require(Controllers:WaitForChild("BossAuraController")).Init() -- босс 10: прототип ауры C.1 (только по атрибуту)
+require(Controllers:WaitForChild("PlayerSwingController")).Init() -- анимация автоудара (пока без анимации)
 require(Controllers:WaitForChild("ZoneController")).Init()
 require(Controllers:WaitForChild("OwnerTagController")).Init()
 require(Controllers:WaitForChild("ItemLabelController")).Init()

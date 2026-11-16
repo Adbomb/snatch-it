@@ -159,6 +159,21 @@ GameConfig.Pvp = {
 	SwingTolerance = 0.1, -- запас перезарядки на сети (клиент шлёт не чаще AttackInterval)
 }
 
+-- Загрузка ассетов у клиента при входе (этап C.2, Controllers/AssetLoaderController): сначала материалы мира,
+-- интерфейс и всё ближе CriticalRadius от персонажа, потом остальное — пачками по Batch. Неудачные (Failure,
+-- TimedOut) повторяются после пауз RetryDelays (с), потом записываются в журнал. CharacterWait — сколько ждать
+-- персонажа, чтобы взять «рядом» от него (иначе — от камеры). Добавленное сервером позже — раз в WatchInterval (с).
+-- QueueWatch — сколько секунд от старта клиента следить за очередью ContentProvider (для замеров). Игру загрузка не
+-- задерживает.
+GameConfig.AssetLoad = {
+	CriticalRadius = 140, -- стадов: площадь появления, свой музей и соседи
+	Batch = 60,
+	RetryDelays = { 2, 6, 15 },
+	CharacterWait = 10,
+	WatchInterval = 1,
+	QueueWatch = 90,
+}
+
 -- Раскладка карты — в ServerScriptService.Server.World.MapLayout (D35: 5 музеев в линию, впереди уровни).
 GameConfig.World = {
 	PlotCount = 5, -- D35: до 5 игроков на сервере (Max Players места = 5)
@@ -193,7 +208,7 @@ GameConfig.Museum = {
 		CheckSeconds = 0.25,
 		ExitDistance = 3,
 		ExitHeight = 3,
-		BarrierHeight = 7.2,
+		BarrierHeight = 9.6, -- весь проём портала (MuseumLayout.Pavilion.Opening 9.5) и чуть выше
 		PromptDistance = 7,
 		OpensPerSecond = 2,
 		NoticeCooldown = 3,
@@ -274,8 +289,8 @@ GameConfig.Zones = {
 	-- Подземка (D54, заменила «Склад»): перрон, пути, платформы и площадку босса кладёт декор
 	-- (World/Models/SubwayStation), узора нет.
 	{ id = "Subway", name = "Подземка", boss = "Крысиный король", floor = "8B8478", accent = "3D8EE0", mood = "😐" },
-	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "F2C46D", accent = "E08A1E", mood = "😬",
-		pattern = pattern("waves", "D99A3A", 28, 0.38) },
+	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "DBAF5C", accent = "E08A1E", mood = "😬",
+		pattern = pattern("waves", "C98B33", 28, 0.38) }, -- пол темнее на 8 %: был пересвет
 	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7", mood = "😨",
 		pattern = pattern("diamonds", "8FD3F5", 20, 0.45) },
 	{ id = "Jungle", name = "Джунгли", boss = "Горилла", floor = "2E8B3A", accent = "1B7A2B", mood = "😠",
@@ -297,6 +312,25 @@ GameConfig.Bosses = {
 	FreeTakeInStudio = true,
 	TakeDistance = 10, -- радиус подсказки «Забрать» у предмета
 	TakeHold = 0.5, -- секунды удержания
+}
+
+-- Тестовый режим владельца (решение владельца 2026-11-16: Король-дракон в опубликованной игре, обычный клиент Roblox).
+-- Только подтверждённое DEV-место (вселенная UniverseId, место PlaceId) и только отдельный резервный сервер, куда
+-- владельца переносит команда чата /test. Там играет только владелец, все профили — в памяти (ни PlayerData, ни
+-- Transfers не пишутся), закрытые боссы — на тестовых площадках, тестовый бой — командами /fight и /win. Обычные
+-- серверы, прогрессия, экономика и сохранения не меняются. Enabled = false — режим выключен целиком (команд нет,
+-- резервные серверы не создаются). Server/Util/OwnerTest, Server/Services/OwnerTestService.
+GameConfig.OwnerTest = {
+	Enabled = true,
+	UniverseId = 10776417796, -- Snatch It DEV (закрытая)
+	PlaceId = 81392528393796,
+	Zone = 10, -- босс тестового боя — Король-дракон
+	Slot = 1, -- предмет у босса, за который идёт тестовый бой
+	FightHp = 1e12, -- HP бойца и босса только этого боя: длинный бой (сон → бой → залпы); числа боя не меняются
+	BossHp = 1e12,
+	FightAt = Vector2.new(0, 30), -- место бойца при /fight в осях босса (x — левый бок, z — вперёд): залпы издалека
+	WinAt = Vector2.new(0, 15), -- /win: ближе к морде, HP босса 1 — следующий удар бойца побеждает
+	CommandCooldown = 2, -- секунд между командами владельца
 }
 
 -- D31: качалка — одно поле с огромной гантелью; уровни и сила гантели — Progression.Dumbbell (шаг 4).

@@ -1,5 +1,6 @@
--- Магазин Ловибумов (D55): покупка за монеты — уровень босса 1–10, вид, количество. Все аргументы от клиента
--- проверяет Shared/CatchRules.CheckBuy (целые без NaN, уровень, вид, 1…MaxBuy, запас ≤ MaxStock, хватает монет); монеты
+-- Магазин Ловибумов (D55, D61): покупка за монеты — уровень босса 1–10 и вид; одна покупка — всегда набор из
+-- Catch.PerBuy (3) штук за цену из Prices, списанную один раз (количество от клиента не принимается). Аргументы от
+-- клиента проверяет Shared/CatchRules.CheckBuy (целые без NaN, уровень, вид, запас ≤ MaxStock, хватает монет); монеты
 -- и запас меняются в одном кадре (DataService.BuyLovibums). Отказ: обучение не пройдено (кнопки «Магазин» у ученика нет,
 -- D55), идёт поимка (CatchService). Цены — Config/Catch.Prices (утверждены для боссов 1–3); в Studio + DevMode ещё и
 -- предварительные 4–10 (PreliminaryPrices), в опубликованной игре они не продаются. Повторная покупка раньше
@@ -73,7 +74,8 @@ function ShopService.Sync(player: any)
 	})
 end
 
-local function tryAction(player: any, action: any, level: any, kind: any, count: any)
+-- Лишние аргументы (прежний клиент слал ещё и количество) не читаются: покупка — всегда набор PerBuy.
+local function tryAction(player: any, action: any, level: any, kind: any)
 	if not limiter:Allow(player) then
 		return
 	end
@@ -101,21 +103,13 @@ local function tryAction(player: any, action: any, level: any, kind: any, count:
 		ShopService.Sync(player) -- повтор той же покупки (двойное нажатие): не принимается
 		return
 	end
-	local total, reason = CatchRules.CheckBuy(ShopService.Prices(), level, kind, count, data.coins, data.lovibums)
-	if not total then
+	local price, reason = CatchRules.CheckBuy(ShopService.Prices(), level, kind, data.coins, data.lovibums)
+	if not price then
 		Notify.Send(player, reason or "Покупка не прошла", "Stop")
 		ShopService.Sync(player)
 		return
 	end
-	if
-		not DataService.BuyLovibums(
-			player,
-			level,
-			kind,
-			count,
-			CatchRules.Price(ShopService.Prices(), level, kind) :: number
-		)
-	then
+	if not DataService.BuyLovibums(player, level, kind, price) then
 		Notify.Send(player, "Покупка не прошла", "Stop")
 		ShopService.Sync(player)
 		return
@@ -125,10 +119,10 @@ local function tryAction(player: any, action: any, level: any, kind: any, count:
 	DataService.RequestSave(player)
 	Log.Debug(
 		"ShopService",
-		("%s купил %s ×%d (уровень %d) за %d"):format(player.Name, kind, count, level, total)
+		("%s купил %s ×%d (уровень %d) за %d"):format(player.Name, kind, Catch.PerBuy, level, price)
 	)
 	ShopService.Sync(player)
-	Notify.Send(player, ("Куплено: %s ×%d — уровень %d"):format(Catch.Names[kind], count, level), "Go")
+	Notify.Send(player, ("Куплено: %s ×%d — уровень %d"):format(Catch.Names[kind], Catch.PerBuy, level), "Go")
 end
 
 function ShopService.Init()

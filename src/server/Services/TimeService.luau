@@ -1,7 +1,7 @@
 -- Игровое время на сервере (D37): раз в GameConfig.Time.TickSeconds считает фазу (Shared/GameTime); при смене —
 -- атрибуты ReplicatedStorage для клиентов (Phase, Day, Cycle, PhaseStartsAt, PhaseEndsAt) и вызов подписчиков
 -- OnPhaseChanged (ночь, обновление слотов боссов, Судная ночь). В Studio — ускорение и переход к фазе (DevTools).
--- Зависит от Shared/GameTime, GameConfig, Util/Log.
+-- Зависит от Shared/GameTime, GameConfig, Util/OwnerTest, Util/Log.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -10,6 +10,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local Log = require(ServerScriptService.Server.Util.Log)
+local OwnerTest = require(ServerScriptService.Server.Util.OwnerTest)
 
 type Listener = (state: GameTime.State, previous: GameTime.State?) -> ()
 
@@ -80,9 +81,10 @@ function TimeService.SetScale(scale: number)
 	update()
 end
 
--- Studio: перейти к ближайшему впереди началу фазы phase минус secondsBefore. Возвращает новую фазу.
+-- Studio и тестовый сервер владельца (Util/OwnerTest, команды /day и /night): перейти к ближайшему впереди началу фазы
+-- phase минус secondsBefore. Возвращает новую фазу.
 function TimeService.SkipTo(phase: GameTime.Phase, secondsBefore: number?): GameTime.State?
-	if not RunService:IsStudio() then
+	if not (RunService:IsStudio() or OwnerTest.IsTestServer()) then
 		return nil
 	end
 	local t = GameTime.Now()

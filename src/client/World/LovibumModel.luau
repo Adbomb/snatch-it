@@ -1,9 +1,12 @@
 -- Модель Ловибума на клиенте (D55): превью в магазине и инвентаре (ViewportFrame), в руке, в полёте и при поимке.
 -- Пока меши не импортированы (импорт и загрузка запрещены владельцем) — Part-версия из Config/LovibumRigs: детали
 -- закреплены (Anchored), без столкновений и запросов; положение и раскрытие когтей ставит Place одним BulkMoveTo
--- (в ViewportFrame — CFrame по одной: там BulkMoveTo не нужен, суставов нет). Кристалл и ядро — Neon (решение
--- владельца 2026-11-08); свет ядра — один PointLight и только по запросу (SetLight: полёт и поимка), на слабых
--- телефонах не включается без нужды.
+-- (в ViewportFrame — CFrame по одной: там BulkMoveTo не нужен, суставов нет). Ядро — Neon (решение владельца
+-- 2026-11-08); кристалл — стекло (этап C.2, решение владельца 2026-11-15): прозрачная оболочка той же формы цвета
+-- кристалла, внутри — светящееся Neon-сердце меньшего размера (видно сквозь стекло; в превью магазина и инвентаря,
+-- где Neon не светится, кристалл читается как самоцвет в стекле, а не как голубой пластик). Когти, основа и металл —
+-- без изменений. Свет ядра — один PointLight и только по запросу (SetLight: полёт и поимка), на слабых телефонах не
+-- включается без нужды.
 -- Зависит от Config/LovibumRigs.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +16,8 @@ local LovibumRigs = require(Config:WaitForChild("LovibumRigs"))
 
 local LovibumModel = {}
 
-type PartInfo = { part: BasePart, group: string, offset: CFrame } -- offset — от точки вращения части
+-- offset — от точки вращения части; size — размер при масштабе 1; base — своя прозрачность (у стекла не 0)
+type PartInfo = { part: BasePart, group: string, offset: CFrame, size: Vector3, base: number }
 type Built = {
 	kind: string,
 	parts: { PartInfo },
@@ -26,6 +30,12 @@ type Built = {
 local built: { [Model]: Built } = setmetatable({}, { __mode = "k" }) :: any
 
 LovibumModel.Kinds = LovibumRigs.Order
+
+-- Стекло кристалла: материал, прозрачность, отражение, доля белого в цвете оболочки; размер Neon-сердца от кристалла.
+-- SmoothPlastic, а не Glass: на кристалле размером меньше стада материал Glass почти не виден (снимки Studio, C.2),
+-- полупрозрачный гладкий пластик с отражением даёт грани и блики, сердце видно сквозь него.
+local GLASS = { material = Enum.Material.SmoothPlastic, transparency = 0.5, reflectance = 0.25, tint = 0.45 }
+local HEART_SCALE = 0.55
 
 -- Габариты закрытого Ловибума вида kind (Size, Center — от низа).
 function LovibumModel.Bounds(kind: string): (Vector3, Vector3)
@@ -47,25 +57,65 @@ function LovibumModel.Build(kind: string): Model
 			info.axes[name] = group.axis
 		end
 	end
-	for i, spec in rig.Parts do
+	-- центр кристалла — середина его деталей: от него сердце меньше в HEART_SCALE
+	local sum, n = Vector3.zero, 0
+	for _, spec in rig.Parts do
+		if spec.g == "Crystal" then
+			sum += spec.cf.Position
+			n += 1
+		end
+	end
+	local center = if n > 0 then sum / n else Vector3.zero
+	local function add(name: string, spec: any, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material)
 		local part = Instance.new("Part")
-		part.Name = spec.g .. "_" .. i
+		part.Name = name
 		if spec.shape ~= "Block" then
 			part.Shape = (Enum.PartType :: any)[spec.shape]
 		end
-		part.Size = spec.size
-		part.Color = Color3.fromHex(spec.color)
-		part.Material = if spec.neon then Enum.Material.Neon else Enum.Material.Plastic
+		part.Size = size
+		part.Color = color
+		part.Material = material
 		part.Anchored = true
 		part.CanCollide = false
 		part.CanQuery = false
 		part.CanTouch = false
 		part.CastShadow = false
 		part.Massless = true
-		part.CFrame = spec.cf
+		part.CFrame = cf
 		part.Parent = model
 		local pivot = info.pivots[spec.g] or Vector3.zero
-		table.insert(info.parts, { part = part, group = spec.g, offset = CFrame.new(-pivot) * spec.cf })
+		table.insert(
+			info.parts,
+			{ part = part, group = spec.g, offset = CFrame.new(-pivot) * cf, size = size, base = 0 }
+		)
+		return part
+	end
+	for i, spec in rig.Parts do
+		local color = Color3.fromHex(spec.color)
+		if spec.g == "Crystal" then
+			local glass = add(
+				spec.g .. "_" .. i,
+				spec,
+				spec.size,
+				spec.cf,
+				color:Lerp(Color3.new(1, 1, 1), GLASS.tint),
+				GLASS.material
+			)
+			glass.Transparency = GLASS.transparency
+			glass.Reflectance = GLASS.reflectance
+			info.parts[#info.parts].base = GLASS.transparency
+			local at = center + (spec.cf.Position - center) * HEART_SCALE
+			add("Heart_" .. i, spec, spec.size * HEART_SCALE, spec.cf.Rotation + at, color, Enum.Material.Neon)
+		else
+			add(
+				spec.g .. "_" .. i,
+				spec,
+				spec.size,
+				spec.cf,
+				color,
+				if spec.neon then Enum.Material.Neon else Enum.Material.Plastic
+			)
+		end
 	end
 	built[model] = info
 	return model
@@ -81,9 +131,8 @@ function LovibumModel.Place(model: Model, cf: CFrame, open: number?, scale: numb
 	local s = scale or 1
 	if model:GetAttribute("Scale") ~= s then
 		model:SetAttribute("Scale", s)
-		local rig = LovibumRigs.Types[info.kind]
-		for i, entry in info.parts do
-			entry.part.Size = rig.Parts[i].size * s
+		for _, entry in info.parts do
+			entry.part.Size = entry.size * s
 		end
 	end
 	local f = math.clamp(open or 0, 0, 1)
@@ -153,12 +202,12 @@ function LovibumModel.SetLight(model: Model, range: number, brightness: number?)
 	light.Enabled = true
 end
 
--- Прозрачность всех деталей (появление и исчезновение).
+-- Прозрачность всех деталей (появление и исчезновение): у стекла — поверх своей.
 function LovibumModel.SetTransparency(model: Model, value: number)
 	local info = built[model]
 	if info then
 		for _, entry in info.parts do
-			entry.part.Transparency = value
+			entry.part.Transparency = 1 - (1 - entry.base) * (1 - value)
 		end
 	end
 end

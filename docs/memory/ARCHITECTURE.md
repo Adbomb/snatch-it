@@ -154,6 +154,37 @@
   `ItemFactory.SetCreatureMeshes(id, parts?)`, `CreatureMeshCount(id)`; предпросмотр — `Tests/CreatureMeshPreview`
   (EditableMesh из `Tests/MeshFixture`, не в репозитории). Готовность моделей — `scripts/blender/check_creature_import.py`.
   Порядок импорта — docs/BOSS3_CREATURES.md.
+- Существа босса 4 «Сфинкс-лежебока» (D57 — каталог и доходы, D58 — веса и подставки, D59 — площадка): модели
+  `scripts/blender/art_oasis.py` → `assets/models/art/boss4/<id>.{fbx,rig.json}`, карты `assets/textures/art/boss4/`
+  (№20 — файлы `FennecRiddler_v2.*`, id в игре `FennecRiddler`; объекты FBX `Art_FennecRiddler_<Часть>`). Индекс —
+  `scripts/build_boss4_index.py` → `Boss4Creatures.index.json` (роли словами D54, точные оси лопастей грифа), Part-версия —
+  `creature_parts.py --boss 4` → `Boss4Creatures.parts.json`, готовность к импорту — `check_boss4_import.py`.
+  `scripts/creature_rigs_to_luau.py` пишет обе коллекции: `Config/CreatureRigs` (у босса 4 Order «родитель раньше детей»;
+  у босса 3 ноги стоят раньше туловища и крепятся к корню — так утверждено, не менялось) и строки `creature4(...)` в
+  `Config/Items` между метками D57 (зона 4; вес — из каталога, не пересчитывается). Подставка прячется у всех 30;
+  детали композиции — свои части: №20 `Dot`, №21 `Haze`. Карты загружены (`Boss4_maps.json` → `bind_maps.py` →
+  `make_looks.py`), меши частей — после импорта FBX (`bind_meshes.py`). Черновик «Египта» зоны 4 — `legacy`.
+  После ручного импорта двух FBX: `scripts/studio/collect_boss4_meshes.luau` (Studio Edit, MCP execute_luau — блок
+  BOSS4_IMPORT: имя|MeshId|размер|метки) → файл → `scripts/boss4_bind_after_import.py <файл>` (имена против
+  CreatureRigs/Boss4SphinxRig, MeshId, размеры, карты; затем `bind_meshes.py`, сверка, check_project, Lune;
+  `--dry-run`, `--synthetic`) → `assets/models/Boss4_meshids.json`. Скелеты и клипы — в коде, из FBX не нужны.
+  Импорт 2026-11-13 сделан через Open Cloud (MCP `open_cloud_invoke`, `POST /assets/v1/assets`, тип Model, FBX из
+  `assets/models`) → `insert_asset` в `ServerStorage.Boss4Import` (Edit) → сборщик → привязка: меши 30 существ (218)
+  и Сфинкса (27) в `ItemModels`/`BossModels`; ориентация такая же, как у File → Import 3D (поворот 180°,
+  `CreatureTurn`/`turn`), — сверено по вершинам.
+  Зона 4 «Храм спящего Сфинкса» (D60, по `assets/concepts/boss4/zone4_temple/reference.png`): `World/Models/DesertOasis`
+  — арена «Ложе Сфинкса» (высоты D59, мощение и синяя мозаика), борт из пяти ярусов r 32–41.5 сегментами по
+  внутренней хорде (у 0°/90°/270° — проходы, у 180° — парадная лестница), жаровни, стелы, дороги и мощёные пути с
+  меандром `DesertOasis.Lane` (|x| 48–66) и обход храма `DesertOasis.Bypass` (|x| 41.5–48, z ≥ 24) — свободны, `check_world`; `World/Models/DesertTemple` — колоннада у выхода
+  (z 34.5–47.4, верх 39) с крыльями-водопадами и набор (Stele, Brazier, Pyramid, Palm, Ruin, Vase, Crate, Bush, Rock,
+  CliffRock, Waterfall, Path, Road; у фасада — утопленный проём, карниз, анты); `World/Models/DesertCanyon` —
+  ландшафт: слой песка `Sand` (LegoSquaresSoft), `Dune`, скала у стены `Cliff` (твёрдый низ ≤ `SolidTop` 21, верхние
+  ярусы и шпиль без столкновений, повороты ≥ 3° — иначе FaceCheck считает их ровными), `Seam` между соседними скалами,
+  `Flowers`, `Oasis` (два бассейна, кромка и ступени, водопад из расщелины). Стены коридора (`WorldBuilder.buildCliffs`)
+  не меняются — их закрывают скалы. 1107 деталей, без света; неон — огонь, анхи, блики. `MapLayout.Arenas[4]` со
+  своими местами `slots` (их берёт `MapLayout.ArtSlotPoints`). Босс 4 открыт (в `Config/Battle` нет `Closed`), Ловибумы
+  уровня 4 — в `Config/Catch.Prices`. Проверки: Lune `check_creatures` (оба индекса), `check_config` (12/9/6/3,
+  средние = ByBoss[4]), `check_world` (зона 4), `check_catch`; серверные тесты «Босс 4: …».
   Интеграция 30 существ (D55, 2026-11-10): `CreatureController.track` собирает суставы и сварку меша и сразу, и по
   `DescendantAdded` корня (модель приходит на клиент по частям; связь снимается, когда корень пропал);
   `CreatureAnim` у spin берёт угол `% TAU` до CFrame (t — время сервера ~1.8·10⁹ с, CFrame — float32).
@@ -414,6 +445,70 @@
   rig`), `BossModels[2]` (карты Head/Body/Limbs, `TRADER_MESHES` пусто до импорта). Скелеты по номеру зоны — `RIGS`
   в BossService и BossAnimController (боссов без скелета нет на карте, их предметы без боя только в Studio).
   `BossService.Height` — рост по скелету (полоска HP над макушкой), сообщения боя — с `GameConfig.Zones[i].boss`.
+- Босс 4 «Сфинкс-лежебока» (интеграция 2026-11-12, решения D57 ещё нет — владелец запретил править DESIGN.md):
+  клипы вместо поз. `scripts/boss4_to_luau.py` из `assets/models/Boss4_Sphinx.{rig,anim,colors}.json` пишет
+  `Config/Boss4SphinxRig` (27 частей, 13 поз, `Clips`) и `Config/Boss4SphinxClips/<Клип>` (10 модулей, ≤ 85 тыс.
+  знаков; сон и стойка — 15 кадров/с, остальное 30; кватернион + сдвиг только у частей со сдвигом). `BossAnim.Sample`:
+  у скелета с `Clips` — `Shared/BossClips` (боссы 1–3 прежним путём). BossClips: Sleep — sleep_idle от StateAt;
+  Wake/StandUp/ToCombat — один клип wake по Timeline; Combat — combat_idle, шаг walk по MovingAt, выпад, реакция на
+  удар (во время выпада или шага — только голова и платок); Victory/Defeat/FallAsleep — свои клипы; Return — walk
+  поверх позы stand; смена состояния — прошлое продолжается и гаснет за 0.25 с (разбудили, пока засыпал, — за
+  Timeline.Wake). Раскачка стойки гаснет рядом с выпадами (`Calm`): клипы выпадов начинаются и кончаются позой combat,
+  иначе хвост дёргался на стыке. **План атаки** (только боссы с клипами): BattleService пишет `PlanKind/PlanAt/PlanSeq`
+  (время сервера будущего выпада + `Battle.AttackPlan.ExpectedDelay` 0.055 — средняя задержка цикла 0.1 с), первый —
+  в начале ToCombat (запас 0.66 с на задержку сети), отмена — `PlanCancelAt` (игрок вне дальности, конец боя), у
+  выпада — `AttackPlanAt` (пишется ДО AttackSeq). Клиент ведёт замах и выпад от времени плана; выпад без плана —
+  сокращённый замах догоняет попадание. Время выпада, урон, HitDelay, интервалы — прежние. `Battle.Bosses[4].Closed` —
+  босс строится только в Studio с DevMode (`BossService.ClosedAllowed`), в опубликованной игре зона 4 как раньше.
+  Модель: игровая копия `assets/models/Boss4_Sphinx_game.{blend,fbx}` (7 916 треугольников, `boss4_sphinx_optimize.py`
+  сняла 57 невидимых граней; утверждённая v2 не меняется), карты загружены (`assets/textures/art/IDS.md`, шаблоны
+  `Server/Looks/Boss4_*`), мешей нет — блоки-заготовки цвета `colors.json`. Предпросмотр без загрузки:
+  `scripts/blender/boss4_sphinx_fixture.py` → `Tests/MeshFixture/Boss4_*` (.gitignore) → `Tests/BossMeshPreview`
+  (Edit, MCP). Проверки — `scripts/lune/check_boss4_player.luau` (50) и серверные тесты «Босс 4».
+- Босс 10 «Король-дракон» (этапы A и B, 2026-11-15; DESIGN.md не правился — исключение D52 для залпа ждёт записи):
+  тот же путь, что у Сфинкса, — `scripts/blender/dragon10/v7_export.py` (поверх `v7_anim5.py`) →
+  `assets/models/Boss10_Dragon.{rig,anim}.json` → `scripts/boss10_to_luau.py` → `Config/Boss10DragonRig` (52 части:
+  49 дракона + 3 скипетра, `AttackClips`, `Turn`, `HeadParts`, `Membranes`, `Body` — контур тела, `VolleyOrigin`) и
+  `Config/Boss10DragonClips/*` (15 клипов, 1.34 млн знаков; сон и стойка через кадр). До этапа C части — блоки.
+  Новое включается только полями `Battle.Bosses[10]` (у 1–9 их нет, путь прежний):
+  - `BodyRange` — дальность от контура тела в осях дракона (`BattleService.bodyDistance`, выпуклый многоугольник),
+    иначе от центра; `reach = AttackRange + Reach` (D52) для обоих — 2.5 + 1 = 3.5 ст.
+  - `Leash = 0` — не бежит, стоит на месте (`MoveTo(home)`), поворачивается к игроку; `TurnRate` (°/с) ограничивает
+    `AlignOrientation.MaxAngularVelocity`. Клиент считает скорость поворота корня и ведёт клип «шаг на месте»
+    (`Turn.Left/Right`, 90° за цикл) по накопленному углу — `BossAnimController.turnInput` → `BossAnim.Input.turn*`.
+  - `AttackSides` — вид выпада по стороне игрока (спереди по кругу, слева хвост, справа укус); урон и интервал прежние.
+  - `Volley` — залп (`Shared/BossVolley` — математика, общая с Lune): готов, если игрок вне ближнего боя, дальше
+    `MinDistance` от круга и перед мордой (`FacingAngle`); объявляется планом `kind = "volley"` за `Announce`, затем
+    `BattleService.startVolley` — цикл на Heartbeat: фиксация на `Lock` (`VolleyDir`), выстрел на `Fire` — Spherecast
+    по карте (без босса и персонажей, RespectCanCollide) и земля, полёт — отрезок против капсулы, допуск `Grace`, урон
+    `roll(bossDamage) × DamageScale` не больше `MaxHits` за залп. `finish` и пропажа цели — `endVolley` (отмена,
+    `VolleyCancelAt`). Атрибуты модели `VolleySeq/At/Origin/LockAt/Dir/FireAt/EndL|C|R/CancelAt` → клиент
+    `Controllers/BossVolleyController` (круг, руны, полосы, снаряды Neon с Trail, вспышки; без источников света).
+  - Удар игрока: сервер на каждом автоударе пишет игроку `BattleSwingAt`/`BattleSwingSeq`;
+    `Controllers/PlayerSwingController` играет `Battle.Player.Swing.Animation` (Action, движение не трогает) только
+    в зонах `Swing.Zones` — анимации нет (`nil`), механизм молчит.
+  - Перепонки (вариант A): `Rig.Membranes` + `BossAnimController.membraneBones` (`Bone.Transform = rest⁻¹·T·rest`) —
+    спят до импорта skinned MeshPart (этап C). Проверки: Lune `check_boss10_clips` (68), `_player` (14), `_volley` (10),
+    серверные тесты «Босс 10» (4), `check_project.py` (подключение).
+  - Этап C (2026-11-15, настоящая модель): `scripts/blender/dragon10/v7_game_export.py` запекает 6 атласов 1024²
+    (BodyA/BodyB — половины корпуса, Head, Front, Hind + скипетр, Tail + перепонки; ~17 текселей/стад, кольца D39 —
+    1.3–1.5 текселя) и пишет `Boss10_Dragon_game.fbx` (52 части + Body_2 + EyeL/R) и `Boss10_Dragon_wings_game.fbx`
+    (перепонки + скелет крыльев, ≤ 2 кости на вершину), сводку `Boss10_Dragon_game.json`; режим `eyes` — канал глаз
+    клипов → `Boss10_Dragon.eyes.json`. Загрузка — Open Cloud (Model 139253334200457 и 104012151110699), карты —
+    upload_image (`assets/textures/art/boss10/Boss10_maps.json`); привязка — `scripts/boss10_bind_after_import.py`
+    (вывод сборщика в Studio → BossModels `DRAGON_MESHES`, `Boss10_meshids.json`, `Boss10_wings_bones.json`), затем
+    `make_looks.py` и `boss10_to_luau.py` (Extras, MembraneMesh, Eyes, eyes в клипах). BossService: добавочные меши на
+    Weld к суставу, перепонки на Weld к Body, их Bone — на частях своих суставов (их двигает тот же Motor6D; клиент
+    кости не трогает). Глаза: `BossClips.Eyes` (тот же клип и время, что поза) → BossAnimController `applyEyes`
+    (Neon FFB020 ↔ SmoothPlastic 43258F). Закрытый дракон в Studio стоит на `World/Models/TestArena`
+    (`MapLayout.TestArenas[10]`, x 330, в полосе z зоны 10). DevTools `FightTest` — HP боя и место бойца (Studio).
+  - Этап C.1 (2026-11-15, на просмотре): клипы перевыгружены через `scripts/blender/dragon10/v7_paw_fix.py`
+    (подменяет поправку наручей v7_anim5: норма касаний — от обеих стоек, отвод — огибающая ≤ 3°/кадр; режимы
+    export / check / diag; прежние данные — `assets/models/backup_anim5/`). Текстуры v2 (не подключены):
+    `scripts/blender/dragon10/v7_tex_v2.py` запекает по загруженным FBX (та же развёртка) окклюзию всех частей вместе
+    (1.4 и 6 ст.), нормаль и высоту → `scripts/boss10_tex_v2.py` собирает цвет поверх v1 + карты металла,
+    шероховатости и маску свечения (`assets/textures/art/boss10_v2/`, ID — `Boss10v2_maps.json`). Подключение —
+    новые Looks (make_looks) с этими ID; поменять ColorMap во время игры нельзя (новая картинка не грузится).
 - Доход (D40): `Config/Items.income` у каждого предмета; `Services/IncomeService` — раз в секунду монеты владельцу за
   экспонаты Displayed, атрибуты Coins и Income, надпись «+X/сек» над экспонатом (MuseumService.PlaceExhibit);
   клиент — плашка «+X/сек» над монетами (GymController).
@@ -438,6 +533,17 @@
   `Notify`, `Log`, `DevTools` (только Studio + DevMode: `ServerStorage.DevTools` — BindableFunction Info, GiveCoins,
   RunServerTests и TimeScale/TimeSkip/TimeReset; из MCP — атрибуты `RunTests` → `TestReport` и `Command` →
   `CommandResult`; команда `BossSlot` кладёт выбранный предмет в слот босса).
+- Тестовый режим владельца (решение владельца 2026-11-16, проверка дракона обычным клиентом): `Util/OwnerTest` —
+  вид сервера `Off` (Studio, `GameConfig.OwnerTest.Enabled = false` или не DEV-место 10776417796 / 81392528393796),
+  `Normal` (обычный сервер DEV-места), `Test` (резервный сервер DEV-места: `PrivateServerId` есть,
+  `PrivateServerOwnerId == 0`; создаёт только `OwnerTestService` — check_project следит, что `ReserveServer` /
+  `ShouldReserveServer` больше нигде нет). Владелец — `game.CreatorId` при `CreatorType.User`. `OwnerTestService` —
+  команды чата через `Player.Chatted` (место на старом `LegacyChatService`): на обычном сервере `/test` → перенос
+  владельца `TeleportAsync` с `ShouldReserveServer`; на тестовом `/fight` (бой за слот 1 дракона, HP бойца и босса
+  только этого боя из `GameConfig.OwnerTest`), `/win` (HP босса 1, боец ближе), `/day`, `/night`
+  (`TimeService.SkipTo` разрешён и тут), `/exit`, `/help`. `Main`: на тестовом сервере чужих кикает, владельцу —
+  `PlayerSession.Join(player, { mock = true, veteran = true })`: профиль `ProfileStore.Mock`, журнал Transfers в
+  памяти — в DataStore ничего не пишется. `BossService.ClosedAllowed` = Studio+DevMode или тестовый сервер.
 - Участок (D35, музей D48-C): `PartBuilder.BuildPlot` — постоянные части: невидимая точка `Floor` (OwnerTag, свет
   зала и галерей), 20 мест `Showcase_n` (тумба 5 × 3 × 5 — она же столкновение постамента и опора экспоната, лицом в
   проход; дочерние `Top` — верх-индикатор: стекло — свободно, золото — занято, серый — закрыто; `Lamp` — SpotLight
@@ -469,9 +575,51 @@
 - Controllers: `NotifyController` (тосты), `CarryController` («Бросить», «Ты несёшь…»),
   `InventoryController` (D46, Stud-UI: окно «Инвентарь» — карточки с 3D-превью из `ReplicatedStorage.ItemPreviews` (копии моделей делает `InventoryService`), редкость, доход, локация, статус, «×N» повторы; выставленные — по одной с «Снять», в инвентаре — стопкой с «Выставить» → выбор постамента «Поставить» / «Заменить»; сортировка по доходу и редкости, фильтр по локации, поиск, счётчики; правило фаз — неактивные кнопки и причина; кнопка «Инвентарь» в HUD слева посередине, клавиша B; подсказка постамента открывает окно для него — `OpenForSlot`; размеры — `UITokens.Inventory`; вид D50: компактные карточки с тонкой рамкой цвета редкости, «чипы» сортировки и фильтра, сетка по ширине окна; окно собирается при первом открытии и заново при смене экрана (`measure` → профиль); низкое окно (телефон) — карточки-строки, счётчики в шапке, кнопки и «чипы» на касании ≥ 52 px; в Studio экран телефона подменяют атрибуты игрока `DevViewport` (Vector2) и `DevTouch`, только при `GameConfig.DevMode`), `MuseumPromptController` (какие подсказки показывать, подсветка
   перестановки, «Улучшить гантель» на своей табличке), `PresentationController` (прожектор и название при
-  выставлении), `GymController` (табличка «Улучшение» — SurfaceGui в PlayerGui на UpgradeBoard каждого участка,
+  выставлении), `GymController` (табличка «Улучшение» — SurfaceGui в PlayerGui на обеих сторонах UpgradeBoard каждого участка,
   текст владельцу/гостю свой; «+N» над головой; временные надписи силы и монет внизу слева).
 - `UI/UIKit` — фабрики интерфейса по UI_KIT.md.
+- C.2: `AssetLoaderController` (запускается первым в `Main.client`, без ожидания) — порядок загрузки ассетов:
+  MaterialVariant LEGO → интерфейс и всё ближе `GameConfig.AssetLoad.CriticalRadius` от персонажа → остальное (ближние
+  вперёд) → добавленное сервером позже (раз в WatchInterval). `ContentProvider:PreloadAsync` пачками, неудачные —
+  повторы по `RetryDelays`, оставшиеся — `warn` с ID; замеры — атрибуты игрока `AssetLoad*`, `AssetQueueMax`,
+  `AssetQueueEmptyAt`. Качество графики и StreamingEnabled не трогает. Сервер пишет время этапов старта
+  (`[Main] Старт, с от начала: …`).
+- C.2: `World/LovibumModel` — кристалл Ловибума стеклянный (решение владельца 2026-11-15): оболочка той же формы
+  (SmoothPlastic, прозрачность 0.5, отражение 0.25, цвет кристалла светлее) и Neon-сердце ×0.55 внутри (группа Crystal, двигается
+  с ним); у деталей хранятся свой размер и своя прозрачность (`SetTransparency` — поверх стекла).
+- C.1 (прототип, на просмотре): `BossAuraController` — фиолетовая аура Короля-дракона по `Config/BossAura` (варианты
+  A/B), только при атрибуте `workspace.BossAuraPrototype` = "A" | "B". Эмиттеры и один PointLight — у клиента на
+  частях дракона; сила по State/StateAt и залпу (VolleyAt), дальность камеры (Lod) и качество графики игрока;
+  частицы — своим счётчиком через `Emit()` 10 раз в секунду (Rate = 0). Урона и сети нет.
+  C.2: у настоящего босса — вариант `BossAura.Active` ("C2", на просмотре; nil — без ауры), атрибут
+  `BossAuraPrototype` = "A" | "B" | "C2" | "off" перекрывает его. У варианта свои `state`, `sleepPulse`, `sleepLayer`,
+  `bursts` (пробуждение, начало выпада); у слоя `byArea` частота части — по её площади (`AREA_REF` 150 ст.²).
+  Доработка C.2: вариант C3 (Active, на утверждении) — на основе C2 через `tweak` слоёв: языки насыщеннее
+  (LightEmission 0.25), дым темнее и плотнее, штрихи длиннее, плюс лапы, кости крыльев, весь хвост; во сне сила 1.
+  Финал C.2 (2026-11-16): C3 не утверждена; три варианта энергетического поля на выбор — `Flow`, `Vortex`, `Veil`
+  (Active пока "C3"). У варианта, кроме частиц `layers`, есть `ribbons` и `arcs`: `chains` — нити Beam вдоль цепочек
+  частей (точка на поверхности вписанного эллипсоида части под углом нити `angles`/`twist`/`wobble`, не ниже пола,
+  отрезки выгнуты наружу `bulge`, у каждого конца отрезка своя Attachment, открытые концы гаснут, `tip` — до конца
+  последней части); `rings` — кольца из дуг Beam вокруг части (`toward` — нормаль на соседнюю часть, `shift` — вдоль
+  неё); `arcs` — пул разрядов: Beam-молния между случайными точками поверхности частей на 0.08–0.2 с. Яркость лент —
+  по силе (сон — `sleepLayer`), на низком качестве — только часть нитей. Свои текстуры —
+  `scripts/blender/boss10_aura_textures.py` (Blender без интерфейса). Lune `check_boss10_aura` (44) проверяет части,
+  свободные морду, корону, Neck4, скипетр с кругом и перепонки (пальцы — только лентами), лент ≤ 90, разрядов ≤ 6.
+  RoyalAura (утверждена владельцем 2026-11-16, `BossAura.Active`): у варианта ещё `orbits` — Attachment на части кружит каждый кадр (только
+  видимая аура), эмиттеры на ней выпускают частицы по касательной (EmissionDirection Top = ось Y точки); бюджет частиц
+  общий со слоями. `vary` — волна силы слоя (период, глубина), `volleyLayer` — доля надбавки залпа по слою,
+  `minQuality` у колец и лент — ниже такой доли качества графики не показываются. Аура держит одно соединение
+  `DescendantAdded` модели: новая часть → пересборка через 0.5 с (части дракона приходят к клиенту после тега); всё
+  созданное удаляется вместе с аурой. Правка владельца «броня у груди читается»: вихри корпуса (Body, Body_2) —
+  отдельный слой с тем же именем `Swirl` (та же волна и залп), `zOffset` −2.5 и прозрачнее; кольцо груди
+  `brightness` 0.45, орбита у груди — `ORBIT_LAYERS_CHEST` (тусклее). Слои с одинаковым именем допустимы: имя — ключ
+  `sleepLayer`/`vary`/`volleyLayer`.
+- `BossService`: у мешей боссов цвет основы — средний цвет части из рига (у добавочных — цвет сустава): если карты
+  SurfaceAppearance не отрисуются (BUGS — пакеты текстур), часть своего цвета, а не серая.
+- C.2: `BossAnimController` пропускает позу `BossAnim.Sample` через `Shared/PoseFade` (только у рига с `Fade`):
+  смена источника позы (`PoseFade.Key`: состояние, номера выпада и плана, вид плана, отмена, ходьба) или пауза
+  > 0.2 с при разнице > `Fade.Jump`° — плавный догон за `Fade.Time`. Внеплановый выпад входит за `rig.CatchUpIn`
+  (`BossClips`). Сервер и тайминги боя не участвуют.
 - D56: `MuseumUpgradeController` — окно «Улучшение музея» (Stud-UI, золотая шапка): карточки «Сейчас» и «После
   улучшения» (уровень, мест, устройств защиты, галереи), полоса из 20 мест, цена, состояние, кнопка. Данные — атрибуты
   игрока MuseumLevel и Coins, цена и места — `Shared/MuseumRules`, запрет и отсчёт — `GameTime.UpgradeLock`; шлёт
@@ -503,7 +651,7 @@
   ворот и стен нет (D41): у зоны — пол с узором (Texture на верхней грани, `Config/ZonePatterns`, картинки —
   `scripts/textures/zone_patterns.py`), неоновая полоса-граница цвета зоны, голограмма названия (`World/Hologram`:
   невидимая деталь с SurfaceGui, Brightness, тег Hologram, атрибут Night — гаснуть ночью; размеры и высота —
-  `MapLayout.Hologram*`), столбики `Pylon_<зона>` у обрывов (`MapLayout.PylonX`). Уровень 1 — `Models/Junkyard`
+  `MapLayout.Hologram*`, у зоны свой масштаб `HologramScale[id]` — «ПУСТЫНЯ» ×0.65), столбики `Pylon_<зона>` у обрывов (`MapLayout.PylonX`). Уровень 1 — `Models/Junkyard`
   (вещи-функции кирпичей + `Junkyard.Zone()`; пол — `Junkyard.Ground()`: дорога из плит, бугры `MOUNDS`, мусор по
   `Random.new(41)` вне `KEEP_OUT`, высота мусора на бугре — `groundHeight`). Уровень 2 — D44 (полировка D45), три модуля:
   `Models/FleaKit` — цвета `C`, помощники (`Box`, `Disc`, `Round`, `Neon`, `Board`, `Gem`, `Gable` — двускатная
@@ -513,7 +661,7 @@
   (`Pagoda`, `Rotunda`, `Tent`, `Containers`, `Vault`, `PrizeTerminal`: начало — середина переднего края, ширина
   вдоль X, лицо −Z) и большие вещи (`TreasureHoard`,
   `PocketWatch`, `CoinStack`, `SymbolMast`, `UmbrellaCart`, `LightTower` — SpotLight на цель, `Bunting`,
-  `ContainerStack`, `Billboard`); `Models/FleaMarket` — `Ground()` (слои пола `TOP` с шагом 0.05: мощение до |x| 30,
+  `ContainerStack`; щиты на обрывах убраны на этапе C.2); `Models/FleaMarket` — `Ground()` (слои пола `TOP` с шагом 0.05: мощение до |x| 30,
   променады до бордюра `CURB` 41.5, дорожка, площадка-монета r `Arenas[2].radius` 24, поле верхом `Arenas[2].top`
   0.3) и `Zone()` → (кирпичи, надписи): павильоны передним краем на |x| `FRONT` 43, гора сокровищ `HOARD` (0, 36.4),
   часы и монеты по бокам, башни (±28, 22), тележки у входа, фонари/столбы/гирлянды на |x| 39.7, щиты на обрывах.
@@ -589,3 +737,21 @@ UITokens.Раздел` → каждое `x.Имя` есть в разделе); 
 виды — в координатах зоны, `--fast` — Workbench.
 Карты и меши после загрузки: `scripts/bind_maps.py` (карты → ItemModels), `scripts/bind_meshes.py` (MeshId,
 дописывает), `scripts/make_looks.py` (шаблоны Looks всех предметов и боссов); порядок — `docs/IMPORT_LEVEL2.md`.
+
+## 2026-11-14: Ловибумы ×3 (D61), пути к следующему уровню и мерцание (D62), импорт боссов 2–3
+- Магазин Ловибумов (D61): `Config/Catch.PerBuy = 3` — одна покупка всегда 3 штуки, цена из `Prices` списывается один
+  раз; `CatchRules.CheckBuy(prices, level, kind, coins, lovibums)` (без количества), `DataService.BuyLovibums(player,
+  level, kind, price)`, `ShopAction("Buy", уровень, вид)` — количество от клиента не читается; окно — наклейка «×3»
+  (`UITokens.Shop.Pack*`) вместо «−, число, +». Бросок тратит 1 (`SpendLovibum`).
+- `World/FaceCheck.ScanAny` — мерцание у деталей под любым углом, клиньев и торцов цилиндров (многоугольники граней,
+  обрезка Сазерленда — Ходжмена; закрывают бруски, клинья, цилиндры, шары); `Report` и `check_world` считают обе
+  проверки. Вся карта (предпросмотр, 6 917 деталей) — 0 пар.
+- Пути к следующему уровню (D62): «Барахолка» — `FleaMarket.Exit` (перемычка за площадкой и дорожки |x| 16.5–20.5 в
+  обход горы сокровищ), «Подземка» — `SubwayStation.Way` (те же |x|, от входа к кольцу и от кольца к выходу),
+  зоны 5–10 — `ZoneDecor.Path` (вызывает `WorldBuilder.buildZone` у зон без своего оформления). `check_world.pathFree`
+  — на путях нет твёрдого выше 0.3 и ниже 7. Указатели «К ПОДЗЕМКЕ», «В ПУСТЫНЮ».
+- Меши и карты: торговец (`TRADER_MESHES`), Крысиный король (`RATKING_MESHES`, карты `BossModels[3]`), 30 предметов
+  босса 2 (`MESHES`) и 30 существ босса 3 (`CREATURE_MESHES`) загружены и привязаны; Part-версии остались запасом
+  на часть без меша. Сводный FBX существ — `scripts/blender/pack_boss3_fbx.py`; `bind_meshes.py` знает
+  `Boss3_RatKing*`. ID — `assets/textures/art/IDS.md`.
+- План боссов 5–10 (на утверждение) — `docs/BOSSES_5_10_PLAN.md`.

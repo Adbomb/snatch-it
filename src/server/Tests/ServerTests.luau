@@ -2162,7 +2162,7 @@ local function ensureDay(): boolean
 	return false
 end
 
-test("Коллекции: босс 1 — 8/8/4, босс 2 и 3 — 12/10/8 (Common/Rare/Epic) с доходом; у черновых нет лишних редкостей", function()
+test("Коллекции: босс 1 — 8/8/4, босс 2 и 3 — 12/10/8, босс 4 — 12/9/6/3 с доходом; у черновых нет лишних редкостей", function()
 	for id, def in Items do
 		check(table.find(Rarities.Order, def.rarity), id .. ": редкость " .. tostring(def.rarity))
 		check(def.boss >= 1 and def.boss <= #GameConfig.Zones, id .. ": босс " .. tostring(def.boss))
@@ -2172,6 +2172,7 @@ test("Коллекции: босс 1 — 8/8/4, босс 2 и 3 — 12/10/8 (Com
 		[1] = { Common = 8, Rare = 8, Epic = 4, Legendary = 0, Secret = 0 },
 		[2] = { Common = 12, Rare = 10, Epic = 8, Legendary = 0, Secret = 0 },
 		[3] = { Common = 12, Rare = 10, Epic = 8, Legendary = 0, Secret = 0 }, -- D54 / D55: 30 существ
+		[4] = { Common = 12, Rare = 9, Epic = 6, Legendary = 3, Secret = 0 }, -- D57: 30 существ Пустыни
 	}
 	for boss = 1, #GameConfig.Zones do
 		local want = wants[boss]
@@ -2580,6 +2581,349 @@ test("Бой с торговцем: при силе 0 — поражение, п
 	TimeService.ResetClock()
 end)
 
+-- Босс 4 «Сфинкс-лежебока» (интеграция 2026-11-12): выпады с отметками атрибутов модели в момент выпада.
+type Swing = { kind: string, at: number, planned: number?, planBefore: number?, dist: number, canceled: boolean }
+local function watchSwings(boss: BossService.Boss, fight: any): { Swing }
+	local swings: { Swing } = {}
+	local lastSeq = boss.model:GetAttribute("AttackSeq") or 0
+	local planBefore = boss.model:GetAttribute("PlanAt")
+	local cancelSeen = false
+	local conn
+	conn = boss.model:GetAttributeChangedSignal("AttackSeq"):Connect(function()
+		local seq = boss.model:GetAttribute("AttackSeq") or 0
+		if seq ~= lastSeq + 1 then
+			lastSeq = seq
+			return
+		end
+		lastSeq = seq
+		local root = fight.player.Character and fight.player.Character:FindFirstChild("HumanoidRootPart")
+		local flat = if root then (root.Position - boss.root.Position) * Vector3.new(1, 0, 1) else Vector3.zero
+		table.insert(swings, {
+			kind = boss.model:GetAttribute("AttackKind"),
+			at = boss.model:GetAttribute("AttackAt"),
+			planned = boss.model:GetAttribute("AttackPlanAt"),
+			planBefore = planBefore,
+			dist = flat.Magnitude,
+			canceled = cancelSeen,
+		})
+		cancelSeen = false
+	end)
+	local planConn = boss.model:GetAttributeChangedSignal("PlanAt"):Connect(function()
+		planBefore = boss.model:GetAttribute("PlanAt")
+	end)
+	local cancelConn = boss.model:GetAttributeChangedSignal("PlanCancelAt"):Connect(function()
+		cancelSeen = cancelSeen or boss.model:GetAttribute("PlanCancelAt") ~= nil
+	end)
+	task.spawn(function()
+		while fight.active do
+			task.wait(0.1)
+		end
+		conn:Disconnect()
+		planConn:Disconnect()
+		cancelConn:Disconnect()
+	end)
+	return swings
+end
+
+test("Босс 4: Сфинкс на карте (открыт с коллекцией, D59), 27 частей на суставах, клипы; числа боя прежние, сила 150 000", function()
+	local boss = BossService.Get(4)
+	check(BossService.ClosedAllowed(), "тесты идут не в Studio с DevMode")
+	check(boss ~= nil, "босса 4 нет на карте в Studio")
+	if not boss then
+		return
+	end
+	local rig = require(ReplicatedStorage.Shared.Config.Boss4SphinxRig) :: any
+	local joints = 0
+	for _, name in rig.Order do
+		local part = boss.model:FindFirstChild(name)
+		local joint = part and part:FindFirstChild(name)
+		if joint and joint:IsA("Motor6D") then
+			joints += 1
+		end
+	end
+	check(#rig.Order == 27 and joints == 27, ("суставов %d из %d"):format(joints, #rig.Order))
+	check(BossService.HasClips(boss), "у Сфинкса нет клипов")
+	for zone = 1, 3 do
+		local other = BossService.Get(zone) :: BossService.Boss
+		check(not BossService.HasClips(other), ("у босса %d появились клипы"):format(zone))
+	end
+	check(Battle.Bosses[4].Closed ~= true, "босс 4 закрыт, хотя коллекция есть (D59)")
+	local cfg, base = Battle.Bosses[4], Battle.Bosses[3]
+	for _, key in { "HP", "Damage", "AttackInterval", "AttackRange", "Leash", "Speed" } do
+		check(cfg[key] == base[key], ("%s босса 4 %s, у боссов 1–3 %s"):format(key, tostring(cfg[key]), tostring(base[key])))
+	end
+	check(cfg.Strength == 150000, "сила босса 4 " .. tostring(cfg.Strength))
+	check(BossService.Height(boss) > 14 and BossService.Height(boss) < 19, "рост Сфинкса " .. BossService.Height(boss))
+	local home = BossService.HomeOf(4)
+	check((boss.root.Position - home.Position).Magnitude < 1, "Сфинкс не на своём месте в зоне 4")
+end)
+
+test("Босс 4: бой — замах объявлен заранее, каждый третий «Хвост-кистень», урон один раз за выпад, интервалы прежние", function(A, _B, ctx)
+	DataService.AddStrength(A, 150000)
+	prepareFight(A, 1, 4)
+	local boss = BossService.Get(4) :: BossService.Boss
+	local fight = BattleService.Handlers.Begin(A, 4, 1)
+	check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+	if not fight then
+		return
+	end
+	local swings = watchSwings(boss, fight)
+	-- первый выпад объявлен в начале ToCombat — запас на задержку сети
+	check(waitUntil(function()
+		return boss.state == "ToCombat"
+	end, 5), "нет ToCombat")
+	task.wait(0.05)
+	local planAt, stateAt = boss.model:GetAttribute("PlanAt"), boss.model:GetAttribute("StateAt")
+	local ahead = if planAt and stateAt then planAt - stateAt else -1
+	check(math.abs(ahead - (Battle.Timeline.ToCombat + 0.6 + Battle.AttackPlan.ExpectedDelay)) < 0.05,
+		("первый выпад объявлен за %.2f с до него (от начала ToCombat)"):format(ahead))
+	check(boss.model:GetAttribute("PlanKind") == "bite", "первый — не «Тяжёлая лапа»")
+	check(fightTo(fight, 90), "бой не закончился")
+	check(fight.result == "win", "при силе 150 000 бой не выигран: " .. tostring(fight.result))
+	local hits = 0
+	for _, line in fight.log do
+		if string.find(line, "босс −", 1, true) then
+			hits += 1
+		end
+	end
+	check(#swings >= 6, ("выпадов %d"):format(#swings))
+	check(hits == #swings or hits == #swings - 1, ("ударов по игроку %d при %d выпадах"):format(hits, #swings))
+	local thirds, planned, offs, worst, gaps = true, 0, 0, 0, {}
+	local unplanned = {} -- выпад без плана — только после отмены (игрок был вне дальности)
+	for i, s in swings do
+		thirds = thirds and s.kind == (if i % 3 == 0 then "swipe" else "bite")
+		if s.planned then
+			planned += 1
+			local off = s.at - s.planned
+			offs += off
+			worst = math.max(worst, math.abs(off))
+		else
+			table.insert(unplanned, ("№%d (%.1f ст., %s)"):format(i, s.dist, if s.canceled then "план был снят" else "план не снимали"))
+			check(s.canceled, ("выпад №%d без плана, хотя план не снимали"):format(i))
+		end
+		if i > 1 then
+			table.insert(gaps, s.at - swings[i - 1].at)
+		end
+	end
+	check(thirds, "каждый третий выпад — не «Хвост-кистень»")
+	check(planned >= #swings - 2, ("по плану %d выпадов из %d; без плана: %s"):format(planned, #swings, table.concat(unplanned, ", ")))
+	ctx.note(("по плану %d из %d; без плана: %s"):format(planned, #swings, if #unplanned > 0 then table.concat(unplanned, ", ") else "нет"))
+	ctx.note(("выпад позже плана: в среднем %+.3f с, наибольшее %.3f с; ударов по игроку %d"):format(offs / math.max(planned, 1), worst, hits))
+	check(worst < 0.15, ("выпад позже плана в среднем на %+.3f с, наибольшее расхождение %.3f с"):format(offs / math.max(planned, 1), worst))
+	local short = 0
+	for _, g in gaps do
+		if g < Battle.Bosses[4].AttackInterval - 0.01 then
+			short += 1
+		end
+	end
+	check(short == 0, ("выпадов чаще интервала: %d"):format(short))
+	CarryService.LoseCarried(A, "уборка после теста")
+	check(waitBossHome(4), "Сфинкс не вернулся и не уснул")
+	check(BossService.DistanceHome(boss) <= Battle.ArriveDistance + 0.5, "Сфинкс уснул не на своём месте")
+	TimeService.ResetClock()
+end)
+
+test("Босс 4: поражение при силе 0 посреди выпадов, план отменён; игрок ушёл — план снят, выпад без плана; повторный бой", function(A)
+	prepareFight(A, 2, 4)
+	local boss = BossService.Get(4) :: BossService.Boss
+	local fight = BattleService.Handlers.Begin(A, 4, 2)
+	check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+	if not fight then
+		return
+	end
+	check(fightTo(fight, 60), "бой не закончился")
+	check(fight.result == "lose", "при силе 0 Сфинкс должен победить: " .. tostring(fight.result))
+	check(boss.state == "Victory", "после поражения игрока не победа Сфинкса: " .. boss.state)
+	local cancel, plan = boss.model:GetAttribute("PlanCancelAt"), boss.model:GetAttribute("PlanAt")
+	check(cancel ~= nil and plan ~= nil, "план не отменён в конце боя")
+	check(waitBossHome(4), "Сфинкс не вернулся после победы")
+	-- второй бой: игрок уходит из дальности — план снимается, вернулся — выпад без плана или с новым планом
+	DataService.AddStrength(A, 150000)
+	prepareFight(A, 3, 4)
+	local again = BattleService.Handlers.Begin(A, 4, 3)
+	check(again, "повторный бой не начался")
+	if not again then
+		return
+	end
+	local swings = watchSwings(boss, again)
+	check(waitUntil(function()
+		return #swings >= 1
+	end, 10), "нет первого выпада")
+	local root = select(1, A.Character and A.Character:FindFirstChild("HumanoidRootPart")) :: BasePart?
+	if root then
+		A:MoveTo(root.Position + (root.Position - boss.root.Position).Unit * 9) -- дальше дальности выпада
+	end
+	check(waitUntil(function()
+		return boss.model:GetAttribute("PlanCancelAt") ~= nil or not again.active
+	end, 3), "игрок вне дальности — план не снят")
+	check(fightTo(again, 90), "повторный бой не закончился")
+	check(again.result == "win", "повторный бой: " .. tostring(again.result))
+	CarryService.LoseCarried(A, "уборка после теста")
+	check(waitBossHome(4), "Сфинкс не вернулся после повторного боя")
+	TimeService.ResetClock()
+end)
+
+test("Босс 4 в зоне 4: во всех клипах не проваливается, не задевает декор и предметы слотов", function(_A, _B, ctx)
+	local boss = BossService.Get(4) :: BossService.Boss
+	-- настоящая форма — вершины из данных предпросмотра (Tests/MeshFixture, только локально); без них — габариты частей
+	local Preview = require(Server.Tests.BossMeshPreview) :: any
+	local points: { [string]: { Vector3 } } = {}
+	local exact = Preview.Has(4)
+	if exact then
+		for _, part in (require(ReplicatedStorage.Shared.Config.Boss4SphinxRig) :: any).Order do
+			points[part] = Preview.Points(4, part)
+		end
+	end
+	ctx.note(if exact then "по вершинам мешей (7 916 треугольников)" else "по габаритам частей (данных мешей нет)")
+	local rig = require(ReplicatedStorage.Shared.Config.Boss4SphinxRig) :: any
+	local BossClips = require(ReplicatedStorage.Shared.BossClips) :: any
+	local turn = CFrame.Angles(0, math.rad(BossModels[4].turn), 0)
+	local home = boss.home
+	-- пол под Сфинксом
+	local down = workspace:Raycast(home.Position + Vector3.new(0, 20, 0), Vector3.new(0, -40, 0), (function()
+		local p = RaycastParams.new()
+		p.FilterType = Enum.RaycastFilterType.Exclude
+		p.FilterDescendantsInstances = { boss.model }
+		return p
+	end)())
+	local floor = if down then down.Position.Y else home.Y
+	check(down ~= nil and math.abs(floor - home.Y) < 0.05, ("пол под Сфинксом на %.2f, место босса на %.2f"):format(floor, home.Y))
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { boss.model }
+	local items: { [BasePart]: string } = {}
+	for slot = 1, 4 do
+		local uid, part = BossLootService.SlotItem(4, slot)
+		if uid and part then
+			items[part] = uid
+		end
+	end
+	local lowest, lowestAt = math.huge, ""
+	local decor: { [string]: { [string]: boolean } } = {} -- «где: деталь» → части и клипы
+	local hitItems: { [string]: string } = {}
+	local poses = 0
+	local function sweep(root: CFrame, names: { string }, label: string)
+		for _, name in names do
+			local clip = BossClips.Get(rig, name)
+			for t = 0, clip.duration, 1 / 15 do
+				local pose = BossClips.At(rig, clip, t)
+				poses += 1
+				local joints = {}
+				for _, part in rig.Order do
+					local info = rig.Parts[part]
+					local transform = pose[part]
+					joints[part] = if info.parent
+						then joints[info.parent] * CFrame.new(info.pivot - rig.Parts[info.parent].pivot) * transform
+						else root * CFrame.new(info.pivot) * transform
+					local box = joints[part] * CFrame.new(info.center) * turn
+					local corners = {}
+					if exact then
+						for _, v in points[part] do
+							table.insert(corners, joints[part]:PointToWorldSpace(v))
+						end
+					else
+						local half = info.size / 2
+						for _, sx in { -1, 1 } do
+							for _, sy in { -1, 1 } do
+								for _, sz in { -1, 1 } do
+									table.insert(corners, box:PointToWorldSpace(half * Vector3.new(sx, sy, sz)))
+								end
+							end
+						end
+					end
+					for _, c in corners do
+						if c.Y < lowest then
+							lowest, lowestAt = c.Y, ("%s в %s на %.2f с, %s"):format(part, name, t, label)
+						end
+					end
+					for _, hit in workspace:GetPartBoundsInBox(box, info.size, params) do
+						-- верх детали с учётом поворота (у плоского диска площадки Size.Y — диаметр, а не высота)
+						local cf, size = hit.CFrame, hit.Size
+						local halfY = (math.abs(cf.RightVector.Y) * size.X + math.abs(cf.UpVector.Y) * size.Y
+							+ math.abs(cf.LookVector.Y) * size.Z) / 2
+						local solid = hit.CanCollide and hit.Transparency < 1 and hit.Position.Y + halfY > floor + 0.3
+						if not (items[hit] or (hit.Parent and items[hit.Parent :: any]) or solid) then
+							continue
+						end
+						-- касание — если вершина части внутри детали (у мешей), иначе — пересечение габаритов
+						local inside = not exact
+						if exact then
+							for _, c in corners do
+								local local_ = hit.CFrame:PointToObjectSpace(c)
+								local h = hit.Size / 2
+								if math.abs(local_.X) < h.X and math.abs(local_.Y) < h.Y and math.abs(local_.Z) < h.Z then
+									inside = true
+									break
+								end
+							end
+						end
+						if inside then
+							if items[hit] or (hit.Parent and items[hit.Parent :: any]) then
+								hitItems[("%s в %s, %s"):format(part, name, label)] = hit:GetFullName()
+							else
+								local key = ("%s: %s.%s"):format(label, (hit.Parent :: Instance).Name, hit.Name)
+							decor[key] = decor[key] or {}
+							decor[key][part .. "/" .. name] = true
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	-- дома (сон, пробуждение, засыпание — и выпады, если бой начался у места) и в бою у каждого слота: игрок у предмета
+	-- (как после поимки), Сфинкс подошёл от своего места на AttackRange − 1.5 и смотрит на него
+	sweep(home, { "sleep_idle", "wake", "combat_idle", "walk", "hit", "victory", "defeat", "fall_asleep" }, "дома")
+	local atHome = table.clone(decor)
+	table.clear(decor)
+	sweep(home, { "heavy_paw", "tail_strike" }, "выпад дома")
+	local cfg4 = Battle.Bosses[4]
+	for slot = 1, 4 do
+		local _, part = BossLootService.SlotItem(4, slot)
+		if part then
+			local at = part.Position + Vector3.new(0, 0, 4)
+			local flat = Vector3.new(at.X - home.X, 0, at.Z - home.Z)
+			local stop = home.Position + flat.Unit * math.min(math.max(flat.Magnitude - (cfg4.AttackRange - 1.5), 0), cfg4.Leash)
+			local root = CFrame.lookAt(stop, Vector3.new(at.X, stop.Y, at.Z)) * CFrame.Angles(0, math.pi, 0)
+			sweep(root, { "combat_idle", "walk", "heavy_paw", "tail_strike", "hit", "victory", "defeat" }, "бой у слота " .. slot)
+		end
+	end
+	ctx.note(("проверено поз: %d; нижняя точка %.2f над полом (%s)"):format(poses, lowest - floor, lowestAt))
+	check(lowest - floor > (if exact then -0.1 else -0.8), ("часть уходит под пол на %.2f (%s)"):format(floor - lowest, lowestAt))
+	local function describe(map: { [string]: { [string]: boolean } }): { string }
+		local out = {}
+		for key, set in map do
+			local parts = {}
+			for k in set do
+				table.insert(parts, k)
+			end
+			table.sort(parts)
+			table.insert(out, ("%s ← %s%s"):format(key, table.concat(parts, ", ", 1, math.min(#parts, 4)), if #parts > 4 then (" и ещё %d"):format(#parts - 4) else ""))
+		end
+		table.sort(out)
+		return out
+	end
+	local list = describe(atHome)
+	check(#list == 0, ("Сфинкс на своём месте задевает декор: %s"):format(table.concat(list, "; ")))
+	-- выпады дома и бой у слотов зоны 4 (площадки босса 4 ещё нет — постаменты-заготовки D37): что задевается
+	local summary = describe(decor)
+	ctx.note("в бою задевает: " .. (if #summary > 0 then table.concat(summary, "; ") else "ничего"))
+	local touched = {}
+	for by, what in hitItems do
+		table.insert(touched, by .. " → " .. what)
+	end
+	ctx.note(("предметы слотов задеты Сфинксом на месте: %s"):format(if #touched > 0 then table.concat(touched, "; ") else "нет"))
+end)
+
+test("Боссы 1–3 без изменений: у них нет атрибутов плана атаки после боёв", function()
+	for zone = 1, 3 do
+		local model = (BossService.Get(zone) :: BossService.Boss).model
+		for _, key in { "PlanKind", "PlanAt", "PlanSeq", "PlanCancelAt", "AttackPlanAt" } do
+			check(model:GetAttribute(key) == nil, ("у босса %d есть %s"):format(zone, key))
+		end
+	end
+end)
+
 test("Доход: свой у каждого экспоната на витрине, сумма в Income, надпись «+X/сек»; в руках и хранилище — 0", function(A, B, ctx)
 	local moai = displayOwn(ctx, A, 1, "Moai")
 	local starry = displayOwn(ctx, A, 2, "StarryNight")
@@ -2697,18 +3041,19 @@ local function beginCatch(player: any, boss: number, slot: number): boolean
 	return CatchService.Begin(player, boss, slot)
 end
 
-test("Без боя (босс 4, тестовый режим): поимка — и в руки, слот пуст до рассвета, экспонат помнит босса", function(A, B)
+-- Босс 4 с 2026-11-12 дерётся в Studio (закрыт до коллекции), поэтому «без боя» — на примере босса 5.
+test("Без боя (босс 5, тестовый режим): поимка — и в руки, слот пуст до рассвета, экспонат помнит босса", function(A, B)
 	local shifted = ensureDay()
 	BossLootService.Handlers.Refresh()
-	local entry = bossSlots()[4][1]
+	local entry = bossSlots()[5][1]
 	local uid = entry.uid :: string
 	local part = (ItemRegistry.Get(uid) :: any).part
 	A:MoveTo(part.Position + Vector3.new(0, 0, -3))
 	CarryService.Handlers.Pickup(A, uid)
 	local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
-	giveLovibums(A, 4, "Mega", 3)
+	giveLovibums(A, 5, "Mega", 3)
 	CatchService.Handlers.SetRoll(0)
-	local started = beginCatch(A, 4, 1)
+	local started = beginCatch(A, 5, 1)
 	if started then
 		throw(A, "Mega", true)
 		waitUntil(function()
@@ -2718,44 +3063,44 @@ test("Без боя (босс 4, тестовый режим): поимка — 
 	CatchService.Handlers.SetRoll(nil)
 	local taken = ItemRegistry.GetCarriedBy(A) == uid
 	local emptied = entry.uid == nil
-	giveLovibums(B, 4, "Boom", 1)
+	giveLovibums(B, 5, "Boom", 1)
 	B:MoveTo(part.Position + Vector3.new(0, 0, 3))
-	BossLootService.Handlers.Take(B, 4, 1)
+	BossLootService.Handlers.Take(B, 5, 1)
 	local bEmpty = ItemRegistry.GetCarriedBy(B) == nil and not CatchService.IsCatching(B)
 	if shifted then
 		TimeService.ResetClock()
 	end
 	check(stillThere, "предмет у босса подняли обычным «Поднять»")
 	check(started, "поимка не началась: " .. table.concat(A:Notices(), "; "))
-	check(taken and ItemRegistry.Get(uid).boss == 4, "A не получил пойманное в тестовом режиме")
-	check(stockOf(A, 4, "Mega") == 2, "Ловибум не списан")
+	check(taken and ItemRegistry.Get(uid).boss == 5, "A не получил пойманное в тестовом режиме")
+	check(stockOf(A, 5, "Mega") == 2, "Ловибум не списан")
 	check(part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil, "у пойманного остались атрибуты босса")
 	check(emptied and bEmpty, "слот не опустел или B что-то получил")
 	local plotA = plotOf(A)
 	near(A, plotA.showcases[1])
 	MuseumService.Handlers.Display(A, plotA, 1)
 	local record = DataService.GetData(A).items[uid]
-	check(record and record.boss == 4 and record.source == "boss", "в профиле нет босса-источника")
+	check(record and record.boss == 5 and record.source == "boss", "в профиле нет босса-источника")
 	BossLootService.Handlers.Refresh()
 	check(entry.uid ~= nil, "слот не заполнен на рассвете")
 	check(ItemRegistry.Get(uid).state == "Displayed", "рассвет тронул выставленный экспонат")
 end)
 
-test("Без боя поймать нельзя вне тестового режима Studio (босс 4)", function(A)
+test("Без боя поймать нельзя вне тестового режима Studio (босс 5)", function(A)
 	local shifted = ensureDay() -- ночью отказ был бы «ночь», а не «нет боя»
 	BossLootService.Handlers.Refresh()
-	local uid = bossSlots()[4][1].uid :: string
+	local uid = bossSlots()[5][1].uid :: string
 	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
-	giveLovibums(A, 4, "Boom", 1)
+	giveLovibums(A, 5, "Boom", 1)
 	local saved = GameConfig.Bosses.FreeTakeInStudio
 	GameConfig.Bosses.FreeTakeInStudio = false
-	local ok, err = pcall(BossLootService.Handlers.Take, A, 4, 1)
+	local ok, err = pcall(BossLootService.Handlers.Take, A, 5, 1)
 	GameConfig.Bosses.FreeTakeInStudio = saved
 	check(ok, tostring(err))
 	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
 	check(not CatchService.IsCatching(A), "поимка у босса без боя началась")
 	check(A:WasNotified("нет боя"), "нет сообщения «у этого босса пока нет боя»")
-	check(stockOf(A, 4, "Boom") == 1, "Ловибум списан без броска")
+	check(stockOf(A, 5, "Boom") == 1, "Ловибум списан без броска")
 	if shifted then
 		TimeService.ResetClock()
 	end
@@ -2769,81 +3114,100 @@ local function waitCatchEnd(player: any, timeout: number): boolean
 	end, timeout)
 end
 
-test("D55 магазин: покупка и все отказы (уровень, вид, количество, монеты, запас, обучение, поимка)", function(A)
+test("D55/D61 магазин: покупка — набор ×3 за цену один раз; отказы (уровень, вид, монеты, запас, обучение, поимка)", function(A)
 	local data = DataService.GetData(A)
 	data.coins = 1e6
-	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 3)
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
 	local price = CatchRules.Price(ShopService.Prices(), 1, "Boom")
-	check(price, "нет цены босса 1")
-	check(stockOf(A, 1, "Boom") == 3 and data.coins == 1e6 - 3 * (price :: number), "покупка не прошла")
+	check(price == 1000, "цена Бума ур. 1 изменилась: " .. tostring(price))
+	check(GameConfig.Catch.PerBuy == 3, "в наборе не 3 Ловибума")
+	check(stockOf(A, 1, "Boom") == 3 and data.coins == 1e6 - 1000, "покупка не выдала 3 за цену один раз")
+	-- прежний клиент присылал количество: оно не читается — снова ровно 3 за одну цену
+	task.wait(GameConfig.Catch.BuyGap + 0.1)
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 100)
+	check(
+		stockOf(A, 1, "Boom") == 6 and data.coins == 1e6 - 2000,
+		("количество от клиента учтено: запас %d, монет %d"):format(stockOf(A, 1, "Boom"), data.coins)
+	)
 	local before = data.coins
 	for _, bad in {
-		{ 0, "Boom", 1 },
-		{ 11, "Boom", 1 },
-		{ 1.5, "Boom", 1 },
-		{ 1, "Ultra", 1 },
-		{ 1, "Boom", 0 },
-		{ 1, "Boom", 100 },
-		{ 1, "Boom", 2.5 },
-		{ 1, "Boom", 0 / 0 },
-		{ "1", "Boom", 1 },
-		{ 1, nil, 1 },
+		{ 0, "Boom" },
+		{ 11, "Boom" },
+		{ 1.5, "Boom" },
+		{ 0 / 0, "Boom" },
+		{ 1, "Ultra" },
+		{ "1", "Boom" },
+		{ 1, nil },
 	} do
 		task.wait(0.3) -- лимит запросов
-		ShopService.Handlers.Action(A, "Buy", bad[1], bad[2], bad[3])
+		ShopService.Handlers.Action(A, "Buy", bad[1], bad[2])
 	end
-	check(data.coins == before and stockOf(A, 1, "Boom") == 3, "поддельная покупка что-то изменила")
+	check(data.coins == before and stockOf(A, 1, "Boom") == 6, "поддельная покупка что-то изменила")
+	-- монет меньше цены набора на 1 — отказ; ровно цена — можно
 	task.wait(0.3)
-	data.coins = 10
-	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
-	check(data.coins == 10 and stockOf(A, 1, "Boom") == 3, "купил без денег")
-	task.wait(0.3)
+	data.coins = 999
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
+	check(data.coins == 999 and stockOf(A, 1, "Boom") == 6 and A:WasNotified("Не хватает"), "купил без денег")
+	task.wait(GameConfig.Catch.BuyGap + 0.1)
+	data.coins = 1000
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
+	check(data.coins == 0 and stockOf(A, 1, "Boom") == 9, "ровно на цену набора не купил")
+	-- запас сверх MaxStock: набор не влезает — отказ без списания
+	task.wait(GameConfig.Catch.BuyGap + 0.1)
 	data.coins = 1e6
+	DataService.Lovibums(A).L1.Boom = GameConfig.Catch.MaxStock - 2
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
+	check(data.coins == 1e6 and stockOf(A, 1, "Boom") == GameConfig.Catch.MaxStock - 2, "набор сверх запаса продан")
+	DataService.Lovibums(A).L1.Boom = 9
+	task.wait(0.3)
 	local saved = data.tutorial
 	data.tutorial = { step = "Catch" }
-	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
 	data.tutorial = saved
-	check(stockOf(A, 1, "Boom") == 3 and A:WasNotified("после обучения"), "во время обучения магазин продал")
+	check(stockOf(A, 1, "Boom") == 9 and A:WasNotified("после обучения"), "во время обучения магазин продал")
 	task.wait(0.3)
 	local saveIsCatching = ShopService.IsCatching
 	ShopService.IsCatching = function()
 		return true
 	end
-	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
 	ShopService.IsCatching = saveIsCatching
-	check(stockOf(A, 1, "Boom") == 3 and A:WasNotified("поимки"), "во время поимки магазин продал")
+	check(stockOf(A, 1, "Boom") == 9 and A:WasNotified("поимки"), "во время поимки магазин продал")
+	-- расход: один бросок — одна штука (списание поимки — DataService.SpendLovibum)
+	check(DataService.SpendLovibum(A, 1, "Boom") and stockOf(A, 1, "Boom") == 8, "расход не по одной штуке")
 end)
 
-test("D55 цены: утверждённые 1–3, покупка списывает итог и выдаёт, повторы режутся, запас и монеты сохраняются", function(A, _B, ctx)
-	-- цены: боссы 1–3 — утверждённые (как в опубликованной игре), 4–10 — только в Studio (предварительные)
+test("D55 цены: утверждённые 1–4 прежние, набор ×3 списывает цену один раз, повторы режутся, запас и монеты сохраняются", function(A, _B, ctx)
+	-- цены: боссы 1–4 — утверждённые (как в опубликованной игре; босс 4 открыт с коллекцией, D59), 5–10 — только в Studio
 	local live = CatchRules.Prices(false)
 	check(live[1] and live[1].Boom == 1000 and live[2].Turbo == 20000 and live[3].Mega == 90000, "утверждённые цены 1–3")
-	check(live[4] == nil and ShopService.Prices()[4] ~= nil, "босс 4 — только в Studio")
-	-- покупка настоящим обработчиком: 3 Турбо босса 2 — минус ровно 60K, плюс 3 в запас
+	check(live[4] and live[4].Boom == 300000 and live[4].Mega == 900000, "утверждённая цена 4 (D56)")
+	check(live[5] == nil and ShopService.Prices()[5] ~= nil, "босс 5 — только в Studio")
+	-- покупка настоящим обработчиком (D61): набор Турбо босса 2 — минус ровно 20K (цена прежняя), плюс 3 в запас
 	local data = DataService.GetData(A)
 	task.wait(1.1) -- лимит запросов прошлых тестов
 	data.coins = 100000
-	ShopService.Handlers.Action(A, "Buy", 2, "Turbo", 3)
+	ShopService.Handlers.Action(A, "Buy", 2, "Turbo")
 	check(
-		data.coins == 40000 and stockOf(A, 2, "Turbo") == 3,
-		("3 Турбо ур. 2: монет %d, запас %d"):format(data.coins, stockOf(A, 2, "Turbo"))
+		data.coins == 80000 and stockOf(A, 2, "Turbo") == 3,
+		("набор Турбо ур. 2: монет %d, запас %d"):format(data.coins, stockOf(A, 2, "Turbo"))
 	)
-	check(A:GetAttribute("Coins") == 40000, "атрибут Coins не обновился")
-	check(A:WasNotified("Куплено"), "нет уведомления о покупке")
+	check(A:GetAttribute("Coins") == 80000, "атрибут Coins не обновился")
+	check(A:WasNotified("Куплено: Турбо ×3"), "нет уведомления «Куплено: Турбо ×3»")
 	-- повторные запросы подряд (двойное нажатие, подделка в цикле): принимается одна покупка (Catch.BuyGap)
 	task.wait(1.1)
 	data.coins = 1e6
 	local before = stockOf(A, 1, "Boom")
 	for _ = 1, 20 do
-		ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
+		ShopService.Handlers.Action(A, "Buy", 1, "Boom")
 	end
 	local bought = stockOf(A, 1, "Boom") - before
-	check(bought == 1, ("из 20 запросов подряд принято %d (ждали 1)"):format(bought))
-	check(data.coins == 1e6 - bought * 1000, ("монеты не сходятся: %d за %d шт."):format(data.coins, bought))
-	-- после паузы — снова можно
+	check(bought == 3, ("из 20 запросов подряд выдано %d шт. (ждали один набор — 3)"):format(bought))
+	check(data.coins == 1e6 - 1000, ("монеты не сходятся: %d за %d шт."):format(data.coins, bought))
+	-- после паузы — снова можно: второй набор
 	task.wait(GameConfig.Catch.BuyGap + 0.3)
-	ShopService.Handlers.Action(A, "Buy", 1, "Boom", 1)
-	check(stockOf(A, 1, "Boom") - before == 2, "после паузы покупка не прошла")
+	ShopService.Handlers.Action(A, "Buy", 1, "Boom")
+	check(stockOf(A, 1, "Boom") - before == 6 and data.coins == 1e6 - 2000, "после паузы второй набор не куплен")
 	-- выход и вход: запас и монеты — из профиля
 	local coins, turbo, boom = data.coins, stockOf(A, 2, "Turbo"), stockOf(A, 1, "Boom")
 	local userId = A.UserId
@@ -3084,25 +3448,41 @@ local function boss3Ids(): { string }
 	return ids
 end
 
-test("Босс 3: 30 существ на суставах — 8–40 блоков, подставка только у трона, осьминога и императора", function()
+test("Босс 3: 30 существ на суставах, по мешу на часть, Part-резерв 8–40; подставка только у трона, осьминога и императора", function()
 	-- D54 (правила владельца): Stand — декоративная подставка, у живого скрыта; у трона, осьминога и императора — часть
-	-- композиции; у билетика с подставкой скрыт и турникет (Grabber).
+	-- композиции; у билетика с подставкой скрыт и турникет (Grabber). Меши загружены 2026-11-14 — бюджет 8–40 деталей
+	-- у Part-версии (резерв на случай, если меши не загрузятся), в игре — меш на каждую видимую часть.
 	local KEEP = { RatThrone = true, SubwayOctopus = true, ThreeTailEmperor = true }
 	local ids = boss3Ids()
 	check(#ids == 30, ("в коллекции босса 3 %d существ"):format(#ids))
 	local problems = {}
-	for _, id in ids do
-		local part = ItemFactory.Create(id)
-		local blocks, motors = 0, 0
+	local function details(part: Instance): (number, number, number)
+		local blocks, meshes, motors = 0, 0, 0
 		for _, d in part:GetDescendants() do
-			if d:IsA("BasePart") then
+			if d:IsA("MeshPart") then
+				meshes += 1
+			elseif d:IsA("BasePart") then
 				blocks += 1
 			elseif d:IsA("Motor6D") then
 				motors += 1
 			end
 		end
-		if blocks < 8 or blocks > 40 then
-			table.insert(problems, ("%s: блоков %d"):format(id, blocks))
+		return blocks, meshes, motors
+	end
+	for _, id in ids do
+		ItemFactory.SetCreatureMeshes(id, {})
+		local reserve = ItemFactory.Create(id)
+		ItemFactory.SetCreatureMeshes(id, nil)
+		local reserveBlocks = details(reserve)
+		reserve:Destroy()
+		if reserveBlocks < 8 or reserveBlocks > 40 then
+			table.insert(problems, ("%s: Part-версия — блоков %d"):format(id, reserveBlocks))
+		end
+		local part = ItemFactory.Create(id)
+		local blocks, meshes, motors = details(part)
+		local loaded = ItemFactory.CreatureMeshCount(id)
+		if loaded == 0 or meshes ~= loaded or blocks > 0 then
+			table.insert(problems, ("%s: мешей %d из %d, лишних блоков %d"):format(id, meshes, loaded, blocks))
 		end
 		if part:GetAttribute("Creature") ~= true or motors < 2 then
 			table.insert(problems, ("%s: не существо на суставах (моторов %d)"):format(id, motors))
@@ -3251,6 +3631,237 @@ test("Босс 3: каждое из 30 существ — у короля, «П�
 	end
 end)
 
+-- ── Босс 4 «Сфинкс-лежебока»: 30 существ (D57 — каталог и доходы, D58 — веса и подставки, D59 — площадка) ───────
+
+local function boss4Ids(): { string }
+	local ids = {}
+	for id, def in Items do
+		if def.boss == 4 and not def.legacy then
+			table.insert(ids, id)
+		end
+	end
+	table.sort(ids)
+	return ids
+end
+
+test("Босс 4: 30 существ на суставах, по мешу на часть, Part-резерв 8–40; подставка скрыта, «?» и марево; вес 6/17/7 (D58)", function()
+	local ids = boss4Ids()
+	check(#ids == 30, ("в коллекции босса 4 %d существ"):format(#ids))
+	local weights: { [string]: number } = {}
+	local problems = {}
+	local function details(part: Instance): (number, number, number)
+		local blocks, meshes, motors = 0, 0, 0
+		for _, d in part:GetDescendants() do
+			if d:IsA("MeshPart") then
+				meshes += 1
+			elseif d:IsA("BasePart") then
+				blocks += 1
+			elseif d:IsA("Motor6D") then
+				motors += 1
+			end
+		end
+		return blocks, meshes, motors
+	end
+	for _, id in ids do
+		local def = Items[id]
+		weights[def.weight] = (weights[def.weight] or 0) + 1
+		-- бюджет деталей предмета 8–40 — у Part-версии (резерв на случай, если меши не загрузятся)
+		ItemFactory.SetCreatureMeshes(id, {})
+		local reserve = ItemFactory.Create(id)
+		ItemFactory.SetCreatureMeshes(id, nil)
+		local reserveBlocks = details(reserve)
+		reserve:Destroy()
+		if reserveBlocks < 8 or reserveBlocks > 40 then
+			table.insert(problems, ("%s: Part-версия — блоков %d"):format(id, reserveBlocks))
+		end
+		-- как в игре: загруженные меши частей (их нет — та же Part-версия)
+		local part = ItemFactory.Create(id)
+		local blocks, meshes, motors = details(part)
+		local loaded = ItemFactory.CreatureMeshCount(id)
+		if loaded > 0 and (meshes ~= loaded or blocks > 0) then
+			table.insert(problems, ("%s: мешей %d из %d, лишних блоков %d"):format(id, meshes, loaded, blocks))
+		end
+		if part:GetAttribute("Creature") ~= true or motors < 2 then
+			table.insert(problems, ("%s: не существо на суставах (моторов %d)"):format(id, motors))
+		end
+		if part:FindFirstChild("Stand") then
+			table.insert(problems, id .. ": подставка видна")
+		end
+		if id == "FennecRiddler" and not part:FindFirstChild("Dot") then
+			table.insert(problems, "FennecRiddler: нет точки «?» (Dot)")
+		end
+		if id == "MirageFish" and not part:FindFirstChild("Haze") then
+			table.insert(problems, "MirageFish: нет марева (Haze)")
+		end
+		part:Destroy()
+	end
+	check(
+		weights.Light == 6 and weights.Medium == 17 and weights.Heavy == 7,
+		("вес: Light %d, Medium %d, Heavy %d (нужно 6/17/7)"):format(weights.Light or 0, weights.Medium or 0, weights.Heavy or 0)
+	)
+	check(#problems == 0, table.concat(problems, "; "))
+end)
+
+test("Босс 4: у Сфинкса 4 существа на плитах площадки, «Поймать», редкости 52/30/13/5, бродят не дальше плиты", function()
+	BossLootService.Handlers.Refresh()
+	local arena = MapLayout.Arenas[4]
+	local radius = CreatureMotion.WanderRadius(4)
+	local now = workspace:GetServerTimeNow()
+	local frame = MapLayout.ZoneCFrame(4)
+	for slot = 1, 4 do
+		local uid, part = BossLootService.SlotItem(4, slot)
+		check(uid and part, ("слот %d пуст"):format(slot))
+		local p = part :: BasePart
+		local def = Items[p:GetAttribute("ItemId") :: string]
+		check(def and def.boss == 4 and not def.legacy, ("слот %d: не существо босса 4"):format(slot))
+		check(p:GetAttribute("Creature") == true, ("слот %d: не живое существо"):format(slot))
+		check(p:GetAttribute("Drop") == arena.top, ("слот %d: высота места %s"):format(slot, tostring(p:GetAttribute("Drop"))))
+		local home = p:GetAttribute("Home")
+		check(typeof(home) == "CFrame", ("слот %d: нет места Home"):format(slot))
+		local spot = frame:PointToObjectSpace((home :: CFrame).Position)
+		check(
+			(Vector2.new(spot.X, spot.Z) - arena.slots[slot]).Magnitude < 0.01,
+			("слот %d: не на своей плите (%.1f, %.1f)"):format(slot, spot.X, spot.Z)
+		)
+		local prompt = p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+		check(prompt and prompt.ActionText == "Поймать", ("слот %d: нет подсказки «Поймать»"):format(slot))
+		local params = {
+			seed = CreatureMotion.SeedOf(uid :: string),
+			radius = radius,
+			scale = CreatureMotion.ScaleOf(def.size),
+			mode = "Wander",
+			drop = arena.top,
+		}
+		local farthest = 0
+		for k = 0, 600 do
+			local pose = CreatureMotion.Pose(params, now + k * 0.37)
+			farthest = math.max(farthest, Vector3.new(pose.offset.X, 0, pose.offset.Z).Magnitude)
+		end
+		check(farthest <= math.min(radius + 0.01, 2.6), ("слот %d: ушёл на %.2f ст. от места"):format(slot, farthest))
+	end
+	local rng = Random.new(4)
+	local counts: { [string]: number } = {}
+	local n = 8000
+	for _ = 1, n do
+		local rarity = BossLootService.RollRarity(4, rng)
+		counts[rarity] = (counts[rarity] or 0) + 1
+	end
+	local chances = BossLootService.Chances(4)
+	check(
+		chances.Common == 52 and chances.Rare == 30 and chances.Epic == 13 and chances.Legendary == 5,
+		"шансы босса 4 — D37 (52/30/13/5)"
+	)
+	for rarity, chance in chances do
+		local share = 100 * (counts[rarity] or 0) / n
+		check(math.abs(share - chance) <= 2, ("%s: %.1f %% (ждали %s %%)"):format(rarity, share, tostring(chance)))
+		local itemId = BossLootService.ChooseItem(4, rarity, rng)
+		if chance > 0 then
+			check(itemId and Items[itemId].boss == 4 and Items[itemId].rarity == rarity, rarity .. ": нет существа")
+		end
+	end
+end)
+
+test("Босс 4: каждое из 30 существ — у Сфинкса, «Поймать», победа → в руках, доход только на постаменте, в инвентарь", function(A)
+	local shifted = ensureDay()
+	local arena = MapLayout.Arenas[4]
+	local plot = plotOf(A)
+	local problems = {}
+	for _, id in boss4Ids() do
+		local def = Items[id]
+		BossLootService.Handlers.FillWith(4, 1, id)
+		local uid, part = BossLootService.SlotItem(4, 1)
+		if not uid or not part then
+			table.insert(problems, id .. ": не появился у Сфинкса")
+			continue
+		end
+		local p = part :: BasePart
+		local prompt = p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+		if p:GetAttribute("Creature") ~= true or p:GetAttribute("Drop") ~= arena.top or typeof(p:GetAttribute("Home")) ~= "CFrame" then
+			table.insert(problems, id .. ": у Сфинкса без места живого существа")
+		end
+		if not prompt or prompt.ActionText ~= "Поймать" or prompt.ObjectText ~= def.displayName then
+			table.insert(problems, id .. ": нет подсказки «Поймать» с именем")
+		end
+		if not (BossLootService.Reserve(4, 1, A) and BossLootService.Award(4, 1, A)) then
+			table.insert(problems, id .. ": победа не отдала в руки")
+			continue
+		end
+		if ItemRegistry.GetCarriedBy(A) ~= uid then
+			table.insert(problems, id .. ": в руках не то")
+		end
+		-- в руках дохода нет (D37): сколько даёт музей без этого существа
+		local coins0 = DataService.GetData(A).coins
+		IncomeService.Handlers.Tick({ A })
+		local base = DataService.GetData(A).coins - coins0
+		near(A, plot.showcases[1])
+		task.wait(0.3) -- лимиты запросов игрока
+		MuseumService.Handlers.Display(A, plot, 1)
+		local entry = ItemRegistry.Get(uid)
+		local shown = entry and entry.part
+		if not entry or entry.state ~= "Displayed" or not shown or shown:GetAttribute("Creature") ~= true then
+			table.insert(problems, ("%s: не выставлено живым существом (%s)"):format(id, tostring(entry and entry.state)))
+			if ItemRegistry.GetCarriedBy(A) == uid then
+				CarryService.LoseCarried(A, "уборка после проверки")
+			end
+			continue
+		end
+		local coins = DataService.GetData(A).coins
+		IncomeService.Handlers.Tick({ A })
+		local got = DataService.GetData(A).coins - coins - base
+		if got ~= def.income then
+			table.insert(problems, ("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(def.income)))
+		end
+		task.wait(0.3)
+		InventoryService.Handlers.StoreDisplayed(A, plot, 1)
+		entry = ItemRegistry.Get(uid)
+		if not entry or entry.state ~= "Stored" then
+			table.insert(problems, id .. ": с постамента не убрано в инвентарь")
+		end
+	end
+	BossLootService.Handlers.Refresh()
+	check(#problems == 0, table.concat(problems, "; "))
+	if shifted then
+		TimeService.ResetClock()
+	end
+end)
+
+test("Босс 4: переноска Light / Medium / Heavy — скорость D24 ×1 / ×0.9 / ×0.8; ночью вне Safe Zone существо теряется", function(A, B, ctx)
+	local Speed = require(ReplicatedStorage.Shared.Speed)
+	local pick: { [string]: string } = {}
+	for _, id in boss4Ids() do
+		pick[Items[id].weight] = pick[Items[id].weight] or id
+	end
+	for _, weight in { "Light", "Medium", "Heavy" } do
+		local id = pick[weight]
+		check(id ~= nil, "нет существа веса " .. weight)
+		if id then
+			carry(ctx, A, id)
+			task.wait(0.4)
+			local humanoid = A.Character:FindFirstChildOfClass("Humanoid")
+			local want = Speed.Walk(A:GetAttribute("Strength") or 0, weight)
+			check(
+				humanoid and math.abs(humanoid.WalkSpeed - want) < 0.05,
+				("%s (%s): скорость %s, ждали %.2f"):format(id, weight, tostring(humanoid and humanoid.WalkSpeed), want)
+			)
+			CarryService.LoseCarried(A, "уборка после проверки")
+			check(ItemRegistry.GetCarriedBy(A) == nil, id .. ": не снят с рук")
+		end
+	end
+	-- ночь: в коридоре уровней — потерян, в Safe Zone — остаётся (D37)
+	local corridor = Vector3.new(10, MapLayout.Heights.Path + 3, MapLayout.ZoneStartZ(4) - 40)
+	A:MoveTo(corridor)
+	local uidA = carry(ctx, A, pick.Heavy)
+	B:MoveTo(MapLayout.Spawn.position + Vector3.new(20, 3, 20))
+	local uidB = carry(ctx, B, pick.Light)
+	local day = GameTime.At(GameConfig.Time.Epoch)
+	local nightState = GameTime.At(GameConfig.Time.Epoch + GameConfig.Time.DayLength)
+	NightService.Handlers.Apply(nightState, day, { A, B })
+	check(ItemRegistry.Get(uidA) == nil and ItemRegistry.GetCarriedBy(A) == nil, "существо в коридоре ночью не потеряно")
+	check(ItemRegistry.GetCarriedBy(B) == uidB, "существо в Safe Zone потеряно")
+	CarryService.LoseCarried(B, "уборка после проверки")
+	NightService.Handlers.Apply(TimeService.Current(), nil, {})
+end)
+
 -- Точки вращения суставов существа в осях корня (покой): имя мотора → позиция; и меши частей.
 local function creatureJoints(part: BasePart): ({ [string]: Vector3 }, { [string]: MeshPart })
 	local pivots, meshes = {}, {}
@@ -3390,6 +4001,407 @@ test("Босс 3: меши D54 вместо Part-версии — те же су
 	check(ok, tostring(err))
 	check(#problems == 0, table.concat(problems, "; "))
 end)
+
+test(
+	"Босс 4: меши частей вместо Part-версии — те же суставы, у Сфинкса, поимка, руки, постамент, доход (до импорта — заглушки)",
+	function(A)
+		-- До импорта мешей нет: подставляем MeshPart-заглушки с именами и габаритами частей D54 (как после импорта) —
+		-- проверяется, что сборка и механики с мешами те же, что с Part-версией (резерв).
+		local shifted = ensureDay()
+		local plot = plotOf(A)
+		local problems = {}
+		local function stand(id: string, only: { [string]: boolean }?): ({ [string]: MeshPart }, number)
+			local parts, n = {}, 0
+			for name, spec in CreatureRigs[id].Parts do
+				if not spec.hidden and (not only or only[name]) then
+					local m = Instance.new("MeshPart")
+					m.Size = spec.size
+					parts[name] = m
+					n += 1
+				end
+			end
+			return parts, n
+		end
+		local ok, err = pcall(function()
+			for _, id in boss4Ids() do
+				local def = Items[id]
+				local reference = ItemFactory.Create(id) -- Part-версия
+				local refPivots = creatureJoints(reference)
+				local parts, visible = stand(id)
+				ItemFactory.SetCreatureMeshes(id, parts)
+				check(ItemFactory.CreatureMeshCount(id) == visible, id .. ": меши не подставились")
+				local built = ItemFactory.Create(id)
+				local pivots, meshes = creatureJoints(built)
+				local blocks = 0
+				for _, d in built:GetChildren() do
+					if d:IsA("Part") then
+						blocks += 1
+					end
+				end
+				local joints, worst = 0, 0
+				for name, at in refPivots do
+					joints += 1
+					worst = math.max(worst, if pivots[name] then (pivots[name] - at).Magnitude else math.huge)
+				end
+				local meshCount = 0
+				for name, m in meshes do
+					meshCount += 1
+					local spec = CreatureRigs[id].Parts[name]
+					if not spec or (m.Size - spec.size).Magnitude > 1e-3 then
+						table.insert(problems, ("%s/%s: размер меша"):format(id, name))
+					end
+				end
+				if built.Size ~= reference.Size or meshCount ~= visible or blocks > 0 or worst > 1e-3 then
+					table.insert(
+						problems,
+						("%s: мешей %d из %d, блоков %d, суставов %d, сдвиг точки вращения %.4f"):format(
+							id,
+							meshCount,
+							visible,
+							blocks,
+							joints,
+							worst
+						)
+					)
+				end
+				reference:Destroy()
+				built:Destroy()
+				-- путь игрока: у Сфинкса → победа → в руках → постамент (музей строит экспонат заново) → доход → инвентарь
+				BossLootService.Handlers.FillWith(4, 1, id)
+				local uid, part = BossLootService.SlotItem(4, 1)
+				local p = part :: BasePart
+				local prompt = p and p:FindFirstChild("TakePrompt") :: ProximityPrompt?
+				if
+					not uid
+					or not prompt
+					or prompt.ActionText ~= "Поймать"
+					or not p:FindFirstChildWhichIsA("MeshPart")
+				then
+					table.insert(
+						problems,
+						id .. ": у Сфинкса без мешей или без «Поймать»"
+					)
+					continue
+				end
+				if not (BossLootService.Reserve(4, 1, A) and BossLootService.Award(4, 1, A)) then
+					table.insert(problems, id .. ": победа не отдала в руки")
+					continue
+				end
+				near(A, plot.showcases[1])
+				task.wait(0.3) -- лимиты запросов игрока
+				MuseumService.Handlers.Display(A, plot, 1)
+				local entry = ItemRegistry.Get(uid :: string)
+				local shown = entry and entry.part
+				if
+					not entry
+					or entry.state ~= "Displayed"
+					or not shown
+					or not shown:FindFirstChildWhichIsA("MeshPart")
+				then
+					table.insert(problems, id .. ": на постаменте не меши")
+					if ItemRegistry.GetCarriedBy(A) == uid then
+						CarryService.LoseCarried(A, "уборка после проверки")
+					end
+					continue
+				end
+				local coins = DataService.GetData(A).coins
+				IncomeService.Handlers.Tick({ A })
+				if DataService.GetData(A).coins - coins ~= def.income then
+					table.insert(problems, id .. ": доход не как в каталоге")
+				end
+				task.wait(0.3)
+				InventoryService.Handlers.StoreDisplayed(A, plot, 1)
+				entry = ItemRegistry.Get(uid :: string)
+				if not entry or entry.state ~= "Stored" then
+					table.insert(problems, id .. ": с постамента не убрано в инвентарь")
+				end
+				ItemFactory.SetCreatureMeshes(id, nil)
+			end
+			-- часть мешей ещё не импортирована: эти части — меши, остальные — блоки Part-версии, суставы те же
+			local id = "CanteenCamel" -- у верблюжонка есть Head, Body и Jaw
+			local reference = ItemFactory.Create(id)
+			local refPivots = creatureJoints(reference)
+			ItemFactory.SetCreatureMeshes(id, (stand(id, { Head = true, Body = true })))
+			local mixed = ItemFactory.Create(id)
+			local pivots, meshes = creatureJoints(mixed)
+			local worst = 0
+			for name, at in refPivots do
+				worst = math.max(worst, if pivots[name] then (pivots[name] - at).Magnitude else math.huge)
+			end
+			check(
+				meshes.Head and meshes.Body and meshes.Jaw == nil,
+				"смешанная сборка: не те части мешами"
+			)
+			check(
+				mixed:FindFirstChild("Jaw") ~= nil and worst <= 1e-3,
+				("смешанная сборка: сдвиг %.4f"):format(worst)
+			)
+			reference:Destroy()
+			mixed:Destroy()
+		end)
+		for _, id in boss4Ids() do
+			ItemFactory.SetCreatureMeshes(id, nil)
+		end
+		BossLootService.Handlers.Refresh()
+		if shifted then
+			TimeService.ResetClock()
+		end
+		check(ok, tostring(err))
+		check(#problems == 0, table.concat(problems, "; "))
+	end
+)
+
+-- После ручного импорта двух FBX и scripts/boss4_bind_after_import.py: меши настоящие, загрузились, с картами D39.
+-- До импорта (MeshId нет) — только сведения «ещё не импортированы», не ошибка: Part-версия — утверждённый резерв.
+test("Босс 4 после импорта: меши 30 существ и 27 частей Сфинкса загружены, с картами (до импорта — сведения)", function(_A, _B, ctx)
+	local sphinxOrder = (require(ReplicatedStorage.Shared.Config.Boss4SphinxRig) :: any).Order
+	local bound, expected, sphinxBound = 0, 0, 0
+	for _, id in boss4Ids() do
+		local parts = ItemModels.Creatures[id]
+		for name, spec in CreatureRigs[id].Parts do
+			if not spec.hidden then
+				expected += 1
+				bound += if parts and parts[name] then 1 else 0
+			end
+		end
+	end
+	for _, name in sphinxOrder do
+		sphinxBound += if BossModels[4].meshes[name] then 1 else 0
+	end
+	local counted = ("частей существ с MeshId %d из %d, частей Сфинкса %d из %d"):format(bound, expected, sphinxBound, #sphinxOrder)
+	if bound == 0 and sphinxBound == 0 then
+		ctx.note("меши босса 4 ещё не импортированы: " .. counted)
+		return
+	end
+	check(bound == expected and sphinxBound == #sphinxOrder, "импорт привязан не полностью: " .. counted)
+	local problems = {}
+	for _, id in boss4Ids() do
+		ItemFactory.SetCreatureMeshes(id, nil)
+		local visible = 0
+		for _, spec in CreatureRigs[id].Parts do
+			visible += if spec.hidden then 0 else 1
+		end
+		local built = ItemFactory.Create(id)
+		local _, meshes = creatureJoints(built)
+		local count, withMaps, blocks = 0, 0, 0
+		for _, m in meshes do
+			count += 1
+			withMaps += if m:FindFirstChildOfClass("SurfaceAppearance") then 1 else 0
+		end
+		for _, d in built:GetChildren() do
+			blocks += if d:IsA("Part") then 1 else 0
+		end
+		built:Destroy()
+		local loaded = ItemFactory.CreatureMeshCount(id)
+		if loaded ~= visible or count ~= visible or withMaps ~= visible or blocks > 0 then
+			table.insert(problems, ("%s: загружено %d из %d, мешей %d, с картами %d, блоков %d"):format(id, loaded, visible, count, withMaps, blocks))
+		end
+	end
+	local boss = BossService.Get(4) :: BossService.Boss
+	for _, name in sphinxOrder do
+		local part = boss.model:FindFirstChild(name)
+		if not (part and part:IsA("MeshPart") and part:FindFirstChildOfClass("SurfaceAppearance")) then
+			table.insert(problems, "Сфинкс/" .. name .. ": не меш с картами")
+		end
+	end
+	check(#problems == 0, table.concat(problems, "; "))
+end)
+
+-- ── Босс 4: отдельные тесты Сфинкса — занятость для второго игрока, бой, поражение, восстановление, повтор ──────────
+-- A и B — серверные NPC-игроки (TestPlayer): проверяются правила сервера, а не игра двух настоящих клиентов.
+
+test(
+	"Сфинкс занят для второго: B не ловит, не дерётся и не забирает, пока A ловит, дерётся и Сфинкс идёт домой",
+	function(A, B)
+		local shifted = ensureDay()
+		check(waitBossHome(4), "Сфинкс не дома")
+		BossLootService.Handlers.Refresh()
+		local uidB = BossLootService.SlotItem(4, 3) :: string
+		check(uidB, "слот 3 Сфинкса пуст")
+		giveLovibums(A, 4, "Boom", 1)
+		giveLovibums(B, 4, "Boom", 1)
+		local function blocked(stage: string, word: string)
+			B:ClearSent()
+			check(not beginCatch(B, 4, 3), stage .. ": B начал поимку у занятого Сфинкса")
+			local said = table.concat(B:Notices(), "; ")
+			check(B:WasNotified(word), ("%s: B не сказали «%s» (%s)"):format(stage, word, said))
+			check(
+				BattleService.Handlers.Begin(B, 4, 3) == nil,
+				stage .. ": B начал бой с занятым Сфинксом"
+			)
+			BossLootService.Handlers.Take(B, 4, 3)
+			local untouched = BossLootService.SlotItem(4, 3) == uidB and ItemRegistry.GetCarriedBy(B) == nil
+			check(untouched, stage .. ": B забрал существо у занятого Сфинкса")
+			check(stockOf(B, 4, "Boom") == 1, stage .. ": у B списали Ловибум")
+			check(
+				not CatchService.IsCatching(B) and not BattleService.InBattle(B),
+				stage .. ": B в поимке или в бою"
+			)
+		end
+		-- 1) A ловит существо в слоте 1
+		CatchService.Handlers.SetRoll(0)
+		check(beginCatch(A, 4, 1), "поимка A не началась: " .. table.concat(A:Notices(), "; "))
+		blocked("поимка A", "ловит")
+		-- 2) A поймал — бой со Сфинксом
+		throw(A, "Boom", true)
+		local fight
+		local fought = waitUntil(function()
+			fight = BattleService.Handlers.FightOf(A)
+			return fight ~= nil
+		end, CG.FlightTime + CG.CaptureTime + 3)
+		CatchService.Handlers.SetRoll(nil)
+		check(
+			fought and fight and fight.zone == 4,
+			"бой A со Сфинксом не начался после поимки"
+		)
+		if not fight then
+			return
+		end
+		blocked("бой A", "занят")
+		-- 3) A проиграл — Сфинкс празднует победу и идёт домой: для B он всё ещё занят. (Прерванный в самом начале бой
+		-- этапа возврата не даёт: Сфинкс ещё не сходил с места и засыпает сразу.)
+		BattleService.Handlers.Finish(fight, "lose")
+		check(
+			BattleService.Handlers.IsReturning(4),
+			"после победы Сфинкс не празднует и не идёт домой"
+		)
+		blocked("победа и возврат Сфинкса", "занят")
+		-- 4) Сфинкс дома — B ловит; теперь занят для A
+		check(waitBossHome(4), "Сфинкс не вернулся домой")
+		check(
+			beginCatch(B, 4, 3),
+			"Сфинкс дома, а B не может ловить: " .. table.concat(B:Notices(), "; ")
+		)
+		A:ClearSent()
+		check(BattleService.Handlers.Begin(A, 4, 1) == nil, "A начал бой, пока ловит B")
+		check(
+			not beginCatch(A, 4, 2),
+			"A начал вторую поимку у Сфинкса, пока ловит B"
+		)
+		CatchService.Handlers.Action(B, "Leave")
+		check(waitCatchEnd(B, 3), "«Уйти» не закончило поимку B")
+		check(stockOf(B, 4, "Boom") == 1, "«Уйти» без броска списало Ловибум B")
+		check(waitBossHome(4), "Сфинкс не дома после ухода B")
+		if shifted then
+			TimeService.ResetClock()
+		end
+	end
+)
+
+test(
+	"Сфинкс: Ловибум ур. 4 → бой → поражение (отброс) → домой, сон, полное HP → сразу снова → победа → в руках",
+	function(A)
+		local shifted = ensureDay()
+		check(waitBossHome(4), "Сфинкс не дома")
+		BossLootService.Handlers.Refresh()
+		local boss = BossService.Get(4) :: BossService.Boss
+		local uid = BossLootService.SlotItem(4, 2) :: string
+		check(uid, "слот 2 Сфинкса пуст")
+		local part = (ItemRegistry.Get(uid) :: any).part :: BasePart
+		-- Ловибум другого уровня у Сфинкса не работает
+		giveLovibums(A, 3, "Mega", 1)
+		check(not beginCatch(A, 4, 2), "поимка у Сфинкса с Ловибумом уровня 3")
+		check(A:WasNotified("уровня 4"), "нет подсказки про Ловибум уровня 4")
+		check(stockOf(A, 3, "Mega") == 1, "Ловибум уровня 3 списан")
+		local humanoid = A.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
+		local savedMax = humanoid.MaxHealth
+		local function caughtFight(kind: string): any
+			CatchService.Handlers.SetRoll(0)
+			check(beginCatch(A, 4, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
+			throw(A, kind, true)
+			local fight
+			waitUntil(function()
+				fight = BattleService.Handlers.FightOf(A)
+				return fight ~= nil
+			end, CG.FlightTime + CG.CaptureTime + 3)
+			CatchService.Handlers.SetRoll(nil)
+			return fight
+		end
+		-- поражение при силе 0
+		giveLovibums(A, 4, "Turbo", 1)
+		local started = os.clock()
+		local lost = caughtFight("Turbo")
+		check(lost and lost.zone == 4, "бой со Сфинксом не начался после поимки")
+		if not lost then
+			return
+		end
+		check(
+			part:GetAttribute("CatchMode") == "Hidden",
+			"пойманное существо не спрятано в Ловибум"
+		)
+		check(
+			fightTo(lost, 60) and lost.result == "lose",
+			"при силе 0 Сфинкса победили: " .. tostring(lost.result)
+		)
+		check(
+			boss.state == "Victory",
+			"после поражения игрока не победа Сфинкса: " .. boss.state
+		)
+		local knockedAt = A:GetAttribute("KnockedAt")
+		check(
+			typeof(knockedAt) == "number" and knockedAt >= started,
+			"проигравшего не отбросило"
+		)
+		check(typeof(A:GetAttribute("KnockedFrom")) == "Vector3", "отброс не от Сфинкса")
+		check(
+			A:GetAttribute("Knocked") == nil,
+			"поражение от Сфинкса — нокаут, а нужен только отброс"
+		)
+		check(
+			BossLootService.SlotItem(4, 2) == uid and part:GetAttribute("CatchMode") == nil,
+			"существо не вернулось на плиту"
+		)
+		check(ItemRegistry.GetCarriedBy(A) == nil, "проигравшему отдали существо")
+		check(stockOf(A, 4, "Turbo") == 0, "Ловибум вернули после поражения")
+		-- восстановление: дома, спит, бой снят, здоровье игрока прежнее
+		check(waitBossHome(4), "Сфинкс не вернулся домой и не уснул")
+		check(
+			BossService.DistanceHome(boss) <= Battle.ArriveDistance + 0.05,
+			"Сфинкс уснул не на своём месте"
+		)
+		check(boss.model:GetAttribute("TargetUserId") == nil, "у Сфинкса осталась цель")
+		check(BossLootService.IsOpen(4) and not BattleService.Busy(4), "Сфинкс дома, но занят")
+		check(
+			A:GetAttribute("InBattle") == nil and A:GetAttribute("BattleHP") == nil,
+			"игрок всё ещё в бою"
+		)
+		check(
+			math.abs(humanoid.MaxHealth - savedMax) < 0.01 and humanoid.Health > 0,
+			"здоровье игрока после боя не вернулось"
+		)
+		-- повтор сразу, без паузы (D37); сила Сфинкса — победа
+		DataService.AddStrength(A, GameConfig.Progression.Bosses[4])
+		giveLovibums(A, 4, "Boom", 1)
+		local won = caughtFight("Boom")
+		check(
+			won and won.zone == 4,
+			"после поражения нельзя сразу ловить и драться снова"
+		)
+		if not won then
+			return
+		end
+		check(
+			won.bossHp == won.bossMax and boss.model:GetAttribute("MaxHP") == won.bossMax,
+			"HP Сфинкса не полное"
+		)
+		check(
+			fightTo(won, 90) and won.result == "win",
+			"при равной силе Сфинкса не победили: " .. tostring(won.result)
+		)
+		check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
+		check(
+			part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil,
+			"в руках — атрибуты Сфинкса"
+		)
+		check(BossLootService.SlotItem(4, 2) == nil, "слот не опустел до рассвета")
+		check(stockOf(A, 4, "Boom") == 0, "Ловибум ур. 4 не списан")
+		CarryService.LoseCarried(A, "уборка после теста")
+		check(waitBossHome(4), "Сфинкс не вернулся после победы игрока")
+		if shifted then
+			TimeService.ResetClock()
+		end
+	end
+)
 
 test("Босс 3: Ловибум ур. 3 → поимка → бой с королём (равная сила) → постамент → доход → вход", function(A, _B, ctx)
 	local shifted = ensureDay()
@@ -3714,7 +4726,7 @@ test("D55 обучение: новичок при силе 0 — поимка, �
 	check(p and p.creature and p.creature:GetAttribute("TutorialOwner") == userId, "нет личного существа")
 	-- магазин и защита — отказ
 	DataService.GetData(S).coins = 1e6
-	ShopService.Handlers.Action(S, "Buy", 1, "Boom", 1)
+	ShopService.Handlers.Action(S, "Buy", 1, "Boom")
 	check(CatchRules.StockOfLevel(DataService.Lovibums(S), 1) == 0, "ученик купил Ловибум")
 	-- поимка: бесплатно, первое попадание — захват
 	S:MoveTo(p.creature.Position + Vector3.new(0, 2, -5))
@@ -3757,8 +4769,8 @@ test("D55 обучение: новичок при силе 0 — поимка, �
 	check(data.tutorial.step == "Done", "обучение не завершилось по первому доходу")
 	check(S2:GetAttribute("Tutorial") == nil, "атрибут Tutorial остался")
 	check(TutorialRules.IsProtected(data, uid), "после обучения защита пропала")
-	ShopService.Handlers.Action(S2, "Buy", 1, "Boom", 1)
-	check(CatchRules.Stock(DataService.Lovibums(S2), 1, "Boom") == 1, "после обучения магазин не открылся")
+	ShopService.Handlers.Action(S2, "Buy", 1, "Boom")
+	check(CatchRules.Stock(DataService.Lovibums(S2), 1, "Boom") == 3, "после обучения магазин не открылся (набор ×3)")
 end)
 
 test("D55 обучение: выход и вход на каждом шаге, ночь, чужой игрок, занятые руки — существо одно", function(_A, B, ctx)
@@ -4492,6 +5504,625 @@ do
 		ctx.note(("музей ур. 2: ловушка ур. 1 не ставится («другого уровня»), новая за %s встала, второе устройство (лазер) встало"):format(money(DefenseRules.Price(cfg, "Trap", 2))))
 	end)
 end
+
+-- ── Босс 10 «Король-дракон» (этап B интеграции, 2026-11-15) ──────────────────────────────────────────────────
+-- Модель — блоки на суставах (меши — этап C). Цель — тестовый игрок, которого тест ставит по заданному пути.
+-- Игрок ставится ступнями на землю в точку local (оси дракона: X — его левый бок, Z — вперёд).
+local function placeNearDragon(player: any, boss: BossService.Boss, localPos: Vector3)
+	local root = player.Character.PrimaryPart :: BasePart
+	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	local hip = if humanoid then humanoid.HipHeight else 2
+	local ground = boss.root.CFrame:PointToWorldSpace(Vector3.new(localPos.X, 0, localPos.Z))
+	player:MoveTo(Vector3.new(ground.X, boss.home.Position.Y + root.Size.Y / 2 + hip, ground.Z))
+end
+
+local function dragonFight(A: any, slot: number): any
+	prepareFight(A, slot, 10)
+	local fight = BattleService.Handlers.Begin(A, 10, slot)
+	check(fight, "бой с драконом не начался: " .. table.concat(A:Notices(), "; "))
+	if not fight then
+		return nil
+	end
+	check(
+		waitUntil(function()
+			return fight.phase == "Fight"
+		end, 6),
+		"дракон не проснулся"
+	)
+	-- проверка дальности и залпа, не исхода: HP с запасом только на этот бой
+	fight.hp, fight.maxHp = 1e15, 1e15
+	fight.bossHp, fight.bossMax = 1e15, 1e15
+	return fight
+end
+
+local function count(fight: any, prefix: string): number
+	local n = 0
+	for _, line in fight.log do
+		if string.sub(line, 1, #prefix) == prefix then
+			n += 1
+		end
+	end
+	return n
+end
+
+test(
+	"Босс 10: Король-дракон закрыт (Studio с DevMode), 52 сустава, числа боя — база 1–4 и сила D56; боссы 1–4 прежние",
+	function()
+		local cfg = Battle.Bosses[10]
+		check(cfg and cfg.Closed == true, "босс 10 не закрыт")
+		check(
+			cfg.HP == 140 and cfg.Damage == 8 and cfg.AttackInterval == 1.4,
+			"база дракона не как у боссов 1–4"
+		)
+		check(
+			cfg.Strength == GameConfig.Progression.Bosses[10],
+			"сила дракона не из Progression.Bosses[10]"
+		)
+		local hp, dmg = BattleService.BossStats(10)
+		check(math.abs(hp - 104766407) < 2 and math.abs(dmg - 5986652) < 2, ("HP %.0f, урон %.0f"):format(hp, dmg))
+		for zone = 1, 4 do
+			local c = Battle.Bosses[zone]
+			check(
+				c.AttackRange == 9.5
+					and c.Leash == 40
+					and c.BodyRange == nil
+					and c.Volley == nil
+					and c.AttackSides == nil,
+				("у босса %d появились правила дракона"):format(zone)
+			)
+		end
+		local boss = BossService.Get(10)
+		check(boss ~= nil, "в Studio с DevMode дракона нет на карте")
+		if not boss then
+			return
+		end
+		local motors = 0
+		for _, d in boss.model:GetDescendants() do
+			if d:IsA("Motor6D") then
+				motors += 1
+			end
+		end
+		check(motors == 52, ("суставов Motor6D %d"):format(motors))
+		check(
+			boss.orient.MaxAngularVelocity < math.rad(50.5),
+			"поворот дракона не ограничен 50°/с"
+		)
+		check(BossService.HasClips(boss), "у дракона нет клипов")
+	end
+)
+
+test(
+	"Босс 10: дальность до тела 3.5 ст. — автоудары начинаются, прекращаются и возобновляются; бой идёт; дракон на месте и поворачивается не быстрее 50°/с",
+	function(A, _B, ctx)
+		local boss = BossService.Get(10) :: BossService.Boss
+		local fight = dragonFight(A, 1)
+		if not fight then
+			return
+		end
+		local function hitsDuring(seconds: number): number
+			local before = A:GetAttribute("BattleSwingSeq") or 0
+			task.wait(seconds)
+			return (A:GetAttribute("BattleSwingSeq") or 0) - before
+		end
+		-- граница дальности (2.5 + 1 = 3.5 ст., D52) по контуру: напротив середины каждой из сторон 3.4 ст. — в
+		-- дальности, 3.6 — нет (расстояние считает сервер, BodyDistance)
+		local reach = Battle.Bosses[10].AttackRange + Battle.Player.Reach
+		local body = BossService.Rig(boss).Body
+		local center = Vector2.zero
+		for _, p in body do
+			center += p / #body
+		end
+		local edgeErr = 0
+		for i, a in body do
+			local b = body[i % #body + 1]
+			local mid = (a + b) / 2
+			local n = Vector2.new(b.Y - a.Y, a.X - b.X).Unit
+			if n:Dot(mid - center) < 0 then
+				n = -n
+			end
+			for _, k in { 3.4, 3.6 } do
+				local q = mid + n * k
+				local world = boss.root.CFrame:PointToWorldSpace(Vector3.new(q.X, 0, q.Y))
+				local d = BattleService.Handlers.BodyDistance(boss, world)
+				edgeErr = math.max(edgeErr, math.abs(d - k))
+				check(
+					(d <= reach) == (k < reach),
+					("сторона %d контура, %.1f ст.: расстояние %.2f"):format(i, k, d)
+				)
+			end
+		end
+		-- на оси дракона (он не доворачивается): 3.4 ст. — удары идут, 3.6 — нет
+		local function onAxis(k: number): Vector3
+			local lo, hi = 0, 40
+			for _ = 1, 30 do
+				local z = (lo + hi) / 2
+				local world = boss.root.CFrame:PointToWorldSpace(Vector3.new(0, 0, z))
+				if BattleService.Handlers.BodyDistance(boss, world) < k then
+					lo = z
+				else
+					hi = z
+				end
+			end
+			return Vector3.new(0, 0, (lo + hi) / 2)
+		end
+		placeNearDragon(A, boss, onAxis(3.4))
+		local in34 = hitsDuring(2.2)
+		placeNearDragon(A, boss, onAxis(3.6))
+		task.wait(0.15)
+		local out36 = hitsDuring(2.2)
+		check(
+			in34 >= 2 and out36 == 0,
+			("у груди 3.4 ст. — ударов %d, 3.6 ст. — %d"):format(in34, out36)
+		)
+		ctx.note(
+			("граница: %d сторон контура — 3.4 ст. в дальности, 3.6 нет (точность %.3f ст.); у груди 3.4 — %d уд., 3.6 — %d"):format(
+				#body,
+				edgeErr,
+				in34,
+				out36
+			)
+		)
+		-- спереди у груди: 3 ст. до контура
+		placeNearDragon(A, boss, Vector3.new(0, 0, 12.7 + 3))
+		local d = BattleService.Handlers.MeleeDistance(fight, A.Character.PrimaryPart.Position)
+		check(math.abs(d - 3) < 0.3, ("до контура спереди %.2f ст."):format(d))
+		local atChest = hitsDuring(2.2)
+		check(
+			atChest >= 2,
+			("в дальности (3 ст. от груди) ударов %d за 2.2 с"):format(atChest)
+		)
+		-- чуть дальше дальности: 4 ст.
+		placeNearDragon(A, boss, Vector3.new(0, 0, 12.7 + 4))
+		task.wait(0.15)
+		local far = hitsDuring(2.2)
+		check(far == 0, ("вне дальности (4 ст.) ударов %d"):format(far))
+		check(fight.active, "бой кончился, когда игрок вышел из дальности")
+		-- вернулся
+		placeNearDragon(A, boss, Vector3.new(0, 0, 12.7 + 3))
+		local again = hitsDuring(2.2)
+		check(again >= 2, ("вернулся — ударов %d"):format(again))
+		-- у бока (лапы и бок, не центр): 2 ст. от контура слева
+		placeNearDragon(A, boss, Vector3.new(10 + 2, 0, 0))
+		local side = hitsDuring(2.2)
+		check(side >= 2, ("у левого бока (2 ст. от контура) ударов %d"):format(side))
+		ctx.note(
+			("ударов за 2.2 с: у груди %d, вне дальности %d, вернулся %d, у бока %d"):format(
+				atChest,
+				far,
+				again,
+				side
+			)
+		)
+		-- далеко: дракон не бежит, только поворачивается — и не быстрее 50°/с
+		local home = boss.home.Position
+		placeNearDragon(A, boss, Vector3.new(-30, 0, -30)) -- сзади справа, далеко
+		local function yaw(): number
+			local z = boss.root.CFrame.ZVector
+			return math.deg(math.atan2(z.X, z.Z))
+		end
+		local y0 = yaw()
+		task.wait(0.5)
+		local y1 = yaw()
+		local rate = math.abs((y1 - y0 + 540) % 360 - 180) / 0.5
+		check(rate <= 55, ("скорость поворота %.0f°/с"):format(rate))
+		check(
+			waitUntil(function()
+				local p = boss.root.CFrame:PointToObjectSpace(A.Character.PrimaryPart.Position)
+				return math.abs(math.deg(math.atan2(p.X, p.Z))) < 10
+			end, 6),
+			"дракон не развернулся к игроку"
+		)
+		check(
+			BossService.DistanceHome(boss) < 0.5,
+			("дракон ушёл с места на %.1f ст."):format(BossService.DistanceHome(boss))
+		)
+		-- все части — в круге арены (31) от места
+		local worst = 0
+		for _, part in boss.model:GetChildren() do
+			if part:IsA("BasePart") and part.Name ~= "Root" then
+				worst = math.max(worst, (Vector3.new(part.Position.X - home.X, 0, part.Position.Z - home.Z)).Magnitude)
+			end
+		end
+		check(worst <= 31, ("центры частей до %.1f ст. от места (арена 31)"):format(worst))
+		ctx.note(
+			("поворот %.0f°/с; дальше всех часть в %.1f ст. от места"):format(
+				rate,
+				worst
+			)
+		)
+		BattleService.Handlers.Finish(fight, "abort")
+		check(waitBossHome(10), "дракон не уснул на месте")
+	end
+)
+
+-- Арены зоны 10 ещё нет (этап D). С этапа C дракон в Studio стоит на временной площадке сбоку от карты — декор
+-- «Замка» далеко, и выключать нечего; если площадки нет: вокруг дракона временный декор (навершия на высоте 13), и
+-- развёрнутый к игроку дракон бьёт залпом прямо в навершие. На время проверки залпа декор зоны выше земли не ловит
+-- снаряды — как будущая чистая площадка: сервер ищет препятствия с RespectCanCollide, поэтому выключаются и CanQuery, и
+-- CanCollide; потом всё возвращается (и так только в этой сессии Play).
+local function openDragonLanes(boss: BossService.Boss): () -> ()
+	local zones = workspace:FindFirstChild("World")
+	zones = zones and zones:FindFirstChild("Map")
+	zones = zones and zones:FindFirstChild("Zones")
+	local zone = zones and zones:FindFirstChild("Zone10_Castle")
+	local changed: { { part: BasePart, query: boolean, collide: boolean } } = {}
+	if zone then
+		local ground = boss.home.Position.Y
+		for _, d in zone:GetDescendants() do
+			if d:IsA("BasePart") and d.Position.Y + d.Size.Y / 2 > ground + 1 then
+				local p = boss.home:PointToObjectSpace(d.Position)
+				if Vector3.new(p.X, 0, p.Z).Magnitude < 120 then
+					table.insert(changed, { part = d, query = d.CanQuery, collide = d.CanCollide })
+					d.CanQuery = false
+					d.CanCollide = false
+				end
+			end
+		end
+	end
+	return function()
+		for _, c in changed do
+			c.part.CanQuery = c.query
+			c.part.CanCollide = c.collide
+		end
+	end
+end
+
+-- Залп против игрока: тест ставит его в place (оси дракона) и ждёт фиксации направления. Дальше — в мировых осях
+-- (дракон ещё может доворачиваться к игроку, и его оси «плывут»): aside(t, pocket) — уход поперёк зафиксированной
+-- центральной полосы, стадов (плюс — к левому боку дракона; t — от фиксации, pocket — середина между полосами на
+-- дистанции игрока); onLock(origin, dir) — что поставить в момент фиксации (вернуть уборку). Возвращает число попаданий.
+local function runVolley(
+	fight: any,
+	boss: BossService.Boss,
+	A: any,
+	place: Vector3,
+	aside: ((number, number) -> number)?,
+	onLock: ((Vector3, Vector3) -> () -> ())?
+): number
+	fight.nextVolley = 0
+	placeNearDragon(A, boss, place)
+	local before = count(fight, "залп −")
+	local seq0 = boss.model:GetAttribute("VolleySeq") or 0
+	check(
+		waitUntil(function()
+			return (boss.model:GetAttribute("VolleySeq") or 0) > seq0
+		end, 4),
+		"залп не начался"
+	)
+	local look0 = boss.root.CFrame.ZVector
+	local turned = 0
+	local function track()
+		turned = math.max(turned, math.deg(math.acos(math.clamp(boss.root.CFrame.ZVector:Dot(look0), -1, 1))))
+	end
+	check(
+		waitUntil(function()
+			track()
+			return boss.model:GetAttribute("VolleyLockAt") ~= nil
+		end, 3),
+		"направление не зафиксировано"
+	)
+	local lockAt = boss.model:GetAttribute("VolleyLockAt") :: number
+	local origin = boss.model:GetAttribute("VolleyOrigin") :: Vector3
+	local dir = boss.model:GetAttribute("VolleyDir") :: Vector3
+	local cleanup = if onLock then onLock(origin, dir) else nil
+	local start = (A.Character.PrimaryPart :: BasePart).Position
+	local across = Vector3.new(dir.Z, 0, -dir.X).Unit
+	if across:Dot(boss.root.CFrame.XVector) < 0 then
+		across = -across
+	end
+	local flat = Vector3.new(start.X - origin.X, 0, start.Z - origin.Z).Magnitude
+	local pocket = flat * math.tan(math.rad(Battle.Bosses[10].Volley.Spread)) / 2
+	while fight.volley and fight.active do
+		if aside then
+			A:MoveTo(start + across * aside(workspace:GetServerTimeNow() - lockAt, pocket))
+		end
+		track()
+		task.wait()
+	end
+	if cleanup then
+		cleanup()
+	end
+	-- во время залпа дракон не поворачивается: круг у скипетра, лапы без шага не скользят
+	check(turned < 3, ("дракон повернулся во время залпа на %.1f°"):format(turned))
+	return count(fight, "залп −") - before
+end
+
+test(
+	"Босс 10: залп — дальний игрок перед мордой; стоит — одно попадание; уходит влево или вправо — промах; колонна гасит снаряд",
+	function(A, _B, ctx)
+		local boss = BossService.Get(10) :: BossService.Boss
+		local fight = dragonFight(A, 2)
+		if not fight then
+			return
+		end
+		local cfg = Battle.Bosses[10].Volley
+		local origin = BossService.Rig(boss).VolleyOrigin
+		local restoreLanes = openDragonLanes(boss)
+		local ok, err = pcall(function()
+			local D = 20
+			local spot = Vector3.new(origin.X, 0, origin.Z + D)
+			local pocket = D * math.tan(math.rad(cfg.Spread)) / 2
+			-- стоит
+			local logFrom = #fight.log
+			local standHits = runVolley(fight, boss, A, spot, nil)
+			local trace = {}
+			for i = logFrom + 1, #fight.log do
+				table.insert(trace, fight.log[i])
+			end
+			local feet = tostring(boss.root.CFrame:PointToObjectSpace(A.Character.PrimaryPart.Position))
+			local path = table.concat(trace, "; ")
+			ctx.note(("стоит: %s; игрок в осях дракона %s"):format(path, feet))
+			check(
+				standHits == 1,
+				("стоит — урон залпом %d раз(а): %s; игрок %s"):format(standHits, path, feet)
+			)
+			-- уходит влево / вправо через 0.35 с после фиксации, 14 ст/с, на середину между полосами
+			local function sidestep(sign: number): (number, number) -> number
+				return function(t: number, gap: number): number
+					return sign * math.clamp((t - 0.35) * 14, 0, gap)
+				end
+			end
+			local leftHits = runVolley(fight, boss, A, spot, sidestep(1))
+			check(leftHits == 0, ("ушёл влево — урон %d: %s"):format(leftHits, fight.log[#fight.log]))
+			local rightHits = runVolley(fight, boss, A, spot, sidestep(-1))
+			check(
+				rightHits == 0,
+				("ушёл вправо — урон %d: %s"):format(rightHits, fight.log[#fight.log])
+			)
+			-- колонна на центральной полосе в 12 ст. от круга (ставится в момент фиксации, до выстрела)
+			local coverHits = runVolley(fight, boss, A, spot, nil, function(at: Vector3, dir: Vector3): () -> ()
+				local flat = Vector3.new(dir.X, 0, dir.Z).Unit
+				local pillar = Instance.new("Part")
+				pillar.Name = "TestPillar"
+				pillar.Anchored = true
+				pillar.CanCollide = true
+				pillar.Shape = Enum.PartType.Cylinder
+				pillar.Size = Vector3.new(16, 3.2, 3.2)
+				local base = at + flat * 12
+				pillar.CFrame = CFrame.new(base.X, boss.home.Position.Y + 8, base.Z) * CFrame.Angles(0, 0, math.rad(90))
+				pillar.Parent = workspace
+				return function()
+					pillar:Destroy()
+				end
+			end)
+			check(coverHits == 0, ("за колонной — урон %d"):format(coverHits))
+			ctx.note(
+				("урон залпом: стоит %d, влево %d, вправо %d, за колонной %d; уход на %.1f ст. через 0.35 с после фиксации"):format(
+					standHits,
+					leftHits,
+					rightHits,
+					coverHits,
+					pocket
+				)
+			)
+		end)
+		restoreLanes()
+		if not ok then
+			error(err, 0)
+		end
+		BattleService.Handlers.Finish(fight, "abort")
+		check(waitBossHome(10), "дракон не уснул на месте")
+	end
+)
+
+test(
+	"Босс 10: конец боя во время подготовки и во время полёта — залп отменён, снаряды убраны, урона нет",
+	function(A, _B, ctx)
+		local boss = BossService.Get(10) :: BossService.Boss
+		local origin
+		for _, when in { "подготовка", "полёт" } do
+			local fight = dragonFight(A, if when == "подготовка" then 3 else 4)
+			if not fight then
+				return
+			end
+			origin = origin or BossService.Rig(boss).VolleyOrigin
+			fight.nextVolley = 0
+			placeNearDragon(A, boss, Vector3.new(origin.X, 0, origin.Z + 20))
+			local seq0 = boss.model:GetAttribute("VolleySeq") or 0
+			check(
+				waitUntil(function()
+					return (boss.model:GetAttribute("VolleySeq") or 0) > seq0
+				end, 4),
+				"залп не начался"
+			)
+			local v = fight.volley
+			if when == "подготовка" then
+				task.wait(1.0)
+			else
+				check(
+					waitUntil(function()
+						return boss.model:GetAttribute("VolleyFireAt") ~= nil
+					end, 3),
+					"выстрела нет"
+				)
+				task.wait(0.2)
+			end
+			local before = count(fight, "залп −")
+			BattleService.Handlers.Finish(fight, "abort")
+			local cancelAt = boss.model:GetAttribute("VolleyCancelAt")
+			check(cancelAt ~= nil, ("%s: залп не отменён (нет VolleyCancelAt)"):format(when))
+			check(
+				fight.volley == nil and (v == nil or v.conn == nil),
+				("%s: цикл снарядов не остановлен"):format(when)
+			)
+			task.wait(1.5)
+			check(count(fight, "залп −") == before, ("%s: урон после конца боя"):format(when))
+			ctx.note(("%s: отменён, цикл снарядов остановлен"):format(when))
+			check(waitBossHome(10), "дракон не уснул на месте")
+		end
+	end
+)
+
+test(
+	"Босс 10 после импорта (этап C): 52 части — меши с картами, Body_2 и глаза на сварке, перепонки skinned, 14 костей на своих частях в покое",
+	function(_A, _B, ctx)
+		local boss = BossService.Get(10)
+		check(boss ~= nil, "в Studio с DevMode дракона нет")
+		if not boss then
+			return
+		end
+		local rig = BossService.Rig(boss)
+		local model = boss.model
+		local meshes, looks = 0, 0
+		for _, name in rig.Order do
+			local part = model:FindFirstChild(name)
+			if part and part:IsA("MeshPart") then
+				meshes += 1
+				if part:FindFirstChildOfClass("SurfaceAppearance") then
+					looks += 1
+				end
+			end
+		end
+		check(
+			meshes == #rig.Order,
+			("мешей у частей %d из %d (остальные — блоки)"):format(meshes, #rig.Order)
+		)
+		check(looks == #rig.Order, ("карт у частей %d из %d"):format(looks, #rig.Order))
+		local extras = 0
+		for name, extra in rig.Extras do
+			extras += 1
+			local mesh = model:FindFirstChild(name)
+			check(mesh ~= nil and mesh:IsA("MeshPart"), "нет меша " .. name)
+			local weld = mesh and mesh:FindFirstChildOfClass("Weld")
+			check(
+				weld ~= nil and weld.Part0 == model:FindFirstChild(extra.joint),
+				("%s не приварен к %s"):format(name, extra.joint)
+			)
+			if mesh and extra.eye then
+				check(mesh.Material == Enum.Material.Neon, name .. ": глаз не Neon")
+			elseif mesh then
+				check(mesh:FindFirstChildOfClass("SurfaceAppearance") ~= nil, name .. ": нет карт")
+			end
+		end
+		local membrane = rig.MembraneMesh
+		local wings = model:FindFirstChild(membrane.name)
+		check(
+			wings ~= nil and wings:IsA("MeshPart") and wings.HasSkinnedMesh,
+			"перепонки не skinned MeshPart"
+		)
+		check(
+			wings ~= nil and wings:FindFirstChildOfClass("SurfaceAppearance") ~= nil,
+			"у перепонок нет карт"
+		)
+		local bones, worst = 0, 0
+		for name in membrane.bones do
+			local holder = model:FindFirstChild(name) or boss.root
+			local bone = nil -- у части есть и Motor6D с тем же именем — ищется именно Bone
+			for _, child in holder:GetChildren() do
+				if child:IsA("Bone") and child.Name == name then
+					bone = child
+				end
+			end
+			check(bone ~= nil and bone:IsA("Bone"), ("кость %s не на своей части"):format(name))
+			local info = rig.Parts[name]
+			if bone and info then
+				-- на сервере суставы в покое (анимации — у клиентов): кость — в точке вращения своего сустава
+				local p = boss.root.CFrame:PointToObjectSpace((bone :: Bone).WorldPosition)
+				worst = math.max(worst, (p - info.pivot).Magnitude)
+			end
+			bones += 1
+		end
+		check(bones == 14, ("костей перепонок %d"):format(bones))
+		check(
+			worst < 0.01,
+			("кость дальше %.3f ст. от точки вращения сустава"):format(worst)
+		)
+		ctx.note(
+			("мешей частей %d с картами %d, добавочных %d, перепонки skinned, костей %d, отклонение %.4f ст."):format(
+				meshes,
+				looks,
+				extras,
+				bones,
+				worst
+			)
+		)
+	end
+)
+
+-- ── Тестовый режим владельца в опубликованном DEV-месте (решение владельца 2026-11-16) ───────────────────────────
+test(
+	"Тестовый режим владельца: только резервный сервер DEV-места и только владелец; в Studio и чужом месте выключен",
+	function(A)
+		local OwnerTest = require(Server.Util.OwnerTest)
+		local OwnerTestService = require(Server.Services.OwnerTestService)
+		local cfg = GameConfig.OwnerTest
+		check(
+			type(cfg) == "table" and type(cfg.Enabled) == "boolean",
+			"нет настройки GameConfig.OwnerTest.Enabled"
+		)
+		check(
+			cfg.UniverseId == 10776417796 and cfg.PlaceId == 81392528393796,
+			"не подтверждённое DEV-место"
+		)
+		check(
+			cfg.Zone == 10 and Battle.Bosses[10].Closed == true,
+			"тестовый бой — с закрытым Королём-драконом"
+		)
+		local function info(fields: { [string]: any }): any
+			local base = {
+				studio = false,
+				gameId = cfg.UniverseId,
+				placeId = cfg.PlaceId,
+				privateServerId = "",
+				privateServerOwnerId = 0,
+			}
+			for k, v in fields do
+				base[k] = v
+			end
+			return base
+		end
+		local on = table.clone(cfg)
+		on.Enabled = true
+		local off = table.clone(cfg)
+		off.Enabled = false
+		local reserved = { privateServerId = "abc" }
+		local cases = {
+			{ "резервный сервер DEV-места", on, info(reserved), "Test" },
+			{ "обычный сервер DEV-места", on, info({}), "Normal" },
+			{
+				"частный сервер игрока",
+				on,
+				info({ privateServerId = "abc", privateServerOwnerId = 42 }),
+				"Normal",
+			},
+			{ "Studio", on, info({ studio = true, privateServerId = "abc" }), "Off" },
+			{ "выключен настройкой", off, info(reserved), "Off" },
+			{ "чужая вселенная", on, info({ gameId = 1, privateServerId = "abc" }), "Off" },
+			{ "чужое место", on, info({ placeId = 2, privateServerId = "abc" }), "Off" },
+			{ "нет настройки", nil, info(reserved), "Off" },
+		}
+		for _, case in cases do
+			local kind = OwnerTest.Kind(case[2], case[3])
+			check(kind == case[4], ("%s: %s вместо %s"):format(case[1], kind, case[4]))
+		end
+		check(OwnerTest.IsOwnerId(77, Enum.CreatorType.User, 77), "создатель места — владелец")
+		check(
+			not OwnerTest.IsOwnerId(78, Enum.CreatorType.User, 77),
+			"другой игрок — не владелец"
+		)
+		check(
+			not OwnerTest.IsOwnerId(77, Enum.CreatorType.Group, 77),
+			"место группы — владельца-игрока нет"
+		)
+		check(
+			not OwnerTest.IsOwnerId(0, Enum.CreatorType.User, 0),
+			"неизвестный создатель — не владелец"
+		)
+		-- здесь Studio: режим выключен, закрытые боссы — по DevMode, как раньше; команды ничего не делают
+		check(
+			OwnerTest.ServerKind() == "Off" and not OwnerTest.IsTestServer(),
+			"в Studio тестовый режим включился"
+		)
+		check(not OwnerTest.IsOwner(A), "тестовый игрок оказался владельцем")
+		OwnerTestService.Handlers.OnChat(A, "/fight")
+		OwnerTestService.Handlers.OnChat(A, "/win")
+		check(BattleService.Handlers.FightOf(A) == nil, "команда не владельца начала бой")
+		check(
+			BattleService.Handlers.Fight(cfg.Zone) == nil,
+			"команда не владельца разбудила дракона"
+		)
+	end
+)
 
 local ServerTests = {}
 

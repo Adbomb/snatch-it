@@ -97,7 +97,7 @@ end
 local finishLoad: (Player, any) -> boolean
 
 -- Загружает профиль (ждёт). true — профиль готов; false — игрока кикнули или он уже вышел.
--- mock — профиль в памяти (ProfileStore.Mock), в DataStore не пишется: только для серверных тестов.
+-- mock — профиль в памяти (ProfileStore.Mock), в DataStore не пишется: серверные тесты и тестовый сервер владельца.
 function DataService.LoadAsync(player: Player, mock: boolean?): boolean
 	mockUsers[player.UserId] = if mock then true else nil
 	local source = if mock then store.Mock else store
@@ -767,31 +767,25 @@ function DataService.Lovibums(player: Player): { [string]: { [string]: number } 
 	return data.lovibums
 end
 
--- Покупка: монеты и запас — в одном кадре (без yield). price — цена штуки (CatchRules.Price; проверки — в ShopService,
--- здесь последняя защита данных: итог считается тут). false — не хватает монет, переполнение запаса, нет цены или
--- профиль не загружен.
-function DataService.BuyLovibums(player: Player, level: number, kind: string, count: number, price: number): boolean
+-- Покупка (D61): цена списывается один раз, в запас — ровно CatchRules.Config.PerBuy штук; монеты и запас — в одном
+-- кадре (без yield). price — цена покупки (CatchRules.Price; проверки — в ShopService, здесь последняя защита
+-- данных). false — не хватает монет, переполнение запаса, нет цены или профиль не загружен.
+function DataService.BuyLovibums(player: Player, level: number, kind: string, price: number): boolean
 	local data = DataService.GetData(player)
 	local lovibums = DataService.Lovibums(player)
 	if not data or not lovibums or not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) then
 		return false
 	end
-	if not CatchRules.IsWhole(count) or count < 1 or count > CatchRules.Config.MaxBuy then
+	if not CatchRules.IsWhole(price) or price <= 0 or data.coins < price then
 		return false
 	end
-	if type(price) ~= "number" or price ~= price or price <= 0 then
-		return false
-	end
-	local total = price * count
-	if not CatchRules.IsWhole(total) or data.coins < total then
-		return false
-	end
+	local count = CatchRules.Config.PerBuy
 	local have = CatchRules.Stock(lovibums, level, kind)
 	if have + count > CatchRules.Config.MaxStock then
 		return false
 	end
 	local key = CatchRules.LevelKey(level)
-	data.coins -= total
+	data.coins -= price
 	lovibums[key] = lovibums[key] or {}
 	lovibums[key][kind] = have + count
 	return true

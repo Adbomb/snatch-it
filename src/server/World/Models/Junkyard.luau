@@ -96,7 +96,8 @@ function Junkyard.Washer(): { Brick }
 	return {
 		B(Vector3.new(2.4, 2.6, 2.2), Vector3.new(0, 1.3, 0), C.appliance),
 		B(Vector3.new(0.12, 1.5, 1.5), CFrame.new(0, 1.15, -1.1) * ALONG_Z, C.dark, { shape = "Cylinder", collide = false }),
-		B(Vector3.new(0.14, 1.1, 1.1), CFrame.new(0, 1.15, -1.1) * ALONG_Z, C.screen, { shape = "Cylinder", collide = false }),
+		-- стекло выступает за кольцо на 0.06 с каждой стороны (было 0.01 — торцы мерцали, D36)
+		B(Vector3.new(0.24, 1.1, 1.1), CFrame.new(0, 1.15, -1.1) * ALONG_Z, C.screen, { shape = "Cylinder", collide = false }),
 		B(Vector3.new(2.0, 0.36, 0.12), Vector3.new(0, 2.33, -1.12), C.dark, DECOR),
 	}
 end
@@ -246,7 +247,7 @@ end
 function Junkyard.Sofa(color: Color3): { Brick }
 	return {
 		B(Vector3.new(6, 1.4, 2.6), Vector3.new(0, 0.9, 0), color),
-		B(Vector3.new(6, 2.2, 0.8), Vector3.new(0, 2.2, 1.1), color:Lerp(Palette.Black, 0.1)),
+		B(Vector3.new(5.8, 2.2, 0.8), Vector3.new(0, 2.2, 1.1), color:Lerp(Palette.Black, 0.1)), -- торцы не в плоскости сиденья
 		B(Vector3.new(0.8, 1.2, 2.6), Vector3.new(-3.3, 2.2, 0.0), color:Lerp(Palette.Black, 0.15)),
 		B(Vector3.new(0.8, 1.2, 2.6), Vector3.new(3.3, 2.2, 0.0), color:Lerp(Palette.Black, 0.15)),
 		B(Vector3.new(4.4, 0.4, 1.8), Vector3.new(-0.2, 1.75, -0.3), color:Lerp(Palette.White, 0.12)),

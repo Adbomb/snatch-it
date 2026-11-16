@@ -1,4 +1,4 @@
--- Качалка на клиенте (D34, D35): табличка «Улучшение» во дворе каждого музея — SurfaceGui в PlayerGui на табло
+-- Качалка на клиенте (D34, D35): табличка «Улучшение» во дворе каждого музея — SurfaceGui в PlayerGui на обеих сторонах табло
 -- участка, текст каждому свой: владельцу — «Уровень N > Уровень N+1», цена и кнопки (Robux — заглушка «Скоро»),
 -- гостю — «Гантель игрока <имя>: уровень N», у свободного участка — «Свободный участок». При качании над головой
 -- всплывает «+N». Слева посередине — статистика HUD v2 (D48 v2): иконка + число без рамок — монеты, доход в секунду,
@@ -68,15 +68,12 @@ local function refresh(sign: Sign)
 	end
 end
 
-local function buildSign(plot: Model)
-	local board = plot:WaitForChild("UpgradeBoard", 30)
-	if not board or not board:IsA("BasePart") then
-		return
-	end
+-- Одна сторона табло: SurfaceGui на грани face (Front — к полю качалки, Back — к музею), текст и кнопки те же.
+local function buildFace(plot: Model, board: BasePart, face: Enum.NormalId, suffix: string)
 	local gui = Instance.new("SurfaceGui")
-	gui.Name = "UpgradeSign_" .. plot.Name
+	gui.Name = "UpgradeSign_" .. plot.Name .. suffix
 	gui.Adornee = board
-	gui.Face = Enum.NormalId.Front
+	gui.Face = face
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = SIGN.PixelsPerStud
 	gui.MaxDistance = SIGN.MaxDistance
@@ -127,6 +124,17 @@ local function buildSign(plot: Model)
 		end)
 	end
 	refresh(sign)
+end
+
+-- Табло двустороннее (этап C.2, решение владельца 2026-11-16): с обратной стороны (от входа в музей) раньше была
+-- пустая тёмная грань.
+local function buildSign(plot: Model)
+	local board = plot:WaitForChild("UpgradeBoard", 30)
+	if not board or not board:IsA("BasePart") then
+		return
+	end
+	buildFace(plot, board, Enum.NormalId.Front, "")
+	buildFace(plot, board, Enum.NormalId.Back, "_Back")
 end
 
 local function refreshAll()

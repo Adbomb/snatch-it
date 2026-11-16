@@ -12,8 +12,11 @@
 -- меш или первый блок: Motor6D (имя = имя части) от сустава родителя (или от корня), остальные блоки приварены к
 -- нему. Скрытые части (подставка D54) не строятся — их дети крепятся к ближайшему видимому предку. Лицо — вперёд
 -- (−Z). Оживляет клиент (Transform моторов, Controllers/CreatureController) — одинаково для мешей и блоков.
--- Зависит от AssetService, Config/Items, Config/ItemModels, Config/CreatureRigs, Config/Rarities, Config/UITokens,
--- Shared/NumberFormat, Server/Looks.
+-- Этап C.2: у стеклянных по дизайну предметов (Config/ItemGlass — банка, шлем, бутылка, колпак) к модели приварены
+-- прозрачные стенки (ItemGlass.Style) между её светлыми рёбрами; они — часть модели и видны везде, где модель (мир, перенос,
+-- постамент, предпросмотр); мигание D10 их тоже касается.
+-- Зависит от AssetService, Config/Items, Config/ItemModels, Config/ItemGlass, Config/CreatureRigs, Config/Rarities,
+-- Config/UITokens, Shared/NumberFormat, Server/Looks.
 
 local AssetService = game:GetService("AssetService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,6 +24,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local CreatureRigs = require(ReplicatedStorage.Shared.Config.CreatureRigs)
 local ItemModels = require(ReplicatedStorage.Shared.Config.ItemModels)
+local ItemGlass = require(ReplicatedStorage.Shared.Config.ItemGlass)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
@@ -28,6 +32,7 @@ local UITokens = require(ReplicatedStorage.Shared.Config.UITokens)
 local Looks = ServerScriptService.Server.Looks
 
 local VISUAL_NAME = "Visual"
+local GLASS_NAME = "Glass"
 local BLOCK_NAME = "Blk" -- блок Part-версии существа (D55)
 local FACE = CFrame.Angles(0, math.pi, 0) -- скелет D54 смотрит в +Z, предметы — вперёд (−Z)
 
@@ -313,6 +318,42 @@ local function buildCreature(root: Part, rig: any, meshes: { [string]: MeshPart 
 	return count
 end
 
+-- Стеклянные стенки (этап C.2) у модели visual: тонкие прозрачные детали на сварке к мешу, концы уходят в его рёбра и
+-- кольца. Базовая прозрачность — в атрибуте GlassTransparency (мигание D10 считает от неё).
+local function addGlass(visual: BasePart, itemId: string)
+	local panes = ItemGlass.Items[itemId]
+	if not panes then
+		return
+	end
+	local style = ItemGlass.Style
+	for _, p in panes do
+		local pane = Instance.new("Part")
+		pane.Name = GLASS_NAME
+		pane.Size = p.size
+		pane.Material = (Enum.Material :: any)[style.Material] or Enum.Material.SmoothPlastic
+		pane.Color = Color3.fromHex(style.Color)
+		pane.Transparency = style.Transparency
+		pane.Reflectance = style.Reflectance
+		pane.TopSurface = Enum.SurfaceType.Smooth
+		pane.BottomSurface = Enum.SurfaceType.Smooth
+		pane.CastShadow = false
+		pane.Anchored = false
+		pane.Massless = true
+		pane.CanCollide = false
+		pane.CanQuery = false
+		pane.CanTouch = false
+		pane:SetAttribute("GlassTransparency", style.Transparency)
+		local offset = CFrame.fromMatrix(p.center, p.right, p.up, p.right:Cross(p.up))
+		pane.CFrame = visual.CFrame * offset
+		local weld = Instance.new("Weld")
+		weld.Part0 = visual
+		weld.Part1 = pane
+		weld.C0 = offset
+		weld.Parent = pane
+		pane.Parent = visual
+	end
+end
+
 function ItemFactory.Create(itemId: string): Part
 	local def = Items[itemId]
 	assert(def, "Нет предмета в Config/Items: " .. tostring(itemId))
@@ -342,6 +383,7 @@ function ItemFactory.Create(itemId: string): Part
 		weld.C0 = turn
 		weld.C1 = CFrame.identity
 		weld.Parent = visual
+		addGlass(visual, itemId)
 	elseif rig then
 		-- Живое существо из частей (D55): невидимый хитбокс по габаритам существа, блоки частей на суставах.
 		part.Size = def.size
@@ -363,6 +405,12 @@ function ItemFactory.SetVisualTransparency(part: BasePart, transparency: number)
 	local visual = part:FindFirstChild(VISUAL_NAME)
 	if visual and visual:IsA("BasePart") then
 		visual.Transparency = transparency
+		for _, pane in visual:GetChildren() do
+			local base = pane:GetAttribute("GlassTransparency")
+			if base and pane:IsA("BasePart") then
+				pane.Transparency = 1 - (1 - base) * (1 - transparency)
+			end
+		end
 	elseif part:GetAttribute("Creature") then
 		for _, child in part:GetChildren() do
 			if child:IsA("BasePart") then

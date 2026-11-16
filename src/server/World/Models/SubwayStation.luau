@@ -39,6 +39,7 @@ local WALL_END = HALF - 1.6
 local COLUMN = 50.5 -- колонны боковых платформ
 local BAYS = { -38, -19, 0, 19, 38 } -- колонны, рёбра свода, пилястры стен
 local RUNNER = 4.5 -- полуширина ковровой дорожки
+local WAY = { inner = 16.5, outer = 20.5 } -- боковые пути к соседним уровням (|x|): между киоском и краем перрона
 local ROW = HALF * 2 / 16 -- ряд плит перрона вдоль z
 local SEAM = 0.5
 local L, R = 1, -1 -- лево и право входящего игрока (лицом к выходу): лево — +x зоны
@@ -60,6 +61,8 @@ local TOP = {
 }
 
 local SubwayStation = {}
+
+SubwayStation.Way = WAY -- проверяет scripts/lune/check_world.luau: на боковых путях нет твёрдого
 
 local function X(s: number, a: number, b: number): (number, number)
 	return math.min(s * a, s * b), math.max(s * a, s * b)
@@ -239,6 +242,39 @@ function SubwayStation.Ground(): { Brick }
 		for k, offset in { V(-2.9, 0, 1.1), V(2.7, 0, -1.6), V(1.4, 0, 2.9) } do
 			local p = at * CFrame.new(offset)
 			table.insert(out, SubwayKit.Coin(p.Position.X, p.Position.Z, 0.34 + k * 0.05))
+		end
+	end
+
+	-- Пути от соседних уровней (запрос владельца 2026-11-14: от каждого босса к следующему — видимый путь): по
+	-- бокам (|x| WAY.inner…WAY.outer — напротив дорожек «Барахолки» в обход горы сокровищ) от входа к кафельному
+	-- кольцу и от кольца к выходу в обход киоска. Фиолетовый ковёр (inlay) уходит под кольцо; золотая кромка (edge)
+	-- кончается до кольца и до полосы границы (верх тот же); ромбы (rim) — к выходу.
+	local function ringZ(
+		u: number,
+		side: number
+	): number -- край кольца на |x| = u: −1 — перед площадкой, +1 — за ней
+		return center.Y + side * math.sqrt(outer ^ 2 - u ^ 2)
+	end
+	for _, s in { -1, 1 } do
+		local x0, x1 = X(s, WAY.inner, WAY.outer)
+		table.insert(out, Box(x0, x1, 0, TOP.inlay, -HALF + 0.2, ringZ(WAY.outer, -1) + 0.3, C.purple, DECOR))
+		table.insert(out, Box(x0, x1, 0, TOP.inlay, ringZ(WAY.outer, 1) - 0.3, HALF - 0.2, C.purple, DECOR))
+		for _, e in { { WAY.inner - 0.6, WAY.inner }, { WAY.outer, WAY.outer + 0.6 } } do
+			local a, b = X(s, e[1], e[2])
+			table.insert(out, Box(a, b, 0, TOP.edge, -HALF + 0.7, ringZ(e[1], -1) - 0.1, C.gold, DECOR))
+			table.insert(out, Box(a, b, 0, TOP.edge, ringZ(e[1], 1) + 0.1, HALF - 0.7, C.gold, DECOR))
+		end
+		-- указатель к следующему уровню у начала пути за площадкой — снаружи от него (табличка лицом к площадке)
+		-- за кругом боя (r 34): табличка ближе к площадке задела бы его
+		local sx, sz = s * (WAY.outer + 3.1), center.Y + 27.5
+		table.insert(out, Box(sx - 0.2, sx + 0.2, 0, 3.7, sz - 0.2, sz + 0.2, C.metal))
+		table.insert(
+			out,
+			SubwayKit.Board(V(4.2, 1.2, 0.3), V(sx, 3.3, sz - 0.35), C.signal, SubwayKit.Label("В ПУСТЫНЮ"))
+		)
+		for k, z in { -HALF + 6, -HALF + 12, ringZ(WAY.inner, 1) + 6, HALF - 12, HALF - 6 } do
+			local at = CFrame.new(s * (WAY.inner + WAY.outer) / 2, TOP.rim / 2, z) * CFrame.Angles(0, math.rad(45), 0)
+			table.insert(out, B(V(2.2, TOP.rim, 2.2), at, if k % 2 == 1 then C.gold else C.purpleLight, DECOR))
 		end
 	end
 	return out
@@ -471,7 +507,8 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 	local inward = CFrame.Angles(0, L * math.pi / 2, 0) -- лицом −Z к середине коридора с левой стороны
 	Put(out, SubwayParts.Wagon(28, true), left(22, TRACK))
 	Put(out, SubwayKit.Crate(), CFrame.new(L * TRACK, 11.2, 28) * CFrame.Angles(0, 0.3, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(L * (TRACK - 0.4), 11.2, 31.5) * CFrame.Angles(0, -0.2, 0))
+	-- второй ящик ниже на 0.1: ящики задевают друг друга, верх не в одной плоскости (D36)
+	Put(out, SubwayKit.Crate(), CFrame.new(L * (TRACK - 0.4), 11.1, 31.5) * CFrame.Angles(0, -0.2, 0))
 	SubwayKit.Sack(out, CFrame.new(L * (TRACK + 0.6), 11.2, 17) * CFrame.Angles(0, 0.5, 0), 0.9)
 	Put(out, SubwayKit.RatMinion(), CFrame.new(L * (TRACK - 1), 11.2, 13.5) * inward)
 	-- Правый путь: дрезина и две вагонетки с золотом.
@@ -501,7 +538,7 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 	Put(out, SubwayKit.Bench(6), right(31, 58))
 	Put(out, SubwayKit.Bench(6), right(39, 58))
 	Put(out, SubwayKit.Crate(), CFrame.new(R * 61, 0, -40) * CFrame.Angles(0, 0.3, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(R * 65.5, 0, -41.5) * CFrame.Angles(0, -0.15, 0))
+	Put(out, SubwayKit.Crate(), CFrame.new(R * 65.5, -0.1, -41.5) * CFrame.Angles(0, -0.15, 0)) -- крышки не в одной плоскости
 	Put(out, SubwayKit.CoinSacks(), right(-36, 61, -0.3))
 	Put(out, SubwayKit.Suitcases(), right(-12.5, 66, 0.25))
 	Put(out, SubwayKit.Litter(), CFrame.new(R * 57, 0, 22) * CFrame.Angles(0, 0.4, 0))
@@ -510,12 +547,12 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 
 	-- Вход на перрон: скамейки лицом к площадке и урны по углам; немного мусора на перроне за кругом площадки.
 	for _, s in { L, R } do
-		Put(out, SubwayKit.Bench(6), CFrame.new(s * 19, 0, -43) * SubwayKit.TURN)
+		Put(out, SubwayKit.Bench(6), CFrame.new(s * 10.5, 0, -43) * SubwayKit.TURN) -- между дорожкой и боковым путём
 		table.insert(out, Disc(1.7, 0, 2.3, s * 25.5, -44, C.tileDark, { collide = true }))
 		table.insert(out, Disc(1.95, 2.3, 2.6, s * 25.5, -44, C.metal))
 	end
-	Put(out, SubwayKit.Litter(), CFrame.new(L * 22, 0, -30) * CFrame.Angles(0, 1.1, 0))
-	Put(out, SubwayKit.Litter(), CFrame.new(R * 22, 0, 16) * CFrame.Angles(0, -0.7, 0))
+	Put(out, SubwayKit.Litter(), CFrame.new(L * 25.5, 0, -30) * CFrame.Angles(0, 1.1, 0)) -- мусор — не на боковом пути
+	Put(out, SubwayKit.Litter(), CFrame.new(R * 25.5, 0, 16) * CFrame.Angles(0, -0.7, 0))
 
 	-- За боссом: тронный вагон на коротком пути, перед ним золото, сундук, мешки, чемоданы и крысёнок; фонари-прожекторы
 	-- светят на короля (в середину корпуса).

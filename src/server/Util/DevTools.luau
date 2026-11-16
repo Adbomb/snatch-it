@@ -169,7 +169,8 @@ function DevTools.Init()
 	-- "GiveDefense <userId> <вид> <сколько> [уровень музея]" | "Exhibit <userId> <место> [предмет]" |
 	-- "InstallDefense <userId> <вид> <x,z | Entrance | Gallery>" | "Strength <userId> <сила>" (только Studio, D53) |
 	-- D55: "Lovibums <userId> <уровень> <вид> <n>" | "Tutorial <userId> <шаг>" | "CatchRoll <0…1 | off>" |
-	-- "BossSlot <босс> <место> <предмет>".
+	-- "BossSlot <босс> <место> <предмет>" | "Fight <userId> <босс> <место> [сила]" |
+	-- "FightTest <босс> <HP бойца | -> <HP босса | -> [x z]" (этап C босса 10).
 	-- Выполняются в потоке этого скрипта (как RunTests),
 	-- ответ — атрибут CommandResult.
 	folder:GetAttributeChangedSignal("Command"):Connect(function()
@@ -190,6 +191,53 @@ function DevTools.Init()
 			elseif command == "TimeReset" then
 				TimeService.ResetClock()
 				return "ок"
+			elseif command == "Fight" then
+				-- «Fight <userId> <босс> <место> [сила]»: бой настоящим персонажем (показ анимаций и проверка в Play,
+				-- интеграция босса 4) — тот же BattleService.Begin, что после поимки; сила — только для проверки в Studio.
+				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+				local zone, slot = tonumber(words[3]) or 1, tonumber(words[4]) or 1
+				local BossLootService = require(ServerScriptService.Server.Services.BossLootService)
+				local BattleService = require(ServerScriptService.Server.Services.BattleService)
+				local _, part = BossLootService.SlotItem(zone, slot)
+				if not player or not player.Character or not part then
+					return "нет игрока, персонажа или предмета в слоте"
+				end
+				if words[5] then
+					local data = DataService.GetData(player)
+					DataService.AddStrength(player, (tonumber(words[5]) or 0) - (data and data.strength or 0))
+				end
+				player.Character:PivotTo(CFrame.new(part.Position + Vector3.new(0, 3, 5)))
+				task.wait(0.3)
+				return if BattleService.Begin(player, zone, slot) then "бой начат" else "бой не начался"
+			elseif command == "FightTest" then
+				-- «FightTest <босс> <HP бойца | -> <HP босса | -> [x z]» (этап C босса 10, проверка живым персонажем):
+				-- HP только этого боя (длинный бой, победа, поражение) и место бойца в осях босса (x — левый бок босса,
+				-- z — вперёд), лицом к боссу. Профиль, сила и числа боя не меняются.
+				local BattleService = require(ServerScriptService.Server.Services.BattleService)
+				local fight = BattleService.Handlers.Fight(tonumber(words[2]) or 0)
+				if not fight then
+					return "боя нет"
+				end
+				local hp, bossHp = tonumber(words[3]), tonumber(words[4])
+				if hp then
+					fight.hp, fight.maxHp = hp, hp
+					fight.player:SetAttribute("BattleMaxHP", hp)
+				end
+				if bossHp then
+					fight.bossHp, fight.bossMax = bossHp, bossHp
+					fight.boss.model:SetAttribute("MaxHP", bossHp)
+				end
+				local x, z = tonumber(words[5]), tonumber(words[6])
+				local character = fight.player.Character
+				if x and z and character then
+					local boss = fight.boss
+					local at = boss.root.CFrame:PointToWorldSpace(Vector3.new(x, 0, z))
+					local y = boss.home.Position.Y + 3
+					local look = Vector3.new(boss.root.Position.X, y, boss.root.Position.Z)
+					character:PivotTo(CFrame.lookAt(Vector3.new(at.X, y, at.Z), look))
+				end
+				local hpText = ("HP %.0f / %.0f"):format(fight.hp, fight.maxHp)
+				return ("%s, босс %.0f / %.0f"):format(hpText, fight.bossHp, fight.bossMax)
 			elseif command == "GiveCoins" then
 				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
 				if not player then

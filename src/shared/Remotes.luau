@@ -24,7 +24,7 @@ Remotes.Names = {
 	PvpEffect = "PvpEffect", -- сервер → игрокам рядом: { kind = "Swing" | "Hit" | "Knock", attacker, target?, damage }
 	OpenWindow = "OpenWindow", -- сервер → владельцу: открыть окно ("Inventory" | "Defense") — подсказки хранилища D48-C
 	-- D55: магазин Ловибумов, поимка, обучение
-	ShopAction = "ShopAction", -- клиент → сервер: ("Buy", уровень, вид, количество) | ("Open")
+	ShopAction = "ShopAction", -- клиент → сервер: ("Buy", уровень, вид) — набор из 3 (D61) | ("Open")
 	LovibumsChanged = "LovibumsChanged", -- сервер → владельцу: { lovibums, coins, prices?, open, reason? }
 	CatchAction = "CatchAction", -- клиент → сервер: ("Throw", вид, точка прилёта Vector3, время отпускания) | ("Leave")
 	CatchState = "CatchState", -- сервер → ловящему: { state, boss, slot, uid, since, throws, max, face, … } | nil

@@ -26,6 +26,7 @@ local Studs = require(World.Studs)
 local FleaMarket = require(World.Models.FleaMarket)
 local SubwayStation = require(World.Models.SubwayStation)
 local Junkyard = require(World.Models.Junkyard)
+local DesertOasis = require(World.Models.DesertOasis)
 local Shops = require(World.Models.Shops)
 local Tree = require(World.Models.Tree)
 local ZoneDecor = require(World.Models.ZoneDecor)
@@ -438,7 +439,7 @@ local function buildZone(index: number, parent: Instance)
 	Hologram.Build({
 		title = zone.name,
 		accent = accent,
-		size = MapLayout.HologramSize,
+		size = MapLayout.HologramSize * (MapLayout.HologramScale[zone.id] or 1),
 		hideAtNight = true,
 	}, ground * CFrame.new(0, MapLayout.HologramHeight, -size / 2 + MapLayout.HologramInset), f)
 
@@ -480,6 +481,8 @@ local function buildZone(index: number, parent: Instance)
 		decor, signs = FleaMarket.Zone() -- уровень 2 «Барахолка» (D43)
 	elseif zone.id == "Subway" then
 		decor, signs = SubwayStation.Zone() -- уровень 3 «Подземка» (D54)
+	elseif zone.id == "Desert" then
+		decor, signs = DesertOasis.Zone() -- уровень 4 «Пустыня», логово Сфинкса (D59)
 	elseif zone.id == "Bank" then
 		decor = ZoneDecor.Bank(size)
 	elseif zone.id == "Jungle" then
@@ -491,6 +494,12 @@ local function buildZone(index: number, parent: Instance)
 		end
 	elseif ZoneDecor[zone.id] then
 		decor = ZoneDecor[zone.id]()
+	end
+	-- зоны без своего оформления (5–10): видимый путь к следующему уровню по середине (у 1–4 — свои пути)
+	if not (zone.id == "Junk" or zone.id == "Flea" or zone.id == "Subway" or zone.id == "Desert") then
+		for _, brick in ZoneDecor.Path(size, accent) do
+			table.insert(decor, brick)
+		end
 	end
 	local model = ModelBuilder.Place(ModelBuilder.Build("Decor", decor), frame, f)
 	for _, sign in signs do

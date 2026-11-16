@@ -6,11 +6,24 @@
 -- AttackSeq/AttackKind/AttackAt, HitSeq/HitAt, HP/MaxHP. Анимации считает каждый клиент (Shared/BossAnim, Controllers/BossAnimController).
 -- Пока меш части не загружен (импорт FBX), часть — блок цвета скелета; у Крысиного короля — Part-версия по
 -- утверждённой модели D54 (Config/Boss3RatKingParts: невидимый сустав части и её детали на сварке, позы те же).
+-- Босс 4 «Сфинкс-лежебока» играет клипы (Config/Boss4SphinxRig, Shared/BossClips) и получает план атаки — атрибуты
+-- PlanKind/PlanAt/PlanSeq/PlanCancelAt и AttackPlanAt (пишет BattleService через Plan, CancelPlan, Attack). Закрытый босс
+-- (Battle.Bosses[N].Closed — коллекции ещё нет) строится только в Studio с DevMode: тесты и проверки.
+-- Босс 10 «Король-дракон» (этап B интеграции): скелет и клипы Config/Boss10DragonRig, закрыт; поворот на месте не быстрее
+-- Battle.Bosses[10].TurnRate °/с (AlignOrientation.MaxAngularVelocity — у остальных без ограничения, как раньше); залп —
+-- атрибуты VolleySeq/VolleyAt (начало клипа), VolleyLockAt/VolleyDir (фиксация, центральное направление),
+-- VolleyFireAt, VolleyOrigin, VolleyEndL/C/R (конец снаряда) и VolleyCancelAt — пишет BattleService (Volley…).
+-- Этап C: настоящие меши и карты дракона (6 групп). Добавочные меши rig.Extras (Body_2 — правая половина корпуса,
+-- EyeL/R — глаза, цвет глаз меняет клиент по каналу клипа) приварены к своему суставу. Перепонки rig.MembraneMesh —
+-- skinned MeshPart на сварке к корпусу; их кости (Bone с именами суставов, покой — из импорта) сидят на частях своих
+-- суставов: Motor6D двигает часть, кость едет с ней, перепонка гнётся как в Blender. Пока закрыт, дракон стоит на
+-- временной площадке сбоку от карты (MapLayout.TestArenas, World/Models/TestArena) — только в Studio с DevMode и на
+-- тестовом сервере владельца (Util/OwnerTest).
 -- Карты — копии шаблонов Server/Looks
 -- (Boss<N>_<группа>, создаёт Rojo: игровой скрипт карты SurfaceAppearance задать не может). Сейчас модели есть у
--- боссов 1 (пёс), 2 (торговец) и 3 (Крысиный король, D55); у остальных зон боя нет.
+-- боссов 1 (пёс), 2 (торговец), 3 (Крысиный король, D55) и 4 (Сфинкс, закрыт до коллекции); у остальных зон боя нет.
 -- Бой и последовательность состояний ведёт BattleService. Зависит от AssetService, CollectionService, Config,
--- World/MapLayout, Util/Log.
+-- World/MapLayout, World/Models/TestArena, Util/OwnerTest, Util/Log.
 
 local AssetService = game:GetService("AssetService")
 local CollectionService = game:GetService("CollectionService")
@@ -23,11 +36,16 @@ local Boss1DogRig = require(ReplicatedStorage.Shared.Config.Boss1DogRig)
 local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
 local Boss3RatKingParts = require(ReplicatedStorage.Shared.Config.Boss3RatKingParts)
 local Boss3RatKingRig = require(ReplicatedStorage.Shared.Config.Boss3RatKingRig)
+local Boss4SphinxRig = require(ReplicatedStorage.Shared.Config.Boss4SphinxRig)
+local Boss10DragonRig = require(ReplicatedStorage.Shared.Config.Boss10DragonRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
+local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Server = ServerScriptService.Server
 local Log = require(Server.Util.Log)
 local Looks = Server.Looks
 local MapLayout = require(Server.World.MapLayout)
+local TestArena = require(Server.World.Models.TestArena)
+local OwnerTest = require(Server.Util.OwnerTest)
 
 export type Boss = {
 	zone: number,
@@ -41,7 +59,8 @@ export type Boss = {
 }
 
 local TAG = "Boss"
-local RIGS = { [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig } -- 3 — D55 (D54)
+local RIGS =
+	{ [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig, [4] = Boss4SphinxRig, [10] = Boss10DragonRig } -- 3 — D55 (D54)
 -- Part-версия по утверждённой модели (пока меши не загружены): детали каждой части. Без неё — блок по габариту части.
 local PART_BLOCKS: { [number]: { [string]: { any } } } = { [3] = Boss3RatKingParts }
 local BLOCK_NAME = "Block"
@@ -66,6 +85,11 @@ local function makePart(zone: number, cfg: BossModels.BossModel, name: string, i
 			local mesh = result :: MeshPart
 			mesh.Size = info.size
 			mesh.Material = Enum.Material.SmoothPlastic
+			-- основа — средний цвет части: если карты SurfaceAppearance не отрисуются (в Studio бывает, этап C.2),
+			-- часть будет своего цвета, а не серой; при картах цвет основы не виден
+			if info.color then
+				mesh.Color = Color3.fromHex(info.color)
+			end
 			local look = Looks:FindFirstChild(("Boss%d_%s"):format(zone, info.map))
 			if look then
 				look:Clone().Parent = mesh
@@ -74,7 +98,10 @@ local function makePart(zone: number, cfg: BossModels.BossModel, name: string, i
 			end
 			part = mesh
 		else
-			Log.Warn("BossService", ("Меш части %s не загрузился: %s"):format(name, tostring(result)))
+			Log.Warn(
+				"BossService",
+				("Меш части %s не загрузился: %s"):format(name, tostring(result))
+			)
 		end
 	end
 	if not part then
@@ -120,6 +147,60 @@ local function makePart(zone: number, cfg: BossModels.BossModel, name: string, i
 	part.CanQuery = false
 	part.CanTouch = false
 	return part
+end
+
+-- Добавочный меш (rig.Extras: половина корпуса или глаз) или перепонки (rig.MembraneMesh): MeshPart из импорта; нет
+-- меша — nil (тогда видна только основная часть). Глаз — Neon цвета открытого глаза (дальше цвет ведёт клиент).
+local function extraMesh(zone: number, cfg: BossModels.BossModel, rig: any, name: string, info: any): MeshPart?
+	local meshId = cfg.meshes[name]
+	if not meshId then
+		return nil
+	end
+	local ok, result = pcall(function()
+		return AssetService:CreateMeshPartAsync(Content.fromUri(meshId))
+	end)
+	if not ok or not result then
+		Log.Warn("BossService", ("Меш %s не загрузился: %s"):format(name, tostring(result)))
+		return nil
+	end
+	local mesh = result :: MeshPart
+	mesh.Name = name
+	mesh.Size = info.size
+	if info.eye then
+		mesh.Material = Enum.Material.Neon
+		mesh.Color = Color3.fromHex(rig.Eyes.Open)
+		mesh.CastShadow = false
+	else
+		mesh.Material = Enum.Material.SmoothPlastic
+		-- основа — цвет сустава (как у makePart): без карт часть не серая
+		local joint = info.joint and rig.Parts[info.joint]
+		local base = info.color or (joint and joint.color)
+		if base then
+			mesh.Color = Color3.fromHex(base)
+		end
+		local look = Looks:FindFirstChild(("Boss%d_%s"):format(zone, info.map))
+		if look then
+			look:Clone().Parent = mesh
+		else
+			Log.Warn("BossService", ("Нет шаблона карт Looks/Boss%d_%s"):format(zone, info.map))
+		end
+	end
+	mesh.Anchored = false
+	mesh.Massless = true
+	mesh.CanCollide = false
+	mesh.CanQuery = false
+	mesh.CanTouch = false
+	return mesh
+end
+
+-- Сварка mesh к части сустава part: offset — от рамки части к рамке меша (оба от одной точки вращения сустава).
+local function weldTo(part: BasePart, mesh: BasePart, offset: CFrame)
+	mesh.CFrame = part.CFrame * offset
+	local weld = Instance.new("Weld")
+	weld.Part0 = part
+	weld.Part1 = mesh
+	weld.C0 = offset
+	weld.Parent = mesh
 end
 
 -- Модель босса зоны zone в позе покоя на месте home (лицо модели — +Z).
@@ -175,6 +256,50 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 		joint.Parent = part
 	end
 
+	-- добавочные меши и перепонки (этап C): параллельно, как части; ставятся в покое — до первого кадра анимации
+	local extras: { [string]: MeshPart } = {}
+	local wanted = table.clone(rig.Extras or {})
+	local membrane = rig.MembraneMesh
+	if membrane then
+		wanted[membrane.name] = membrane
+	end
+	local waiting = 0
+	for name, info in wanted do
+		waiting += 1
+		task.spawn(function()
+			extras[name] = extraMesh(zone, cfg, rig, name, info) :: any
+			waiting -= 1
+		end)
+	end
+	while waiting > 0 do
+		task.wait()
+	end
+	for name, extra in rig.Extras or {} do
+		local mesh = extras[name]
+		local info = rig.Parts[extra.joint]
+		if mesh then
+			weldTo(
+				parts[extra.joint],
+				mesh,
+				(CFrame.new(info.center) * meshTurn):Inverse() * CFrame.new(extra.center) * meshTurn
+			)
+			mesh.Parent = model
+		end
+	end
+	local wings = membrane and extras[membrane.name]
+	if membrane and wings then
+		local body = parts.Body
+		weldTo(body, wings, body.CFrame:Inverse() * home * CFrame.new(membrane.center) * meshTurn)
+		wings.Parent = model
+		for name, bone in membrane.bones do
+			local holder = parts[name] or root -- кость Root (без весов) — на корне модели
+			local b = Instance.new("Bone")
+			b.Name = name
+			b.CFrame = holder.CFrame:Inverse() * wings.CFrame * bone.cframe
+			b.Parent = holder
+		end
+	end
+
 	local align = Instance.new("AlignPosition")
 	align.Mode = Enum.PositionAlignmentMode.OneAttachment
 	align.Attachment0 = attachment
@@ -188,6 +313,10 @@ local function build(zone: number, home: CFrame, parent: Instance): Boss
 	orient.Attachment0 = attachment
 	orient.MaxTorque = math.huge
 	orient.Responsiveness = 25
+	local turnRate = Battle.Bosses[zone].TurnRate
+	if turnRate then
+		orient.MaxAngularVelocity = math.rad(turnRate) -- большой босс поворачивается на месте шагом, не рывком
+	end
 	orient.CFrame = home.Rotation
 	orient.Parent = root
 
@@ -232,11 +361,18 @@ function BossService.Height(boss: Boss): number
 	return top
 end
 
--- Место босса зоны: центр зоны, лицом ко входу (лицо модели +Z → мировая +Z).
+-- Место босса зоны: центр зоны (на полу площадки, если он приподнят), лицом ко входу (лицо модели +Z → мировая +Z).
 function BossService.HomeOf(zone: number): CFrame
 	local frame = MapLayout.ZoneCFrame(zone)
 	local spot = MapLayout.BossSpot
-	local position = (frame * CFrame.new(spot.X, 0, spot.Y)).Position
+	local arena = MapLayout.Arenas[zone]
+	-- у площадки с приподнятым полом (Arenas[N].floor, зона 4) босс стоит и ходит на её верху
+	local position = (frame * CFrame.new(spot.X, if arena and arena.floor then arena.floor else 0, spot.Y)).Position
+	local test = MapLayout.TestArenas[zone]
+	if test and Battle.Bosses[zone].Closed and BossService.ClosedAllowed() then
+		-- закрытый босс (Studio, тестовый сервер владельца) — на временной площадке сбоку от карты, в полосе z своей зоны (D49 держит по z)
+		return CFrame.new(test.x, 0, position.Z)
+	end
 	return CFrame.new(position)
 end
 
@@ -245,7 +381,15 @@ function BossService.Init(world: Instance)
 	folder.Name = "Bosses"
 	folder.Parent = world
 	for zone in RIGS do
-		bosses[zone] = build(zone, BossService.HomeOf(zone), folder)
+		if Battle.Bosses[zone].Closed and not BossService.ClosedAllowed() then
+			continue -- коллекции ещё нет: в опубликованной игре босса нет
+		end
+		local home = BossService.HomeOf(zone)
+		local test = MapLayout.TestArenas[zone]
+		if test and Battle.Bosses[zone].Closed then
+			TestArena.Build(("TestArena%d"):format(zone), home.Position, test.size, folder)
+		end
+		bosses[zone] = build(zone, home, folder)
 	end
 	RunService.Heartbeat:Connect(function()
 		for _, boss in bosses do
@@ -261,6 +405,12 @@ function BossService.Init(world: Instance)
 		end
 	end)
 	Log.Debug("BossService", ("Боссов на карте: %d"):format(#bosses))
+end
+
+-- Закрытые боссы (Battle.Bosses[N].Closed) есть только в Studio с DevMode и на тестовом сервере владельца
+-- (Util/OwnerTest: резервный сервер подтверждённого DEV-места, профили в памяти).
+function BossService.ClosedAllowed(): boolean
+	return (RunService:IsStudio() and GameConfig.DevMode == true) or OwnerTest.IsTestServer()
 end
 
 -- Босс зоны (nil — у зоны пока нет модели и боя).
@@ -300,6 +450,12 @@ function BossService.Face(boss: Boss, position: Vector3)
 	boss.orient.CFrame = CFrame.lookAt(from, flat).Rotation * CFrame.Angles(0, math.pi, 0)
 end
 
+-- Держать нынешнее направление (залп босса 10: цель поворота — куда смотрит сейчас, иначе он доворачивал бы к прежней
+-- цели посреди клипа — круг скипетра уезжал бы, лапы скользили без шага).
+function BossService.HoldFacing(boss: Boss)
+	BossService.Face(boss, boss.root.Position + boss.root.CFrame.ZVector * 10)
+end
+
 -- Лицом ко входу, как на месте.
 function BossService.FaceHome(boss: Boss)
 	boss.orient.CFrame = boss.home.Rotation
@@ -320,17 +476,88 @@ function BossService.DistanceHome(boss: Boss): number
 	return Vector3.new(p.X - h.X, 0, p.Z - h.Z).Magnitude
 end
 
--- Выпад (анимация укуса или удара лапой).
-function BossService.Attack(boss: Boss, kind: string)
+-- Играет ли босс клипы (тогда ему нужен план атаки).
+function BossService.HasClips(boss: Boss): boolean
+	return RIGS[boss.zone].Clips ~= nil
+end
+
+-- Выпад (анимация укуса или удара лапой). plannedAt — у босса с клипами: время из плана этого выпада (nil — без
+-- плана); клиент ведёт клип от него, чтобы замах и удар шли одним движением.
+function BossService.Attack(boss: Boss, kind: string, plannedAt: number?)
+	if BossService.HasClips(boss) then
+		boss.model:SetAttribute("AttackPlanAt", plannedAt) -- до AttackSeq: номер выпада — последним
+	end
 	boss.model:SetAttribute("AttackKind", kind)
 	boss.model:SetAttribute("AttackAt", now())
 	boss.model:SetAttribute("AttackSeq", (boss.model:GetAttribute("AttackSeq") or 0) + 1)
+end
+
+-- План следующего выпада (только у босса с клипами): вид, время сервера и номер — следующий после AttackSeq.
+function BossService.Plan(boss: Boss, kind: string, at: number)
+	if not BossService.HasClips(boss) then
+		return
+	end
+	boss.model:SetAttribute("PlanKind", kind)
+	boss.model:SetAttribute("PlanAt", at)
+	boss.model:SetAttribute("PlanSeq", (boss.model:GetAttribute("AttackSeq") or 0) + 1)
+	boss.model:SetAttribute("PlanCancelAt", nil)
+end
+
+-- Отмена плана (игрок вне дальности, бой кончился): начатый замах у клиентов гаснет.
+function BossService.CancelPlan(boss: Boss)
+	if BossService.HasClips(boss) and boss.model:GetAttribute("PlanAt") ~= nil then
+		boss.model:SetAttribute("PlanCancelAt", now())
+	end
 end
 
 -- Попадание по боссу (анимация реакции).
 function BossService.Hit(boss: Boss)
 	boss.model:SetAttribute("HitAt", now())
 	boss.model:SetAttribute("HitSeq", (boss.model:GetAttribute("HitSeq") or 0) + 1)
+end
+
+-- Скелет босса (Config/Boss<N>…Rig).
+function BossService.Rig(boss: Boss): any
+	return RIGS[boss.zone]
+end
+
+-- Залп (босс 10): начало клипа залпа (время сервера at) и центр магического круга. Номер — последним: клиенты
+-- начинают новый залп, когда остальное уже на месте.
+function BossService.Volley(boss: Boss, at: number, origin: Vector3)
+	local model = boss.model
+	model:SetAttribute("VolleyAt", at)
+	model:SetAttribute("VolleyOrigin", origin)
+	model:SetAttribute("VolleyLockAt", nil)
+	model:SetAttribute("VolleyDir", nil)
+	model:SetAttribute("VolleyFireAt", nil)
+	model:SetAttribute("VolleyCancelAt", nil)
+	for _, side in { "L", "C", "R" } do
+		model:SetAttribute("VolleyEnd" .. side, nil)
+	end
+	model:SetAttribute("VolleySeq", (model:GetAttribute("VolleySeq") or 0) + 1)
+end
+
+-- Направление зафиксировано: центральное направление dir (время сервера at).
+function BossService.VolleyLock(boss: Boss, dir: Vector3, at: number)
+	boss.model:SetAttribute("VolleyDir", dir)
+	boss.model:SetAttribute("VolleyLockAt", at)
+end
+
+-- Выстрел (время сервера at).
+function BossService.VolleyFire(boss: Boss, at: number)
+	boss.model:SetAttribute("VolleyFireAt", at)
+end
+
+-- Снаряд стороны side (−1, 0, 1) кончился в момент at (время сервера): попал, о землю, о препятствие или на дальности.
+function BossService.VolleyEnd(boss: Boss, side: number, at: number)
+	boss.model:SetAttribute("VolleyEnd" .. (if side < 0 then "L" elseif side > 0 then "R" else "C"), at)
+end
+
+-- Залп отменён (бой кончился, боец пропал): предупреждения и снаряды у клиентов исчезают.
+function BossService.CancelVolley(boss: Boss)
+	if boss.model:GetAttribute("VolleyAt") ~= nil then
+		boss.model:SetAttribute("VolleyCancelAt", now())
+	end
 end
 
 -- Для тестов: мгновенно поставить босса на место (без физики).

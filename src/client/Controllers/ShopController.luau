@@ -1,14 +1,15 @@
 -- Окно «Магазин» Ловибумов (D55, Stud-UI D20: красная кнопка и розовая шапка — магазин). Сверху — уровни 1–10
 -- (Ловибум уровня N ловит только существ босса N), ниже три карточки: Бум, Турбо, Мега — вращающаяся 3D-модель
--- (World/LovibumModel), бонус к шансу, запас, цена, количество (−, число, +; касание числа: 1 → 5 → 10) и «Купить».
+-- (World/LovibumModel), бонус к шансу, запас, цена, наклейка «×3» и «Купить»: одна покупка — всегда набор из
+-- Catch.PerBuy штук за цену из Prices (D61), количество не выбирается.
 -- Покупку проверяет и проводит сервер (ShopAction → ShopService); окно только показывает его ответ (LovibumsChanged).
 -- Кнопки «Магазин» нет, пока не пройдено обучение; во время поимки (атрибут Catching) окно не открывается и
 -- закрывается. Цены боссов 1–3 утверждены (Config/Catch.Prices); уровень без утверждённой цены — «Скоро», в Studio
 -- + DevMode — предварительная цена с пометкой «предварительно» в подвале.
 -- Адаптивно, как «Инвентарь»: размер окна — по экрану (ниже кнопок Roblox), на телефоне масштаб не меньше PhoneScale,
 -- кнопки на касание не ниже MinTouch px; в Studio экран подменяют атрибуты игрока DevViewport и DevTouch. Низкое или
--- узкое окно (телефон) — компактная раскладка «уровень → вид → количество»: три карточки-выбора вида (превью, запас,
--- цена; выбранная — салатовая рамка) и одна строка внизу: итог, «−», число, «+», «Купить» для выбранного вида.
+-- узкое окно (телефон) — компактная раскладка «уровень → вид»: три карточки-выбора вида (превью, запас, цена;
+-- выбранная — салатовая рамка) и одна строка внизу: вид и цена, «×3», «Купить» для выбранного вида.
 -- Зависит от Shared/StudUI, Shared/NumberFormat, Remotes, Config/GameConfig, Config/UITokens, UI/MenuHud, UI/HudIcons,
 -- World/LovibumModel.
 
@@ -44,13 +45,11 @@ type Profile = {
 	button: number,
 	touch: boolean,
 	compact: boolean,
-	qty: number, -- ширина числа в карточке ПК
 }
 type Card = {
 	stock: TextLabel,
 	price: TextLabel,
-	qty: TextLabel?, -- у карточки ПК; на телефоне — общая строка (bar)
-	buy: GuiButton?,
+	buy: GuiButton?, -- у карточки ПК; на телефоне — общая строка (bar)
 	select: GuiObject?, -- рамка выбора (телефон)
 	view: ViewportFrame,
 	camera: Camera,
@@ -61,7 +60,6 @@ type Card = {
 local state: any = { lovibums = {}, coins = 0, prices = nil, open = false }
 local waitingUntil = 0 -- после «Купить» — ждём ответа сервера (LovibumsChanged), повторное нажатие не шлём
 local level = 1
-local qty: { [string]: number } = { Boom = 1, Turbo = 1, Mega = 1 }
 local profile: Profile
 local gui: ScreenGui? = nil
 local win: any
@@ -71,7 +69,7 @@ local subtitle: TextLabel
 local footer: TextLabel
 local cards: { [string]: Card } = {}
 local selected = "Boom" -- выбранный вид (телефон)
-local bar: { qty: TextLabel, buy: GuiButton, total: TextLabel }? = nil
+local bar: { buy: GuiButton, total: TextLabel }? = nil
 local hudButton: GuiButton? = nil
 local spin = 0
 
@@ -106,11 +104,9 @@ local function measure(): Profile
 	local w = math.clamp(math.floor((viewport.X - 2 * T.Margin) / scale), T.MinWindow.X, T.Window.X)
 	local h = math.clamp(math.floor((viewport.Y - inset - 2 * T.Margin) / scale), T.MinWindow.Y, T.Window.Y)
 	local button = if touch then math.max(T.Button, math.ceil(T.MinTouch / scale)) else T.Button
-	-- карточка ПК вмещает «−», число, «+» и «Купить» не уже BuyMin (зазор не меньше 4); не влезает — число уже
-	-- (QtyCompact); и так не влезает — компактная раскладка
+	-- карточка ПК вмещает наклейку «×3» и «Купить» не уже BuyMin; не влезает — компактная раскладка
 	local row = math.floor((w - 5 - 2 * T.Pad - 2 * T.Gap) / 3) - 2 * T.Pad
-	local qtyWidth = if row >= 2 * button + T.QtyValue + 12 + T.BuyMin then T.QtyValue else T.QtyCompact
-	local fits = row >= 2 * button + qtyWidth + 12 + T.BuyMin
+	local fits = row >= T.Pack + 8 + T.BuyMin
 	return {
 		key = ("%dx%d:%d"):format(w, h, button),
 		window = Vector2.new(w, h),
@@ -118,7 +114,6 @@ local function measure(): Profile
 		button = button,
 		touch = touch,
 		compact = h < T.CompactHeight or not fits,
-		qty = qtyWidth,
 	}
 end
 
@@ -156,64 +151,21 @@ local function placeCamera(card: Card, angle: number)
 	card.camera.CFrame = CFrame.lookAt(card.center + dir * card.distance, card.center)
 end
 
-local function setQty(kind: string, value: number)
-	qty[kind] = math.clamp(math.floor(value), 1, Catch.MaxBuy)
-	render()
-end
-
--- Строка покупки: «−», число (касание: 1 → 5 → 10), «+», «Купить» (прижата к концу width, не уже BuyMin). kindOf —
--- вид, к которому она относится сейчас (у карточки ПК — свой, у строки телефона — выбранный).
-local function buyRow(parent: Instance, kindOf: () -> string, x: number, rowY: number, width: number, qtyWidth: number)
+-- Строка покупки: наклейка «×3» (одна покупка — набор, D61) и «Купить» (прижата к концу width, не уже BuyMin). kindOf — вид, к
+-- которому она относится сейчас (у карточки ПК — свой, у строки телефона — выбранный).
+local function buyRow(parent: Instance, kindOf: () -> string, x: number, rowY: number, width: number): GuiButton
 	local b = profile.button
-	local minus = UI.Button(parent, {
-		Name = "Moins",
-		Style = "Chunky",
-		Theme = "gray",
-		Size = Vector2.new(b, b),
-		Position = UDim2.fromOffset(x + b / 2, rowY),
-		Text = "−",
-		TextSize = 28,
-		ZIndex = 7,
+	local pack = UI.Text(parent, "×" .. tostring(Catch.PerBuy), {
+		Name = "Lot",
+		Size = UDim2.fromOffset(T.Pack, b),
+		Position = UDim2.fromOffset(x, rowY - b / 2),
+		AnchorPoint = Vector2.zero,
+		TextSize = T.PackText,
+		Color = T.PackColor,
+		ZIndex = 8,
 	})
-	Motion.BindButton(minus, 1.05, nil, function()
-		setQty(kindOf(), qty[kindOf()] - 1)
-	end)
-	local value = Instance.new("TextButton")
-	value.Name = "Quantite"
-	value.BackgroundTransparency = 1
-	value.Text = ""
-	value.Size = UDim2.fromOffset(qtyWidth, b)
-	value.Position = UDim2.fromOffset(x + b + 4, rowY - b / 2)
-	value.ZIndex = 7
-	value.Parent = parent
-	local qtyText = UI.Text(value, "1", { Name = "Texte", TextSize = 26, ZIndex = 8 })
-	Motion.BindButton(value, 1.05, nil, function()
-		-- быстрый выбор: 1 → 5 → 10 → 1
-		local kind = kindOf()
-		local presets = T.Presets
-		local nextValue = presets[1]
-		for i, p in presets do
-			if qty[kind] < p or (qty[kind] == p and i < #presets) then
-				nextValue = if qty[kind] == p then presets[i + 1] else p
-				break
-			end
-		end
-		setQty(kind, nextValue)
-	end)
-	local plus = UI.Button(parent, {
-		Name = "Plus",
-		Style = "Chunky",
-		Theme = "gray",
-		Size = Vector2.new(b, b),
-		Position = UDim2.fromOffset(x + b * 1.5 + qtyWidth + 8, rowY),
-		Text = "+",
-		TextSize = 28,
-		ZIndex = 7,
-	})
-	Motion.BindButton(plus, 1.05, nil, function()
-		setQty(kindOf(), qty[kindOf()] + 1)
-	end)
-	local buyX = x + 2 * b + qtyWidth + 20
+	pack.Rotation = T.PackTilt
+	local buyX = x + T.Pack + 8
 	local buyWidth = math.max(width - (buyX - x), T.BuyMin)
 	local buy = UI.Button(parent, {
 		Name = "Acheter",
@@ -227,7 +179,7 @@ local function buyRow(parent: Instance, kindOf: () -> string, x: number, rowY: n
 	Motion.BindButton(buy, 1.05, nil, function()
 		local kind = kindOf()
 		local price = priceOf(level, kind)
-		if not state.open or not price or state.coins < price * qty[kind] then
+		if not state.open or not price or state.coins < price then
 			Motion.Shake(buy)
 			return
 		end
@@ -235,9 +187,9 @@ local function buyRow(parent: Instance, kindOf: () -> string, x: number, rowY: n
 			return -- прошлая покупка ещё не подтверждена сервером
 		end
 		waitingUntil = os.clock() + T.BuyWait
-		send("Buy", level, kind, qty[kind])
+		send("Buy", level, kind)
 	end)
-	return qtyText, buy
+	return buy
 end
 
 -- Карточка вида. ПК: превью сверху во всю ширину, под ним название, запас, цена и строка покупки. Телефон: превью
@@ -334,9 +286,9 @@ local function card(parent: Instance, kind: string, x: number, width: number, he
 			render()
 		end)
 	else
-		c.qty, c.buy = buyRow(box, function()
+		c.buy = buyRow(box, function()
 			return kind
-		end, pad, height - pad - b / 2, width - 2 * pad, profile.qty)
+		end, pad, height - pad - b / 2, width - 2 * pad)
 	end
 	cards[kind] = c
 	placeCamera(c, 0)
@@ -411,13 +363,13 @@ local function build()
 		subtitle = nil :: any
 		cardsTop = pad + b + 10
 		local rowY = footY - 6 - b / 2
-		local rowW = 2 * b + T.QtyCompact + 20 + T.Buy
+		local rowW = T.Pack + 8 + T.Buy
 		local rowX = W - pad - rowW
-		local qtyText, buy = buyRow(corps, function()
+		local buy = buyRow(corps, function()
 			return selected
-		end, rowX, rowY, rowW, T.QtyCompact)
+		end, rowX, rowY, rowW)
 		local total = line("Total", rowY - (T.BarText + 6) / 2, rowX - 2 * pad - 10, T.BarText)
-		bar = { qty = qtyText, buy = buy, total = total }
+		bar = { buy = buy, total = total }
 		cardsBottom = rowY - b / 2 - 10
 	else
 		local subY = pad + b + 6
@@ -444,24 +396,22 @@ local function build()
 	Motion.SpinSunbursts(screen)
 end
 
--- Число, «Купить» и итог для вида kind (общее у карточки ПК и строки телефона); head — начало строки цены.
-local function priceLine(kind: string, qtyLabel: TextLabel, buy: GuiButton, head: string?): string
+-- «Купить» и цена набора для вида kind (общее у карточки ПК и строки телефона); head — начало строки цены.
+local function priceLine(kind: string, buy: GuiButton, head: string?): string
 	local price = priceOf(level, kind)
-	local n = qty[kind]
-	qtyLabel.Text = tostring(n)
 	if not price then
 		UI.SetButtonText(buy, "Скоро")
 		UI.SetDisabled(buy, true)
-		return "Цена: скоро"
+		return (head or "") .. "Цена: скоро"
 	end
-	local total = price * n
-	local afford = state.coins >= total
+	local afford = state.coins >= price
 	UI.SetButtonText(buy, "Купить")
 	UI.SetDisabled(buy, not afford or not state.open)
-	return ('%sИтого: <font color="%s">%s</font>'):format(
-		head or ("Цена: %s · "):format(money(price)),
+	return ('%sЦена: <font color="%s">%s</font> за %d шт.'):format(
+		head or "",
 		if afford then "#60E87A" else "#FF6A6A",
-		money(total)
+		money(price),
+		Catch.PerBuy
 	)
 end
 
@@ -491,11 +441,11 @@ render = function()
 			UI.Colors.HighlightHex,
 			NumberFormat.Short(stockOf(level, kind))
 		)
-		if c.qty and c.buy then
-			c.price.Text = priceLine(kind, c.qty, c.buy)
+		if c.buy then
+			c.price.Text = priceLine(kind, c.buy)
 		else
 			local price = priceOf(level, kind)
-			c.price.Text = if price then "Цена: " .. money(price) else "Цена: скоро"
+			c.price.Text = if price then ("Цена: %s за ×%d"):format(money(price), Catch.PerBuy) else "Цена: скоро"
 		end
 		if c.select then
 			c.select.Visible = kind == selected
@@ -504,13 +454,8 @@ render = function()
 	if bar then
 		bar.total.Text = priceLine(
 			selected,
-			bar.qty,
 			bar.buy,
-			('<font color="#%s">%s</font> ×%d · '):format(
-				T.KindColor[selected]:ToHex(),
-				Catch.Names[selected],
-				qty[selected]
-			)
+			('<font color="#%s">%s</font> · '):format(T.KindColor[selected]:ToHex(), Catch.Names[selected])
 		)
 	end
 	local coins = ('У вас: <font color="#60E87A">%s</font>'):format(money(state.coins or 0))

@@ -7,16 +7,20 @@
 -- Шаг (Combat и Return) включается и гаснет за один шаг цикла от смены Moving (атрибут MovingAt); каждый переход
 -- начинается с живой позы того, что играло (сон с дыханием, бой с выпадом, шаг домой, головокружение, танец), —
 -- на стыках состояний и при остановке позы не прыгают, длительности прежние.
--- Длительности — Config/Battle.Timeline. Ни от чего не зависит, кроме Config/Battle.
+-- Длительности — Config/Battle.Timeline. У скелета с клипами (rig.Clips — босс 4) позу отдаёт Shared/BossClips: кадры
+-- анимаций из Blender вместо двух поз на состояние; боссы 1–3 идут прежним путём. Зависит от Config/Battle и
+-- Shared/BossClips.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local BossClips = require(ReplicatedStorage.Shared.BossClips)
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
 
 export type Rig = {
 	Order: { string },
 	Parts: { [string]: any },
 	Poses: { [string]: { [string]: { number } } },
+	Clips: any?, -- клипы (Config/Boss4SphinxClips): есть — играет BossClips
 }
 
 export type Input = {
@@ -30,6 +34,18 @@ export type Input = {
 	attackT: number?, -- секунд с начала последнего выпада (nil — давно)
 	hitT: number?, -- секунд с последнего попадания по боссу
 	clock: number, -- общее время для циклов (дыхание, шаги)
+	-- план атаки (только у скелетов с клипами, пишет BattleService): номер последнего выпада, сколько прошло от
+	-- плана этого выпада, вид и номер следующего, сколько прошло от его плана (минус — ещё впереди) и от отмены
+	attackSeq: number?,
+	attackPlanT: number?,
+	planKind: string?,
+	planSeq: number?,
+	planT: number?,
+	planCancelT: number?,
+	-- шаг на месте при повороте модели (скелет с rig.Turn — босс 10; считает BossAnimController)
+	turnDir: number?, -- 1 — влево, −1 — вправо
+	turnT: number?, -- время в клипе шага
+	turnWeight: number?, -- сила 0…1
 }
 
 local ATTACK_TIME = 0.5 -- выпад: 0.2 замах и удар, остальное — возврат
@@ -197,6 +213,9 @@ end
 -- Transform каждого сустава для состояния. Каждый переход начинается с той позы, что играла (живой: с дыханием,
 -- покачиванием, шагом, выпадом), и приходит в ту, что будет, — на стыках позы совпадают, длительности те же.
 function BossAnim.Sample(rig: Rig, input: Input): { [string]: CFrame }
+	if rig.Clips then
+		return BossClips.Sample(rig, input)
+	end
 	local tl = Battle.Timeline
 	local state, t, clock = input.state, input.t, input.clock
 	local pose

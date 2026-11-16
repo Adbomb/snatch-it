@@ -28,19 +28,23 @@ MuseumLayout.Hall = {
 	Portico = -23,
 }
 
--- Павильон над лестницей (портал спереди, z0) и лестница: верх у TopZ, ступени 1 × 1 вниз к +z, проём в полу.
+-- Павильон над лестницей (портал спереди, z0; Opening — высота проёма портала) и лестница: верх у TopZ, ступени
+-- 1 × 1 вниз к +z, проём в полу до WellZ1. Этап C.2 (крупные аватары): проём портала 7.1 → 9.5 (павильон 9 → 11.4),
+-- проём в полу и павильон длиннее на 3 (WellZ1 11 → 14, Z1 11.6 → 14.6) — голова персонажа высотой до ~9 стадов
+-- не упирается ни в перемычку, ни в край потолка хранилища внизу лестницы.
 MuseumLayout.Pavilion = {
 	HalfX = 4.4,
 	Z0 = 2.4,
-	Z1 = 11.6,
-	Height = 9,
+	Z1 = 14.6,
+	Height = 11.4,
+	Opening = 9.5,
 }
 MuseumLayout.Stair = {
 	TopZ = 3,
 	HalfWidth = 2.6,
 	Steps = 12,
 	WellX = 2.8,
-	WellZ1 = 11,
+	WellZ1 = 14,
 }
 -- Хранилище под главным залом: пол и низ потолка (от пола зала), по плану — контур зала.
 MuseumLayout.Vault = {
@@ -103,9 +107,8 @@ MuseumLayout.Places = {
 	{ slot = 20, zone = "Gallery", center = Vector3.new(-26.7, 0, 15.95), face = Vector3.new(1, 0, 0), unlock = 10 },
 } :: { Place }
 
--- Сундук (центр на полу, замок смотрит в Face) и стенд музея у входа.
+-- Сундук (центр на полу, замок смотрит в Face).
 MuseumLayout.Chest = { Center = Vector3.new(-9, 0, -9.7), Face = Vector3.new(0, 0, 1) }
-MuseumLayout.Stand = { Center = Vector3.new(9, 0, -9.6) }
 
 -- Лазеры поперёк прохода: z, длина луча, высота.
 MuseumLayout.Lasers = {
@@ -119,11 +122,11 @@ MuseumLayout.Defense = {
 	Allowed = {
 		{ -10.2, -5, -4.5, 18.8 },
 		{ 5, 10.2, -4.5, 18.8 },
-		{ -4.6, 4.6, 12.2, 18.8 },
+		{ -4.6, 4.6, 15.2, 18.8 },
 	},
 	Forbidden = {
 		{ -3.6, 3.6, -11.3, 2.4 },
-		{ -4.8, 4.8, 2, 12 },
+		{ -4.8, 4.8, 2, 15 },
 		{ 4.4, 5.6, -5, 2.6 },
 		{ -7.5, 7.5, -11.3, -5 },
 		{ 8.8, 18, -6.6, 2.6 },
@@ -158,7 +161,6 @@ MuseumLayout.Modules = {
 	{ model = "D48_Lockers", position = Vector3.new(-11.9, -13, -11.3), yaw = 0, from = 1, to = 10 },
 	{ model = "D48_Lockers", position = Vector3.new(4, -13, -11.3), yaw = 0, from = 1, to = 10 },
 	{ model = "D48_Chest", position = Vector3.new(-9, 0, -9.7), yaw = 0, from = 1, to = 10 },
-	{ model = "D48_Stand", position = Vector3.new(9, 0, -9.6), yaw = 0, from = 1, to = 10 },
 	{ model = "D48_GateLeaf", position = Vector3.new(-2.58, 0, 2.7), yaw = 0, from = 1, to = 10 },
 	{ model = "D48_GateLeaf", position = Vector3.new(2.58, 0, 2.7), yaw = 180, from = 1, to = 10 },
 	{ model = "D48_Scanner", position = Vector3.new(-3.45, 2.6, 2.25), yaw = 0, from = 1, to = 10 },
