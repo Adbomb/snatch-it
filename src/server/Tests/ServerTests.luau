@@ -115,6 +115,9 @@ local function countUid(uid: string): number
 	return count
 end
 
+-- Музей-небоскрёб (этап B, режим башни DEV): свои сценарии — Tests/TowerTests, те же test/check/вход/выход.
+require(Server.Tests.TowerTests).Register(test, { check = check, join = join, leave = leave, countUid = countUid })
+
 -- Предмет на карте в точке position (брошенный: Part, uid в реестре, подсказка «Поднять»).
 local function mapItem(ctx: Context, position: Vector3, itemId: string?): (string, BasePart)
 	local folder = workspace:FindFirstChild(ITEMS_FOLDER)
@@ -6116,6 +6119,13 @@ test(
 		check(not OwnerTest.IsOwner(A), "тестовый игрок оказался владельцем")
 		OwnerTestService.Handlers.OnChat(A, "/fight")
 		OwnerTestService.Handlers.OnChat(A, "/win")
+		-- кнопка «Тест» (RemoteEvent OwnerTest): не владелец, мусор вместо действия, чужой вид сервера — ничего
+		OwnerTestService.Handlers.OnRemote(A, "Fight")
+		OwnerTestService.Handlers.OnRemote(A, { "Fight" })
+		OwnerTestService.Handlers.OnRemote(A, string.rep("x", 200))
+		OwnerTestService.Handlers.Run(A, "Fight", "Test")
+		OwnerTestService.Handlers.Run(A, "Test", "Normal")
+		check(Remotes.Names.OwnerTest ~= nil, "нет RemoteEvent OwnerTest")
 		check(BattleService.Handlers.FightOf(A) == nil, "команда не владельца начала бой")
 		check(
 			BattleService.Handlers.Fight(cfg.Zone) == nil,
@@ -6133,6 +6143,20 @@ test(
 		local data = DataService.GetData(A)
 		local strength = data and data.strength
 		local bossHp, bossDamage = BattleService.BossStats(cfg.Zone)
+		-- «К дракону»: рядом со спящим драконом, боя нет
+		local dragon = BossService.Get(cfg.Zone) :: BossService.Boss
+		local stateBefore = dragon.state -- после прошлого боя дракон может ещё засыпать (FallAsleep): бой из него начать можно
+		OwnerTestService.Handlers.GoTo(A)
+		local away = (A.Character:GetPivot().Position - dragon.root.Position).Magnitude
+		check(away > 20 and away < 70, ("«К дракону» поставил в %.0f ст. от дракона"):format(away))
+		check(
+			BattleService.Handlers.FightOf(A) == nil and BattleService.Handlers.Fight(cfg.Zone) == nil,
+			"«К дракону» начал бой"
+		)
+		check(
+			dragon.state == stateBefore and (stateBefore == "Sleep" or stateBefore == "FallAsleep"),
+			("«К дракону» изменил состояние дракона: %s → %s"):format(tostring(stateBefore), tostring(dragon.state))
+		)
 		OwnerTestService.Handlers.StartFight(A)
 		local fight = BattleService.Handlers.FightOf(A)
 		check(fight ~= nil, "/fight не начал бой: " .. table.concat(A:Notices(), "; "))

@@ -1,7 +1,8 @@
 -- Доход экспонатов (D37, D40): у каждого произведения свой доход в секунду (Config/Items.income, без множителей
 -- редкости). Раз в секунду сервер начисляет каждому игроку сумму дохода его экспонатов на витринах (Displayed): в
 -- руках, в хранилище и у босса предмет дохода не приносит. Атрибуты игрока для интерфейса: Coins и Income (общий
--- доход в секунду, пересчитывается при каждом изменении витрин). Надпись «+X/сек» над экспонатом ставит
+-- доход в секунду, пересчитывается при каждом изменении витрин); тот же доход — в стандартном списке игроков Roblox
+-- (leaderstats «Доход/сек», HUD v3: отдельной строки дохода на экране нет). Надпись «+X/сек» над экспонатом ставит
 -- MuseumService (IncomeService.Label). Зависит от ItemRegistry, DataService, Config/Items, Shared/NumberFormat.
 
 local Players = game:GetService("Players")
@@ -17,6 +18,7 @@ local ItemRegistry = require(Server.Services.ItemRegistry)
 local TICK = 1 -- секунд между начислениями
 local SAVE_EVERY = 60 -- раз в столько секунд начисленное просится в DataStore (на выходе сохраняется всегда)
 local LABEL_NAME = "IncomeLabel"
+local LEADERSTAT = "Доход/сек" -- столбец в стандартном списке игроков Roblox
 local LABEL_GAP = 2.6 -- над названием предмета, стадов
 local LABEL_COLOR = Color3.fromHex("5BEA72")
 
@@ -28,12 +30,13 @@ function IncomeService.Of(itemId: string): number
 	return if def then def.income or 0 else 0
 end
 
--- Общий доход владельца в секунду: сумма по экспонатам на витринах.
+-- Общий доход владельца в секунду: сумма по экспонатам на витринах и построенным этажам (Floor — этап B, режим
+-- башни DEV; этаж приносит фиксированный доход своего предмета, без множителей).
 function IncomeService.TotalFor(userId: number): number
 	local total = 0
 	for _, uid in ItemRegistry.GetOwnedBy(userId) do
 		local entry = ItemRegistry.Get(uid)
-		if entry and entry.state == "Displayed" then
+		if entry and (entry.state == "Displayed" or entry.state == "Floor") then
 			total += IncomeService.Of(entry.itemId)
 		end
 	end
@@ -72,12 +75,37 @@ function IncomeService.Label(part: BasePart, itemId: string)
 	label.Text = ("+%s/сек"):format(NumberFormat.Short(income))
 end
 
--- Обновить атрибут общего дохода игрока.
-local function refreshIncome(player: any)
-	local total = IncomeService.TotalFor(player.UserId)
+-- Общий доход игрока наружу: атрибут Income (окна интерфейса) и столбец LEADERSTAT в стандартном списке игроков
+-- Roblox (папка leaderstats; ТЗ владельца 2026-11-17: отдельной строки дохода в HUD нет). Только показ: расчёт и
+-- начисление не меняются. У тестовых игроков (не Instance) — только атрибут.
+local function publishIncome(player: any, total: number)
 	if player:GetAttribute("Income") ~= total then
 		player:SetAttribute("Income", total)
 	end
+	if typeof(player) ~= "Instance" or not player:IsA("Player") then
+		return
+	end
+	local stats = player:FindFirstChild("leaderstats")
+	if not stats then
+		stats = Instance.new("Folder")
+		stats.Name = "leaderstats"
+		stats.Parent = player
+	end
+	local value = stats:FindFirstChild(LEADERSTAT)
+	if not value then
+		value = Instance.new("IntValue")
+		value.Name = LEADERSTAT
+		value.Parent = stats
+	end
+	local whole = math.floor(total + 0.5)
+	if value:IsA("IntValue") and value.Value ~= whole then
+		value.Value = whole
+	end
+end
+
+-- Обновить общий доход игрока.
+local function refreshIncome(player: any)
+	publishIncome(player, IncomeService.TotalFor(player.UserId))
 end
 
 -- Один такт начисления для списка игроков. Возвращает начисленное по игрокам (для тестов).
@@ -87,7 +115,7 @@ local function tick(players: { any }): { [any]: number }
 	local paid = {}
 	for _, player in players do
 		local total = IncomeService.TotalFor(player.UserId)
-		player:SetAttribute("Income", total)
+		publishIncome(player, total)
 		if total > 0 then
 			local coins = DataService.AddCoins(player, total)
 			if coins then
@@ -111,7 +139,8 @@ IncomeService.OnPaid = nil :: ((player: any, amount: number) -> ())?
 
 function IncomeService.Init()
 	ItemRegistry.OnChanged(function(_uid, fromState, toState, entry)
-		if (fromState == "Displayed" or toState == "Displayed") and entry.owner then
+		local counted = fromState == "Displayed" or toState == "Displayed" or fromState == "Floor" or toState == "Floor"
+		if counted and entry.owner then
 			local player = Players:GetPlayerByUserId(entry.owner)
 			if player then
 				refreshIncome(player)

@@ -27,6 +27,8 @@ export type Plot = {
 	level: number,
 	fieldCFrame: CFrame,
 	signBoard: BasePart,
+	tower: boolean?, -- этап B: на участке башня (режим башни DEV), здание и постаменты сняты
+	parked: { Instance }?, -- снятые здание и постаменты (вернуть при выходе из режима башни)
 }
 
 local plots: { Plot } = {}
@@ -95,7 +97,41 @@ function PlotService.ShowLevel(plot: Plot, level: number)
 		return
 	end
 	plot.level = level
+	if plot.tower then
+		-- режим башни (этап B): уровень музея запоминается, здание не строится (вернётся при выходе из режима)
+		plot.model:SetAttribute("MuseumLevel", level)
+		return
+	end
 	PartBuilder.SetLevel(plot, level)
+end
+
+-- Режим башни на участке (этап B, только DEV — решает TowerService): on — здание D48-C и постаменты снимаются из мира
+-- и хранятся (двор, сундук, табличка и точка пола остаются); off — возвращаются и здание пересобирается по уровню.
+function PlotService.UseTower(plot: Plot, on: boolean)
+	if on == (plot.tower == true) then
+		return
+	end
+	local model = plot.model
+	if on then
+		plot.tower = true
+		plot.parked = {}
+		for _, name in { "Building", "Showcases" } do
+			local child = model:FindFirstChild(name)
+			if child then
+				child.Parent = nil
+				table.insert(plot.parked :: { Instance }, child)
+			end
+		end
+		model:SetAttribute("TowerMode", true)
+	else
+		plot.tower = nil
+		for _, child in plot.parked or {} do
+			child.Parent = model
+		end
+		plot.parked = nil
+		PartBuilder.SetLevel(plot, plot.level)
+		model:SetAttribute("TowerMode", nil)
+	end
 end
 
 -- Уровень гантели владельца участка (nil — участок свободен): атрибут DumbbellLevel для таблички «Улучшение».

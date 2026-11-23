@@ -354,6 +354,17 @@ local function addGlass(visual: BasePart, itemId: string)
 	end
 end
 
+-- Габарит корня предмета — тот же, что у Create (по загруженной модели или Config/Items): хитбокс экспоната башни.
+function ItemFactory.SizeOf(itemId: string): Vector3
+	local template = templates[itemId]
+	if template then
+		return template.Size
+	end
+	local def = Items[itemId]
+	assert(def, "Нет предмета в Config/Items: " .. tostring(itemId))
+	return def.size
+end
+
 function ItemFactory.Create(itemId: string): Part
 	local def = Items[itemId]
 	assert(def, "Нет предмета в Config/Items: " .. tostring(itemId))

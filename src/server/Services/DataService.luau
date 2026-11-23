@@ -9,8 +9,14 @@
 -- покупка и трата Ловибумов — атомарно (монеты и запас в одном кадре, без yield).
 -- D56: schema 4 → 5 — запас защиты по уровням музея (Shared/DefenseRules.Normalize: старым устройствам — сохранённый
 -- уровень музея, ничего не удаляется); покупка уровня музея — UpgradeMuseum (монеты и уровень в одном кадре).
+-- Этап B (музей-небоскрёб, только режим башни DEV — Util/TowerMode): этаж — запись items[uid] с builtAt, порядок —
+-- data.tower.order (Shared/TowerRules). При загрузке в режиме башни — миграция v5 → v6 и проверка порядка
+-- (TowerRules.Migrate / Normalize); у обычных профилей (нет tower и builtAt) ничего не создаётся. Построенный
+-- экземпляр нельзя поставить на постамент, удалить общей функцией или передать прежней кражей экспоната — проверка
+-- здесь, в одном месте для всех служб (SetItemPlace, ReplaceInSlot, RemoveItem, TransferItem).
 -- Зависит от Vendor/ProfileStore, ProfileTemplate, GameConfig, Config/Items, Shared/Inventory, Shared/CatchRules,
--- Shared/DefenseRules, Shared/MuseumRules, Shared/TutorialRules, Util/TransferJournal, Util/Log.
+-- Shared/DefenseRules, Shared/MuseumRules, Shared/TutorialRules, Shared/TowerRules, Util/TransferJournal,
+-- Util/TowerMode, Util/Log.
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
@@ -24,9 +30,11 @@ local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local Inventory = require(ReplicatedStorage.Shared.Inventory)
 local MuseumRules = require(ReplicatedStorage.Shared.MuseumRules)
 local TutorialRules = require(ReplicatedStorage.Shared.TutorialRules)
+local TowerRules = require(ReplicatedStorage.Shared.TowerRules)
 local ProfileTemplate = require(ReplicatedStorage.Shared.Config.ProfileTemplate)
 local ProfileStore = require(ServerScriptService.Server.Vendor.ProfileStore)
 local Log = require(ServerScriptService.Server.Util.Log)
+local TowerMode = require(ServerScriptService.Server.Util.TowerMode)
 local TransferJournal = require(ServerScriptService.Server.Util.TransferJournal)
 
 local store = ProfileStore.New(GameConfig.Data.StoreName, ProfileTemplate)
@@ -181,6 +189,8 @@ finishLoad = function(player: Player, profile: any): boolean
 			)
 		)
 	end
+	-- Башня (этап B, только режим башни DEV): миграция v5 → v6 один раз и проверка порядка этажей при каждой загрузке.
+	DataService.TowerOnLoad(player, profile.Data)
 	-- schema 3 → 4 (D55): обучение — по своим предметам (pending не считается), Ловибумы — пусто; затем проверка
 	-- Ловибумов и записи обучения при каждой загрузке. Схема обучения — своя (TutorialRules.Schema), не шаблона.
 	if TutorialRules.Migrate(profile.Data, TutorialRules.Schema) then
@@ -323,6 +333,16 @@ function DataService.AddItem(player: Player, uid: string, record: { [string]: an
 	return true
 end
 
+-- Построенный этаж (этап B): записи с builtAt недоступны операциям с инвентарём и постаментами — их меняют только
+-- функции башни ниже. Отказ пишется в лог (вызов из обычного пути — ошибка службы, не игрока).
+local function refuseBuilt(player: Player, record: any, uid: string, what: string): boolean
+	if TowerRules.IsBuilt(record) then
+		Log.Warn("DataService", ("%s: %s — uid %s стоит этажом башни, отказ"):format(player.Name, what, uid))
+		return true
+	end
+	return false
+end
+
 -- Перенос записи между витриной и хранилищем. Поворот (rot) сохраняется.
 -- Откат — тот же вызов со старыми place/slot в том же кадре.
 function DataService.SetItemPlace(player: Player, uid: string, place: string, slot: number?): boolean
@@ -330,6 +350,9 @@ function DataService.SetItemPlace(player: Player, uid: string, place: string, sl
 	local record = data and data.items[uid]
 	if not record then
 		Log.Warn("DataService", ("%s: uid %s нет в профиле"):format(player.Name, uid))
+		return false
+	end
+	if refuseBuilt(player, record, uid, "перенос в «" .. tostring(place) .. "»") then
 		return false
 	end
 	if place == "slot" then
@@ -371,6 +394,9 @@ function DataService.ReplaceInSlot(player: Player, oldUid: string, newUid: strin
 		Log.Warn("DataService", ("%s: замена %s → %s невозможна"):format(player.Name, oldUid, newUid))
 		return false
 	end
+	if refuseBuilt(player, new, newUid, "замена на постаменте") then
+		return false
+	end
 	new.place, new.slot = "slot", old.slot
 	old.place, old.slot = "storage", nil
 	return true
@@ -390,6 +416,9 @@ end
 function DataService.RemoveItem(player: Player, uid: string)
 	local data = DataService.GetData(player)
 	if data then
+		if refuseBuilt(player, data.items[uid], uid, "удаление записи") then
+			return
+		end
 		data.items[uid] = nil
 	end
 end
@@ -648,6 +677,10 @@ function DataService.TransferItem(
 			"DataService",
 			("передача %s: %s → %s невозможна"):format(uid, victim.Name, thief.Name)
 		)
+		return false
+	end
+	-- кража этажа — этап E (через этот же журнал); прежняя кража экспоната этаж не передаёт
+	if refuseBuilt(victim, from.items[uid], uid, "передача кражей экспоната") then
 		return false
 	end
 	local now = os.time()
@@ -937,6 +970,80 @@ function DataService.RequestSave(player: Player)
 			DataService.RequestSave(player) -- только что записывали (подтверждение кражи): позже, не чаще MinSaveInterval
 		end
 	end)
+end
+
+-- ── Музей-небоскрёб (этап B, только режим башни DEV) ─────────────────────────────────────────────────────────
+
+-- При загрузке (и при включении режима башни у загруженного профиля): в режиме башни — миграция v5 → v6 один раз;
+-- проверка порядка этажей — в режиме башни или если в профиле уже есть башня. Обычный профиль не трогается.
+function DataService.TowerOnLoad(player: Player, data: any): TowerRules.Report?
+	local towerMode = TowerMode.For(player)
+	if towerMode and TowerRules.Migrate(data, Items, os.time()) then
+		Log.Debug(
+			"DataService",
+			("%s: миграция v5 → v6 (башня), этажей: %d"):format(player.Name, #TowerRules.Order(data))
+		)
+	end
+	if not towerMode and not TowerRules.HasTower(data) then
+		return nil
+	end
+	local report = TowerRules.Normalize(data, Items)
+	if report.changed then
+		Log.Warn(
+			"DataService",
+			("%s: башня исправлена — убрано из порядка %d, дописано %d, снят признак этажа %d"):format(
+				player.Name,
+				#report.dropped,
+				#report.appended,
+				#report.demoted
+			)
+		)
+	end
+	return report
+end
+
+-- Режим башни включили у уже загруженного профиля (DevTools, тесты): те же миграция и проверка, что при загрузке.
+function DataService.EnterTowerMode(player: Player): boolean
+	local data = DataService.GetData(player)
+	if not data then
+		return false
+	end
+	DataService.TowerOnLoad(player, data)
+	return true
+end
+
+-- Порядок этажей (копия списка uid снизу вверх) или nil, если профиль не загружен.
+function DataService.Tower(player: Player): { string }?
+	local data = DataService.GetData(player)
+	return if data then table.clone(TowerRules.Order(data)) else nil
+end
+
+-- Постройка этажа: builtAt и uid наверх в одном вызове, без yield. Все проверки записи — TowerRules.CanBuild.
+-- true — записано; иначе false и причина для игрока.
+function DataService.BuildFloor(player: Player, uid: any): (boolean, string?)
+	local data = DataService.GetData(player)
+	if not data then
+		return false, "Сохранение ещё загружается"
+	end
+	local ok, reason = TowerRules.CanBuild(data, uid, Items)
+	if not ok then
+		return false, reason
+	end
+	TowerRules.AddFloor(data, uid, os.time())
+	return true, nil
+end
+
+-- Снять этаж (DEV RemoveFloor и откат постройки в том же кадре): uid из порядка, builtAt снимается, запись остаётся.
+-- Прежний номер или nil.
+function DataService.UnbuildFloor(player: Player, uid: string): number?
+	local data = DataService.GetData(player)
+	return if data then TowerRules.RemoveFloor(data, uid) else nil
+end
+
+-- Перестановка этажа (DEV MoveFloor): прежний номер или nil.
+function DataService.MoveFloor(player: Player, uid: string, to: number): number?
+	local data = DataService.GetData(player)
+	return if data then TowerRules.MoveFloor(data, uid, to) else nil
 end
 
 -- Для серверных тестов (Server/Tests): загрузка после начала сессии (моделирование перехвата сессии) и профиль игрока

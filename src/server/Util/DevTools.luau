@@ -238,6 +238,16 @@ function DevTools.Init()
 				end
 				local hpText = ("HP %.0f / %.0f"):format(fight.hp, fight.maxHp)
 				return ("%s, босс %.0f / %.0f"):format(hpText, fight.bossHp, fight.bossMax)
+			elseif
+				command == "TowerMode"
+				or command == "GiveItem"
+				or command == "BuildFloor"
+				or command == "RemoveFloor"
+				or command == "MoveFloor"
+				or command == "TowerFill"
+				or command == "TowerStats"
+			then
+				return DevTools.Tower(words)
 			elseif command == "GiveCoins" then
 				local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
 				if not player then
@@ -450,6 +460,120 @@ function DevTools.Init()
 		folder:SetAttribute("CommandResult", (if ok then "" else "ошибка: ") .. tostring(result))
 	end)
 	folder.Parent = ServerStorage
+end
+
+-- ── Музей-небоскрёб (этап B, только Studio DevMode; всё — через TowerService, который проверяет режим башни) ──
+--   TowerMode <userId> on|off — режим башни игроку (настоящему — только если ProfileStore без DataStore);
+--   GiveItem <userId> <ItemId> — тестовый предмет в инвентарь; BuildFloor <userId> <ItemId> — выдать и построить;
+--   RemoveFloor <userId> <N> — снять этаж N (сдвиг); MoveFloor <userId> <N> <M> — переставить N на место M;
+--   TowerFill <N> — нагрузка: на свободных участках тестовые владельцы, у всех башен по N этажей (0 — убрать тестовых);
+--   TowerStats — детали и память сервера.
+local fillers: { any } = {}
+
+function DevTools.Tower(words: { string }): any
+	local Server = ServerScriptService.Server
+	local TowerService = require(Server.Services.TowerService)
+	local TowerRules = require(ReplicatedStorage.Shared.TowerRules)
+	local command = words[1]
+	if command == "TowerStats" then
+		local Stats = game:GetService("Stats")
+		local total, towerParts, floors = 0, 0, 0
+		for _, d in workspace:GetDescendants() do
+			if d:IsA("BasePart") then
+				total += 1
+			end
+		end
+		for _, t in TowerService.Handlers.Towers() do
+			floors += t.model:GetAttribute("FloorCount") or 0
+			for _, d in t.model:GetDescendants() do
+				if d:IsA("BasePart") then
+					towerParts += 1 -- каркас (невидимый) и экспонаты с их частями
+				end
+			end
+		end
+		return ("деталей в Workspace %d, у башен %d (этажей %d); InstanceCount %d; память %.0f МБ; Heartbeat %.2f мс"):format(
+			total,
+			towerParts,
+			floors,
+			Stats.InstanceCount,
+			Stats:GetTotalMemoryUsageMb(),
+			Stats.HeartbeatTimeMs
+		)
+	elseif command == "TowerFill" then
+		local n = math.clamp(math.floor(tonumber(words[2]) or 0), 0, GameConfig.Tower.FillMax)
+		local PlayerSession = require(Server.Services.PlayerSession)
+		local PlotService = require(Server.Services.PlotService)
+		local TestPlayer = require(Server.Tests.TestPlayer)
+		if n == 0 then
+			for _, p in fillers do
+				p.Parent = nil
+				PlayerSession.Leave(p)
+				p.Character:Destroy()
+			end
+			table.clear(fillers)
+			return "тестовые владельцы убраны"
+		end
+		for _, plot in PlotService.GetPlots() do
+			if plot.owner == nil then
+				local p = TestPlayer.new("Башня_" .. plot.index)
+				if PlayerSession.Join(p, { mock = true, veteran = true, tower = true }) then
+					table.insert(fillers, p)
+				end
+			end
+		end
+		local t0 = os.clock()
+		local built = 0
+		for _, t in TowerService.Handlers.Towers() do
+			local have = t.model:GetAttribute("FloorCount") or 0
+			if have < n then
+				built += TowerService.DevFill(t.owner, n - have)
+			end
+		end
+		return ("построено этажей %d за %.2f с; башен %d"):format(built, os.clock() - t0, #fillers)
+	end
+	local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
+	if not player then
+		for _, p in fillers do
+			if p.UserId == tonumber(words[2]) then
+				player = p
+			end
+		end
+	end
+	if not player then
+		return "нет игрока"
+	end
+	if command == "TowerMode" then
+		if words[3] == "off" then
+			TowerService.Disable(player)
+			return "режим башни выключен"
+		end
+		local ok, reason = TowerService.Enable(player)
+		return if ok then "режим башни включён" else reason
+	elseif command == "GiveItem" then
+		local uid, reason = TowerService.DevGiveItem(player, words[3] or "")
+		return uid or reason
+	elseif command == "BuildFloor" then
+		local uid, reason = TowerService.DevGiveItem(player, words[3] or "")
+		if not uid then
+			return reason
+		end
+		local ok, why = TowerService.Build(player, uid)
+		return if ok then "этаж построен: " .. uid else why
+	elseif command == "RemoveFloor" or command == "MoveFloor" then
+		local data = DataService.GetData(player)
+		local order = data and TowerRules.Order(data) or {}
+		local uid = order[tonumber(words[3]) or 0]
+		if not uid then
+			return "нет этажа " .. tostring(words[3])
+		end
+		if command == "RemoveFloor" then
+			local was, reason = TowerService.Remove(player, uid)
+			return if was then ("снят этаж %d, осталось %d"):format(was, #order) else reason
+		end
+		local ok, reason = TowerService.Move(player, uid, tonumber(words[4]) or 0)
+		return if ok then "переставлен" else reason
+	end
+	return "неизвестная команда"
 end
 
 return DevTools

@@ -33,6 +33,13 @@ Remotes.Names = {
 	-- D56: улучшение музея
 	MuseumUpgrade = "MuseumUpgrade", -- клиент → сервер: (уровень, который хочу купить, — только следующий)
 	MuseumUpgradeResult = "MuseumUpgradeResult", -- сервер → владельцу: { ok, code?, message?, level, slots, coins }
+	-- тестовый режим владельца (Server/Services/OwnerTestService): клиент → сервер: имя действия ("Test" | "Goto" |
+	-- "Fight" | "Win" | "Day" | "Night" | "Exit"); сервер слушает только в подтверждённом DEV-месте и только владельца
+	OwnerTest = "OwnerTest",
+	-- этап B, музей-небоскрёб (режим башни DEV): лифт — клиент → сервер: (номер участка, номер этажа 0…N; 0 — холл);
+	-- сервер → игроку: { ok, plot, index, reason? }. Окно лифта открывает OpenWindow("Elevator", участок).
+	ElevatorGo = "ElevatorGo",
+	ElevatorResult = "ElevatorResult",
 }
 
 function Remotes.CreateAll()

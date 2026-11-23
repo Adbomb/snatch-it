@@ -33,6 +33,13 @@ local MAX_UID_LENGTH = 64
 
 local limiter = RateLimiter.new(GameConfig.RateLimits.Storage)
 local stolenDelivery: ((player: Player, plot: PlotService.Plot) -> ())? = nil
+-- Музей-небоскрёб (этап B, режим башни DEV): TowerService передаёт свои функции (обратной зависимости нет).
+type TowerHooks = {
+	build: (player: any, uid: any) -> (),
+	describe: (player: any, uid: string) -> { [string]: any }?,
+	active: (player: any) -> boolean,
+}
+local towerHooks: TowerHooks? = nil
 
 local InventoryService = {}
 
@@ -44,7 +51,8 @@ local PREVIEW_FOLDER = "ItemPreviews"
 local previewRequested: { [string]: boolean } = {}
 
 -- Копия предмета для превью в окне «Инвентарь» (та же модель, что на постаменте, D39): одна на itemId, создаётся по
--- первому запросу. Подписи и сварка убираются — в ViewportFrame нужен только внешний вид.
+-- первому запросу. Подписи убираются. Сварка и суставы остаются: в ViewportFrame они ничего не делают, а копия
+-- экспоната на этаже башни (клиент, TowerController) в мире держится на них и оживляется, как на постаменте.
 local function ensurePreview(itemId: string)
 	if previewRequested[itemId] or not Items[itemId] then
 		return
@@ -59,7 +67,7 @@ local function ensurePreview(itemId: string)
 		end
 		local part = ItemFactory.Create(itemId)
 		for _, d in part:GetDescendants() do
-			if d:IsA("BillboardGui") or d:IsA("JointInstance") then
+			if d:IsA("BillboardGui") then
 				d:Destroy()
 			end
 		end
@@ -70,6 +78,9 @@ local function ensurePreview(itemId: string)
 		model.Parent = folder
 	end)
 end
+
+-- Для башни: модель экспоната этажа у клиентов — эта копия (TowerService зовёт при постройке и загрузке этажей).
+InventoryService.EnsurePreview = ensurePreview
 
 local function nameOf(itemId: string): string
 	local def = Items[itemId]
@@ -94,6 +105,15 @@ function InventoryService.SetStolenDelivery(handler: (player: Player, plot: Plot
 	stolenDelivery = handler
 end
 
+-- Башня (этап B): постройка этажа из окна, сведения «этаж N / повтор», включён ли режим башни у игрока.
+function InventoryService.SetTowerHooks(hooks: TowerHooks)
+	towerHooks = hooks
+end
+
+local function towerActive(player: any): boolean
+	return towerHooks ~= nil and towerHooks.active(player)
+end
+
 -- Отправляет владельцу весь инвентарь: { uid, itemId, slot?, pending? } (slot — постамент, если выставлен; pending —
 -- украденное ещё передаётся по журналу, выставить нельзя) и атрибуты для подсказок и интерфейса: StorageCount
 -- (в инвентаре), MuseumSlots (постаментов в музее), MuseumLevel (уровень музея, D56).
@@ -103,12 +123,20 @@ function InventoryService.Sync(player: Player)
 	syncCount[player] = (syncCount[player] or 0) + 1
 	local list, stored = {}, 0
 	local data = DataService.GetData(player)
+	local hooks = if towerActive(player) then towerHooks else nil
 	for _, uid in ItemRegistry.GetOwnedBy(player.UserId) do
 		local entry = ItemRegistry.Get(uid)
-		if entry and (entry.state == "Stored" or entry.state == "Displayed") then
+		if entry and (entry.state == "Stored" or entry.state == "Displayed" or entry.state == "Floor") then
 			local record = data and data.items[uid]
 			local pending = record ~= nil and record.pending ~= nil
-			table.insert(list, { uid = uid, itemId = entry.itemId, slot = entry.slot, pending = pending or nil })
+			local row = { uid = uid, itemId = entry.itemId, slot = entry.slot, pending = pending or nil }
+			if hooks then
+				-- режим башни: номер этажа, «повтор» и признак режима для окна (этап B)
+				for key, value in hooks.describe(player, uid) or {} do
+					row[key] = value
+				end
+			end
+			table.insert(list, row)
 			ensurePreview(entry.itemId)
 			if entry.state == "Stored" then
 				stored += 1
@@ -434,6 +462,15 @@ local function tryAction(player: Player, action: any, uid: any, slot: any)
 	if not limiter:Allow(player) then
 		return
 	end
+	-- Режим башни (этап B, DEV): постаментов нет — только «Построить этаж»; в обычной игре «Build» не существует.
+	if towerActive(player) then
+		if action == "Build" then
+			(towerHooks :: TowerHooks).build(player, uid)
+		else
+			Notify.Send(player, "В башне постаментов нет — стройте этажи", "Stop")
+		end
+		return
+	end
 	if action ~= "Display" and action ~= "Remove" and action ~= "Replace" then
 		Log.Warn(
 			"InventoryService",
@@ -511,6 +548,8 @@ function InventoryService.Init()
 			or fromState == "Displayed"
 			or toState == "Stored"
 			or toState == "Displayed"
+			or fromState == "Floor"
+			or toState == "Floor"
 		local player = inventory and entry.owner and Players:GetPlayerByUserId(entry.owner)
 		if player then
 			queueSync(player)

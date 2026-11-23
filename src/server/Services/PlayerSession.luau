@@ -1,7 +1,9 @@
 -- Вход и выход игрока: участок, профиль, гантель, музей, хранилище — в одном порядке для игры и серверных тестов
 -- (Main вызывает Join/Leave на PlayerAdded/PlayerRemoving, Server/Tests — для тестовых игроков с профилем в памяти).
+-- Этап B: игрок в режиме башни DEV (Util/TowerMode — только Studio, явно включённые) вместо музея получает башню
+-- (TowerService.LoadTower / UnloadTower); у остальных вход и выход не меняются.
 -- Зависит от CarryService, DataService, GymService, MuseumService, PlotService, InventoryService, TheftService, DefenseService,
--- VaultService, ShopService и TutorialService (D55), Util/Notify, Util/Log.
+-- VaultService, ShopService и TutorialService (D55), TowerService, Util/TowerMode, Util/Notify, Util/Log.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -17,12 +19,15 @@ local DefenseService = require(Server.Services.DefenseService)
 local VaultService = require(Server.Services.VaultService)
 local ShopService = require(Server.Services.ShopService)
 local TutorialService = require(Server.Services.TutorialService)
+local TowerService = require(Server.Services.TowerService)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
+local TowerMode = require(Server.Util.TowerMode)
 
 export type JoinOptions = {
 	mock: boolean?, -- профиль в памяти (ProfileStore.Mock): серверные тесты и тестовый сервер владельца (Util/OwnerTest)
 	veteran: boolean?, -- обучение D55 уже пройдено (как у старого профиля), если в профиле не начато; только с mock
+	tower: boolean?, -- этап B: войти в режиме башни (только Studio DevMode и только с mock — тесты, нагрузка)
 }
 
 local PlayerSession = {}
@@ -38,6 +43,9 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 		return false
 	end
 	VaultService.OnPlotAssigned(player) -- свой барьер хранилища пропускает (D48-C)
+	if options and options.tower and options.mock then
+		TowerMode.Enable(player) -- до загрузки: DataService проверяет башню в профиле (этап B)
+	end
 	if not DataService.LoadAsync(player, options and options.mock) then
 		return false
 	end
@@ -52,7 +60,11 @@ function PlayerSession.Join(player: Player, options: JoinOptions?): boolean
 	end
 	PlotService.ShowLevel(plot, data.museumLevel)
 	GymService.OnPlayerLoaded(player, plot)
-	MuseumService.LoadMuseum(player)
+	if TowerMode.For(player) then
+		TowerService.LoadTower(player) -- этап B, режим башни DEV
+	else
+		MuseumService.LoadMuseum(player)
+	end
 	InventoryService.Sync(player)
 	TheftService.WatchTransfers(player) -- украденное, которое при входе ждало жертву, — перепроверять (D53)
 	DefenseService.OnPlayerLoaded(player) -- поставленное к ещё не прошедшей ночи — снова в запасе
@@ -77,7 +89,16 @@ function PlayerSession.Leave(player: Player)
 		{ "защита", DefenseService.OnPlayerLeaving }, -- установленная защита убирается (не сохраняется, D37)
 		{ "обучение", TutorialService.OnPlayerLeaving }, -- учебные поимка, существо и пёс убираются (D55)
 		{ "руки", CarryService.OnPlayerRemoving },
-		{ "музей", MuseumService.UnloadMuseum },
+		{
+			"музей",
+			function(p)
+				if TowerMode.For(p) then
+					TowerService.UnloadTower(p) -- этап B, режим башни DEV
+				else
+					MuseumService.UnloadMuseum(p)
+				end
+			end,
+		},
 		{ "участок", PlotService.Release },
 	}
 	for _, step in steps do

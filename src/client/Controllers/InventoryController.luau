@@ -36,12 +36,32 @@ local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local MenuHud = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("MenuHud"))
+local HudIcons = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudIcons"))
 
 local T = UITokens.Inventory
 local player = Players.LocalPlayer
 
-type Owned = { uid: string, itemId: string, slot: number?, pending: boolean? }
-type Card = { itemId: string, uids: { string }, slot: number?, count: number, pending: boolean? }
+-- tower, floor, duplicate — режим башни DEV (этап B): номер этажа построенного экземпляра и «повтор» (вид уже стоит
+-- этажом — только продажа, этап D). В обычной игре этих полей нет.
+type Owned = {
+	uid: string,
+	itemId: string,
+	slot: number?,
+	pending: boolean?,
+	tower: boolean?,
+	floor: number?,
+	duplicate: boolean?,
+}
+type Card = {
+	itemId: string,
+	uids: { string },
+	slot: number?,
+	count: number,
+	pending: boolean?,
+	tower: boolean?,
+	floor: number?,
+	duplicate: boolean?,
+}
 -- Раскладка под экран: размер окна (px опорного экрана), множитель масштаба окна, высота кнопок и карточки.
 type Profile = {
 	key: string,
@@ -164,7 +184,16 @@ local function buildCards(): { Card }
 	local cards: { Card } = {}
 	local stacks: { [string]: Card } = {}
 	for _, item in owned do
-		if item.slot then
+		if item.floor then
+			-- построенный этаж (режим башни, этап B): своя карточка без действий
+			table.insert(cards, {
+				itemId = item.itemId,
+				uids = { item.uid },
+				floor = item.floor,
+				count = total[item.itemId],
+				tower = true,
+			})
+		elseif item.slot then
 			table.insert(
 				cards,
 				{ itemId = item.itemId, uids = { item.uid }, slot = item.slot, count = total[item.itemId] }
@@ -178,11 +207,14 @@ local function buildCards(): { Card }
 		else
 			local stack = stacks[item.itemId]
 			if not stack then
-				stack = { itemId = item.itemId, uids = {}, count = total[item.itemId] }
+				stack = { itemId = item.itemId, uids = {}, count = total[item.itemId], tower = item.tower }
 				stacks[item.itemId] = stack
 				table.insert(cards, stack)
 			end
 			table.insert(stack.uids, item.uid)
+			if item.duplicate then
+				stack.duplicate = true -- вид уже стоит этажом: все сохранённые экземпляры — повторы
+			end
 		end
 	end
 	local q = TextCase.Lower(query, true) -- кириллица: string.lower её не меняет
@@ -285,7 +317,8 @@ local function actionButton(
 	cellWidth: number,
 	text: string,
 	theme: string,
-	onClick: () -> ()
+	onClick: () -> (),
+	ignoreLock: boolean? -- «Построить этаж» (этап B): запрета по фазе для постройки нет (правило не утверждено)
 ): GuiButton
 	local width = if profile.compact then T.Row.Button else cellWidth - 2 * T.CardPad
 	local button = UI.Button(parent, {
@@ -300,13 +333,15 @@ local function actionButton(
 		ZIndex = 5,
 	})
 	Motion.BindButton(button, 1.04, nil, function()
-		if lockReason() then
+		if not ignoreLock and lockReason() then
 			Motion.Shake(button)
 			return
 		end
 		onClick()
 	end)
-	table.insert(actionButtons, button)
+	if not ignoreLock then
+		table.insert(actionButtons, button)
+	end
 	return button
 end
 
@@ -360,7 +395,20 @@ local function stageFor(frame: Frame, itemId: string, rarityColor: Color3, posit
 end
 
 -- Статус предмета и его цвет.
+-- Предмет даёт этаж (режим башни, этап B): известен, с доходом, не прежний.
+local function buildable(itemId: string): boolean
+	local d = Items[itemId]
+	return d ~= nil and (d.income or 0) > 0 and not d.legacy
+end
+
 local function statusOf(card: Card): (string, Color3)
+	if card.floor then
+		return ("Этаж %d"):format(card.floor), UI.Colors.Positive
+	elseif card.tower and card.duplicate then
+		return "Повтор · только продажа", T.Muted
+	elseif card.tower and not buildable(card.itemId) then
+		return "Пока без этажа", T.Muted
+	end
 	local status = if card.slot
 		then ("В музее · место %d"):format(card.slot)
 		elseif card.pending then "Передаётся…"
@@ -368,10 +416,18 @@ local function statusOf(card: Card): (string, Color3)
 	return status, if card.slot then UI.Colors.Positive elseif card.pending then T.Muted else UI.Colors.TagGold
 end
 
--- Кнопка действия предмета: «Снять» (выставлен), «На место N» (окно открыто с постамента), «Выставить».
+-- Кнопка действия предмета: «Снять» (выставлен), «На место N» (окно открыто с постамента), «Выставить»; в режиме
+-- башни (этап B) — «Построить этаж» у сохранённого уникального с доходом, у этажа и повтора кнопки нет (продажа — этап D).
 local function cardAction(frame: Frame, card: Card, cellWidth: number)
-	if card.pending then
+	if card.pending or card.floor then
 		return
+	elseif card.tower then
+		if card.duplicate or not buildable(card.itemId) then
+			return
+		end
+		actionButton(frame, cellWidth, "Построить этаж", "green", function()
+			Remotes.Get(Remotes.Names.InventoryAction):FireServer("Build", card.uids[1])
+		end, true)
 	elseif card.slot then
 		-- «Снять» — спокойная серая (красный в Stud-UI — уничтожить), «Выставить» — главная зелёная
 		actionButton(frame, cellWidth, "Снять", "gray", function()
@@ -571,10 +627,16 @@ local function pedestalCard(slot: number, order: number, cellWidth: number)
 	end
 end
 
+-- Режим башни (этап B–C, атрибут TowerMode от TowerService): постаментов нет, запрета подготовки нет — плашку не
+-- показывать, вместо «Постаменты» — число этажей.
+local function towerMode(): boolean
+	return player:GetAttribute("TowerMode") == true
+end
+
 local function updateLock()
 	local reason = lockReason()
 	lastLock = reason
-	lockPill.Visible = reason ~= nil
+	lockPill.Visible = reason ~= nil and not towerMode()
 	lockText.Text = reason or ""
 	for _, button in actionButtons do
 		if button.Parent then
@@ -584,6 +646,26 @@ local function updateLock()
 end
 
 local function updateStats()
+	if towerMode() then
+		local floors = 0
+		for _, item in owned do
+			if item.floor then
+				floors += 1
+			end
+		end
+		statsText.Text = (if profile.compact
+			then 'Предметов: <font color="%s">%d</font>  Этажей: <font color="%s">%d</font>  '
+				.. '<font color="#60E87A">+%s/сек</font>'
+			else 'Предметов: <font color="%s">%d</font>   Этажей: <font color="%s">%d</font>   '
+				.. 'Доход: <font color="#60E87A">+%s/сек</font>'):format(
+			UI.Colors.HighlightHex,
+			#owned,
+			UI.Colors.HighlightHex,
+			floors,
+			NumberFormat.Short(player:GetAttribute("Income") or 0)
+		)
+		return
+	end
 	local slots = player:GetAttribute("MuseumSlots") or GameConfig.Museum.SlotsByLevel[1]
 	local displayed = 0
 	for _, item in owned do
@@ -606,7 +688,7 @@ local function updateStats()
 	)
 end
 
--- «Чип» сортировки и фильтра (D50): плоская кнопка-капсула, выбранный — синий.
+-- «Чип» сортировки и фильтра (D50): плоская плашка в стиле референса владельца, выбранная — голубая.
 local function chip(text: string, active: boolean, order: number, onClick: () -> ())
 	local c = T.Chip
 	local button = Instance.new("TextButton")
@@ -615,16 +697,19 @@ local function chip(text: string, active: boolean, order: number, onClick: () ->
 	button.AutomaticSize = Enum.AutomaticSize.X
 	button.Size = UDim2.fromOffset(0, profile.chip)
 	button.BackgroundColor3 = if active then c.Active else c.Idle
-	button.BackgroundTransparency = if active then 0 else 0.15
+	button.BackgroundTransparency = if active then 0 else c.IdleTransparency
 	button.BorderSizePixel = 0
-	button.FontFace = UI.Fonts.Bold
+	button.FontFace = UI.Fonts.Heavy
 	button.TextSize = profile.chipText
-	button.TextColor3 = if active then Color3.new(1, 1, 1) else c.IdleText
+	button.TextColor3 = Color3.new(1, 1, 1)
 	button.Text = text
 	button.LayoutOrder = order
 	button.ZIndex = 4
-	UI.Corner(button, profile.chip // 2)
-	UI.Stroke(button, if active then Color3.new(1, 1, 1) else c.IdleStroke, 1.5, if active then 0.55 else 0.2)
+	UI.Corner(button, c.Corner)
+	if active then
+		UI.Stroke(button, c.ActiveStroke, 2, 0, nil, "Bord")
+	end
+	UI.Stroke(button, UI.Flat.Stroke, 2, 0, Enum.ApplyStrokeMode.Contextual, "Contour")
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0, c.Pad)
 	padding.PaddingRight = UDim.new(0, c.Pad)
@@ -840,7 +925,8 @@ local function build()
 		Size = profile.window,
 		Title = "Инвентарь",
 		Header = T.Header,
-		TitleWidth = math.min(640, profile.window.X - 140),
+		Icon = HudIcons.Get("Inventory"), -- HUD v3: та же иконка, что у кнопки меню (как у магазина и музея)
+		TitleWidth = math.min(640, profile.window.X - 200),
 		Position = UDim2.new(0.5, 0, 0.5, inset / 2), -- ниже кнопок Roblox
 	})
 	corps = win.Corps
@@ -1026,6 +1112,12 @@ function InventoryController.Init()
 	player:GetAttributeChangedSignal("Income"):Connect(function()
 		if isOpen() then
 			updateStats()
+		end
+	end)
+	player:GetAttributeChangedSignal("TowerMode"):Connect(function()
+		if isOpen() then
+			updateStats()
+			updateLock()
 		end
 	end)
 	ContextActionService:BindAction("InventaireToggle", function(_, inputState)

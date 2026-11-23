@@ -33,5 +33,10 @@ require(Controllers:WaitForChild("CreatureController")).Init() -- D55: живы�
 require(Controllers:WaitForChild("CatchController")).Init() -- D55: мини-игра поимки (ловящий)
 require(Controllers:WaitForChild("LovibumFxController")).Init() -- D55: эффекты поимки у всех рядом
 require(Controllers:WaitForChild("TutorialController")).Init() -- D55: обучение новичка
+require(Controllers:WaitForChild("OwnerTestController")).Init() -- кнопка «Тест» владельца (только DEV-место)
 require(Controllers:WaitForChild("MuseumVisualController")).Init()
 require(Controllers:WaitForChild("MuseumCameraController")).Init()
+-- музей-небоскрёб (этап B, режим башни DEV): убранство башен по уровням детализации и окно лифта; без башен в мире
+-- (обычная игра) ничего не строят
+require(Controllers:WaitForChild("TowerController")).Init()
+require(Controllers:WaitForChild("ElevatorController")).Init()

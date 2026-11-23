@@ -10,7 +10,9 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Log = require(ServerScriptService.Server.Util.Log)
 
-export type State = "AtBoss" | "OnMap" | "Carried" | "Displayed" | "Stored" | "Lifting" | "Stolen" | "Dropped"
+-- Floor — построенный этаж музея-небоскрёба (этап B, только режим башни DEV): у владельца не больше одного Floor
+-- каждого itemId (индекс floorIndex); номер этажа реестр не хранит — это позиция в профиле (TowerRules).
+export type State = "AtBoss" | "OnMap" | "Carried" | "Displayed" | "Stored" | "Lifting" | "Stolen" | "Dropped" | "Floor"
 
 export type Entry = {
 	uid: string,
@@ -35,15 +37,17 @@ local ALLOWED: { [State]: { [State]: boolean } } = {
 	OnMap = { Carried = true },
 	Carried = { OnMap = true, Displayed = true, Stored = true },
 	Displayed = { Stored = true, Lifting = true },
-	Stored = { Displayed = true },
+	Stored = { Displayed = true, Floor = true }, -- Floor: постройка этажа (этап B)
 	Lifting = { Stolen = true, Displayed = true },
 	Stolen = { Displayed = true, Stored = true, Dropped = true },
 	Dropped = { Displayed = true },
+	Floor = { Stored = true }, -- снять этаж: только DEV-команда RemoveFloor (этап B); кража этажа — этап E
 }
 
 local entries: { [string]: Entry } = {}
 local carrierIndex: { [Player]: string } = {} -- кто что несёт
 local slotIndex: { [number]: { [number]: string } } = {} -- [владелец][витрина] = uid
+local floorIndex: { [number]: { [string]: string } } = {} -- [владелец][itemId] = uid построенного этажа
 local listeners: { Listener } = {}
 
 local ItemRegistry = {}
@@ -83,6 +87,12 @@ local function detach(entry: Entry)
 		local slots = slotIndex[entry.owner]
 		if slots and slots[entry.slot] == entry.uid then
 			slots[entry.slot] = nil
+		end
+	end
+	if entry.owner then
+		local floors = floorIndex[entry.owner]
+		if floors and floors[entry.itemId] == entry.uid then
+			floors[entry.itemId] = nil
 		end
 	end
 	entry.owner = nil
@@ -231,6 +241,28 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		if params.part then
 			entry.part = params.part
 		end
+	elseif toState == "Floor" then
+		-- Постройка этажа (этап B): только свой предмет из инвентаря; второй этаж того же вида у владельца — отказ.
+		local owner = params.owner
+		if type(owner) ~= "number" or entry.owner ~= owner then
+			return refuse(uid, fromState, toState, "этаж строится только из своего инвентаря")
+		end
+		local floors = floorIndex[owner]
+		if floors and floors[entry.itemId] ~= nil and floors[entry.itemId] ~= uid then
+			return refuse(uid, fromState, toState, "у владельца уже есть этаж " .. entry.itemId)
+		end
+		floorIndex[owner] = floors or {}
+		floorIndex[owner][entry.itemId] = uid
+		entry.part = nil
+	elseif toState == "Stored" and fromState == "Floor" then
+		-- Снять этаж (этап B, только DEV RemoveFloor): предмет остаётся у владельца в инвентаре.
+		if params.owner ~= entry.owner then
+			return refuse(uid, fromState, toState, "чужой этаж")
+		end
+		local owner = entry.owner :: number
+		detach(entry)
+		entry.owner = owner
+		entry.part = nil
 	elseif toState == "Stored" and fromState == "Stolen" then
 		-- Доставлено (журнал §6): экспонат прежнего владельца — в инвентарь вора.
 		local owner = params.owner
@@ -418,6 +450,7 @@ function ItemRegistry.Unload(uid: string): boolean
 		and entry.state ~= "Stored"
 		and entry.state ~= "Lifting"
 		and entry.state ~= "Stolen"
+		and entry.state ~= "Floor"
 	then
 		refuse(uid, entry.state, "Unload", "выгружать можно только экспонаты")
 		return false
@@ -455,12 +488,31 @@ function ItemRegistry.GetSlotItem(owner: number, slot: number): string?
 	return if slots then slots[slot] else nil
 end
 
+-- Экземпляры владельца: на постаментах, в инвентаре и построенные этажи (Floor — только режим башни DEV).
 function ItemRegistry.GetOwnedBy(owner: number): { string }
 	local result = {}
 	for uid, entry in entries do
-		if entry.owner == owner and (entry.state == "Displayed" or entry.state == "Stored") then
+		if
+			entry.owner == owner
+			and (entry.state == "Displayed" or entry.state == "Stored" or entry.state == "Floor")
+		then
 			table.insert(result, uid)
 		end
+	end
+	return result
+end
+
+-- Построенный этаж вида itemId у владельца (uid) или nil (этап B).
+function ItemRegistry.GetFloor(owner: number, itemId: string): string?
+	local floors = floorIndex[owner]
+	return if floors then floors[itemId] else nil
+end
+
+-- Все построенные этажи владельца: uid (без порядка — порядок в профиле, TowerRules.Order).
+function ItemRegistry.GetFloors(owner: number): { string }
+	local result = {}
+	for _, uid in floorIndex[owner] or {} do
+		table.insert(result, uid)
 	end
 	return result
 end
