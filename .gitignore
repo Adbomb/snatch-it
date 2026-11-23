@@ -14,3 +14,12 @@ __pycache__/
 
 # Предпросмотр мешей D54 в Studio без загрузки (scripts/creature_mesh_fixture.py) — только локально
 src/server/Tests/MeshFixture/
+
+# Концепт-картинки, кадры и отчёты-листы — не в git (2,5 ГБ); уже закоммиченные файлы остаются.
+# Резервная копия вне репозитория: C:\Users\uzhgb\snatch-it-backups\2026-11-23-concepts\
+assets/concepts/
+
+# Локальные пробы и резервные копии моделей (игра их не использует; копия там же, models-local\)
+assets/models/backup_anim5/
+assets/models/floors_lod_proto/
+assets/models/floors_lod_proto2/
