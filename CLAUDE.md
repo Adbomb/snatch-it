@@ -4,13 +4,16 @@ Roblox-игра на Luau. Код в репозитории, в Studio попа�
 
 ## Начало сессии
 1. Прочитай этот файл и `docs/memory/NEXT_TASK.md`.
-2. При необходимости — остальное из `docs/memory/` и нужные разделы `DESIGN.md`.
+2. Обзор проекта (что это, системы, боссы, открытые вопросы) — [docs/OVERVIEW.md](docs/OVERVIEW.md).
+3. При необходимости — остальное из `docs/memory/` и нужные разделы `DESIGN.md`.
 
 ## Память проекта (`docs/memory/`)
 - [ARCHITECTURE.md](docs/memory/ARCHITECTURE.md) — устройство игры: модули, данные, мир.
 - [PROGRESS.md](docs/memory/PROGRESS.md) — завершённые задачи (коротко, со ссылкой на коммит).
 - [BUGS.md](docs/memory/BUGS.md) — известные ошибки и особенности инструментов.
-- [NEXT_TASK.md](docs/memory/NEXT_TASK.md) — текущая задача, следующая и открытые вопросы.
+- [NEXT_TASK.md](docs/memory/NEXT_TASK.md) — текущая задача, следующая и открытые вопросы (≤ 150 строк).
+- [HISTORY.md](docs/memory/HISTORY.md) — прежние записи NEXT_TASK (история задач подробно).
+- [ONBOARDING.md](docs/memory/ONBOARDING.md) — ввод в курс дела новой сессии.
 
 После каждой завершённой задачи обнови нужные файлы памяти в том же коммите.
 В память не пиши длинные логи, исходный код целиком и историю переписки — только выводы и факты.
