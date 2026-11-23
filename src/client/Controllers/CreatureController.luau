@@ -4,8 +4,9 @@
 -- "Flee" | "Hidden"), CatchSince, CatchFace, CatchAnchor. У босса клиент ставит корень предмета в позу (локально, у
 -- сервера он на месте); части существ из скелета (босс 3) — Transform моторов по ролям (Shared/CreatureAnim).
 -- Части, которые смотрят на игрока (стражи сейфа), поворачиваются к камере этого клиента.
--- Экспонат на постаменте (атрибут Slot) — спокойно на месте: только суставы и лёгкое покачивание меша (D55: без
--- перемещения, корень не трогается — презентация и сервер двигают его сами); в руках — «трепыхание». Дальние (дальше
+-- Экспонат на постаменте (атрибут Slot) или на этаже башни (TowerFloor — копия у клиента) — спокойно на месте: только
+-- суставы и лёгкое покачивание меша (D55: без перемещения, корень не трогается — презентация и сервер двигают его
+-- сами); в руках — «трепыхание». Хитбокс экспоната башни (TowerHitbox) не оживляется. Дальние (дальше
 -- Catch.Creature.ViewRadius от камеры) не считаются, средние — через кадр. Пойманное (Hidden) спрятано до конца боя.
 -- У ближайших существ у боссов — тонкая светлая обводка (UITokens.CreatureOutline: силуэт не сливается с подушкой);
 -- во время своей поимки обводок нет. Highlight на детали обводит только её саму, а блоки существа — дети невидимого
@@ -141,7 +142,8 @@ local function updateOutlines(eye: Vector3)
 end
 
 local function track(root: BasePart)
-	if tracked[root] then
+	-- невидимый хитбокс экспоната этажа башни: модель — копия у клиента (TowerController), её и оживляем
+	if tracked[root] or root:GetAttribute("TowerHitbox") then
 		return
 	end
 	local itemId = root:GetAttribute("ItemId")
@@ -258,7 +260,8 @@ local function step(dt: number)
 			mode, moving, dodge = p.mode, pose.moving, pose.dodge
 		else
 			setHidden(entry, false)
-			mode = if root.Anchored and root:GetAttribute("Slot") ~= nil then "Calm" else "Held"
+			local placed = root:GetAttribute("Slot") ~= nil or root:GetAttribute("TowerFloor") ~= nil -- постамент, этаж
+			mode = if root.Anchored and placed then "Calm" else "Held"
 		end
 		if entry.rig then
 			-- к зрителю — в осях модели (скелет смотрит в +Z, корень — в −Z: поворот на 180°)
