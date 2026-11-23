@@ -492,6 +492,19 @@
   `Server/Looks/Boss4_*`), мешей нет — блоки-заготовки цвета `colors.json`. Предпросмотр без загрузки:
   `scripts/blender/boss4_sphinx_fixture.py` → `Tests/MeshFixture/Boss4_*` (.gitignore) → `Tests/BossMeshPreview`
   (Edit, MCP). Проверки — `scripts/lune/check_boss4_player.luau` (50) и серверные тесты «Босс 4».
+- Босс 5 «Йети-коллекционер» (шаг 2 D64, этап П — производство в Blender, в игру не подключён): каталог —
+  `docs/BOSS5_CATALOG.md`, план файлов — `docs/BOSS5_STEP2.md`. Модель — `scripts/blender/boss5_yeti.py` (модуль и
+  скрипт): формы утверждённого концепта `boss5/yeti.py`, 30 частей (Torso → Head/Jaw/EyelidL,R/BrowL,R/Monocle;
+  UpperArm → ForeArm → Hand → Fingers; Thigh → Shin → Foot; Block (лёд) → BlockFrame, BlockTop (лёд) →
+  BlockTopFrame, 4 экспоната Ex*), карты Head/Body/Limbs 1024², масштаб 2.03 (рост 24 стада). Позы — параметры
+  скелета концепта (`frames(P)` → `pose_world` → `transforms` как у Motor6D; ноги — обратная кинематика по целям стоп;
+  глыба на спине или в мире, `blend` матриц), у руки пятый параметр — поворот внутрь. Пишет `Boss5_Yeti.{fbx,blend,
+  rig.json,colors.json}` (rig: 13 поз, `head_parts`, `ice_parts`, `attack_clips` bite→smash, swipe→ice_clap).
+  Клипы — `boss5_yeti_anim.py` → `Boss5_Yeti.anim.json` (10 клипов, формат Сфинкса; проверка провала под землю с
+  допуском 0.1 ед. и недотяга ног). Существа — `scripts/blender/creature_kit.py` (цикл art_oasis.py без изменений
+  поведения, карта по редкости: Common 512²) + `art_glacier.py` (30 строителей) → `assets/models/art/boss5/`,
+  `assets/textures/art/boss5/`; собирать по одному существу на процесс (`scripts/run_glacier.sh`): в одном процессе
+  свет студии копится. Листы на просмотр и таблица весов D58 — `scripts/boss5_sheets.py` → `assets/concepts/boss5/sheets/`.
 - Босс 10 «Король-дракон» (этапы A и B, 2026-11-15; DESIGN.md не правился — исключение D52 для залпа ждёт записи):
   тот же путь, что у Сфинкса, — `scripts/blender/dragon10/v7_export.py` (поверх `v7_anim5.py`) →
   `assets/models/Boss10_Dragon.{rig,anim}.json` → `scripts/boss10_to_luau.py` → `Config/Boss10DragonRig` (52 части:
