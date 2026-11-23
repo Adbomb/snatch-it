@@ -231,7 +231,12 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 	elseif toState == "Displayed" and (fromState == "Lifting" or fromState == "Stolen") then
 		-- Кража сорвалась: экспонат на свой постамент (owner и slot не менялись, постамент остался за ним).
 		if params.owner ~= entry.owner or params.slot ~= entry.slot then
-			return refuse(uid, fromState, toState, "вернуть можно только на свой постамент")
+			return refuse(
+				uid,
+				fromState,
+				toState,
+				"вернуть можно только на свой постамент"
+			)
 		end
 		if entry.carrier then
 			carrierIndex[entry.carrier] = nil
@@ -245,7 +250,12 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		-- Постройка этажа (этап B): только свой предмет из инвентаря; второй этаж того же вида у владельца — отказ.
 		local owner = params.owner
 		if type(owner) ~= "number" or entry.owner ~= owner then
-			return refuse(uid, fromState, toState, "этаж строится только из своего инвентаря")
+			return refuse(
+				uid,
+				fromState,
+				toState,
+				"этаж строится только из своего инвентаря"
+			)
 		end
 		local floors = floorIndex[owner]
 		if floors and floors[entry.itemId] ~= nil and floors[entry.itemId] ~= uid then
@@ -267,7 +277,12 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		-- Доставлено (журнал §6): экспонат прежнего владельца — в инвентарь вора.
 		local owner = params.owner
 		if type(owner) ~= "number" or not entry.carrier or (entry.carrier :: Player).UserId ~= owner then
-			return refuse(uid, fromState, toState, "сдать добычу может только вор, который её несёт")
+			return refuse(
+				uid,
+				fromState,
+				toState,
+				"сдать добычу может только вор, который её несёт"
+			)
 		end
 		detach(entry)
 		entry.owner = owner
@@ -317,7 +332,12 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 			return refuse(uid, fromState, toState, "не указан владелец")
 		end
 		if fromState == "Carried" and (entry.carrier :: Player).UserId ~= owner then
-			return refuse(uid, fromState, toState, "убрать можно только в своё хранилище")
+			return refuse(
+				uid,
+				fromState,
+				toState,
+				"убрать можно только в своё хранилище"
+			)
 		elseif fromState == "Displayed" and entry.owner ~= owner then
 			return refuse(uid, fromState, toState, "чужой экспонат")
 		elseif fromState ~= "Carried" and fromState ~= "Displayed" then
@@ -399,7 +419,12 @@ function ItemRegistry.ReplaceSlot(
 		return refuse(newUid, "Stored", label, "на постаменте нет своего экспоната")
 	end
 	if not new or new.state ~= "Stored" or new.owner ~= owner then
-		return refuse(newUid, if new then new.state else "?", label, "предмета нет в инвентаре владельца")
+		return refuse(
+			newUid,
+			if new then new.state else "?",
+			label,
+			"предмета нет в инвентаре владельца"
+		)
 	end
 	if typeof(part) ~= "Instance" or not part:IsA("BasePart") then
 		return refuse(newUid, "Stored", label, "для постамента нужен Part")

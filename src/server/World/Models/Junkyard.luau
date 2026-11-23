@@ -95,9 +95,19 @@ end
 function Junkyard.Washer(): { Brick }
 	return {
 		B(Vector3.new(2.4, 2.6, 2.2), Vector3.new(0, 1.3, 0), C.appliance),
-		B(Vector3.new(0.12, 1.5, 1.5), CFrame.new(0, 1.15, -1.1) * ALONG_Z, C.dark, { shape = "Cylinder", collide = false }),
+		B(
+			Vector3.new(0.12, 1.5, 1.5),
+			CFrame.new(0, 1.15, -1.1) * ALONG_Z,
+			C.dark,
+			{ shape = "Cylinder", collide = false }
+		),
 		-- стекло выступает за кольцо на 0.06 с каждой стороны (было 0.01 — торцы мерцали, D36)
-		B(Vector3.new(0.24, 1.1, 1.1), CFrame.new(0, 1.15, -1.1) * ALONG_Z, C.screen, { shape = "Cylinder", collide = false }),
+		B(
+			Vector3.new(0.24, 1.1, 1.1),
+			CFrame.new(0, 1.15, -1.1) * ALONG_Z,
+			C.screen,
+			{ shape = "Cylinder", collide = false }
+		),
 		B(Vector3.new(2.0, 0.36, 0.12), Vector3.new(0, 2.33, -1.12), C.dark, DECOR),
 	}
 end
@@ -155,8 +165,18 @@ function Junkyard.Kennel(): { Brick }
 		B(Vector3.new(2.4, 0.6, 5.4), Vector3.new(0, 5.5, 0.9), C.roof),
 		B(Vector3.new(2.6, 0.5, 0.14), Vector3.new(0, 3.55, -1.22), Palette.White, DECOR), -- табличка-косточка
 		-- миска и корм
-		B(Vector3.new(0.5, 1.7, 1.7), CFrame.new(2.0, 0.65, -1.9) * UPRIGHT, C.bowl, { shape = "Cylinder", collide = false }),
-		B(Vector3.new(0.52, 1.3, 1.3), CFrame.new(2.0, 0.67, -1.9) * UPRIGHT, C.food, { shape = "Cylinder", collide = false }),
+		B(
+			Vector3.new(0.5, 1.7, 1.7),
+			CFrame.new(2.0, 0.65, -1.9) * UPRIGHT,
+			C.bowl,
+			{ shape = "Cylinder", collide = false }
+		),
+		B(
+			Vector3.new(0.52, 1.3, 1.3),
+			CFrame.new(2.0, 0.67, -1.9) * UPRIGHT,
+			C.food,
+			{ shape = "Cylinder", collide = false }
+		),
 		-- косточка
 		B(Vector3.new(1.4, 0.3, 0.3), CFrame.new(-1.8, 0.55, -2.2) * CFrame.Angles(0, 0.5, 0), C.bone, DECOR),
 	}
@@ -195,14 +215,29 @@ function Junkyard.Crane(reach: number): { Brick }
 		B(Vector3.new(4.4, 3.4, 4), Vector3.new(0, 2 + height + 1.7, 0), C.crane),
 		B(Vector3.new(0.16, 1.8, 3.2), Vector3.new(-2.28, 2 + height + 2, 0), Palette.Glass, DECOR),
 		-- стрела (ферма) и противовес
-		B(Vector3.new(2, reach + 4, 2), CFrame.new(-reach / 2 + 1, 2 + height + 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)), C.crane, {
-			shape = "Truss",
-		}),
-		B(Vector3.new(2, 8, 2), CFrame.new(7, 2 + height + 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)), C.crane, { shape = "Truss" }),
+		B(
+			Vector3.new(2, reach + 4, 2),
+			CFrame.new(-reach / 2 + 1, 2 + height + 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)),
+			C.crane,
+			{
+				shape = "Truss",
+			}
+		),
+		B(
+			Vector3.new(2, 8, 2),
+			CFrame.new(7, 2 + height + 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)),
+			C.crane,
+			{ shape = "Truss" }
+		),
 		B(Vector3.new(3, 3, 3.2), Vector3.new(7.6, 2 + height + 2.6, 0), C.concrete),
 		-- трос и магнит
 		B(Vector3.new(0.2, 8, 0.2), Vector3.new(-reach, 2 + height - 0.6, 0), C.dark, DECOR),
-		B(Vector3.new(1.2, 4.4, 4.4), CFrame.new(-reach, 2 + height - 5.2, 0) * UPRIGHT, C.dark, { shape = "Cylinder" }),
+		B(
+			Vector3.new(1.2, 4.4, 4.4),
+			CFrame.new(-reach, 2 + height - 5.2, 0) * UPRIGHT,
+			C.dark,
+			{ shape = "Cylinder" }
+		),
 		B(Vector3.new(0.4, 3.6, 3.6), CFrame.new(-reach, 2 + height - 4.5, 0) * UPRIGHT, C.roof, {
 			shape = "Cylinder",
 			collide = false,
@@ -222,14 +257,25 @@ function Junkyard.Heap(variant: number): { Brick }
 		{ Junkyard.Fridge, CFrame.new(-3.2, 0, 1.2) * CFrame.Angles(0, 0.3, 0) },
 		{ Junkyard.Washer, CFrame.new(0.4, 0, -1.6) * CFrame.Angles(0, -0.2, 0) },
 		{ Junkyard.TV, CFrame.new(3.6, 0, 1.4) * CFrame.Angles(0, 0.6, 0) },
-		{ function() return Junkyard.Tires(2) end, CFrame.new(0.2, 0, 3.8) },
+		{
+			function()
+				return Junkyard.Tires(2)
+			end,
+			CFrame.new(0.2, 0, 3.8),
+		},
 		{ Props.Crate, CFrame.new(-0.6, 0, 6.8) * CFrame.Angles(0, 0.25, 0) },
 	}
-	local top = { -- на опорах: стиральная машина на холодильнике, телевизор на стиральной, шина на ящике
-		{ Junkyard.Washer, CFrame.new(-3.2, 4.6, 1.2) * CFrame.Angles(0, 1.0, 0) },
-		{ Junkyard.TV, CFrame.new(0.5, 2.6, -1.5) * CFrame.Angles(0, -0.5, 0) },
-		{ function() return Junkyard.Tires(1) end, CFrame.new(-0.6, 4.0, 6.8) },
-	}
+	local top =
+		{ -- на опорах: стиральная машина на холодильнике, телевизор на стиральной, шина на ящике
+			{ Junkyard.Washer, CFrame.new(-3.2, 4.6, 1.2) * CFrame.Angles(0, 1.0, 0) },
+			{ Junkyard.TV, CFrame.new(0.5, 2.6, -1.5) * CFrame.Angles(0, -0.5, 0) },
+			{
+				function()
+					return Junkyard.Tires(1)
+				end,
+				CFrame.new(-0.6, 4.0, 6.8),
+			},
+		}
 	local turn = if variant == 2 then CFrame.Angles(0, math.pi, 0) else CFrame.identity -- зеркально: другая гора
 	for _, entry in base do
 		put(bricks, entry[1](), turn * entry[2])
@@ -262,13 +308,22 @@ end
 function Junkyard.Puddle(radius: number): { Brick }
 	local mud = hex("5E4B38")
 	local function water(transparency: number)
-		return { shape = "Cylinder", material = Enum.Material.Glass, transparency = transparency, collide = false, shadow = false }
+		return {
+			shape = "Cylinder",
+			material = Enum.Material.Glass,
+			transparency = transparency,
+			collide = false,
+			shadow = false,
+		}
 	end
 	local bricks = {}
 	for i, spot in { { 0.15, 0.1, 1.15 }, { -0.35, -0.3, 0.85 } } do
 		local h = 0.03 + i * 0.03
 		local d = radius * 2 * spot[3]
-		table.insert(bricks, B(Vector3.new(h, d, d), CFrame.new(spot[1] * radius, h / 2, spot[2] * radius) * UPRIGHT, mud, ROUND))
+		table.insert(
+			bricks,
+			B(Vector3.new(h, d, d), CFrame.new(spot[1] * radius, h / 2, spot[2] * radius) * UPRIGHT, mud, ROUND)
+		)
 	end
 	for i, spot in { { 0, 0, 1 }, { 0.5, 0.3, 0.68 }, { -0.45, -0.25, 0.6 } } do
 		local h = 0.1 + i * 0.03
@@ -298,8 +353,12 @@ end
 function Junkyard.Weeds(variant: number): { Brick }
 	local green = Palette.Leaves[(variant - 1) % #Palette.Leaves + 1]
 	local bricks = {}
-	for i, blade in { { 0, 0, 1.5, 0.15 }, { 0.4, 0.2, 1.1, -0.35 }, { -0.35, 0.25, 0.9, 0.4 }, { 0.1, -0.4, 0.75, -0.2 } } do
-		local at = CFrame.new(blade[1], 0, blade[2]) * CFrame.Angles(0, i * 1.3, blade[4]) * CFrame.new(0, blade[3] / 2, 0)
+	for i, blade in
+		{ { 0, 0, 1.5, 0.15 }, { 0.4, 0.2, 1.1, -0.35 }, { -0.35, 0.25, 0.9, 0.4 }, { 0.1, -0.4, 0.75, -0.2 } }
+	do
+		local at = CFrame.new(blade[1], 0, blade[2])
+			* CFrame.Angles(0, i * 1.3, blade[4])
+			* CFrame.new(0, blade[3] / 2, 0)
 		local tone = if i % 2 == 0 then green:Lerp(Palette.White, 0.12) else green
 		table.insert(bricks, B(Vector3.new(0.34, blade[3], 0.34), at, tone, DECOR))
 	end
@@ -324,7 +383,12 @@ function Junkyard.Scrap(kind: number, tone: number): { Brick }
 		local wood = pick(SCRAP.plank)
 		return {
 			B(Vector3.new(2.6, 0.2, 0.5), Vector3.new(0, 0.1, 0), wood, DECOR),
-			B(Vector3.new(2.2, 0.2, 0.5), CFrame.new(0.2, 0.3, 0.1) * CFrame.Angles(0, 0.9, 0), wood:Lerp(Palette.Black, 0.12), DECOR),
+			B(
+				Vector3.new(2.2, 0.2, 0.5),
+				CFrame.new(0.2, 0.3, 0.1) * CFrame.Angles(0, 0.9, 0),
+				wood:Lerp(Palette.Black, 0.12),
+				DECOR
+			),
 		}
 	elseif kind == 3 then
 		return { B(Vector3.new(2.2, 0.12, 1.5), Vector3.new(0, 0.06, 0), pick(SCRAP.sheet), DECOR) }
@@ -339,8 +403,18 @@ function Junkyard.Scrap(kind: number, tone: number): { Brick }
 	elseif kind == 6 then
 		return {
 			B(Vector3.new(0.9, 0.45, 0.45), Vector3.new(0, 0.22, 0), SCRAP.brick, DECOR),
-			B(Vector3.new(0.9, 0.45, 0.45), CFrame.new(0.3, 0.22, 0.7) * CFrame.Angles(0, 0.7, 0), SCRAP.brick:Lerp(Palette.Black, 0.1), DECOR),
-			B(Vector3.new(0.9, 0.45, 0.45), CFrame.new(0.1, 0.62, 0.3) * CFrame.Angles(0, 0.3, 0), SCRAP.brick:Lerp(Palette.White, 0.08), DECOR),
+			B(
+				Vector3.new(0.9, 0.45, 0.45),
+				CFrame.new(0.3, 0.22, 0.7) * CFrame.Angles(0, 0.7, 0),
+				SCRAP.brick:Lerp(Palette.Black, 0.1),
+				DECOR
+			),
+			B(
+				Vector3.new(0.9, 0.45, 0.45),
+				CFrame.new(0.1, 0.62, 0.3) * CFrame.Angles(0, 0.3, 0),
+				SCRAP.brick:Lerp(Palette.White, 0.08),
+				DECOR
+			),
 		}
 	elseif kind == 7 then
 		return {
@@ -474,7 +548,9 @@ function Junkyard.Ground(): { Brick }
 		blob(m[1], m[2], m[3], m[4], 6, 0.11, GROUND.dirt[1])
 	end
 	-- Тёмная земля под машинами, бочками, диваном, шинами.
-	for i, spot in { { -34, -24, 5.5 }, { 34, 30, 5.5 }, { 31, -2, 4.2 }, { 46, -38, 4.6 }, { -21, -37, 4.2 }, { 78, -40, 3.2 } } do
+	for i, spot in
+		{ { -34, -24, 5.5 }, { 34, 30, 5.5 }, { 31, -2, 4.2 }, { 46, -38, 4.6 }, { -21, -37, 4.2 }, { 78, -40, 3.2 } }
+	do
 		blob(spot[1], spot[2], spot[3], i * 0.9, 3, 0.09, GROUND.dirt[2])
 	end
 	-- Колеи от машин: две полосы по ломаной (отрезки внахлёст, верх через один выше — без совпадающих граней).
@@ -498,12 +574,21 @@ function Junkyard.Ground(): { Brick }
 			end
 		end
 	end
-	track({ Vector2.new(-66, -29), Vector2.new(-52, -34), Vector2.new(-40, -38.5), Vector2.new(-28, -44.5), Vector2.new(-10, -46) })
+	track({
+		Vector2.new(-66, -29),
+		Vector2.new(-52, -34),
+		Vector2.new(-40, -38.5),
+		Vector2.new(-28, -44.5),
+		Vector2.new(-10, -46),
+	})
 	track({ Vector2.new(58, 12), Vector2.new(44, 14.5), Vector2.new(30, 18.5), Vector2.new(16, 18), Vector2.new(8, 16) })
 	-- Масляные пятна: по два круга разной толщины.
 	for _, spot in { { -31, -21.5, 1.7 }, { 36.5, 27.5, 1.3 }, { 33.5, 1.8, 1.1 }, { 46, -11, 1.5 }, { 24, -42, 1.2 } } do
 		local r = spot[3]
-		table.insert(out, B(Vector3.new(0.26, r * 2, r * 2), CFrame.new(spot[1], 0.13, spot[2]) * UPRIGHT, GROUND.oil, ROUND))
+		table.insert(
+			out,
+			B(Vector3.new(0.26, r * 2, r * 2), CFrame.new(spot[1], 0.13, spot[2]) * UPRIGHT, GROUND.oil, ROUND)
+		)
 		local small = CFrame.new(spot[1] + r * 0.8, 0.15, spot[2] + r * 0.5) * UPRIGHT
 		table.insert(out, B(Vector3.new(0.3, r * 1.1, r * 1.1), small, GROUND.oil:Lerp(Palette.White, 0.06), ROUND))
 	end
@@ -513,7 +598,10 @@ function Junkyard.Ground(): { Brick }
 		local h = 0.14 + i * 0.05
 		table.insert(out, B(Vector3.new(4.4, h, 3.2), at * CFrame.new(0, h / 2, 0), SCRAP.sheet[i], DECOR))
 		for _, corner in { { -1.9, -1.3 }, { 1.9, -1.3 }, { -1.9, 1.3 }, { 1.9, 1.3 } } do
-			table.insert(out, B(Vector3.new(0.3, 0.3, 0.3), at * CFrame.new(corner[1], h, corner[2]), Palette.Metal, BALL))
+			table.insert(
+				out,
+				B(Vector3.new(0.3, 0.3, 0.3), at * CFrame.new(corner[1], h, corner[2]), Palette.Metal, BALL)
+			)
 		end
 	end
 	-- Мусор: две трети — у холмов (на склонах и вокруг), остальное — по всей свалке.
@@ -524,7 +612,8 @@ function Junkyard.Ground(): { Brick }
 		if placed % 3 ~= 2 then
 			local m = MOUNDS[random:NextInteger(1, #MOUNDS)]
 			local a = random:NextNumber(0, math.pi * 2)
-			p = Vector2.new(m[1], m[2]) + Vector2.new(math.cos(a), math.sin(a)) * random:NextNumber(m[3] * 0.25, m[3] + 5)
+			p = Vector2.new(m[1], m[2])
+				+ Vector2.new(math.cos(a), math.sin(a)) * random:NextNumber(m[3] * 0.25, m[3] + 5)
 		else
 			p = Vector2.new(random:NextNumber(-88, 88), random:NextNumber(-45, 45))
 		end
@@ -587,7 +676,9 @@ function Junkyard.Zone(): { Brick }
 	put(out, Junkyard.Tires(3), at(-18.6, -38.4))
 	put(out, Junkyard.Tires(2), at(27, 14))
 	put(out, Junkyard.Tires(5), at(78, -40))
-	for i, spot in { Vector3.new(30, 0, -4), Vector3.new(32.4, 0, -1.6), Vector3.new(29.6, 0, 0.6), Vector3.new(44, 0, 38) } do
+	for i, spot in
+		{ Vector3.new(30, 0, -4), Vector3.new(32.4, 0, -1.6), Vector3.new(29.6, 0, 0.6), Vector3.new(44, 0, 38) }
+	do
 		local colors = { hex("C8442E"), hex("2F6BD8"), hex("C8442E"), hex("43A047") }
 		put(out, Junkyard.Barrel(colors[i]), CFrame.new(spot))
 	end

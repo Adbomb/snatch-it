@@ -22,7 +22,10 @@ return function(size: string, colorIndex: number): { ModelBuilder.Brick }
 	local t = spec.trunk
 	-- Ствол из двух брусков разного оттенка.
 	table.insert(bricks, B(Vector3.new(t.X, t.Y / 2, t.X), Vector3.new(0, t.Y / 4, 0), Palette.Trunk))
-	table.insert(bricks, B(Vector3.new(t.X * 0.85, t.Y / 2, t.X * 0.85), Vector3.new(0, t.Y * 3 / 4, 0), Palette.WoodDark))
+	table.insert(
+		bricks,
+		B(Vector3.new(t.X * 0.85, t.Y / 2, t.X * 0.85), Vector3.new(0, t.Y * 3 / 4, 0), Palette.WoodDark)
+	)
 	local y = t.Y
 	for index, crown in spec.crowns do
 		local color = if index % 2 == 0 then leaves:Lerp(Palette.White, 0.12) else leaves

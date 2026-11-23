@@ -37,7 +37,6 @@ function CharacterGroups.Register(group: string)
 	if group ~= lock and PhysicsService:IsCollisionGroupRegistered(lock) then
 		PhysicsService:CollisionGroupSetCollidable(group, lock, group == CharacterGroups.Fighter)
 	end
-
 end
 
 -- Группа ученика участка index (D55, регистрируется при первом вызове): ночной барьер и барьер своего хранилища —

@@ -64,11 +64,16 @@ function Shops.Sell(): { Brick }
 		B(Vector3.new(14, 0.7, 0.12), Vector3.new(0, 2.6, -6.24), gold, DECOR),
 		-- касса: корпус, зелёное табло, клавиши
 		B(Vector3.new(2.2, 1.2, 1.6), Vector3.new(-5.5, 4.6, -5), hex("5A6270")),
-		B(Vector3.new(1.5, 0.6, 0.12), CFrame.new(-5.5, 5.5, -5.55) * CFrame.Angles(math.rad(-20), 0, 0), hex("43E05A"), {
-			material = Enum.Material.Neon,
-			collide = false,
-			shadow = false,
-		}),
+		B(
+			Vector3.new(1.5, 0.6, 0.12),
+			CFrame.new(-5.5, 5.5, -5.55) * CFrame.Angles(math.rad(-20), 0, 0),
+			hex("43E05A"),
+			{
+				material = Enum.Material.Neon,
+				collide = false,
+				shadow = false,
+			}
+		),
 		B(Vector3.new(1.8, 0.14, 0.7), Vector3.new(-5.5, 5.27, -5.4), hex("E3E6EA"), DECOR),
 		-- весы: на левой чаше монеты, на правой — ваза (обмен добычи на деньги)
 		B(Vector3.new(1.6, 0.3, 1.2), Vector3.new(0, 4.15, -5), goldDark),
@@ -78,35 +83,76 @@ function Shops.Sell(): { Brick }
 	}
 	for _, x in { -1.95, 1.95 } do
 		table.insert(bricks, B(Vector3.new(0.08, 0.9, 0.08), Vector3.new(x, 6.2, -5), Palette.Metal, DECOR))
-		table.insert(bricks, B(Vector3.new(0.15, 1.6, 1.6), CFrame.new(x, 5.6, -5) * UPRIGHT, gold, { shape = "Cylinder", collide = false }))
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(0.15, 1.6, 1.6),
+				CFrame.new(x, 5.6, -5) * UPRIGHT,
+				gold,
+				{ shape = "Cylinder", collide = false }
+			)
+		)
 	end
 	for i = 0, 2 do
-		table.insert(bricks, B(Vector3.new(0.2, 0.7 - i * 0.08, 0.7 - i * 0.08), CFrame.new(-1.95, 5.775 + i * 0.2, -5) * UPRIGHT, gold, DECOR))
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(0.2, 0.7 - i * 0.08, 0.7 - i * 0.08),
+				CFrame.new(-1.95, 5.775 + i * 0.2, -5) * UPRIGHT,
+				gold,
+				DECOR
+			)
+		)
 	end
 	table.insert(bricks, B(Vector3.new(0.6, 0.8, 0.6), Vector3.new(1.95, 6.08, -5), hex("2F6BD8"), DECOR)) -- ваза
 	table.insert(bricks, B(Vector3.new(0.36, 0.3, 0.36), Vector3.new(1.95, 6.62, -5), hex("2F6BD8"), DECOR))
 	-- стопки монет на прилавке
 	for i, h in { 1.2, 0.8, 1.6 } do
 		local x = 3.6 + i * 1.3
-		table.insert(bricks, B(Vector3.new(h, 1.0, 1.0), CFrame.new(x, 4 + h / 2, -5 + (i % 2) * 0.3) * UPRIGHT, gold, {
-			shape = "Cylinder",
-			collide = false,
-		}))
+		table.insert(
+			bricks,
+			B(Vector3.new(h, 1.0, 1.0), CFrame.new(x, 4 + h / 2, -5 + (i % 2) * 0.3) * UPRIGHT, gold, {
+				shape = "Cylinder",
+				collide = false,
+			})
+		)
 	end
 	-- мешки с деньгами у прилавка
 	for _, bag in { { -9.2, 2.6 }, { -7.2, 1.8 } } do
 		local x, size = bag[1], bag[2]
-		table.insert(bricks, B(Vector3.new(size, size, size), Vector3.new(x, 0.6 + size / 2 - 0.1, -4.2), hex("D8B98A"), {
-			shape = "Ball",
-		}))
-		table.insert(bricks, B(Vector3.new(size * 0.38, size * 0.25, size * 0.38), Vector3.new(x, 0.6 + size - 0.05, -4.2), woodDark, DECOR))
-		table.insert(bricks, B(Vector3.new(size * 0.28, size * 0.3, size * 0.28), Vector3.new(x, 0.6 + size + 0.2, -4.2), hex("D8B98A"), DECOR))
+		table.insert(
+			bricks,
+			B(Vector3.new(size, size, size), Vector3.new(x, 0.6 + size / 2 - 0.1, -4.2), hex("D8B98A"), {
+				shape = "Ball",
+			})
+		)
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(size * 0.38, size * 0.25, size * 0.38),
+				Vector3.new(x, 0.6 + size - 0.05, -4.2),
+				woodDark,
+				DECOR
+			)
+		)
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(size * 0.28, size * 0.3, size * 0.28),
+				Vector3.new(x, 0.6 + size + 0.2, -4.2),
+				hex("D8B98A"),
+				DECOR
+			)
+		)
 	end
 	-- сундук с золотом, крышка откинута
 	table.insert(bricks, B(Vector3.new(3, 1.8, 2), Vector3.new(8.6, 1.5, -3.2), wood))
 	table.insert(bricks, B(Vector3.new(3.1, 0.3, 2.1), Vector3.new(8.6, 1.2, -3.2), gold, DECOR))
 	table.insert(bricks, B(Vector3.new(2.6, 0.5, 1.6), Vector3.new(8.6, 2.55, -3.2), gold, DECOR))
-	table.insert(bricks, B(Vector3.new(3, 0.3, 2), CFrame.new(8.6, 3.0, -1.75) * CFrame.Angles(math.rad(65), 0, 0), woodDark, DECOR))
+	table.insert(
+		bricks,
+		B(Vector3.new(3, 0.3, 2), CFrame.new(8.6, 3.0, -1.75) * CFrame.Angles(math.rad(65), 0, 0), woodDark, DECOR)
+	)
 	-- полки на задней стене с товаром (вазы, рамы, статуэтки)
 	local goods = { hex("E53935"), hex("2F6BD8"), hex("F2C230"), hex("8E44AD"), hex("43A047"), hex("FB8C00") }
 	for row, y in { 4.4, 7.2 } do
@@ -114,7 +160,10 @@ function Shops.Sell(): { Brick }
 		for i = 1, 6 do
 			local x = -7.5 + (i - 1) * 3 + (row - 1) * 0.8
 			local h = 0.8 + ((i + row) % 3) * 0.35
-			table.insert(bricks, B(Vector3.new(0.9, h, 0.8), Vector3.new(x, y + 0.15 + h / 2, 7.8), goods[(i + row) % #goods + 1], DECOR))
+			table.insert(
+				bricks,
+				B(Vector3.new(0.9, h, 0.8), Vector3.new(x, y + 0.15 + h / 2, 7.8), goods[(i + row) % #goods + 1], DECOR)
+			)
 		end
 	end
 	-- колонны с золотыми капителями
@@ -129,23 +178,37 @@ function Shops.Sell(): { Brick }
 	local tilt = CFrame.new(0, 9.5, -11.4) * CFrame.Angles(math.rad(-25), 0, 0)
 	for i = 1, stripes do
 		local x = -12 + (i - 0.5) * width
-		table.insert(bricks, B(Vector3.new(width, 0.3, 4.4), tilt * CFrame.new(x, 0, 0), if i % 2 == 0 then Palette.White else green, DECOR))
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(width, 0.3, 4.4),
+				tilt * CFrame.new(x, 0, 0),
+				if i % 2 == 0 then Palette.White else green,
+				DECOR
+			)
+		)
 	end
 	-- тёплые лампы под крышей
 	for _, x in { -6, 6 } do
 		table.insert(bricks, neon(Vector3.new(0.9, 0.9, 0.9), Vector3.new(x, 9.75, -2), Palette.Lamp, 16))
 	end
 	-- большая монета «$» над крышей (вращается): ребро и лицевой диск
-	table.insert(bricks, B(Vector3.new(1.0, 7.6, 7.6), CFrame.new(0, 16.4, 2) * ALONG_Z, goldDark, {
-		shape = "Cylinder",
-		collide = false,
-		name = "Spin",
-	}))
-	table.insert(bricks, B(Vector3.new(1.2, 7, 7), CFrame.new(0, 16.4, 2) * ALONG_Z, gold, {
-		shape = "Cylinder",
-		collide = false,
-		name = "Spin",
-	}))
+	table.insert(
+		bricks,
+		B(Vector3.new(1.0, 7.6, 7.6), CFrame.new(0, 16.4, 2) * ALONG_Z, goldDark, {
+			shape = "Cylinder",
+			collide = false,
+			name = "Spin",
+		})
+	)
+	table.insert(
+		bricks,
+		B(Vector3.new(1.2, 7, 7), CFrame.new(0, 16.4, 2) * ALONG_Z, gold, {
+			shape = "Cylinder",
+			collide = false,
+			name = "Spin",
+		})
+	)
 	return bricks
 end
 
@@ -164,7 +227,12 @@ function Shops.Aura(): { Brick }
 			collide = false,
 			shadow = false,
 		}),
-		B(Vector3.new(0.08, 13.8, 13.8), CFrame.new(0, 1.45, 0) * UPRIGHT, tier, { shape = "Cylinder", collide = false }),
+		B(
+			Vector3.new(0.08, 13.8, 13.8),
+			CFrame.new(0, 1.45, 0) * UPRIGHT,
+			tier,
+			{ shape = "Cylinder", collide = false }
+		),
 		-- алтарь
 		B(Vector3.new(3.4, 1.6, 3.4), Vector3.new(0, 2.2, 2), lilac),
 		B(Vector3.new(2.4, 0.6, 2.4), Vector3.new(0, 3.3, 2), gold),
@@ -188,13 +256,16 @@ function Shops.Aura(): { Brick }
 		table.insert(bricks, B(Vector3.new(1.6, 8.8, 1.6), Vector3.new(p.X, 6.0, p.Z), marble))
 		table.insert(bricks, B(Vector3.new(2.2, 0.6, 2.2), Vector3.new(p.X, 10.7, p.Z), gold))
 		local color = glow[(i - 1) % #glow + 1]
-		table.insert(bricks, B(Vector3.new(1.5, 1.5, 1.5), CFrame.new(p.X, 12.3, p.Z) * DIAMOND, color, {
-			material = Enum.Material.Neon,
-			collide = false,
-			shadow = false,
-			name = "Bob",
-			light = { range = 12, brightness = 1.2, color = color },
-		}))
+		table.insert(
+			bricks,
+			B(Vector3.new(1.5, 1.5, 1.5), CFrame.new(p.X, 12.3, p.Z) * DIAMOND, color, {
+				material = Enum.Material.Neon,
+				collide = false,
+				shadow = false,
+				name = "Bob",
+				light = { range = 12, brightness = 1.2, color = color },
+			})
+		)
 	end
 	-- золотые балки между колоннами (кроме прохода спереди)
 	for i = 1, #pillars - 1 do
@@ -207,13 +278,21 @@ function Shops.Aura(): { Brick }
 	-- огоньки цветов аур вокруг алтаря
 	for i, color in glow do
 		local a = math.rad(i * 72)
-		table.insert(bricks, B(Vector3.new(0.8, 0.8, 0.8), Vector3.new(3.6 * math.cos(a), 4.6 + (i % 3) * 0.8, 2 + 3.6 * math.sin(a)), color, {
-			shape = "Ball",
-			material = Enum.Material.Neon,
-			collide = false,
-			shadow = false,
-			name = "Bob",
-		}))
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(0.8, 0.8, 0.8),
+				Vector3.new(3.6 * math.cos(a), 4.6 + (i % 3) * 0.8, 2 + 3.6 * math.sin(a)),
+				color,
+				{
+					shape = "Ball",
+					material = Enum.Material.Neon,
+					collide = false,
+					shadow = false,
+					name = "Bob",
+				}
+			)
+		)
 	end
 	return bricks
 end

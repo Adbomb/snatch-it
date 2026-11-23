@@ -848,7 +848,14 @@ local function lovibumGrid()
 			if player:GetAttribute("Tutorial")
 				then "Ловибумы продаются в «Магазине» — он откроется после обучения"
 				else "Ловибумов нет: купите их в «Магазине» (кнопка справа)",
-			{ Name = "Vide", Font = "Bold", Size = UDim2.fromOffset(gridWidth - 80, 60), Max = 24, Color = T.Muted, ZIndex = 4 }
+			{
+				Name = "Vide",
+				Font = "Bold",
+				Size = UDim2.fromOffset(gridWidth - 80, 60),
+				Max = 24,
+				Color = T.Muted,
+				ZIndex = 4,
+			}
 		).LayoutOrder =
 			1
 	end

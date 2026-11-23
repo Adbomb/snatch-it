@@ -53,7 +53,11 @@ local function sweep(players: { Player }): number
 		if root and root:IsA("BasePart") and MapLayout.InDangerZone(root.Position) and not exempt(player) then
 			MoveGuard.Teleport(player, safePoint()) -- перенос сервером (D52)
 			moved += 1
-			Notify.Send(player, "Ночь: коридор уровней закрыт — вы в безопасной зоне", "Stop")
+			Notify.Send(
+				player,
+				"Ночь: коридор уровней закрыт — вы в безопасной зоне",
+				"Stop"
+			)
 		end
 	end
 	return moved
@@ -71,12 +75,23 @@ local function startNight(players: { Player })
 	night = true
 	barrier.Parent = world
 	for _, player in players do
-		if outside(player) and not exempt(player) and CarryService.LoseCarried(player, "ночь застала вне Safe Zone (D37)") then
-			Notify.Send(player, "Ночь застала вас вне безопасной зоны — предмет потерян", "Stop")
+		if
+			outside(player)
+			and not exempt(player)
+			and CarryService.LoseCarried(player, "ночь застала вне Safe Zone (D37)")
+		then
+			Notify.Send(
+				player,
+				"Ночь застала вас вне безопасной зоны — предмет потерян",
+				"Stop"
+			)
 		end
 	end
 	local moved = sweep(players)
-	Log.Debug("NightService", ("Ночь: коридор закрыт, перенесено в Safe Zone: %d"):format(moved))
+	Log.Debug(
+		"NightService",
+		("Ночь: коридор закрыт, перенесено в Safe Zone: %d"):format(moved)
+	)
 end
 
 local function startDay()
@@ -209,10 +224,18 @@ function NightService.BuildBarrier(): Model
 	gui.LightInfluence = 0
 	gui.Brightness = 2
 	gui.Parent = sign
-	for _, line in {
-		{ text = "🌙 НОЧЬ", size = 0.6, y = 0, weight = Enum.FontWeight.Heavy, stroke = 3 },
-		{ text = "Уровни закрыты до рассвета", size = 0.3, y = 0.64, weight = Enum.FontWeight.Bold, stroke = 1.5 },
-	} do
+	for _, line in
+		{
+			{ text = "🌙 НОЧЬ", size = 0.6, y = 0, weight = Enum.FontWeight.Heavy, stroke = 3 },
+			{
+				text = "Уровни закрыты до рассвета",
+				size = 0.3,
+				y = 0.64,
+				weight = Enum.FontWeight.Bold,
+				stroke = 1.5,
+			},
+		}
+	do
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, line.size)

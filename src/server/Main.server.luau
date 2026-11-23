@@ -124,7 +124,13 @@ Log.Debug("Main", "Старт, с от начала: " .. table.concat(marks, ",
 local partCount = ModelBuilder.CountParts(world)
 Log.Debug("Main", ("Карта: %d частей (бюджет %d)"):format(partCount, GameConfig.World.MaxParts))
 if partCount > GameConfig.World.MaxParts then
-	Log.Warn("Main", ("Карта превышает бюджет: %d > %d частей"):format(partCount, GameConfig.World.MaxParts))
+	Log.Warn(
+		"Main",
+		("Карта превышает бюджет: %d > %d частей"):format(
+			partCount,
+			GameConfig.World.MaxParts
+		)
+	)
 end
 
 -- Вход игрока. Тестовый сервер владельца: чужих не пускает, профиль владельца — в памяти (ProfileStore.Mock: ни

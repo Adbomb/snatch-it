@@ -126,7 +126,10 @@ local function fill(entry: Slot, forced: string?)
 		end
 	end
 	if not itemId then
-		Log.Warn("BossLootService", ("Босс %d: нет предмета нужной редкости"):format(entry.boss))
+		Log.Warn(
+			"BossLootService",
+			("Босс %d: нет предмета нужной редкости"):format(entry.boss)
+		)
 		return
 	end
 	local part = ItemFactory.Create(itemId)

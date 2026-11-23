@@ -104,7 +104,10 @@ local function buildGround(parent: Instance)
 	end)
 	local hz0, hz1 = holes[1][3], holes[1][4]
 	for _, hole in holes do
-		assert(hole[3] == hz0 and hole[4] == hz1, "WorldBuilder: проёмы хранилищ не в одном ряду")
+		assert(
+			hole[3] == hz0 and hole[4] == hz1,
+			"WorldBuilder: проёмы хранилищ не в одном ряду"
+		)
 	end
 	local bricks = {
 		box(x0, x1, y0, y1, island.minZ - 2, hz0, Palette.Field),
@@ -240,10 +243,20 @@ end
 -- Детали с именами Spin и Bob получают теги (вращение и покачивание делает клиент), у кристалла ауры — искры.
 local SHOP_BUILD = { ["Продажа"] = Shops.Sell, ["Аура"] = Shops.Aura }
 local SHOP_STYLE = {
-	["Продажа"] = { title = "💰 Продажа", accent = Color3.fromHex("2EBD4E"), size = Vector2.new(22, 5.5),
-		height = Shops.SellTitleHeight, z = 2 },
-	["Аура"] = { title = "✨ Аура", accent = Color3.fromHex("B04BFF"), size = Vector2.new(18, 5.5),
-		height = Shops.AuraTitleHeight, z = 0 },
+	["Продажа"] = {
+		title = "💰 Продажа",
+		accent = Color3.fromHex("2EBD4E"),
+		size = Vector2.new(22, 5.5),
+		height = Shops.SellTitleHeight,
+		z = 2,
+	},
+	["Аура"] = {
+		title = "✨ Аура",
+		accent = Color3.fromHex("B04BFF"),
+		size = Vector2.new(18, 5.5),
+		height = Shops.AuraTitleHeight,
+		z = 0,
+	},
 }
 local SPARKLES = "rbxasset://textures/particles/sparkles_main.dds" -- встроенная текстура Roblox
 
@@ -301,7 +314,8 @@ local function buildShops(parent: Instance)
 					sparks.Lifetime = NumberRange.new(1.2, 2)
 					sparks.Speed = NumberRange.new(1, 2.5)
 					sparks.SpreadAngle = Vector2.new(180, 180)
-					sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
+					sparks.Size =
+						NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
 					sparks.Parent = part
 				end
 			end
@@ -405,7 +419,14 @@ local function buildZone(index: number, parent: Instance)
 	local accent = Color3.fromHex(zone.accent)
 
 	-- Пол с узором зоны (Texture поверх пупырышков): зоны различаются полом, а не рамками (D41).
-	local floor = slab("Floor", Vector2.new(MapLayout.ZoneHalfWidth * 2, size), frame.Position, H.Path, Color3.fromHex(zone.floor), f)
+	local floor = slab(
+		"Floor",
+		Vector2.new(MapLayout.ZoneHalfWidth * 2, size),
+		frame.Position,
+		H.Path,
+		Color3.fromHex(zone.floor),
+		f
+	)
 	local spec = zone.pattern
 	local top = floor:FindFirstChildWhichIsA("BasePart")
 	if spec and top then
@@ -468,7 +489,8 @@ local function buildZone(index: number, parent: Instance)
 		for i, spot in MapLayout.ArtSlots do
 			place("Pedestal_" .. zone.id, function()
 				return ZoneDecor.Pedestal(accent)
-			end, frame * CFrame.new(spot.X, 0, spot.Y), f).Name = "Pedestal_" .. i
+			end, frame * CFrame.new(spot.X, 0, spot.Y), f).Name = "Pedestal_"
+				.. i
 		end
 	end
 
@@ -511,7 +533,6 @@ local function buildZone(index: number, parent: Instance)
 		end
 	end
 end
-
 
 function WorldBuilder.Build(parent: Instance)
 	local map = folder("Map", parent)

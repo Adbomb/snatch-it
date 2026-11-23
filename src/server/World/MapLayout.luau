@@ -37,7 +37,10 @@ MapLayout.Cliff = {
 -- Участки: центр музея (44 × 44, вход в -Z) — PlotCFrame. Участок 1 — по +X (левая рука игрока).
 local PLOT_XS = { 150, 75, 0, -75, -150 }
 local PLOT_Z = 100
-assert(#PLOT_XS == GameConfig.World.PlotCount, "MapLayout: число участков не совпадает с GameConfig.World.PlotCount")
+assert(
+	#PLOT_XS == GameConfig.World.PlotCount,
+	"MapLayout: число участков не совпадает с GameConfig.World.PlotCount"
+)
 
 function MapLayout.PlotCFrame(index: number): CFrame
 	return CFrame.new(PLOT_XS[index], 0, PLOT_Z)

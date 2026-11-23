@@ -200,7 +200,11 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	MuseumService.PlaceExhibit(part, plot, slot, 0)
 	DataService.IncrementStat(player, "delivered")
 	DataService.RequestSave(player)
-	Notify.Send(player, ("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot), "Go")
+	Notify.Send(
+		player,
+		("Выставлено: %s (витрина %d)"):format(Items[entry.itemId].displayName, slot),
+		"Go"
+	)
 	MuseumService.Present(player, plot, slot, entry.itemId)
 end
 
@@ -298,7 +302,11 @@ local function tryPlaceHere(player: Player, plot: PlotService.Plot, slot: number
 	local entryA = uidA and ItemRegistry.Get(uidA)
 	if not uidA or not recordA or not entryA or recordA.place ~= "slot" or recordA.slot ~= fromSlot then
 		MuseumService.CancelMove(player)
-		Notify.Send(player, "Экспонат уже не на витрине — перестановка отменена", "Stop")
+		Notify.Send(
+			player,
+			"Экспонат уже не на витрине — перестановка отменена",
+			"Stop"
+		)
 		return
 	end
 	local uidB = ItemRegistry.GetSlotItem(player.UserId, slot)
@@ -344,7 +352,11 @@ local function tryPlaceHere(player: Player, plot: PlotService.Plot, slot: number
 		if entryB.part then
 			MuseumService.PlaceExhibit(entryB.part, plot, fromSlot, recordB.rot or 0)
 		end
-		Notify.Send(player, ("Витрины %d и %d поменялись экспонатами"):format(fromSlot, slot), "Go")
+		Notify.Send(
+			player,
+			("Витрины %d и %d поменялись экспонатами"):format(fromSlot, slot),
+			"Go"
+		)
 	end
 	MuseumService.CancelMove(player)
 	DataService.RequestSave(player)
@@ -401,7 +413,10 @@ function MuseumService.LoadMuseum(player: Player)
 		if type(record) ~= "table" or not Items[record.id] then
 			Log.Warn(
 				"MuseumService",
-				("%s: неизвестный или нечитаемый предмет (uid %s) пропущен"):format(player.Name, tostring(uid))
+				("%s: неизвестный или нечитаемый предмет (uid %s) пропущен"):format(
+					player.Name,
+					tostring(uid)
+				)
 			)
 		elseif record.pending ~= nil then
 			-- украденное ещё передаётся по журналу (D46): в реестр не ставится, в окне — «Передаётся…»

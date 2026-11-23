@@ -122,7 +122,11 @@ local function tryAction(player: any, action: any, level: any, kind: any)
 		("%s купил %s ×%d (уровень %d) за %d"):format(player.Name, kind, Catch.PerBuy, level, price)
 	)
 	ShopService.Sync(player)
-	Notify.Send(player, ("Куплено: %s ×%d — уровень %d"):format(Catch.Names[kind], Catch.PerBuy, level), "Go")
+	Notify.Send(
+		player,
+		("Куплено: %s ×%d — уровень %d"):format(Catch.Names[kind], Catch.PerBuy, level),
+		"Go"
+	)
 end
 
 function ShopService.Init()

@@ -61,7 +61,10 @@ function Preview.Build(): string
 	end
 
 	root.Parent = workspace
-	return ("Предпросмотр собран: %d частей (бюджет %d)"):format(ModelBuilder.CountParts(root), GameConfig.World.MaxParts)
+	return ("Предпросмотр собран: %d частей (бюджет %d)"):format(
+		ModelBuilder.CountParts(root),
+		GameConfig.World.MaxParts
+	)
 end
 
 return Preview

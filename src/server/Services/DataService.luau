@@ -337,7 +337,10 @@ end
 -- функции башни ниже. Отказ пишется в лог (вызов из обычного пути — ошибка службы, не игрока).
 local function refuseBuilt(player: Player, record: any, uid: string, what: string): boolean
 	if TowerRules.IsBuilt(record) then
-		Log.Warn("DataService", ("%s: %s — uid %s стоит этажом башни, отказ"):format(player.Name, what, uid))
+		Log.Warn(
+			"DataService",
+			("%s: %s — uid %s стоит этажом башни, отказ"):format(player.Name, what, uid)
+		)
 		return true
 	end
 	return false
@@ -981,7 +984,10 @@ function DataService.TowerOnLoad(player: Player, data: any): TowerRules.Report?
 	if towerMode and TowerRules.Migrate(data, Items, os.time()) then
 		Log.Debug(
 			"DataService",
-			("%s: миграция v5 → v6 (башня), этажей: %d"):format(player.Name, #TowerRules.Order(data))
+			("%s: миграция v5 → v6 (башня), этажей: %d"):format(
+				player.Name,
+				#TowerRules.Order(data)
+			)
 		)
 	end
 	if not towerMode and not TowerRules.HasTower(data) then

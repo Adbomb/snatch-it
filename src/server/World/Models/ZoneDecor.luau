@@ -66,17 +66,23 @@ function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 				local x = -count * tile / 2 + (ix + 0.5) * tile
 				local z = -count * tile / 2 + (iz + 0.5) * tile
 				-- Плитка выше подложки на 0.12: зазор 0.02 издалека мерцал (D36).
-				table.insert(bricks, B(Vector3.new(tile, 0.2, tile), Vector3.new(x, 0.1, z), marbleB, {
-					collide = false,
-					shadow = false,
-				}))
+				table.insert(
+					bricks,
+					B(Vector3.new(tile, 0.2, tile), Vector3.new(x, 0.1, z), marbleB, {
+						collide = false,
+						shadow = false,
+					})
+				)
 			end
 		end
 	end
-	table.insert(bricks, B(Vector3.new(size, 0.08, size), Vector3.new(0, 0.04, 0), marbleA, {
-		collide = false,
-		shadow = false,
-	}))
+	table.insert(
+		bricks,
+		B(Vector3.new(size, 0.08, size), Vector3.new(0, 0.04, 0), marbleA, {
+			collide = false,
+			shadow = false,
+		})
+	)
 	local gold = hex("FFB800")
 	for _, x in { -24, 24 } do
 		for _, z in { -6, 14 } do
@@ -88,17 +94,27 @@ function ZoneDecor.Bank(size: number): { ModelBuilder.Brick }
 	for _, x in { -21, -14, 14, 21 } do
 		local z = 27
 		table.insert(bricks, B(Vector3.new(5, 6, 3.6), Vector3.new(x, 3, z), hex("546E7A")))
-		table.insert(bricks, B(Vector3.new(0.4, 2.2, 2.2), CFrame.new(x, 3.6, z - 2) * CFrame.Angles(0, math.rad(90), 0), gold, {
-			shape = "Cylinder",
-			collide = false,
-		}))
+		table.insert(
+			bricks,
+			B(Vector3.new(0.4, 2.2, 2.2), CFrame.new(x, 3.6, z - 2) * CFrame.Angles(0, math.rad(90), 0), gold, {
+				shape = "Cylinder",
+				collide = false,
+			})
+		)
 		table.insert(bricks, B(Vector3.new(0.6, 0.6, 1.2), Vector3.new(x + 1.6, 2.4, z - 2.2), Palette.Metal, DECOR))
 	end
 	return bricks
 end
 
 -- Ступенчатая пирамида из квадратных плит: base — сторона нижней, steps — число ступеней.
-local function stepped(bricks: { ModelBuilder.Brick }, at: Vector2, base: number, steps: number, step: number, color: Color3)
+local function stepped(
+	bricks: { ModelBuilder.Brick },
+	at: Vector2,
+	base: number,
+	steps: number,
+	step: number,
+	color: Color3
+)
 	for i = 0, steps - 1 do
 		local side = base * (1 - i / steps)
 		table.insert(bricks, B(Vector3.new(side, step, side), Vector3.new(at.X, (i + 0.5) * step, at.Y), color))
@@ -116,7 +132,10 @@ function ZoneDecor.Desert(): { ModelBuilder.Brick }
 		local side = if i % 2 == 0 then 1 else -1
 		table.insert(bricks, B(Vector3.new(1.6, h, 1.6), Vector3.new(spot.X, h / 2, spot.Y), cactus))
 		table.insert(bricks, B(Vector3.new(1.6, 1.2, 1.2), Vector3.new(spot.X + side * 1.4, h * 0.5, spot.Y), cactus))
-		table.insert(bricks, B(Vector3.new(1.2, 2.4, 1.2), Vector3.new(spot.X + side * 1.8, h * 0.5 + 1.8, spot.Y), cactus))
+		table.insert(
+			bricks,
+			B(Vector3.new(1.2, 2.4, 1.2), Vector3.new(spot.X + side * 1.8, h * 0.5 + 1.8, spot.Y), cactus)
+		)
 	end
 	return bricks
 end
@@ -130,7 +149,10 @@ function ZoneDecor.Glacier(): { ModelBuilder.Brick }
 		table.insert(bricks, B(Vector3.new(7, 1.2, 7), Vector3.new(spot.X, 0.6, spot.Y), snow))
 		for i, h in { 9, 6, 4 } do
 			local dx, dz = (i - 2) * 2, (i % 2) * 2 - 1
-			table.insert(bricks, B(Vector3.new(1.8, h, 1.8), Vector3.new(spot.X + dx, h / 2 + 1.2, spot.Y + dz), iceColor, ice))
+			table.insert(
+				bricks,
+				B(Vector3.new(1.8, h, 1.8), Vector3.new(spot.X + dx, h / 2 + 1.2, spot.Y + dz), iceColor, ice)
+			)
 		end
 	end
 	for _, spot in { Vector2.new(-26, 6), Vector2.new(26, 10) } do
@@ -167,7 +189,10 @@ function ZoneDecor.Volcano(): { ModelBuilder.Brick }
 	table.insert(bricks, B(Vector3.new(2.6, 0.4, 2.6), Vector3.new(22, 12.2, 24), lava, glow))
 	for _, spot in { Vector2.new(-24, -20), Vector2.new(24, -18), Vector2.new(-24, 24) } do
 		table.insert(bricks, B(Vector3.new(8, 0.2, 6), Vector3.new(spot.X, 0.1, spot.Y), lava, glow))
-		table.insert(bricks, B(Vector3.new(3, 2.4, 3), CFrame.new(spot.X + 4, 1.2, spot.Y + 3) * CFrame.Angles(0, 0.5, 0), basalt))
+		table.insert(
+			bricks,
+			B(Vector3.new(3, 2.4, 3), CFrame.new(spot.X + 4, 1.2, spot.Y + 3) * CFrame.Angles(0, 0.5, 0), basalt)
+		)
 	end
 	return bricks
 end
@@ -177,14 +202,20 @@ function ZoneDecor.Spaceport(): { ModelBuilder.Brick }
 	local bricks: { ModelBuilder.Brick } = {}
 	local pad, white, red = hex("546E7A"), Palette.White, hex("E53935")
 	local at = Vector2.new(-22, 22)
-	table.insert(bricks, B(Vector3.new(0.4, 12, 12), CFrame.new(at.X, 0.2, at.Y) * UPRIGHT, pad, { shape = "Cylinder" }))
+	table.insert(
+		bricks,
+		B(Vector3.new(0.4, 12, 12), CFrame.new(at.X, 0.2, at.Y) * UPRIGHT, pad, { shape = "Cylinder" })
+	)
 	-- Ракета снизу вверх: корпус, кольцо, нос, кончик (диаметр, высота).
 	local y = 0.4
 	for i, piece in { { 3.6, 10 }, { 3, 2 }, { 2, 2 }, { 1, 1.4 } } do
 		local color = if i % 2 == 0 then red else white
-		table.insert(bricks, B(Vector3.new(piece[2], piece[1], piece[1]), CFrame.new(at.X, y + piece[2] / 2, at.Y) * UPRIGHT, color, {
-			shape = "Cylinder",
-		}))
+		table.insert(
+			bricks,
+			B(Vector3.new(piece[2], piece[1], piece[1]), CFrame.new(at.X, y + piece[2] / 2, at.Y) * UPRIGHT, color, {
+				shape = "Cylinder",
+			})
+		)
 		y += piece[2]
 	end
 	for j = 0, 2 do
@@ -193,15 +224,21 @@ function ZoneDecor.Spaceport(): { ModelBuilder.Brick }
 	end
 	local dish = Vector2.new(24, -20)
 	table.insert(bricks, B(Vector3.new(1, 6, 1), Vector3.new(dish.X, 3, dish.Y), Palette.Metal))
-	table.insert(bricks, B(Vector3.new(0.4, 6, 6), CFrame.new(dish.X, 6.5, dish.Y) * CFrame.Angles(0, 0, math.rad(60)), white, {
-		shape = "Cylinder",
-	}))
+	table.insert(
+		bricks,
+		B(Vector3.new(0.4, 6, 6), CFrame.new(dish.X, 6.5, dish.Y) * CFrame.Angles(0, 0, math.rad(60)), white, {
+			shape = "Cylinder",
+		})
+	)
 	for _, spot in { Vector2.new(-26, -6), Vector2.new(26, 8) } do
 		table.insert(bricks, B(Vector3.new(3, 3, 3), Vector3.new(spot.X, 1.5, spot.Y), hex("90A4AE")))
-		table.insert(bricks, B(Vector3.new(3.2, 0.3, 3.2), Vector3.new(spot.X, 3.15, spot.Y), hex("00E5FF"), {
-			material = Enum.Material.Neon,
-			collide = false,
-		}))
+		table.insert(
+			bricks,
+			B(Vector3.new(3.2, 0.3, 3.2), Vector3.new(spot.X, 3.15, spot.Y), hex("00E5FF"), {
+				material = Enum.Material.Neon,
+				collide = false,
+			})
+		)
 	end
 	return bricks
 end
@@ -212,12 +249,22 @@ function ZoneDecor.Castle(): { ModelBuilder.Brick }
 	local stone, dark, banner = hex("BDBDBD"), hex("757575"), hex("C62828")
 	for _, spot in { Vector2.new(-25, -25), Vector2.new(25, -25), Vector2.new(-25, 25), Vector2.new(25, 25) } do
 		for i = 0, 4 do
-			table.insert(bricks, B(Vector3.new(7, 2.4, 7), Vector3.new(spot.X, i * 2.4 + 1.2, spot.Y), if i % 2 == 0 then stone else dark))
+			table.insert(
+				bricks,
+				B(
+					Vector3.new(7, 2.4, 7),
+					Vector3.new(spot.X, i * 2.4 + 1.2, spot.Y),
+					if i % 2 == 0 then stone else dark
+				)
+			)
 		end
 		for _, d in { Vector2.new(-2.5, -2.5), Vector2.new(2.5, -2.5), Vector2.new(-2.5, 2.5), Vector2.new(2.5, 2.5) } do
 			table.insert(bricks, B(Vector3.new(1.6, 1.6, 1.6), Vector3.new(spot.X + d.X, 12.8, spot.Y + d.Y), stone))
 		end
-		table.insert(bricks, B(Vector3.new(0.2, 4, 2.4), Vector3.new(spot.X - math.sign(spot.X) * 3.6, 8, spot.Y), banner, DECOR))
+		table.insert(
+			bricks,
+			B(Vector3.new(0.2, 4, 2.4), Vector3.new(spot.X - math.sign(spot.X) * 3.6, 8, spot.Y), banner, DECOR)
+		)
 	end
 	table.insert(bricks, B(Vector3.new(6, 0.1, 56), Vector3.new(0, 0.05, 0), banner, DECOR))
 	return bricks

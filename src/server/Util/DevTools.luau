@@ -151,11 +151,13 @@ function DevTools.Init()
 		end)
 	end)
 	local TimeService = require(ServerScriptService.Server.Services.TimeService)
-	for name, handler in {
-		TimeScale = TimeService.SetScale,
-		TimeSkip = TimeService.SkipTo,
-		TimeReset = TimeService.ResetClock,
-	} :: { [string]: (...any) -> any } do
+	for name, handler in
+		{
+			TimeScale = TimeService.SetScale,
+			TimeSkip = TimeService.SkipTo,
+			TimeReset = TimeService.ResetClock,
+		} :: { [string]: (...any) -> any }
+	do
 		local fn = Instance.new("BindableFunction")
 		fn.Name = name
 		fn.OnInvoke = function(...)
@@ -208,7 +210,9 @@ function DevTools.Init()
 				end
 				player.Character:PivotTo(CFrame.new(part.Position + Vector3.new(0, 3, 5)))
 				task.wait(0.3)
-				return if BattleService.Begin(player, zone, slot) then "бой начат" else "бой не начался"
+				return if BattleService.Begin(player, zone, slot)
+					then "бой начат"
+					else "бой не начался"
 			elseif command == "FightTest" then
 				-- «FightTest <босс> <HP бойца | -> <HP босса | -> [x z]» (этап C босса 10, проверка живым персонажем):
 				-- HP только этого боя (длинный бой, победа, поражение) и место бойца в осях босса (x — левый бок босса,
@@ -271,7 +275,9 @@ function DevTools.Init()
 					local open = GameConfig.Museum.SlotsByLevel[level]
 					for _, record in data.items do
 						if type(record) == "table" and record.place == "slot" and (record.slot or 0) > open then
-							return ("на месте %d экспонат — уровень ниже не ставится"):format(record.slot)
+							return ("на месте %d экспонат — уровень ниже не ставится"):format(
+								record.slot
+							)
 						end
 					end
 					data.museumLevel = level
@@ -346,7 +352,9 @@ function DevTools.Init()
 				local spot: any = if x then Vector3.new(tonumber(x) :: number, 0, tonumber(z) :: number) else words[4]
 				DefenseService.Handlers.Action(player, "Install", kind, spot)
 				local installed = DefenseService.Handlers.Museum(player.UserId).installed[kind]
-				return if installed then "установлено" else "отказ (см. уведомление игроку)"
+				return if installed
+					then "установлено"
+					else "отказ (см. уведомление игроку)"
 			elseif command == "BossSlot" then
 				-- «BossSlot <босс> <место> <предмет>» — в слот у босса именно этот предмет (показ и проверка каждого
 				-- существа коллекции: вид, анимации, поимка); после рассвета слоты снова случайные. Только в Studio.
@@ -529,7 +537,11 @@ function DevTools.Tower(words: { string }): any
 				built += TowerService.DevFill(t.owner, n - have)
 			end
 		end
-		return ("построено этажей %d за %.2f с; башен %d"):format(built, os.clock() - t0, #fillers)
+		return ("построено этажей %d за %.2f с; башен %d"):format(
+			built,
+			os.clock() - t0,
+			#fillers
+		)
 	end
 	local player = Players:GetPlayerByUserId(tonumber(words[2]) or 0)
 	if not player then

@@ -98,16 +98,14 @@ function UIKit.Constrain(object: GuiObject, opts: { aspect: number?, minSize: Ve
 end
 
 -- Подпись. onLight = тёмный текст без обводки (на светлой панели), иначе белый с обводкой Ink.
-function UIKit.Text(
-	props: Placement & {
-		text: string,
-		textSize: number?,
-		weight: Enum.FontWeight?,
-		onLight: boolean?,
-		color: Color3?,
-		alignX: Enum.TextXAlignment?,
-	}
-): TextLabel
+function UIKit.Text(props: Placement & {
+	text: string,
+	textSize: number?,
+	weight: Enum.FontWeight?,
+	onLight: boolean?,
+	color: Color3?,
+	alignX: Enum.TextXAlignment?,
+}): TextLabel
 	local label = Instance.new("TextLabel")
 	label.Name = "Text"
 	label.BackgroundTransparency = 1
@@ -225,9 +223,7 @@ end
 
 -- Окно или карточка: светлый фон, обводка, тень; с title — синяя шапка.
 -- Возвращает (окно, область содержимого).
-function UIKit.Panel(
-	props: Placement & { title: string?, headerHeight: number?, card: boolean? }
-): (Frame, Frame)
+function UIKit.Panel(props: Placement & { title: string?, headerHeight: number?, card: boolean? }): (Frame, Frame)
 	local radius = if props.card then UITokens.Corner.Card else UITokens.Corner.Window
 	local holder = blank(if props.card then "Card" else "Panel")
 

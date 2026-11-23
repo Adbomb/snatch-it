@@ -445,7 +445,9 @@ render = function()
 			c.price.Text = priceLine(kind, c.buy)
 		else
 			local price = priceOf(level, kind)
-			c.price.Text = if price then ("Цена: %s за ×%d"):format(money(price), Catch.PerBuy) else "Цена: скоро"
+			c.price.Text = if price
+				then ("Цена: %s за ×%d"):format(money(price), Catch.PerBuy)
+				else "Цена: скоро"
 		end
 		if c.select then
 			c.select.Visible = kind == selected

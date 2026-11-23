@@ -217,7 +217,11 @@ local function addLabel(part: BasePart, def: Items.ItemDef)
 	local rarity = ('<font color="#%s">%s</font>'):format(color:ToHex(), Rarities.Names[def.rarity] or def.rarity)
 	local income = def.income or 0
 	info.Text = if income > 0
-		then ('%s · <font color="#%s">+%s/сек</font>'):format(rarity, cfg.Income:ToHex(), NumberFormat.Short(income))
+		then ('%s · <font color="#%s">+%s/сек</font>'):format(
+			rarity,
+			cfg.Income:ToHex(),
+			NumberFormat.Short(income)
+		)
 		else rarity
 end
 

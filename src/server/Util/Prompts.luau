@@ -16,14 +16,24 @@ type ActionSpec = { text: string, key: Enum.KeyCode, gamepadKey: Enum.KeyCode, o
 
 -- Подсказки на одной витрине разнесены по вертикали (UIOffset, px), чтобы не перекрывать друг друга.
 Prompts.Actions = {
-	Display = { text = "Выставить", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
+	Display = {
+		text = "Выставить",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 	FromStorage = {
 		text = "Выставить из инвентаря",
 		key = Enum.KeyCode.E,
 		gamepadKey = Enum.KeyCode.ButtonX,
 		offset = Vector2.zero,
 	},
-	Move = { text = "Переставить", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
+	Move = {
+		text = "Переставить",
+		key = Enum.KeyCode.E,
+		gamepadKey = Enum.KeyCode.ButtonX,
+		offset = Vector2.zero,
+	},
 	Here = { text = "Сюда", key = Enum.KeyCode.E, gamepadKey = Enum.KeyCode.ButtonX, offset = Vector2.zero },
 	Rotate = {
 		text = "Повернуть",
