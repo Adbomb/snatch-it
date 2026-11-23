@@ -22,6 +22,8 @@
 			Position = UDim2.fromOffset(511, 36) })
 ]]
 
+-- В игре (решение владельца 2026-11-17): вид по референсу владельца — скин «Flat», раздел 7 в конце файла.
+-- Зависит только от сервисов Roblox.
 local UI = {}
 
 -- =====================================================================================================
@@ -384,6 +386,11 @@ end
 --- Spinning-ready sunburst ("Soleil"). Rotate it with StudMotion.SpinSunbursts.
 function UI.Sunburst(parent, size, p)
 	p = p or {}
+	if UI.Skin == "Flat" then -- лучей на референсе нет: картинка остаётся (на неё ссылается код окон), но не видна
+		local hidden = UI.Image(parent, "", { Name = "Soleil", Size = UDim2.fromOffset(0, 0), ZIndex = p.ZIndex or 4 })
+		hidden.Visible = false
+		return hidden
+	end
 	return UI.Image(parent, UI.Assets.Sunburst, { Name = "Soleil", Size = typeof(size) == "UDim2" and size or UDim2.fromOffset(size, size),
 		Position = p.Position or UDim2.fromScale(0.5, 0.47), Transparency = p.Transparency or 0.55, ZIndex = p.ZIndex or 4, Color = p.Color })
 end
@@ -433,6 +440,7 @@ end
 	   IconLayout ("Left" default | "Top" | "Big" (square menu tile: big icon top, label bottom)), IconRotation (-8),
 	   Studs (bool, default true for Stud style), Reflections ({preset names}), ZIndex, LayoutOrder ]]
 function UI.Button(parent, p)
+	if UI.Skin == "Flat" then return UI.FlatButton(parent, p) end
 	p = p or {}
 	local style = p.Style or "Stud"
 	local th = themeOf(p.Theme)
@@ -542,6 +550,7 @@ end
 
 --- Re-color an existing 3D button (same contract as the reference game's ModuleMenus.Theme).
 function UI.Recolor(b, theme)
+	if b:GetAttribute("Skin") == "Flat" then return UI.FlatRecolor(b, theme) end
 	local th = themeOf(theme)
 	b.BackgroundColor3 = th.bord
 	b.Biseau.UIGradient.Color = th.biseau
@@ -567,6 +576,7 @@ end
 
 --- Square 55x55 close button with extruded "X" (Montserrat 38).
 function UI.CloseButton(parent, p)
+	if UI.Skin == "Flat" then return UI.FlatCloseButton(parent, p) end
 	p = p or {}
 	local b = UI.Button(parent, { Name = p.Name or "Fermer", Style = "Chunky", Theme = "close", Size = Vector2.new(55, 55),
 		Position = p.Position, AnchorPoint = p.AnchorPoint, ZIndex = p.ZIndex or 8, Reflections = { "Close" } })
@@ -643,6 +653,7 @@ end
 	Used for Daily tiles, Rebirth cards, shop offer banners, the gold reward banner, FREE/PREMIUM tracks.
 	p: Name, Size (UDim2), Position, AnchorPoint, Gradient (ColorSequence or UI.PanelThemes key), Rotation (90), Corner (6), Stroke (3), ZIndex ]]
 function UI.StudPanel(parent, p)
+	if UI.Skin == "Flat" then return UI.FlatPanel(parent, p) end
 	local grad = p.Gradient
 	if type(grad) == "string" then grad = UI.PanelThemes[grad] end
 	local z = p.ZIndex or 2
@@ -661,6 +672,7 @@ end
 --[[ Dark recessed box ("boite"): #141E24 @0.1, stroke #080C0E 2.5, inner line #4B7D91 1.2 @0.45, corner 6.
 	Used for "Lvl." headers, requirements frame, HUD boost pills, bottom bars, shop sub-boxes (transparency 0.25). ]]
 function UI.InsetBox(parent, p)
+	if UI.Skin == "Flat" then return UI.FlatInsetBox(parent, p) end
 	local z = p.ZIndex or 3
 	local f = new("Frame", { Name = p.Name or "Boite", BackgroundColor3 = p.Color or UI.Colors.Inset,
 		BackgroundTransparency = p.Transparency or 0.1, BorderSizePixel = 0, Size = p.Size, Position = p.Position or UDim2.new(),
@@ -690,6 +702,7 @@ end
 
 --- Rounded info pill ("Minuteur"/"Aide"): #1C242C, stroke #0A0C10 2.5, inner line #6E8CA5 1.2 @0.35, RichText Montserrat 18.
 function UI.Pill(parent, text, p)
+	if UI.Skin == "Flat" then return UI.FlatPill(parent, text, p) end
 	p = p or {}
 	local h = p.Height or 30
 	local z = p.ZIndex or 20
@@ -742,6 +755,7 @@ end
 	p: Size (Vector2), Title, Icon, Header ("blue"|"purple"|"gold"|"pink"|"green"|ColorSequence|"image"), HeaderImage,
 	   IconSize, Close (bool, default true), Position, Visible (false) ]]
 function UI.Window(gui, p)
+	if UI.Skin == "Flat" then return UI.FlatWindow(gui, p) end
 	local size = v2(p.Size or Vector2.new(640, 470))
 	local W, H = size.X, size.Y
 	local imageHeader = p.Header == "image" or p.HeaderImage ~= nil
@@ -893,6 +907,330 @@ function UI.ProductCard(parent, p)
 	c:SetAttribute("Produit", p.Product or p.Name)
 	c.Parent = parent
 	return c
+end
+
+-- =====================================================================================================
+-- 7. СКИН «FLAT» (решение владельца 2026-11-17: вид интерфейса — по его референсу, а не Stud-UI)
+-- =====================================================================================================
+--[[ Референс: плоские яркие прямоугольники — заливка в два тона сверху вниз, тонкий тёмный контур, светлая рамка
+	по внутреннему краю, почти без скругления; надписи — белый Montserrat Black с чёрной обводкой и тенью вниз;
+	значки на кнопках — плоские белые силуэты с чёрной обводкой; тёмные полупрозрачные скруглённые плашки (слоты).
+	Пупырышек, бликов и «губы» снизу нет. Цвета green, blue, red, orange и teal сняты пипеткой с референса; остальные
+	темы (и редкости) выводятся из тем Stud по тому же правилу. Имена Face / Fond / Degrade / Texte / Ombre /
+	ButtonScale сохранены: Recolor, SetDisabled, SetButtonText и StudMotion работают как раньше.
+	UI.Skin = "Stud" возвращает исходный вид набора. ]]
+UI.Skin = "Flat"
+
+local BLACK = RGB(0, 0, 0)
+
+UI.Fonts.Italic = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy, Enum.FontStyle.Italic)
+
+UI.Flat = {
+	Outline = 2, -- тёмный контур кнопки, px
+	Edge = 2, -- светлая рамка по внутреннему краю, px
+	Corner = 5,
+	Stroke = BLACK, -- обводка надписей и значков
+	Body = RGB(0, 0, 0), -- тело окна
+	BodyTransparency = 0.38,
+	Slot = RGB(0, 0, 0), -- тёмная плашка (слот)
+	SlotTransparency = 0.45,
+	SlotCorner = 8,
+}
+
+-- top / bottom — заливка сверху вниз, edge — светлая рамка, bord — тёмный контур.
+UI.FlatThemes = {
+	green = { top = RGB(132, 255, 0), bottom = RGB(74, 255, 0), edge = RGB(201, 255, 192), bord = RGB(12, 52, 0) },
+	blue = { top = RGB(2, 238, 255), bottom = RGB(1, 200, 255), edge = RGB(150, 250, 255), bord = RGB(0, 26, 67) },
+	red = { top = RGB(253, 80, 84), bottom = RGB(255, 20, 20), edge = RGB(255, 150, 150), bord = RGB(78, 0, 0) },
+	orange = { top = RGB(255, 179, 81), bottom = RGB(252, 122, 28), edge = RGB(255, 210, 150), bord = RGB(69, 11, 0) },
+	teal = { top = RGB(45, 219, 170), bottom = RGB(11, 184, 131), edge = RGB(174, 253, 222), bord = RGB(0, 60, 33) },
+	-- нет на референсе, собраны по тому же правилу
+	yellow = { top = RGB(255, 232, 70), bottom = RGB(255, 196, 0), edge = RGB(255, 246, 180), bord = RGB(70, 40, 0) },
+	purple = { top = RGB(206, 120, 255), bottom = RGB(156, 60, 248), edge = RGB(234, 196, 255), bord = RGB(40, 0, 70) },
+	gray = { top = RGB(206, 212, 222), bottom = RGB(158, 166, 180), edge = RGB(236, 240, 246), bord = RGB(30, 34, 40) },
+}
+UI.FlatThemes.close = UI.FlatThemes.red
+UI.FlatThemes.cash = UI.FlatThemes.green
+UI.FlatThemes.vert = UI.FlatThemes.green
+UI.FlatThemes.rouge = UI.FlatThemes.red
+UI.FlatThemes.bleu = UI.FlatThemes.blue
+UI.FlatThemes.jaune = UI.FlatThemes.yellow
+UI.FlatThemes.violet = UI.FlatThemes.purple
+UI.FlatThemes.gris = UI.FlatThemes.gray
+UI.FlatThemes.robux = UI.FlatThemes.purple
+UI.FlatThemes.gold = UI.FlatThemes.orange -- шапки окон
+UI.FlatThemes.pink = UI.FlatThemes.red
+
+-- Изображения-силуэты: кнопка и шапка окна рисуют их белыми с чёрной обводкой (UI.Glyph), а не наклейкой.
+UI.GlyphImages = {}
+
+local function evalSeq(s, t)
+	local k = s.Keypoints
+	if t <= k[1].Time then return k[1].Value end
+	for i = 2, #k do
+		if t <= k[i].Time then
+			local a, b = k[i - 1], k[i]
+			return a.Value:Lerp(b.Value, (t - a.Time) / math.max(b.Time - a.Time, 1e-6))
+		end
+	end
+	return k[#k].Value
+end
+
+local flatCache = {}
+--- Плоская тема: имя из UI.FlatThemes, готовая таблица { top, bottom, edge, bord }, тема Stud (имя, редкость или
+--- таблица) или ColorSequence (шапка окна).
+local function flatOf(theme)
+	if type(theme) == "table" and theme.top then return theme end
+	if type(theme) == "string" and UI.FlatThemes[theme] then return UI.FlatThemes[theme] end
+	local key = theme or "green"
+	if flatCache[key] then return flatCache[key] end
+	local fond, bord
+	if typeof(theme) == "ColorSequence" then
+		fond = theme
+	elseif type(theme) == "string" and UI.HeaderThemes[theme] and not UI.ButtonThemes[theme] and not UI.Rarities[theme] then
+		fond = UI.HeaderThemes[theme]
+	else
+		local th = themeOf(theme)
+		fond, bord = th.fond, th.bord
+	end
+	local top, bottom = evalSeq(fond, 0.2), evalSeq(fond, 0.9)
+	local flat = { top = top, bottom = bottom, edge = top:Lerp(WHITE, 0.55), bord = bord or bottom:Lerp(BLACK, 0.78) }
+	flatCache[key] = flat
+	return flat
+end
+UI.FlatTheme = flatOf
+
+--[[ Плоский значок с чёрной обводкой. У ImageLabel нет UIStroke: обводка — чёрные копии со сдвигом на Thickness
+	по кругу, тень — копии ниже на Drop. image — белый силуэт (CheckUIIcons «… White») или свой плоский рисунок.
+	p: Name, Size (UDim2), Position, AnchorPoint, Rotation, ZIndex, Thickness (2), Drop (1), Color ]]
+function UI.Glyph(parent, image, p)
+	p = p or {}
+	local t = p.Thickness or 2
+	local drop = p.Drop or 1
+	local z = p.ZIndex or 5
+	local f = new("Frame", { Name = p.Name or "Glyphe", BackgroundTransparency = 1, Size = p.Size or UDim2.fromOffset(32, 32),
+		Position = p.Position or UDim2.fromScale(0.5, 0.5), AnchorPoint = p.AnchorPoint or Vector2.new(0.5, 0.5),
+		Rotation = p.Rotation or 0, ZIndex = z, LayoutOrder = p.LayoutOrder or 0 })
+	local steps = t > 2.5 and 16 or 8
+	local n = 0
+	local function copy(x, y)
+		n += 1
+		new("ImageLabel", { Name = "Contour" .. n, BackgroundTransparency = 1, Image = image or "", ImageColor3 = UI.Flat.Stroke,
+			ScaleType = Enum.ScaleType.Fit, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(x, y), ZIndex = z }, f)
+	end
+	for i = 0, steps - 1 do
+		local a = i / steps * math.pi * 2
+		copy(math.cos(a) * t, math.sin(a) * t)
+	end
+	if drop > 0 then
+		copy(0, t + drop); copy(-t * 0.7, t * 0.7 + drop); copy(t * 0.7, t * 0.7 + drop)
+	end
+	new("ImageLabel", { Name = "Dessus", BackgroundTransparency = 1, Image = image or "", ImageColor3 = p.Color or WHITE,
+		ScaleType = Enum.ScaleType.Fit, Size = UDim2.fromScale(1, 1), ZIndex = z + 1 }, f)
+	f.Parent = parent
+	return f
+end
+
+--- Сменить рисунок значка UI.Glyph.
+function UI.SetGlyph(glyph, image)
+	for _, c in glyph:GetChildren() do
+		if c:IsA("ImageLabel") then c.Image = image or "" end
+	end
+end
+
+--- Значок кнопки или шапки: силуэт (UI.GlyphImages) — с обводкой, остальное — наклейкой как есть.
+local function flatIcon(parent, image, size, position, z, rotation, thickness)
+	if UI.GlyphImages[image] then
+		return UI.Glyph(parent, image, { Name = "Glyphe", Size = UDim2.fromOffset(size, size), Position = position, ZIndex = z,
+			Rotation = rotation or 0, Thickness = thickness })
+	end
+	return UI.Image(parent, image, { Name = "Icone", Size = UDim2.fromOffset(size, size), Position = position, ZIndex = z,
+		Rotation = rotation or 0 })
+end
+
+--- Плоская плашка: контур (фон), лицо с заливкой и светлой рамкой. Возвращает лицо (CanvasGroup "Face").
+local function flatFace(holder, th, outline, edge, corner, z)
+	holder.BackgroundColor3 = th.bord
+	UI.Corner(holder, corner)
+	local face = new("CanvasGroup", { Name = "Face", BackgroundTransparency = 1, Size = UDim2.new(1, -outline * 2, 1, -outline * 2),
+		Position = UDim2.fromOffset(outline, outline), ZIndex = z }, holder)
+	UI.Corner(face, math.max(corner - outline, 0))
+	local fond = new("Frame", { Name = "Fond", BackgroundColor3 = WHITE, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1), ZIndex = 1 }, face)
+	UI.Gradient(fond, ColorSequence.new(th.top, th.bottom), 90, "Degrade")
+	inner(face, "LisereInterne1", edge * 2, th.edge, edge, 0.08, math.max(corner - outline - edge, 0), 4)
+	return face
+end
+
+--- Плоская кнопка (тот же набор параметров, что у UI.Button; Style и Reflections не влияют).
+function UI.FlatButton(parent, p)
+	p = p or {}
+	local th = flatOf(p.Theme)
+	local size = v2(p.Size or Vector2.new(179, 65))
+	local w, h = size.X, size.Y
+	local z = p.ZIndex or 1
+	local big = h >= 60
+	local b = new("ImageButton", {
+		Name = p.Name or "Bouton", AutoButtonColor = false, BorderSizePixel = 0, Image = "",
+		Size = UDim2.fromOffset(w, h), Position = p.Position or UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = p.AnchorPoint or Vector2.new(0.5, 0.5), ZIndex = z, LayoutOrder = p.LayoutOrder or 0,
+	})
+	flatFace(b, th, UI.Flat.Outline, big and 3 or UI.Flat.Edge, big and 6 or UI.Flat.Corner, z + 1)
+
+	local layout = p.IconLayout or "Left"
+	local cx, tw, th_ = w / 2, w - 14, math.floor(h * (p.TextHeight or 0.62))
+	local textY = 0.5
+	if p.Icon then
+		if layout == "Left" and (p.Text == nil or p.Text == "") then
+			-- кнопка без подписи (квадратные кнопки референса): значок по центру
+			local ti = math.floor(math.min(w, h) * (p.IconSize or 0.66))
+			flatIcon(b, p.Icon, ti, UDim2.fromScale(0.5, 0.5), z + 7, p.IconRotation, big and 2.5 or 2)
+		elseif layout == "Left" then
+			local ti = math.floor(h * (p.IconSize or 0.62))
+			local left = math.floor(h * 0.16)
+			flatIcon(b, p.Icon, ti, UDim2.new(0, left + ti / 2, 0.5, 0), z + 7, p.IconRotation, big and 2.5 or 2)
+			local start = left + ti + 2
+			cx, tw = (start + w - 8) / 2, w - 8 - start
+		elseif layout == "Top" then
+			local ti = math.floor(math.min(w, h) * (p.IconSize or 0.5))
+			flatIcon(b, p.Icon, ti, UDim2.new(0.5, 0, 0, math.floor(h * 0.36)), z + 7, p.IconRotation, 2)
+			th_ = 22; textY = nil
+		elseif layout == "Big" then
+			local ti = math.floor(w * (p.IconSize or 0.62))
+			flatIcon(b, p.Icon, ti, UDim2.new(0.5, 0, 0, math.floor(h * 0.4)), z + 7, p.IconRotation, 2.5)
+			th_ = 30; tw = w - 6; textY = nil
+		end
+	end
+
+	if p.Text and p.Text ~= "" then
+		local fixed = p.FixedTextSize
+		local tp = {
+			Font = p.Font or "Heavy", Stroke = UI.Flat.Stroke, ZIndex = z + 8,
+			Thickness = p.TextThickness or (fixed and math.clamp(fixed * 0.12, 1.8, 3.2) or 2.4),
+			Size = UDim2.fromOffset(tw, th_), Max = p.TextSize or 30, TextSize = fixed, Offset = 2,
+		}
+		if textY then
+			tp.Position = UDim2.new(0, cx, 0.5, 1)
+		elseif layout == "Top" then
+			tp.Position = UDim2.new(0.5, 0, 1, -16); tp.Max = p.TextSize or 18
+		else
+			tp.Position = UDim2.new(0.5, 0, 1, -17); tp.Max = p.TextSize or 26
+		end
+		-- FixedTextSize — обычный TextSize: он масштабируется вместе с UIScale корня (TextScaled с
+		-- UITextSizeConstraint держит размер в px экрана: на ПК подпись выходила бы мельче, на телефоне — крупнее)
+		UI.ShadowText(b, p.Text, tp)
+	end
+
+	new("UIScale", { Name = "ButtonScale" }, b)
+	b:SetAttribute("Theme", type(p.Theme) == "string" and p.Theme or "custom")
+	b:SetAttribute("Skin", "Flat")
+	b.Parent = parent
+	return b
+end
+
+function UI.FlatRecolor(b, theme)
+	local th = flatOf(theme)
+	b.BackgroundColor3 = th.bord
+	b.Face.Fond.Degrade.Color = ColorSequence.new(th.top, th.bottom)
+	local l = b.Face:FindFirstChild("LisereInterne1")
+	if l then l.UIStroke.Color = th.edge end
+	if type(theme) == "string" then b:SetAttribute("Theme", theme) end
+end
+
+--- Квадратная красная кнопка закрытия с белым «X».
+function UI.FlatCloseButton(parent, p)
+	p = p or {}
+	local b = UI.FlatButton(parent, { Name = p.Name or "Fermer", Theme = "red", Size = Vector2.new(52, 52),
+		Position = p.Position, AnchorPoint = p.AnchorPoint, ZIndex = p.ZIndex or 8 })
+	UI.ShadowText(b, "X", { Name = "X", ShadowName = "X_Ombre", Font = "Heavy", TextSize = 34, Stroke = UI.Flat.Stroke,
+		Thickness = 3, Size = UDim2.fromScale(1, 1), Position = UDim2.new(0.5, 0, 0.5, 1), ZIndex = (p.ZIndex or 8) + 2 })
+	return b
+end
+
+--- Тёмная полупрозрачная скруглённая плашка — как слоты внизу экрана на референсе (параметры — как у UI.InsetBox).
+function UI.FlatInsetBox(parent, p)
+	local z = p.ZIndex or 3
+	local f = new("Frame", { Name = p.Name or "Boite", BackgroundColor3 = p.Color or UI.Flat.Slot,
+		BackgroundTransparency = p.Transparency or UI.Flat.SlotTransparency, BorderSizePixel = 0, Size = p.Size,
+		Position = p.Position or UDim2.new(), AnchorPoint = p.AnchorPoint or Vector2.zero, ZIndex = z, LayoutOrder = p.LayoutOrder or 0 })
+	UI.Corner(f, p.Corner or UI.Flat.SlotCorner)
+	f.Parent = parent
+	return f
+end
+
+--- Цветная плашка: заливка, тёмный контур, светлая рамка — как кнопка, без нажатия (параметры — как у UI.StudPanel).
+function UI.FlatPanel(parent, p)
+	local grad = p.Gradient
+	if type(grad) == "string" then grad = UI.PanelThemes[grad] end
+	grad = grad or UI.PanelThemes.cyan
+	local z = p.ZIndex or 2
+	local c = p.Corner or 6
+	local f = new("Frame", { Name = p.Name or "Panneau", BackgroundColor3 = WHITE, BorderSizePixel = 0, Size = p.Size,
+		Position = p.Position or UDim2.new(), AnchorPoint = p.AnchorPoint or Vector2.zero, ZIndex = z, LayoutOrder = p.LayoutOrder or 0 })
+	UI.Corner(f, c)
+	UI.Gradient(f, grad, p.Rotation or 90, "Degrade")
+	UI.Stroke(f, evalSeq(grad, 1):Lerp(BLACK, 0.78), p.Stroke or 2)
+	inner(f, "Lisere", 4, WHITE, 2, 0.5, math.max(c - 2, 0), z, Enum.ApplyStrokeMode.Border)
+	f.Parent = parent
+	return f
+end
+
+--- Подсказка: тёмная плашка с белым текстом (параметры — как у UI.Pill).
+function UI.FlatPill(parent, text, p)
+	p = p or {}
+	local h = p.Height or 30
+	local z = p.ZIndex or 20
+	local f = new("Frame", { Name = p.Name or "Minuteur", BackgroundColor3 = UI.Flat.Slot, BackgroundTransparency = 0.4, BorderSizePixel = 0,
+		Size = p.Width and UDim2.fromOffset(p.Width, h) or UDim2.fromOffset(0, h), AutomaticSize = p.Width and Enum.AutomaticSize.None or Enum.AutomaticSize.X,
+		Position = p.Position or UDim2.fromScale(0.5, 0), AnchorPoint = p.AnchorPoint or Vector2.new(0.5, 0.5), ZIndex = z }, parent)
+	UI.Corner(f, UI.Flat.SlotCorner)
+	if p.Width then
+		UI.Text(f, text, { Name = "Texte", Size = UDim2.new(1, -16, 1, 0), Position = UDim2.new(0.5, 0, 0.5, 0), TextSize = p.TextSize or 18,
+			Stroke = UI.Flat.Stroke, Thickness = 2, Rich = true, ZIndex = z + 2 })
+	else
+		new("UIPadding", { PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }, f)
+		UI.Text(f, text, { Name = "Texte", Size = UDim2.fromScale(0, 1), Position = UDim2.new(), AnchorPoint = Vector2.zero, AutoX = true,
+			TextSize = p.TextSize or 18, Stroke = UI.Flat.Stroke, Thickness = 2, Rich = true, ZIndex = z + 2 })
+	end
+	return f
+end
+
+--[[ Плоское окно. Геометрия та же, что у окна Stud (шапка 78, тело W-5 x H-80 с (2, 78), крестик у (W-41, 39)):
+	контроллеры окон считают раскладку от неё. Шапка — плашка цвета Header (имя темы кнопки, шапки или
+	ColorSequence) со значком и названием; тело — тёмная полупрозрачная скруглённая плашка "Dos" позади "Corps". ]]
+function UI.FlatWindow(gui, p)
+	local size = v2(p.Size or Vector2.new(640, 470))
+	local W, H = size.X, size.Y
+	local Hh = 78
+	local th = flatOf(p.Header or "blue")
+	local fen = new("Frame", { Name = p.Name or "Fenetre", BackgroundTransparency = 1, Size = UDim2.fromOffset(W, H),
+		Position = p.Position or UDim2.fromScale(0.5, 0.5), AnchorPoint = Vector2.new(0.5, 0.5), Visible = p.Visible == true, ZIndex = 1 })
+	local scale = new("UIScale", { Name = "WindowScale" }, fen)
+
+	local dos = new("Frame", { Name = "Dos", BackgroundColor3 = UI.Flat.Body, BackgroundTransparency = UI.Flat.BodyTransparency,
+		BorderSizePixel = 0, Size = UDim2.fromOffset(W - 4, H - Hh + 18), Position = UDim2.fromOffset(2, Hh - 20), ZIndex = 1 }, fen)
+	UI.Corner(dos, 8)
+	UI.Stroke(dos, BLACK, 2, 0.25)
+	local corps = new("Frame", { Name = "Corps", BackgroundTransparency = 1, BorderSizePixel = 0,
+		Size = UDim2.fromOffset(W - 5, H - Hh - 2), Position = UDim2.fromOffset(2, Hh), ZIndex = 1 }, fen)
+
+	local entete = new("Frame", { Name = "Entete", BorderSizePixel = 0, Size = UDim2.fromOffset(W, Hh), ZIndex = 4 }, fen)
+	flatFace(entete, th, 3, 3, 8, 5)
+	local icone
+	if p.Icon then
+		icone = flatIcon(entete, p.Icon, p.IconSize or 54, UDim2.fromOffset(46, Hh / 2), 12, 0, 3)
+	end
+	local titre, ombre = UI.ShadowText(entete, p.Title or "Title", { Name = "Titre", ShadowName = "TitreOmbre",
+		Size = UDim2.fromOffset(p.TitleWidth or 340, 60), Position = UDim2.fromOffset(p.Icon and 86 or 24, Hh / 2 + 1),
+		AnchorPoint = Vector2.new(0, 0.5), AlignX = Enum.TextXAlignment.Left, TextSize = 44, Thickness = 3.5, Offset = 3,
+		Stroke = UI.Flat.Stroke, ZIndex = 11 })
+	titre:GetPropertyChangedSignal("Text"):Connect(function() ombre.Text = titre.Text end)
+	local fermer
+	if p.Close ~= false then
+		fermer = UI.FlatCloseButton(entete, { Position = UDim2.fromOffset(W - 41, Hh / 2) })
+	end
+	fen.Parent = gui
+	return { Fenetre = fen, Entete = entete, Corps = corps, Fermer = fermer, Titre = titre, Icone = icone, WindowScale = scale,
+		Width = W, Height = H, HeaderHeight = Hh }
 end
 
 return UI

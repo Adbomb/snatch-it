@@ -420,7 +420,7 @@ render = function()
 		return
 	end
 	for lvl, tab in tabs do
-		UI.Recolor(tab, if lvl == level then "red" else "gray")
+		UI.Recolor(tab, if lvl == level then "green" else "gray")
 	end
 	local zone = GameConfig.Zones[level]
 	-- в подвале телефона — коротко (длинная строка сжалась бы до нечитаемой)
@@ -509,7 +509,7 @@ end
 
 function ShopController.Init()
 	-- Кнопка «Магазин» в колонке меню HUD v2 (третья, под «Защитой»); у ученика её нет до конца обучения.
-	hudButton = MenuHud.Add("Shop", "Магазин", "red", 3, toggle, { icon = "Shop" })
+	hudButton = MenuHud.Add("Shop", "Магазин", "green", 3, toggle, { icon = "Shop" })
 	updateHud()
 	Remotes.Get(Remotes.Names.LovibumsChanged).OnClientEvent:Connect(function(payload)
 		if type(payload) ~= "table" then

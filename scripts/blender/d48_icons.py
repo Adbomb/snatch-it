@@ -5,8 +5,12 @@
 свет (ключ слева сверху, заполняющий справа, контровой сзади), прозрачный фон; модели — блоки с острыми рёбрами и
 тонкой фаской, силуэт ступенями, чистые яркие цвета. Контур и тень одной толщины добавляет scripts/d48_hud_mockup.py.
 
-Запуск: blender --background --factory-startup --python scripts/blender/d48_icons.py -- <репо>
-Пишет assets/concepts/d48/v2/icons/raw_<имя>.png (1024², прозрачный фон) и icons.blend.
+HUD v3 (ТЗ владельца 2026-11-17, свои иконки вместо библиотечных): тем же набором приёмов добавлены магазин
+(тележка), музей, фазы суток — солнце, луна, песочные часы (подготовка), череп (Судная ночь).
+
+Запуск: blender --background --factory-startup --python scripts/blender/d48_icons.py -- <репо> [имя,имя…]
+Пишет assets/concepts/d48/v2/icons/raw_<имя>.png (1024², прозрачный фон) и icons.blend; со списком имён — только их
+(icons.blend тогда не перезаписывается). Контур, обрезку и размер 256 для игры делает scripts/hud_icons.py.
 """
 
 import glob
@@ -20,6 +24,7 @@ from mathutils import Matrix, Vector
 
 argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 REPO = os.path.abspath(argv[0]) if argv else os.getcwd()
+ONLY = [n for n in argv[1].split(",") if n] if len(argv) > 1 else None
 OUT = os.path.join(REPO, "assets", "concepts", "d48", "v2", "icons")
 os.makedirs(OUT, exist_ok=True)
 RES = 1024
@@ -312,6 +317,129 @@ for k, (w, z0) in enumerate(((0.7, 0.3), (0.52, 0.5), (0.34, 0.7), (0.16, 0.9)))
     box("income", 0.4 - w, 0.4 + w, -0.22, 0.12, z0, z0 + 0.2, mat(GREEN if k % 2 == 0 else GREEN_L, 0.45))
 box("income", 0.27, 0.53, -0.28, -0.2, -0.8, 0.26, mat(GREEN_L, 0.45))  # блик на стержне
 
+# ── HUD v3 ─────────────────────────────────────────────────────────────────────────────────────────────────────
+def ry(deg):
+    return Matrix.Rotation(math.radians(deg), 3, "Y")
+
+
+def star4(icon, cx, cz, r, y0, y1, m):
+    """Четырёхлучевая звезда-ромб лицом к камере (как на щите)."""
+    k = 0.3
+    pts = [(0, r), (r * k, r * k), (r, 0), (r * k, -r * k), (0, -r), (-r * k, -r * k), (-r, 0), (-r * k, r * k)]
+    b = bmesh.new()
+    front = [b.verts.new((cx + x, y0, cz + z)) for x, z in pts]
+    back = [b.verts.new((cx + x, y1, cz + z)) for x, z in pts]
+    b.faces.new(front[::-1])
+    b.faces.new(back)
+    for i in range(len(pts)):
+        j = (i + 1) % len(pts)
+        b.faces.new((front[i], front[j], back[j], back[i]))
+    me_ = bpy.data.meshes.new(icon + "_star")
+    b.to_mesh(me_)
+    b.free()
+    me_.materials.append(m)
+    coll(icon).objects.link(bpy.data.objects.new(icon + "_star", me_))
+
+
+# 6. Магазин: красная тележка — корзина ступенью, белый обод, рейки, ручка, колёса, покупки сверху
+CART, CART_D, CART_L = "F0473C", "B82E28", "FF7A6E"
+STEEL, STEEL_D = "B9C3D6", "2C3350"
+box("shop", -0.82, 0.86, -0.42, 0.42, -0.28, 0.44, mat(CART, 0.45, rings=0.4))  # корзина
+box("shop", -0.66, 0.7, -0.38, 0.38, -0.5, -0.28, mat(CART_D, 0.45))  # дно ступенью
+box("shop", -0.9, 0.94, -0.48, 0.48, 0.44, 0.58, mat("F4F8FF", 0.35))  # белый обод
+for sx in (-0.5, -0.06, 0.38):  # рейки на лицевой стенке
+    box("shop", sx, sx + 0.14, -0.47, -0.41, -0.2, 0.4, mat(CART_L, 0.45), 0.012)
+box("shop", -1.1, -0.92, -0.12, 0.12, 0.3, 0.98, mat(STEEL_D, 0.4))  # стойка ручки
+box("shop", -1.28, -0.86, -0.3, 0.3, 0.94, 1.1, mat(STEEL_D, 0.4))  # ручка
+box("shop", -1.3, -1.1, -0.31, 0.31, 0.92, 1.12, mat(CART, 0.45), 0.02)  # красная накладка ручки
+box("shop", -0.74, 0.78, -0.3, 0.3, -0.66, -0.5, mat(STEEL, 0.3, 0.7))  # рама
+for wx in (-0.5, 0.56):
+    disc("shop", wx, -0.36, -0.86, 0.24, 0.2, mat(STEEL_D, 0.4))
+    disc("shop", wx, -0.48, -0.86, 0.1, 0.08, mat(GOLD, 0.3, 0.55))
+box("shop", -0.6, -0.16, -0.26, 0.26, 0.58, 0.98, mat(GOLD, 0.3, 0.55))  # покупки: золотая коробка
+box("shop", -0.6, -0.16, -0.28, -0.24, 0.72, 0.8, mat("FFE873", 0.3), 0.008)
+box("shop", -0.06, 0.34, -0.24, 0.24, 0.58, 0.82, mat("2FC94A", 0.45))  # зелёная
+box("shop", 0.42, 0.74, -0.2, 0.2, 0.58, 1.06, mat("2F7BFF", 0.45))  # синяя высокая
+box("shop", 0.42, 0.74, -0.22, -0.18, 0.9, 0.98, mat("F4F8FF", 0.35), 0.008)
+
+# 7. Музей: ступени, четыре белые колонны, синяя стена с золотой дверью, фронтон ступенями со звездой
+STONE, STONE_D = "F4F8FF", "C9D3E6"
+box("museum", -1.08, 1.08, -0.56, 0.5, -1.0, -0.82, mat(STONE_D, 0.5))  # ступени
+box("museum", -0.96, 0.96, -0.5, 0.46, -0.82, -0.66, mat(STONE, 0.45))
+box("museum", -0.84, 0.84, -0.2, 0.42, -0.66, 0.3, mat(BLUE, 0.45, rings=0.36))  # стена
+box("museum", -0.15, 0.15, -0.24, -0.18, -0.66, 0.02, mat(GOLD, 0.3, 0.55), 0.012)  # дверь
+box("museum", -0.2, 0.2, -0.26, -0.18, 0.02, 0.1, mat(GOLD_D, 0.3, 0.55), 0.01)
+for cx_ in (-0.69, -0.33, 0.33, 0.69):  # колонны с базой и капителью
+    box("museum", cx_ - 0.1, cx_ + 0.1, -0.44, -0.24, -0.6, 0.24, mat(STONE, 0.4))
+    box("museum", cx_ - 0.14, cx_ + 0.14, -0.48, -0.2, -0.66, -0.58, mat(STONE_D, 0.45), 0.015)
+    box("museum", cx_ - 0.14, cx_ + 0.14, -0.48, -0.2, 0.22, 0.3, mat(STONE_D, 0.45), 0.015)
+box("museum", -1.0, 1.0, -0.54, 0.48, 0.3, 0.46, mat(STONE, 0.4))  # антаблемент
+for k, w in enumerate((0.92, 0.7, 0.48, 0.26)):  # фронтон ступенями
+    box("museum", -w, w, -0.5, 0.44, 0.46 + k * 0.15, 0.61 + k * 0.15, mat(BLUE if k % 2 == 0 else BLUE_D, 0.45))
+star4("museum", 0.0, 0.66, 0.2, -0.56, -0.5, mat(GOLD, 0.3, 0.55))
+
+# 8. День: солнце — диск ступенью и восемь лучей-брусков
+SUN, SUN_L, SUN_D = "FFD23F", "FFEB7A", "FF9F1C"
+disc("sun", 0, 0, 0, 0.66, 0.34, mat(SUN_D, 0.4))
+disc("sun", 0, -0.06, 0, 0.56, 0.34, mat(SUN, 0.35))
+disc("sun", 0, -0.12, 0, 0.4, 0.3, mat(SUN_L, 0.35))
+for k in range(8):
+    long_ = k % 2 == 0
+    box("sun", -0.11, 0.11, -0.12, 0.12, 0.8, 1.16 if long_ else 1.02, mat(SUN_D if long_ else SUN, 0.4),
+        rot=ry(k * 45))
+
+# 9. Ночь: месяц ступенями и две звезды
+MOON, MOON_L = "CFC7FF", "EEEAFF"
+R_OUT, R_IN, C_IN = 1.0, 0.86, (0.44, 0.22)
+step_ = 0.125
+z_ = -1.0
+row_ = 0
+while z_ < 1.0 - 1e-6:
+    zm = z_ + step_ / 2
+    xo = math.sqrt(max(R_OUT ** 2 - zm ** 2, 0.0))
+    right = xo
+    dz = zm - C_IN[1]
+    if abs(dz) < R_IN:
+        right = min(xo, C_IN[0] - math.sqrt(R_IN ** 2 - dz ** 2))
+    if right - (-xo) > 0.12:
+        box("moon", -xo, right, -0.2, 0.2, z_, z_ + step_, mat(MOON_L if zm > 0.45 else MOON, 0.4), 0.015)
+    z_ += step_
+    row_ += 1
+star4("moon", 0.5, 0.42, 0.26, -0.16, -0.06, mat("FFEB7A", 0.35))
+star4("moon", 0.72, -0.2, 0.15, -0.16, -0.06, mat("FFFFFF", 0.35))
+
+# 10. Подготовка: песочные часы — золотые крышки, стекло ступенями, песок
+GLASS, SAND, WOOD = "BFE6FF", "FFB020", "6E3414"
+for sz in (1, -1):
+    box("hourglass", -0.76, 0.76, -0.4, 0.4, sz * 0.86 - 0.11, sz * 0.86 + 0.11, mat(GOLD, 0.3, 0.55))
+    box("hourglass", -0.62, 0.62, -0.34, 0.34, sz * 1.03 - 0.06, sz * 1.03 + 0.06, mat(GOLD_D, 0.3, 0.55))
+    for k, w in enumerate((0.56, 0.44, 0.3, 0.14)):  # колба сужается к перемычке
+        z0_ = 0.75 - (k + 1) * 0.185
+        lo, hi = (z0_, z0_ + 0.185) if sz > 0 else (-z0_ - 0.185, -z0_)
+        box("hourglass", -w, w, -0.26, 0.26, lo, hi, mat(GLASS, 0.2), 0.012)
+for sx in (-0.68, 0.56):
+    box("hourglass", sx, sx + 0.12, -0.36, -0.24, -0.76, 0.76, mat(WOOD, 0.5), 0.02)
+box("hourglass", -0.3, 0.3, -0.3, -0.24, 0.24, 0.42, mat(SAND, 0.45), 0.01)  # песок сверху
+box("hourglass", -0.16, 0.16, -0.3, -0.24, 0.06, 0.24, mat(SAND, 0.45), 0.01)
+box("hourglass", -0.04, 0.04, -0.3, -0.24, -0.4, 0.06, mat(SAND, 0.45), 0.006)  # струйка
+box("hourglass", -0.46, 0.46, -0.3, -0.24, -0.74, -0.56, mat(SAND, 0.45), 0.01)  # горка снизу
+box("hourglass", -0.32, 0.32, -0.3, -0.24, -0.56, -0.44, mat("FFC65A", 0.45), 0.01)
+box("hourglass", -0.16, 0.16, -0.3, -0.24, -0.44, -0.36, mat("FFC65A", 0.45), 0.01)
+
+# 11. Судная ночь: череп — свод ступенью, скулы, зубы, тёмные глазницы с красными огнями
+BONE, BONE_D, HOLE, EYE = "F4F8FF", "CBD3E4", "1E1428", "FF3B3B"
+box("skull", -0.86, 0.86, -0.5, 0.5, -0.12, 0.84, mat(BONE, 0.45, rings=0.4))  # свод
+box("skull", -0.66, 0.66, -0.46, 0.46, 0.84, 1.04, mat(BONE, 0.45))
+box("skull", -0.94, -0.84, -0.3, 0.3, 0.1, 0.6, mat(BONE_D, 0.45), 0.02)  # виски
+box("skull", 0.84, 0.94, -0.3, 0.3, 0.1, 0.6, mat(BONE_D, 0.45), 0.02)
+box("skull", -0.56, 0.56, -0.46, 0.4, -0.58, -0.12, mat(BONE_D, 0.45))  # скулы и челюсть
+for k, tx in enumerate((-0.42, -0.14, 0.14, 0.42)):  # зубы
+    box("skull", tx - 0.11, tx + 0.11, -0.5, -0.3, -0.86, -0.56, mat(BONE, 0.4), 0.03)
+for sx in (-1, 1):
+    box("skull", sx * 0.36 - 0.24, sx * 0.36 + 0.24, -0.56, -0.46, 0.14, 0.6, mat(HOLE, 0.6), 0.02)  # глазницы
+    box("skull", sx * 0.36 - 0.09, sx * 0.36 + 0.09, -0.6, -0.54, 0.26, 0.44, mat(EYE, 0.3, emit=2.5), 0.01)
+box("skull", -0.09, 0.09, -0.56, -0.46, -0.1, 0.1, mat(HOLE, 0.6), 0.015)  # нос
+
 # ── Свет и камера ──────────────────────────────────────────────────────────────────────────────────────────────
 for name, loc, energy, size in (("Key", (-3.0, -4.0, 4.5), 520, 3.5), ("Fill", (4.0, -3.5, 1.0), 190, 4.0),
                                 ("Rim", (2.0, 4.0, 3.5), 420, 3.0)):
@@ -333,7 +461,9 @@ cam.rotation_euler = eye.to_track_quat("Z", "Y").to_euler()
 # одинаковый «вес»: каждая иконка вписывается в кадр по своей проекции с одним запасом
 bpy.context.view_layer.update()
 inv = cam.matrix_world.inverted()
-for name in ("briefcase", "shield", "coin", "income", "fist", "dumbbell", "bicep"):
+ALL = ("briefcase", "shield", "coin", "income", "fist", "dumbbell", "bicep", "shop", "museum", "sun", "moon",
+       "hourglass", "skull")
+for name in ONLY or ALL:
     for other, c in ICONS.items():
         c.hide_render = other != name
     pts = []
@@ -351,4 +481,5 @@ for name in ("briefcase", "shield", "coin", "income", "fist", "dumbbell", "bicep
     scene.render.filepath = os.path.join(OUT, f"raw_{name}.png")
     bpy.ops.render.render(write_still=True)
     print("icon", name)
-bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "icons.blend"))
+if not ONLY:
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "icons.blend"))

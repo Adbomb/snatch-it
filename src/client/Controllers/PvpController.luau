@@ -253,29 +253,25 @@ local function refreshButton()
 end
 
 local function buildButton()
-	local gui = UI.ScreenGui("PvpHud", 6, { Menu = false, ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets })
+	local gui = UI.ScreenGui("PvpHud", 6, { Menu = false })
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local holder = Instance.new("Frame")
 	holder.Name = "Racine"
 	holder.BackgroundTransparency = 1
 	holder.Size = UDim2.fromOffset(T.Button.X, T.Button.Y)
-	holder.AnchorPoint = Vector2.new(1, 0)
+	holder.AnchorPoint = Vector2.new(1, 1)
 	holder.Parent = gui
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
 	scale.Parent = holder
-	-- кнопка только на телефоне: масштаб экрана, но не ниже MinTouch px (D32; на телефоне масштаб ~0.6 давал 43 px)
+	-- кнопка только на телефоне: масштаб HUD, но не ниже MinTouch px (D32)
 	local floor = T.MinTouch / T.Button.Y
-	scale:SetAttribute("MinScale", floor) -- для моделирования телефона (scripts/studio/hud_phone_sim)
+	scale:SetAttribute("MinScale", floor)
+	-- HUD v3: у правого края прямо над кнопкой прыжка — под большим пальцем, меню теперь слева
 	HudLayout.Track(function()
-		scale.Scale = math.max(Motion.ScreenScale(), floor)
-		if HudLayout.MenuColumns() > 1 then
-			-- меню — сетка в два столбца (невысокий экран, D56): левее него кнопка упёрлась бы в таймер — над сеткой у
-			-- правого края (D49), сетка стоит ниже (UI/MenuHud)
-			holder.Position = UDim2.new(1, -UITokens.MenuHud.Margin, 0, T.ButtonTop)
-		else
-			holder.Position = UDim2.new(1, -HudLayout.LeftOfMenu(T.MenuGap), 0, T.ButtonTop) -- левее колонки меню
-		end
+		scale.Scale = math.max(HudLayout.Scale(), floor)
+		local jump = HudLayout.Jump()
+		holder.Position = UDim2.new(1, -T.Right, 1, -((if jump then jump.Top else 0) + T.JumpGap))
 	end)
 	button = UI.Button(holder, {
 		Name = "Frapper",

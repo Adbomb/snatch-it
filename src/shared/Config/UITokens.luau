@@ -102,36 +102,18 @@ UITokens.Layout = {
 	MinTouchButton = Vector2.new(52, 52),
 	-- Уведомления: колонка справа, ниже верхней панели Roblox.
 	Toasts = {
-		-- справа, левее колонки меню HUD v2 и ниже таймера (D49: не перекрываются; Client/UI/HudLayout): зазоры до
-		-- колонки меню и до низа таймера
+		-- HUD v3: сверху по центру под местом плашки входа в зону (timerGap — зазор под ней); при открытом окне меню —
+		-- в полосе справа от окна (menuGap — зазоры до окна и края экрана)
 		menuGap = 12,
-		timerGap = 10,
-		size = UDim2.fromScale(0.26, 0.5),
-		minWidth = 180, -- на телефоне шире не помещается: справа колонка меню, по центру плашка «Бросить»
+		timerGap = 6,
+		size = UDim2.fromScale(0.26, 0.3), -- невысокая: на телефоне одно уведомление, персонажа не закрывает
+		minWidth = 180,
 		maxWidth = 360,
 		itemHeight = 56,
 		lifetime = 4, -- секунды
 		maxCount = 4, -- не больше, чем помещается в высоту колонки (на телефоне — 2)
 		displayOrder = 14, -- поверх окон «Инвентарь» и «Защита» (12) и расстановки защиты (13), под плашкой зоны (30)
 		windowCheck = 0.25, -- секунд между проверками, открыто ли окно меню (колонка — справа от окна)
-	},
-	-- «Бросить»: внизу по центру над плашкой «Ты несёшь…» (контекст HUD v2, D48 v2; справа — колонка меню, D49).
-	DropButton = {
-		-- низ кнопки — над верхом плашки CarryPill при любой высоте экрана: плашка не выше 60 px + зазор 8 px
-		position = UDim2.new(0.5, 0, 0.86, -68),
-		size = UDim2.fromScale(0.15, 0.1),
-		aspect = 2.6,
-		minSize = Vector2.new(52 * 2.6, 52),
-		maxSize = Vector2.new(220, 84),
-	},
-	-- «Ты несёшь…»: внизу по центру, между джойстиком и прыжком.
-	CarryPill = {
-		position = UDim2.fromScale(0.5, 0.86),
-		size = UDim2.fromScale(0.36, 0.07),
-		minSize = Vector2.new(220, 44),
-		maxSize = Vector2.new(460, 60),
-		nameSize = UDim2.fromScale(0.68, 1), -- плашка с названием
-		tagSize = UDim2.fromScale(0.3, 0.8), -- плашка редкости справа
 	},
 	-- Окно хранилища: по центру экрана.
 	StorageWindow = {
@@ -169,52 +151,40 @@ UITokens.GymGain = {
 	TextSize = 40,
 }
 
--- Таймер фазы HUD v2 (D48 v2: сверху по центру, под кнопками Roblox — ScreenInsets CoreUISafeInsets): капсула с
--- иконкой фазы, названием и отсчётом, полоса фазы и строка «до Судной ночи».
+-- Таймер фазы (вид — по референсу владельца 2026-11-17): справа внизу — маленький значок фазы и две короткие строки
+-- белым жирным курсивом с чёрной обводкой: «День 0:57» и подпись про Судную ночь; под ними едва заметная тёмная
+-- полоса. Без панели и полосы прогресса. На касании — левее кнопки прыжка или под ней (Client/UI/HudLayout).
 UITokens.TimeHud = {
-	Size = Vector2.new(300, 54), -- капсула, px при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
-	Top = 6,
-	InfoGap = 16, -- отступы полосы и капсулы подписи (высота блока — Client/UI/HudLayout.TimerHeight)
-	Icon = 40,
-	PhaseSize = 22,
-	TimeSize = 32,
-	InfoSize = 18,
-	InfoPill = { Transparency = 0.25, Pad = 8, Side = 12 }, -- тёмная капсула под подписью (D50: читается на любом фоне)
-	Bar = Vector2.new(250, 8), -- полоса фазы под капсулой
+	Icon = 34, -- px при масштабе 1 (масштаб надписей HUD — Client/UI/HudLayout.InfoScale)
+	Gap = 6, -- между значком и текстом
+	PhaseSize = 19, -- «День 0:57»
+	InfoSize = 16, -- «Судная ночь — завтра»
+	LineGap = 0,
+	Margin = Vector2.new(12, 6), -- от правого и нижнего края (на касании справа — от зоны кнопки прыжка)
 	Refresh = 0.2, -- секунды между обновлениями отсчёта
-	Fill = Color3.fromHex("1C2440"), -- капсула
-	Stroke = {
-		Day = Color3.fromHex("E9B43C"),
-		Preparation = Color3.fromHex("FFB020"),
-		Night = Color3.fromHex("8E7CFF"),
-		DoomNight = Color3.fromHex("FF3B3B"),
-	},
-	PhaseColor = {
-		Day = Color3.fromHex("FFD23F"),
-		Preparation = Color3.fromHex("FFB020"),
-		Night = Color3.fromHex("B9AEFF"),
-		DoomNight = Color3.fromHex("FF7A7A"),
-	},
-	DoomFill = Color3.fromHex("4A0F1C"), -- капсула в Судную ночь
-	-- Названия в капсуле прописными (string.upper кириллицу не меняет); номер дня не пишется (D51).
+	Strip = 0.87, -- прозрачность тёмной полосы под таймером у её правого края (к левому — прозрачная)
+	StripPad = 10, -- поля полосы вокруг значка и текста
+	Danger = Color3.fromHex("FF6A6A"), -- отсчёт в последние секунды фазы и подпись «Судная ночь — сегодня»
+	-- Названия фаз (номер дня не пишется, D51).
 	Titles = {
-		Day = "ДЕНЬ",
-		Preparation = "ПОДГОТОВКА",
-		Night = "НОЧЬ",
-		DoomNight = "СУДНАЯ НОЧЬ",
+		Day = "День",
+		Preparation = "Подготовка",
+		Night = "Ночь",
+		DoomNight = "Судная ночь",
 	},
 	Warning = 15, -- последние секунды фазы: отсчёт мигает цветом Danger
 }
 
--- Плашка входа в уровень (D41): сверху по центру, 1.5 с, цвет — от спокойного зелёного к тревожному (по номеру зоны).
+-- Плашка входа в уровень (D41; HUD v3 — маленькая и короткая): сверху по центру под кнопками Roblox, цвет — от
+-- спокойного зелёного к тревожному (по номеру зоны). Персонажа и дорогу не закрывает.
 UITokens.LevelBanner = {
-	Size = Vector2.new(380, 96), -- пиксели при масштабе 1 (UIScale по экрану, StudMotion.BindResponsive)
-	Gap = 12, -- зазор под таймером-капсулой HUD v2 (Client/UI/HudLayout: низ таймера при текущем масштабе)
-	Hold = 1.5, -- секунд на экране после появления
-	In = 0.35,
-	Out = 0.3,
-	Emoji = 64, -- круг со смайликом
-	TitleSize = 38,
+	Size = Vector2.new(250, 46), -- пиксели при масштабе 1 (масштаб HUD — Client/UI/HudLayout.Scale)
+	Top = 6, -- от низа кнопок Roblox
+	Hold = 1.1, -- секунд на экране после появления
+	In = 0.25,
+	Out = 0.25,
+	Emoji = 30, -- круг со смайликом
+	TitleSize = 22,
 	Check = 0.15, -- секунды между проверками, в какой зоне игрок
 	-- Градиенты панели по номеру зоны 1…10 (верх → низ): добрый зелёный → жёлтый → оранжевый → красный → тёмный.
 	Themes = {
@@ -286,27 +256,30 @@ UITokens.ItemLabel = {
 	Follow = 12, -- скорость, с которой подпись догоняет своё место (1/с)
 }
 
--- Иконки HUD v2 (D48 v2, утверждено 2026-11-06): путь CheckUIIcons «Категория/Подкатегория/Имя» (проверенные иконки
--- Stud-UI) или готовый "rbxassetid://<id>". Новые иконки D48 (assets/concepts/d48/v2/icons: портфель, щит, монета,
--- доход, кулак силы) ещё не загружены — после разрешённой загрузки вписать их ID сюда, больше ничего менять не нужно.
+-- Иконки HUD (Client/UI/HudIcons). Значение — путь CheckUIIcons «Категория/Подкатегория/Имя» или готовый
+-- "rbxassetid://<id>"; таблица { glyph = … } — плоский силуэт: интерфейс рисует его белым с чёрной обводкой
+-- (Shared/StudUI — UI.Glyph), как значки на кнопках референса владельца (2026-11-17).
+-- Силуэты — «… White» из CheckUIIcons (проверены в Studio) и три своих плоских рисунка (scripts/hud_glyphs.py,
+-- assets/ui/hud/glyph_*_256.png, ID — assets/ui/hud/IDS.md): музей, солнце, луна с облаком.
+-- Монеты и сила — цветные 2D-наклейки CheckUIIcons с тёмным контуром (как наклейки у чисел на референсе).
 UITokens.HudIcons = {
 	Coins = "Currency/Coin/Golden Coin 1st Outline",
-	Income = "Main/Upgrade/Green Upgrade 1st Outline",
-	Strength = "Player/Arm/Arm 1st Outline", -- до загрузки кулака (готов: assets/ui/hud/icon_fist_256.png)
-	Inventory = "Item/Backpack/Backpack 1st Outline", -- до загрузки портфеля (icon_briefcase.png)
-	Defense = "Item/Shield/Shield 1st Outline",
-	Shop = "Main/Shopping Cart/Red Shopping Cart 1st Outline", -- «Магазин» Ловибумов (D55): красный — магазин (Stud-UI)
-	-- «Музей» (D56): кнопка меню и шапка окна «Улучшение музея»; стрелка «станет», замок запрета, кубок максимума
-	Museum = "Main/House/Blue House 1st Outline",
-	MuseumNext = "Main/House/Green House 1st Outline", -- музей следующего уровня в карточке «После улучшения»
+	Strength = "Player/Arm/Arm 1st Outline",
+	Inventory = { glyph = "Item/Backpack/Backpack White" },
+	Defense = { glyph = "Item/Shield/Shield White" },
+	Shop = { glyph = "Main/Shopping Cart/Shopping Cart White" }, -- «Магазин» Ловибумов (D55)
+	Museum = { glyph = "rbxassetid://107254124592158" }, -- кнопка меню и шапка окна «Улучшение музея» (D56)
+	OwnerTest = { glyph = "Main/Settings/Settings White" }, -- кнопка «Тест» владельца
+	Day = { glyph = "rbxassetid://101917311109817" },
+	Preparation = { glyph = "Item/Clock/Clock White" },
+	Night = { glyph = "rbxassetid://89574346976067" },
+	DoomNight = { glyph = "Player/Skull/Skull White" },
+	-- окно «Улучшение музея»: музей следующего уровня; стрелка «станет», замок запрета, кубок максимума
+	MuseumNext = { glyph = "rbxassetid://107254124592158" },
 	Upgrade = "Main/Upgrade/Golden Upgrade 1st Outline",
 	Lock = "Item/Lock/Lock 1st Outline",
 	Trophy = "Item/Trophy/Golden Trophy 1st Outline",
 	Lovibum = "Currency/Crystal/Crystal Blue Outline", -- раздел «Ловибумы» в инвентаре: кристалл — знак Ловибумов
-	Day = "Main/Star/Golden Star 1st Outline",
-	Preparation = "UI/Warning/Warning 1st Outline",
-	Night = "Nature/Cloud/Cloud 1st Outline",
-	DoomNight = "Player/Skull/Skull 1st Outline",
 }
 
 -- Камера в музее (D50, Controllers/MuseumCameraController): детали здания между персонажем и камерой гаснут у этого
@@ -347,30 +320,88 @@ UITokens.Training = {
 	R6 = { Rest = 8, Top = 100 }, -- R6 без локтя: подъём прямой руки вперёд
 }
 
--- Колонка меню HUD v2 (D48 v2): справа посередине — иконка, подпись под ней, на ПК клавиша (B — «Инвентарь»).
+-- Меню HUD (вид — по референсу владельца 2026-11-17): слева посередине — столбик квадратных плоских кнопок только
+-- со значком, без подписей (решение владельца: подписи занимают лишнее место на экране) — как квадратные кнопки
+-- референса: яркая заливка, тонкий тёмный контур, светлая рамка внутри, по центру белый значок с чёрной обводкой.
+-- Цвета — с референса: «Магазин» зелёный, «Инвентарь» голубой, «Музей» оранжевый, «Защита» красная. Квадратная
+-- кнопка референса — 34 × 36 px при экране 880 × 405. Столбик стоит между кнопками Roblox (или панелью обучения)
+-- сверху и монетами снизу (Client/UI/HudLayout).
 UITokens.MenuHud = {
-	Icon = 92, -- px при масштабе 1 (WindowScale, StudMotion.BindResponsive)
-	Label = 22, -- размер подписи
-	LabelGap = 2,
-	Gap = 14, -- между кнопками
-	Margin = 18, -- от правого края
-	Tilt = -8, -- наклон иконки (Stud-UI)
-	KeySize = 28, -- значок клавиши
-	Hover = 1.08,
-	-- наклонная иконка-наклейка выступает левее кнопки: уведомления и «Удар» держатся левее и этого (визуальный QA:
-	-- второе уведомление в Судную ночь наезжало на «Инвентарь»)
-	IconOverflow = 14, -- px при масштабе 1
-	-- D56 (четвёртая кнопка «Музей»): столбик стоит по центру экрана и должен уместиться между кнопками Roblox сверху
-	-- (TopReserve, px экрана) и низом экрана (BottomReserve), а на касании — верхом кнопки прыжка (Jump — от низа
-	-- экрана с запасом; JumpSmall — на экране с меньшей стороной ≤ SmallSide: там кнопки Roblox мельче). Не умещается —
-	-- кнопки встают сеткой в два столбца (ColumnGap между ними, px при масштабе 1).
-	ColumnGap = 4,
-	SlotGap = 6, -- px экрана: между кнопкой «Удар» (над сеткой, только касание и Судная ночь) и сеткой меню
-	TopReserve = 48,
-	BottomReserve = 16,
-	Jump = 218,
-	JumpSmall = 98,
+	Button = Vector2.new(48, 48), -- px при масштабе 1 (масштаб HUD — Client/UI/HudLayout.Scale); телефон — 41 × 41
+	Text = 15, -- подпись рисуется, только если у кнопки нет значка
+	IconSize = 0.68, -- доля стороны кнопки
+	Gap = 6, -- между кнопками
+	Margin = 12, -- от левого края (безопасной зоны экрана)
+	KeySize = 18, -- значок клавиши на ПК
+	Hover = 1.06,
+	Themes = { Shop = "green", Inventaire = "blue", Museum = "orange", Defense = "red", OwnerTest = "teal" },
+	Order = { Shop = 1, Inventaire = 2, Museum = 3, Defense = 4, OwnerTest = 9 },
+	EdgeGap = 8, -- px экрана: от столбика до кнопок Roblox сверху и до монет снизу
+}
+
+-- Ноша (Controllers/CarryController; вид — по референсу владельца 2026-11-17): у нижнего края по центру — тёмный
+-- полупрозрачный скруглённый слот с 3D-видом предмета (как слоты инструментов на референсе), правее — название
+-- и красная плоская кнопка «Бросить». Px при масштабе 1 (масштаб HUD — Client/UI/HudLayout.Scale).
+UITokens.CarryHud = {
+	Slot = 64, -- сторона слота (на референсе 59 px при экране 880 × 405)
+	Side = 176, -- ширина колонки справа: название (во всю ширину) и кнопка (слева)
+	Button = Vector2.new(132, 40), -- «Бросить»
+	ButtonText = 19,
+	Gap = 8, -- между слотом и колонкой
+	Bottom = 6, -- px от нижнего края
+	BandGap = 10, -- px экрана: до монет слева и таймера справа
+	NameText = 16, -- название предмета (цветом редкости)
+	MinText = 10,
+	KeySize = 20, -- значок клавиши G на ПК
+	Turn = 25, -- поворот предмета в слоте вокруг вертикали, градусов
+	PreviewWait = 0.25, -- секунд между попытками собрать вид ноши, пока её сварка с персонажем не пришла
+	PreviewTries = 12,
+	-- самый узкий телефон: блок не помещается между монетами и таймером хотя бы в MinFull от масштаба HUD —
+	-- слот убирается, остаются название и кнопка «Бросить»
+	MinFull = 0.8,
+}
+
+-- Панель действий тестового режима владельца (Controllers/OwnerTestController): правее столбика меню, видна только
+-- владельцу в DEV-месте. id — действие для сервера (Services/OwnerTestService).
+UITokens.OwnerTest = {
+	Button = Vector2.new(170, 40), -- px при масштабе 1 (масштаб HUD)
+	Text = 16,
+	Gap = 6,
+	Pad = 10,
+	Left = 10, -- px от столбика меню
+	Columns = 2,
+	Actions = {
+		Normal = { { id = "Test", text = "На тестовый сервер", theme = "teal" } },
+		Test = {
+			{ id = "Goto", text = "К дракону", theme = "blue" },
+			{ id = "Fight", text = "Бой", theme = "red" },
+			{ id = "Win", text = "Победа", theme = "green" },
+			{ id = "Day", text = "День", theme = "orange" },
+			{ id = "Night", text = "Ночь", theme = "purple" },
+			{ id = "Exit", text = "Выход", theme = "gray" },
+		},
+	},
+}
+
+-- Общее для HUD v3 (Client/UI/HudLayout): масштаб и зоны экрана.
+UITokens.Hud = {
+	-- опорный экран и нижний предел масштаба — как у окон (StudMotion.REFERENCE, MIN_SCALE); верхний предел выше,
+	-- чем у окон (1.18): на мониторе 1920 × 1080 и больше кнопки HUD не должны быть крошечными (там кнопка меню —
+	-- 63 px в высоту, на 1280 × 720 — 49 px)
+	Reference = Vector2.new(1050, 620),
+	MinScale = 0.52,
+	MaxScale = 1.5,
+	TouchScale = 0.85, -- на касании масштаб кнопок HUD не меньше: кнопки меню не мельче ~40 px
+	-- на касании масштаб надписей без нажатия (монеты, сила, таймер) не меньше: на узком телефоне они не должны
+	-- занимать весь нижний край (между ними встаёт «Бросить»)
+	InfoTouchScale = 0.72,
+	TopBar = 58, -- px: кнопки Roblox сверху (GuiService:GetGuiInset бывает 0 в первые кадры)
+	-- кнопка прыжка Roblox (PlayerModule/TouchJump): на экране с меньшей стороной ≤ SmallSide — 70 px у края,
+	-- иначе 120 px выше; Left — от правого края до левого края кнопки, Top — от низа до её верха, с запасом
 	SmallSide = 500,
+	JumpSmall = { Left = 103, Top = 96 },
+	Jump = { Left = 178, Top = 216 },
+	JumpLow = 150, -- кнопка прыжка ниже этого (px от низа до её верха) — таймер встаёт левее неё, а не под ней
 }
 
 -- Окно «Улучшение музея» (D56, Stud-UI: золотая шапка — рост и награда). Слева карточка «Сейчас», справа — «После
@@ -384,14 +415,14 @@ UITokens.MuseumUpgrade = {
 	Margin = 16,
 	PhoneScale = 0.78,
 	MinTouch = 52,
-	Header = "gold",
+	Header = "orange", -- как кнопка «Музей»
 	Pad = 16,
 	PadCompact = 10,
 	Gap = 12,
 	GapCompact = 8,
 	CompactHeight = 430,
 	Arrow = 76, -- стрелка между карточками (наклейка, заходит на обе)
-	Tilt = -8, -- наклон иконок-наклеек (Stud-UI)
+	Tilt = 0, -- наклон иконок: на референсе владельца значки стоят прямо
 	IconGap = 8, -- от заголовка «Уровень N» до иконки карточки
 	ArrowCompact = 56,
 	CaptionText = 20, -- «Сейчас» / «После улучшения»
@@ -422,19 +453,17 @@ UITokens.MuseumUpgrade = {
 	Refresh = 0.25, -- секунд: как часто обновляется отсчёт запрета, пока окно открыто
 }
 
--- Статистика HUD v2 (D48 v2): слева посередине — иконка + число, без рамок; доход зелёный, сила с подписью.
+-- Статистика (вид — по референсу владельца 2026-11-17): слева внизу — сила и монеты, цветная 2D-наклейка и число
+-- жирным курсивом с чёрной обводкой; сила белая, монеты ярко-зелёные (цвет с референса). Без рамок. Дохода в секунду
+-- здесь нет: он в стандартном списке игроков Roblox (leaderstats «Доход/сек», IncomeService).
 UITokens.StatsHud = {
-	Margin = 18,
-	Width = 260, -- строка: иконка и число (D50: уже — плашка зоны на iPad не задевает)
-	Y = 0.42, -- середина столбика по высоте экрана
+	Margin = Vector2.new(12, 6), -- от левого и нижнего края
 	Rows = {
-		Coins = { icon = 56, text = 40 },
-		Income = { icon = 44, text = 30, color = Color3.fromHex("8BF06B") },
-		Strength = { icon = 44, text = 30, note = 24 }, -- подпись «сила» крупнее (D50: на телефоне читается)
+		Strength = { icon = 38, text = 29 },
+		Coins = { icon = 38, text = 29, color = Color3.fromHex("19FA00") },
 	},
-	Gap = 8,
-	TextGap = 8,
-	Tilt = -8,
+	Gap = 1,
+	TextGap = 5,
 }
 
 -- Окно «Инвентарь» (D46, Stud-UI): пиксели опорного экрана 1050 × 620, весь корень масштабирует WindowScale
@@ -447,16 +476,16 @@ UITokens.Inventory = {
 	Margin = 16, -- px экрана
 	PhoneScale = 0.78, -- на сенсорном экране без клавиатуры масштаб окна не меньше (текст читается)
 	MinTouch = 52, -- px: кнопки на сенсорном экране не меньше (D32)
-	Header = "blue", -- шапка окна: синяя — навигация (Stud-UI)
+	Header = "blue", -- как кнопка «Инвентарь»
 	-- Карточка D50: наименьшая ширина (сетка растягивает до строки), высота без кнопки — CardBody.
 	Card = Vector2.new(178, 0),
 	CardBody = 228, -- отступ, редкость, превью, название (2 строки), доход и локация, статус, отступы
 	CardPad = 10,
-	CardCorner = 10,
-	CardStroke = 2, -- рамка цвета редкости (вместо чёрной 3 px Stud-UI)
-	CardColor = Color3.fromHex("1B2238"),
-	CardTransparency = 0.06,
-	CardNeutral = Color3.fromHex("3A4560"), -- рамка карточки без редкости (занятый постамент)
+	CardCorner = 8,
+	CardStroke = 2, -- рамка цвета редкости
+	CardColor = Color3.fromHex("000000"), -- тёмная полупрозрачная плашка, как слоты на референсе владельца
+	CardTransparency = 0.4,
+	CardNeutral = Color3.fromHex("6A7280"), -- рамка карточки без редкости (занятый постамент)
 	Muted = Color3.fromHex("B8C3D6"), -- второстепенный текст
 	Preview = 86, -- высота 3D-превью
 	PreviewGlow = 0.55, -- прозрачность фона цвета редкости вверху превью (книзу — почти прозрачный)
@@ -479,16 +508,20 @@ UITokens.Inventory = {
 	MinText = 12,
 	ButtonHeight = 36,
 	ButtonText = 19,
-	Chip = { -- сортировка и фильтр (D50): плоские капсулы вместо толстых кнопок
+	-- сортировка и фильтр (D50): плоские плашки в стиле референса владельца — выбранная голубая с тёмным контуром
+	-- (цвет кнопки «Инвентарь»), остальные тёмные полупрозрачные; подпись белая с чёрной обводкой
+	Chip = {
 		Height = 34,
 		Text = 17,
-		TouchText = 22, -- на касании капсула высотой с кнопку (D32), текст крупнее
+		TouchText = 22, -- на касании плашка высотой с кнопку (D32), текст крупнее
 		Pad = 14,
 		Gap = 8,
-		Active = Color3.fromHex("2F7BFF"),
-		Idle = Color3.fromHex("26304A"),
-		IdleText = Color3.fromHex("C9D2E3"),
-		IdleStroke = Color3.fromHex("3A4560"),
+		Corner = 5,
+		Active = Color3.fromHex("01C8FF"),
+		ActiveStroke = Color3.fromHex("001A43"),
+		Idle = Color3.fromHex("000000"),
+		IdleTransparency = 0.45,
+		IdleStroke = Color3.fromHex("6A7280"), -- черта между сортировкой и фильтром
 	},
 	HotKey = Enum.KeyCode.B, -- ПК: открыть / закрыть (I и O — зум камеры Roblox)
 	Refresh = 0.5, -- секунд между проверками фазы, пока окно открыто
@@ -499,7 +532,12 @@ UITokens.Inventory = {
 -- Окно «Защита» и расстановка (D46, Stud-UI): пиксели опорного экрана 1050 × 620.
 UITokens.Defense = {
 	Window = Vector2.new(940, 580),
-	Header = "purple",
+	-- окно — по экрану: ширина постоянная (строки устройств), высота — сколько помещается ниже кнопок Roblox без
+	-- Margin по краям, не меньше MinHeight (список прокручивается); на касании масштаб не меньше PhoneScale
+	MinHeight = 300,
+	Margin = 16,
+	PhoneScale = 0.78,
+	Header = "red", -- как кнопка «Защита»
 	Row = Vector2.new(880, 92), -- строка устройства
 	TextWidth = 380, -- колонка названия и подробностей; правее — кнопки (до 3 × 150 + промежутки)
 	RowGap = 10,
@@ -539,7 +577,7 @@ UITokens.Shop = {
 	Margin = 16,
 	PhoneScale = 0.78,
 	MinTouch = 52,
-	Header = "pink",
+	Header = "green", -- как кнопка «Магазин»
 	Pad = 14,
 	PadCompact = 8, -- внутри карточки телефона
 	Gap = 12, -- между карточками
@@ -549,7 +587,7 @@ UITokens.Shop = {
 	Pack = 58, -- ширина наклейки «×3» перед «Купить»
 	PackText = 32,
 	PackColor = Color3.fromHex("FFD23F"), -- жёлтая наклейка (Stud-UI: акцент)
-	PackTilt = -8, -- градусов: наклейки в Stud-UI наклонены
+	PackTilt = 0, -- градусов: на референсе владельца значки стоят прямо
 	Buy = 150, -- ширина «Купить» (строка телефона)
 	BuyMin = 96, -- «Купить» в карточке ПК не уже
 	BarText = 24, -- итог в строке телефона
@@ -648,12 +686,9 @@ UITokens.Museum = {
 UITokens.Pvp = {
 	Button = Vector2.new(150, 72), -- кнопка «Удар» (px опорного экрана, масштаб — StudMotion)
 	MinTouch = 52, -- px: на телефоне кнопка не ниже (D32) — масштаб не меньше MinTouch / Button.Y
-	-- справа вверху сразу под кнопками Roblox (CoreUISafeInsets), левее колонки меню HUD v2 (D50: кнопка 52 px над
-	-- колонкой задевала её на узких телефонах); только телефон. Отступы: сверху и до колонки меню. D56: когда меню
-	-- стоит сеткой в два столбца (невысокий экран), левее меню кнопка упёрлась бы в таймер — она встаёт над сеткой у
-	-- правого края (как в D49), сетка стоит ниже неё (UI/MenuHud)
-	ButtonTop = 4,
-	MenuGap = 8,
+	-- HUD v3: у правого края над кнопкой прыжка (UI/HudLayout.Jump); только телефон и только в Судную ночь
+	Right = 22, -- px от правого края
+	JumpGap = 8, -- px между верхом зоны прыжка и кнопкой
 	Stars = Vector2.new(4, 1.4), -- звёзды над головой оглушённого, стадов
 	StarsLift = 2.6,
 	StarColor = Color3.fromHex("FFD23F"),

@@ -1,6 +1,7 @@
 -- Уровни коридора на клиенте (D41): плашка входа в уровень и «живые» голограммы названий.
--- Плашка — сверху по центру на 1.5 с: смайлик настроения уровня (GameConfig.Zones[i].mood, от доброго к страшному),
--- название уровня (D49: без номера); цвет панели — по номеру зоны (UITokens.LevelBanner). Показывается при каждом входе в
+-- Плашка (HUD v3: маленькая и короткая, персонажа и дорогу не закрывает) — сверху по центру под кнопками Roblox на
+-- ~1 с: смайлик настроения уровня (GameConfig.Zones[i].mood, от доброго к страшному), название уровня (D49: без
+-- номера); цвет панели — по номеру зоны (UITokens.LevelBanner). Показывается при каждом входе в
 -- уровень (из Safe Zone или из соседнего уровня). В какой зоне игрок — по полу зон (workspace.World.Map.Zones,
 -- атрибут Zone у папки зоны). Голограммы (тег Hologram) слегка покачиваются и мерцают — только у этого клиента;
 -- ночью (на карте NightBarrier) надписи уровней гаснут. Теги Spin и Bob — вращение и покачивание украшений магазинов.
@@ -17,7 +18,6 @@ local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfi
 local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 local TextCase = require(Shared:WaitForChild("TextCase"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
-local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
 
 local player = Players.LocalPlayer
@@ -45,8 +45,8 @@ local function buildBanner(gui: ScreenGui)
 	group.Name = "LevelBanner"
 	group.BackgroundTransparency = 1
 	group.AnchorPoint = Vector2.new(0.5, 0)
-	group.Size = UDim2.fromOffset(CFG.Size.X + 16, CFG.Size.Y + 16)
-	group.Position = UDim2.new(0.5, 0, 0, HudLayout.BelowTimer(CFG.Gap))
+	group.Size = UDim2.fromOffset(CFG.Size.X + 12, CFG.Size.Y + 12)
+	group.Position = UDim2.new(0.5, 0, 0, CFG.Top)
 	group.GroupTransparency = 1
 	group.Visible = false
 	group.Parent = gui
@@ -55,25 +55,29 @@ local function buildBanner(gui: ScreenGui)
 	scale.Parent = group
 	local pop = Instance.new("NumberValue")
 	pop.Value = 1
-	Motion.BindResponsive(scale, 1, pop)
+	local function rescale()
+		scale.Scale = HudLayout.Scale() * pop.Value
+	end
+	pop.Changed:Connect(rescale)
+	HudLayout.Track(rescale)
 
 	local panel = UI.StudPanel(group, {
 		Name = "Panneau",
 		Size = UDim2.fromOffset(CFG.Size.X, CFG.Size.Y),
-		Position = UDim2.fromOffset(8, 8),
+		Position = UDim2.fromOffset(6, 6),
 		Gradient = gradient(1),
-		Corner = 14,
+		Corner = 10,
 	})
 	local circle = Instance.new("Frame")
 	circle.Name = "Circle"
 	circle.BackgroundColor3 = Color3.new(1, 1, 1)
 	circle.Size = UDim2.fromOffset(CFG.Emoji, CFG.Emoji)
 	circle.AnchorPoint = Vector2.new(0, 0.5)
-	circle.Position = UDim2.new(0, 16, 0.5, 0)
+	circle.Position = UDim2.new(0, 10, 0.5, 0)
 	circle.ZIndex = 8
 	circle.Parent = panel
 	UI.Corner(circle, CFG.Emoji)
-	local ring = UI.Stroke(circle, UI.Colors.StrokeDark, 3)
+	local ring = UI.Stroke(circle, UI.Colors.StrokeDark, 2)
 	local emoji = Instance.new("TextLabel")
 	emoji.Name = "Emoji"
 	emoji.BackgroundTransparency = 1
@@ -84,21 +88,21 @@ local function buildBanner(gui: ScreenGui)
 	emoji.ZIndex = 9
 	emoji.Parent = circle
 
-	local left = CFG.Emoji + 32
+	local left = CFG.Emoji + 20
 	local title, shadow = UI.ShadowText(panel, "", {
 		Name = "Title",
 		ShadowName = "TitleShadow",
 		Max = CFG.TitleSize,
 		AlignX = Enum.TextXAlignment.Left,
 		AnchorPoint = Vector2.new(0, 0.5),
-		Size = UDim2.new(1, -left - 12, 0, CFG.TitleSize + 6),
+		Size = UDim2.new(1, -left - 10, 0, CFG.TitleSize + 6),
 		Position = UDim2.new(0, left, 0.5, 2),
 	})
 	banner = group
 	parts = { panel = panel, emoji = emoji, title = title, shadow = shadow, ring = ring, pop = pop }
 end
 
--- Показать плашку уровня index: появление, 1.5 с на экране, исчезновение (новый вход перебивает старый).
+-- Показать плашку уровня index: появление, около секунды на экране, исчезновение (новый вход перебивает старый).
 function ZoneController.Show(index: number)
 	local zone = GameConfig.Zones[index]
 	if not zone or not banner then
@@ -115,11 +119,11 @@ function ZoneController.Show(index: number)
 	parts.title.Text = name
 	parts.shadow.Text = name
 
-	local home = UDim2.new(0.5, 0, 0, HudLayout.BelowTimer(CFG.Gap)) -- под таймером при текущем масштабе экрана
+	local home = UDim2.new(0.5, 0, 0, CFG.Top)
 	banner.Visible = true
 	banner.GroupTransparency = 1
-	banner.Position = home - UDim2.fromOffset(0, 24)
-	parts.pop.Value = 0.85
+	banner.Position = home - UDim2.fromOffset(0, 12)
+	parts.pop.Value = 0.9
 	local into = TweenInfo.new(CFG.In, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	TweenService:Create(banner, into, { GroupTransparency = 0, Position = home }):Play()
 	TweenService:Create(parts.pop, into, { Value = 1 }):Play()
@@ -128,8 +132,9 @@ function ZoneController.Show(index: number)
 			return
 		end
 		local out = TweenInfo.new(CFG.Out, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		local fade = TweenService:Create(banner, out, { GroupTransparency = 1, Position = home - UDim2.fromOffset(0, 16) })
-		TweenService:Create(parts.pop, out, { Value = 0.92 }):Play()
+		local fade =
+			TweenService:Create(banner, out, { GroupTransparency = 1, Position = home - UDim2.fromOffset(0, 10) })
+		TweenService:Create(parts.pop, out, { Value = 0.94 }):Play()
 		fade:Play()
 		fade.Completed:Wait()
 		if serial == showSerial then

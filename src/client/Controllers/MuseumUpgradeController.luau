@@ -57,6 +57,7 @@ type Card = {
 	levelShadow: TextLabel,
 	lines: { TextLabel },
 	icon: ImageLabel,
+	glyph: Frame,
 }
 
 local profile: Profile
@@ -131,10 +132,10 @@ local function set(object: Instance, property: string, value: any)
 	end
 end
 
--- Карточка уровня: сверху подпись и объёмное «Уровень N», справа от них иконка-наклейка (дом; у максимума — кубок);
+-- Карточка уровня: сверху подпись и объёмное «Уровень N», справа от них иконка (музей; у максимума — кубок);
 -- ниже три строки во всю ширину (одного размера). lead — отступ текста слева: на край правой карточки заходит
 -- стрелка; reserve — тот же отступ в расчёте ширины заголовка у обеих карточек (заголовки одного размера, иконка их
--- не касается); sun — лучи за иконкой.
+-- не касается).
 local function card(
 	parent: Instance,
 	name: string,
@@ -144,8 +145,7 @@ local function card(
 	h: number,
 	color: Color3,
 	lead: number,
-	reserve: number,
-	sun: boolean
+	reserve: number
 ): Card
 	local compact = profile.compact
 	local inner = if compact then 8 else 14
@@ -200,7 +200,7 @@ local function card(
 	for i = 1, 3 do
 		lines[i] = label("Ligne" .. i, top + headH + 10 + (i - 1) * (lineH + 2), fullW, lineH, lineText)
 	end
-	-- иконка-наклейка Stud-UI: справа от заголовка, с наклоном, чуть выступает за край карточки
+	-- иконка: справа от заголовка
 	local stage = Instance.new("Frame")
 	stage.Name = "Vitrine"
 	stage.BackgroundTransparency = 1
@@ -209,9 +209,7 @@ local function card(
 	stage.Position = UDim2.new(1, -inner + 6, 0, top + math.floor(headH / 2))
 	stage.ZIndex = 5
 	stage.Parent = box
-	if sun then
-		UI.Sunburst(stage, math.floor(iconSize * 1.3)).ZIndex = 5
-	end
+	-- наклейка (кубок максимума) и плоский силуэт с чёрной обводкой (музей) — показывается одно из двух (setIcon)
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icone"
 	icon.BackgroundTransparency = 1
@@ -220,7 +218,33 @@ local function card(
 	icon.Rotation = T.Tilt
 	icon.ZIndex = 7
 	icon.Parent = stage
-	return { box = box, caption = caption, level = level, levelShadow = levelShadow, lines = lines, icon = icon }
+	local glyph =
+		UI.Glyph(stage, "", { Name = "Glyphe", Size = UDim2.fromScale(0.82, 0.82), ZIndex = 7, Thickness = 3 })
+	glyph.Visible = false
+	return {
+		box = box,
+		caption = caption,
+		level = level,
+		levelShadow = levelShadow,
+		lines = lines,
+		icon = icon,
+		glyph = glyph,
+	}
+end
+
+-- Иконка карточки по ключу UI/HudIcons: силуэт — белым с чёрной обводкой, наклейка — как есть.
+local function setIcon(c: Card, key: string)
+	local image, isGlyph = HudIcons.Get(key)
+	if isGlyph then
+		if c.glyph:GetAttribute("Image") ~= image then
+			c.glyph:SetAttribute("Image", image)
+			UI.SetGlyph(c.glyph, image)
+		end
+	else
+		set(c.icon, "Image", image)
+	end
+	set(c.glyph, "Visible", isGlyph)
+	set(c.icon, "Visible", not isGlyph)
 end
 
 local render: () -> ()
@@ -355,13 +379,13 @@ local function build()
 	-- текст правой карточки начинается правее стрелки, которая заходит на её край
 	local lead = math.floor(arrowSize / 2)
 	cards = {
-		current = card(corps, "Maintenant", pad, cardsTop, cardW, cardsH, T.Current, 0, lead, false),
-		next = card(corps, "Apres", pad + cardW + gap, cardsTop, cardW, cardsH, T.Next, lead, lead, true),
+		current = card(corps, "Maintenant", pad, cardsTop, cardW, cardsH, T.Current, 0, lead),
+		next = card(corps, "Apres", pad + cardW + gap, cardsTop, cardW, cardsH, T.Next, lead, lead),
 	}
 	arrow = Instance.new("ImageLabel")
 	arrow.Name = "Fleche"
 	arrow.BackgroundTransparency = 1
-	arrow.Image = HudIcons.Get("Upgrade")
+	arrow.Image = (HudIcons.Get("Upgrade"))
 	arrow.ScaleType = Enum.ScaleType.Fit
 	arrow.Size = UDim2.fromOffset(arrowSize, arrowSize)
 	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -395,7 +419,7 @@ render = function()
 	set(current.caption, "Text", "СЕЙЧАС")
 	set(current.level, "Text", ("Уровень %d"):format(level))
 	set(current.levelShadow, "Text", ("Уровень %d"):format(level))
-	set(current.icon, "Image", HudIcons.Get("Museum"))
+	setIcon(current, "Museum")
 	set(current.lines[1], "Text", ("Мест: %d из %d"):format(slots, MAX_SLOTS))
 	set(current.lines[2], "Text", "Защита: " .. devices(level))
 	local galleries = GameConfig.Defense.Galleries.Level
@@ -407,9 +431,9 @@ render = function()
 	-- между карточками: стрелка «станет» (стрелка «вверх» из набора, повёрнутая к правой карточке) или замок запрета
 	local locked = code == Codes.Locked
 	set(arrow, "Visible", not isMax)
-	set(arrow, "Image", HudIcons.Get(if locked then "Lock" else "Upgrade"))
+	set(arrow, "Image", (HudIcons.Get(if locked then "Lock" else "Upgrade")))
 	set(arrow, "Rotation", if locked then T.Tilt else 90)
-	set(after.icon, "Image", HudIcons.Get(if isMax then "Trophy" else "MuseumNext"))
+	setIcon(after, if isMax then "Trophy" else "MuseumNext")
 	set(after.levelShadow, "Text", ("Уровень %d"):format(nextLevel))
 	if isMax then
 		set(after.caption, "Text", "МАКСИМУМ")
@@ -581,7 +605,7 @@ end
 
 function MuseumUpgradeController.Init()
 	-- Кнопка «Музей» в колонке меню HUD v2 (четвёртая, под «Магазином»); у ученика её нет до конца обучения.
-	hudButton = MenuHud.Add("Museum", "Музей", "blue", 4, toggle, { icon = "Museum" })
+	hudButton = MenuHud.Add("Museum", "Музей", "orange", 4, toggle, { icon = "Museum" })
 	updateHud()
 	player:GetAttributeChangedSignal("Tutorial"):Connect(updateHud)
 	Remotes.Get(Remotes.Names.MuseumUpgradeResult).OnClientEvent:Connect(function(payload)

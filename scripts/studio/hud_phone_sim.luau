@@ -1,3 +1,5 @@
+-- УСТАРЕЛО (2026-11-17): модель HUD v2 (меню справа, таймер сверху). Для HUD v3 — scripts/studio/hud_probe.luau
+-- (настоящие прямоугольники на экране нужного размера) и scripts/lune/check_hud.luau (расчёты по экранам).
 -- Моделирование HUD на экране телефона в Studio (D49): вставить в MCP execute_luau (Client, Play) и снять
 -- screen_capture. Не настоящее устройство (StudioDeviceEmulatorService скриптам недоступен): копии экранов HUD в
 -- рамке размера телефона, масштаб WindowScale как у StudMotion для этого размера, соседи таймера и меню — как в

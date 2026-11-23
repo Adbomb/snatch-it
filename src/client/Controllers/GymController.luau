@@ -1,9 +1,11 @@
 -- Качалка на клиенте (D34, D35): табличка «Улучшение» во дворе каждого музея — SurfaceGui в PlayerGui на обеих сторонах табло
 -- участка, текст каждому свой: владельцу — «Уровень N > Уровень N+1», цена и кнопки (Robux — заглушка «Скоро»),
 -- гостю — «Гантель игрока <имя>: уровень N», у свободного участка — «Свободный участок». При качании над головой
--- всплывает «+N». Слева посередине — статистика HUD v2 (D48 v2): иконка + число без рамок — монеты, доход в секунду,
--- сила (иконки — UI/HudIcons). Только показывает и просит: улучшение проверяет сервер. Зависит от Remotes,
--- GameConfig, NumberFormat, UITokens, UI/UIKit, Shared/StudUI, UI/HudIcons.
+-- всплывает «+N». Слева внизу — статистика (вид — по референсу владельца 2026-11-17): цветная 2D-наклейка и число
+-- жирным курсивом с чёрной обводкой, без рамок — сила (белая) и монеты (зелёные); иконки — UI/HudIcons; доход в
+-- секунду — в списке игроков Roblox (IncomeService). Только показывает и
+-- просит: улучшение проверяет сервер. Зависит от Remotes, GameConfig, NumberFormat, UITokens, UI/UIKit, Shared/StudUI,
+-- UI/HudIcons, UI/HudLayout.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,9 +17,9 @@ local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 local NumberFormat = require(Shared:WaitForChild("NumberFormat"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local UIKit = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("UIKit"))
+local HudLayout = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudLayout"))
 local HudIcons = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudIcons"))
 local StudUI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
-local StudMotion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 
 local player = Players.LocalPlayer
 local Dumbbell = GameConfig.Progression.Dumbbell
@@ -172,7 +174,9 @@ local function showGain(amount: number)
 	end)
 end
 
--- Статистика HUD v2 слева посередине: строка — иконка (наклон Stud-UI) и число с объёмной тенью, без рамок.
+-- Статистика HUD v3 слева внизу (ТЗ владельца 2026-11-17): сила и монеты — иконка (наклон Stud-UI) и число с
+-- объёмной тенью, без рамок и подписей. Доход в секунду — в стандартном списке игроков Roblox (leaderstats).
+-- Касания не перехватывает (под ним на телефоне — джойстик).
 local function buildHud()
 	local cfg = UITokens.StatsHud
 	local gui = StudUI.ScreenGui("GymHud", 3, { Menu = false })
@@ -180,63 +184,71 @@ local function buildHud()
 	local column = Instance.new("Frame")
 	column.Name = "Stats"
 	column.BackgroundTransparency = 1
-	column.AnchorPoint = Vector2.new(0, 0.5)
-	column.Position = UDim2.new(0, cfg.Margin, cfg.Y, 0)
-	column.Size = UDim2.fromOffset(cfg.Width, 0)
-	column.AutomaticSize = Enum.AutomaticSize.Y
+	column.AnchorPoint = Vector2.new(0, 1)
+	column.Position = UDim2.new(0, cfg.Margin.X, 1, -cfg.Margin.Y)
+	column.Size = UDim2.fromOffset(0, 0)
+	column.AutomaticSize = Enum.AutomaticSize.XY
 	column.Parent = gui
 	local list = Instance.new("UIListLayout")
 	list.Padding = UDim.new(0, cfg.Gap)
 	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	list.Parent = column
 	local scale = Instance.new("UIScale")
 	scale.Name = "WindowScale"
 	scale.Parent = column
-	StudMotion.BindResponsive(scale)
-	-- строка: иконка, число (rich — с мелкой подписью после числа, у силы)
-	local function row(key: string, order: number, rich: boolean?): (TextLabel, TextLabel)
+	HudLayout.Track(function()
+		scale.Scale = HudLayout.InfoScale()
+	end)
+	-- правый край столбика — граница свободной полосы у нижнего края (строка «Несёте: …» встаёт правее)
+	local function reportEdge()
+		HudLayout.SetBottom("Left", cfg.Margin.X + column.AbsoluteSize.X)
+	end
+	column:GetPropertyChangedSignal("AbsoluteSize"):Connect(reportEdge)
+	reportEdge()
+	local widest = math.max(cfg.Rows.Strength.icon, cfg.Rows.Coins.icon)
+	-- строка: иконка в общей по ширине ячейке (числа стоят в одну линию) и число
+	local function row(key: string, order: number): (TextLabel, TextLabel)
 		local spec = cfg.Rows[key]
 		local frame = Instance.new("Frame")
 		frame.Name = key
 		frame.BackgroundTransparency = 1
-		frame.Size = UDim2.fromOffset(cfg.Width, spec.icon)
+		frame.Size = UDim2.fromOffset(0, spec.icon)
+		frame.AutomaticSize = Enum.AutomaticSize.X
 		frame.LayoutOrder = order
 		frame.Parent = column
-		StudUI.Image(frame, HudIcons.Get(key), {
+		StudUI.Image(frame, (HudIcons.Get(key)), {
 			Size = UDim2.fromOffset(spec.icon, spec.icon),
-			Position = UDim2.fromOffset(spec.icon / 2, spec.icon / 2),
-			Rotation = cfg.Tilt,
+			Position = UDim2.fromOffset(widest / 2, spec.icon / 2),
 		})
 		local text, shadow = StudUI.ShadowText(frame, "", {
 			Name = "Valeur",
 			ShadowName = "ValeurOmbre",
+			Font = StudUI.Fonts.Italic,
 			Size = UDim2.fromOffset(0, spec.text + 4),
-			Position = UDim2.new(0, spec.icon + cfg.TextGap, 0.5, 0),
+			Position = UDim2.new(0, widest + cfg.TextGap, 0.5, 0),
 			AnchorPoint = Vector2.new(0, 0.5),
 			AlignX = Enum.TextXAlignment.Left,
 			TextSize = spec.text,
 			AutoX = true,
 			Color = spec.color,
-			Rich = rich,
+			Stroke = StudUI.Flat.Stroke,
+			Thickness = 3,
 		})
 		return text, shadow
 	end
-	local coins, coinsShadow = row("Coins", 1)
-	local income, incomeShadow = row("Income", 2) -- общий доход экспонатов на постаментах (IncomeService)
-	local strength, strengthShadow = row("Strength", 3, true)
-	local note = (' <font size="%d">сила</font>'):format(cfg.Rows.Strength.note)
+	local strength, strengthShadow = row("Strength", 1)
+	local coins, coinsShadow = row("Coins", 2)
 	local function set(label: TextLabel, shadow: TextLabel, text: string)
 		label.Text = text
 		shadow.Text = text
 	end
 	local function update()
 		set(coins, coinsShadow, "$" .. NumberFormat.Short(player:GetAttribute("Coins") or 0))
-		set(income, incomeShadow, ("+%s/сек"):format(NumberFormat.Short(player:GetAttribute("Income") or 0)))
-		set(strength, strengthShadow, NumberFormat.Short(player:GetAttribute("Strength") or 0) .. note)
+		set(strength, strengthShadow, NumberFormat.Short(player:GetAttribute("Strength") or 0))
 	end
 	player:GetAttributeChangedSignal("Strength"):Connect(update)
 	player:GetAttributeChangedSignal("Coins"):Connect(update)
-	player:GetAttributeChangedSignal("Income"):Connect(update)
 	update()
 end
 

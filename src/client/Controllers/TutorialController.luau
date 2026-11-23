@@ -9,7 +9,6 @@
 -- места хватает — всё на своих местах).
 -- Зависит от Shared/StudUI, Remotes, Config/UITokens, UI/HudLayout.
 
-local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
@@ -106,6 +105,7 @@ end
 
 local last: any = nil
 local fitPanel: () -> () -- размер панели по экрану и тексту (ниже)
+local reserve: () -> () -- место, занятое панелью слева сверху (ниже)
 
 local function render(payload: any)
 	last = payload
@@ -115,6 +115,7 @@ local function render(payload: any)
 	gui.Enabled = active and not catching
 	if not active or catching then
 		clearGuide() -- на экране поимки линии и метки нет (там свой прицел)
+		reserve()
 		return
 	end
 	title.Text = ("Обучение · шаг %d из 5"):format(ORDER[step])
@@ -162,38 +163,26 @@ local function screen(): (Vector2, number)
 	return view, s
 end
 
--- Столбик монет и силы (GymHud.Stats, UITokens.StatsHud): пока идёт обучение и он по своему месту налез бы на панель
--- (низкий экран) — под панелью; иначе — на своём месте.
-local function placeStats()
-	local pg = player:FindFirstChild("PlayerGui")
-	local hud = pg and pg:FindFirstChild("GymHud")
-	local stats = hud and hud:FindFirstChild("Stats")
-	if not stats or not stats:IsA("GuiObject") then
+-- HUD v3: панель стоит слева сверху, столбик меню — слева посередине: пока панель на экране, меню встаёт ниже неё
+-- (UI/HudLayout.SetLeftTop — низ панели, px от верха экрана; 0 — панели нет). Монеты и сила — слева внизу, им панель
+-- не мешает.
+reserve = function()
+	if not gui.Enabled then
+		HudLayout.SetLeftTop(0)
 		return
 	end
-	local S = UITokens.StatsHud
-	local view, s = screen()
-	-- px от верха экрана (GymHud — без отступа под кнопками Roblox, панель — под ними); высота столбика — его строки
-	local rows = S.Rows.Coins.icon + S.Rows.Income.icon + S.Rows.Strength.icon + 2 * S.Gap
-	local below = GuiService:GetGuiInset().Y + T.Top + panel.Size.Y.Offset * s + T.Gap
-	local top = S.Y * view.Y - rows * s / 2
-	if player:GetAttribute("Tutorial") ~= nil and top < below then
-		stats.AnchorPoint = Vector2.zero
-		stats.Position = UDim2.fromOffset(S.Margin, below)
-	else
-		stats.AnchorPoint = Vector2.new(0, 0.5)
-		stats.Position = UDim2.new(0, S.Margin, S.Y, 0)
-	end
+	local _, s = screen()
+	HudLayout.SetLeftTop(HudLayout.TopBar() + T.Top + panel.Size.Y.Offset * s)
 end
 
--- Размер панели: обычный; если слева от таймера дня места меньше (узкий телефон) — уже и выше, чтобы текст шага
--- поместился не мельче MinText. Потом — столбик монет (placeStats).
+-- Размер панели: обычный; если слева от плашки зоны (сверху по центру) места меньше (узкий телефон) — уже и выше,
+-- чтобы текст шага поместился не мельче MinText. Потом — место для меню (reserve).
 local fitToken = 0
 fitPanel = function()
 	fitToken += 1
 	local token = fitToken
 	local view, s = screen()
-	local room = view.X / 2 - UITokens.TimeHud.Size.X / 2 * s - T.Gap - T.Left -- до капсулы таймера (по центру)
+	local room = view.X / 2 - UITokens.LevelBanner.Size.X / 2 * s - T.Gap - T.Left -- до плашки зоны (по центру)
 	local width = math.min(T.Panel.X, room / s)
 	local height = T.Panel.Y
 	if width < T.Panel.X and body.Text ~= "" then
@@ -212,7 +201,7 @@ fitPanel = function()
 		end
 	end
 	panel.Size = UDim2.fromOffset(width, height)
-	placeStats()
+	reserve()
 end
 
 local function updateMenu()
@@ -260,19 +249,9 @@ function TutorialController.Init()
 	})
 	body.TextWrapped = true
 	Remotes.Get(Remotes.Names.TutorialChanged).OnClientEvent:Connect(render)
-	player:GetAttributeChangedSignal("Tutorial"):Connect(function()
-		updateMenu()
-		placeStats()
-	end)
-	task.spawn(function()
-		local hud = player:WaitForChild("PlayerGui"):WaitForChild("GymHud", 30)
-		local stats = hud and hud:WaitForChild("Stats", 10)
-		if stats and stats:IsA("GuiObject") then
-			stats:GetPropertyChangedSignal("AbsoluteSize"):Connect(placeStats) -- масштаб по экрану, число строк
-		end
-	end)
+	player:GetAttributeChangedSignal("Tutorial"):Connect(updateMenu)
 	HudLayout.Track(function()
-		task.defer(fitPanel) -- после пересчёта масштаба (BindResponsive); fitPanel ставит и столбик монет
+		task.defer(fitPanel) -- после пересчёта масштаба (BindResponsive); fitPanel сообщает и место для меню
 	end)
 	player:GetAttributeChangedSignal("DevViewport"):Connect(fitPanel)
 	player:GetAttributeChangedSignal("Catching"):Connect(function()

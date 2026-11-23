@@ -1,4 +1,4 @@
--- Окно «Защита» и расстановка (D37, D46, Stud-UI). Вкладка «Защита»: пять устройств — цена для своего музея (доля
+-- Окно «Защита» и расстановка (D37, D46; вид — Shared/StudUI, окно — по экрану, ниже кнопок Roblox). Вкладка «Защита»: пять устройств — цена для своего музея (доля
 -- цены взлома; у капкана цена не утверждена — купить нельзя), сколько куплено, что стоит; «Купить» и «Поставить» —
 -- только в подготовку. Ловушка, робот и капкан ставятся свободно: полупрозрачный образец следует за курсором или
 -- касанием по полу своего зала, зелёный — можно, красный — нельзя с причиной (Shared/DefenseRules — те же правила, что
@@ -26,6 +26,7 @@ local UITokens = require(Config:WaitForChild("UITokens"))
 local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local Motion = require(Shared:WaitForChild("StudUI"):WaitForChild("StudMotion"))
 local MenuHud = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("MenuHud"))
+local HudIcons = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("HudIcons"))
 
 local T = UITokens.Defense
 local cfg = GameConfig.Defense
@@ -36,6 +37,7 @@ local DefenseController = {}
 local state: any = { owned = {}, stale = {}, hacks = {}, installed = {}, level = 1, max = 1 }
 local tab = "Defense" -- "Defense" | "Hack"
 local gui: ScreenGui
+local builtFor = "" -- ключ экрана, под который собрано окно (measure)
 local win: any
 local menu: any
 local list: ScrollingFrame
@@ -281,7 +283,7 @@ local function render()
 		state.max
 	)
 	for name, b in tabButtons do
-		UI.Recolor(b, if name == tab then "purple" else "gray")
+		UI.Recolor(b, if name == tab then "red" else "gray")
 	end
 	if tab == "Defense" then
 		renderDefense()
@@ -475,11 +477,43 @@ local function buildBar()
 	Motion.BindButton(cancel, 1.05, nil, stopPlacing)
 end
 
+-- Окно под текущий экран: размер, поправка масштаба к масштабу экрана StudMotion и ключ (окно пересобирается, когда
+-- он сменился). Ширина постоянная (строки устройств), высота — сколько помещается ниже кнопок Roblox; на касании
+-- масштаб не меньше PhoneScale, но окно не шире экрана.
+local function measure(): (Vector2, number, string)
+	local fake = GameConfig.DevMode and player:GetAttribute("DevViewport")
+	local viewport = if typeof(fake) == "Vector2" then fake else workspace.CurrentCamera.ViewportSize
+	local inset = GuiService:GetGuiInset().Y
+	local screen = Motion.ScreenScale()
+	local touch = (GameConfig.DevMode and player:GetAttribute("DevTouch") == true)
+		or (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
+	local scale = if touch then math.max(screen, T.PhoneScale) else screen
+	scale = math.min(scale, (viewport.X - 2 * T.Margin) / T.Window.X)
+	local height = math.clamp(math.floor((viewport.Y - inset - 2 * T.Margin) / scale), T.MinHeight, T.Window.Y)
+	return Vector2.new(T.Window.X, height), scale / screen, ("%d:%.3f"):format(height, scale)
+end
+
 local function build()
+	local size, boost, key = measure()
+	builtFor = key
+	if gui then
+		if menu and menu.Destroy then
+			menu.Destroy()
+		end
+		gui:Destroy()
+		table.clear(tabButtons)
+	end
 	gui = UI.ScreenGui("Defense", 12)
 	gui.Enabled = false
 	gui.Parent = player:WaitForChild("PlayerGui")
-	win = UI.Window(gui, { Size = T.Window, Title = "Защита музея", Header = T.Header, TitleWidth = 620 })
+	win = UI.Window(gui, {
+		Size = size,
+		Title = "Защита музея",
+		Header = T.Header,
+		Icon = HudIcons.Get("Defense"), -- та же иконка, что у кнопки меню
+		TitleWidth = 560,
+		Position = UDim2.new(0.5, 0, 0.5, GuiService:GetGuiInset().Y / 2), -- ниже кнопок Roblox
+	})
 	local corps = win.Corps
 	local W = win.Width - 5
 	info = UI.Text(corps, "", {
@@ -489,10 +523,15 @@ local function build()
 		Position = UDim2.fromOffset(18, 22),
 		AnchorPoint = Vector2.new(0, 0.5),
 		AlignX = Enum.TextXAlignment.Left,
-		TextSize = T.InfoText,
+		Max = T.InfoText,
+		Min = 12,
 		ZIndex = 4,
 	})
-	info.TextWrapped = true
+	-- одна строка: длинная подсказка становится мельче, а не обрезается (перенос выключается до TextScaled, иначе
+	-- масштабирование по одной строке не включается)
+	info.TextScaled = false
+	info.TextWrapped = false
+	info.TextScaled = true
 	counter = UI.Text(corps, "", {
 		Name = "Compteur",
 		Font = "Bold",
@@ -531,12 +570,15 @@ local function build()
 		ZIndex = 3,
 	})
 	-- крестик «Fermer» привязывает сам Motion.Window (второй BindButton давал двойные твины и Close)
-	menu = Motion.Window(gui, win.Fenetre, { Keep = { Toasts = true, Defense = true } })
+	menu = Motion.Window(gui, win.Fenetre, { Keep = { Toasts = true, Defense = true }, Size = boost })
 end
 
 -- Открыть окно «Защита» (центр безопасности хранилища D48-C).
 function DefenseController.Open()
 	if not menu.IsOpen then
+		if select(3, measure()) ~= builtFor then
+			build() -- экран сменился (поворот, окно ПК): окно собирается заново под него
+		end
 		stopPlacing()
 		render()
 		menu.Open()
@@ -545,7 +587,7 @@ end
 
 -- Кнопка «Защита» в колонке меню HUD v2 (UI/MenuHud: справа, щит), под «Инвентарём».
 local function buildHud()
-	MenuHud.Add("Defense", "Защита", "purple", 2, function()
+	MenuHud.Add("Defense", "Защита", "red", 2, function()
 		if menu.IsOpen then
 			menu.Close()
 		else
