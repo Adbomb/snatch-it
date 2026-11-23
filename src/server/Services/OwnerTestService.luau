@@ -1,12 +1,18 @@
--- Команды тестового режима владельца в чате (решение владельца 2026-11-16; где и что разрешено — Util/OwnerTest).
--- Команды принимает только владелец места (сервер проверяет каждый раз), остальным они ничего не делают:
---   обычный сервер подтверждённого DEV-места: /test — перенос на новый резервный тестовый сервер (только владелец);
---   тестовый сервер: /fight — бой с Королём-драконом за предмет Slot (HP бойца и босса только этого боя —
---   GameConfig.OwnerTest, профиль, сила и числа боя не меняются), /win — HP босса 1 и боец ближе к морде (следующий
---   удар — победа), /day и /night — переход к фазе (бой ночью не начинается), /exit — на обычный сервер, /help.
+-- Тестовый режим владельца: действия (решение владельца 2026-11-16; где и что разрешено — Util/OwnerTest).
+-- Действия принимает только владелец места (сервер проверяет каждый раз: владелец, вид сервера, пауза между
+-- действиями), остальным они ничего не делают. Два входа с одним обработчиком:
+--   кнопка «Тест» в HUD владельца (Controllers/OwnerTestController, RemoteEvent OwnerTest — имя действия) —
+--     добавлена 2026-11-17: на телефоне чат неудобен или недоступен, из-за чего дракона было не открыть;
+--   команды чата (Player.Chatted): /test, /goto, /fight, /win, /day, /night, /exit, /help.
+-- Обычный сервер подтверждённого DEV-места: Test — перенос на новый резервный тестовый сервер.
+-- Тестовый сервер: Goto — к спящему дракону; Fight — бой за предмет Slot (HP бойца и босса только этого боя —
+-- GameConfig.OwnerTest, профиль, сила и числа боя не меняются); Win — HP босса 1 и боец ближе к морде (следующий удар
+-- — победа); Day и Night — переход к фазе (бой ночью не начинается); Exit — на обычный сервер.
 -- На тестовом сервере все профили — в памяти (Main: PlayerSession.Join с mock), поэтому ни бой, ни награда, ни
--- что-либо ещё не попадает в сохранения. Команды — через Player.Chatted (работает и со старым, и с новым чатом).
--- Зависит от Util/OwnerTest, BattleService, BossLootService, TimeService, GameConfig, Util/Notify, Util/Log.
+-- что-либо ещё не попадает в сохранения. Владельцу ставится атрибут игрока OwnerTest = "Normal" | "Test" — по нему
+-- клиент показывает кнопку (сам атрибут прав не даёт).
+-- Зависит от Util/OwnerTest, BattleService, BossLootService, BossService, TimeService, GameConfig, Shared/Remotes,
+-- Util/Notify, Util/Log.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,9 +20,11 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local TeleportService = game:GetService("TeleportService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
 local BattleService = require(Server.Services.BattleService)
 local BossLootService = require(Server.Services.BossLootService)
+local BossService = require(Server.Services.BossService)
 local TimeService = require(Server.Services.TimeService)
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
@@ -24,11 +32,21 @@ local OwnerTest = require(Server.Util.OwnerTest)
 
 local OwnerTestService = {}
 
-local lastCommand: { [Player]: number } = {}
+local lastAction: { [Player]: number } = {}
 local teleporting: { [Player]: boolean } = {}
 
-local HELP =
-	"Тест: /fight — бой с драконом, /win — победа, /day, /night, /exit — выйти"
+local HELP = "Тест: кнопка «Тест» или чат — /goto, /fight, /win, /day, /night, /exit"
+-- команда чата → действие
+local CHAT = {
+	["/test"] = "Test",
+	["/goto"] = "Goto",
+	["/fight"] = "Fight",
+	["/win"] = "Win",
+	["/day"] = "Day",
+	["/night"] = "Night",
+	["/exit"] = "Exit",
+	["/help"] = "Help",
+}
 
 -- Перенос владельца: на новый резервный сервер (reserve) или на обычный сервер места.
 local function teleport(player: Player, reserve: boolean)
@@ -48,7 +66,20 @@ local function teleport(player: Player, reserve: boolean)
 	end
 end
 
--- HP только этого боя и место бойца в осях босса (x — левый бок, z — вперёд), лицом к боссу.
+-- Поставить персонажа в точку at осей босса (x — левый бок, z — вперёд), лицом к боссу.
+local function standAt(player: Player, boss: any, at: Vector2): boolean
+	local character = player.Character
+	if not character then
+		return false
+	end
+	local point = boss.root.CFrame:PointToWorldSpace(Vector3.new(at.X, 0, at.Y))
+	local y = boss.home.Position.Y + 3
+	local look = Vector3.new(boss.root.Position.X, y, boss.root.Position.Z)
+	character:PivotTo(CFrame.lookAt(Vector3.new(point.X, y, point.Z), look))
+	return true
+end
+
+-- HP только этого боя и место бойца.
 local function setUp(fight: any, hp: number?, bossHp: number, at: Vector2)
 	if hp then
 		fight.hp, fight.maxHp = hp, hp
@@ -56,20 +87,28 @@ local function setUp(fight: any, hp: number?, bossHp: number, at: Vector2)
 	end
 	fight.bossHp, fight.bossMax = bossHp, bossHp
 	fight.boss.model:SetAttribute("MaxHP", bossHp)
-	local character = fight.player.Character
-	if character then
-		local boss = fight.boss
-		local point = boss.root.CFrame:PointToWorldSpace(Vector3.new(at.X, 0, at.Y))
-		local y = boss.home.Position.Y + 3
-		local look = Vector3.new(boss.root.Position.X, y, boss.root.Position.Z)
-		character:PivotTo(CFrame.lookAt(Vector3.new(point.X, y, point.Z), look))
+	standAt(fight.player, fight.boss, at)
+end
+
+-- К спящему дракону: посмотреть модель, текстуры и ауру без боя.
+local function goTo(player: Player)
+	local cfg = GameConfig.OwnerTest
+	if BattleService.Handlers.FightOf(player) then
+		Notify.Send(player, "Идёт бой: «Победа» завершит его", "Stop")
+		return
 	end
+	local boss = BossService.Get(cfg.Zone)
+	if not boss or not standAt(player, boss, cfg.ViewAt) then
+		Notify.Send(player, "Дракона или персонажа нет", "Stop")
+		return
+	end
+	Notify.Send(player, "Король-дракон перед вами", "Go")
 end
 
 local function startFight(player: Player)
 	local cfg = GameConfig.OwnerTest
 	if BattleService.Handlers.FightOf(player) then
-		Notify.Send(player, "Бой уже идёт: /win — победа", "Stop")
+		Notify.Send(player, "Бой уже идёт: «Победа» завершит его", "Stop")
 		return
 	end
 	local _, part = BossLootService.SlotItem(cfg.Zone, cfg.Slot)
@@ -90,29 +129,26 @@ end
 local function win(player: Player)
 	local fight = BattleService.Handlers.FightOf(player)
 	if not fight then
-		Notify.Send(player, "Сначала /fight", "Stop")
+		Notify.Send(player, "Сначала начните бой", "Stop")
 		return
 	end
 	setUp(fight, nil, 1, GameConfig.OwnerTest.WinAt)
 	Notify.Send(player, "У босса 1 HP — следующий удар побеждает", "Go")
 end
 
-local function onChat(player: Player, message: string)
+-- Действие владельца на сервере вида kind. Чужой игрок, неизвестное действие, слишком частое или не для этого
+-- вида сервера — ничего не происходит.
+local function run(player: Player, action: string, kind: OwnerTest.Kind)
 	if not OwnerTest.IsOwner(player) then
-		return -- команды только владельцу
-	end
-	local command = string.lower(string.match(message, "^%s*(/%S+)") or "")
-	if command == "" then
 		return
 	end
 	local now = os.clock()
-	if now - (lastCommand[player] or -math.huge) < GameConfig.OwnerTest.CommandCooldown then
+	if now - (lastAction[player] or -math.huge) < GameConfig.OwnerTest.CommandCooldown then
 		return
 	end
-	lastCommand[player] = now
-	local kind = OwnerTest.ServerKind()
+	lastAction[player] = now
 	if kind == "Normal" then
-		if command == "/test" then
+		if action == "Test" then
 			Notify.Send(player, "Перенос на тестовый сервер…", "Info")
 			teleport(player, true)
 		end
@@ -121,22 +157,42 @@ local function onChat(player: Player, message: string)
 	if kind ~= "Test" then
 		return
 	end
-	if command == "/fight" then
+	if action == "Goto" then
+		goTo(player)
+	elseif action == "Fight" then
 		startFight(player)
-	elseif command == "/win" then
+	elseif action == "Win" then
 		win(player)
-	elseif command == "/day" or command == "/night" then
-		local state = TimeService.SkipTo(if command == "/day" then "Day" else "Night", 0)
+	elseif action == "Day" or action == "Night" then
+		local state = TimeService.SkipTo(action :: any, 0)
 		Notify.Send(player, if state then "Фаза: " .. state.phase else "Не получилось", "Info")
-	elseif command == "/exit" then
+	elseif action == "Exit" then
 		Notify.Send(player, "Перенос на обычный сервер…", "Info")
 		teleport(player, false)
-	elseif command == "/help" then
+	elseif action == "Help" then
 		Notify.Send(player, HELP, "Info")
 	end
 end
 
+local function onChat(player: Player, message: string)
+	local action = CHAT[string.lower(string.match(message, "^%s*(/%S+)") or "")]
+	if action then
+		run(player, action, OwnerTest.ServerKind())
+	end
+end
+
+-- Запрос кнопки HUD: клиент присылает только имя действия.
+local function onRemote(player: Player, action: any)
+	if type(action) ~= "string" or #action > 12 then
+		return
+	end
+	run(player, action, OwnerTest.ServerKind())
+end
+
 local function watch(player: Player)
+	if OwnerTest.IsOwner(player) then
+		player:SetAttribute("OwnerTest", OwnerTest.ServerKind()) -- клиент покажет кнопку «Тест»
+	end
 	player.Chatted:Connect(function(message: string)
 		onChat(player, message)
 	end)
@@ -149,20 +205,25 @@ function OwnerTestService.Welcome(player: Player)
 		"Тестовый сервер владельца: прогресс здесь не сохраняется",
 		"Info"
 	)
-	Notify.Send(player, HELP, "Info")
+	Notify.Send(
+		player,
+		"Кнопка «Тест» слева: к дракону, бой, победа, день и ночь",
+		"Info"
+	)
 end
 
 function OwnerTestService.Init()
 	local kind = OwnerTest.ServerKind()
 	if kind == "Off" then
-		return -- Studio, режим выключен или чужое место: ничего не создаётся
+		return -- Studio, режим выключен или чужое место: ничего не создаётся, запросы никто не слушает
 	end
+	Remotes.Get(Remotes.Names.OwnerTest).OnServerEvent:Connect(onRemote)
 	Players.PlayerAdded:Connect(watch)
 	for _, player in Players:GetPlayers() do
 		watch(player)
 	end
 	Players.PlayerRemoving:Connect(function(player)
-		lastCommand[player] = nil
+		lastAction[player] = nil
 		teleporting[player] = nil
 	end)
 	TeleportService.TeleportInitFailed:Connect(function(player: Player, result, message: string)
@@ -176,7 +237,10 @@ end
 -- Для серверных тестов.
 OwnerTestService.Handlers = {
 	OnChat = onChat,
+	OnRemote = onRemote,
+	Run = run,
 	StartFight = startFight,
+	GoTo = goTo,
 	Win = win,
 }
 
