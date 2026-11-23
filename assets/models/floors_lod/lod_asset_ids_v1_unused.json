@@ -1,0 +1,522 @@
+{
+ "AllSeeingEye": {
+  "asset": "130237413266532",
+  "mesh": "rbxassetid://104550824012066",
+  "part": "EY_S_All"
+ },
+ "AngryAlarmClock": {
+  "asset": "103051822017831",
+  "mesh": "rbxassetid://99016294272874",
+  "part": "AL_S_All"
+ },
+ "AnubisStatue": {
+  "asset": "94519081177825",
+  "mesh": "rbxassetid://106412440343634",
+  "part": "AN_S_All"
+ },
+ "AquariumCamel": {
+  "asset": "96638566508265",
+  "mesh": "rbxassetid://132641562993203",
+  "part": "AQ_S_All"
+ },
+ "AstroCat": {
+  "asset": "84186040467440",
+  "mesh": "rbxassetid://138413098050771",
+  "part": "AC_S_All"
+ },
+ "BlackCatIdol": {
+  "asset": "112635685216230",
+  "mesh": "rbxassetid://81876053068597",
+  "part": "BC_S_All"
+ },
+ "BlazeOstrich": {
+  "asset": "101628197183847",
+  "mesh": "rbxassetid://89569239845777",
+  "part": "FH_S_All"
+ },
+ "BuffRat": {
+  "asset": "139548465091940",
+  "mesh": "rbxassetid://99231959726854",
+  "part": "BR_S_All"
+ },
+ "CactusAcrobats": {
+  "asset": "122003760944146",
+  "mesh": "rbxassetid://114426703504618",
+  "part": "CI_S_All"
+ },
+ "CactusBoxer": {
+  "asset": "77817607756887",
+  "mesh": "rbxassetid://121498241251966",
+  "part": "CB_S_All"
+ },
+ "CanScorpion": {
+  "asset": "92687661957261",
+  "mesh": "rbxassetid://138239588868812",
+  "part": "GC_S_All"
+ },
+ "CanteenCamel": {
+  "asset": "121025480880808",
+  "mesh": "rbxassetid://70420527038724",
+  "part": "OA_S_All"
+ },
+ "ChaosCrown": {
+  "asset": "133518478499477",
+  "mesh": "rbxassetid://129487044982175",
+  "part": "CC_S_All"
+ },
+ "CheeseDragon": {
+  "asset": "73180774663295",
+  "mesh": "rbxassetid://101908949103889",
+  "part": "DR_S_All"
+ },
+ "CheeseSkater": {
+  "asset": "81232604398878",
+  "mesh": "rbxassetid://116353363485740",
+  "part": "SK_S_All"
+ },
+ "CheeseVaultHeart": {
+  "asset": "88937998869006",
+  "mesh": "rbxassetid://125874059270152",
+  "part": "VH_S_All"
+ },
+ "ClockGolem": {
+  "asset": "108599645136289",
+  "mesh": "rbxassetid://119647301003767",
+  "part": "CG_S_All"
+ },
+ "CloudCamel": {
+  "asset": "94266125594929",
+  "mesh": "rbxassetid://108311811998364",
+  "part": "ZP_S_All"
+ },
+ "CobraFountain": {
+  "asset": "115182010473366",
+  "mesh": "rbxassetid://138054496360417",
+  "part": "MQ_S_All"
+ },
+ "Colosseum": {
+  "asset": "114774971673875",
+  "mesh": "rbxassetid://115728911043323",
+  "part": "CO_S_All"
+ },
+ "CrystalDino": {
+  "asset": "75064801745763",
+  "mesh": "rbxassetid://134744547963056",
+  "part": "CD_S_All"
+ },
+ "CrystalHotDog": {
+  "asset": "101071499697314",
+  "mesh": "rbxassetid://95368339584180",
+  "part": "HD_S_All"
+ },
+ "CrystalScorpion": {
+  "asset": "97724302792193",
+  "mesh": "rbxassetid://73130135734427",
+  "part": "CR_S_All"
+ },
+ "CursedTV": {
+  "asset": "120810816260827",
+  "mesh": "rbxassetid://80566690895233",
+  "part": "CT_S_All"
+ },
+ "DevourerVending": {
+  "asset": "123558186843880",
+  "mesh": "rbxassetid://70684618775567",
+  "part": "VM_S_All"
+ },
+ "DrillWorm": {
+  "asset": "78831116308690",
+  "mesh": "rbxassetid://133838966219038",
+  "part": "OR_S_All"
+ },
+ "DropBeetle": {
+  "asset": "72882235023161",
+  "mesh": "rbxassetid://120831848235995",
+  "part": "WT_S_All"
+ },
+ "DuckInspector": {
+  "asset": "111546673424745",
+  "mesh": "rbxassetid://128202878268748",
+  "part": "DK_S_All"
+ },
+ "DuneTurtle": {
+  "asset": "137567068993432",
+  "mesh": "rbxassetid://120259323375065",
+  "part": "TH_S_All"
+ },
+ "DuneWhale": {
+  "asset": "86518266513770",
+  "mesh": "rbxassetid://124073024185890",
+  "part": "DW_S_All"
+ },
+ "DustDevil": {
+  "asset": "86564677562883",
+  "mesh": "rbxassetid://118186521630378",
+  "part": "WX_S_All"
+ },
+ "EgyptianCat": {
+  "asset": "92987187557229",
+  "mesh": "rbxassetid://84392152254473",
+  "part": "BS_S_All"
+ },
+ "EgyptianSarcophagus": {
+  "asset": "120316561804408",
+  "mesh": "rbxassetid://99522070191941",
+  "part": "LX_S_All"
+ },
+ "FanVulture": {
+  "asset": "71003719106153",
+  "mesh": "rbxassetid://118195107810002",
+  "part": "WM_S_All"
+ },
+ "FennecRiddler": {
+  "asset": "129806630341380",
+  "mesh": "rbxassetid://107429331408448",
+  "part": "CS_S_All"
+ },
+ "FloppyFennec": {
+  "asset": "124837162490299",
+  "mesh": "rbxassetid://126424749301106",
+  "part": "RA_S_All"
+ },
+ "GiantCactus": {
+  "asset": "135203379294175",
+  "mesh": "rbxassetid://92548642487071",
+  "part": "GK_S_All"
+ },
+ "GizaPyramids": {
+  "asset": "87435939685401",
+  "mesh": "rbxassetid://93781785571856",
+  "part": "GZ_S_All"
+ },
+ "GladiatorHelmet": {
+  "asset": "81708280258685",
+  "mesh": "rbxassetid://129285506907548",
+  "part": "LU_S_All"
+ },
+ "GoldenBanana": {
+  "asset": "129537489800655",
+  "mesh": "rbxassetid://75574419698442",
+  "part": "GB_S_All"
+ },
+ "GoldenGamepad": {
+  "asset": "123405352668257",
+  "mesh": "rbxassetid://73301051647672",
+  "part": "GG_S_All"
+ },
+ "GoldenMic": {
+  "asset": "134642489579164",
+  "mesh": "rbxassetid://107113410372188",
+  "part": "GM_S_All"
+ },
+ "GoldenRatMech": {
+  "asset": "79710146735690",
+  "mesh": "rbxassetid://80110562170414",
+  "part": "MH_S_All"
+ },
+ "GoldenThrone": {
+  "asset": "131723338071618",
+  "mesh": "rbxassetid://109791522687510",
+  "part": "GT_S_All"
+ },
+ "GreatSphinx": {
+  "asset": "97392801077045",
+  "mesh": "rbxassetid://103305476795663",
+  "part": "BZ_S_All"
+ },
+ "IslandTurtle": {
+  "asset": "94550953958424",
+  "mesh": "rbxassetid://79448671920437",
+  "part": "IT_S_All"
+ },
+ "KaleidoChameleon": {
+  "asset": "91107318509131",
+  "mesh": "rbxassetid://98509624132073",
+  "part": "PT_S_All"
+ },
+ "LiveCheeseMonster": {
+  "asset": "96067889523078",
+  "mesh": "rbxassetid://86277902042818",
+  "part": "CH_S_All"
+ },
+ "LivingCassette": {
+  "asset": "91974368445451",
+  "mesh": "rbxassetid://110013957228392",
+  "part": "LC_S_All"
+ },
+ "MagicMushroom": {
+  "asset": "86347740304392",
+  "mesh": "rbxassetid://106922166756738",
+  "part": "MM_S_All"
+ },
+ "MagicSoda": {
+  "asset": "92152341212097",
+  "mesh": "rbxassetid://119168665901472",
+  "part": "SD_S_All"
+ },
+ "MeerkatLookout": {
+  "asset": "126327370586417",
+  "mesh": "rbxassetid://83446932136510",
+  "part": "LH_S_All"
+ },
+ "MelonArmadillo": {
+  "asset": "128673707963261",
+  "mesh": "rbxassetid://79676811797212",
+  "part": "ME_S_All"
+ },
+ "MimicChest": {
+  "asset": "86353089134992",
+  "mesh": "rbxassetid://95172472983687",
+  "part": "MC_S_All"
+ },
+ "MiniStonehenge": {
+  "asset": "121949816010266",
+  "mesh": "rbxassetid://101001733699511",
+  "part": "MS_S_All"
+ },
+ "MirageFish": {
+  "asset": "71105401541481",
+  "mesh": "rbxassetid://109577736680201",
+  "part": "MI_S_All"
+ },
+ "Moai": {
+  "asset": "80922667839033",
+  "mesh": "rbxassetid://136127093996567",
+  "part": "MO_S_All"
+ },
+ "MonsterFlower": {
+  "asset": "137028642411072",
+  "mesh": "rbxassetid://97921454318789",
+  "part": "MF_S_All"
+ },
+ "MonsterRadio": {
+  "asset": "93886574368917",
+  "mesh": "rbxassetid://109359261777519",
+  "part": "MR_S_All"
+ },
+ "MonsterTrain": {
+  "asset": "105840395995921",
+  "mesh": "rbxassetid://136539070871043",
+  "part": "DP_S_All"
+ },
+ "MutantSoda": {
+  "asset": "90188716399416",
+  "mesh": "rbxassetid://95001048404105",
+  "part": "LB_S_All"
+ },
+ "NefertitiBust": {
+  "asset": "115028640931613",
+  "mesh": "rbxassetid://82193105967335",
+  "part": "AM_S_All"
+ },
+ "NeonHeart": {
+  "asset": "117737781933543",
+  "mesh": "rbxassetid://81214406230543",
+  "part": "NH_S_All"
+ },
+ "PanicCone": {
+  "asset": "82545480793766",
+  "mesh": "rbxassetid://81972249064454",
+  "part": "PC_S_All"
+ },
+ "PizzaRat": {
+  "asset": "93045649867666",
+  "mesh": "rbxassetid://119813180426650",
+  "part": "PZ_S_All"
+ },
+ "PizzaUfo": {
+  "asset": "95495855014653",
+  "mesh": "rbxassetid://118622152401188",
+  "part": "PU_S_All"
+ },
+ "PocketDragon": {
+  "asset": "115192100317122",
+  "mesh": "rbxassetid://85800847189004",
+  "part": "PD_S_All"
+ },
+ "PocketSafe": {
+  "asset": "112562859317781",
+  "mesh": "rbxassetid://135208823070598",
+  "part": "PS_S_All"
+ },
+ "PortalMirror": {
+  "asset": "73551793736342",
+  "mesh": "rbxassetid://80868935566150",
+  "part": "PR_S_All"
+ },
+ "PrizeMachine": {
+  "asset": "109036977930783",
+  "mesh": "rbxassetid://81665296317698",
+  "part": "PM_S_All"
+ },
+ "PuzzlePhoenix": {
+  "asset": "139651479789900",
+  "mesh": "rbxassetid://127789193531254",
+  "part": "FW_S_All"
+ },
+ "RatKnight": {
+  "asset": "108605404377199",
+  "mesh": "rbxassetid://96278774117313",
+  "part": "KN_S_All"
+ },
+ "RatMimic": {
+  "asset": "82285894077488",
+  "mesh": "rbxassetid://113058132125928",
+  "part": "PI_S_All"
+ },
+ "RatThrone": {
+  "asset": "106332205754213",
+  "mesh": "rbxassetid://72814367397607",
+  "part": "RT_S_All"
+ },
+ "RatWizard": {
+  "asset": "103848615628911",
+  "mesh": "rbxassetid://139188169878541",
+  "part": "WZ_S_All"
+ },
+ "RoboDuck": {
+  "asset": "75062104962454",
+  "mesh": "rbxassetid://101110601352601",
+  "part": "RD_S_All"
+ },
+ "RoyalDuck": {
+  "asset": "105114798655300",
+  "mesh": "rbxassetid://84274223592847",
+  "part": "RY_S_All"
+ },
+ "RoyalRatTrain": {
+  "asset": "99400904267450",
+  "mesh": "rbxassetid://93165238084455",
+  "part": "TS_S_All"
+ },
+ "RubyThief": {
+  "asset": "76651483507106",
+  "mesh": "rbxassetid://131302566219585",
+  "part": "JW_S_All"
+ },
+ "RunawayTicket": {
+  "asset": "121452954928366",
+  "mesh": "rbxassetid://86736259765782",
+  "part": "CN_S_All"
+ },
+ "SandChick": {
+  "asset": "92389104808997",
+  "mesh": "rbxassetid://132606322453146",
+  "part": "FM_S_All"
+ },
+ "SneakerTenant": {
+  "asset": "101027011193484",
+  "mesh": "rbxassetid://134530402009544",
+  "part": "SN_S_All"
+ },
+ "SpaceHelmet": {
+  "asset": "84027943667485",
+  "mesh": "rbxassetid://131473023137173",
+  "part": "SH_S_All"
+ },
+ "SpringAntelope": {
+  "asset": "139556317256428",
+  "mesh": "rbxassetid://84247116428100",
+  "part": "SP_S_All"
+ },
+ "StatueOfLiberty": {
+  "asset": "78205088645888",
+  "mesh": "rbxassetid://92759712841823",
+  "part": "SL_S_All"
+ },
+ "StrawSnake": {
+  "asset": "106703332195560",
+  "mesh": "rbxassetid://112446730153756",
+  "part": "IC_S_All"
+ },
+ "SubwayOctopus": {
+  "asset": "113055152579458",
+  "mesh": "rbxassetid://91486613956134",
+  "part": "OC_S_All"
+ },
+ "SubwaySnail": {
+  "asset": "130650551469963",
+  "mesh": "rbxassetid://76811041031545",
+  "part": "SW_S_All"
+ },
+ "Sunflowers": {
+  "asset": "74458884466554",
+  "mesh": "rbxassetid://129255405429422",
+  "part": "SF_S_All"
+ },
+ "TRexSkeleton": {
+  "asset": "138956523036691",
+  "mesh": "rbxassetid://96469098564987",
+  "part": "TR_S_All"
+ },
+ "TerracottaWarrior": {
+  "asset": "79585199872009",
+  "mesh": "rbxassetid://89042221538558",
+  "part": "TW_S_All"
+ },
+ "ThreeHeadedRat": {
+  "asset": "111782242790691",
+  "mesh": "rbxassetid://131480721242341",
+  "part": "UW_S_All"
+ },
+ "ThreeTailEmperor": {
+  "asset": "103078987072451",
+  "mesh": "rbxassetid://140200656320029",
+  "part": "EP_S_All"
+ },
+ "TornadoKing": {
+  "asset": "128875676880235",
+  "mesh": "rbxassetid://139526096628041",
+  "part": "TK_S_All"
+ },
+ "TrashGobbler": {
+  "asset": "102266182317240",
+  "mesh": "rbxassetid://91329648899357",
+  "part": "JY_S_All"
+ },
+ "TriceratopsSkull": {
+  "asset": "116134636809126",
+  "mesh": "rbxassetid://135046360404258",
+  "part": "DG_S_All"
+ },
+ "TrophyBurger": {
+  "asset": "103198283090340",
+  "mesh": "rbxassetid://117354268856676",
+  "part": "TB_S_All"
+ },
+ "TumbleweedRunner": {
+  "asset": "76961340417928",
+  "mesh": "rbxassetid://122018207282268",
+  "part": "SA_S_All"
+ },
+ "TurnstileTerminator": {
+  "asset": "109015974520590",
+  "mesh": "rbxassetid://119215679023991",
+  "part": "SG_S_All"
+ },
+ "TutMask": {
+  "asset": "93200399906472",
+  "mesh": "rbxassetid://91687461883409",
+  "part": "TU_S_All"
+ },
+ "UfoJar": {
+  "asset": "94220594337552",
+  "mesh": "rbxassetid://97591068013867",
+  "part": "UF_S_All"
+ },
+ "UmbrellaLizard": {
+  "asset": "80336978805936",
+  "mesh": "rbxassetid://73770805668472",
+  "part": "BE_S_All"
+ },
+ "WalkingSuitcase": {
+  "asset": "109087258157155",
+  "mesh": "rbxassetid://85739146306408",
+  "part": "AP_S_All"
+ },
+ "WorldInBottle": {
+  "asset": "131424857443636",
+  "mesh": "rbxassetid://128500020934258",
+  "part": "WB_S_All"
+ }
+}
