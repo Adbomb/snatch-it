@@ -341,6 +341,33 @@
   Roblox (`Camera + 1`, `clampStep`) камеру внутри места (тумба + экспонат) подтягивает к персонажу до края места,
   отпускает плавно (ColumnRelease). Отсев: общий габарит отрезков → габарит каждого → сфера → плиты. Стоимость (ПК,
   музей 20 существ): 0.16–0.20 мс/кадр (старый — 0.34–0.41). Проверка — `scripts/studio/museum_camera_probe.luau`.
+- **HUD v3 (ТЗ владельца 2026-11-17, по референсу; заменяет раскладку HUD v2 ниже — DESIGN.md ещё не обновлён, ждёт
+  согласования):** одна схема на телефоне и ПК.
+  - Слева посередине — столбик кнопок `UI/MenuHud`: `UI.Button` стиля «Chunky» 168 × 48 со своей иконкой слева,
+    подпись одного размера; цвет и порядок — `UITokens.MenuHud.Themes/Order` по имени кнопки («Магазин» зелёная,
+    «Инвентарь» синяя + клавиша B, «Музей» жёлтая, «Защита» красная, «Тест» — только владельцу). API `MenuHud.Add`
+    прежний.
+  - Слева внизу — сила и монеты (`GymController.buildHud`), дохода нет: он в списке игроков Roblox —
+    `IncomeService.publishIncome` ведёт `leaderstats/«Доход/сек»` (IntValue) вместе с атрибутом `Income`.
+  - Справа внизу — таймер (`TimeController`): иконка фазы, «День 0:57» (RichText: фаза цветом, отсчёт белым), подпись
+    про Судную ночь; без рамки. На касании с маленьким экраном — левее кнопки прыжка, на планшете — в углу под ней.
+  - Низ по центру — `CarryController`: строка «Несёте: … · редкость · [Бросить]»; на узком телефоне, где строка не
+    помещается (`CarryHud.MinFull`), — только кнопка с названием над ней.
+  - Сверху по центру под кнопками Roblox — короткая плашка зоны (`ZoneController`, 250 × 46, ~1 с) и под её местом
+    уведомления (`NotifyController`; колонка невысокая: на телефоне одно). «Удар» (`PvpController`) — у правого края
+    над кнопкой прыжка. Панель обучения слева сверху сообщает свой низ (`HudLayout.SetLeftTop`) — меню встаёт ниже.
+  - `UI/HudLayout` — экран (подмена `DevViewport`/`DevTouch` в Studio), масштабы, зоны, `Track`; занятое у нижнего
+    края сообщают статы и таймер (`SetBottom` → `BottomBand`). Расчёты — чистый `Shared/HudMath` (Scale — кнопки, на
+    касании ≥ 0.85; InfoScale — надписи, на касании ≥ 0.72; Jump — зона прыжка Roblox; Menu; Fit), их же гоняет Lune
+    `check_hud` на 13 экранах (568 × 320 … 2560 × 1440).
+  - Иконки HUD — свои (стиль D39): `scripts/blender/d48_icons.py` (рендер, аргумент — список имён) →
+    `scripts/hud_icons.py` (контур, 256 px) → `assets/ui/hud/`, ID — `assets/ui/hud/IDS.md`, `UITokens.HudIcons`.
+    Те же иконки — в шапках окон (магазин, инвентарь, музей, защита).
+  - Проверка на экране: `scripts/studio/hud_probe.luau` (прямоугольники HUD и зон Roblox, пересечения).
+  - Кнопка владельца «Тест»: `Controllers/OwnerTestController` — по атрибуту игрока `OwnerTest` ("Normal" | "Test",
+    ставит `OwnerTestService` только владельцу в DEV-месте), панель действий правее меню, RemoteEvent `OwnerTest`
+    (имя действия); сервер: `OwnerTestService.run` — владелец, вид сервера, пауза; действия те же, что у команд
+    чата, плюс `Goto` («К дракону» без боя, `GameConfig.OwnerTest.ViewAt`).
 - HUD v2 (D48 v2): иконки — `client/UI/HudIcons` по `UITokens.HudIcons` (путь CheckUIIcons или rbxassetid); колонка
   меню `UI/MenuHud` справа (иконка + подпись, значок клавиши B у «Инвентаря» — саму клавишу привязывает
   `InventoryController` через ContextActionService, колонка её не слушает), статистика слева (`GymController`), таймер —
@@ -755,3 +782,129 @@ UITokens.Раздел` → каждое `x.Имя` есть в разделе); 
   на часть без меша. Сводный FBX существ — `scripts/blender/pack_boss3_fbx.py`; `bind_meshes.py` знает
   `Boss3_RatKing*`. ID — `assets/textures/art/IDS.md`.
 - План боссов 5–10 (на утверждение) — `docs/BOSSES_5_10_PLAN.md`.
+
+## 2026-11-18/19: музей-небоскрёб — этап B (технический прототип, только режим башни DEV)
+Спецификация — `docs/TOWER_PLAN.md` v3. В опубликованной игре не работает: `Util/TowerMode.For` — только Studio +
+`GameConfig.DevMode` + `Tower.DevOnly` и явно включённые UserId (DevTools `TowerMode <uid> on`, тесты, `TowerFill`);
+настоящему игроку — только при `ProfileStore.DataStoreState ~= "Access"` (профиль в памяти).
+- **Данные.** Этаж — запись `items[uid]` + `builtAt` (place остаётся `"storage"`: `Inventory.Normalize` сбрасывает
+  незнакомые place); порядок — `data.tower.order` (uid снизу вверх), FloorIndex — позиция, уникальность — `id` у
+  владельца. Чистые правила — `Shared/TowerRules` (`CanBuild`, `AddFloor`, `RemoveFloor`, `MoveFloor`, `Normalize`,
+  `Migrate` v5 → v6, `Check`). `DataService.TowerOnLoad` после `Inventory.Normalize`: миграция — только в режиме башни,
+  `Normalize` — в режиме или если в профиле уже есть башня; шаблон профиля не менялся.
+- **Защита построенного** (одно место — `DataService.refuseBuilt`): `SetItemPlace`, `ReplaceInSlot`, `RemoveItem`,
+  `TransferItem` отказывают записи с `builtAt`. Реестр: состояние `Floor` (Stored → Floor, Floor → Stored только DEV),
+  индекс `floorIndex[owner][itemId]` — второй Floor вида у владельца невозможен; `GetOwnedBy` включает Floor, `Unload`
+  принимает Floor. Доход — `IncomeService.TotalFor` считает Displayed и Floor.
+- **Сервер.** `Services/TowerService` (LoadTower/UnloadTower, Enable/Disable, Build, Remove со сдвигом — игроки раньше
+  геометрии, Move, DevGiveItem, DevFill, NextSpot — места высадки по кругу и не занятые персонажами),
+  `World/TowerBuilder` (модель `Plot_n.Tower`: Lobby, Floors/F_<uid>, Roof; невидимый каркас со столкновениями у
+  каждого этажа всегда — плита, 4 стены, тумба; экспонат `ItemFactory`; Attachment `ElevatorPoint` + подсказка
+  `ElevatorPrompt`, места `Spot1–4`; атрибуты Tower: Origin, Version, FloorCount, Accent; F_: Uid, ItemId, Index, BaseY,
+  State; PrimaryPart не задаётся — точка опоры = оси этажа), `Services/ElevatorService` (подсказка → OpenWindow
+  «Elevator»; ElevatorGo: башня, ShiftLock, жив, Knocked / Snared / IsPinned, у точки лифта по серверу, этаж есть,
+  лимит → `MoveGuard.Teleport`). `PlotService.UseTower` снимает Building и Showcases участка и возвращает их;
+  `ShowLevel` в режиме башни здание не строит. `PlayerSession`: в режиме — LoadTower / UnloadTower вместо музея.
+  `InventoryService`: `SetTowerHooks` (build, describe, active) — действие «Build», поля окна `tower / floor /
+  duplicate`; в режиме башни постаментные действия отказывают.
+- **Клиент.** `Controllers/TowerController` — убранство из `Shared/Floors` (`FloorBuilder`, `Placeholder`,
+  `Floors.Lobby`, `Floors.Roof`) в `workspace.TowerDecor`: LOD интерьер / фасад / силуэт (`Tower.Lod`), очередь сборки
+  ≤ BuildPartsPerFrame, анимации появления (State Building) и сдвига (BaseY), счётчики-атрибуты папки (Views,
+  PartsInterior/Facade/Silhouette, Queue, Builds, Last/MaxInteriorMs). Стены убранства на месте стен каркаса —
+  `occlude`: сталкиваются только у этого клиента (камера Roblox не уходит сквозь невидимую серверную стену).
+  `Controllers/ElevatorController` — окно «Лифт» (Flat, синяя шапка), затемнение до сборки интерьера (≤ 1 с).
+  `InventoryController`: «Построить этаж», «Этаж N», «Повтор · только продажа» (без запрета по фазе — не утверждён).
+- **DEV.** DevTools: `TowerMode`, `GiveItem`, `BuildFloor`, `RemoveFloor`, `MoveFloor`, `TowerFill <N>` (тестовые
+  владельцы на свободных участках, N этажей у всех башен), `TowerStats`. Нагрузка интерьера — атрибут Workspace
+  `TowerStress`. Замеры клиента — `scripts/studio/tower_probe.luau`.
+- **Проверки.** Lune `check_tower` (правила, миграция, починка, 10 000 случайных шагов, бюджет LOD, площадка лифта,
+  FaceCheck, стены occlude внутри каркаса); серверные `Tests/TowerTests` (16, подключены в `ServerTests` одной строкой).
+
+## 2026-11-19: музей-небоскрёб — этап C (дальний вид, экспонаты, три эталонных этажа; только режим башни DEV)
+Отчёт — `assets/concepts/tower_c/REPORT.md`.
+- **LOD.** `TowerController`: у каждого вида всегда есть оболочка — фасад (ближе `Lod.Facade`, выход на Hysteresis)
+  или силуэт; дальше ничего не прячется. Смена фасад ↔ силуэт не чаще `Lod.MinSwap` (вход в интерьер — сразу),
+  старая модель удаляется, когда готова новая. Счётчики папки обновляются и когда видов не осталось.
+  Дальний силуэт этажа (`<prefix>_S_All`, ≤ 400 треугольников, один MeshPart) с 2026-11-23 — из
+  `scripts/blender/lod_silhouette.py` (основа прежнего силуэта + крупные детали фасада, без граней разного цвета в
+  одной плоскости), меши `assets/models/floors_lod/<Тема>Sil.fbx`, ID — `floors_lod/lod_asset_ids.json`, проверка —
+  `scripts/blender/lod_check.py`; привязка — `floor_bind_meshes.py` (BUGS.md, «Выкатка дальнего LOD»).
+- **Экспонат.** Сервер (`TowerBuilder.placeExhibit`) — одна невидимая деталь `Exhibit` (габарит
+  `ItemFactory.SizeOf` × масштаб темы; атрибуты ItemUid, ItemId, TowerHitbox, Scale; «+X/сек»; столкновения и лучи).
+  Клиент — копия `ReplicatedStorage.ItemPreviews[itemId]` (`InventoryService.EnsurePreview`, её зовёт TowerService)
+  внутри модели интерьера на месте хитбокса, `ScaleTo(Scale)`, без столкновений; у корня `ItemUid` и `TowerFloor` —
+  `CreatureController` оживляет её спокойной позой, хитбокс (`TowerHitbox`) пропускает. Превью теперь с суставами и
+  сваркой (во ViewportFrame не мешают).
+- **Темы.** `Shared/Floors/init` — THEMES { GoldenThrone, TRexSkeleton, SpaceHelmet }, `Floors.ExhibitAt(theme, cfg)`
+  → (CFrame верха подставки с поворотом, масштаб); у темы `shell`, `exhibit`, `decor(cfg, ctx, tier)`. Общие детали —
+  `Floors/Kit`: стены с проёмами-объединениями и поясами цвета (строки по высоте, слияние одинаковых), стекло в
+  толще стены, двери лифта в нише задней стены (площадка лифта пуста), пояса, кромка плиты, потолок, пол, каркас
+  (`Slab` — первая деталь). Детали тем — `LegoSquaresSoft` (`Kit.B`, поле `variant` у `FloorBuilder`). Каждая деталь
+  этажа — в полосе высоты −плита…19, поэтому любые темы стыкуются без пересечений (`check_tower`: все пары тем).
+- **Интерфейс режима башни.** Атрибут игрока `TowerMode` (TowerService Load/Unload): `InventoryController` — «Этажей:
+  N», плашка запрета скрыта; `ElevatorController` — быстрый переход «Холл / −10 / страница / +10 / Верх», страницы по
+  10 этажей.
+- **Стиль тем (2026-11-19, позже).** `Kit.B` ставит деталям тем `LegoSquaresItem` (`Kit.Tile`, контурные квадраты
+  предметов D39); `Kit.Bone(points, z, thick, depth)` — изогнутая сужающаяся кость из отрезков в плоскости XY;
+  `FloorBuilder` — `light.spot` (прожектор вниз). Наружный декор может выступать за контур 36 × 34 (портик «Трона» —
+  до −22.4 по Z), но остаётся в полосе высоты этажа.
+
+## 2026-11-19: этажи из мешей Blender (эталон — «Золотой трон»; только режим башни DEV)
+- **Конвейер.** `scripts/blender/floorkit.py` (тела с фаской, рамы, плоскости с проёмами на регулярной сетке, стёганая
+  обивка, огранка камней, затенение лучами в цвета вершин) + `floor_golden_throne.py` (геометрия в осях этажа, рендеры)
+  → `assets/models/floors/GoldenThroneFloor.fbx` и `.json` (центры, размеры). Загрузка — Open Cloud (модель), MeshId —
+  `.ids.json`, привязка — `scripts/floor_bind_meshes.py` → `Shared/Floors/FloorMeshes`.
+- **Вид.** Один MeshPart на материал и уровень: tile (Plastic + LegoSquaresItem), smooth, glass. Оттенки и затенение — в
+  цветах вершин, цвет детали — Color в теме (`LOOK`), поэтому палитра меняется без повторной загрузки. Детали Accent
+  несут свои цвета в вершинах (ковёр, камни), Color у них — общее приглушение.
+- **Игра.** `World/FloorMeshLoader.Start()` (зовёт `TowerBuilder.NewTower`) грузит шаблоны в
+  `ReplicatedStorage.FloorMeshes` (атрибут Ready); `FloorBuilder`: кирпич с полем `mesh` — клон шаблона (без
+  столкновений, лучей и теней), `WaitMeshes`; `TowerController` ждёт шаблоны один раз (до 15 с). Каркас сервера —
+  прежние невидимые детали по форме зала (помост «плюсом», пилоны, стены, скамьи); стены упора камеры спрятаны
+  между обшивками зала и фасада.
+- **Проверки.** `check_tower`: меши есть в FloorMeshes и стоят на своём месте, треугольники ≤ 14 000 / 12 000 / 400,
+  каркас ≤ 24; грани и площадка лифта — по обычным деталям.
+- **Этаж в стиле D39 (2026-11-19, ночь).** Детали этажа — два вида: Rings (Plastic + MaterialVariant `LegoRingsD39`,
+  `Config/Textures.RingsD39`: плитка 2.4 стада = 4 × 4 квадрата-контура с числами `art_style.RING`, фон белый) и
+  Smooth (SmoothPlastic). Цвета (палитра предмета) и затенение — в цветах вершин, Color детали — множитель яркости
+  из темы. Вариант создаёт Rojo из `default.project.json`; `LegoMaterial.ensure` в игре создать его не может
+  (нужны права плагина) — теперь при неудаче предупреждает, а не роняет запуск сервера.
+- **Свет и тени этажа из мешей (2026-11-19, под утро).** Объём даёт не свет игры, а запекание в цвета вершин:
+  `floorkit.Part(grid=…)` режет меш сеткой (зал 1.25 / 2.5 стада, фасад 2 / 3), `shade_parts` кладёт окклюзию по
+  сетке, множитель стороны блока (`form`) и зоны зала (`zone`); узкие грани детали с квадратами уходят в гладкую
+  (`partner`, `narrow`). В теме — одна лампа в центре зала. `TowerController.soloLights`: камера внутри этажа или
+  холла — лампы остальных видов этой башни погашены (атрибут модели `LightsOn`), камера снаружи — все включены.
+- **Этаж в стиле «крупные квадраты» (2026-11-19, утро).** Детали Rings — Plastic + MaterialVariant `LegoSquaresBold`
+  (`Config/Textures.SquaresBold`, плитка 2 стада, один вдавленный квадрат на стад). Геометрия блоков с квадратами —
+  на целых координатах этажа; узкие грани (< 0.9) уходят в гладкую деталь. `floorkit.adaptive_cut` (до finish) режет
+  крупные грани только там, где меняется окклюзия; `Part(adapt=True)`. Поле темы `soloLights = true` включает
+  гашение ламп остальных видов башни, пока камера на этом этаже (`TowerController.soloLights`).
+- **Три материала этажа (2026-11-20).** Золото зала — `LegoSquaresBold`, золото фасада — `LegoSquaresFar` (мягче, его
+  видят издалека), ткань — `LegoSquaresQuiet` (квадраты едва заметны); все три — одна сетка в стад, плитка 2 стада
+  (`scripts/textures/squares_bold.py`). В скрипте этажа ткань переносится в детали *_Quiet по цвету
+  (`Part.give_tones`), у брусков с рисунком — фаска рёбер (`Part(bevel=…)`), узкие фаски уходят в гладкую деталь.
+- **Предметы на этажах — текстура боссов (2026-11-21, решение владельца).** Архитектура этажа — квадраты эталона
+  GoldenThrone (`LegoSquaresFar`/`Bold`/`Quiet`); вещи внутри и на фасаде (мебель, фигуры, механизмы) — кольца D39
+  в масштабе боссов: MaterialVariant `LegoRingsD39Boss` (`Config/Textures.RingsD39Boss` — те же карты, что у
+  предметов, плитка 7.2 стада = шаг 1.8, как у боссов ×3; эталон — Крысиный король). Детали `F_Props`/`I_Props`
+  (`floorbase.Floor.FP/IP`) → в `MeshTheme.look` суффикс `_Props$` = Plastic + `LegoRingsD39Boss`. Разводка в
+  `floorkit.Part.route`: тело гладкой детали с длиной ≥ 8 и толщиной ≥ 0.4 → архитектура (квадраты), толщина ≥ 0.5
+  и средний размер ≥ 0.9 → Props (кольца), иначе гладкое; накладки `slab`/`chamfer` ≥ 0.9 в плоскости → квадраты;
+  узкие грани Props < 0.5 → гладкая. Якоря-«невидимки» симметричны (фасад ±30, зал ±17/±16), чтобы центр рисунка
+  совпадал с целой координатой этажа.
+- **Вещи на утверждённых этажах (2026-11-21, «да, перевести»).** 13 утверждённых этажей (GoldenThrone, TRexSkeleton,
+  SpaceHelmet, Colosseum, MagicMushroom, GoldenMic, Moai, TutMask, TerracottaWarrior, StatueOfLiberty, GoldenGamepad,
+  CrystalDino, TrophyBurger) пересобраны с Props, архитектура не тронута: `B.Floor(..., keep_arch=True)` выключает
+  автоматическую разводку, на кольца уходят только тела в участках `F.objects(True)` … `F.objects(False)` (у эталонов
+  GoldenThrone/TRex/Space — своя `objects()`); в участке гладкие и брусковые тела (FS/IS, FR/IR) толщиной ≥ 0.25 и
+  средним размером ≥ 0.6 идут в FP/IP (`floorkit.FORCE_THICK/FORCE_MID`), ткань (Quiet) и стекло — как были. Пустые
+  детали (≤ 4 треугольников — только якоря, с 2026-11-22; раньше ≤ 2) `floor_bind_meshes.py` не привязывает. Откат —
+  `assets/concepts/tower_props/backup_v1/` (скрипты, темы, модели, кадры «до»).
+- **Общий декор этажей (партия 4, 2026-11-22)** — `scripts/blender/floordecor.py`: `palm`, `torch`, `barrel`, `crate`,
+  `lantern`, `bush`, `flower`, `chain` (провис, возвращает точки — на них вешают лампочки/фонари). Этажи партии 4
+  собраны на `B.Floor` без `keep_arch` (автоматическая разводка); экспонат у всех — (0, TOP, −3), постамент-каркас
+  в теме повторяет ступени из скрипта.
+- **Партия 5 этажей (2026-11-22)** — тот же конвейер; `floorbase._art_path(kind, name)` ищет FBX предмета и карту
+  цвета в `assets/<kind>/art/` и подпапках (`boss4/` и др.) — только для предпросмотра экспоната в Blender. Темы —
+  раздел «пятая партия» в `Floors/init.luau`; SubwayOctopus — масштаб экспоната 2.4. Реквизит перед фасадом — не
+  дальше ≈ −FZ−7.6 (дальше он висит над этажом ниже).
