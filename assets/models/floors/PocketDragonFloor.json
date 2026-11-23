@@ -1,0 +1,178 @@
+{
+ "PD_F_Smooth": {
+  "tier": "facade",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.9991,
+   -1.54
+  ],
+  "size": [
+   54.0,
+   19.9981,
+   48.92
+  ],
+  "tris": 5188
+ },
+ "PD_F_Rings": {
+  "tier": "facade",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   0.0
+  ],
+  "size": [
+   60.0,
+   20.0,
+   60.0
+  ],
+  "tris": 5692
+ },
+ "PD_F_Quiet": {
+  "tier": "facade",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   0.0
+  ],
+  "size": [
+   60.0,
+   20.0,
+   60.0
+  ],
+  "tris": 1254
+ },
+ "PD_F_Glass": {
+  "tier": "facade",
+  "material": "glass",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   13.3,
+   -4.955
+  ],
+  "size": [
+   39.76,
+   9.4,
+   30.43
+  ],
+  "tris": 236
+ },
+ "PD_I_Smooth": {
+  "tier": "interior",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.995,
+   0.23
+  ],
+  "size": [
+   33.98,
+   18.13,
+   32.44
+  ],
+  "tris": 5370
+ },
+ "PD_I_Rings": {
+  "tier": "interior",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.98,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.04,
+   32.0
+  ],
+  "tris": 2392
+ },
+ "PD_I_Quiet": {
+  "tier": "interior",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.015,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.03,
+   32.0
+  ],
+  "tris": 904
+ },
+ "PD_I_Glass": {
+  "tier": "interior",
+  "material": "glass",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.05,
+   0.0
+  ],
+  "size": [
+   31.48,
+   1.3,
+   29.48
+  ],
+  "tris": 616
+ },
+ "PD_S_All": {
+  "tier": "silhouette",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   0.4,
+   9.0,
+   -0.4
+  ],
+  "size": [
+   45.84,
+   20.0,
+   43.84
+  ],
+  "tris": 184
+ },
+ "PD_F_Props": {
+  "tier": "facade",
+  "material": "props",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   0.0
+  ],
+  "size": [
+   60.0,
+   20.0,
+   60.0
+  ],
+  "tris": 1508
+ },
+ "PD_I_Props": {
+  "tier": "interior",
+  "material": "props",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.01,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.08,
+   32.0
+  ],
+  "tris": 1196
+ }
+}

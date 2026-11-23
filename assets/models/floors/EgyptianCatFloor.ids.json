@@ -1,0 +1,16 @@
+{
+ "asset": "120920953379845",
+ "meshes": {
+  "BS_F_Glass": "rbxassetid://124377383188648",
+  "BS_F_Props": "rbxassetid://104705144103546",
+  "BS_F_Quiet": "rbxassetid://134545572774518",
+  "BS_F_Rings": "rbxassetid://94947595403328",
+  "BS_F_Smooth": "rbxassetid://73823710399417",
+  "BS_I_Glass": "rbxassetid://103574682550609",
+  "BS_I_Props": "rbxassetid://116056509718821",
+  "BS_I_Quiet": "rbxassetid://90388570184342",
+  "BS_I_Rings": "rbxassetid://89130544575191",
+  "BS_I_Smooth": "rbxassetid://100149196872739",
+  "BS_S_All": "rbxassetid://136167460072683"
+ }
+}

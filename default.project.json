@@ -126,6 +126,56 @@
 					"RoughnessMap": "rbxassetid://86272303409120",
 					"StudsPerTile": 4
 				}
+			},
+			"LegoRingsD39": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://93780113976638",
+					"NormalMap": "rbxassetid://121354316727204",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 2.4
+				}
+			},
+			"LegoRingsD39Boss": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://93780113976638",
+					"NormalMap": "rbxassetid://121354316727204",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 7.2
+				}
+			},
+			"LegoSquaresBold": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://96497926936161",
+					"NormalMap": "rbxassetid://136219700983341",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 2
+				}
+			},
+			"LegoSquaresQuiet": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://104945001541305",
+					"NormalMap": "rbxassetid://84552646501158",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 2
+				}
+			},
+			"LegoSquaresFar": {
+				"$className": "MaterialVariant",
+				"$properties": {
+					"BaseMaterial": "Plastic",
+					"ColorMap": "rbxassetid://80091990664920",
+					"NormalMap": "rbxassetid://98136649032051",
+					"RoughnessMap": "rbxassetid://86272303409120",
+					"StudsPerTile": 2
+				}
 			}
 		},
 		"ReplicatedStorage": {

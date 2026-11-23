@@ -1,0 +1,178 @@
+{
+ "GT_F_Smooth": {
+  "tier": "facade",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.315,
+   -1.585
+  ],
+  "size": [
+   38.9,
+   18.63,
+   40.07
+  ],
+  "tris": 8768
+ },
+ "GT_F_Rings": {
+  "tier": "facade",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   -1.0
+  ],
+  "size": [
+   42.0,
+   20.0,
+   42.0
+  ],
+  "tris": 2374
+ },
+ "GT_F_Quiet": {
+  "tier": "facade",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   -1.0
+  ],
+  "size": [
+   42.0,
+   20.0,
+   42.0
+  ],
+  "tris": 538
+ },
+ "GT_F_Glass": {
+  "tier": "facade",
+  "material": "glass",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.5,
+   -0.86
+  ],
+  "size": [
+   36.72,
+   8.86,
+   36.44
+  ],
+  "tris": 870
+ },
+ "GT_I_Smooth": {
+  "tier": "interior",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.9806,
+   0.7
+  ],
+  "size": [
+   33.92,
+   18.0812,
+   31.5
+  ],
+  "tris": 7536
+ },
+ "GT_I_Rings": {
+  "tier": "interior",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.03,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.06,
+   34.0
+  ],
+  "tris": 2765
+ },
+ "GT_I_Quiet": {
+  "tier": "interior",
+  "material": "tile",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.0,
+   34.0
+  ],
+  "tris": 674
+ },
+ "GT_I_Glass": {
+  "tier": "interior",
+  "material": "glass",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   10.185,
+   2.7031
+  ],
+  "size": [
+   33.28,
+   10.23,
+   16.2662
+  ],
+  "tris": 792
+ },
+ "GT_F_Props": {
+  "tier": "facade",
+  "material": "props",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   -1.0
+  ],
+  "size": [
+   42.0,
+   20.0,
+   42.0
+  ],
+  "tris": 188
+ },
+ "GT_I_Props": {
+  "tier": "interior",
+  "material": "props",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   8.985,
+   0.0
+  ],
+  "size": [
+   34.0,
+   18.03,
+   34.0
+  ],
+  "tris": 172
+ },
+ "GT_S_All": {
+  "tier": "silhouette",
+  "material": "smooth",
+  "tint": "FFFFFF",
+  "center": [
+   -0.0,
+   9.0,
+   -1.6
+  ],
+  "size": [
+   38.84,
+   20.0,
+   40.04
+  ],
+  "tris": 372
+ }
+}
