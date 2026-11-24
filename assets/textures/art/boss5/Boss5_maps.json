@@ -1,0 +1,124 @@
+{
+ "AccordionBear": {
+  "normal": "rbxassetid://128659688787204",
+  "color": "rbxassetid://124258339623279"
+ },
+ "AntlerFawn": {
+  "color": "rbxassetid://101399128088010",
+  "normal": "rbxassetid://84051709868692"
+ },
+ "BallBear": {
+  "normal": "rbxassetid://99218542710189",
+  "color": "rbxassetid://130837340444096"
+ },
+ "ElephantSeal": {
+  "normal": "rbxassetid://110413680413240",
+  "color": "rbxassetid://74033765313385"
+ },
+ "FluffCyclops": {
+  "color": "rbxassetid://123228754449922",
+  "normal": "rbxassetid://117365945206724"
+ },
+ "GiantPenguin": {
+  "normal": "rbxassetid://126752622485492",
+  "color": "rbxassetid://130697657913425"
+ },
+ "HedgeOwl": {
+  "normal": "rbxassetid://117312966681515",
+  "color": "rbxassetid://87240333761921"
+ },
+ "IceCrab": {
+  "normal": "rbxassetid://79551537020837",
+  "color": "rbxassetid://110442350272616"
+ },
+ "IceSpider": {
+  "normal": "rbxassetid://86712545718377",
+  "color": "rbxassetid://107347791107598"
+ },
+ "IcebergNarwhal": {
+  "normal": "rbxassetid://106044758155004",
+  "color": "rbxassetid://115421360483923"
+ },
+ "LeggedNarwhal": {
+  "normal": "rbxassetid://74029435054648",
+  "color": "rbxassetid://120331790454010"
+ },
+ "MustacheWalrus": {
+  "color": null,
+  "normal": null,
+  "pending": "новая развёртка после правки групп частей — ждёт просмотра владельцем (старые ID не подходят)"
+ },
+ "NestDeer": {
+  "color": "rbxassetid://99907307573686",
+  "normal": "rbxassetid://113816671787054"
+ },
+ "OwlTotem": {
+  "normal": "rbxassetid://109780435659655",
+  "color": "rbxassetid://89279067829937"
+ },
+ "PenguinGiraffe": {
+  "normal": "rbxassetid://80765840283109",
+  "color": "rbxassetid://87433815766528"
+ },
+ "PenguinStack": {
+  "color": "rbxassetid://104053212144911",
+  "normal": "rbxassetid://75488700609634"
+ },
+ "SealCaterpillar": {
+  "color": "rbxassetid://80205865902419",
+  "normal": "rbxassetid://134284892552166"
+ },
+ "SkiEarHare": {
+  "color": "rbxassetid://120073305105529",
+  "normal": "rbxassetid://109929124464324"
+ },
+ "SnowSlime": {
+  "color": "rbxassetid://120780060891068",
+  "normal": "rbxassetid://134782567542676"
+ },
+ "SnowWorm": {
+  "color": "rbxassetid://131393990165828",
+  "normal": "rbxassetid://96664321798148"
+ },
+ "SpringMammoth": {
+  "color": "rbxassetid://75183689410574",
+  "normal": "rbxassetid://132429281744279"
+ },
+ "StiltWhale": {
+  "color": "rbxassetid://119204324802099",
+  "normal": "rbxassetid://116952472048554"
+ },
+ "SwivelOwl": {
+  "color": null,
+  "normal": null,
+  "pending": "новая развёртка после правки групп частей — ждёт просмотра владельцем (старые ID не подходят)"
+ },
+ "ThreeHeadSerpent": {
+  "color": "rbxassetid://118393811271092",
+  "normal": "rbxassetid://123733215074086"
+ },
+ "ToothBeaver": {
+  "normal": "rbxassetid://94295454406758",
+  "color": "rbxassetid://79014754308761"
+ },
+ "TwoHeadFox": {
+  "color": "rbxassetid://93696834359069",
+  "normal": "rbxassetid://73806206126241"
+ },
+ "WalkingFish": {
+  "normal": "rbxassetid://76163834848445",
+  "color": "rbxassetid://103917941810668"
+ },
+ "WalkingJelly": {
+  "color": "rbxassetid://78223285660318",
+  "normal": "rbxassetid://119382545422252"
+ },
+ "WingedWalrus": {
+  "color": "rbxassetid://110006004501798",
+  "normal": "rbxassetid://79517440919865"
+ },
+ "YetiCub": {
+  "color": "rbxassetid://119120585314626",
+  "normal": "rbxassetid://128686301671883"
+ }
+}

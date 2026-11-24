@@ -1,0 +1,14 @@
+{
+ "Body": {
+  "color": "rbxassetid://93942245151760",
+  "normal": "rbxassetid://76219191547989"
+ },
+ "Head": {
+  "color": "rbxassetid://102344471750384",
+  "normal": "rbxassetid://126413183189503"
+ },
+ "Limbs": {
+  "normal": "rbxassetid://84860610722819",
+  "color": "rbxassetid://110096942919118"
+ }
+}

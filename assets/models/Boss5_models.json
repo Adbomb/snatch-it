@@ -1,0 +1,12 @@
+{
+ "yeti_model": "115856961352655",
+ "creatures_model": "132714481201297",
+ "uploaded": "2026-11-24",
+ "fbx": {
+  "yeti": "assets/models/Boss5_Yeti.fbx",
+  "creatures": "assets/models/Boss5Creatures_all.fbx"
+ },
+ "creatures_model_rejected": {
+  "92525691633819": "v1: задние ласты моржа и хвост филина были в частях FlipperR / WingR — не использовать"
+ }
+}

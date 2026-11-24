@@ -301,6 +301,7 @@ def mustache_walrus():
         part(a, name, "Body", (s * 0.7, -0.35, z + 0.75))
         A.flipper(a, "walrus", (s * 0.66, -0.35, z + 0.78), (s * 1.0, -0.72, z + 0.05), 0.5, 0.26, thick=0.16,
                   bend=(s * 0.08, -0.06, 0), up=(s, -0.2, 0.3), segments=2)
+    a.group = "Body"  # задние ласты — часть тела (после цикла передних ласт)
     for s in S2:  # задние ласты — веером назад
         for k, ang in enumerate((-18, 0, 18)):
             d = V((s * (0.35 + 0.12 * k), 1.0, 0)).normalized()
@@ -834,6 +835,7 @@ def swivel_owl():
     for s, name in ((1, "WingL"), (-1, "WingR")):  # крылья сложены вдоль тела, перья ступенями
         part(a, name, "Body", (s * 0.62, 0.05, z + 1.25))
         A.folded_wing(a, "owlD", "owl", (s * 0.6, 0.08, z + 1.3), s, 1.05, 0.62, rows=3, down=(0, 0.3, -1), thick=0.12)
+    a.group = "Body"  # хвост — часть тела (после цикла крыльев)
     spike(a, "owlD", (0, 0.55, z + 0.45), (0, 0.92, z + 0.1), 0.4)  # хвост — сзади
     part(a, "Head", "Body", (0, 0.0, z + 1.52))
     hz = z + 1.52
