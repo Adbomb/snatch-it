@@ -535,7 +535,7 @@ def build_block(a, F):
     at(a, Fb, "Block")
     a.extrude("iceBlock", oct_, z0, SPLIT, axis="z")  # невыпуклая деталь: грани экспонатов внутри не прячутся
     for x in (x0 + 0.02, x1 - 0.02):
-        a.box("iceE", x - 0.04, x + 0.04, y0 + 0.35, y0 + 0.85, z0 + 0.3, SPLIT - 0.2, bevel=0)
+        a.box("iceE", x - 0.035, x + 0.035, y0 + 0.35, y0 + 0.85, z0 + 0.3, SPLIT - 0.2, bevel=0)
     for i, x in enumerate((-1.55, -0.9, -0.2, 0.55, 1.2, 1.7)):
         key("iceD" if i % 2 else "iceE")
         K.spike(a, (x, y1 - 0.25, z0 + 0.02), (x, y1 - 0.2, z0 - 0.45 - 0.25 * (i % 3)), 0.32)
@@ -548,7 +548,7 @@ def build_block(a, F):
         key("iceD")
         K.spike(a, (x, y, z1 + 0.1), (x + lean, y + 0.1, z1 + 0.25 + h), w)  # основанием в льду
     for x in (x0 + 0.02, x1 - 0.02):
-        a.box("iceE", x - 0.04, x + 0.04, y0 + 0.35, y0 + 0.85, SPLIT + 0.2, z1 - 0.3, bevel=0)
+        a.box("iceE", x - 0.035, x + 0.035, y0 + 0.35, y0 + 0.85, SPLIT + 0.2, z1 - 0.3, bevel=0)
     # рама, обвязки, лямки, нижние уголки, табличка, шов-трещина — непрозрачная часть
     at(a, Fb, "BlockFrame")
     a.box("leatherD", -1.45, 1.45, y0 - 0.85, y0 + 0.05, 2.3, 6.3, bevel=0.03)
