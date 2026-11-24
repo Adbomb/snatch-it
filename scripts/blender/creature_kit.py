@@ -601,6 +601,9 @@ def run(items, repo, shots, models, texdir, quick=False, report_name="report.jso
                 mm.use_backface_culling = True
                 me.materials[i] = mm
         rep["transparent_parts"] = list(getattr(art, "transparent_parts", ()))
+        bpy.context.view_layer.update()
+        from joint_check import check_bends, check_joints  # правила анатомии D64: щели в суставах > 0.05 стада — ошибка
+        rep["joint_issues"] = check_joints(parts, art.rig, gap=0.05) + check_bends(parts, art.rig)
         rep["meshes"] = len(parts)
         rep["tris_by_part"] = {g: len(o.data.polygons) and sum(len(p.vertices) - 2 for p in o.data.polygons)
                                for g, o in parts.items()}

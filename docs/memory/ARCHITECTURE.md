@@ -505,6 +505,12 @@
   поведения, карта по редкости: Common 512²) + `art_glacier.py` (30 строителей) → `assets/models/art/boss5/`,
   `assets/textures/art/boss5/`; собирать по одному существу на процесс (`scripts/run_glacier.sh`): в одном процессе
   свет студии копится. Листы на просмотр и таблица весов D58 — `scripts/boss5_sheets.py` → `assets/concepts/boss5/sheets/`.
+  Анатомия (D64): `scripts/blender/joint_check.py` — `check_joints` (щель часть↔родитель > 0.05 стада, летающие куски,
+  ось дальше 0.5 стада; тело на подставке может опираться на ноги-детей или ноги-соседей) и `check_bends` (пустота
+  вокруг оси — сгиб раскрывается); вызывается из `creature_kit.run` и `boss5_yeti.py` (у Йети — во всех позах,
+  экспонаты Ex* вне проверки — вморожены по замыслу). Лист-аудит — `scripts/boss5_anatomy_audit.py` (быстрая сборка
+  `bash scripts/run_glacier.sh assets/concepts/boss5/audit/creatures quick` и
+  `YETI_SHOTS=none … boss5_yeti.py -- . assets/concepts/boss5/audit/yeti quick` → отчёты).
 - Босс 10 «Король-дракон» (этапы A и B, 2026-11-15; DESIGN.md не правился — исключение D52 для залпа ждёт записи):
   тот же путь, что у Сфинкса, — `scripts/blender/dragon10/v7_export.py` (поверх `v7_anim5.py`) →
   `assets/models/Boss10_Dragon.{rig,anim}.json` → `scripts/boss10_to_luau.py` → `Config/Boss10DragonRig` (52 части:

@@ -656,6 +656,25 @@ def main():
     if missing:
         raise ValueError(f"нет частей {missing}")
     report["dropped_enclosed_faces"] = _drop_enclosed(parts)
+    bpy.context.view_layer.update()
+    from joint_check import check_bends, check_joints  # правила анатомии D64: щели в суставах > 0.05 стада — ошибка
+
+    rig = {n: (par, tuple(PIVOTS[n])) for n, (par, _) in RIG_TREE.items()}
+    report["joint_issues"] = check_joints(parts, rig, gap=0.05 / SCALE, pivot_far=0.5 / SCALE)
+    print("JOINTS", json.dumps(report["joint_issues"], ensure_ascii=False), flush=True)
+    report["joint_issues_by_pose"] = {}
+    for name, P in POSES.items():  # в позах: сустав не должен расходиться при сгибе
+        apply(parts, P)
+        W = pose_world(P)
+        rig_p = {n: (par, tuple(W[n] @ PIVOTS[n])) for n, (par, _) in RIG_TREE.items()}
+        gaps = [i for i in check_joints(parts, rig_p, gap=0.05 / SCALE, pivot_far=99) if i["kind"] == "щель в суставе"]
+        gaps += [i for i in check_bends(parts, rig_p) if not i["part"].startswith("Ex")]
+        report["joint_issues_by_pose"][name] = gaps
+    apply(parts, base_pose())
+    for o in parts.values():
+        o.matrix_world = T(PIVOTS[[k for k, v in parts.items() if v is o][0]])
+    bpy.context.view_layer.update()
+    print("JOINTS_POSES", json.dumps(report["joint_issues_by_pose"], ensure_ascii=False), flush=True)
     for n, o in parts.items():
         o.data.calc_loop_triangles()
         report["tris"][n] = len(o.data.loop_triangles)
@@ -842,7 +861,7 @@ def shoot(parts, shots, report):
     for o in parts.values():
         o.parent = root
     want = os.environ.get("YETI_SHOTS", "all")
-    names = list(POSES) if want == "all" else want.split(",")
+    names = [] if want == "none" else list(POSES) if want == "all" else want.split(",")
     for name in names:
         apply(parts, POSES[name])
         co = [o.matrix_world @ v.co for o in parts.values() for v in o.data.vertices]
