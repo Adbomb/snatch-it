@@ -121,6 +121,11 @@ def check_joints(parts, rig, gap=0.05, pivot_far=0.5):
                 near = min(near, _min_dist(ipts, t))
             if near > gap and any(_inside(t, ipts[0]) for t in others):
                 near = 0.0  # остров целиком внутри другой части — не летает
+            own = [v.co for f in faces for v in f.verts]
+            if near > gap and any(_in_hull(ipts, [v.co for f in fs for v in f.verts]) or
+                                  _in_hull([v.co for f in fs for v in f.verts], own, step=1)
+                                  for j, fs in enumerate(isl) if j != k):
+                near = 0.0  # детали вложены друг в друга (общие грани срезаны при сборке) — касаются
             if near > gap:
                 c = sum((p for p in ipts), Vector()) / len(ipts)
                 issues.append({"kind": "летающая деталь", "part": n, "gap": round(near, 3),
@@ -128,6 +133,24 @@ def check_joints(parts, rig, gap=0.05, pivot_far=0.5):
     for bm in bms.values():
         bm.free()
     return issues
+
+
+def _in_hull(points, cloud, step=6):
+    """Хоть одна из points лежит внутри выпуклой оболочки cloud (острова — выпуклые детали, у вложенных деталей
+    грани внутри соседа срезаны, поэтому поверхности не касаются, а объёмы пересекаются)."""
+    bm = bmesh.new()
+    for p in cloud:
+        bm.verts.new(p)
+    try:
+        bmesh.ops.convex_hull(bm, input=bm.verts[:], use_existing_faces=False)
+        for v in [v for v in bm.verts if not v.link_faces]:
+            bm.verts.remove(v)
+        if not bm.faces:
+            return False
+        tree = BVHTree.FromBMesh(bm)
+        return any(_inside(tree, p) for p in points[::step])
+    finally:
+        bm.free()
 
 
 def _enclosed(tree, p):

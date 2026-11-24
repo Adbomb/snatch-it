@@ -1,14 +1,16 @@
 """Набор анатомии существ (D64 «Анатомия», 2026-11-24): объёмные тела и конечности вместо ящиков и плоских досок.
 
-- body — тело-яйцо, бочка, капля, груша, шар: ярусы-«бочонки» с фаской вдоль оси (лофт ступенями, как у дракона),
-  каждый ярус — усечённая призма между двумя кольцами профиля, поэтому силуэт идёт по кривой, а шов яруса виден
-  тонкой ступенью; сужение к плечам и лапам задаёт профиль.
+- body — тело-яйцо, бочка, капля, груша, шар в стиле D39 (как «шар» Сфинкса и ярусы дракона): стопка ярусов
+  с прямыми стенками и срезанными углами (сечение — прямоугольник со скосами, не круг), каждый ярус своей ширины,
+  поэтому силуэт ступенчатый, а крупные плоские грани несут кольца D39; профиль задаёт только ширину ступеней.
+  Не гладкий многогранник: «лофтовая органика» отклонена (дракон v2; набор v1 2026-11-24 — «отошёл от стиля»).
 - limb — конечность из сужающихся звеньев с шарами-суставами в изгибах (части заходят друг в друга);
   flipper — ласт или лапа-лопасть с изгибом и толщиной; foot — стопа с пальцами; folded_wing — сложенное крыло
   с перьями ступенями.
-- eye — глаз (белок + зрачок + два блика) по нормали поверхности, утоплен в голову на sink (≥ 0.05); closed=True —
-  закрытый глаз для сна (веко и полоска ресниц); snout — морда вперёд с носом и ртом; beak — клюв из двух половин;
-  facial_disc — лицевой диск совы («сердце» вокруг глаз).
+- eye — глаз как у существ и Сфинкса: брусок белка, квадратный зрачок, квадратный блик; по нормали поверхности,
+  утоплен в голову на sink (≥ 0.05); closed=True — закрытый глаз для сна (веко и полоска ресниц); snout — морда-брусок
+  вперёд ступенью, с носом-бруском и ртом; beak — тупой клюв-клин из двух половин; facial_disc — лицевой диск совы.
+- Сечения звеньев — восьмигранник с малыми скосами (CUT): читаются брусками, а не круглыми трубами.
 Все детали — выпуклые куски Art (art_style.py): грани внутри других деталей убирает конвейер (drop_enclosed).
 Подключается из коллекций: import anatomy_kit as A; A.body(a, "navy", (0, 0, z), 1.2, 1.0, 2.4, "egg").
 Зависит от art_style.py (Art, фаска), dragon10/v4_kit.py (звенья-цепи).
@@ -18,7 +20,6 @@ import math
 import os
 import sys
 
-import bmesh
 from mathutils import Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +29,9 @@ import art_style as S  # noqa: E402
 import v4_kit as K  # noqa: E402
 
 V = Vector
-TIER_BEVEL = S.BEVEL  # фаска яруса — как у всех деталей D39 (0.012): шов читается ступенью, силуэт — кривой
+TIER_BEVEL = S.BEVEL  # фаска яруса — как у всех деталей D39 (0.012)
+CORNER = 0.34  # скос угла яруса — доля меньшего радиуса (прямоугольник со срезанными углами, как «шар» Сфинкса)
+CUT = 0.26  # скос сечения звеньев (дракон v4–v7: 0.3) — брусок, не труба
 SINK = 0.06  # глаза и морды заходят в голову не меньше чем на 0.05 (правило D64)
 
 
@@ -48,29 +51,6 @@ PROFILES = {
 }
 
 
-def ring(rx, ry, sides=8, phase=None):
-    """Кольцо-эллипс из sides точек (правильный восьмиугольник при rx = ry)."""
-    phase = math.pi / sides if phase is None else phase
-    return [(rx * math.cos(phase + 2 * math.pi * i / sides), ry * math.sin(phase + 2 * math.pi * i / sides))
-            for i in range(sides)]
-
-
-def tier(a, key, lo, z0, hi, z1, bevel=TIER_BEVEL, matrix=None):
-    """Ярус: выпуклая усечённая призма между кольцами lo (на z0) и hi (на z1) с одинаковым числом точек."""
-    bm = bmesh.new()
-    vl = [bm.verts.new((x, y, z0)) for x, y in lo]
-    vh = [bm.verts.new((x, y, z1)) for x, y in hi]
-    bm.faces.new(vl)
-    bm.faces.new(list(reversed(vh)))
-    for i in range(len(vl)):
-        j = (i + 1) % len(vl)
-        bm.faces.new((vl[i], vl[j], vh[j], vh[i]))
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    planes = S._convex_planes(bm)
-    S._bevel(bm, bevel)
-    a._add(bm, key, planes, matrix)
-
-
 _N = [0]
 
 
@@ -79,30 +59,110 @@ def _count():
     return _N[0]
 
 
-def body(a, key, base, rx, ry, h, shape="egg", n=8, t0=0.0, t1=1.0, lean=0.0, sides=8, floor=0.25, bevel=TIER_BEVEL,
-         matrix=None, keys=None):
-    """Объёмное тело: n ярусов вдоль оси z от base (середина низа) высотой h; радиусы rx, ry × профиль shape.
-    t0/t1 — срез профиля снизу/сверху (опора на землю — плоский низ); lean — сдвиг по y к верху (грудь вперёд < 0);
-    floor — наименьшая доля радиуса (верх и низ не схлопываются в иглу); keys — свои цвета по ярусам снизу вверх
-    (полосы, живот); matrix — поворот всего тела (лежащее тело, наклон)."""
+def body(a, key, base, rx, ry, h, shape="egg", n=6, t0=0.0, t1=1.0, lean=0.0, sides=8, floor=0.25, bevel=TIER_BEVEL,
+         matrix=None, keys=None, corner=CORNER, front=None):
+    """Тело D39: n ярусов с прямыми стенками вдоль оси z от base (середина низа) высотой h; ширина яруса — rx, ry ×
+    профиль shape в середине яруса (ступени, не гладкий лофт). t0/t1 — срез профиля снизу/сверху; lean — сдвиг
+    ярусов по y к верху (грудь вперёд < 0); floor — наименьшая доля радиуса; keys — свои цвета по ярусам снизу вверх;
+    corner — скос углов (доля меньшего радиуса); matrix — поворот всего тела. sides оставлен для совместимости.
+    front = (цвет, w, z0, z1[, глубина]) — живот или грудка, вписанные в ярусы: на ярусах между z0 и z1 передняя
+    часть яруса (ширина w × плоская грань, овалом) — другого цвета, вровень с ярусом; ступени живота = ступени тела.
+    Возвращает ярусы (za, zb, x, y, wx, wy, скос) для belly и проверок."""
     prof = PROFILES[shape] if isinstance(shape, str) else shape
     bx, by, bz = base
-    ts = [t0 + (t1 - t0) * k / n for k in range(n + 1)]
+    tiers, prev = [], None
     for k in range(n):
-        ta, tb = ts[k], ts[k + 1]
-        ra, rb = max(prof(ta), floor), max(prof(tb), floor)
-        rmin = min(rx, ry) * min(ra, rb)
-        q = 1.0 - min(0.02, 0.012 / max(rmin, 1e-3)) * (k % 2)  # соседние ярусы чуть разной ширины на стыке (грани
-        # не совпадают); множитель, а не вычитание: кольца яруса подобны, боковые грани плоские
-        za, zb = bz + h * (ta - t0) / (t1 - t0), bz + h * (tb - t0) / (t1 - t0)
-        ya, yb = by + lean * (ta - t0) / (t1 - t0), by + lean * (tb - t0) / (t1 - t0)
-        lo = [(bx + x, ya + y) for x, y in ring(rx * ra * q, ry * ra * q, sides)]
-        hi = [(bx + x, yb + y) for x, y in ring(rx * rb * q, ry * rb * q, sides)]
+        ta, tb = t0 + (t1 - t0) * k / n, t0 + (t1 - t0) * (k + 1) / n
+        r = max(prof((ta + tb) / 2), floor)
+        if prev is not None and abs(r - prev) < 0.04:
+            r = prev * 0.96  # соседний ярус почти той же ширины (середина яйца) — ступень внутрь: видна, грани не
+            # совпадают; заметно разные ярусы не трогаем (бока без лишних зубцов)
+        prev = r
+        wx, wy = rx * r, ry * r
+        za, zb = bz + h * k / n, bz + h * (k + 1) / n
+        y = by + lean * ((ta + tb) / 2 - t0) / (t1 - t0)
         ov = 0.01 if k else -(0.004 + 0.0017 * (_count() % 12))  # ярусы заходят друг в друга; низ над опорой (у разных
         # тел на разной высоте — нижние грани не совпадают)
-        # мелкие тела без фаски (треугольники); фаска не больше трети самого узкого кольца — иначе грани выворачиваются
-        bv = min(bevel, h / n / 3, rmin * 0.3) if min(rx, ry) >= 0.3 else 0.0
-        tier(a, keys[k % len(keys)] if keys else key, lo, za - ov, hi, zb + 0.01, bevel=bv, matrix=matrix)
+        bv = min(bevel, h / n / 3, min(wx, wy) * 0.3) if min(rx, ry) >= 0.12 else 0.0
+        pts = S.octagon(bx - wx, bx + wx, y - wy, y + wy, min(wx, wy) * corner)
+        tk = keys[k % len(keys)] if keys else key
+        cut = min(wx, wy) * corner
+        lo, hi = (max(za, front[2]), min(zb, front[3])) if front else (0, 0)
+        if front and hi - lo >= 0.05:
+            fkey, fw, fz0, fz1 = front[:4]
+            depth = front[4] if len(front) > 4 else 0.3
+            u = ((za + zb) / 2 - (fz0 + fz1) / 2) / ((fz1 - fz0) / 2)
+            hw = min((wx - cut) * fw * math.sqrt(max(1.0 - u * u * 0.85, 0.2)), wx - cut - 0.05)  # зазор > 2 фасок
+            yd = y - wy + min(depth, wy)
+            for piece in (_clip(pts, (1, 0), bx - hw), _clip(pts, (-1, 0), -(bx + hw)),
+                          _clip(_clip(_clip(pts, (-1, 0), -(bx - hw)), (1, 0), bx + hw), (0, -1), -yd)):
+                if len(piece) >= 3:  # тёмные бока и спина яруса
+                    a.prism(tk, piece, za - ov, zb + 0.01, axis="z", bevel=bv, matrix=matrix)
+            a.prism(fkey, [(bx - hw - 0.005, y - wy - 0.006), (bx + hw + 0.005, y - wy - 0.006),
+                           (bx + hw + 0.005, yd + 0.005), (bx - hw - 0.005, yd + 0.005)],
+                    za - ov + 0.002, zb + 0.008, axis="z", bevel=bv, matrix=matrix)  # перёд яруса — живот вровень
+        else:
+            a.prism(tk, pts, za - ov, zb + 0.01, axis="z", bevel=bv, matrix=matrix)
+        tiers.append((za, zb, bx, y, wx, wy, min(wx, wy) * corner))
+    return tiers
+
+
+def _clip(pts, n, d):
+    """Выпуклый многоугольник pts, обрезанный полуплоскостью n·p <= d (Сазерленд — Ходжман)."""
+    out = []
+    for i in range(len(pts)):
+        p, q = pts[i], pts[(i + 1) % len(pts)]
+        fp, fq = n[0] * p[0] + n[1] * p[1] - d, n[0] * q[0] + n[1] * q[1] - d
+        if fp <= 0:
+            out.append(p)
+        if fp * fq < 0:
+            t = fp / (fp - fq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    clean = []
+    for p in out:  # точка на самой линии среза попадает дважды — вырожденная грань
+        if not clean or abs(p[0] - clean[-1][0]) + abs(p[1] - clean[-1][1]) > 1e-5:
+            clean.append(p)
+    if len(clean) > 1 and abs(clean[0][0] - clean[-1][0]) + abs(clean[0][1] - clean[-1][1]) <= 1e-5:
+        clean.pop()
+    return clean
+
+
+def belly(a, key, tiers, z0, z1, w=0.7, lift=0.025, reach=0.16, flat=False, depth=0.3, matrix=None):
+    """Живот, грудка спереди тела между z0 и z1, ширина w × ширина яруса, контур — ступенчатый овал по ярусам тела
+    (tiers из body). По умолчанию — накладка на каждый ярус: ступени живота совпадают со ступенями тела (живот вписан
+    в форму, как полосы Сфинкса), выступ lift. flat=True — одна плоская накладка без швов (передняя грань — одна
+    плоскость; ярусы, утопленные глубже reach, пропускает)."""
+    if not flat:
+        for za, zb, bx, y, wx, wy, cut in tiers:
+            lo, hi = max(za, z0), min(zb, z1)
+            if hi - lo < 0.05:
+                continue
+            u = ((lo + hi) / 2 - (z0 + z1) / 2) / ((z1 - z0) / 2)
+            hw = min(wx * w * math.sqrt(max(1.0 - u * u * 0.85, 0.15)), wx - cut - 0.03)
+            a.box(key, bx - hw, bx + hw, y - wy - lift, y - wy + depth, lo + 0.004, hi + 0.006, matrix=matrix)
+        return
+    rows = []
+    front = min(y - wy for za, zb, bx, y, wx, wy, cut in tiers if min(zb, z1) - max(za, z0) >= 0.05)
+    for za, zb, bx, y, wx, wy, cut in tiers:
+        lo, hi = max(za, z0), min(zb, z1)
+        if hi - lo < 0.05 or (y - wy) - front > reach:
+            continue
+        u = ((lo + hi) / 2 - (z0 + z1) / 2) / ((z1 - z0) / 2)
+        hw = min(wx * w * math.sqrt(max(1.0 - u * u * 0.85, 0.15)), wx - cut - 0.03)  # овал, не шире плоской грани
+        rows.append((lo, hi, bx, hw, y - wy))
+    if not rows:
+        return
+    bx = rows[0][2]
+    right = []
+    for lo, hi, _, hw, _ in rows:
+        right += [(bx + hw, lo + 0.004), (bx + hw, hi + 0.004)]
+    pts = right + [(2 * bx - x, z) for x, z in reversed(right)]
+    clean = [pts[0]]
+    for q in pts[1:]:  # соседние ярусы одной ширины — без лишних точек на прямой
+        if abs(q[0] - clean[-1][0]) > 1e-4 or abs(q[1] - clean[-1][1]) > 1e-4:
+            clean.append(q)
+    back = max(r[4] for r in rows) + 0.08  # уходит в каждый ярус
+    a.extrude(key, clean, front - lift, back, axis="y", matrix=matrix)
 
 
 def ball(a, key, c, r, n=4, ry=None, rz=None, matrix=None):
@@ -117,7 +177,7 @@ def limb(a, key, pts, ws, hs=None, up=(0, -1, 0), joint_key=None, joints=True):
     чуть толще звеньев — части заходят друг в друга, сгиб не раскрывается."""
     hs = hs or ws
     K.KEY = key
-    K.chain(a, pts, ws, hs, up=up, cut=0.42, overlap=0.5)
+    K.chain(a, pts, ws, hs, up=up, cut=CUT, overlap=0.5)
     if joints:
         for i in range(1, len(pts) - 1):
             r = max(ws[i], hs[i]) * 0.56
@@ -135,26 +195,27 @@ def flipper(a, key, root, tip, w0, w1, thick=0.16, bend=(0, 0, 0), up=(0, 0, 1),
         ws.append(w0 + (w1 - w0) * t ** 0.8)
         hs.append(thick * (1.0 - 0.5 * t))
     K.KEY = key
-    K.chain(a, pts, ws, hs, up=up, cut=0.45, overlap=0.5)
+    K.chain(a, pts, ws, hs, up=up, cut=CUT, overlap=0.5)
 
 
 def foot(a, key, ankle, forward, length, width, toes=3, toe_key=None, h=0.14, z=None):
-    """Стопа: подушка от пятки (под щиколоткой) вперёд на length и пальцы-капли; forward — направление в плоскости."""
+    """Стопа-брусок: подушка от пятки (под щиколоткой) вперёд на length и тупые пальцы-бруски (как лапы Сфинкса);
+    forward — направление в плоскости."""
     f = V(forward).normalized()
     side = V((-f.y, f.x, 0))
     an = V(ankle)
     gz = an.z if z is None else z
     heel = V((an.x, an.y, gz + h / 2)) - f * width * 0.2
-    toe = heel + f * length * 0.78
+    toe = heel + f * length * 0.72
     K.KEY = key
-    K.taper(a, heel, toe, width * 0.8, width, h, h * 0.85, up=(0, 0, 1), cut=0.4)
+    K.taper(a, heel, toe, width * 0.86, width, h, h * 0.92, up=(0, 0, 1), cut=0.2)
     K.KEY = toe_key or key
-    tw = width / toes * 0.85
+    tw = width / toes * 0.86
     for i in range(toes):
         o = (i - (toes - 1) / 2) * width / toes
-        b = toe + side * o - f * 0.04
-        K.taper(a, b, b + f * length * (0.26 if i in (0, toes - 1) else 0.32) - V((0, 0, h * 0.12)), tw, tw * 0.55,
-                h * 0.8, h * 0.45, up=(0, 0, 1), cut=0.45)
+        b = toe + side * o - f * 0.05 - V((0, 0, h * 0.04 * (i % 2)))
+        ln = length * (0.26 if i in (0, toes - 1) else 0.32)
+        K.taper(a, b, b + f * ln, tw, tw * 0.8, h * 0.82 - 0.01 * (i % 2), h * 0.66, up=(0, 0, 1), cut=0.22)
 
 
 def folded_wing(a, key, tip_key, shoulder, side, length, width, rows=3, down=(0, 0.35, -1), thick=0.12):
@@ -171,7 +232,7 @@ def folded_wing(a, key, tip_key, shoulder, side, length, width, rows=3, down=(0,
         p1 = p0 + d * ln * 0.72
         p2 = p0 + d * ln + out * 0.02
         K.KEY = key if r < rows - 1 else tip_key
-        K.chain(a, [p0, p1, p2], [w, w * 0.8, w * 0.28], [thick, thick * 0.9, thick * 0.6], up=out, cut=0.45,
+        K.chain(a, [p0, p1, p2], [w, w * 0.8, w * 0.36], [thick, thick * 0.9, thick * 0.6], up=out, cut=CUT,
                 overlap=0.4)
 
 
@@ -187,69 +248,73 @@ def _at(c, normal):
     return Matrix.Translation(V(c)) @ facing(normal)
 
 
-def eye(a, c, r, normal=(0, -1, 0), look=(0.0, 0.0), pupil=0.58, sink=SINK, lift=0.04, closed=False,
-        lid_key="dark", skin_key=None, sides=8):
-    """Глаз на поверхности головы в точке c, смотрит по normal: белок выступает на lift и уходит внутрь на sink,
-    зрачок со смещением look, два блика. closed — закрытый глаз: веко цвета skin_key и тёмная полоса ресниц."""
+def eye(a, c, r, normal=(0, -1, 0), look=(0.0, 0.0), pupil=0.55, sink=SINK, lift=0.04, closed=False,
+        lid_key="dark", skin_key=None, sides=8, h=1.1):
+    """Глаз D39 (как у существ и Сфинкса) в точке c головы, смотрит по normal: брусок белка 2r × 2r·h выступает на
+    lift и уходит внутрь на sink, квадратный зрачок со смещением look, квадратный блик. closed — закрытый глаз:
+    веко-брусок цвета skin_key и тёмная полоса ресниц. sides оставлен для совместимости."""
     m = _at(c, normal)
+    w, hh = r, r * h
     if closed:
-        a.prism(skin_key or lid_key, ring(r * 1.02, r * 0.9, sides), -lift * 0.7, sink, axis="y", bevel=0.01,
-                matrix=m)
-        a.box(lid_key, -r * 0.95, r * 0.95, -lift * 0.7 - 0.03, -lift * 0.7 + 0.01, -r * 0.16, r * 0.02, bevel=0,
+        a.box(skin_key or lid_key, -w * 1.02, w * 1.02, -lift * 0.7, sink, -hh * 0.95, hh * 0.95,
+              bevel=0.01 if r >= 0.1 else 0.0, matrix=m)
+        a.box(lid_key, -w * 0.95, w * 0.95, -lift * 0.7 - 0.03, -lift * 0.7 + 0.01, -hh * 0.18, hh * 0.02, bevel=0,
               matrix=m)
         return
-    a.prism("white", ring(r, r, sides), -lift, sink, axis="y", bevel=0.01 if r >= 0.12 else 0.0, matrix=m)
-    pr = r * pupil
-    px, pz = look[0] * (r - pr) * 0.8, look[1] * (r - pr) * 0.8
-    a.prism("dark", [(px + x, pz + y) for x, y in ring(pr, pr, sides)], -lift - 0.025, -lift + 0.01, axis="y", bevel=0,
-            matrix=m)
-    g = pr * 0.4
-    a.box("glint", px - pr * 0.55, px - pr * 0.55 + g, -lift - 0.045, -lift - 0.02, pz + pr * 0.12,
-          pz + pr * 0.12 + g, bevel=0, matrix=m)
-    g2 = pr * 0.18
-    a.box("glint", px + pr * 0.3, px + pr * 0.3 + g2, -lift - 0.045, -lift - 0.02, pz - pr * 0.5, pz - pr * 0.5 + g2,
+    a.box("white", -w, w, -lift, sink, -hh, hh, bevel=0.01 if r >= 0.1 else 0.0, matrix=m)
+    pr = min(w, hh) * pupil
+    px, pz = look[0] * (w - pr) * 0.8, look[1] * (hh - pr) * 0.8
+    a.box("dark", px - pr, px + pr, -lift - 0.025, -lift + 0.01, pz - pr, pz + pr, bevel=0, matrix=m)
+    g = pr * 0.62
+    a.box("glint", px - pr + 0.02, px - pr + 0.02 + g, -lift - 0.045, -lift - 0.02, pz + pr - 0.02 - g, pz + pr - 0.02,
           bevel=0, matrix=m)
 
 
 def snout(a, key, base, direction, length, w0, w1, h0=None, h1=None, nose_key="dark", nose=0.3, mouth_key="mouth",
           mouth=0.7):
-    """Морда: сужающийся выступ от base (внутри головы на SINK) по direction на length; на конце нос (доля nose
-    от ширины конца), снизу полоса рта (доля mouth от длины, 0 — без рта)."""
+    """Морда-брусок: от base (внутри головы на SINK) по direction на length двумя ступенями (корень шире, конец уже),
+    на конце нос-брусок (доля nose от ширины конца), снизу полоса рта (доля mouth от длины, 0 — без рта)."""
     b, d = V(base), V(direction).normalized()
     h0, h1 = h0 or w0 * 0.85, h1 or w1 * 0.85
     tip = b + d * length
+    mid = b + d * length * 0.55
     K.KEY = key
-    K.taper(a, b - d * SINK, tip, w0, w1, h0, h1, up=(0, 0, 1), cut=0.42)
+    K.taper(a, b - d * SINK, mid, w0, w0 * 0.94, h0, h0 * 0.94, up=(0, 0, 1), cut=0.22)  # корень морды
+    K.taper(a, mid - d * 0.04, tip, w1 * 1.04, w1, h1 * 1.04, h1, up=(0, 0, 1), cut=0.22)  # ступень к носу
     if nose:
-        ball(a, nose_key, tuple(tip + V((0, 0, h1 * 0.3)) - d * 0.02), w1 * nose + 0.02, n=2, rz=h1 * 0.28)
+        nw = w1 * nose + 0.03
+        nc = tip + V((0, 0, h1 * 0.3))
+        K.KEY = nose_key
+        K.taper(a, nc - d * 0.05, nc + d * 0.035, nw, nw * 0.92, nw * 0.7, nw * 0.62, up=(0, 0, 1), cut=0.2)
     if mouth:
         side = d.cross(V((0, 0, 1))).normalized()
         m0 = tip - d * length * mouth - V((0, 0, h1 * 0.42))
         m1 = tip - d * 0.03 - V((0, 0, h1 * 0.42))
         for s in (1, -1):
             K.KEY = mouth_key
-            K.taper(a, m0 + side * s * w0 * 0.36, m1 + side * s * w1 * 0.1, 0.05, 0.045, 0.05, 0.045, cut=0.3)
+            K.taper(a, m0 + side * s * w0 * 0.36, m1 + side * s * w1 * 0.1, 0.05, 0.045, 0.05, 0.045, cut=0.2)
 
 
 def beak(a, key, base, direction, length, w, h=None, key_low=None, gape=0.0):
-    """Клюв: верхняя половина — к острию и чуть вниз, нижняя — короче; gape — щель (открыт)."""
+    """Клюв-клин D39: верхняя половина сужается к тупому концу и чуть вниз, нижняя — короче; gape — щель (открыт)."""
     b, d = V(base), V(direction).normalized()
     h = h or w * 0.8
     up = V((0, 0, 1))
     K.KEY = key
-    K.taper(a, b - d * SINK + up * h * 0.18, b + d * length - up * h * 0.25, w, w * 0.1, h * 0.6, h * 0.1, cut=0.42)
+    K.taper(a, b - d * SINK + up * h * 0.18, b + d * length - up * h * 0.2, w, w * 0.34, h * 0.6, h * 0.24, cut=0.2)
     K.KEY = key_low or key
-    K.taper(a, b - d * SINK - up * (h * 0.22 + gape), b + d * length * 0.62 - up * (h * 0.32 + gape), w * 0.85,
-            w * 0.12, h * 0.42, h * 0.1, cut=0.42)
+    K.taper(a, b - d * SINK - up * (h * 0.22 + gape), b + d * length * 0.66 - up * (h * 0.3 + gape), w * 0.86,
+            w * 0.36, h * 0.42, h * 0.2, cut=0.2)
 
 
 def facial_disc(a, key, rim_key, c, r, normal=(0, -1, 0), gap=0.55):
     """Лицевой диск совы: два круга вокруг глаз (сердце), светлее перьев; тёмная кайма позади. c — середина лица."""
     m = _at(c, normal)
     for s in (1, -1):
-        a.prism(rim_key, [(s * r * gap + x, y) for x, y in ring(r * 1.08, r * 1.12, 10)], 0.0, SINK + 0.02, axis="y",
-                bevel=0.01, matrix=m)
-        a.prism(key, [(s * r * gap + x, 0.04 + y) for x, y in ring(r, r * 1.02, 10)], -0.04, SINK, axis="y",
+        x0 = s * r * gap
+        a.prism(rim_key, S.octagon(x0 - r * 1.08, x0 + r * 1.08, -r * 1.12, r * 1.12, r * 0.4), 0.0, SINK + 0.02,
+                axis="y", bevel=0.01, matrix=m)
+        a.prism(key, S.octagon(x0 - r, x0 + r, 0.04 - r * 1.02, 0.04 + r * 1.02, r * 0.36), -0.04, SINK, axis="y",
                 bevel=0.01, matrix=m)
 
 

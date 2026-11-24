@@ -518,11 +518,11 @@ def row(sheet, y, m, jt):
 
 # ---------------------------------------------------------------- листы «до / после» (правки по аудиту)
 CHANGES = {  # что сделано по колонке «Как исправить» (коротко, для листа)
-    "GiantPenguin": ["тело-яйцо из 9 ярусов (было — ступенчатый ящик)", "живот вписан в тело белым овалом",
+    "GiantPenguin": ["тело-яйцо из 8 ярусов-ступеней (было — ящик)", "живот вписан в ярусы тела белым овалом",
                      "ласты-лопасти с изгибом и толщиной", "крупные лапы с пальцами",
                      "голова крошечная (шутка), но с лицом: большие глаза, клюв, белые щёчки"],
     "TwoHeadFox": ["поза «сидит»: круп-груша, грудь вперёд, белая грудка", "передние лапы-колонны и стопы, бёдра сбоку",
-                   "хвост клубками обвивает лапы", "толстые шеи буквой V из плеч", "морды вперёд с носом и ртом, брови"],
+                   "хвост брусками обвивает лапы", "толстые шеи буквой V из плеч", "морды вперёд с носом и ртом, брови"],
     "WalkingJelly": ["купол-полусфера, полупрозрачный (в игре — прозрачность части)", "фестоны по краю купола",
                      "ноги-щупальца с волной, сужаются к концу", "ротовые щупальца под куполом",
                      "лицо и ядро — отдельная непрозрачная часть, видны сквозь купол"],
@@ -592,6 +592,82 @@ def before_after(ids, after, name, title):
     return os.path.join(OUT, name)
 
 
+STYLE_BACK = [  # набор v2: что вернул в стиль предметов и боссов (D39) после «отошёл от нашего стиля»
+    "тела — ярусы с прямыми стенками и срезанными углами, ступени видны (как «шар» Сфинкса), а не гладкий "
+    "многогранник",
+    "крупные плоские грани — на них снова читаются кольца D39",
+    "глаза — брусок белка, квадратный зрачок, квадратный блик (как у Верблюда-тучи и Сфинкса)",
+    "клюв, морда, пальцы — тупые бруски и клинья, звенья лап — сечение-брусок (как у дракона)",
+    "живот и грудка — часть ярусов тела вровень, ступени общие (как полосы Сфинкса)",
+]
+
+
+def style_sheet(ids, v1, v2, name):
+    """Лист «набор v2 — снова наш стиль»: эталоны стиля сверху; по строке на модель — до | набор v1 (отклонён) |
+    набор v2 спереди, сбоку, 3/4 | текстура D39 крупно; проверки v2."""
+    R = reports(v2)
+    meta = {m[0]: m for m in M}
+    cw, rh = 300, 330
+    width = cw * 6 + 36
+    refs = [("эталон: Сфинкс (босс 4)", os.path.join(ROOT, "assets", "concepts", "boss4", "sphinx_v2",
+                                                       "sphinx_hero_lazy.jpg")),
+            ("эталон: Верблюд-туча (существо босса 4)", os.path.join(ROOT, "assets", "concepts", "boss4", "creatures",
+                                                                     "CloudCamel", "CloudCamel_hero.png")),
+            ("эталон: лицо Верблюда", os.path.join(ROOT, "assets", "concepts", "boss4", "creatures", "CloudCamel",
+                                                   "CloudCamel_face.png"))]
+    top = HEAD + rh + 20 + 24 * (len(STYLE_BACK) + 1)
+    sheet = Image.new("RGB", (width, 70 + top + len(ids) * (HEAD + rh + 40)), "white")
+    d = ImageDraw.Draw(sheet)
+    d.text((14, 12), "Набор анатомии v2: анатомия прежняя, стиль — наш (D39, как Сфинкс и существа босса 4)",
+           font=font(28, True), fill=(30, 30, 40))
+    y = 64
+    d.rectangle([0, y, width, y + HEAD], fill=(38, 44, 58))
+    d.text((14, y + 4), "Эталоны стиля", font=font(22, True), fill="white")
+    x = 0
+    for lab, path in refs:
+        sheet.paste(fit(crop(Image.open(path)), cw * 2 - 6, rh - 6), (x + 3, y + HEAD + 3))
+        label(d, x + 8, y + HEAD + 8, lab)
+        x += cw * 2
+    ty = y + HEAD + rh + 12
+    d.text((14, ty), "Что вернул в стиль (анатомия по аудиту не менялась):", font=font(18, True), fill=(30, 100, 60))
+    for ln in STYLE_BACK:
+        ty += 24
+        d.text((24, ty), "• " + ln, font=font(17), fill=(35, 35, 45))
+    y += top + 10
+    for i in ids:
+        m = meta[i]
+        d.rectangle([0, y, width, y + HEAD], fill=(38, 44, 58))
+        d.text((14, y + 4), f"№{m[1]}  {m[2]}", font=font(22, True), fill="white")
+        cols = [("до", shots(i)[2][1], (255, 170, 170)),
+                ("набор v1 — отклонён", os.path.join(v1, f"{i}_hero.png"), (255, 170, 170)),
+                ("v2 спереди", os.path.join(v2, f"{i}_front.png"), (160, 240, 170)),
+                ("v2 сбоку", os.path.join(v2, f"{i}_side.png"), (160, 240, 170)),
+                ("v2 3/4", os.path.join(v2, f"{i}_hero.png"), (160, 240, 170)),
+                ("v2 крупно: кольца D39", os.path.join(v2, f"{i}_side.png"), (160, 240, 170))]
+        x = 0
+        for k, (lab, path, col) in enumerate(cols):
+            if k == 2:
+                x += 12
+                d.rectangle([x - 8, y + HEAD, x - 4, y + HEAD + rh], fill=(38, 44, 58))
+            im = Image.open(path)
+            if k == 5:  # вырез из вида сбоку в 2 раза крупнее — кольца и ступени
+                c = crop(im)
+                im = c.crop((c.width // 4, c.height // 5, c.width * 3 // 4, c.height * 3 // 5))
+            sheet.paste(fit(im if k == 5 else crop(im), cw - 6, rh - 6), (x + 3, y + HEAD + 3))
+            label(d, x + 8, y + HEAD + 8, lab)
+            x += cw
+        r = R.get(i, {})
+        if r:
+            ji = [j for j in r.get("joint_issues", []) if j["part"] != "Stand"]
+            chk = (f"v2: треугольников {r['tris']} (≤ 3 000); вывернутых {r['flipped']}, вырожденных "
+                   f"{r['degenerate']}, совпадающих граней {len(r['coplanar'])}; суставы: "
+                   f"{'ошибок нет' if not ji else len(ji)}")
+            d.text((14, y + HEAD + rh + 8), chk, font=font(16), fill=(90, 90, 110))
+        y += HEAD + rh + 40
+    sheet.save(os.path.join(OUT, name))
+    return os.path.join(OUT, name)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     J = joints()
@@ -644,5 +720,8 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["kit"]:  # лист «до / после» набора анатомии на трёх моделях
         print(before_after(["GiantPenguin", "TwoHeadFox", "WalkingJelly"], os.path.join(C, "kit_v1"),
                            "kit_before_after.png", "Набор анатомии: до / после на трёх моделях"))
+    elif sys.argv[1:2] == ["kit2"]:  # набор v2 — возврат к стилю D39, рядом с эталонами
+        print(style_sheet(["GiantPenguin", "TwoHeadFox", "WalkingJelly"], os.path.join(C, "kit_v1"),
+                          os.path.join(C, "kit_v2"), "kit_v2_style.png"))
     else:
         main()
