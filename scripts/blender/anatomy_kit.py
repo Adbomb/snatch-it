@@ -315,7 +315,8 @@ def _brow(a, key, m, w, hh, tilt, raise_, lift):
     ниже), подъём raise_ над верхом белка."""
     bh = max(hh * 0.32, 0.03)
     mm = m @ Matrix.Translation((0, 0, hh + bh * 0.9 + raise_)) @ Matrix.Rotation(math.radians(tilt), 4, "Y")
-    a.box(key, -w * 1.25, w * 1.25, -lift - 0.05, SINK * 0.6, -bh / 2, bh / 2, bevel=0, matrix=mm)
+    a.box(key, -w * 1.25, w * 1.25, -lift - 0.05, SINK * 2.2, -bh / 2, bh / 2, bevel=0, matrix=mm)  # глубоко: на
+    # круглой голове бровь не отходит от поверхности
 
 
 def snout(a, key, base, direction, length, w0, w1, h0=None, h1=None, nose_key="dark", nose=0.3, mouth_key="mouth",

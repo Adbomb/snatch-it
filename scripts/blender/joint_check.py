@@ -85,6 +85,9 @@ def check_joints(parts, rig, gap=0.05, pivot_far=0.5):
                 for c, (cp, _) in rig.items():
                     if c != n and cp in (n, parent) and c in trees and                             _min_dist([v.co for v in bms[c].verts], trees[parent]) <= gap:
                         d = min(d, _min_dist(pts, trees[c]))
+                        cv = [v.co for v in bms[c].verts]
+                        if d > gap and any(_inside(trees[n], q) or _enclosed(trees[n], q) for q in cv[:: max(1, len(cv) // 30)]):
+                            d = 0.0  # нога входит в тело (поверхности далеко, объёмы пересекаются)
             if d > gap and not any(_inside(trees[parent], p) for p in pts[:: max(1, len(pts) // 40)]):
                 issues.append({"kind": "щель в суставе", "part": n, "parent": parent, "gap": round(d, 3)})
             pv = Vector(pivot)
