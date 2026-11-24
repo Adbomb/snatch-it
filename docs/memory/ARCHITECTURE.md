@@ -505,6 +505,11 @@
   поведения, карта по редкости: Common 512²) + `art_glacier.py` (30 строителей) → `assets/models/art/boss5/`,
   `assets/textures/art/boss5/`; собирать по одному существу на процесс (`scripts/run_glacier.sh`): в одном процессе
   свет студии копится. Листы на просмотр и таблица весов D58 — `scripts/boss5_sheets.py` → `assets/concepts/boss5/sheets/`.
+  Набор анатомии (D64) — `scripts/blender/anatomy_kit.py` (`import anatomy_kit as A`): `body` (ярусы-усечённые
+  призмы по профилю egg / barrel / drop / pear / ball / dome, фаска D39, кольца яруса подобны — грани плоские, низы
+  разных тел на разной высоте — без совпадений), `ball`, `limb` (звенья + шар-сустав), `flipper`, `foot`,
+  `folded_wing`, `eye` (по нормали, утоплен ≥ 0.05; `closed` — сон), `snout`, `beak`, `facial_disc`. Мелкие тела
+  (< 0.3) без фаски — бюджет треугольников. `GLACIER_OUT` — полная сборка вне assets (листы «до/после»).
   Анатомия (D64): `scripts/blender/joint_check.py` — `check_joints` (щель часть↔родитель > 0.05 стада, летающие куски,
   ось дальше 0.5 стада; тело на подставке может опираться на ноги-детей или ноги-соседей) и `check_bends` (пустота
   вокруг оси — сгиб раскрывается); вызывается из `creature_kit.run` и `boss5_yeti.py` (у Йети — во всех позах,

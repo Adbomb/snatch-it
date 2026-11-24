@@ -516,6 +516,82 @@ def row(sheet, y, m, jt):
     sheet.paste(text_block(m, jt, text_width(m)), (x + CELL + 12, y + HEAD + 8))
 
 
+# ---------------------------------------------------------------- листы «до / после» (правки по аудиту)
+CHANGES = {  # что сделано по колонке «Как исправить» (коротко, для листа)
+    "GiantPenguin": ["тело-яйцо из 9 ярусов (было — ступенчатый ящик)", "живот вписан в тело белым овалом",
+                     "ласты-лопасти с изгибом и толщиной", "крупные лапы с пальцами",
+                     "голова крошечная (шутка), но с лицом: большие глаза, клюв, белые щёчки"],
+    "TwoHeadFox": ["поза «сидит»: круп-груша, грудь вперёд, белая грудка", "передние лапы-колонны и стопы, бёдра сбоку",
+                   "хвост клубками обвивает лапы", "толстые шеи буквой V из плеч", "морды вперёд с носом и ртом, брови"],
+    "WalkingJelly": ["купол-полусфера, полупрозрачный (в игре — прозрачность части)", "фестоны по краю купола",
+                     "ноги-щупальца с волной, сужаются к концу", "ротовые щупальца под куполом",
+                     "лицо и ядро — отдельная непрозрачная часть, видны сквозь купол"],
+}
+
+
+def reports(folder):
+    out = {}
+    for f in os.listdir(folder) if os.path.isdir(folder) else []:
+        if f.startswith("report_") and f.endswith(".json"):
+            for k, r in json.load(open(os.path.join(folder, f), encoding="utf-8")).items():
+                out[k] = r
+    return out
+
+
+def before_after(ids, after, name, title):
+    """Лист: по строке на модель — до (спереди, сбоку, 3/4) | после (то же) и что изменилось + проверки."""
+    R = reports(after)
+    meta = {m[0]: m for m in M}
+    cw, rh, tw = 250, 290, 560
+    width = cw * 6 + 24 + tw
+    rows = []
+    for i in ids:
+        lines = CHANGES.get(i, [])
+        rows.append((i, lines, HEAD + max(rh, 60 + 24 * (len(lines) + 4))))
+    sheet = Image.new("RGB", (width, 70 + sum(h + 10 for _, _, h in rows)), "white")
+    d = ImageDraw.Draw(sheet)
+    d.text((14, 12), title, font=font(30, True), fill=(30, 30, 40))
+    y = 64
+    for i, lines, h in rows:
+        m = meta[i]
+        d.rectangle([0, y, width, y + HEAD], fill=(38, 44, 58))
+        d.text((14, y + 4), f"№{m[1]}  {m[2]}", font=font(22, True), fill="white")
+        d.text((cw * 1.5, y + HEAD / 2), "ДО", font=font(20, True), fill=(255, 170, 170), anchor="mm")
+        d.text((cw * 4.5 + 12, y + HEAD / 2), "ПОСЛЕ", font=font(20, True), fill=(160, 240, 170), anchor="mm")
+        before = shots(i)
+        x = 0
+        for (lab, path), (_, v) in zip(before, (("спереди", "front"), ("сбоку", "side"), ("3/4", "hero"))):
+            sheet.paste(fit(crop(Image.open(path)), cw - 6, rh - 6), (x + 3, y + HEAD + 3))
+            label(d, x + 8, y + HEAD + 8, lab)
+            x += cw
+        x += 12
+        d.rectangle([x - 8, y + HEAD, x - 4, y + HEAD + rh], fill=(38, 44, 58))
+        for lab, v in (("спереди", "front"), ("сбоку", "side"), ("3/4", "hero")):
+            sheet.paste(fit(crop(Image.open(os.path.join(after, f"{i}_{v}.png"))), cw - 6, rh - 6),
+                        (x + 3, y + HEAD + 3))
+            label(d, x + 8, y + HEAD + 8, lab)
+            x += cw
+        tx, ty = x + 12, y + HEAD + 8
+        d.text((tx, ty), "Что исправлено:", font=font(17, True), fill=(30, 100, 60))
+        ty += 24
+        for ln in lines:
+            for k, w in enumerate(wrap(d, ln, font(17), tw - 30)):
+                d.text((tx + 4, ty), ("• " if k == 0 else "   ") + w, font=font(17), fill=(35, 35, 45))
+                ty += 22
+        r = R.get(i, {})
+        if r:
+            ji = [j for j in r.get("joint_issues", []) if j["part"] != "Stand"]
+            chk = (f"треугольников {r['tris']} (≤ 3 000); вывернутых {r['flipped']}, вырожденных {r['degenerate']}, "
+                   f"совпадающих граней {len(r['coplanar'])}; суставы: {'ошибок нет' if not ji else len(ji)}")
+            for w in wrap(d, chk, font(15), tw - 20):
+                ty += 4
+                d.text((tx, ty), w, font=font(15), fill=(90, 90, 110))
+                ty += 16
+        y += h + 10
+    sheet.save(os.path.join(OUT, name))
+    return os.path.join(OUT, name)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     J = joints()
@@ -563,4 +639,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if sys.argv[1:2] == ["kit"]:  # лист «до / после» набора анатомии на трёх моделях
+        print(before_after(["GiantPenguin", "TwoHeadFox", "WalkingJelly"], os.path.join(C, "kit_v1"),
+                           "kit_before_after.png", "Набор анатомии: до / после на трёх моделях"))
+    else:
+        main()

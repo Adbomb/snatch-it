@@ -89,7 +89,7 @@ def check_joints(parts, rig, gap=0.05, pivot_far=0.5):
                 issues.append({"kind": "щель в суставе", "part": n, "parent": parent, "gap": round(d, 3)})
             pv = Vector(pivot)
             dp = min(trees[n].find_nearest(pv)[3], trees[parent].find_nearest(pv)[3])
-            if dp > pivot_far:
+            if dp > pivot_far and not any(f(t, pv) for f in (_inside, _enclosed) for t in (trees[n], trees[parent])):  # внутри тела — в суставе
                 issues.append({"kind": "точка вращения вдали от сустава", "part": n, "dist": round(dp, 3)})
         # летающие острова: не касаются ни других островов части, ни других частей
         isl = _islands(bms[n])

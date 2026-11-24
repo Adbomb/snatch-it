@@ -25,6 +25,7 @@ from creature_kit import (S, bar, chain, closed_eye, common_stand, d39v2, disc, 
                           legendary_stand, ngon, part, rare_stand, round_eye, run, stripe_chain, tilt, tube,
                           with_matrix)
 import v4_kit as K  # noqa: E402
+import anatomy_kit as A  # noqa: E402
 
 V = Vector
 S2 = (1, -1)
@@ -202,31 +203,43 @@ def snow_slime():
 
 
 def two_head_fox():
-    """3. Двухголовый песец: на одном пушистом теле две головы смотрят в разные стороны и спорят."""
+    """3. Двухголовый песец: сидит, обвив лапы хвостом; из плеч буквой V растут две шеи — головы спорят, глядя
+    в разные стороны (D64 «Анатомия»: грудь, передние лапы, бедро, хвост вокруг лап)."""
     a = new("TwoHeadFox", {"fox": ("F4F8FF", True), "foxT": ("BFD3EA", False), "earIn": ("FFB7C8", False)})
     t = common_stand(a, 1.4)
     part(a, "Body", "Stand", (0, 0.1, t + 0.5))
     z = t
-    layered(a, "fox", [(-0.5, z), (-0.68, z + 0.75), (-0.5, z + 1.35), (0.4, z + 1.35), (0.72, z + 0.8), (0.75, z)],
-            [(0.6, 1, 1), (0.78, 0.9, 0.9)], (0.1, z + 0.7))
+    A.body(a, "fox", (0, 0.28, z), 0.6, 0.62, 1.32, "pear", n=5, t0=0.06, lean=-0.42)  # сидит: круп сзади, грудь вперёд
+    A.body(a, "snow", (0, -0.22, z + 0.55), 0.38, 0.32, 0.72, "egg", n=2, t0=0.05, lean=-0.06, bevel=0)  # белая грудка
     for s in S2:
-        a.box("fox", s * 0.2, s * 0.52, -0.95, -0.35, z + 0.01, z + 0.18)  # лапы
-    part(a, "Tail", "Body", (0.55, 0.55, z + 0.3))
-    kchain(a, "fox", [(0.55, 0.55, z + 0.3), (1.15, 0.2, z + 0.32), (1.05, -0.6, z + 0.38)], [0.6, 0.8, 0.6])
-    spike(a, "foxT", (1.05, -0.6, z + 0.38), (0.6, -0.95, z + 0.42), 0.42)
+        A.body(a, "fox", (s * 0.42, 0.42, z), 0.2, 0.42, 0.62, "egg", n=3, t0=0.12)  # бедро задней лапы
+        A.foot(a, "fox", (s * 0.42, 0.1, z), (0, -1, 0), 0.5, 0.26, toes=3, toe_key="foxT", h=0.13, z=z)
+        A.limb(a, "fox", [(s * 0.22, -0.3, z + 0.92), (s * 0.24, -0.42, z + 0.45), (s * 0.25, -0.46, z + 0.12)],
+               [0.27, 0.22, 0.2], joints=False)  # передняя лапа-колонна под грудью
+        A.foot(a, "fox", (s * 0.25, -0.46, z), (0, -1, 0), 0.32, 0.24, toes=3, toe_key="foxT", h=0.12, z=z)
+    part(a, "Tail", "Body", (0.45, 0.6, z + 0.25))
+    for c, r in (((0.5, 0.58, z + 0.27), 0.24), ((0.9, 0.22, z + 0.3), 0.29), ((0.86, -0.4, z + 0.28), 0.27),
+                 ((0.4, -0.8, z + 0.22), 0.21)):  # пушистый хвост клубками обвивает лапы
+        A.ball(a, "fox", c, r, n=2, rz=r * 0.85)
+    spike(a, "foxT", (0.3, -0.84, z + 0.2), (-0.12, -0.92, z + 0.18), 0.3)
     for s, name in ((1, "HeadL"), (-1, "HeadR")):
-        base = V((s * 0.38, -0.1, z + 1.3))
+        base = V((s * 0.16, -0.32, z + 1.12))
         part(a, name, "Body", tuple(base))
-        hc = V((s * 0.75, -0.3, z + 1.85))
-        kchain(a, "fox", [tuple(base), tuple(hc)], [0.42, 0.36])
-        with_matrix(a, tilt(hc, "Z", s * 40))  # каждая голова отвернулась в свою сторону
-        blob(a, "fox", tuple(hc), 0.38, 0.36, 0.32, n=3)
-        taper(a, "fox", tuple(hc + V((0, -0.3, -0.05))), tuple(hc + V((0, -0.72, -0.1))), 0.32, 0.12, 0.26, 0.1)
-        blob(a, "dark", tuple(hc + V((0, -0.76, -0.1))), 0.06, 0.05, 0.05, n=2)
+        hc = V((s * 0.56, -0.44, z + 1.64))
+        A.limb(a, "fox", [tuple(base), tuple((base + hc) / 2 + V((s * 0.04, 0, 0.03))), tuple(hc)], [0.46, 0.4, 0.34],
+               joints=False)  # толстая шея из плеча
+        with_matrix(a, tilt(hc, "Z", s * 38))  # каждая голова отвернулась в свою сторону
+        A.ball(a, "fox", tuple(hc), 0.32, n=3, ry=0.34, rz=0.28)
+        A.body(a, "snow", tuple(hc + V((0, -0.12, -0.3))), 0.24, 0.2, 0.2, "ball", n=2)  # белые щёки
+        A.snout(a, "fox", tuple(hc + V((0, -0.24, -0.06))), (0, -1, -0.18), 0.42, 0.28, 0.1, 0.22, 0.08,
+                mouth_key="mouth", mouth=0.75)
         for e in S2:
-            round_eye(a, tuple(hc + V((e * 0.15, -0.34, 0.1))), 0.07, look=(s * 0.6, 0.0), lid=0.4, lid_key="foxT")
-            spike(a, "fox", tuple(hc + V((e * 0.2, 0.0, 0.25))), tuple(hc + V((e * 0.3, 0.05, 0.6))), 0.22)
-        a.box("mouth", hc.x - 0.12, hc.x + 0.12, hc.y - 0.62, hc.y - 0.58, hc.z - 0.22, hc.z - 0.14, bevel=0)  # спорят
+            ep = hc + V((e * 0.15, -0.27, 0.08))
+            A.eye(a, tuple(ep), 0.075, normal=(e * 0.45, -1, 0.15), look=(s * 0.6, 0.0), sides=6)
+            bar(a, "foxT", tuple(ep + V((-e * 0.09, -0.05, 0.11))), tuple(ep + V((e * 0.09, -0.05, 0.07))), 0.05, 0.04,
+                bevel=0)  # сердитые брови — спорят
+            spike(a, "fox", tuple(hc + V((e * 0.17, 0.02, 0.18))), tuple(hc + V((e * 0.27, 0.06, 0.62))), 0.24)
+            spike(a, "earIn", tuple(hc + V((e * 0.17, -0.07, 0.22))), tuple(hc + V((e * 0.25, -0.03, 0.52))), 0.13)
         with_matrix(a, None)
     face_point(a, (0, -0.8, z + 1.8))
     closeup(a, (0.3, -0.5, z + 0.8))
@@ -767,30 +780,43 @@ def swivel_owl():
 
 
 def walking_jelly():
-    """19. Медуза-ходок: розовый купол шагает на шести длинных щупальцах-ногах, как паук."""
+    """19. Медуза-ходок: полупрозрачный купол с фестонами шагает на шести щупальцах-ногах с волной; под куполом —
+    короткие ротовые щупальца, внутри светится ядро (D64 «Анатомия»)."""
     a = new("WalkingJelly", {"dome": ("FF9FD6", True), "domeD": ("E86FB8", False), "leg": ("FFC8E8", False),
                              "neonCore": ("FF4FA3", False)})
     t = rare_stand(a, 1.6)
-    part(a, "Bell", "Stand", (0, 0, t + 1.7))
     z = t
-    bz = z + 1.75
-    blob(a, "dome", (0, 0, bz + 0.45), 0.9, 0.85, 0.65, n=5, z0=bz)
-    a.frame("domeD", ngon(0, 0, 0.92, 12), 0.15, bz - 0.05, bz + 0.12, axis="z")
-    blob(a, "neonCore", (0, 0, bz + 0.4), 0.32, 0.32, 0.28, n=3)
-    eyes(a, 0.26, -0.84, bz + 0.48, 0.12)
-    cheeks(a, 0.48, -0.76, bz + 0.25, 0.07)
+    bz = z + 1.6
+    part(a, "Bell", "Stand", (0, 0, bz + 0.2))
+    A.body(a, "dome", (0, 0, bz), 0.98, 0.98, 1.1, "dome", n=6, sides=10, floor=0.12)  # купол-полусфера
+    a.frame("domeD", ngon(0, 0, 0.99, 10), 0.14, bz - 0.06, bz + 0.1, axis="z")
+    for k in range(10):  # фестоны по краю
+        ang = math.radians(18 + 36 * k)
+        d = V((math.cos(ang), math.sin(ang), 0))
+        spike(a, "domeD", tuple(d * 0.9 + V((0, 0, bz + 0.02))), tuple(d * 1.02 + V((0, 0, bz - 0.2))), 0.26)
+    for k in range(4):  # ротовые щупальца — короткие, с волной
+        ang = math.radians(45 + 90 * k)
+        d = V((math.cos(ang), math.sin(ang), 0))
+        side = V((-d.y, d.x, 0))
+        kchain(a, "leg", [tuple(d * 0.12 + V((0, 0, bz + 0.05))), tuple(d * 0.2 + side * 0.08 + V((0, 0, bz - 0.3))),
+                          tuple(d * 0.16 - side * 0.08 + V((0, 0, bz - 0.6)))], [0.16, 0.12, 0.06], up=(0, 0, 1))
+    part(a, "Face", "Bell", (0, -0.4, bz + 0.45))  # лицо и ядро — непрозрачные, видны сквозь купол
+    A.ball(a, "neonCore", (0, 0.32, bz + 0.52), 0.24, n=3, rz=0.22)  # ядро в глубине купола, над глазами
+    for s in S2:
+        A.eye(a, (s * 0.28, -0.79, bz + 0.45), 0.13, normal=(s * 0.33, -1, 0.42), look=(0, 0.2))
+        disc(a, "pink", s * 0.5, bz + 0.2, 0.07, -0.86, -0.8, n=8, axis="y", bevel=0)
+    a.box("mouth", -0.1, 0.1, -0.9, -0.84, bz + 0.26, bz + 0.31, bevel=0)
     for i, name in enumerate(("LegsA", "LegsB", "LegsC")):
         part(a, name, "Bell", (0, 0, bz))
         for s in S2:
             ang = math.radians(30 + 60 * i) * s
             d = V((math.sin(ang), -math.cos(ang), 0))
-            root = V((0, 0, bz)) + d * 0.55
-            knee = V((0, 0, bz + 0.75)) + d * 1.3
-            foot = V((0, 0, z + 0.04)) + d * 1.5
-            kchain(a, "leg", [tuple(root), tuple(knee)], [0.18, 0.15], up=(0, 0, 1))
-            blob(a, "domeD", tuple(knee), 0.12, 0.12, 0.12, n=2)
-            kchain(a, "leg", [tuple(knee), tuple(foot - d * 0.15 + V((0, 0, 0.35)))], [0.15, 0.12], up=(0, 0, 1))
-            spike(a, "domeD", tuple(foot - d * 0.15 + V((0, 0, 0.35))), tuple(foot), 0.12)
+            side = V((-d.y, d.x, 0)) * s
+            pts = [d * 0.6 + V((0, 0, bz + 0.05)), d * 1.0 + side * 0.12 + V((0, 0, bz - 0.35)),
+                   d * 1.22 - side * 0.14 + V((0, 0, z + 0.95)), d * 1.36 + side * 0.1 + V((0, 0, z + 0.42)),
+                   d * 1.5 + V((0, 0, z + 0.08)), d * 1.72 + V((0, 0, z + 0.06))]
+            kchain(a, "leg", [tuple(p) for p in pts], [0.24, 0.2, 0.17, 0.14, 0.12, 0.08], up=(0, 0, 1))
+    a.transparent_parts = ("Bell",)
     face_point(a, (0, -0.9, bz + 0.45))
     closeup(a, (0.4, -0.4, bz + 0.7), eye_off=(-1.0, -1.8, 0.8))
     a.pose = {"Bell": ((0, 6, 0), (0, 0, 0.1)), "LegsA": ((0, 0, 8), (0, 0, 0)), "LegsC": ((0, 0, -8), (0, 0, 0))}
@@ -997,27 +1023,28 @@ def nest_deer():
 
 
 def giant_penguin():
-    """25. Пингвин-гигант: огромное круглое тело на всю площадку и крошечная головка с клювиком наверху."""
+    """25. Пингвин-гигант: огромное тело-яйцо с вписанным белым животом, ласты-лопасти вдоль боков, крупные лапы —
+    и крошечная головка (шутка), но с явным лицом: большие глаза и клюв (D64 «Анатомия»)."""
     a = new("GiantPenguin", {"navy": ("273A6E", True), "orange": ("FF9F1C", False)})
     t = epic_stand(a, 1.6)
     part(a, "Body", "Stand", (0, 0, t + 1.3))
     z = t
+    A.body(a, "navy", (0, 0.06, z), 1.42, 1.26, 2.72, "egg", n=9, t0=0.07)  # тело-яйцо
+    A.body(a, "white", (0, -0.22, z + 0.14), 1.2, 1.12, 2.2, "egg", n=7, t0=0.1, t1=0.9)  # живот вписан спереди
     for s in S2:
-        a.box("orange", s * 0.55 - 0.3, s * 0.55 + 0.3, -1.1, -0.2, z, z + 0.16)
-    blob(a, "navy", (0, 0.05, z + 1.4), 1.45, 1.3, 1.4, n=6)
-    slab(a, "white", [(-1.0, z + 0.35), (-1.38, z + 1.2), (-1.2, z + 2.2), (-0.5, z + 2.3), (-0.5, z + 0.35)],
-         -1.0, 1.0)
+        A.foot(a, "orange", (s * 0.56, -0.5, z), (s * 0.12, -1, 0), 0.82, 0.58, toes=3, h=0.16, z=z)
     for s, name in ((1, "FlipperL"), (-1, "FlipperR")):
-        part(a, name, "Body", (s * 1.38, 0.0, z + 1.9))
-        kchain(a, "navy", [(s * 1.38, 0.0, z + 1.9), (s * 1.6, -0.1, z + 1.1)], [0.45, 0.28], [0.16, 0.12])
-    part(a, "Head", "Body", (0, 0.0, z + 2.75))
-    hz = z + 2.75
-    blob(a, "navy", (0, 0.0, hz + 0.16), 0.2, 0.2, 0.17, n=3)  # крошечная головка
-    a.box("white", -0.12, 0.12, -0.2, -0.17, hz + 0.08, hz + 0.24, bevel=0)
+        part(a, name, "Body", (s * 1.22, 0.05, z + 2.05))
+        A.flipper(a, "navy", (s * 1.18, 0.05, z + 2.1), (s * 1.58, 0.12, z + 0.95), 0.62, 0.16, thick=0.24,
+                  bend=(s * 0.16, 0.0, 0.0), up=(s, 0, 0))
+    part(a, "Head", "Body", (0, 0.0, z + 2.72))
+    hz = z + 2.93
+    A.ball(a, "navy", (0, 0.0, hz), 0.27, n=4, rz=0.25)  # крошечная головка
     for s in S2:
-        disc(a, "dark", s * 0.07, hz + 0.18, 0.03, -0.22, -0.19, n=6, axis="y", bevel=0)
-    spike(a, "orange", (0, -0.18, hz + 0.1), (0, -0.34, hz + 0.08), 0.08)
-    face_point(a, (0, -0.25, hz + 0.15))
+        A.body(a, "white", (s * 0.12, -0.18, hz - 0.15), 0.09, 0.07, 0.26, "egg", n=2)  # белые щёчки под глазами
+        A.eye(a, (s * 0.11, -0.22, hz + 0.06), 0.1, normal=(s * 0.4, -1, 0.15), look=(0, 0.1), pupil=0.55)
+    A.beak(a, "orange", (0, -0.24, hz - 0.06), (0, -1, -0.2), 0.26, 0.16)
+    face_point(a, (0, -0.3, hz))
     closeup(a, (0.0, -1.2, z + 1.4))
     a.pose = {"Head": ((0, 15, 0), (0, 0, 0)), "FlipperL": ((0, 25, 0), (0, 0, 0)), "FlipperR": ((0, -10, 0), (0, 0, 0))}
     return a
@@ -1260,8 +1287,10 @@ def main():
     only = [x for x in argv[2:] if x != "quick"]
     items = [x for x in COMMON + RARE + EPIC + LEGENDARY if not only or x[0] in only]
     name = "report.json" if not only else "report_" + "+".join(only)[:120] + ".json"
-    run(items, repo, shots, os.path.join(repo, "assets", "models", "art", "boss5"),
-        os.path.join(repo, "assets", "textures", "art", "boss5"), quick=quick, report_name=name)
+    out = os.environ.get("GLACIER_OUT")  # предпросмотр полной сборки вне assets (листы «до/после»)
+    models = os.path.join(out, "models") if out else os.path.join(repo, "assets", "models", "art", "boss5")
+    tex = os.path.join(out, "textures") if out else os.path.join(repo, "assets", "textures", "art", "boss5")
+    run(items, repo, shots, models, tex, quick=quick, report_name=name)
 
 
 if __name__ == "__main__":
