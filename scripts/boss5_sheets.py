@@ -177,10 +177,71 @@ def maps(cat):
                   os.path.join(OUT, f"maps_creatures_{page // 6 + 1}.png"), thumb=440)
 
 
+def fixes(cat):
+    """Только исправленное по замечаниям владельца 2026-11-24: Йети (сон, засыпание, пробуждение, глыба крупно),
+    4 существа и их карты (листы 3_fix_yeti.png, 4_fix_creatures.png, maps_fix.png)."""
+    g = os.path.join(C, "yeti_game")
+    a = os.path.join(C, "anim", "frames")
+    tw, th = 270, 334
+    shots = [("pose_sleep_34.png", "Сон — глыба рядом"), ("pose_sleep_front.png", "Сон — спереди"),
+             ("pose_stand_side.png", "Глыба сбоку"), ("pose_stand_back34.png", "Глыба сзади, 3/4")]
+    clips = [("sleep_idle", "Сон (цикл)"), ("fall_asleep", "Засыпание: снял глыбу, поставил рядом, сел"),
+             ("wake", "Пробуждение: встал, поднял глыбу к плечу, закинул на спину")]
+    sheet = Image.new("RGB", (W, 128 + 600 + 20 + len(clips) * (th + 50) + 40), BG)
+    d = ImageDraw.Draw(sheet)
+    header(d, "Йети — исправления 2026-11-24",
+           "Глыба во сне стоит рядом; пробуждение без подъёма над головой; экспонаты крупнее, у краёв глыбы.")
+    pw = (W - 2 * M - 3 * 12) // 4
+    for i, (f, title) in enumerate(shots):
+        path = os.path.join(g, f)
+        if os.path.exists(path):
+            sheet.paste(fit(Image.open(path).convert("RGB"), pw, 600), (M + i * (pw + 12), 128))
+            d.rectangle((M + i * (pw + 12), 128 + 560, M + i * (pw + 12) + pw, 128 + 600), fill=PANEL)
+            d.text((M + i * (pw + 12) + 10, 128 + 566), title, font=font(22, True), fill=INK)
+    y = 128 + 620
+    for name, title in clips:
+        d.text((M, y), title, font=font(26, True), fill=ACC)
+        y += 40
+        for k in range(8):
+            path = os.path.join(a, f"{name}_{k}.png")
+            if os.path.exists(path):
+                sheet.paste(fit(Image.open(path).convert("RGB"), tw, th), (M + k * (tw + 12), y))
+        y += th + 10
+    sheet.save(os.path.join(OUT, "3_fix_yeti.png"))
+    ids = ["SnowSlime", "SkiEarHare", "PenguinStack", "SwivelOwl"]
+    shots_dir = os.path.join(C, "creatures_final")
+    views = ("hero", "front", "side", "face")
+    cw = (W - 2 * M - 3 * 12) // 4
+    sheet = Image.new("RGB", (W, 128 + len(ids) * (cw + 60) + 20), BG)
+    d = ImageDraw.Draw(sheet)
+    header(d, "Существа — исправления 2026-11-24",
+           "№2 слизень (рыбка внутри, желе прозрачное), №9 заяц (кончики ушей-лыж), №17 пирамида 3-2-1, №18 филин.")
+    y = 128
+    for item_id in ids:
+        num, rarity, wow, name, income = cat[item_id]
+        d.text((M, y + 6), f"{num}. {name} ({RU[rarity]})", font=font(26, True), fill=RARITY[rarity])
+        for i, v in enumerate(views):
+            path = os.path.join(shots_dir, f"{item_id}_{v}.png")
+            if os.path.exists(path):
+                sheet.paste(fit(Image.open(path).convert("RGB"), cw, cw), (M + i * (cw + 12), y + 48))
+        y += cw + 60
+    sheet.save(os.path.join(OUT, "4_fix_creatures.png"))
+    tex = os.path.join(TEX, "boss5")
+    items = [(f"Йети · {m}", os.path.join(TEX, f"Boss5Yeti{m}_color.png"), os.path.join(TEX, f"Boss5Yeti{m}_normal.png"))
+             for m in ("Head", "Body", "Limbs")]
+    items += [(f"{cat[i][0]}. {cat[i][3]} ({RU[cat[i][1]]})", os.path.join(tex, f"{i}_color.png"),
+               os.path.join(tex, f"{i}_normal.png")) for i in ids]
+    maps_page(items, "Карты исправленного: Йети (3) и 4 существа", os.path.join(OUT, "maps_fix.png"), thumb=440)
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     cat = catalog()
     assert len(cat) == 30, len(cat)
+    if "fixes" in sys.argv[1:]:
+        fixes(cat)
+        print("FIX_SHEETS_OK")
+        return
     w = collection(cat)
     yeti()
     maps(cat)

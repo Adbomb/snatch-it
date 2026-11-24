@@ -55,6 +55,7 @@ def flat(P):
     for i, c in enumerate(P["pelvis"]):
         f[f"pel{i}"] = c
     f["pitch"], f["torso"], f["jaw"], f["mono"] = P["pitch"], P["torso"], P["jaw"], P["mono"]
+    f["roll"] = P.get("roll", 0.0)
     for i, c in enumerate(P["head"]):
         f[f"head{i}"] = c
     for s in S2:
@@ -79,6 +80,7 @@ def unflat(f):
     P = Y.base_pose()
     P["pelvis"] = V((f["pel0"], f["pel1"], f["pel2"]))
     P["pitch"], P["torso"], P["jaw"], P["mono"] = f["pitch"], f["torso"], f["jaw"], f["mono"]
+    P["roll"] = f["roll"]
     P["head"] = (f["head0"], f["head1"], f["head2"])
     P["arm"] = {s: tuple(f[f"arm{s}{i}"] for i in range(5)) for s in S2}
     P["curl"] = {s: f[f"curl{s}"] for s in S2}
@@ -167,7 +169,7 @@ class Clip:
 SLEEP = Y.POSES["sleep"]
 COMBAT = Y.POSES["combat"]
 STAND = Y.POSES["stand"]
-OVERHEAD = T((0.0, -1.0, 6.2))  # глыба над головой (система глыбы → мир): основание на высоте ≈ 7.8
+HOIST = Y.block_world((1.55, 1.6, 2.4), yaw=-12.0, tilt_y=18.0)  # глыба на уровне плеча сбоку — по пути на спину
 LIFTED_BACK = None  # на спине
 
 
@@ -178,12 +180,13 @@ def clips():
     C.append(Clip("sleep_idle", "Сон", 6.4, [(0.0, SLEEP), (3.2, inhale), (6.4, SLEEP)], loop=True))
     # пробуждение
     blink = pose("sleep", lid={1: 0.55, -1: 0.65}, head=(10.0, 0.0, 8.0), brow={1: (4, 0.06), -1: (4, 0.06)})
-    reach = pose("alert", pelvis=V((0, 0.0, 1.5)), torso=34.0, head=(-20.0, 0, 0),
-                 arm={1: (-35.0, 40.0, 45.0, 0), -1: (-35.0, 40.0, 45.0, 0)}, curl={1: 0.7, -1: 0.7},
+    # встаёт, наклонившись к глыбе, хватает её левой лапой, поднимает к плечу и закидывает на спину
+    reach = pose("alert", pelvis=V((0, 0.1, 1.8)), torso=22.0, roll=14.0, head=(-16.0, 0, -10.0),
+                 arm={1: (20.0, 70.0, 20.0, 0), -1: (30.0, 20.0, 50.0, 0)}, curl={1: 0.7, -1: 0.4},
                  feet={1: (-0.4, 0.0, 0.0), -1: (-0.2, 0.0, 0.0)})
-    lift = pose("stand", pelvis=V((0, 0.1, 2.2)), torso=4.0, head=(-22.0, 0, 0), jaw=10.0,
-                arm={1: (168.0, 14.0, 24.0, 0), -1: (168.0, 14.0, 24.0, 0)}, curl={1: 0.8, -1: 0.8},
-                feet={1: (0.2, 0.0, 0.0), -1: (0.4, 0.0, 0.0)}, block=OVERHEAD)
+    lift = pose("stand", pelvis=V((0, 0.1, 2.15)), torso=8.0, roll=-6.0, head=(-20.0, 0, 8.0), jaw=12.0,
+                arm={1: (70.0, 70.0, 70.0, 0), -1: (95.0, 10.0, 60.0, 0, 40.0)}, curl={1: 0.8, -1: 0.8},
+                feet={1: (0.2, 0.0, 0.0), -1: (0.4, 0.0, 0.0)}, block=HOIST)
     stood = pose("stand", arm={1: (60.0, 30.0, 80.0, 0), -1: (60.0, 30.0, 80.0, 0)}, curl={1: 0.5, -1: 0.5})
     C.append(Clip("wake", "Пробуждение", 2.4, [(0.0, SLEEP), (0.5, blink), (1.0, Y.POSES["alert"]), (1.35, reach),
                                                (1.65, lift), (1.9, stood), (2.4, COMBAT)],
@@ -241,8 +244,9 @@ def clips():
                   events={"сел, глыба треснула": 0.35, "верхушка откинута, экспонаты в воздухе": 0.6,
                           "лежит (оглушён)": 0.95, "начинает вставать": 1.62}, start="combat", end="stand"))
     # засыпание: снимает глыбу, садится, закрывает глаза
-    unload = pose("stand", pelvis=V((0, 0.1, 2.1)), torso=24.0, arm={1: (-40.0, 40.0, 40.0, 0), -1: (-40.0, 40.0, 40.0, 0)},
-                  curl={1: 0.7, -1: 0.7}, block=T((0.0, 0.6, -0.9)))
+    unload = pose("stand", pelvis=V((0, 0.1, 2.1)), torso=10.0, roll=-6.0,
+                  arm={1: (70.0, 70.0, 70.0, 0), -1: (95.0, 10.0, 60.0, 0, 40.0)}, curl={1: 0.7, -1: 0.7},
+                  block=HOIST)
     sit = pose("alert", lid={1: 0.4, -1: 0.4})
     C.append(Clip("fall_asleep", "Засыпание", 1.6, [(0.0, STAND), (0.45, unload), (0.88, sit), (1.2, pose(
         "sleep", lid={1: 0.7, -1: 0.7})), (1.6, SLEEP)], events={"сел (поза alert)": 0.88}, start="stand", end="sleep"))
@@ -341,7 +345,7 @@ def strips(parts, baked, out):
             mm = m.copy()
             b = next((x for x in mm.node_tree.nodes if x.type == "BSDF_PRINCIPLED"), None)
             if b is not None:
-                b.inputs["Alpha"].default_value = 0.38
+                b.inputs["Alpha"].default_value = 0.3
             mm.surface_render_method = "BLENDED"
             me.materials[i] = mm
     turn = Y.R("Z", -35)
@@ -352,7 +356,8 @@ def strips(parts, baked, out):
             for n, o in parts.items():
                 o.matrix_world = turn @ W[n] @ Y.T(Y.PIVOTS[n])
             bpy.context.view_layer.update()
-            ck.shot(cam, os.path.join(fdir, f"{clip.name}_{k}.png"), (0, -24.0, 6.5), (0, 0, 4.6), 55, (420, 520))
+            ck.shot(cam, os.path.join(fdir, f"{clip.name}_{k}.png"), (1.3, -27.0, 6.5), (1.3, 0, 4.6), 55,
+                    (420, 520))  # чуть шире и правее: глыба рядом во сне и при засыпании в кадре
         print("STRIP", clip.name, flush=True)
 
 

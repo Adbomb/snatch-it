@@ -60,8 +60,8 @@ MONO_C = V((-0.52, -1.46, 1.43))
 BLOCK_PIV = V((0, 1.05, 1.6))  # в системе торса
 BLOCK_TILT = -8.0  # глыба на спине стоит ровнее торса (концепт: половина наклона стойки 16°)
 TOP_HINGE = V((0.0, 3.05, SPLIT))  # задний край шва — петля верхушки (в системе глыбы)
-EXHIBITS = {"ExCup": V((-0.72, 2.15, 5.55)), "ExGem": V((0.85, 2.1, 6.35)), "ExLovibum": V((0.75, 2.2, 3.55)),
-            "ExCritter": V((-0.6, 2.25, 2.25))}  # центры (точки вращения) в системе глыбы
+EXHIBITS = {"ExCup": V((-1.12, 2.0, 5.75)), "ExGem": V((1.2, 2.0, 6.2)), "ExLovibum": V((1.1, 2.0, 3.7)),
+            "ExCritter": V((-1.05, 2.0, 2.45))}  # крупные, у краёв глыбы: спереди видны по бокам головы, сбоку — все  # центры (точки вращения) в системе глыбы
 
 PALETTE = dict(C5.PALETTE)
 for k in ("iceBlock", "iceD", "iceE"):
@@ -95,7 +95,7 @@ def base_pose():
             "arm": {1: (34.0, 12.0, 26.0, 10.0), -1: (28.0, 14.0, 22.0, 8.0)},
             "leg": {1: (12.0, 26.0, 0.0), -1: (12.0, 26.0, 0.0)}, "curl": {1: 0.0, -1: 0.0},
             "jaw": 0.0, "lid": {1: 0.0, -1: 0.0}, "brow": {1: (0.0, 0.0), -1: (0.0, 0.0)}, "mono": 0.0,
-            "block": None, "top": (0.0, 0.0), "ex": {}}
+            "block": None, "top": (0.0, 0.0), "ex": {}, "roll": 0.0}
 
 
 def _ground_offset():
@@ -110,7 +110,7 @@ def skeleton(P, ground=True):
     M = {}
     pel = V(P["pelvis"]) + (V((0, 0, GROUND)) if ground else V())
     M["pelvis"] = T(pel) @ R("X", P["pitch"])
-    M["torso"] = M["pelvis"] @ R("X", P["torso"])
+    M["torso"] = M["pelvis"] @ R("X", P["torso"]) @ R("Y", P.get("roll", 0.0))  # roll > 0 — наклон к +x
     hp, hy, hr = P["head"]
     M["head"] = M["torso"] @ T(NECK) @ R("Z", hy) @ R("X", hp) @ R("Y", hr)
     for s in S2:
@@ -285,17 +285,26 @@ def stand_feet(y=0.25, spread=0.0, lift=0.0):
     return {1: (y, lift, 0.0), -1: (y - spread, lift, 0.0)}
 
 
+BLOCK_BASE = V((0.0, 1.95, 1.6))  # середина основания глыбы в её системе
+
+
+def block_world(pos, yaw=0.0, tilt_y=0.0):
+    """Глыба в мире: середина основания в pos, поворот вокруг вертикали yaw и наклон вбок tilt_y."""
+    return T(pos) @ R("Z", yaw) @ R("Y", tilt_y) @ T(-BLOCK_BASE)
+
+
 def sleep_block():
-    """Глыба снята и стоит на земле позади: спина Йети опирается на её переднюю грань."""
-    return T((0.0, 0.85, -1.54))  # стоит ровно: нижние уголки (−0.06) касаются земли
+    """Глыба снята и стоит на земле рядом (слева от Йети, к зрителю в 3/4 — видна): он спит, привалившись к ней."""
+    return block_world((3.75, 0.9, 0.06), yaw=135.0)  # рама-носилка — от Йети и зрителя; уголки (−0.06) на земле
 
 
 POSES = {
     "stand": pose(head=(-14, 0, 0), brow={1: (-16, 0), -1: (10, 0.12)}, feet=stand_feet(0.4)),
-    "sleep": pose(pelvis=V((0, 0.35, 1.0)), torso=-12, head=(22, 0, 14), lid={1: 1.0, -1: 1.0},
-                  brow={1: (-4, -0.05), -1: (-4, -0.05)}, arm={1: (18, 22, 42, 35), -1: (16, 24, 46, 35)},
+    "sleep": pose(pelvis=V((0, 0.35, 1.0)), torso=-8, roll=20, head=(18, 0, 22), lid={1: 1.0, -1: 1.0},
+                  brow={1: (-4, -0.05), -1: (-4, -0.05)}, arm={1: (8, 48, 62, 20), -1: (16, 24, 46, 35)},
                   feet={1: (-1.5, 0.08, -18), -1: (-1.4, 0.08, -16)}, curl={1: 0.35, -1: 0.35}, block=sleep_block()),
-    "alert": pose(pelvis=V((0, 0.35, 1.0)), torso=-4, head=(-6, 0, 0), arm={1: (18, 22, 42, 35), -1: (16, 24, 46, 35)},
+    "alert": pose(pelvis=V((0, 0.35, 1.0)), torso=-4, roll=10, head=(-6, 0, -6),
+                  arm={1: (8, 44, 58, 20), -1: (16, 24, 46, 35)},
                   feet={1: (-1.5, 0.08, -18), -1: (-1.4, 0.08, -16)}, curl={1: 0.35, -1: 0.35}, block=sleep_block(),
                   brow={1: (6, 0.08), -1: (6, 0.08)}),
     "combat": pose(pelvis=V((0, 0.1, 2.0)), torso=22, head=(-22, 0, 0), jaw=14, brow={1: (-24, 0), -1: (-24, 0)},
@@ -544,18 +553,18 @@ def build_block(a, F):
     # экспонаты: простые и лёгкие (D64)
     at(a, Fb, "ExCup")
     c = EXHIBITS["ExCup"]
-    sc = 1.15
+    sc = 1.38
     a.prism("gold", S.octagon(c.x - 0.42 * sc, c.x + 0.42 * sc, c.y - 0.42 * sc, c.y + 0.42 * sc, 0.12 * sc),
-            c.z - 0.72, c.z - 0.54)
+            c.z - 0.62 * sc, c.z - 0.47 * sc)
     a.prism("goldD", S.octagon(c.x - 0.12 * sc, c.x + 0.12 * sc, c.y - 0.12 * sc, c.y + 0.12 * sc, 0.04 * sc),
-            c.z - 0.54, c.z - 0.1)
+            c.z - 0.47 * sc, c.z - 0.09 * sc)
     a.frustum("gold", (c.x - 0.25 * sc, c.x + 0.25 * sc, c.y - 0.25 * sc, c.y + 0.25 * sc),
-              (c.x - 0.55 * sc, c.x + 0.55 * sc, c.y - 0.55 * sc, c.y + 0.55 * sc), c.z - 0.1, c.z + 0.72)
+              (c.x - 0.55 * sc, c.x + 0.55 * sc, c.y - 0.55 * sc, c.y + 0.55 * sc), c.z - 0.09 * sc, c.z + 0.6 * sc)
     at(a, Fb @ T(EXHIBITS["ExGem"]) @ R("X", 35) @ R("Y", 45), "ExGem")
-    a.box("neonGem", -0.36, 0.36, -0.36, 0.36, -0.36, 0.36, bevel=0)
+    a.box("neonGem", -0.45, 0.45, -0.45, 0.45, -0.45, 0.45, bevel=0)
     at(a, Fb, "ExLovibum")
-    c = EXHIBITS["ExLovibum"] - V((0, 0, 0.5))
-    sc = 1.25
+    c = EXHIBITS["ExLovibum"] - V((0, 0, 0.7))
+    sc = 1.55
     a.prism("steel", S.octagon(c.x - 0.32 * sc, c.x + 0.32 * sc, c.y - 0.32 * sc, c.y + 0.32 * sc, 0.1 * sc), c.z,
             c.z + 0.22 * sc)
     a.frustum("neonCrystal", (c.x - 0.26 * sc, c.x + 0.26 * sc, c.y - 0.26 * sc, c.y + 0.26 * sc), (c.x, c.x, c.y, c.y),
@@ -563,8 +572,8 @@ def build_block(a, F):
     a.frustum("crystalD", (c.x - 0.26 * sc, c.x + 0.26 * sc, c.y - 0.26 * sc, c.y + 0.26 * sc), (c.x, c.x, c.y, c.y),
               c.z + 0.45 * sc, c.z + 0.2 * sc, bevel=0)
     at(a, Fb, "ExCritter")
-    c = EXHIBITS["ExCritter"] - V((0, 0, 0.5))
-    sc = 1.3
+    c = EXHIBITS["ExCritter"] - V((0, 0, 0.7))
+    sc = 1.55
     key("critter")
     K.layered(a, [(-0.4 * sc, c.z), (-0.45 * sc, c.z + 0.5 * sc), (-0.2 * sc, c.z + 0.85 * sc),
                   (0.3 * sc, c.z + 0.8 * sc), (0.42 * sc, c.z + 0.35 * sc), (0.3 * sc, c.z)],
@@ -824,7 +833,7 @@ def shoot(parts, shots, report):
             mm = m.copy()
             b = next((x for x in mm.node_tree.nodes if x.type == "BSDF_PRINCIPLED"), None)
             if b is not None:
-                b.inputs["Alpha"].default_value = 0.38
+                b.inputs["Alpha"].default_value = 0.3
             mm.surface_render_method = "BLENDED"
             mm.use_backface_culling = True
             me.materials[i] = mm
@@ -842,10 +851,17 @@ def shoot(parts, shots, report):
         cz = (lo.z + hi.z) / 2
         span = max(hi.x - lo.x, hi.z - lo.z, 9.0)
         dist = 1.15 * span / (2 * 18 / 55)
-        for label, ang in (("34", -35), ("front", 0)) if name in ("stand", "sleep", "combat") else (("34", -35),):
+        views = (("34", -35), ("front", 0)) if name in ("sleep", "combat") else (("34", -35),)
+        if name == "stand":  # глыба с экспонатами: сбоку и сзади в 3/4
+            views = (("34", -35), ("front", 0), ("side", -90), ("back34", 145))
+        for label, ang in views:
             root.rotation_euler = (0, 0, math.radians(ang))
             bpy.context.view_layer.update()
-            ck.shot(cam, os.path.join(shots, f"pose_{name}_{label}.png"), (0, -dist, cz + 1.5), (0, 0, cz), 55,
+            xs = [(o.matrix_world @ v.co).x for o in parts.values() for v in o.data.vertices]
+            cx = (min(xs) + max(xs)) / 2  # кадр по всей сцене (глыба рядом во сне не обрезается)
+            span2 = max(max(xs) - min(xs), hi.z - lo.z, 9.0)
+            d2 = 1.15 * span2 / (2 * 18 / 55)
+            ck.shot(cam, os.path.join(shots, f"pose_{name}_{label}.png"), (cx, -d2, cz + 1.5), (cx, 0, cz), 55,
                     (700, 700))
         root.rotation_euler = (0, 0, 0)
         report.setdefault("pose_size", {})[name] = [round(hi[i] - lo[i], 2) for i in range(3)]

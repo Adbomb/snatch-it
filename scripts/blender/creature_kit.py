@@ -385,7 +385,8 @@ def split_keep(obj, art, collection):
 
 def rig_json(item_id, art, parts, path):
     """Скелет для анимаций (D55): части, родители, точки вращения и габариты в осях Roblox."""
-    out = {"id": item_id, "order": list(art.rig), "parts": {}, "demo_pose": {}}
+    out = {"id": item_id, "order": list(art.rig), "parts": {}, "demo_pose": {},
+           "transparent": list(getattr(art, "transparent_parts", ()))}
     for g, (parent, pivot) in art.rig.items():
         co = [TO_RBX @ (parts[g].matrix_world @ v.co) for v in parts[g].data.vertices]
         lo = Vector([min(c[i] for c in co) for i in range(3)])
@@ -589,6 +590,17 @@ def run(items, repo, shots, models, texdir, quick=False, report_name="report.jso
         else:
             parts = S.split_groups(obj, art, {g: Vector(art.rig[g][1]) for g in art.rig}, collection)
         rep["dropped_enclosed_faces"] = drop_enclosed(parts)
+        for g in getattr(art, "transparent_parts", ()):  # полупрозрачные части (в игре — прозрачность MeshPart)
+            me = parts[g].data
+            for i, m in enumerate(me.materials):
+                mm = m.copy()
+                b = next((x for x in mm.node_tree.nodes if x.type == "BSDF_PRINCIPLED"), None)
+                if b is not None:
+                    b.inputs["Alpha"].default_value = 0.35
+                mm.surface_render_method = "BLENDED"
+                mm.use_backface_culling = True
+                me.materials[i] = mm
+        rep["transparent_parts"] = list(getattr(art, "transparent_parts", ()))
         rep["meshes"] = len(parts)
         rep["tris_by_part"] = {g: len(o.data.polygons) and sum(len(p.vertices) - 2 for p in o.data.polygons)
                                for g, o in parts.items()}
