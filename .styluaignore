@@ -4,6 +4,7 @@ src/server/Vendor/
 # число на строку (~270 тыс. строк) — а следующая выгрузка всё равно вернула бы компактный вид.
 src/shared/Config/Boss10DragonClips/
 src/shared/Config/Boss4SphinxClips/
+src/shared/Config/Boss5YetiClips/
 src/shared/Config/Boss*Rig.luau
 src/shared/Config/Boss3RatKingParts.luau
 src/shared/Config/CreatureRigs.luau

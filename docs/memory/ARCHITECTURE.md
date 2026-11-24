@@ -516,6 +516,27 @@
   экспонаты Ex* вне проверки — вморожены по замыслу). Лист-аудит — `scripts/boss5_anatomy_audit.py` (быстрая сборка
   `bash scripts/run_glacier.sh assets/concepts/boss5/audit/creatures quick` и
   `YETI_SHOTS=none … boss5_yeti.py -- . assets/concepts/boss5/audit/yeti quick` → отчёты).
+- Босс 5 «Йети-коллекционер» подключён 2026-11-24 (`docs/BOSS5_INTEGRATION_PLAN.md`), закрыт до выпуска (D64 п. 7):
+  `scripts/boss5_to_luau.py` (rig.json + anim.json + colors.json) → `Config/Boss5YetiRig` (31 часть, 13 поз; поза
+  `sleep` — первый кадр клипа сна: в rig.json нет опускания корня; `AttackClips` bite → smash, swipe → ice_clap,
+  `AttackDefault`; `Eyes` — линза `Lens` (Neon, гаснет по каналу `lens` клипов); `Body` — выпуклый контур корпуса и ног;
+  `Transparent` — лёд глыбы 0.45) и `Config/Boss5YetiClips/*` (10 клипов, в `.styluaignore`). `BossService.makePart`:
+  часть с `eye` — Neon без карт, `rig.Transparent` — прозрачность меша. `Battle.Bosses[5]`: база 1–4, сила D56,
+  `BodyRange` (удар от контура, 3.5 ст.), ходит за игроком (`Leash` 40): погоня останавливает центр дальше на вынос
+  контура в сторону игрока (`BattleService`, `outline`). Коллекция: `build_boss5_index.py` (роли ROLES5, OVERRIDE для
+  ходуль кита, transparency желе и купола) → `creature_parts.py --boss 5` → `creature_rigs_to_luau.py` (метки D64,
+  `creature5`); `ItemFactory` даёт части `transparency` и атрибут `GlassTransparency` (мигание D10 от неё). Меши —
+  `Boss5_meshids_flat.json` → `bind_meshes.py` (`Boss5Yeti` → `YETI_MESHES`), карты — `bind_maps.py`, шаблоны —
+  `make_looks.py`. Пока босс закрыт, `BossLootService` не выставляет слоты закрытого босса с живой коллекцией вне
+  Studio/теста владельца (заготовки зон 6–10 стоят, как раньше).
+  Зона 5 «Ледник» — `World/Models/GlacierHall` (610 частей, 3 света): «замёрзшее озеро» r 32 из шести дисков (верх
+  центра — `Arenas[5].floor` 0.7, плиты существ — `top` 1.08), снежинка-мозаика, столбики с канатом r 34.4 (проходы
+  к входу и к дорожкам выхода), ледник одной стеной (глыбы на LegoSquaresSoft, пики из двух клиньев со смещённой
+  вершиной, карниз-козырёк, сосульки, круглая дверь хранилища), 10 витрин (стекло, экспонаты — только предметы), гряды
+  у стен (твёрдые ≤ 13, пики без столкновений), трещины, ели, сугробы, сияние (Neon в небе за ледником), указатели
+  «В ДЖУНГЛИ». Пути `GlacierHall.Paths` (5 отрезков) свободны — `check_world` (порог 1.1, круг боя r 41).
+  Проверки: `scripts/lune/check_boss5_clips.luau` (скелет, клипы = экспорт, подошвы, стыки, линза, контур),
+  `check_creatures` и `check_world` с зоной 5, `check_project.py` (раздел босса 5), ServerTests «Босс 5: …» (4 теста).
 - Босс 10 «Король-дракон» (этапы A и B, 2026-11-15; DESIGN.md не правился — исключение D52 для залпа ждёт записи):
   тот же путь, что у Сфинкса, — `scripts/blender/dragon10/v7_export.py` (поверх `v7_anim5.py`) →
   `assets/models/Boss10_Dragon.{rig,anim}.json` → `scripts/boss10_to_luau.py` → `Config/Boss10DragonRig` (52 части:

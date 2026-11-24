@@ -235,6 +235,18 @@ local function creature4(
 )
 	collectible(4, id, rarity, displayName, "Creature", weight, income, color, size, "существо Пустыни")
 end
+-- Живое существо босса 5 «Йети-коллекционер» (D64): доход — ступень 3.2 (вариант А), вес D58, модель — Config/CreatureRigs.
+local function creature5(
+	id: string,
+	rarity: string,
+	displayName: string,
+	weight: string,
+	income: number,
+	color: string,
+	size: Vector3
+)
+	collectible(5, id, rarity, displayName, "Creature", weight, income, color, size, "существо Ледника")
+end
 
 -- D55: коллекция босса 3 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)
 creature("LiveCheeseMonster", "Common", "Живой сыр-монстр", "Medium", 110, "E8AC2C", V(3.081, 2.234, 1.954))
@@ -323,13 +335,50 @@ for _, id in { "CanopicJar", "ScarabAmulet", "BastetCat", "GoldenAnkh", "Neferti
 	Items[id].legacy = true
 end
 
--- 5. Ледник — «Полярный медведь»: северное искусство.
+-- 5. Ледник — «Йети-коллекционер»: 30 живых существ (D64 — каталог docs/BOSS5_CATALOG.md, доходы по ступени 3.2, вес D58).
+-- D64: коллекция босса 5 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)
+creature5("PenguinGiraffe", "Common", "Пингвин-жираф", "Heavy", 1280, "243666", V(1.639, 4.289, 1.441))
+creature5("SnowSlime", "Common", "Снежный слизень", "Medium", 1150, "8CDCFB", V(2.624, 2.145, 2.436))
+creature5("TwoHeadFox", "Common", "Двухголовый песец", "Light", 1200, "D6D9DF", V(2.006, 2.14, 1.986))
+creature5("FluffCyclops", "Common", "Пушистик-циклоп", "Heavy", 1230, "AD83E3", V(2.4, 3.44, 2.145))
+creature5("MustacheWalrus", "Common", "Морж-усач", "Medium", 1180, "BB805C", V(2.879, 2.322, 2.826))
+creature5("SealCaterpillar", "Common", "Тюлень-гусеница", "Heavy", 1020, "A0AEC1", V(1.264, 1.556, 3.228))
+creature5("HedgeOwl", "Common", "Сова-ёж", "Medium", 1070, "9F7049", V(2.565, 2.382, 2.35))
+creature5("IceCrab", "Common", "Краб-льдина", "Medium", 1120, "E25338", V(3.128, 1.776, 2.91))
+creature5("SkiEarHare", "Common", "Заяц-лыжник", "Medium", 1110, "E0E4EB", V(1.19, 2.302, 3.069))
+creature5("SnowWorm", "Common", "Снежный червь", "Medium", 1000, "DADFE8", V(2.509, 2.027, 2.176))
+creature5("WalkingFish", "Common", "Рыба на лапках", "Medium", 970, "81998C", V(1.525, 2.31, 3.15))
+creature5("AntlerFawn", "Common", "Оленёнок-рога", "Heavy", 1050, "EFDFBE", V(3.099, 3.281, 2.303))
+creature5("SpringMammoth", "Rare", "Мамонтёнок-пружина", "Heavy", 3900, "BB6E39", V(1.521, 2.305, 3.324))
+creature5("AccordionBear", "Rare", "Медведь-гармошка", "Heavy", 3710, "F0F4FB", V(1.138, 1.45, 3.202))
+creature5("IceSpider", "Rare", "Ледяной паук", "Medium", 3810, "E5E9EF", V(2.911, 1.786, 2.405))
+creature5("LeggedNarwhal", "Rare", "Нарвал на ножках", "Heavy", 3615, "6277A4", V(1.806, 1.587, 3.403))
+creature5("PenguinStack", "Rare", "Пингвинья пирамида", "Medium", 4000, "949DB4", V(2.762, 2.454, 1.13))
+creature5("SwivelOwl", "Rare", "Филин-вертушка", "Medium", 3420, "BBBFC9", V(1.56, 2.791, 1.62))
+creature5("WalkingJelly", "Rare", "Медуза-ходок", "Heavy", 3330, "ED93C6", V(3.484, 2.692, 3.053))
+creature5("ElephantSeal", "Rare", "Морской слон-надувала", "Heavy", 3520, "907A6A", V(2.012, 1.875, 3.418))
+creature5("ToothBeaver", "Rare", "Бобр-зубастик", "Medium", 3230, "7F5237", V(1.36, 2.164, 2.386))
+creature5("WingedWalrus", "Epic", "Морж с крылышками", "Medium", 15100, "AD7350", V(2.639, 2.958, 2.55))
+creature5("OwlTotem", "Epic", "Сова-тотем", "Heavy", 16600, "4871C6", V(1.458, 3.842, 1.375))
+creature5("NestDeer", "Epic", "Олень-гнездо", "Heavy", 12720, "A27044", V(2.191, 3.699, 3.04))
+creature5("GiantPenguin", "Epic", "Пингвин-гигант", "Heavy", 13800, "233565", V(3.377, 3.222, 2.492))
+creature5("BallBear", "Epic", "Медведь-шар", "Medium", 15700, "E4E8EF", V(3.196, 3.11, 2.971))
+creature5("StiltWhale", "Epic", "Кит на ходулях", "Heavy", 14784, "364F95", V(2.13, 4.223, 2.559))
+creature5("YetiCub", "Legendary", "Йетёнок-коллекционер", "Heavy", 48000, "E7EAF1", V(2.401, 3.205, 1.919))
+creature5("IcebergNarwhal", "Legendary", "Нарвал-айсберг", "Heavy", 44352, "46608F", V(2.993, 2.95, 3.56))
+creature5("ThreeHeadSerpent", "Legendary", "Ледяной змей", "Heavy", 40704, "56B7DD", V(2.898, 3.626, 2.898))
+-- D64: конец коллекции босса 5
+
+-- Черновик «Полярного медведя» зоны 5 до D64 (заготовки без дохода): только для старых сохранений.
 art("VikingFigure", 5, "Common", "Фигурка викинга", "Sculpture", "Light", "Block", "8D6E63", V(1.2, 2.2, 1.2))
 art("RuneStone", 5, "Common", "Рунический камень", "Artifact", "Heavy", "Block", "8E9AA5", V(1.6, 2.8, 0.8))
 art("Longship", 5, "Rare", "Ладья викингов", "Sculpture", "Medium", "Wedge", "9C6B3C", V(1.2, 1.8, 3.4))
 art("IceSwan", 5, "Rare", "Ледяной лебедь", "Sculpture", "Medium", "Block", "BFE9FF", V(1.6, 2.4, 2.4))
 art("NinthWave", 5, "Legendary", "Девятый вал", "Painting", "Medium", "Block", "3A8F8C", V(3.4, 2.2, 0.4),
 	"Иван Айвазовский, 1850")
+for _, id in { "VikingFigure", "RuneStone", "Longship", "IceSwan", "NinthWave" } do
+	Items[id].legacy = true
+end
 
 -- 6. Джунгли — «Горилла»: Мезоамерика.
 art("MayaVessel", 6, "Common", "Сосуд майя", "Vase", "Light", "Cylinder", "B5653A", V(2, 1.5, 1.5))

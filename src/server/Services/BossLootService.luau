@@ -7,8 +7,9 @@
 -- боя (пока 3–10) забрать без боя можно только в тестовом режиме Studio (GameConfig.Bosses.FreeTakeInStudio), в
 -- опубликованной игре — нельзя.
 -- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
--- Зависит от ItemRegistry, CarryService, TimeService, Util/ItemFactory, Util/Validate, Util/Notify, Util/Log,
--- World/MapLayout, Shared/GameTime, Config.
+-- Коллекция закрытого босса из живых существ (D64 п. 7) вне Studio и теста владельца не выставляется.
+-- Зависит от BossService (ClosedAllowed), ItemRegistry, CarryService, TimeService, Util/ItemFactory, Util/Validate,
+-- Util/Notify, Util/Log, World/MapLayout, Shared/GameTime, Config.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -19,6 +20,8 @@ local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Rarities = require(ReplicatedStorage.Shared.Config.Rarities)
 local Server = ServerScriptService.Server
+local Battle = require(ReplicatedStorage.Shared.Config.Battle)
+local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local TimeService = require(Server.Services.TimeService)
@@ -339,7 +342,26 @@ function BossLootService.Init(world: Folder)
 	itemsFolder = Instance.new("Folder")
 	itemsFolder.Name = "Items"
 	itemsFolder.Parent = world
+	-- D64 п. 7: коллекция закрытого босса (живые существа, готовые к общему выпуску — босс 5) видна только там, где
+	-- виден он сам (Studio с DevMode, тестовый сервер владельца); заготовки зон 6–10 стоят, как раньше
+	local function unreleased(zone: number): boolean
+		local cfg = Battle.Bosses[zone]
+		if not (cfg and cfg.Closed) or BossService.ClosedAllowed() then
+			return false
+		end
+		for _, byRarity in pools[zone] or {} do
+			for _, id in byRarity do
+				if Items[id].kind == "Creature" then
+					return true
+				end
+			end
+		end
+		return false
+	end
 	for _, spec in MapLayout.ArtSlotPoints() do
+		if unreleased(spec.zone) then
+			continue
+		end
 		slots[spec.zone] = slots[spec.zone] or {}
 		local arena = MapLayout.Arenas[spec.zone]
 		slots[spec.zone][spec.slot] = {

@@ -7,7 +7,7 @@
 -- здесь по пройденному углу считается шаг на месте (rig.Turn: turnDir, turnT, turnWeight для BossClips), лапы не
 -- скользят; большой босс считается дальше (NEAR_BIG). Этап C: кости перепонок (skinned mesh) сидят на частях своих
 -- суставов (BossService) — их двигает тот же Motor6D, здесь их не трогают; глаза (rig.Eyes) — цвет по каналу клипа.
--- Зависит от Shared/BossAnim, Shared/BossClips, Config/Boss1DogRig, Config/Boss2TraderRig, Config/Boss3RatKingRig (D55), Config/Boss4SphinxRig,
+-- Зависит от Shared/BossAnim, Shared/BossClips, Config/Boss1DogRig, Config/Boss2TraderRig, Config/Boss3RatKingRig (D55), Config/Boss4SphinxRig, Config/Boss5YetiRig (линза — rig.Eyes),
 -- Config/Boss10DragonRig, Shared/PoseFade (этап C.2: разрыв позы при смене источника — план → залп в одном шаге
 -- сервера, возврат в кадр — сглаживается только у скелета с rig.Fade, у дракона).
 
@@ -23,10 +23,17 @@ local Boss1DogRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss1Dog
 local Boss2TraderRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss2TraderRig"))
 local Boss3RatKingRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss3RatKingRig"))
 local Boss4SphinxRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss4SphinxRig"))
+local Boss5YetiRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss5YetiRig"))
 local Boss10DragonRig = require(Shared:WaitForChild("Config"):WaitForChild("Boss10DragonRig"))
 
-local RIGS =
-	{ [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig, [4] = Boss4SphinxRig, [10] = Boss10DragonRig }
+local RIGS = {
+	[1] = Boss1DogRig,
+	[2] = Boss2TraderRig,
+	[3] = Boss3RatKingRig,
+	[4] = Boss4SphinxRig,
+	[5] = Boss5YetiRig,
+	[10] = Boss10DragonRig,
+}
 local TAG = "Boss"
 local MAX_DISTANCE = 220 -- дальше анимации не считаются (экономия на телефонах)
 -- Босс с клипами вне кадра и дальше NEAR не считается; рамка кадра расширена на MARGIN (босс большой).

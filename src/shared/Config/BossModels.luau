@@ -1,7 +1,8 @@
 -- Модели боссов из Blender (D40): у каждой части свой меш (импорт FBX в Studio даёт MeshId), карты SurfaceAppearance
 -- общие на группу частей (голова и тело, assets/textures/art/IDS.md). turn — поворот меша частей вокруг вертикали
 -- после импорта, чтобы он совпал со скелетом. Нет меша у части — часть показывается заготовкой (блок цвета из
--- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig (1 — пёс, 2 — торговец, 3 — Крысиный король). Ни от чего
+-- скелета) до импорта. Скелет и позы — Config/Boss<N>…Rig (1 — пёс, 2 — торговец, 3 — Крысиный король, 4 — Сфинкс,
+-- 5 — Йети, 10 — дракон). Ни от чего
 -- не зависит.
 
 export type BossModel = {
@@ -172,6 +173,42 @@ local DRAGON_MESHES: { [string]: number } = {
 	WingMembranes = 120947390133081,
 }
 
+-- MeshId частей Йети-коллекционера — модель Open Cloud 115856961352655 (Boss5_Yeti.fbx, загружена 2026-11-24;
+-- assets/models/Boss5_meshids.json, вписывает scripts/bind_meshes.py).
+local YETI_MESHES: { [string]: number } = {
+	Block = 105977164972324,
+	BlockFrame = 124643434705095,
+	BlockTop = 78727668818006,
+	BlockTopFrame = 127567874290074,
+	BrowL = 127742719894488,
+	BrowR = 98410730061618,
+	ExCritter = 97258883847055,
+	ExCup = 95657324508748,
+	ExGem = 127020399904045,
+	ExLovibum = 124527362780495,
+	EyelidL = 135880482273931,
+	EyelidR = 138408304256772,
+	FingersL = 136742894629751,
+	FingersR = 87615735179764,
+	FootL = 77884554823168,
+	FootR = 81914325446537,
+	ForeArmL = 123784516181703,
+	ForeArmR = 108304200525776,
+	HandL = 92164908211429,
+	HandR = 119655609769684,
+	Head = 136352406131019,
+	Jaw = 79352699759839,
+	Lens = 133160884983976,
+	Monocle = 121716652755827,
+	ShinL = 76802776319321,
+	ShinR = 107427268827355,
+	ThighL = 114709404851630,
+	ThighR = 136101499055448,
+	Torso = 108716682221463,
+	UpperArmL = 81337829205729,
+	UpperArmR = 111124413752864,
+}
+
 local function ids(list: { [string]: number }): { [string]: string }
 	local out = {}
 	for part, id in list do
@@ -225,6 +262,18 @@ return table.freeze({
 			Limbs = { color = "rbxassetid://79180327028035", normal = "rbxassetid://130003429663958" },
 		},
 		meshes = ids(SPHINX_MESHES),
+		turn = 180,
+	} :: BossModel,
+	-- Йети-коллекционер (D64, шаг 2): меши — модель Open Cloud 115856961352655, карты 1024² загружены 2026-11-24
+	-- (assets/textures/art/Boss5Yeti_maps.json). turn 180 — сверено в Studio по центрам 31 части (отклонение 0.004 ст.).
+	[5] = {
+		name = "Йети-коллекционер",
+		maps = {
+			Head = { color = "rbxassetid://102344471750384", normal = "rbxassetid://126413183189503" },
+			Body = { color = "rbxassetid://93942245151760", normal = "rbxassetid://76219191547989" },
+			Limbs = { color = "rbxassetid://110096942919118", normal = "rbxassetid://84860610722819" },
+		},
+		meshes = ids(YETI_MESHES),
 		turn = 180,
 	} :: BossModel,
 	-- Король-дракон (модель v7, риг 53 кости, этап C 2026-11-15): меши — модели Open Cloud 139253334200457 (части)

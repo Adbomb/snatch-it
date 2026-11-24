@@ -27,6 +27,7 @@ local FleaMarket = require(World.Models.FleaMarket)
 local SubwayStation = require(World.Models.SubwayStation)
 local Junkyard = require(World.Models.Junkyard)
 local DesertOasis = require(World.Models.DesertOasis)
+local GlacierHall = require(World.Models.GlacierHall)
 local Shops = require(World.Models.Shops)
 local Tree = require(World.Models.Tree)
 local ZoneDecor = require(World.Models.ZoneDecor)
@@ -505,6 +506,8 @@ local function buildZone(index: number, parent: Instance)
 		decor, signs = SubwayStation.Zone() -- уровень 3 «Подземка» (D54)
 	elseif zone.id == "Desert" then
 		decor, signs = DesertOasis.Zone() -- уровень 4 «Пустыня», логово Сфинкса (D59)
+	elseif zone.id == "Glacier" then
+		decor, signs = GlacierHall.Zone() -- уровень 5 «Ледник», галерея Йети-коллекционера (D64)
 	elseif zone.id == "Bank" then
 		decor = ZoneDecor.Bank(size)
 	elseif zone.id == "Jungle" then
@@ -517,8 +520,16 @@ local function buildZone(index: number, parent: Instance)
 	elseif ZoneDecor[zone.id] then
 		decor = ZoneDecor[zone.id]()
 	end
-	-- зоны без своего оформления (5–10): видимый путь к следующему уровню по середине (у 1–4 — свои пути)
-	if not (zone.id == "Junk" or zone.id == "Flea" or zone.id == "Subway" or zone.id == "Desert") then
+	-- зоны без своего оформления (6–10): видимый путь к следующему уровню по середине (у 1–5 — свои пути)
+	if
+		not (
+			zone.id == "Junk"
+			or zone.id == "Flea"
+			or zone.id == "Subway"
+			or zone.id == "Desert"
+			or zone.id == "Glacier"
+		)
+	then
 		for _, brick in ZoneDecor.Path(size, accent) do
 			table.insert(decor, brick)
 		end

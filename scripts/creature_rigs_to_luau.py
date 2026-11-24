@@ -28,6 +28,8 @@ BEGIN = "-- D55: коллекция босса 3 (сгенерировано scr
 END = "-- D55: конец коллекции босса 3"
 BEGIN4 = "-- D57: коллекция босса 4 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)"
 END4 = "-- D57: конец коллекции босса 4"
+BEGIN5 = "-- D64: коллекция босса 5 (сгенерировано scripts/creature_rigs_to_luau.py — руками не править)"
+END5 = "-- D64: конец коллекции босса 5"
 
 ROLES = [  # подстрока роли D54 → ключ анимации
     ("подставка", "stand"), ("нога", "leg"), ("рука или лапа", "arm"), ("лапка", "paw"), ("туловище", "body"),
@@ -120,12 +122,14 @@ def parents_first(order, parts):
 COLLECTIONS = [  # босс, папка моделей, раздел каталога, метки строк Items, функция каталога в Items
     (3, ART, ("## Босс 3", "## Босс 4"), (BEGIN, END), "creature"),
     (4, os.path.join(ART, "boss4"), ("## Босс 4", "## Боссы 5–10"), (BEGIN4, END4), "creature4"),
+    (5, os.path.join(ART, "boss5"), None, (BEGIN5, END5), "creature5"),  # каталог — из индекса (build_boss5_index.py)
 ]
 
 
 def main():
     lines = [
-        "-- Живые существа боссов 3 «Крысиный король» (D55, данные D54) и 4 «Сфинкс-лежебока» (D57, D58): скелет, роли",
+        "-- Живые существа боссов 3 «Крысиный король» (D55, данные D54), 4 «Сфинкс-лежебока» (D57, D58) и 5",
+        "-- «Йети-коллекционер» (D64; transparency — прозрачная часть, желе и купол): скелет, роли",
         "-- частей и Part-версия до импорта",
         "-- мешей. Сгенерировано scripts/creature_rigs_to_luau.py — руками не править. Оси Roblox, стады; модель в осях",
         "-- скелета: лицо к +Z, низ подставки на y = 0 (игра поворачивает на 180°: лицо вперёд, −Z). Parts: родитель,",
@@ -143,8 +147,9 @@ def main():
     ]
     items_text = open(ITEMS, encoding="utf-8").read()
     total = 0
-    for boss, art, (c0, c1), (begin, end), fn in COLLECTIONS:
-        items_text = collection(boss, art, catalog(c0, c1), begin, end, fn, lines, items_text)
+    for boss, art, cat_range, (begin, end), fn in COLLECTIONS:
+        items_text = collection(boss, art, catalog(*cat_range) if cat_range else None, begin, end, fn, lines,
+                                items_text)
         total += 1
     lines += ["}", ""]
     with open(DST, "w", encoding="utf-8", newline="\n") as f:
@@ -155,6 +160,8 @@ def main():
 
 def collection(boss, art, cat, begin, end, fn, lines, items_text):
     index = json.load(open(os.path.join(art, f"Boss{boss}Creatures.index.json"), encoding="utf-8"))
+    if cat is None:  # босс 5: название, редкость, доход и вес — в индексе
+        cat = {it["id"]: {k: it[k] for k in ("rarity", "name", "income", "weight")} for it in index["items"]}
     blocks = json.load(open(os.path.join(art, f"Boss{boss}Creatures.parts.json"), encoding="utf-8"))
     item_lines = [begin]
     for item in index["items"]:
@@ -206,6 +213,8 @@ def collection(boss, art, cat, begin, end, fn, lines, items_text):
                 fields.append(f"shift = V({', '.join(num(c) for c in info['demo_offset_rbx'])})")
             if name in hidden:
                 fields.append("hidden = true")
+            if info.get("transparency"):
+                fields.append(f"transparency = {num(info['transparency'])}")  # желе, купол: внутренности видны
             # габарит меша D54 части от её pivot (rig.json): меш после импорта встаёт на тот же сустав
             fields.append(f"center = V({', '.join(num(c) for c in r['center'])})")
             fields.append(f"size = V({', '.join(num(c) for c in r['size'])})")

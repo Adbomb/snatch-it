@@ -13,6 +13,9 @@
 -- Battle.Bosses[10].TurnRate °/с (AlignOrientation.MaxAngularVelocity — у остальных без ограничения, как раньше); залп —
 -- атрибуты VolleySeq/VolleyAt (начало клипа), VolleyLockAt/VolleyDir (фиксация, центральное направление),
 -- VolleyFireAt, VolleyOrigin, VolleyEndL/C/R (конец снаряда) и VolleyCancelAt — пишет BattleService (Volley…).
+-- Босс 5 «Йети-коллекционер» (D64): скелет и клипы Config/Boss5YetiRig, закрыт до выпуска (D64 п. 7); глыба — его
+-- части (во сне стоит рядом, при пробуждении — на спине: это клипы); лёд глыбы прозрачный (rig.Transparent), линза
+-- монокля (rig.Eyes, часть Lens) — Neon, гаснет во сне по каналу клипа (клиент). Дальность удара — до контура тела.
 -- Этап C: настоящие меши и карты дракона (6 групп). Добавочные меши rig.Extras (Body_2 — правая половина корпуса,
 -- EyeL/R — глаза, цвет глаз меняет клиент по каналу клипа) приварены к своему суставу. Перепонки rig.MembraneMesh —
 -- skinned MeshPart на сварке к корпусу; их кости (Bone с именами суставов, покой — из импорта) сидят на частях своих
@@ -37,6 +40,7 @@ local Boss2TraderRig = require(ReplicatedStorage.Shared.Config.Boss2TraderRig)
 local Boss3RatKingParts = require(ReplicatedStorage.Shared.Config.Boss3RatKingParts)
 local Boss3RatKingRig = require(ReplicatedStorage.Shared.Config.Boss3RatKingRig)
 local Boss4SphinxRig = require(ReplicatedStorage.Shared.Config.Boss4SphinxRig)
+local Boss5YetiRig = require(ReplicatedStorage.Shared.Config.Boss5YetiRig)
 local Boss10DragonRig = require(ReplicatedStorage.Shared.Config.Boss10DragonRig)
 local BossModels = require(ReplicatedStorage.Shared.Config.BossModels)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
@@ -59,8 +63,14 @@ export type Boss = {
 }
 
 local TAG = "Boss"
-local RIGS =
-	{ [1] = Boss1DogRig, [2] = Boss2TraderRig, [3] = Boss3RatKingRig, [4] = Boss4SphinxRig, [10] = Boss10DragonRig } -- 3 — D55 (D54)
+local RIGS = { -- 3 — D55 (D54)
+	[1] = Boss1DogRig,
+	[2] = Boss2TraderRig,
+	[3] = Boss3RatKingRig,
+	[4] = Boss4SphinxRig,
+	[5] = Boss5YetiRig,
+	[10] = Boss10DragonRig,
+}
 -- Part-версия по утверждённой модели (пока меши не загружены): детали каждой части. Без неё — блок по габариту части.
 local PART_BLOCKS: { [number]: { [string]: { any } } } = { [3] = Boss3RatKingParts }
 local BLOCK_NAME = "Block"
@@ -85,16 +95,29 @@ local function makePart(zone: number, cfg: BossModels.BossModel, name: string, i
 			local mesh = result :: MeshPart
 			mesh.Size = info.size
 			mesh.Material = Enum.Material.SmoothPlastic
-			-- основа — средний цвет части: если карты SurfaceAppearance не отрисуются (в Studio бывает, этап C.2),
-			-- часть будет своего цвета, а не серой; при картах цвет основы не виден
-			if info.color then
-				mesh.Color = Color3.fromHex(info.color)
-			end
-			local look = Looks:FindFirstChild(("Boss%d_%s"):format(zone, info.map))
-			if look then
-				look:Clone().Parent = mesh
+			local rig = RIGS[zone]
+			if info.eye then
+				-- линза Йети (rig.Eyes): без карт, Neon открытого цвета — гаснет по каналу клипа (клиент)
+				mesh.Material = Enum.Material.Neon
+				mesh.Color = Color3.fromHex(rig.Eyes.Open)
+				mesh.CastShadow = false
 			else
-				Log.Warn("BossService", ("Нет шаблона карт Looks/Boss%d_%s"):format(zone, info.map))
+				-- основа — средний цвет части: если карты SurfaceAppearance не отрисуются (в Studio бывает, этап C.2),
+				-- часть будет своего цвета, а не серой; при картах цвет основы не виден
+				if info.color then
+					mesh.Color = Color3.fromHex(info.color)
+				end
+				local look = Looks:FindFirstChild(("Boss%d_%s"):format(zone, info.map))
+				if look then
+					look:Clone().Parent = mesh
+				else
+					Log.Warn("BossService", ("Нет шаблона карт Looks/Boss%d_%s"):format(zone, info.map))
+				end
+			end
+			-- прозрачная часть (rig.Transparent — лёд глыбы Йети): экспонаты внутри видны
+			local transparent = rig.Transparent and rig.Transparent[name]
+			if transparent then
+				mesh.Transparency = transparent
 			end
 			part = mesh
 		else

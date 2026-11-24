@@ -3908,21 +3908,21 @@ local function beginCatch(player: any, boss: number, slot: number): boolean
 	return CatchService.Begin(player, boss, slot)
 end
 
--- Босс 4 с 2026-11-12 дерётся в Studio (закрыт до коллекции), поэтому «без боя» — на примере босса 5.
+-- Боссы 4 и 5 дерутся (босс 5 — с 2026-11-24, в Studio), поэтому «без боя» — на примере босса 6.
 test(
-	"Без боя (босс 5, тестовый режим): поимка — и в руки, слот пуст до рассвета, экспонат помнит босса",
+	"Без боя (босс 6, тестовый режим): поимка — и в руки, слот пуст до рассвета, экспонат помнит босса",
 	function(A, B)
 		local shifted = ensureDay()
 		BossLootService.Handlers.Refresh()
-		local entry = bossSlots()[5][1]
+		local entry = bossSlots()[6][1]
 		local uid = entry.uid :: string
 		local part = (ItemRegistry.Get(uid) :: any).part
 		A:MoveTo(part.Position + Vector3.new(0, 0, -3))
 		CarryService.Handlers.Pickup(A, uid)
 		local stillThere = ItemRegistry.Get(uid).state == "AtBoss"
-		giveLovibums(A, 5, "Mega", 3)
+		giveLovibums(A, 6, "Mega", 3)
 		CatchService.Handlers.SetRoll(0)
-		local started = beginCatch(A, 5, 1)
+		local started = beginCatch(A, 6, 1)
 		if started then
 			throw(A, "Mega", true)
 			waitUntil(function()
@@ -3932,9 +3932,9 @@ test(
 		CatchService.Handlers.SetRoll(nil)
 		local taken = ItemRegistry.GetCarriedBy(A) == uid
 		local emptied = entry.uid == nil
-		giveLovibums(B, 5, "Boom", 1)
+		giveLovibums(B, 6, "Boom", 1)
 		B:MoveTo(part.Position + Vector3.new(0, 0, 3))
-		BossLootService.Handlers.Take(B, 5, 1)
+		BossLootService.Handlers.Take(B, 6, 1)
 		local bEmpty = ItemRegistry.GetCarriedBy(B) == nil and not CatchService.IsCatching(B)
 		if shifted then
 			TimeService.ResetClock()
@@ -3942,10 +3942,10 @@ test(
 		check(stillThere, "предмет у босса подняли обычным «Поднять»")
 		check(started, "поимка не началась: " .. table.concat(A:Notices(), "; "))
 		check(
-			taken and ItemRegistry.Get(uid).boss == 5,
+			taken and ItemRegistry.Get(uid).boss == 6,
 			"A не получил пойманное в тестовом режиме"
 		)
-		check(stockOf(A, 5, "Mega") == 2, "Ловибум не списан")
+		check(stockOf(A, 6, "Mega") == 2, "Ловибум не списан")
 		check(
 			part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil,
 			"у пойманного остались атрибуты босса"
@@ -3956,7 +3956,7 @@ test(
 		MuseumService.Handlers.Display(A, plotA, 1)
 		local record = DataService.GetData(A).items[uid]
 		check(
-			record and record.boss == 5 and record.source == "boss",
+			record and record.boss == 6 and record.source == "boss",
 			"в профиле нет босса-источника"
 		)
 		BossLootService.Handlers.Refresh()
@@ -3968,15 +3968,15 @@ test(
 	end
 )
 
-test("Без боя поймать нельзя вне тестового режима Studio (босс 5)", function(A)
+test("Без боя поймать нельзя вне тестового режима Studio (босс 6)", function(A)
 	local shifted = ensureDay() -- ночью отказ был бы «ночь», а не «нет боя»
 	BossLootService.Handlers.Refresh()
-	local uid = bossSlots()[5][1].uid :: string
+	local uid = bossSlots()[6][1].uid :: string
 	A:MoveTo((ItemRegistry.Get(uid) :: any).part.Position + Vector3.new(0, 0, -3))
-	giveLovibums(A, 5, "Boom", 1)
+	giveLovibums(A, 6, "Boom", 1)
 	local saved = GameConfig.Bosses.FreeTakeInStudio
 	GameConfig.Bosses.FreeTakeInStudio = false
-	local ok, err = pcall(BossLootService.Handlers.Take, A, 5, 1)
+	local ok, err = pcall(BossLootService.Handlers.Take, A, 6, 1)
 	GameConfig.Bosses.FreeTakeInStudio = saved
 	check(ok, tostring(err))
 	check(ItemRegistry.Get(uid).state == "AtBoss" and ItemRegistry.GetCarriedBy(A) == nil, "забрал без боя")
@@ -3985,7 +3985,7 @@ test("Без боя поймать нельзя вне тестового реж
 		A:WasNotified("нет боя"),
 		"нет сообщения «у этого босса пока нет боя»"
 	)
-	check(stockOf(A, 5, "Boom") == 1, "Ловибум списан без броска")
+	check(stockOf(A, 6, "Boom") == 1, "Ловибум списан без броска")
 	if shifted then
 		TimeService.ResetClock()
 	end
@@ -7849,6 +7849,278 @@ test(
 			"результат " .. tostring(fight.result) .. ": " .. table.concat(fight.log, ", ")
 		)
 		ctx.note(("бой: %d записей, итог %s"):format(#fight.log, tostring(fight.result)))
+	end
+)
+
+-- ── Босс 5 «Йети-коллекционер» (D64, подключение 2026-11-24) ─────────────────────────────────────────────────
+
+test(
+	"Босс 5: Йети закрыт до выпуска (D64 п. 7), 31 часть на суставах, клипы, линза Neon, лёд глыбы прозрачный; база боя 1–4, сила D56; стоит на «Леднике»",
+	function()
+		local cfg, base = Battle.Bosses[5], Battle.Bosses[4]
+		check(cfg and cfg.Closed == true, "босс 5 не закрыт")
+		for _, key in { "HP", "Damage", "AttackInterval", "Leash", "Speed" } do
+			check(
+				cfg[key] == base[key],
+				("%s босса 5 %s, у боссов 1–4 %s"):format(key, tostring(cfg[key]), tostring(base[key]))
+			)
+		end
+		check(cfg.Strength == GameConfig.Progression.Bosses[5], "сила Йети не из Progression.Bosses[5]")
+		check(
+			cfg.BodyRange == true and cfg.AttackRange == 2.5,
+			"дальность Йети — не от контура тела (2.5 + 1)"
+		)
+		check(BossService.ClosedAllowed(), "тесты идут не в Studio с DevMode")
+		local boss = BossService.Get(5)
+		check(boss ~= nil, "в Studio с DevMode Йети нет на карте")
+		if not boss then
+			return
+		end
+		local rig = BossService.Rig(boss)
+		local joints = 0
+		for _, d in boss.model:GetDescendants() do
+			if d:IsA("Motor6D") then
+				joints += 1
+			end
+		end
+		check(#rig.Order == 31 and joints == 31, ("суставов %d из %d"):format(joints, #rig.Order))
+		check(BossService.HasClips(boss), "у Йети нет клипов")
+		local lens = boss.model:FindFirstChild("Lens") :: BasePart?
+		check(lens and lens.Material == Enum.Material.Neon, "линза не Neon")
+		for name, value in rig.Transparent do
+			local part = boss.model:FindFirstChild(name) :: BasePart?
+			check(part and math.abs(part.Transparency - value) < 1e-3, name .. ": лёд не прозрачный")
+		end
+		local meshes = 0
+		for _, name in rig.Order do
+			if BossModels[5].meshes[name] then
+				meshes += 1
+			end
+		end
+		check(meshes == 31, ("мешей частей %d из 31"):format(meshes))
+		local height = BossService.Height(boss)
+		check(height > 22 and height < 27, "рост Йети " .. height)
+		local home = BossService.HomeOf(5)
+		local local_ = MapLayout.ZoneCFrame(5):PointToObjectSpace(home.Position)
+		check(
+			math.abs(local_.X - MapLayout.BossSpot.X) < 1e-3
+				and math.abs(local_.Z - MapLayout.BossSpot.Y) < 1e-3
+				and math.abs(local_.Y - MapLayout.Arenas[5].floor) < 1e-3,
+			"место Йети — не центр площадки «Ледника»"
+		)
+		check(
+			(boss.root.Position - home.Position).Magnitude < 1,
+			"Йети не на своём месте в зоне 5"
+		)
+		for zone = 1, 4 do
+			check(
+				Battle.Bosses[zone].BodyRange == nil,
+				("у босса %d появилась дальность до тела"):format(zone)
+			)
+		end
+	end
+)
+
+test(
+	"Босс 5: 30 существ в коллекции, у Йети 4 на плитах площадки «Ледник», «Поймать», бродят не дальше плиты",
+	function()
+		local active = 0
+		for id, def in Items do
+			if def.boss == 5 and not def.legacy then
+				active += 1
+				check(def.kind == "Creature", id .. ": не существо")
+			end
+		end
+		check(active == 30, ("у босса 5 существ %d"):format(active))
+		BossLootService.Handlers.Refresh()
+		local arena = MapLayout.Arenas[5]
+		local frame = MapLayout.ZoneCFrame(5)
+		local radius = CreatureMotion.WanderRadius(5)
+		local now = workspace:GetServerTimeNow()
+		for slot = 1, 4 do
+			local uid, part = BossLootService.SlotItem(5, slot)
+			check(uid and part, ("слот %d пуст"):format(slot))
+			if not part then
+				continue
+			end
+			local def = Items[part:GetAttribute("ItemId") :: string]
+			check(
+				def and def.boss == 5 and not def.legacy,
+				("слот %d: не существо босса 5"):format(slot)
+			)
+			check(part:GetAttribute("Creature") == true, ("слот %d: не живое существо"):format(slot))
+			check(part:GetAttribute("Drop") == arena.top, ("слот %d: высота места"):format(slot))
+			local home = part:GetAttribute("Home")
+			local spot = typeof(home) == "CFrame" and frame:PointToObjectSpace(home.Position)
+			check(
+				spot and (Vector2.new(spot.X, spot.Z) - arena.slots[slot]).Magnitude < 0.01,
+				("слот %d: не на своей плите"):format(slot)
+			)
+			local prompt = part:FindFirstChild("TakePrompt") :: ProximityPrompt?
+			check(
+				prompt and prompt.ActionText == "Поймать",
+				("слот %d: нет подсказки «Поймать»"):format(slot)
+			)
+			local params = {
+				seed = CreatureMotion.SeedOf(uid :: string),
+				radius = radius,
+				scale = CreatureMotion.ScaleOf(def.size),
+				mode = "Wander",
+				drop = arena.top,
+			}
+			local farthest = 0
+			for k = 0, 600 do
+				local pose = CreatureMotion.Pose(params, now + k * 0.37)
+				farthest = math.max(farthest, Vector3.new(pose.offset.X, 0, pose.offset.Z).Magnitude)
+			end
+			check(
+				farthest <= math.min(radius + 0.01, 2.6),
+				("слот %d: ушёл на %.2f ст. от места"):format(slot, farthest)
+			)
+		end
+	end
+)
+
+test(
+	"Босс 5: дальность удара до контура тела — 3.4 ст. от любой стороны в дальности, 3.6 — нет; в центре контура 0",
+	function()
+		local boss = BossService.Get(5) :: BossService.Boss
+		if not boss then
+			check(false, "Йети нет на карте")
+			return
+		end
+		local reach = Battle.Bosses[5].AttackRange + Battle.Player.Reach
+		check(math.abs(reach - 3.5) < 1e-6, "дальность не 3.5 ст.")
+		local body = BossService.Rig(boss).Body
+		local center = Vector2.zero
+		for _, p in body do
+			center += p / #body
+		end
+		for i, a in body do
+			local b = body[i % #body + 1]
+			if (b - a).Magnitude > 0.5 then
+				local mid = (a + b) / 2
+				local n = Vector2.new(b.Y - a.Y, a.X - b.X).Unit
+				if n:Dot(mid - center) < 0 then
+					n = -n
+				end
+				for _, k in { 3.4, 3.6 } do
+					local q = mid + n * k
+					local world = boss.root.CFrame:PointToWorldSpace(Vector3.new(q.X, 0, q.Y))
+					local d = BattleService.Handlers.BodyDistance(boss, world)
+					check(
+						(d <= reach) == (k < reach),
+						("сторона %d, %.1f ст.: расстояние %.2f"):format(i, k, d)
+					)
+				end
+			end
+		end
+		check(
+			BattleService.Handlers.BodyDistance(boss, boss.root.Position) == 0,
+			"в центре Йети расстояние не 0"
+		)
+	end
+)
+
+test(
+	"Босс 5: равная сила — победа, существо в руках; Йети вернулся и уснул; сила 0 — поражение, существо на месте",
+	function(A, B)
+		DataService.AddStrength(A, GameConfig.Progression.Bosses[5])
+		local uid = prepareFight(A, 1, 5)
+		local boss = BossService.Get(5) :: BossService.Boss
+		local fight = BattleService.Handlers.Begin(A, 5, 1)
+		check(fight, "бой не начался: " .. table.concat(A:Notices(), "; "))
+		if not fight then
+			return
+		end
+		check(boss.state == "Wake", "Йети не просыпается: " .. boss.state)
+		check(fightTo(fight, 120), "бой не закончился")
+		check(fight.result == "win", "при равной силе не победили: " .. tostring(fight.result))
+		check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
+		CarryService.LoseCarried(A, "уборка после теста")
+		check(waitBossHome(5), "Йети не вернулся и не уснул после боя")
+		-- сила 0: поражение, существо на своей плите
+		local uid2 = prepareFight(B, 2, 5)
+		local lost = BattleService.Handlers.Begin(B, 5, 2)
+		check(lost, "второй бой не начался: " .. table.concat(B:Notices(), "; "))
+		if not lost then
+			return
+		end
+		check(fightTo(lost, 90), "второй бой не закончился")
+		check(
+			lost.result == "lose",
+			"при силе 0 Йети должен победить: " .. tostring(lost.result)
+		)
+		check(
+			BossLootService.SlotItem(5, 2) == uid2,
+			"после поражения существо не на месте"
+		)
+		check(waitBossHome(5), "Йети не вернулся после победы")
+		TimeService.ResetClock()
+	end
+)
+
+test(
+	"Босс 5: тестовый бой владельца с Йети (/fight → /win, зона боя 5 на время теста) — проснулся, подошёл до контура, бьёт, победа",
+	function(A)
+		local OwnerTestService = require(Server.Services.OwnerTestService) :: any
+		local cfg = GameConfig.OwnerTest
+		local savedZone = cfg.Zone
+		cfg.Zone = 5
+		local ok, err = pcall(function()
+			ensureDay()
+			check(waitBossHome(5), "Йети не дома")
+			BossLootService.Handlers.Refresh()
+			local boss = BossService.Get(5) :: BossService.Boss
+			OwnerTestService.Handlers.StartFight(A)
+			local fight = BattleService.Handlers.FightOf(A)
+			check(fight ~= nil, "/fight не начал бой с Йети: " .. table.concat(A:Notices(), "; "))
+			if not fight then
+				return
+			end
+			check(
+				fight.zone == 5 and fight.maxHp == cfg.FightHp,
+				"бой не с Йети или HP не из OwnerTest"
+			)
+			check(
+				waitUntil(function()
+					return fight.phase == "Fight"
+				end, 8),
+				"Йети не проснулся"
+			)
+			-- игрок стоит в 30 ст. перед Йети: тот идёт к нему и встаёт так, что до контура ≤ 3.5, но не внутри тела
+			local reach = Battle.Bosses[5].AttackRange + Battle.Player.Reach
+			local root = A.Character and A.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local closest = math.huge
+			check(
+				root ~= nil
+					and waitUntil(function()
+						closest = BattleService.Handlers.BodyDistance(boss, root.Position)
+						return closest <= reach
+					end, 15),
+				("Йети не подошёл на дальность удара (до контура %.1f)"):format(
+					closest
+				)
+			)
+			local swings = A:GetAttribute("BattleSwingSeq") or 0
+			task.wait(3)
+			check(
+				(A:GetAttribute("BattleSwingSeq") or 0) > swings,
+				"игрок не бьёт Йети на дальности"
+			)
+			check(
+				BattleService.Handlers.BodyDistance(boss, root.Position) > 0,
+				"игрок оказался внутри контура тела Йети"
+			)
+			OwnerTestService.Handlers.Win(A)
+			check(fightTo(fight, 25), "бой после /win не закончился")
+			check(fight.result == "win", "результат " .. tostring(fight.result))
+			CarryService.LoseCarried(A, "уборка после теста")
+			check(waitBossHome(5), "Йети не вернулся после тестового боя")
+		end)
+		cfg.Zone = savedZone
+		TimeService.ResetClock()
+		check(ok, tostring(err))
 	end
 )
 

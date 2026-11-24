@@ -291,7 +291,7 @@ GameConfig.Zones = {
 	{ id = "Subway", name = "Подземка", boss = "Крысиный король", floor = "8B8478", accent = "3D8EE0", mood = "😐" },
 	{ id = "Desert", name = "Пустыня", boss = "Сфинкс", floor = "DBAF5C", accent = "E08A1E", mood = "😬",
 		pattern = pattern("waves", "C98B33", 28, 0.38) }, -- пол темнее на 8 %: был пересвет
-	{ id = "Glacier", name = "Ледник", boss = "Полярный медведь", floor = "DDF3FF", accent = "4FC3F7", mood = "😨",
+	{ id = "Glacier", name = "Ледник", boss = "Йети-коллекционер", floor = "DDF3FF", accent = "4FC3F7", mood = "😨",
 		pattern = pattern("diamonds", "8FD3F5", 20, 0.45) },
 	{ id = "Jungle", name = "Джунгли", boss = "Горилла", floor = "2E8B3A", accent = "1B7A2B", mood = "😠",
 		pattern = pattern("tiles", "1E6B2A", 16, 0.45) },

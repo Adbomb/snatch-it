@@ -275,6 +275,11 @@ local function buildCreature(root: Part, rig: any, meshes: { [string]: MeshPart 
 			joint.CanCollide = false
 			joint.CanQuery = false
 			joint.CanTouch = false
+			if spec.transparency then
+				-- прозрачная часть (желе, купол — босс 5): внутренности видны; мигание D10 считает от неё
+				joint.Transparency = spec.transparency
+				joint:SetAttribute("GlassTransparency", spec.transparency)
+			end
 			offset = CFrame.new(spec.center) * meshTurn
 		else
 			local first = spec.blocks[1]
@@ -429,7 +434,8 @@ function ItemFactory.SetVisualTransparency(part: BasePart, transparency: number)
 	elseif part:GetAttribute("Creature") then
 		for _, child in part:GetChildren() do
 			if child:IsA("BasePart") then
-				child.Transparency = transparency
+				local base = child:GetAttribute("GlassTransparency") -- прозрачная часть существа (босс 5)
+				child.Transparency = if base then 1 - (1 - base) * (1 - transparency) else transparency
 			end
 		end
 	else

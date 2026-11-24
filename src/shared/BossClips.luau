@@ -9,7 +9,8 @@
 -- выпад, начатый по плану, идёт от времени плана (AttackPlanAt); без плана — сокращённый замах догоняет попадание.
 -- Урон считает только сервер (BattleService, через HitDelay после выпада) — клип только показывает.
 -- Свои таблицы скелета (босс 10 «Король-дракон»): rig.AttackClips — вид выпада → клип (иначе общая таблица Сфинкса),
--- rig.HeadParts — что вздрагивает при ударе поверх выпада, rig.Turn — шаг на месте, пока модель поворачивается
+-- rig.AttackDefault — клип выпада без своего вида (босс 5), rig.HeadParts — что вздрагивает при ударе поверх выпада,
+-- rig.Turn — шаг на месте, пока модель поворачивается
 -- (input.turnDir, turnT, turnWeight считает BossAnimController); у скелета без них всё как раньше.
 -- Зависит от Config/Battle.
 
@@ -193,8 +194,10 @@ local function lastAttack(rig: any, input: any): (Clip?, number, number)
 		return nil, 0, 0
 	end
 	at = math.max(at, 0)
-	local clip =
-		BossClips.Get(rig, attackClipName(rig, kind) or (if rig.AttackClips then "claw_swipe" else "heavy_paw"))
+	local clip = BossClips.Get(
+		rig,
+		attackClipName(rig, kind) or rig.AttackDefault or (if rig.AttackClips then "claw_swipe" else "heavy_paw")
+	)
 	local lead = clip.lead
 	local planT = input.attackPlanT
 	if planT and planT - at <= PLAN_MATCH and planT - at >= -lead then

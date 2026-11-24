@@ -18,6 +18,7 @@ local Junkyard = Env.Require("ServerScriptService.Server.World.Models.Junkyard")
 local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMarket")
 local SubwayStation = Env.Require("ServerScriptService.Server.World.Models.SubwayStation")
 local DesertOasis = Env.Require("ServerScriptService.Server.World.Models.DesertOasis")
+local GlacierHall = Env.Require("ServerScriptService.Server.World.Models.GlacierHall")
 
 local Battle = Env.Require("ReplicatedStorage.Shared.Config.Battle")
 
@@ -59,6 +60,8 @@ local subwayBricks, subwaySigns = SubwayStation.Zone()
 local subway = placed(3, subwayBricks)
 local desertBricks, desertSigns = DesertOasis.Zone()
 local desert = placed(4, desertBricks)
+local glacierBricks, glacierSigns = GlacierHall.Zone()
+local glacier = placed(5, glacierBricks)
 
 print("Грани (D36):")
 local groups = {
@@ -66,7 +69,8 @@ local groups = {
 	{ name = "Flea", bricks = flea },
 	{ name = "Subway", bricks = subway },
 	{ name = "Desert", bricks = desert },
-	{ name = "Floor", bricks = { floorOf(1), floorOf(2), floorOf(3), floorOf(4) } },
+	{ name = "Glacier", bricks = glacier },
+	{ name = "Floor", bricks = { floorOf(1), floorOf(2), floorOf(3), floorOf(4), floorOf(5) } },
 }
 local pairsCount, found = FaceCheck.Scan(Env.FakeRoot(groups))
 for key, group in found do
@@ -348,6 +352,7 @@ end
 checkArenaZone(2, "Барахолка", flea, fleaBricks, fleaSigns)
 checkArenaZone(3, "Подземка", subway, subwayBricks, subwaySigns)
 checkArenaZone(4, "Пустыня", desert, desertBricks, desertSigns)
+checkArenaZone(5, "Ледник", glacier, glacierBricks, glacierSigns)
 
 -- «Храм спящего Сфинкса» (D60): по обе стороны от арены и храма — свободный путь к следующей зоне вдоль всей зоны
 -- (полосы |x| DesertOasis.Lane): ни одной твёрдой детали выше пола (0.3 — мощение) и ниже 7 (листья пальм выше
@@ -472,6 +477,60 @@ do
 	check(
 		#high == 0,
 		"Пустыня: у стен нет твёрдых уступов выше 24 (за кромку обрыва не запрыгнуть)"
+			.. (if #high > 0 then ": " .. table.concat(high, "; ", 1, math.min(#high, 5)) else "")
+	)
+end
+
+-- «Ледник» (D64): видимые пути GlacierHall.Paths (от входа к площадке и от неё к выходу в обход ледника) свободны —
+-- вдоль отрезка в полосе его ширины нет твёрдых деталей выше порога 1.1 (площадка, плиты и уступ — шагом) и ниже 7; у
+-- стен обрыва (|x| > 76) верх твёрдых деталей не выше 24 (за кромку обрыва не запрыгнуть).
+do
+	local frame = MapLayout.ZoneCFrame(5)
+	local blocked, high = {}, {}
+	for _, brick in glacier do
+		if brick.collide ~= false then
+			local cf, size = frame:ToObjectSpace(brick.cframe), brick.size
+			local function half(axis: string): number
+				return (
+					math.abs(cf.RightVector[axis]) * size.X
+					+ math.abs(cf.UpVector[axis]) * size.Y
+					+ math.abs(cf.LookVector[axis]) * size.Z
+				) / 2
+			end
+			local p = cf.Position
+			local hx, hy, hz = half("X"), half("Y"), half("Z")
+			if p.Y - hy < 7 and p.Y + hy > 1.1 then
+				for _, seg in GlacierHall.Paths do
+					local a, b, w = Vector2.new(seg[1], seg[2]), Vector2.new(seg[3], seg[4]), seg[5]
+					local hit = false
+					for k = 0, 40 do
+						local q = a:Lerp(b, k / 40)
+						local dx = math.max(math.abs(q.X - p.X) - hx, 0)
+						local dz = math.max(math.abs(q.Y - p.Z) - hz, 0)
+						if dx * dx + dz * dz < (w / 2) ^ 2 then
+							hit = true
+						end
+					end
+					if hit then
+						table.insert(blocked, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+						break
+					end
+				end
+			end
+			if math.abs(p.X) + hx > 76 and p.Y + hy > 24 then
+				table.insert(high, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y + hy, p.Z))
+			end
+		end
+	end
+	check(
+		#blocked == 0,
+		("Ледник: пути к площадке и к выходу (%d) свободны"):format(
+			#GlacierHall.Paths
+		) .. (if #blocked > 0 then ": " .. table.concat(blocked, "; ", 1, math.min(#blocked, 5)) else "")
+	)
+	check(
+		#high == 0,
+		"Ледник: у стен нет твёрдых уступов выше 24"
 			.. (if #high > 0 then ": " .. table.concat(high, "; ", 1, math.min(#high, 5)) else "")
 	)
 end

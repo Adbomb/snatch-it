@@ -685,8 +685,10 @@ local function step(fight: Fight)
 	if bossCfg.Leash == 0 then
 		BossService.MoveTo(boss, boss.home.Position) -- не преследует: стоит на своём месте и только поворачивается
 	elseif dist > bossCfg.AttackRange - 0.5 then
-		-- Босс держит дистанцию атаки: далеко — бежит к игроку.
-		local stopAt = root.Position - toPlayer.Unit * (bossCfg.AttackRange - 1.5)
+		-- Босс держит дистанцию атаки: далеко — бежит к игроку. С BodyRange (Йети) дистанция — от контура тела: центр
+		-- останавливается дальше на вынос контура в сторону игрока (иначе игрок оказался бы внутри тела).
+		local outline = if bossCfg.BodyRange then math.max(toPlayer.Magnitude - dist, 0) else 0
+		local stopAt = root.Position - toPlayer.Unit * (bossCfg.AttackRange - 1.5 + outline)
 		-- дальше Leash от своего места босс не идёт (его площадка свободна от декора, D43): ждёт на краю
 		local fromHome = flat(stopAt - boss.home.Position)
 		if fromHome.Magnitude > bossCfg.Leash then

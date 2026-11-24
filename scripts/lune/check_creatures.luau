@@ -28,12 +28,16 @@ local function check(ok: boolean, message: string)
 	end
 end
 
--- боссы 3 (D54) и 4 (D57, D58): общие проверки — для обоих индексов
+-- боссы 3 (D54), 4 (D57, D58) и 5 (D64): общие проверки — для всех индексов
 local index3 = serde.decode("json", fs.readFile("assets/models/art/Boss3Creatures.index.json"))
 local index4 = serde.decode("json", fs.readFile("assets/models/art/boss4/Boss4Creatures.index.json"))
-check(#index3.items == 30 and #index4.items == 30, "в индексах по 30 существ (боссы 3 и 4)")
+local index5 = serde.decode("json", fs.readFile("assets/models/art/boss5/Boss5Creatures.index.json"))
+check(
+	#index3.items == 30 and #index4.items == 30 and #index5.items == 30,
+	"в индексах по 30 существ (боссы 3, 4 и 5)"
+)
 local index = { items = {} }
-for boss, src in { [3] = index3, [4] = index4 } do
+for boss, src in { [3] = index3, [4] = index4, [5] = index5 } do
 	for _, item in src.items do
 		item.boss = boss
 		table.insert(index.items, item)
@@ -63,7 +67,7 @@ for _, item in index.items do
 		-- у босса 4 части упорядочены «родитель раньше детей» (у босса 3 ноги раньше туловища — крепятся к корню, как
 		-- утверждено; не менялось)
 		check(
-			item.boss ~= 4 or spec.parent == nil or table.find(rig.Order, spec.parent) < table.find(rig.Order, name),
+			item.boss < 4 or spec.parent == nil or table.find(rig.Order, spec.parent) < table.find(rig.Order, name),
 			id .. "." .. name .. ": родитель раньше в Order (ItemFactory.buildCreature)"
 		)
 		blocks += #spec.blocks
@@ -92,9 +96,16 @@ for _, item in index.items do
 	if def then
 		check(def.rarity == item.rarity, id .. ": редкость")
 		check(def.income > 0, id .. ": доход")
-		if item.boss == 4 then
-			check(def.income == item.income, id .. ": доход = каталог (D57)")
+		if item.boss >= 4 then
+			check(def.income == item.income, id .. ": доход = каталог (D57, D64)")
 			check(def.weight == item.weight, id .. ": вес = каталог (D58)")
+		end
+		-- прозрачные части (желе, купол — босс 5): прозрачность из индекса дошла до скелета
+		for _, part in item.parts do
+			check(
+				rig.Parts[part.name].transparency == part.transparency,
+				id .. "." .. part.name .. ": прозрачность = индекс"
+			)
 		end
 		check(
 			(def.size - rig.Size).Magnitude < 1e-3,
@@ -104,14 +115,28 @@ for _, item in index.items do
 		byRarity[item.boss][def.rarity] = (byRarity[item.boss][def.rarity] or 0) + 1
 	end
 end
-local b3, b4 = byRarity[3] or {}, byRarity[4] or {}
+local b3, b4, b5 = byRarity[3] or {}, byRarity[4] or {}, byRarity[5] or {}
 check(b3.Common == 12 and b3.Rare == 10 and b3.Epic == 8, "босс 3: 12 Common, 10 Rare, 8 Epic")
 check(
 	b4.Common == 12 and b4.Rare == 9 and b4.Epic == 6 and b4.Legendary == 3,
 	"босс 4: 12 Common, 9 Rare, 6 Epic, 3 Legendary (D57)"
 )
+check(
+	b5.Common == 12 and b5.Rare == 9 and b5.Epic == 6 and b5.Legendary == 3,
+	"босс 5: 12 Common, 9 Rare, 6 Epic, 3 Legendary (D64)"
+)
+for _, id in { "VikingFigure", "RuneStone", "Longship", "IceSwan", "NinthWave" } do
+	check(
+		Items[id].legacy == true,
+		id
+			.. ": черновик «Полярного медведя» — только для старых сохранений"
+	)
+end
 for _, id in { "CanopicJar", "ScarabAmulet", "BastetCat", "GoldenAnkh", "Nefertiti" } do
-	check(Items[id].legacy == true, id .. ": черновик «Египта» — только для старых сохранений")
+	check(
+		Items[id].legacy == true,
+		id .. ": черновик «Египта» — только для старых сохранений"
+	)
 end
 for _, id in { "CratedVase", "PlasterBust", "KnightArmor", "BronzeHorse" } do
 	check(
@@ -133,6 +158,13 @@ for _, def in Items do
 	end
 end
 check(active4 == 30, "у босса 4 появляются только 30 существ")
+local active5 = 0
+for _, def in Items do
+	if def.boss == 5 and not def.legacy then
+		active5 += 1
+	end
+end
+check(active5 == 30, "у босса 5 появляются только 30 существ")
 
 print("· сборка ItemFactory")
 local function close(a, b, eps)
@@ -323,7 +355,9 @@ check(gl > 25 and gl < 50, ("страж поворачивается к игро
 CreatureAnim.Transforms(vault, 4242, 1700000000.3, "Wander", false, 0, out, Vector3.new(-5, 0, -1))
 gl = math.deg(math.atan2(out.GuardL.LookVector.X, out.GuardL.LookVector.Z) + math.pi) % 360
 check(gl > 360 - 40 and gl < 360 - 30, ("страж не дальше 35° (%.1f°)"):format(gl))
-print("· все 30: живые (суставы двигаются в каждом режиме) и ловятся (точный бросок попадает)")
+print(
+	"· все 30: живые (суставы двигаются в каждом режиме) и ловятся (точный бросок попадает)"
+)
 do
 	local CreatureMotion = Env.Require("ReplicatedStorage.Shared.CreatureMotion")
 	local CatchThrow = Env.Require("ReplicatedStorage.Shared.CatchThrow")
@@ -414,7 +448,10 @@ do
 		check(hits == 3, ("%s: точный бросок попадает %d/3"):format(item.id, hits))
 		local top = stage + Vector3.new(0, def.size.Y / 2, 0)
 		local look = (top - cam.Position).Unit:Dot(cam.LookVector)
-		check(look > math.cos(math.rad(30)), ("%s: верх существа в кадре поимки (%.2f)"):format(item.id, look))
+		check(
+			look > math.cos(math.rad(30)),
+			("%s: верх существа в кадре поимки (%.2f)"):format(item.id, look)
+		)
 	end
 	print("  суставы в движении у босса: " .. table.concat(summary, ", "))
 end

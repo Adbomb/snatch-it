@@ -1,0 +1,3797 @@
+{
+ "version": "D64-2026-11-24",
+ "accepted": "каталог (D64) утверждён владельцем 2026-11-24; доходы — ступень 3.2 (D64, вариант А); модели и карты приняты, загружены 2026-11-24",
+ "rules": [
+  "Stand у всех 30 — декоративная подставка, в игре прячется (stand_policy hide)",
+  "вес — наибольший габарит без подставки (D58)",
+  "прозрачные части (transparency) — желе и купол: внутренности видны"
+ ],
+ "axes": "Roblox: x вправо, y вверх, z к зрителю − (лицо смотрит в −z); стады",
+ "root": "Stand",
+ "roughness_map": "assets/textures/art/art_roughness.png",
+ "items": [
+  {
+   "id": "PenguinGiraffe",
+   "n": 1,
+   "rarity": "Common",
+   "name": "Пингвин-жираф",
+   "description": "шея длиннее тела  маленькая голова качается сверху",
+   "income": 1280.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/PenguinGiraffe.fbx",
+   "rig": "assets/models/art/boss5/PenguinGiraffe.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/PenguinGiraffe_color.png",
+    "assets/textures/art/boss5/PenguinGiraffe_normal.png"
+   ],
+   "footprint": [
+    1.64,
+    1.44
+   ],
+   "height": 4.29,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.82,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FlipperL",
+     "parent": "Body",
+     "pivot": [
+      0.48,
+      1.32,
+      0.0
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -22
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FlipperR",
+     "parent": "Body",
+     "pivot": [
+      -0.48,
+      1.32,
+      0.0
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Neck",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.57,
+      0.05
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      -8,
+      6,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Neck",
+     "pivot": [
+      0.0,
+      3.52,
+      -0.05
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      12,
+      -14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SnowSlime",
+   "n": 2,
+   "rarity": "Common",
+   "name": "Снежный слизень",
+   "description": "желейная ледяная лужица с тремя глазами  внутри застряла рыбка",
+   "income": 1150.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/SnowSlime.fbx",
+   "rig": "assets/models/art/boss5/SnowSlime.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SnowSlime_color.png",
+    "assets/textures/art/boss5/SnowSlime_normal.png"
+   ],
+   "footprint": [
+    2.62,
+    2.44
+   ],
+   "height": 2.14,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.52,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null,
+     "transparency": 0.45
+    },
+    {
+     "name": "Top",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.32,
+      -0.05
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.06,
+      0
+     ],
+     "transparency": 0.45
+    },
+    {
+     "name": "Fish",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.64,
+      0.3
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Eyes",
+     "parent": "Top",
+     "pivot": [
+      0.0,
+      1.32,
+      0.7
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "TwoHeadFox",
+   "n": 3,
+   "rarity": "Common",
+   "name": "Двухголовый песец",
+   "description": "две головы смотрят в разные стороны и спорят",
+   "income": 1200.0,
+   "weight": "Light",
+   "fbx": "assets/models/art/boss5/TwoHeadFox.fbx",
+   "rig": "assets/models/art/boss5/TwoHeadFox.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/TwoHeadFox_color.png",
+    "assets/textures/art/boss5/TwoHeadFox_normal.png"
+   ],
+   "footprint": [
+    2.01,
+    1.99
+   ],
+   "height": 2.14,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.1
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.45,
+      0.47,
+      -0.6
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      -18,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadL",
+     "parent": "Body",
+     "pivot": [
+      0.16,
+      1.38,
+      0.3
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadR",
+     "parent": "Body",
+     "pivot": [
+      -0.16,
+      1.38,
+      0.3
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      -14,
+      8
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "FluffCyclops",
+   "n": 4,
+   "rarity": "Common",
+   "name": "Пушистик-циклоп",
+   "description": "шар меха с одним огромным глазом на тонких ножках",
+   "income": 1230.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/FluffCyclops.fbx",
+   "rig": "assets/models/art/boss5/FluffCyclops.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/FluffCyclops_color.png",
+    "assets/textures/art/boss5/FluffCyclops_normal.png"
+   ],
+   "footprint": [
+    2.4,
+    2.15
+   ],
+   "height": 3.44,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      2.42,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -8
+     ],
+     "demo_offset_rbx": [
+      0,
+      -0.1,
+      0
+     ]
+    },
+    {
+     "name": "Eye",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.87,
+      0.8
+     ],
+     "role": "глаз: поворот (взгляд), моргание — масштаб по высоте",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      0.36,
+      2.07,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -14,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      -0.36,
+      2.07,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "MustacheWalrus",
+   "n": 5,
+   "rarity": "Common",
+   "name": "Морж-усач",
+   "description": "усы до земли  заплетены в косы",
+   "income": 1180.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/MustacheWalrus.fbx",
+   "rig": "assets/models/art/boss5/MustacheWalrus.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/MustacheWalrus_color.png",
+    "assets/textures/art/boss5/MustacheWalrus_normal.png"
+   ],
+   "footprint": [
+    2.88,
+    2.83
+   ],
+   "height": 2.32,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.82,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FlipperL",
+     "parent": "Body",
+     "pivot": [
+      0.7,
+      0.97,
+      0.35
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FlipperR",
+     "parent": "Body",
+     "pivot": [
+      -0.7,
+      0.97,
+      0.35
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.67,
+      0.35
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "BraidL",
+     "parent": "Head",
+     "pivot": [
+      0.36,
+      1.79,
+      1.06
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "BraidR",
+     "parent": "Head",
+     "pivot": [
+      -0.36,
+      1.79,
+      1.06
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      6
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SealCaterpillar",
+   "n": 6,
+   "rarity": "Common",
+   "name": "Тюлень-гусеница",
+   "description": "длинный тюлень на шести ластах",
+   "income": 1020.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/SealCaterpillar.fbx",
+   "rig": "assets/models/art/boss5/SealCaterpillar.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SealCaterpillar_color.png",
+    "assets/textures/art/boss5/SealCaterpillar_normal.png"
+   ],
+   "footprint": [
+    1.26,
+    3.23
+   ],
+   "height": 1.56,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Rear",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.52,
+      -1.05
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Mid",
+     "parent": "Rear",
+     "pivot": [
+      0.0,
+      0.52,
+      -0.42
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.08,
+      0
+     ]
+    },
+    {
+     "name": "Front",
+     "parent": "Mid",
+     "pivot": [
+      0.0,
+      0.52,
+      0.24
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      -10,
+      -10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Front",
+     "pivot": [
+      0.0,
+      1.07,
+      0.62
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "HedgeOwl",
+   "n": 7,
+   "rarity": "Common",
+   "name": "Сова-ёж",
+   "description": "круглая сова  вместо перьев — ледяные иголки",
+   "income": 1070.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/HedgeOwl.fbx",
+   "rig": "assets/models/art/boss5/HedgeOwl.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/HedgeOwl_color.png",
+    "assets/textures/art/boss5/HedgeOwl_normal.png"
+   ],
+   "footprint": [
+    2.57,
+    2.35
+   ],
+   "height": 2.38,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.02,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Quills",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.62,
+      -0.4
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      -6,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.04,
+      0
+     ]
+    },
+    {
+     "name": "WingL",
+     "parent": "Body",
+     "pivot": [
+      0.8,
+      1.52,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      18
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingR",
+     "parent": "Body",
+     "pivot": [
+      -0.8,
+      1.52,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Face",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.57,
+      0.7
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      14,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "IceCrab",
+   "n": 8,
+   "rarity": "Common",
+   "name": "Краб-льдина",
+   "description": "панцирь — глыба льда  одна клешня гигантская",
+   "income": 1120.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/IceCrab.fbx",
+   "rig": "assets/models/art/boss5/IceCrab.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/IceCrab_color.png",
+    "assets/textures/art/boss5/IceCrab_normal.png"
+   ],
+   "footprint": [
+    3.13,
+    2.91
+   ],
+   "height": 1.78,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EyeL",
+     "parent": "Body",
+     "pivot": [
+      0.22,
+      1.12,
+      0.32
+     ],
+     "role": "глаз на стебельке: качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      14
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EyeR",
+     "parent": "Body",
+     "pivot": [
+      -0.22,
+      1.12,
+      0.32
+     ],
+     "role": "глаз на стебельке: качается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "ClawBig",
+     "parent": "Body",
+     "pivot": [
+      -0.75,
+      0.87,
+      0.3
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      -12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.1,
+      0
+     ]
+    },
+    {
+     "name": "ClawSmall",
+     "parent": "Body",
+     "pivot": [
+      0.74,
+      0.87,
+      0.3
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SkiEarHare",
+   "n": 9,
+   "rarity": "Common",
+   "name": "Заяц-лыжник",
+   "description": "уши такие длинные  что он скользит на них",
+   "income": 1110.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/SkiEarHare.fbx",
+   "rig": "assets/models/art/boss5/SkiEarHare.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SkiEarHare_color.png",
+    "assets/textures/art/boss5/SkiEarHare_normal.png"
+   ],
+   "footprint": [
+    1.19,
+    3.07
+   ],
+   "height": 2.3,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.92,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      8,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.52,
+      0.35
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      -10,
+      8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Head",
+     "pivot": [
+      0.16,
+      2.08,
+      0.5
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": [
+      0,
+      4,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarR",
+     "parent": "Head",
+     "pivot": [
+      -0.16,
+      2.08,
+      0.5
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "SnowWorm",
+   "n": 10,
+   "rarity": "Common",
+   "name": "Снежный червь",
+   "description": "улыбка с зубами-сосульками  хвост — снежок",
+   "income": 1000.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/SnowWorm.fbx",
+   "rig": "assets/models/art/boss5/SnowWorm.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SnowWorm_color.png",
+    "assets/textures/art/boss5/SnowWorm_normal.png"
+   ],
+   "footprint": [
+    2.51,
+    2.18
+   ],
+   "height": 2.03,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Ball",
+     "parent": "Stand",
+     "pivot": [
+      0.7,
+      0.22,
+      -0.55
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Mid",
+     "parent": "Ball",
+     "pivot": [
+      0.45,
+      1.22,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Mid",
+     "pivot": [
+      -0.7,
+      1.62,
+      0.45
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      14
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "WalkingFish",
+   "n": 11,
+   "rarity": "Common",
+   "name": "Рыба на лапках",
+   "description": "удивлённая треска на коротких лягушачьих лапах",
+   "income": 970.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/WalkingFish.fbx",
+   "rig": "assets/models/art/boss5/WalkingFish.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/WalkingFish_color.png",
+    "assets/textures/art/boss5/WalkingFish_normal.png"
+   ],
+   "footprint": [
+    1.52,
+    3.15
+   ],
+   "height": 2.31,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Stand",
+     "pivot": [
+      0.3,
+      1.07,
+      -0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Stand",
+     "pivot": [
+      -0.3,
+      1.07,
+      -0.1
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.52,
+      -0.1
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.57,
+      -1.15
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Fin",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.12,
+      0.2
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "AntlerFawn",
+   "n": 12,
+   "rarity": "Common",
+   "name": "Оленёнок-рога",
+   "description": "рога втрое больше тела  еле держит голову",
+   "income": 1050.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/AntlerFawn.fbx",
+   "rig": "assets/models/art/boss5/AntlerFawn.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/AntlerFawn_color.png",
+    "assets/textures/art/boss5/AntlerFawn_normal.png"
+   ],
+   "footprint": [
+    3.1,
+    2.3
+   ],
+   "height": 3.28,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.12,
+      -0.3
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      0.18,
+      0.92,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -8,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      -0.18,
+      0.92,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      0.18,
+      0.92,
+      -0.5
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      -0.18,
+      0.92,
+      -0.5
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.27,
+      0.6
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      10,
+      8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Antlers",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      1.25,
+      0.95
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -8
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SpringMammoth",
+   "n": 13,
+   "rarity": "Rare",
+   "name": "Мамонтёнок-пружина",
+   "description": "хобот длиной в три тела  скручен пружиной",
+   "income": 3900.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/SpringMammoth.fbx",
+   "rig": "assets/models/art/boss5/SpringMammoth.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SpringMammoth_color.png",
+    "assets/textures/art/boss5/SpringMammoth_normal.png"
+   ],
+   "footprint": [
+    1.52,
+    3.32
+   ],
+   "height": 2.3,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.12,
+      -0.45
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      0.72,
+      -0.05
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      0.72,
+      -0.05
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      0.72,
+      -0.95
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      0.72,
+      -0.95
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.42,
+      0.25
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Trunk",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      1.32,
+      0.72
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      -10,
+      8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "AccordionBear",
+   "n": 14,
+   "rarity": "Rare",
+   "name": "Медведь-гармошка",
+   "description": "длинное тело собирается складками",
+   "income": 3710.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/AccordionBear.fbx",
+   "rig": "assets/models/art/boss5/AccordionBear.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/AccordionBear_color.png",
+    "assets/textures/art/boss5/AccordionBear_normal.png"
+   ],
+   "footprint": [
+    1.14,
+    3.2
+   ],
+   "height": 1.45,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Rear",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.92,
+      -0.9
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Folds",
+     "parent": "Rear",
+     "pivot": [
+      0.0,
+      0.97,
+      -0.5
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      -0.1
+     ]
+    },
+    {
+     "name": "Front",
+     "parent": "Folds",
+     "pivot": [
+      0.0,
+      0.97,
+      0.55
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      -12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Front",
+     "pivot": [
+      0.0,
+      1.17,
+      0.9
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      -10,
+      8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "IceSpider",
+   "n": 15,
+   "rarity": "Rare",
+   "name": "Ледяной паук",
+   "description": "тело-снежок на восьми ногах-сосульках",
+   "income": 3810.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/IceSpider.fbx",
+   "rig": "assets/models/art/boss5/IceSpider.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/IceSpider_color.png",
+    "assets/textures/art/boss5/IceSpider_normal.png"
+   ],
+   "footprint": [
+    2.91,
+    2.4
+   ],
+   "height": 1.79,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.22,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.08,
+      0
+     ]
+    },
+    {
+     "name": "LegsL",
+     "parent": "Body",
+     "pivot": [
+      0.34,
+      1.22,
+      0.25
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      8
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegsR",
+     "parent": "Body",
+     "pivot": [
+      -0.34,
+      1.22,
+      0.25
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.17,
+      0.6
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LeggedNarwhal",
+   "n": 16,
+   "rarity": "Rare",
+   "name": "Нарвал на ножках",
+   "description": "ходит по суше на четырёх ножках  бивень светится",
+   "income": 3615.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/LeggedNarwhal.fbx",
+   "rig": "assets/models/art/boss5/LeggedNarwhal.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/LeggedNarwhal_color.png",
+    "assets/textures/art/boss5/LeggedNarwhal_normal.png"
+   ],
+   "footprint": [
+    1.81,
+    3.4
+   ],
+   "height": 1.59,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.12,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      0.32,
+      0.82,
+      0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      -0.32,
+      0.82,
+      0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      0.32,
+      0.82,
+      -0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      -0.32,
+      0.82,
+      -0.55
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Horn",
+     "parent": "Body",
+     "pivot": [
+      0.1,
+      1.42,
+      1.05
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.12,
+      -1.1
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "PenguinStack",
+   "n": 17,
+   "rarity": "Rare",
+   "name": "Пингвинья пирамида",
+   "description": "три пингвинёнка стоят друг на друге",
+   "income": 4000.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/PenguinStack.fbx",
+   "rig": "assets/models/art/boss5/PenguinStack.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/PenguinStack_color.png",
+    "assets/textures/art/boss5/PenguinStack_normal.png"
+   ],
+   "footprint": [
+    2.76,
+    1.13
+   ],
+   "height": 2.45,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Bottom",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.29,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Middle",
+     "parent": "Bottom",
+     "pivot": [
+      0.0,
+      1.0468,
+      -0.16
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -6
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Top",
+     "parent": "Middle",
+     "pivot": [
+      0.0,
+      1.8036,
+      -0.32
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      8,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SwivelOwl",
+   "n": 18,
+   "rarity": "Rare",
+   "name": "Филин-вертушка",
+   "description": "голова повёрнута задом наперёд",
+   "income": 3420.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/SwivelOwl.fbx",
+   "rig": "assets/models/art/boss5/SwivelOwl.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/SwivelOwl_color.png",
+    "assets/textures/art/boss5/SwivelOwl_normal.png"
+   ],
+   "footprint": [
+    1.56,
+    1.62
+   ],
+   "height": 2.79,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Branch",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.22,
+      0.0
+     ],
+     "role": "неподвижная часть композиции (как подставка, без движения)",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Branch",
+     "pivot": [
+      0.0,
+      1.07,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -6
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingL",
+     "parent": "Body",
+     "pivot": [
+      0.62,
+      1.72,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingR",
+     "parent": "Body",
+     "pivot": [
+      -0.62,
+      1.72,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.99,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "WalkingJelly",
+   "n": 19,
+   "rarity": "Rare",
+   "name": "Медуза-ходок",
+   "description": "шагает на щупальцах  как паук",
+   "income": 3330.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/WalkingJelly.fbx",
+   "rig": "assets/models/art/boss5/WalkingJelly.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/WalkingJelly_color.png",
+    "assets/textures/art/boss5/WalkingJelly_normal.png"
+   ],
+   "footprint": [
+    3.48,
+    3.05
+   ],
+   "height": 2.69,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Bell",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      2.02,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -6
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.1,
+      0
+     ],
+     "transparency": 0.45
+    },
+    {
+     "name": "Face",
+     "parent": "Bell",
+     "pivot": [
+      0.0,
+      2.27,
+      0.4
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegsA",
+     "parent": "Bell",
+     "pivot": [
+      0.0,
+      1.82,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      0,
+      8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegsB",
+     "parent": "Bell",
+     "pivot": [
+      0.0,
+      1.82,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegsC",
+     "parent": "Bell",
+     "pivot": [
+      0.0,
+      1.82,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      0,
+      -8,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ElephantSeal",
+   "n": 20,
+   "rarity": "Rare",
+   "name": "Морской слон-надувала",
+   "description": "нос-пузырь больше головы",
+   "income": 3520.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/ElephantSeal.fbx",
+   "rig": "assets/models/art/boss5/ElephantSeal.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/ElephantSeal_color.png",
+    "assets/textures/art/boss5/ElephantSeal_normal.png"
+   ],
+   "footprint": [
+    2.01,
+    3.42
+   ],
+   "height": 1.87,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.72,
+      -0.3
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FlipperL",
+     "parent": "Body",
+     "pivot": [
+      0.55,
+      0.67,
+      0.45
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -18
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FlipperR",
+     "parent": "Body",
+     "pivot": [
+      -0.55,
+      0.67,
+      0.45
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.37,
+      0.55
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      -8,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Nose",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      1.6,
+      0.98
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0.05
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ToothBeaver",
+   "n": 21,
+   "rarity": "Rare",
+   "name": "Бобр-зубастик",
+   "description": "зубы в половину тела",
+   "income": 3230.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/ToothBeaver.fbx",
+   "rig": "assets/models/art/boss5/ToothBeaver.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/ToothBeaver_color.png",
+    "assets/textures/art/boss5/ToothBeaver_normal.png"
+   ],
+   "footprint": [
+    1.36,
+    2.38
+   ],
+   "height": 2.16,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.92,
+      -0.1
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.47,
+      -0.55
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      0.42,
+      1.22,
+      0.2
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      -0.42,
+      1.22,
+      0.2
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.67,
+      0.1
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      -12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "WingedWalrus",
+   "n": 22,
+   "rarity": "Epic",
+   "name": "Морж с крылышками",
+   "description": "огромный морж с крошечными крыльями пытается взлететь",
+   "income": 15100.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/WingedWalrus.fbx",
+   "rig": "assets/models/art/boss5/WingedWalrus.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/WingedWalrus_color.png",
+    "assets/textures/art/boss5/WingedWalrus_normal.png"
+   ],
+   "footprint": [
+    2.64,
+    2.55
+   ],
+   "height": 2.96,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Floe",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.34,
+      0.0
+     ],
+     "role": "неподвижная часть композиции (как подставка, без движения)",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Floe",
+     "pivot": [
+      0.0,
+      1.74,
+      -0.1
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -4
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.15,
+      0
+     ]
+    },
+    {
+     "name": "WingL",
+     "parent": "Body",
+     "pivot": [
+      0.58,
+      2.54,
+      -0.35
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "WingR",
+     "parent": "Body",
+     "pivot": [
+      -0.58,
+      2.54,
+      -0.35
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -30
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      2.59,
+      0.45
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "OwlTotem",
+   "n": 23,
+   "rarity": "Epic",
+   "name": "Сова-тотем",
+   "description": "три совы срослись в столбик",
+   "income": 16600.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/OwlTotem.fbx",
+   "rig": "assets/models/art/boss5/OwlTotem.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/OwlTotem_color.png",
+    "assets/textures/art/boss5/OwlTotem_normal.png"
+   ],
+   "footprint": [
+    1.46,
+    1.38
+   ],
+   "height": 3.84,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "OwlLow",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.39,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "OwlMid",
+     "parent": "OwlLow",
+     "pivot": [
+      0.0,
+      1.685,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      15,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "OwlTop",
+     "parent": "OwlMid",
+     "pivot": [
+      0.0,
+      2.869,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      -25,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "NestDeer",
+   "n": 24,
+   "rarity": "Epic",
+   "name": "Олень-гнездо",
+   "description": "на рогах живут птички",
+   "income": 12720.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/NestDeer.fbx",
+   "rig": "assets/models/art/boss5/NestDeer.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/NestDeer_color.png",
+    "assets/textures/art/boss5/NestDeer_normal.png"
+   ],
+   "footprint": [
+    2.19,
+    3.04
+   ],
+   "height": 3.7,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.64,
+      -0.1
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegFL",
+     "parent": "Body",
+     "pivot": [
+      0.26,
+      1.39,
+      0.62
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -20,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegFR",
+     "parent": "Body",
+     "pivot": [
+      -0.26,
+      1.39,
+      0.62
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBL",
+     "parent": "Body",
+     "pivot": [
+      0.26,
+      1.39,
+      -0.62
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegBR",
+     "parent": "Body",
+     "pivot": [
+      -0.26,
+      1.39,
+      -0.62
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.84,
+      -0.98
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.99,
+      0.85
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      8,
+      10,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Antlers",
+     "parent": "Head",
+     "pivot": [
+      0.0,
+      2.94,
+      1.1
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Bird1",
+     "parent": "Antlers",
+     "pivot": [
+      0.8,
+      3.74,
+      0.9
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": [
+      0,
+      30,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.05,
+      0
+     ]
+    },
+    {
+     "name": "Bird2",
+     "parent": "Antlers",
+     "pivot": [
+      -0.8,
+      3.74,
+      0.9
+     ],
+     "role": "маленький жилец: выглядывает, двигается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "GiantPenguin",
+   "n": 25,
+   "rarity": "Epic",
+   "name": "Пингвин-гигант",
+   "description": "огромное тело и крошечная голова",
+   "income": 13800.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/GiantPenguin.fbx",
+   "rig": "assets/models/art/boss5/GiantPenguin.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/GiantPenguin_color.png",
+    "assets/textures/art/boss5/GiantPenguin_normal.png"
+   ],
+   "footprint": [
+    3.38,
+    2.49
+   ],
+   "height": 3.22,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.64,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FlipperL",
+     "parent": "Body",
+     "pivot": [
+      1.22,
+      2.39,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -25
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FlipperR",
+     "parent": "Body",
+     "pivot": [
+      -1.22,
+      2.39,
+      -0.05
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      3.06,
+      0.0
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "BallBear",
+   "n": 26,
+   "rarity": "Epic",
+   "name": "Медведь-шар",
+   "description": "совершенно круглый белый медведь  катится",
+   "income": 15700.0,
+   "weight": "Medium",
+   "fbx": "assets/models/art/boss5/BallBear.fbx",
+   "rig": "assets/models/art/boss5/BallBear.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/BallBear_color.png",
+    "assets/textures/art/boss5/BallBear_normal.png"
+   ],
+   "footprint": [
+    3.2,
+    2.97
+   ],
+   "height": 3.11,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.84,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "EarL",
+     "parent": "Body",
+     "pivot": [
+      0.75,
+      3.11,
+      0.2
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "EarR",
+     "parent": "Body",
+     "pivot": [
+      -0.75,
+      3.11,
+      0.2
+     ],
+     "role": "ухо: шевелится",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "PawFL",
+     "parent": "Body",
+     "pivot": [
+      1.15,
+      2.71,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      0,
+      20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "PawFR",
+     "parent": "Body",
+     "pivot": [
+      -1.15,
+      2.71,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "PawBL",
+     "parent": "Body",
+     "pivot": [
+      1.15,
+      1.61,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "PawBR",
+     "parent": "Body",
+     "pivot": [
+      -1.15,
+      1.61,
+      0.45
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      0,
+      -20,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "StiltWhale",
+   "n": 27,
+   "rarity": "Epic",
+   "name": "Кит на ходулях",
+   "description": "маленький кит шагает на длинных ногах-сосульках",
+   "income": 14784.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/StiltWhale.fbx",
+   "rig": "assets/models/art/boss5/StiltWhale.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/StiltWhale_color.png",
+    "assets/textures/art/boss5/StiltWhale_normal.png"
+   ],
+   "footprint": [
+    2.13,
+    2.56
+   ],
+   "height": 4.22,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Stand",
+     "pivot": [
+      0.35,
+      2.94,
+      0.0
+     ],
+     "role": "крупная часть: покачивание на ходулях",
+     "demo_rot_rbx_deg": [
+      -14,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "LegR",
+     "parent": "Stand",
+     "pivot": [
+      -0.35,
+      2.94,
+      0.0
+     ],
+     "role": "крупная часть: покачивание на ходулях",
+     "demo_rot_rbx_deg": [
+      12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      3.14,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      3.42,
+      -0.72
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      -15
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "YetiCub",
+   "n": 28,
+   "rarity": "Legendary",
+   "name": "Йетёнок-коллекционер",
+   "description": "маленький пушистый малыш (не копия босса): лупа в лапе  крошечная ледяная глыба-рюкзачок; без монокля и бивней",
+   "income": 48000.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/YetiCub.fbx",
+   "rig": "assets/models/art/boss5/YetiCub.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/YetiCub_color.png",
+    "assets/textures/art/boss5/YetiCub_normal.png"
+   ],
+   "footprint": [
+    2.4,
+    1.92
+   ],
+   "height": 3.2,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      1.06,
+      0.0
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegL",
+     "parent": "Body",
+     "pivot": [
+      0.3,
+      0.81,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "LegR",
+     "parent": "Body",
+     "pivot": [
+      -0.3,
+      0.81,
+      0.0
+     ],
+     "role": "нога: шаг",
+     "demo_rot_rbx_deg": [
+      -12,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Pack",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.36,
+      -0.45
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.03,
+      0
+     ]
+    },
+    {
+     "name": "Head",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.84,
+      0.05
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      12,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmL",
+     "parent": "Body",
+     "pivot": [
+      0.6,
+      1.61,
+      0.1
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": [
+      -15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Loupe",
+     "parent": "ArmL",
+     "pivot": [
+      0.98,
+      1.96,
+      0.66
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      10,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "ArmR",
+     "parent": "Body",
+     "pivot": [
+      -0.6,
+      1.61,
+      0.1
+     ],
+     "role": "рука или лапа: машет",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    }
+   ]
+  },
+  {
+   "id": "IcebergNarwhal",
+   "n": 29,
+   "rarity": "Legendary",
+   "name": "Нарвал-айсберг",
+   "description": "на спине айсберг с деревушкой и маяком  бивень-кристалл",
+   "income": 44352.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/IcebergNarwhal.fbx",
+   "rig": "assets/models/art/boss5/IcebergNarwhal.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/IcebergNarwhal_color.png",
+    "assets/textures/art/boss5/IcebergNarwhal_normal.png"
+   ],
+   "footprint": [
+    2.99,
+    3.56
+   ],
+   "height": 2.95,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Water",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.36,
+      0.0
+     ],
+     "role": "неподвижная часть композиции (как подставка, без движения)",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Water",
+     "pivot": [
+      0.0,
+      0.96,
+      -0.2
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": [
+      -6,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0.08,
+      0
+     ]
+    },
+    {
+     "name": "Horn",
+     "parent": "Body",
+     "pivot": [
+      0.05,
+      1.06,
+      1.36
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "FinL",
+     "parent": "Body",
+     "pivot": [
+      0.6,
+      0.76,
+      0.5
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": [
+      0,
+      0,
+      20
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "FinR",
+     "parent": "Body",
+     "pivot": [
+      -0.6,
+      0.76,
+      0.5
+     ],
+     "role": "крыло: взмах",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Tail",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.86,
+      -1.2
+     ],
+     "role": "хвост: виляет",
+     "demo_rot_rbx_deg": [
+      15,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "Iceberg",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      1.71,
+      -0.3
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Lighthouse",
+     "parent": "Iceberg",
+     "pivot": [
+      0.45,
+      2.11,
+      -0.45
+     ],
+     "role": "головной убор или деталь: подпрыгивает, качается",
+     "demo_rot_rbx_deg": [
+      0,
+      45,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ThreeHeadSerpent",
+   "n": 30,
+   "rarity": "Legendary",
+   "name": "Ледяной змей",
+   "description": "три головы-сосульки на длинных шеях из полыньи",
+   "income": 40704.0,
+   "weight": "Heavy",
+   "fbx": "assets/models/art/boss5/ThreeHeadSerpent.fbx",
+   "rig": "assets/models/art/boss5/ThreeHeadSerpent.rig.json",
+   "maps": [
+    "assets/textures/art/boss5/ThreeHeadSerpent_color.png",
+    "assets/textures/art/boss5/ThreeHeadSerpent_normal.png"
+   ],
+   "footprint": [
+    2.9,
+    2.9
+   ],
+   "height": 3.63,
+   "yaw_deg": 0,
+   "hide_with_stand": [],
+   "keep_stand": null,
+   "stand_policy": "hide",
+   "attention": false,
+   "attention_note": null,
+   "parts": [
+    {
+     "name": "Stand",
+     "parent": null,
+     "pivot": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "role": "подставка: корень, неподвижна",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Water",
+     "parent": "Stand",
+     "pivot": [
+      0.0,
+      0.36,
+      0.0
+     ],
+     "role": "неподвижная часть композиции (как подставка, без движения)",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "Body",
+     "parent": "Water",
+     "pivot": [
+      0.0,
+      0.88,
+      -0.3
+     ],
+     "role": "туловище: покачивание, подпрыгивание, наклоны",
+     "demo_rot_rbx_deg": null,
+     "demo_offset_rbx": null
+    },
+    {
+     "name": "HeadMid",
+     "parent": "Body",
+     "pivot": [
+      0.0,
+      0.68,
+      0.1
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      8,
+      0,
+      0
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadL",
+     "parent": "Body",
+     "pivot": [
+      0.279,
+      0.68,
+      0.1
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      10,
+      -12
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "name": "HeadR",
+     "parent": "Body",
+     "pivot": [
+      -0.279,
+      0.68,
+      0.1
+     ],
+     "role": "голова: повороты, кивки",
+     "demo_rot_rbx_deg": [
+      0,
+      -12,
+      10
+     ],
+     "demo_offset_rbx": [
+      0,
+      0,
+      0
+     ]
+    }
+   ]
+  }
+ ]
+}

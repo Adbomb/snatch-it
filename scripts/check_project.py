@@ -167,9 +167,10 @@ for p in walk("src"):
 im = open(os.path.join(ROOT, "src/shared/Config/ItemModels.luau"), encoding="utf-8").read()
 models = dict((k, (c, n)) for k, c, n in re.findall(r"^\s*(\w+) = model\((\d+), (\d+),", im, re.M))
 meshes = dict(re.findall(r"^\s*(\w+) = (\d{9,}),", im.split("local MESHES")[1], re.M)) if "local MESHES" in im else {}
-# живые существа (боссы 3–4, D55, D57): FBX — по индексу коллекции, меши частей — CREATURE_MESHES (<id>_<Часть>)
+# живые существа (боссы 3–5, D55, D57, D64): FBX — по индексу коллекции, меши частей — CREATURE_MESHES (<id>_<Часть>)
 creature_fbx = {}
-for _idx in ("assets/models/art/Boss3Creatures.index.json", "assets/models/art/boss4/Boss4Creatures.index.json"):
+for _idx in ("assets/models/art/Boss3Creatures.index.json", "assets/models/art/boss4/Boss4Creatures.index.json",
+             "assets/models/art/boss5/Boss5Creatures.index.json"):
     if os.path.isfile(os.path.join(ROOT, _idx)):
         for _it in json.load(open(os.path.join(ROOT, _idx), encoding="utf-8"))["items"]:
             creature_fbx[_it["id"]] = _it["fbx"]
@@ -289,6 +290,41 @@ for clip in ("SleepIdle", "Wake", "CombatIdle", "Walk", "HeavyPaw", "TailStrike"
         errors.append(f"нет клипа {path}")
     elif os.path.getsize(os.path.join(ROOT, path)) > 200_000:
         errors.append(f"{path}: больше 200 000 знаков")
+# Босс 5 «Йети-коллекционер» (подключение 2026-11-24, D64): коллекция из 30 существ, но закрыт до общего выпуска
+# боссов 5–10 (D64 п. 7); сила D56; удар до контура тела; скелет и 10 клипов из Blender; арена «Ледник»
+strength5 = re.search(r"\[5\] = \{[^}]*?Strength = (\d+)", battle)
+want5 = bosses.group(1).split(",")[4].strip() if bosses else None
+if not strength5 or strength5.group(1) != want5:
+    errors.append(f"Battle.Bosses[5].Strength ({strength5 and strength5.group(1)}) ≠ Progression.Bosses[5] ({want5})")
+_b5 = re.search(r"\[5\] = \{([^}]*)\}", battle)
+for field in ("Closed = true", "BodyRange = true"):
+    if not _b5 or field not in _b5.group(1):
+        errors.append(f"Battle.Bosses[5]: нет {field} (D64)")
+_boss5_items = len(re.findall(r'^creature5\("', src("src/shared/Config/Items.luau"), re.M))
+if _boss5_items != 30:
+    errors.append(f"в коллекции босса 5 {_boss5_items} существ (нужно 30, D64)")
+for path in ("src/server/Services/BossService.luau", "src/client/Controllers/BossAnimController.luau"):
+    if not re.search(r"\[5\] = Boss5YetiRig", src(path)):
+        errors.append(f"{path}: скелет босса 5 не подключён")
+if "Clips = require(script.Parent.Boss5YetiClips)" not in src("src/shared/Config/Boss5YetiRig.luau"):
+    errors.append("у скелета босса 5 нет клипов (Config/Boss5YetiClips)")
+for clip in ("SleepIdle", "Wake", "CombatIdle", "Walk", "Smash", "IceClap", "Hit", "Victory", "Defeat", "FallAsleep"):
+    path = f"src/shared/Config/Boss5YetiClips/{clip}.luau"
+    if not os.path.exists(os.path.join(ROOT, path)):
+        errors.append(f"нет клипа {path}")
+    elif os.path.getsize(os.path.join(ROOT, path)) > 200_000:
+        errors.append(f"{path}: больше 200 000 знаков")
+if "[5] = {" not in bm or "Йети-коллекционер" not in bm or "ids(YETI_MESHES)" not in bm:
+    errors.append("нет BossModels[5] «Йети-коллекционер» с мешами частей")
+_yeti = bm.split("local YETI_MESHES")[1].split("\n}")[0] if "local YETI_MESHES" in bm else ""
+if len(re.findall(r"= \d{9,},", _yeti)) != 31:
+    errors.append("BossModels: у Йети не 31 меш частей (YETI_MESHES)")
+if not re.search(r"\[5\] = \{\s*floor = ", src("src/server/World/MapLayout.luau")):
+    errors.append("нет площадки босса 5 (MapLayout.Arenas[5])")
+if "GlacierHall.Zone()" not in src("src/server/World/WorldBuilder.luau"):
+    errors.append("арена «Ледник» (GlacierHall) не подключена в WorldBuilder")
+if not re.search(r'id = "Glacier", name = "Ледник", boss = "Йети-коллекционер"', src("src/shared/Config/GameConfig.luau")):
+    errors.append("нет зоны 5 «Ледник» с боссом «Йети-коллекционер» (GameConfig.Zones)")
 # Босс 10 «Король-дракон» (этап B интеграции, 2026-11-15): закрыт до коллекции и импорта модели; сила D56; свои
 # правила боя только у него (дальность до тела, без погони, залп); скелет и 15 клипов из Blender
 battle10 = re.search(r"\[10\] = \{(.*?)\n\t\t\},\n\t\},", battle, re.S)
