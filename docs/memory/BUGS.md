@@ -824,3 +824,10 @@ ojo-serve.ps1`).
 - MCP `open_cloud_invoke`: `displayName` проходит фильтр текста — «MagicMushroomSil», «SubwayOctopusSil» стали
   «####»; ассет при этом создан и одобрен, искать его по operationId, а не по имени.
 
+- Босс 5 (2026-11-24): деталь, нарисованная после цикла `for s, name in ((1, "…L"), (-1, "…R"))`, попадает в последнюю
+  часть цикла (`…R`) — у моржа задние ласты, у филина хвост; ставить `a.group = "Body"` после цикла.
+  `pack_boss5_fbx.py` печатает `ASYM` — пары L/R разного размера (> 25 %).
+- `insert_asset` ставит модель с поворотом (у босса 5 — 34.9°) — ориентацию мешей сверять по взаимному
+  расположению частей, а не по мировым осям.
+- После обновления плагина Assistant («Please restart Roblox Studio») зависают вьюпорт, `screen_capture` и
+  `ContentProvider:PreloadAsync`; состояние загруженных картинок проверять Open Cloud `GET /assets/v1/assets/<id>`.
