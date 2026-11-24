@@ -3,11 +3,13 @@
 -- действиями), остальным они ничего не делают. Два входа с одним обработчиком:
 --   кнопка «Тест» в HUD владельца (Controllers/OwnerTestController, RemoteEvent OwnerTest — имя действия) —
 --     добавлена 2026-11-17: на телефоне чат неудобен или недоступен, из-за чего дракона было не открыть;
---   команды чата (Player.Chatted): /test, /goto, /fight, /win, /day, /night, /exit, /help.
+--   команды чата (Player.Chatted): /test, /goto, /fight [N], /win, /day, /night, /exit, /help.
 -- Обычный сервер подтверждённого DEV-места: Test — перенос на новый резервный тестовый сервер.
 -- Тестовый сервер: Goto — к спящему дракону; Fight — бой за предмет Slot (HP бойца и босса только этого боя —
--- GameConfig.OwnerTest, профиль, сила и числа боя не меняются); Win — HP босса 1 и боец ближе к морде (следующий удар
--- — победа); Day и Night — переход к фазе (бой ночью не начинается); Exit — на обычный сервер.
+-- GameConfig.OwnerTest, профиль, сила и числа боя не меняются); /fight N — с боссом зоны N (1…10, решение владельца
+-- 2026-11-24: для проверки боссов 5–9), без числа и кнопкой — с боссом OwnerTest.Zone (дракон); Win — HP босса 1 и
+-- боец на место WinAt (следующий удар — победа); Day и Night — переход к фазе (бой ночью не начинается);
+-- Exit — на обычный сервер.
 -- На тестовом сервере все профили — в памяти (Main: PlayerSession.Join с mock), поэтому ни бой, ни награда, ни
 -- что-либо ещё не попадает в сохранения. Владельцу ставится атрибут игрока OwnerTest = "Normal" | "Test" — по нему
 -- клиент показывает кнопку (сам атрибут прав не даёт).
@@ -35,7 +37,8 @@ local OwnerTestService = {}
 local lastAction: { [Player]: number } = {}
 local teleporting: { [Player]: boolean } = {}
 
-local HELP = "Тест: кнопка «Тест» или чат — /goto, /fight, /win, /day, /night, /exit"
+local HELP =
+	"Тест: кнопка «Тест» или чат — /goto, /fight, /fight 1…10, /win, /day, /night, /exit"
 -- команда чата → действие
 local CHAT = {
 	["/test"] = "Test",
@@ -79,15 +82,23 @@ local function standAt(player: Player, boss: any, at: Vector2): boolean
 	return true
 end
 
--- HP только этого боя и место бойца.
-local function setUp(fight: any, hp: number?, bossHp: number, at: Vector2)
+-- Места бойца у босса зоны zone (GameConfig.OwnerTest.Spots, иначе DefaultSpot).
+local function spotOf(zone: number): { FightAt: Vector2?, WinAt: Vector2? }
+	local cfg = GameConfig.OwnerTest
+	return cfg.Spots[zone] or cfg.DefaultSpot
+end
+
+-- HP только этого боя и место бойца (нет места — боец остаётся, где стоит).
+local function setUp(fight: any, hp: number?, bossHp: number, at: Vector2?)
 	if hp then
 		fight.hp, fight.maxHp = hp, hp
 		fight.player:SetAttribute("BattleMaxHP", hp)
 	end
 	fight.bossHp, fight.bossMax = bossHp, bossHp
 	fight.boss.model:SetAttribute("MaxHP", bossHp)
-	standAt(fight.player, fight.boss, at)
+	if at then
+		standAt(fight.player, fight.boss, at)
+	end
 end
 
 -- К спящему дракону: посмотреть модель, текстуры и ауру без боя.
@@ -105,13 +116,15 @@ local function goTo(player: Player)
 	Notify.Send(player, "Король-дракон перед вами", "Go")
 end
 
-local function startFight(player: Player)
+-- Тестовый бой с боссом зоны zone (нет — OwnerTest.Zone). Зоны без боя отказывает BattleService.Begin.
+local function startFight(player: Player, zone: number?)
 	local cfg = GameConfig.OwnerTest
+	zone = zone or cfg.Zone
 	if BattleService.Handlers.FightOf(player) then
 		Notify.Send(player, "Бой уже идёт: «Победа» завершит его", "Stop")
 		return
 	end
-	local _, part = BossLootService.SlotItem(cfg.Zone, cfg.Slot)
+	local _, part = BossLootService.SlotItem(zone :: number, cfg.Slot)
 	local character = player.Character
 	if not part or not character then
 		Notify.Send(player, "Нет предмета у босса или персонажа", "Stop")
@@ -119,10 +132,16 @@ local function startFight(player: Player)
 	end
 	character:PivotTo(CFrame.new(part.Position + Vector3.new(0, 3, 5)))
 	task.wait(0.3)
-	local fight = BattleService.Begin(player, cfg.Zone, cfg.Slot)
+	local fight = BattleService.Begin(player, zone :: number, cfg.Slot)
 	if fight then -- отказ Begin уже сообщил игроку
-		setUp(fight, cfg.FightHp, cfg.BossHp, cfg.FightAt)
-		Notify.Send(player, "Тестовый бой начат (в сохранения не попадает)", "Go")
+		setUp(fight, cfg.FightHp, cfg.BossHp, spotOf(zone :: number).FightAt)
+		Notify.Send(
+			player,
+			("Тестовый бой с боссом %d начат (в сохранения не попадает)"):format(
+				zone :: number
+			),
+			"Go"
+		)
 	end
 end
 
@@ -132,13 +151,13 @@ local function win(player: Player)
 		Notify.Send(player, "Сначала начните бой", "Stop")
 		return
 	end
-	setUp(fight, nil, 1, GameConfig.OwnerTest.WinAt)
+	setUp(fight, nil, 1, spotOf(fight.zone).WinAt)
 	Notify.Send(player, "У босса 1 HP — следующий удар побеждает", "Go")
 end
 
--- Действие владельца на сервере вида kind. Чужой игрок, неизвестное действие, слишком частое или не для этого
--- вида сервера — ничего не происходит.
-local function run(player: Player, action: string, kind: OwnerTest.Kind)
+-- Действие владельца на сервере вида kind; zone — номер босса для Fight (/fight N, уже проверен). Чужой игрок,
+-- неизвестное действие, слишком частое или не для этого вида сервера — ничего не происходит.
+local function run(player: Player, action: string, kind: OwnerTest.Kind, zone: number?)
 	if not OwnerTest.IsOwner(player) then
 		return
 	end
@@ -160,7 +179,7 @@ local function run(player: Player, action: string, kind: OwnerTest.Kind)
 	if action == "Goto" then
 		goTo(player)
 	elseif action == "Fight" then
-		startFight(player)
+		startFight(player, zone)
 	elseif action == "Win" then
 		win(player)
 	elseif action == "Day" or action == "Night" then
@@ -174,11 +193,40 @@ local function run(player: Player, action: string, kind: OwnerTest.Kind)
 	end
 end
 
-local function onChat(player: Player, message: string)
-	local action = CHAT[string.lower(string.match(message, "^%s*(/%S+)") or "")]
-	if action then
-		run(player, action, OwnerTest.ServerKind())
+-- Номер босса после /fight: целое 1…число зон; другое число или лишний текст — команда не выполняется.
+local function zoneArg(rest: string): (boolean, number?)
+	if rest == "" then
+		return true, nil
 	end
+	local n = tonumber(string.match(rest, "^(%d%d?)$"))
+	if n and n >= 1 and n <= #GameConfig.Zones then
+		return true, n
+	end
+	return false, nil
+end
+
+local function onChat(player: Player, message: string)
+	local command, rest = string.match(message, "^%s*(/%S+)%s*(.-)%s*$")
+	local action = CHAT[string.lower(command or "")]
+	if not action then
+		return
+	end
+	local zone: number? = nil
+	if action == "Fight" then
+		local ok, n = zoneArg(rest or "")
+		if not ok then
+			if OwnerTest.IsOwner(player) and OwnerTest.ServerKind() == "Test" then
+				Notify.Send(
+					player,
+					("Номер босса — от 1 до %d: /fight 5"):format(#GameConfig.Zones),
+					"Stop"
+				)
+			end
+			return
+		end
+		zone = n
+	end
+	run(player, action, OwnerTest.ServerKind(), zone)
 end
 
 -- Запрос кнопки HUD: клиент присылает только имя действия.
@@ -242,6 +290,7 @@ OwnerTestService.Handlers = {
 	StartFight = startFight,
 	GoTo = goTo,
 	Win = win,
+	ZoneArg = zoneArg,
 }
 
 return OwnerTestService

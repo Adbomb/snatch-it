@@ -8061,18 +8061,16 @@ test(
 )
 
 test(
-	"Босс 5: тестовый бой владельца с Йети (/fight → /win, зона боя 5 на время теста) — проснулся, подошёл до контура, бьёт, победа",
+	"Босс 5: тестовый бой владельца с Йети (/fight 5 → /win) — проснулся, подошёл до контура, бьёт, победа",
 	function(A)
 		local OwnerTestService = require(Server.Services.OwnerTestService) :: any
 		local cfg = GameConfig.OwnerTest
-		local savedZone = cfg.Zone
-		cfg.Zone = 5
 		local ok, err = pcall(function()
 			ensureDay()
 			check(waitBossHome(5), "Йети не дома")
 			BossLootService.Handlers.Refresh()
 			local boss = BossService.Get(5) :: BossService.Boss
-			OwnerTestService.Handlers.StartFight(A)
+			OwnerTestService.Handlers.StartFight(A, 5)
 			local fight = BattleService.Handlers.FightOf(A)
 			check(fight ~= nil, "/fight не начал бой с Йети: " .. table.concat(A:Notices(), "; "))
 			if not fight then
@@ -8118,9 +8116,30 @@ test(
 			CarryService.LoseCarried(A, "уборка после теста")
 			check(waitBossHome(5), "Йети не вернулся после тестового боя")
 		end)
-		cfg.Zone = savedZone
 		TimeService.ResetClock()
 		check(ok, tostring(err))
+	end
+)
+
+test(
+	"Тестовый режим: номер босса в /fight N — 1…10, без числа — босс OwnerTest.Zone, остальное отказ",
+	function(A)
+		local OwnerTestService = require(Server.Services.OwnerTestService) :: any
+		ensureDay()
+		OwnerTestService.Handlers.StartFight(A, 6) -- у босса 6 пока нет боя: отказ, бой не начат
+		check(BattleService.Handlers.FightOf(A) == nil, "/fight 6 начал бой с боссом без боя")
+		check(#A:Notices() > 0, "/fight 6: игрок не узнал об отказе")
+		local arg = OwnerTestService.Handlers.ZoneArg
+		local okEmpty, zoneEmpty = arg("")
+		check(okEmpty and zoneEmpty == nil, "без числа должен быть босс по умолчанию")
+		for _, n in { 1, 5, 6, 10 } do
+			local ok, zone = arg(tostring(n))
+			check(ok and zone == n, "/fight " .. n .. " не принят")
+		end
+		for _, bad in { "0", "11", "-1", "5x", "5 6", "1.5", "abc", "100" } do
+			check(not (arg(bad)), "/fight " .. bad .. " принят")
+		end
+		check(#GameConfig.Zones == 10, "зон не 10: " .. #GameConfig.Zones)
 	end
 )
 

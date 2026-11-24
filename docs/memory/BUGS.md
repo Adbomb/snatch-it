@@ -839,3 +839,8 @@ ojo-serve.ps1`).
 - `execute_luau` в Play: `require` из потока MCP получает свои копии модулей (`BossService.Get` → nil) — состояние
   смотреть по Workspace (папка `Bosses`, атрибут `State`), тесты — атрибутом `DevTools.RunTests`. Долгие ожидания
   (> ~50 с) в одном вызове MCP обрываются таймаутом — опрашивать короткими вызовами.
+- 2026-11-24, снимки в Play: камера клиента — `BindToRenderStep` (приоритет Last + 10) из атрибутов workspace
+  (`SnapEye`, `SnapAt`, `SnapFov`), интерфейс — `ScreenGui.Enabled = false`; Studio вперёд — `AppActivate` (PowerShell
+  `WScript.Shell`). Поражение босса длится < 3 с: камеру ставить заранее (следовать за `GetPivot` босса), бой кончать
+  `FightTest <босс> - 1` и снимать сразу. Полный прогон ServerTests (146) — ~25 мин, опрашивать короткими вызовами.
+

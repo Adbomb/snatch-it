@@ -612,7 +612,9 @@
   `ShouldReserveServer` больше нигде нет). Владелец — `game.CreatorId` при `CreatorType.User`. `OwnerTestService` —
   команды чата через `Player.Chatted` (место на старом `LegacyChatService`): на обычном сервере `/test` → перенос
   владельца `TeleportAsync` с `ShouldReserveServer`; на тестовом `/fight` (бой за слот 1 дракона, HP бойца и босса
-  только этого боя из `GameConfig.OwnerTest`), `/win` (HP босса 1, боец ближе), `/day`, `/night`
+  только этого боя из `GameConfig.OwnerTest`; `/fight N` — с боссом зоны N 1…10, решение владельца 2026-11-24; зона
+  без боя — отказ `BattleService.Begin`; место бойца — `OwnerTest.Spots[N]` или `DefaultSpot`), `/win` (HP босса 1,
+  боец на `WinAt`, если оно есть — у дракона; ходящие боссы подходят сами), `/day`, `/night`
   (`TimeService.SkipTo` разрешён и тут), `/exit`, `/help`. `Main`: на тестовом сервере чужих кикает, владельцу —
   `PlayerSession.Join(player, { mock = true, veteran = true })`: профиль `ProfileStore.Mock`, журнал Transfers в
   памяти — в DataStore ничего не пишется. `BossService.ClosedAllowed` = Studio+DevMode или тестовый сервер.
