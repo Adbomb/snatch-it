@@ -119,8 +119,8 @@ def check_joints(parts, rig, gap=0.05, pivot_far=0.5):
                 if near <= gap:
                     break
                 near = min(near, _min_dist(ipts, t))
-            if near > gap and any(_inside(t, ipts[0]) for t in others):
-                near = 0.0  # остров целиком внутри другой части — не летает
+            if near > gap and any(_inside(t, p) for t in others for p in ipts[:: max(1, len(ipts) // 24)]):
+                near = 0.0  # остров врезан в другую часть (точки внутри неё) — не летает
             own = [v.co for f in faces for v in f.verts]
             if near > gap and any(_in_hull(ipts, [v.co for f in fs for v in f.verts]) or
                                   _in_hull([v.co for f in fs for v in f.verts], own, step=1)

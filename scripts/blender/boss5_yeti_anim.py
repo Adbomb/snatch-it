@@ -15,7 +15,7 @@
   подпрыгнули, монокль слетел; захлопнул верхушку, встаёт → stand); fall_asleep 1.6 (снял глыбу, сел, закрыл глаза → sleep).
 Выход: assets/models/Boss5_Yeti.anim.json (кадры: Transform суставов в осях Roblox, [x, y, z, qx, qy, qz, qw]),
 кадры клипов в <папка>/strip_<клип>.png и anim_report.json (провал под землю, недотяг ног).
-Режимы: (пусто) — расчёт, экспорт и кадры; export — без кадров.
+Режимы: (пусто) — расчёт, экспорт и кадры; export — без кадров; check — только проверка, без записи в assets.
 Запуск: blender --background --factory-startup --python scripts/blender/boss5_yeti_anim.py -- <репо> <папка> [export]
 """
 
@@ -208,7 +208,7 @@ def clips():
     # основной выпад: кулак сверху
     wind = pose("combat", pelvis=V((0, 0.25, 2.1)), torso=6.0, head=(-30.0, 0, 0), jaw=22.0,
                 arm={1: (165.0, 18.0, 70.0, 0), -1: (40.0, 30.0, 60.0, 10)}, feet={1: (-0.6, 0.0, 0.0), -1: (0.8, 0, 0)})
-    hold = pose("bite", pelvis=V((0, -0.15, 1.8)), torso=36.0)
+    hold = pose("bite", pelvis=V((0, -0.15, 2.0)), torso=36.0)  # ноги длиннее (аудит): таз выше, голень над землёй
     C.append(Clip("smash", "Удар кулаком сверху", 1.3, [(0.0, COMBAT), (0.45, wind), (0.7, Y.POSES["bite"]),
                                                         (0.95, hold), (1.3, COMBAT)],
                   events={"начало выпада в игре (AttackAt)": 0.45, "контакт: удар кулаком": 0.7}, start="combat",
@@ -256,9 +256,10 @@ def clips():
 # ── Экспорт и проверки ──────────────────────────────────────────────────────────────────────────────────────
 def export(path, baked):
     out = {"fps": FPS, "order": list(Y.RIG_TREE), "scale": Y.SCALE,
-           "format": "frames[кадр][часть по order] = [x, y, z, qx, qy, qz, qw]", "clips": {}}
+           "format": "frames[кадр][часть по order] = [x, y, z, qx, qy, qz, qw]; lens[кадр] — яркость линзы 0…1",
+           "clips": {}}
     for clip, frames in baked:
-        rows = []
+        rows, lens = [], []
         for P in frames:
             tr = Y.transforms(P)
             row = []
@@ -268,9 +269,11 @@ def export(path, baked):
                 q = (Y.AX @ m3 @ Y.AX.transposed()).to_quaternion()
                 row.append([round(v, 4) for v in (t.x, t.y, t.z, q.x, q.y, q.z, q.w)])
             rows.append(row)
+            lens.append(round(Y.lens_light(P), 3))
         out["clips"][clip.name] = {"title": clip.title, "duration": round(clip.dur, 4), "loop": clip.loop,
                                    "start_pose": clip.start, "end_pose": clip.end,
-                                   "events": {k: round(v, 4) for k, v in clip.events.items()}, "frames": rows}
+                                   "events": {k: round(v, 4) for k, v in clip.events.items()}, "frames": rows,
+                                   "lens": lens}  # яркость линзы монокля по кадрам (0 — погасла, во сне)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print("EXPORT_OK", path, round(os.path.getsize(path) / 1e6, 2), "МБ", flush=True)
@@ -322,6 +325,8 @@ def main():
     with open(os.path.join(out, "anim_report.json"), "w", encoding="utf-8") as f:
         json.dump(rep, f, ensure_ascii=False, indent=1)
     print("CHECK", json.dumps(rep, ensure_ascii=False), flush=True)
+    if mode == "check":  # только проверка клипов (под землю, недотяг ног), ничего не пишет в assets
+        return
     if not only:
         export(os.path.join(repo, "assets", "models", "Boss5_Yeti.anim.json"), baked)
     if mode == "export":

@@ -714,12 +714,91 @@ def main():
     print("AUDIT_OK", len(pages), {r: len(v) for r, v in cnt.items()})
 
 
+def pair_sheet(rows, name, title):
+    """Лист «до / после» произвольных кадров: rows = [(заголовок, [(подпись до, путь)…], [(подпись после, путь)…],
+    [что сделано…], строка проверок)]; кадры до слева, после справа."""
+    cw, rh, tw = 260, 280, 520
+    ncol = max(len(r[1]) + len(r[2]) for r in rows)
+    width = cw * ncol + 24 + tw
+    dd = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    heights = [HEAD + max(rh, 60 + 21 * sum(len(wrap(dd, ln, font(16), tw - 30)) for ln in r[3])
+                          + 20 * len(wrap(dd, r[4], font(15), tw - 20))) for r in rows]
+    sheet = Image.new("RGB", (width, 70 + sum(h + 10 for h in heights)), "white")
+    d = ImageDraw.Draw(sheet)
+    d.text((14, 12), title, font=font(28, True), fill=(30, 30, 40))
+    y = 64
+    for (head, before, after, lines, chk), h in zip(rows, heights):
+        d.rectangle([0, y, width, y + HEAD], fill=(38, 44, 58))
+        d.text((14, y + 4), head, font=font(22, True), fill="white")
+        tx0 = d.textlength(head, font=font(22, True)) + 60
+        d.text((max(cw * len(before) / 2, tx0), y + HEAD / 2), "ДО", font=font(20, True), fill=(255, 170, 170),
+               anchor="mm")
+        d.text((cw * (len(before) + len(after) / 2) + 12, y + HEAD / 2), "ПОСЛЕ", font=font(20, True),
+               fill=(160, 240, 170), anchor="mm")
+        x = 0
+        for k, (lab, path) in enumerate(before + after):
+            if k == len(before):
+                x += 12
+                d.rectangle([x - 8, y + HEAD, x - 4, y + HEAD + rh], fill=(38, 44, 58))
+            sheet.paste(fit(crop(Image.open(path)), cw - 6, rh - 6), (x + 3, y + HEAD + 3))
+            label(d, x + 8, y + HEAD + 8, lab)
+            x += cw
+        tx, ty = cw * ncol + 24, y + HEAD + 8
+        d.text((tx, ty), "Что исправлено:", font=font(17, True), fill=(30, 100, 60))
+        ty += 24
+        for ln in lines:
+            for k, w in enumerate(wrap(d, ln, font(16), tw - 30)):
+                d.text((tx + 4, ty), ("• " if k == 0 else "   ") + w, font=font(16), fill=(35, 35, 45))
+                ty += 21
+        for w in wrap(d, chk, font(15), tw - 20):
+            ty += 4
+            d.text((tx, ty), w, font=font(15), fill=(90, 90, 110))
+            ty += 16
+        y += h + 10
+    sheet.save(os.path.join(OUT, name))
+    return os.path.join(OUT, name)
+
+
+def yeti_fox_sheet():
+    """Шаг 2: Йети по аудиту + доработка песца по замечаниям к набору v2."""
+    yb, ya, f2, f3 = (os.path.join(C, d) for d in ("yeti_v3_before", "yeti_v3_all", "kit_v2", "fox4_q"))
+    rows = [("Йети-коллекционер (босс)",
+             [("стойка", os.path.join(yb, "pose_stand_front.png")), ("сбоку", os.path.join(yb, "pose_stand_side.png")),
+              ("сон", os.path.join(C, "yeti_fix2", "pose_sleep_34.png"))],
+             [("стойка", os.path.join(ya, "pose_stand_front.png")), ("сбоку", os.path.join(ya, "pose_stand_side.png")),
+              ("бой: локти", os.path.join(ya, "pose_combat_34.png")), ("сон", os.path.join(ya, "pose_sleep_34.png"))],
+             ["ноги ×1.15 длиннее и ×1.4 толще, стопа шире (4 когтя), постановка шире; колено — шар-сустав",
+              "локоть — шар-сустав, плечо и предплечье заходят в него, сверху манжета шерсти; щелей в локтях нет "
+              "во всех 13 позах (проверено глазами и автопроверкой)",
+              "во сне глаза закрыты веками, линза монокля гаснет (своя часть Lens, в клипах — канал lens)",
+              "во сне обе ладони лежат на коленях ладонью вниз (рука больше не висит в воздухе)",
+              "веки, шипы гривы, звенья цепочки, уголки и шипы глыбы утоплены — летающих деталей нет",
+              "клипы: голени в выпадах больше не уходят под землю (таз в выпаде чуть выше)"],
+             "треугольников 6 921 (≤ 8 000); суставы: ошибок нет в покое и в 13 позах; 10 клипов — "
+             "кадров под землёй 0, недотяга ног 0"),
+            ("№3 Двухголовый песец — правки к набору v2",
+             [("v2 спереди", os.path.join(f2, "TwoHeadFox_front.png")), ("v2 сбоку", os.path.join(f2, "TwoHeadFox_side.png")),
+              ("v2 3/4", os.path.join(f2, "TwoHeadFox_hero.png"))],
+             [("спереди", os.path.join(f3, "TwoHeadFox_front.png")), ("сбоку", os.path.join(f3, "TwoHeadFox_side.png")),
+              ("3/4", os.path.join(f3, "TwoHeadFox_hero.png")), ("сзади", os.path.join(f3, "TwoHeadFox_back.png"))],
+             ["две передние лапы-колонны спереди, видны в фас; хвост лежит сбоку и обвивает лапы, не закрывая их",
+              "шеи короче и толще (одно звено от плеча)",
+              "бледно-голубые спина и кончик хвоста, розовое внутри ушей, чёрный нос",
+              "сидит: грудь вперёд, круп и крупное бедро сзади",
+              "лица: левая голова хитрая (веко наискось, бровь), правая сердитая (брови «домиком» вниз)",
+              "кадры «после» — быстрый рендер без запекания (запечённый — в листе Common)"],
+             "треугольников 2 988 (≤ 3 000); вывернутых, вырожденных, совпадающих граней 0; суставы: ошибок нет")]
+    return pair_sheet(rows, "step2_yeti_fox.png", "Шаг 2: Йети по аудиту и доработка песца")
+
+
 if __name__ == "__main__":
     import sys
 
     if sys.argv[1:2] == ["kit"]:  # лист «до / после» набора анатомии на трёх моделях
         print(before_after(["GiantPenguin", "TwoHeadFox", "WalkingJelly"], os.path.join(C, "kit_v1"),
                            "kit_before_after.png", "Набор анатомии: до / после на трёх моделях"))
+    elif sys.argv[1:2] == ["yeti"]:  # шаг 2: Йети + песец
+        print(yeti_fox_sheet())
     elif sys.argv[1:2] == ["kit2"]:  # набор v2 — возврат к стилю D39, рядом с эталонами
         print(style_sheet(["GiantPenguin", "TwoHeadFox", "WalkingJelly"], os.path.join(C, "kit_v1"),
                           os.path.join(C, "kit_v2"), "kit_v2_style.png"))

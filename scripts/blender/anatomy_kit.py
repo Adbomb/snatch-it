@@ -127,19 +127,22 @@ def _clip(pts, n, d):
     return clean
 
 
-def belly(a, key, tiers, z0, z1, w=0.7, lift=0.025, reach=0.16, flat=False, depth=0.3, matrix=None):
+def belly(a, key, tiers, z0, z1, w=0.7, lift=0.025, reach=0.16, flat=False, depth=0.3, matrix=None, back=False):
     """Живот, грудка спереди тела между z0 и z1, ширина w × ширина яруса, контур — ступенчатый овал по ярусам тела
     (tiers из body). По умолчанию — накладка на каждый ярус: ступени живота совпадают со ступенями тела (живот вписан
     в форму, как полосы Сфинкса), выступ lift. flat=True — одна плоская накладка без швов (передняя грань — одна
-    плоскость; ярусы, утопленные глубже reach, пропускает)."""
+    плоскость; ярусы, утопленные глубже reach, пропускает). back=True — полоса по спине (+y), ширина без овала."""
     if not flat:
         for za, zb, bx, y, wx, wy, cut in tiers:
             lo, hi = max(za, z0), min(zb, z1)
             if hi - lo < 0.05:
                 continue
-            u = ((lo + hi) / 2 - (z0 + z1) / 2) / ((z1 - z0) / 2)
+            u = 0.0 if back else ((lo + hi) / 2 - (z0 + z1) / 2) / ((z1 - z0) / 2)
             hw = min(wx * w * math.sqrt(max(1.0 - u * u * 0.85, 0.15)), wx - cut - 0.03)
-            a.box(key, bx - hw, bx + hw, y - wy - lift, y - wy + depth, lo + 0.004, hi + 0.006, matrix=matrix)
+            if back:
+                a.box(key, bx - hw, bx + hw, y + wy - depth, y + wy + lift, lo + 0.004, hi + 0.006, matrix=matrix)
+            else:
+                a.box(key, bx - hw, bx + hw, y - wy - lift, y - wy + depth, lo + 0.004, hi + 0.006, matrix=matrix)
         return
     rows = []
     front = min(y - wy for za, zb, bx, y, wx, wy, cut in tiers if min(zb, z1) - max(za, z0) >= 0.05)
@@ -248,26 +251,71 @@ def _at(c, normal):
     return Matrix.Translation(V(c)) @ facing(normal)
 
 
-def eye(a, c, r, normal=(0, -1, 0), look=(0.0, 0.0), pupil=0.55, sink=SINK, lift=0.04, closed=False,
-        lid_key="dark", skin_key=None, sides=8, h=1.1):
+MOODS = {  # эмоция лица (как у Верблюда-тучи и Сфинкса): веко (доля белка сверху), наклон века и брови (градусы,
+    # «+» — внутренний конец ниже), подъём брови (доля радиуса), зрачок
+    "calm": dict(lid=0.15, lid_tilt=0, brow_tilt=0, brow_lift=0.25, pupil=0.55),
+    "surprised": dict(lid=0.0, lid_tilt=0, brow_tilt=-12, brow_lift=0.75, pupil=0.42),
+    "sly": dict(lid=0.45, lid_tilt=-14, brow_tilt=18, brow_lift=0.15, pupil=0.5),
+    "sleepy": dict(lid=0.58, lid_tilt=8, brow_tilt=-6, brow_lift=0.05, pupil=0.5),
+    "angry": dict(lid=0.3, lid_tilt=22, brow_tilt=28, brow_lift=0.0, pupil=0.5),
+    "worried": dict(lid=0.12, lid_tilt=-18, brow_tilt=-26, brow_lift=0.4, pupil=0.48),
+    "proud": dict(lid=0.4, lid_tilt=0, brow_tilt=-8, brow_lift=0.45, pupil=0.5),
+    "goofy": dict(lid=0.0, lid_tilt=0, brow_tilt=-14, brow_lift=0.55, pupil=0.36),
+}
+
+
+def eye(a, c, r, normal=(0, -1, 0), look=(0.0, 0.0), pupil=None, sink=SINK, lift=0.04, closed=False,
+        lid_key="dark", skin_key=None, sides=8, h=1.1, mood=None, side=1, brow_key=None, lid=None, lid_tilt=None,
+        brow_tilt=None, brow_lift=None, brow=True):
     """Глаз D39 (как у существ и Сфинкса) в точке c головы, смотрит по normal: брусок белка 2r × 2r·h выступает на
     lift и уходит внутрь на sink, квадратный зрачок со смещением look, квадратный блик. closed — закрытый глаз:
-    веко-брусок цвета skin_key и тёмная полоса ресниц. sides оставлен для совместимости."""
+    веко-брусок цвета skin_key и тёмная полоса ресниц. sides оставлен для совместимости.
+    Эмоция (лицо — половина шутки коллекции): mood из MOODS или свои lid / lid_tilt / brow_tilt / brow_lift; веко —
+    брусок цвета skin_key сверху белка с наклоном, бровь — брусок brow_key над глазом с наклоном; side — знак x
+    глаза (+1 / −1), зеркалит наклоны: «+» опускает внутренний конец (к середине лица)."""
     m = _at(c, normal)
     w, hh = r, r * h
+    bk = brow_key or lid_key
     if closed:
         a.box(skin_key or lid_key, -w * 1.02, w * 1.02, -lift * 0.7, sink, -hh * 0.95, hh * 0.95,
               bevel=0.01 if r >= 0.1 else 0.0, matrix=m)
         a.box(lid_key, -w * 0.95, w * 0.95, -lift * 0.7 - 0.03, -lift * 0.7 + 0.01, -hh * 0.18, hh * 0.02, bevel=0,
               matrix=m)
+        if mood and brow:
+            _brow(a, bk, m, w, hh, MOODS[mood]["brow_tilt"] * -side, MOODS[mood]["brow_lift"] * r, lift)
         return
+    mv = dict(MOODS.get(mood or "calm"))
+    for k, v in (("lid", lid), ("lid_tilt", lid_tilt), ("brow_tilt", brow_tilt), ("brow_lift", brow_lift),
+                 ("pupil", pupil)):
+        if v is not None:
+            mv[k] = v
+    if mood is None and lid is None:
+        mv["lid"] = 0.0  # без эмоции — как раньше, глаз открыт и без брови
     a.box("white", -w, w, -lift, sink, -hh, hh, bevel=0.01 if r >= 0.1 else 0.0, matrix=m)
-    pr = min(w, hh) * pupil
-    px, pz = look[0] * (w - pr) * 0.8, look[1] * (hh - pr) * 0.8
+    pr = min(w, hh) * mv["pupil"]
+    open_top = hh - 2 * hh * mv["lid"]  # зрачок под веком не прячется целиком
+    px = look[0] * (w - pr) * 0.8
+    pz = min(look[1] * (hh - pr) * 0.8, open_top - pr * 0.9)
     a.box("dark", px - pr, px + pr, -lift - 0.025, -lift + 0.01, pz - pr, pz + pr, bevel=0, matrix=m)
     g = pr * 0.62
     a.box("glint", px - pr + 0.02, px - pr + 0.02 + g, -lift - 0.045, -lift - 0.02, pz + pr - 0.02 - g, pz + pr - 0.02,
           bevel=0, matrix=m)
+    if mv["lid"] > 0.02:  # веко с наклоном: хитрость, сонливость, злость
+        lt = math.radians(mv["lid_tilt"] * -side)
+        lh = 2 * hh * mv["lid"]
+        mm = m @ Matrix.Translation((0, 0, hh - lh / 2)) @ Matrix.Rotation(lt, 4, "Y")
+        a.box(skin_key or lid_key, -w * 1.12, w * 1.12, -lift - 0.06, sink * 0.5, -lh / 2, lh / 2 + hh * 0.3,
+              bevel=0, matrix=mm)
+    if brow and (mood is not None or brow_tilt is not None):
+        _brow(a, bk, m, w, hh, mv["brow_tilt"] * -side, mv["brow_lift"] * r, lift)
+
+
+def _brow(a, key, m, w, hh, tilt, raise_, lift):
+    """Бровь-брусок над глазом (как у Сфинкса и Верблюда): длина 2.5w, наклон tilt (° , «+» — внутренний конец
+    ниже), подъём raise_ над верхом белка."""
+    bh = max(hh * 0.32, 0.03)
+    mm = m @ Matrix.Translation((0, 0, hh + bh * 0.9 + raise_)) @ Matrix.Rotation(math.radians(tilt), 4, "Y")
+    a.box(key, -w * 1.25, w * 1.25, -lift - 0.05, SINK * 0.6, -bh / 2, bh / 2, bevel=0, matrix=mm)
 
 
 def snout(a, key, base, direction, length, w0, w1, h0=None, h1=None, nose_key="dark", nose=0.3, mouth_key="mouth",

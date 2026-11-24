@@ -42,6 +42,7 @@ for p in (HERE, os.path.join(HERE, "dragon10"), os.path.join(HERE, "boss5")):
 import art_style as S  # noqa: E402
 import v4_kit as K  # noqa: E402
 import yeti as C5  # noqa: E402  (концепт: контуры, помощники, палитра)
+import anatomy_kit as A  # noqa: E402  (шары-суставы D39)
 
 V = Vector
 S2 = (1, -1)
@@ -52,6 +53,9 @@ AX = Matrix(((1, 0, 0), (0, 0, 1), (0, -1, 0)))  # оси Roblox: (x, y, z) Blen
 R, T, key, slab, half, tufts = C5.R, C5.T, C5.key, C5.slab, C5.half, C5.tufts
 SHOULDER, NECK, HIP = C5.SHOULDER, C5.NECK, C5.HIP
 UPPER, FORE, THIGH, SHIN = C5.UPPER, C5.FORE, C5.THIGH, C5.SHIN
+LEG_LONG, LEG_THICK, FOOT_WIDE = 1.15, 1.4, 1.35  # аудит анатомии (D64): ноги ×1.15 длиннее, ×1.4 толще, стопа шире
+THIGH, SHIN = THIGH * LEG_LONG, SHIN * LEG_LONG
+HIP = V((1.38, HIP.y, HIP.z))  # постановка шире: толстые бёдра не сходятся
 ANKLE_H = 0.42  # от сустава стопы до подошвы
 KNUCKLE = V((0, -0.05, -0.7))  # сгиб пальцев в системе кисти
 JAW_HINGE = V((0, -0.6, 0.45))  # в системе головы (до HEAD_SCALE)
@@ -70,7 +74,7 @@ for k in ("iceBlock", "iceD", "iceE"):
 # ── Скелет игры: часть → (родитель, карта) — точки вращения считаются из позы покоя ────────────────────────────
 RIG_TREE = {"Torso": (None, "Body"), "Head": ("Torso", "Head"), "Jaw": ("Head", "Head"),
             "EyelidL": ("Head", "Head"), "EyelidR": ("Head", "Head"), "BrowL": ("Head", "Head"),
-            "BrowR": ("Head", "Head"), "Monocle": ("Head", "Head")}
+            "BrowR": ("Head", "Head"), "Monocle": ("Head", "Head"), "Lens": ("Monocle", "Head")}
 for _s in "LR":
     RIG_TREE.update({f"UpperArm{_s}": ("Torso", "Limbs"), f"ForeArm{_s}": (f"UpperArm{_s}", "Limbs"),
                      f"Hand{_s}": (f"ForeArm{_s}", "Limbs"), f"Fingers{_s}": (f"Hand{_s}", "Limbs"),
@@ -80,7 +84,9 @@ RIG_TREE.update({"Block": ("Torso", "Body"), "BlockFrame": ("Block", "Body"), "B
                  "BlockTopFrame": ("BlockTop", "Body"), "ExCup": ("Block", "Body"), "ExGem": ("Block", "Body"),
                  "ExLovibum": ("Block", "Body"), "ExCritter": ("Block", "Body")})
 MAPS = {m: tuple(p for p, (_, mm) in RIG_TREE.items() if mm == m) for m in ("Head", "Body", "Limbs")}
-HEAD_PARTS = ["Head", "Jaw", "EyelidL", "EyelidR", "BrowL", "BrowR", "Monocle"]
+HEAD_PARTS = ["Head", "Jaw", "EyelidL", "EyelidR", "BrowL", "BrowR", "Monocle", "Lens"]
+NOT_JOINTS = ("Monocle", "Lens", "Block", "BlockFrame", "BlockTop", "BlockTopFrame")  # не суставы тела: висят или
+# стоят жёстко — проверка «сгиб раскрывается» к ним не относится (щели и летающие детали проверяются)
 ICE_PARTS = ["Block", "BlockTop"]
 
 
@@ -190,7 +196,7 @@ def frames(P):
         F[f"Foot{side(s)}"] = M[("an", s)]
     on = T(MONO_C)
     off = T((-0.95, -1.5, 0.15)) @ R("X", -20) @ R("Z", 30)  # слетел: висит на цепочке у щеки
-    F["Monocle"] = hs @ blend(on, off, P["mono"]) @ T(-MONO_C)
+    F["Monocle"] = F["Lens"] = hs @ blend(on, off, P["mono"]) @ T(-MONO_C)
     Fb = block_attached(M) if P["block"] is None else P["block"]
     F["Block"] = F["BlockFrame"] = Fb
     ang, lift = P["top"]
@@ -236,7 +242,7 @@ def pivots():
         PIVOTS[f"Eyelid{side(s)}"] = hs @ V((s * 0.52, -1.42, 1.84))
         PIVOTS[f"Brow{side(s)}"] = hs @ V((s * 0.55, -1.3, 1.78))
         PIVOTS[f"Fingers{side(s)}"] = F[f"Hand{side(s)}"] @ KNUCKLE
-    PIVOTS["Monocle"] = hs @ MONO_C
+    PIVOTS["Monocle"] = PIVOTS["Lens"] = hs @ MONO_C
     PIVOTS["BlockTop"] = PIVOTS["BlockTopFrame"] = F["Block"] @ TOP_HINGE
     PIVOTS["Block"] = PIVOTS["BlockFrame"] = F["Block"] @ V((0.0, 1.95, 1.6))  # середина основания глыбы
     for n, c in EXHIBITS.items():
@@ -298,13 +304,22 @@ def sleep_block():
     return block_world((3.75, 0.9, 0.06), yaw=135.0)  # рама-носилка — от Йети и зрителя; уголки (−0.06) на земле
 
 
+SLEEP_ARMS = {1: (-12.0, 9.1, 78.2, 100.0, 58.8), -1: (-15.2, 1.4, 59.8, 80.0, 34.4)}  # во сне ладони лежат на
+# коленях ладонью вниз (аудит: рука торчала в воздухе); подобрано по скелету: ладонь над верхом колена ±0.02
+
+
+def lens_light(P):
+    """Яркость линзы монокля: гаснет вместе с правым веком (монокль на правом глазу), во сне — 0."""
+    return max(0.0, 1.0 - P["lid"][-1])
+
+
 POSES = {
     "stand": pose(head=(-14, 0, 0), brow={1: (-16, 0), -1: (10, 0.12)}, feet=stand_feet(0.4)),
     "sleep": pose(pelvis=V((0, 0.35, 1.0)), torso=-8, roll=20, head=(18, 0, 22), lid={1: 1.0, -1: 1.0},
-                  brow={1: (-4, -0.05), -1: (-4, -0.05)}, arm={1: (8, 48, 62, 20), -1: (16, 24, 46, 35)},
+                  brow={1: (-4, -0.05), -1: (-4, -0.05)}, arm=SLEEP_ARMS,
                   feet={1: (-1.5, 0.08, -18), -1: (-1.4, 0.08, -16)}, curl={1: 0.35, -1: 0.35}, block=sleep_block()),
     "alert": pose(pelvis=V((0, 0.35, 1.0)), torso=-4, roll=10, head=(-6, 0, -6),
-                  arm={1: (8, 44, 58, 20), -1: (16, 24, 46, 35)},
+                  arm=SLEEP_ARMS,
                   feet={1: (-1.5, 0.08, -18), -1: (-1.4, 0.08, -16)}, curl={1: 0.35, -1: 0.35}, block=sleep_block(),
                   brow={1: (6, 0.08), -1: (6, 0.08)}),
     "combat": pose(pelvis=V((0, 0.1, 2.0)), torso=22, head=(-22, 0, 0), jaw=14, brow={1: (-24, 0), -1: (-24, 0)},
@@ -326,7 +341,7 @@ POSES = {
                   brow={1: (16, 0.06), -1: (12, 0.06)}, mono=1.0, arm={1: (-8, 52, 14, -10), -1: (-14, 56, 20, -6)},
                   feet={1: (-1.5, 0.12, -25), -1: (-1.4, 0.12, -22)}, top=(-75, 0.4),
                   ex={"ExCup": (-0.4, -0.6, 1.6, 40), "ExGem": (0.5, -0.4, 1.2, -60)}),
-    "bite": pose(pelvis=V((0, -0.2, 1.75)), torso=40, head=(-30, 0, 0), jaw=24, brow={1: (-26, 0), -1: (-26, 0)},
+    "bite": pose(pelvis=V((0, -0.2, 1.95)), torso=40, head=(-30, 0, 0), jaw=24, brow={1: (-26, 0), -1: (-26, 0)},
                  arm={1: (95, 10, 10, 0), -1: (30, 30, 60, 10)}, curl={1: 1.0, -1: 1.0},
                  feet={1: (-1.1, 0, 0), -1: (0.9, 0, 0)}),
     "swipe": pose(pelvis=V((0, -0.1, 1.9)), torso=30, head=(-26, 0, 0), jaw=26, brow={1: (-26, 0), -1: (-26, 0)},
@@ -376,7 +391,7 @@ def build_head(a, F):
             (-0.6, -0.15), (0.6, -0.15)]
     key("fur")
     K.layered(a, dome, [(1.05, 1.0, 1.0), (1.32, 0.88, 0.9)], (0.0, 1.1))
-    for p in ((0, 0.25, 2.45), (0.5, 0.5, 2.3), (-0.5, 0.5, 2.3), (0.0, 0.85, 2.15)):
+    for p in ((0, 0.25, 2.4), (0.5, 0.5, 2.2), (-0.5, 0.5, 2.2), (0.0, 0.85, 2.08)):  # основанием в голове
         p = V(p)
         K.spike(a, p, p + V((p.x * 0.6, 0.5, 1.0 - abs(p.x) * 0.3)), 0.66)
     for i, t in enumerate(range(-140, 141, 28)):
@@ -430,9 +445,10 @@ def build_head(a, F):
         ex = s * 0.52
         at(a, F[f"Eyelid{side(s)}"], f"Eyelid{side(s)}")
         key("skinD")
-        slab(a, [(-1.39, 2.06), (-1.47, 2.02), (-1.47, 1.63), (-1.39, 1.62)], ex - 0.34, ex + 0.34)
+        slab(a, [(-1.28, 2.06), (-1.47, 2.02), (-1.47, 1.63), (-1.28, 1.62)], ex - 0.34, ex + 0.34)  # веко уходит
+        # в голову (аудит: щель 0.13 стада)
         key("dark")
-        slab(a, [(-1.47, 1.68), (-1.5, 1.68), (-1.5, 1.62), (-1.47, 1.62)], ex - 0.3, ex + 0.3)  # ресничная линия
+        slab(a, [(-1.45, 1.69), (-1.5, 1.69), (-1.5, 1.62), (-1.45, 1.62)], ex - 0.3, ex + 0.3)  # ресничная линия
         at(a, F[f"Brow{side(s)}"], f"Brow{side(s)}")
         key("skinD")
         slab(a, [(-0.98, 2.04), (-1.58, 1.94), (-1.52, 1.7), (-1.05, 1.72)], s * 0.04, s * 1.06)
@@ -440,10 +456,11 @@ def build_head(a, F):
     at(a, F["Monocle"], "Monocle")
     mm = T(MONO_C) @ R("X", 90)
     a.frame("gold", S.octagon(-0.42, 0.42, -0.42, 0.42, 0.13), 0.1, -0.05, 0.05, axis="z", matrix=mm)
-    a.prism("lens", S.octagon(-0.33, 0.33, -0.33, 0.33, 0.1), -0.015, 0.015, axis="z", matrix=mm)
-    for i in range(4):
+    for i in range(4):  # звенья цепочки внахлёст (аудит: летали)
         p = MONO_C + V((-0.36 - i * 0.06, 0.06 + i * 0.03, -0.42 - i * 0.26))
-        a.box("goldS", p.x - 0.05, p.x + 0.05, p.y - 0.05, p.y + 0.05, p.z - 0.1, p.z + 0.1, bevel=0.01)
+        a.box("goldS", p.x - 0.05, p.x + 0.05, p.y - 0.05, p.y + 0.05, p.z - 0.16, p.z + 0.15, bevel=0.01)
+    at(a, F["Lens"], "Lens")  # линза — своя часть: во сне гаснет (канал lens клипов), рамка остаётся
+    a.prism("lens", S.octagon(-0.35, 0.35, -0.35, 0.35, 0.11), -0.015, 0.015, axis="z", matrix=mm)
 
 
 def build_limbs(a, F):
@@ -457,8 +474,11 @@ def build_limbs(a, F):
         K.taper(a, (0, 0, 0.55), (0, 0, -0.65), 1.75, 1.45, 1.6, 1.35, up=(0, -1, 0), cut=0.32)
         key("fur")
         K.chain(a, [(0, 0, 0.1), (0, 0.05, -1.05), (0, 0, -UPPER)], [1.25, 1.18, 1.0], up=(0, -1, 0), cut=0.3)
-        tufts(a, [(s * 0.55, -0.1, 0.75), (s * 0.85, 0.15, 0.4), (s * 0.4, 0.45, 0.65)], 0.75,
-              lambda p, s=s: (s * 0.6, 0.1, 1.0), down=-0.3)
+        tufts(a, [(s * 0.55, -0.1, 0.62), (s * 0.78, 0.15, 0.32), (s * 0.4, 0.42, 0.55)], 0.75,
+              lambda p, s=s: (s * 0.6, 0.1, 1.0), down=-0.3)  # пряди плеча — основанием в плече
+        A.ball(a, "fur", (0, 0, -UPPER), 0.7, n=3)  # шар-сустав локтя: плечо и предплечье заходят в него
+        cuff = [(0.66 * math.cos(t), 0.6 * math.sin(t), -UPPER + 0.42) for t in [i * math.pi / 3.5 for i in range(7)]]
+        tufts(a, cuff, 0.62, lambda p: (p.x, p.y, -0.15), down=0.55)  # манжета шерсти над локтем
         at(a, M[("el", s)], f"ForeArm{L}")
         key("fur")
         K.chain(a, [(0, 0, 0.15), (0, -0.1, -1.25), (0, 0, -FORE)], [1.1, 1.95, 1.15], [1.1, 1.75, 1.05],
@@ -484,20 +504,25 @@ def build_limbs(a, F):
         # нога — как в концепте
         at(a, M[("hip", s)], f"Thigh{L}")
         key("fur")
-        K.chain(a, [(0, 0, 0.35), (0, -0.05, -0.6), (0, 0, -THIGH)], [1.6, 1.7, 1.35], up=(0, -1, 0), cut=0.32)
+        K.chain(a, [(0, 0, 0.35), (0, -0.05, -0.6 * LEG_LONG), (0, 0, -THIGH)],
+                [w * LEG_THICK for w in (1.6, 1.7, 1.35)], up=(0, -1, 0), cut=0.32)
+        A.ball(a, "fur", (0, 0, -THIGH), 0.95, n=3)  # колено — шар-сустав, голень заходит в него
         at(a, M[("kn", s)], f"Shin{L}")
-        K.chain(a, [(0, 0, 0.2), (0, 0.05, -0.5), (0, 0, -SHIN)], [1.25, 1.3, 1.08], up=(0, -1, 0), cut=0.32)
-        cuff = [(0.62 * math.cos(t), 0.6 * math.sin(t), -SHIN + 0.42) for t in [i * math.pi / 3.5 for i in range(7)]]
-        tufts(a, cuff, 0.4, lambda p: (p.x, p.y, -0.2), down=0.7)  # короче концепта: в позах не задевают землю
+        K.chain(a, [(0, 0, 0.2), (0, 0.05, -0.35), (0, 0, -0.62)],
+                [w * LEG_THICK for w in (1.25, 1.3, 0.86)], up=(0, -1, 0), cut=0.32)  # низ уже и выше щиколотки:
+        # толстая голень в приседе не уходит под землю (стопа закрывает сустав)
+        cuff = [(0.84 * math.cos(t), 0.82 * math.sin(t), -SHIN + 0.95) for t in [i * math.pi / 3.5 for i in range(7)]]
+        tufts(a, cuff, 0.4, lambda p: (p.x, p.y, -0.2), down=0.35)  # короче концепта: в позах не задевают землю
         at(a, M[("an", s)], f"Foot{L}")
         key("skin")
-        slab(a, [(0.5, 0.0), (0.42, -0.42), (-1.2, -0.42), (-1.38, -0.18), (-1.05, 0.12), (-0.2, 0.3), (0.35, 0.25)],
-             -0.62, 0.62)
+        fw = 0.62 * FOOT_WIDE  # стопа шире (аудит)
+        slab(a, [(0.5, 0.05), (0.42, -0.42), (-1.25, -0.42), (-1.45, -0.18), (-1.1, 0.14), (-0.25, 0.46), (0.38, 0.42)],
+             -fw, fw)
         key("skinD")
-        slab(a, [(0.45, -0.42), (-1.2, -0.42), (-1.2, -0.36), (0.45, -0.36)], -0.64, 0.64)
+        slab(a, [(0.45, -0.42), (-1.25, -0.42), (-1.25, -0.36), (0.45, -0.36)], -fw - 0.02, fw + 0.02)
         key("ivory")
-        for dx in (-0.36, 0.0, 0.36):
-            K.spike(a, (dx, -1.25, -0.3), (dx, -1.6, -0.4), 0.2)
+        for dx in (-0.54, -0.18, 0.18, 0.54):
+            K.spike(a, (dx, -1.28, -0.3), (dx, -1.62, -0.4), 0.2)
 
 
 def build_block(a, F):
@@ -517,9 +542,9 @@ def build_block(a, F):
     a.extrude("iceBlock", oct_, SPLIT, z1, axis="z")
     a.frustum("iceBlock", (x0 + 0.2, x1 - 0.2, y0 + 0.15, y1 - 0.15), (-1.3, 0.9, 1.55, 2.85), z1, z1 + 0.85, bevel=0)
     a.frustum("iceE", (-1.3, 0.9, 1.55, 2.85), (-0.7, -0.1, 2.0, 2.4), z1 + 0.85, z1 + 1.45, bevel=0)
-    for x, y, h, lean, w in ((1.3, 1.8, 1.6, 0.5, 0.6), (-1.45, 2.55, 1.2, -0.45, 0.5), (0.35, 2.9, 0.9, 0.2, 0.42)):
+    for x, y, h, lean, w in ((1.15, 1.8, 1.6, 0.5, 0.6), (-1.45, 2.55, 1.2, -0.45, 0.5), (0.35, 2.9, 0.9, 0.2, 0.42)):
         key("iceD")
-        K.spike(a, (x, y, z1 + 0.25), (x + lean, y + 0.1, z1 + 0.25 + h), w)
+        K.spike(a, (x, y, z1 + 0.1), (x + lean, y + 0.1, z1 + 0.25 + h), w)  # основанием в льду
     for x in (x0 + 0.02, x1 - 0.02):
         a.box("iceE", x - 0.04, x + 0.04, y0 + 0.35, y0 + 0.85, SPLIT + 0.2, z1 - 0.3, bevel=0)
     # рама, обвязки, лямки, нижние уголки, табличка, шов-трещина — непрозрачная часть
@@ -537,7 +562,7 @@ def build_block(a, F):
                 up=(1, 0, 0), cut=0.15, overlap=0.15)
     for x in (x0, x1):
         sx = 1 if x > 0 else -1
-        for y in (y0 + 0.3, y1 - 0.3):
+        for y in (y0 + 0.3, y1 - 0.62):  # задний уголок — на прямой грани (на скосе висел, аудит)
             a.box("gold", x - sx * 0.05, x + sx * 0.12, y - 0.35, y + 0.35, z0 - 0.06, z0 + 0.55, bevel=0.015)
     a.box("gold", -0.75, 0.75, y1 + 0.02, y1 + 0.1, z0 + 0.95, z0 + 1.45, bevel=0.02)
     a.box("goldD", -0.55, 0.55, y1 + 0.1, y1 + 0.13, z0 + 1.08, z0 + 1.32, bevel=0)
@@ -548,7 +573,7 @@ def build_block(a, F):
         a.box("gold", x - 0.06, x + 0.06, 1.95, 2.45, 6.24, 6.74, bevel=0.015)
     for x in (x0, x1):
         sx = 1 if x > 0 else -1
-        for y in (y0 + 0.3, y1 - 0.3):
+        for y in (y0 + 0.3, y1 - 0.62):  # задний уголок — на прямой грани (на скосе висел, аудит)
             a.box("gold", x - sx * 0.05, x + sx * 0.12, y - 0.35, y + 0.35, z1 + 0.06, z1 - 0.55, bevel=0.015)
     # экспонаты: простые и лёгкие (D64)
     at(a, Fb, "ExCup")
@@ -659,16 +684,20 @@ def main():
     bpy.context.view_layer.update()
     from joint_check import check_bends, check_joints  # правила анатомии D64: щели в суставах > 0.05 стада — ошибка
 
-    rig = {n: (par, tuple(PIVOTS[n])) for n, (par, _) in RIG_TREE.items()}
+    # экспонаты выше шва вморожены в верхушку: для проверки касания их «родитель» — BlockTop (в риге — Block)
+    cpar = {n: ("BlockTop" if n in EXHIBITS and EXHIBITS[n].z > SPLIT else par) for n, (par, _) in RIG_TREE.items()}
+    rig = {n: (cpar[n], tuple(PIVOTS[n])) for n in RIG_TREE}
     report["joint_issues"] = check_joints(parts, rig, gap=0.05 / SCALE, pivot_far=0.5 / SCALE)
     print("JOINTS", json.dumps(report["joint_issues"], ensure_ascii=False), flush=True)
     report["joint_issues_by_pose"] = {}
     for name, P in POSES.items():  # в позах: сустав не должен расходиться при сгибе
         apply(parts, P)
         W = pose_world(P)
-        rig_p = {n: (par, tuple(W[n] @ PIVOTS[n])) for n, (par, _) in RIG_TREE.items()}
+        rig_p = {n: (cpar[n], tuple(W[n] @ PIVOTS[n])) for n in RIG_TREE}
         gaps = [i for i in check_joints(parts, rig_p, gap=0.05 / SCALE, pivot_far=99) if i["kind"] == "щель в суставе"]
-        gaps += [i for i in check_bends(parts, rig_p) if not i["part"].startswith("Ex")]
+        if tuple(P["top"]) != (0.0, 0.0) or P["ex"]:  # поражение: верхушка откинута, экспонаты подпрыгнули — так задумано
+            gaps = [i for i in gaps if not (i["part"].startswith("Ex") or i["part"] in NOT_JOINTS)]
+        gaps += [i for i in check_bends(parts, rig_p) if not i["part"].startswith("Ex") and i["part"] not in NOT_JOINTS]
         report["joint_issues_by_pose"][name] = gaps
     apply(parts, base_pose())
     for o in parts.values():
@@ -862,16 +891,32 @@ def shoot(parts, shots, report):
         o.parent = root
     want = os.environ.get("YETI_SHOTS", "all")
     names = [] if want == "none" else list(POSES) if want == "all" else want.split(",")
+    lens_mats = list(parts["Lens"].data.materials)
     for name in names:
         apply(parts, POSES[name])
+        k = lens_light(POSES[name])
+        for i, m in enumerate(lens_mats):  # линза гаснет вместе с веком (в игре — канал lens клипов)
+            mm = m.copy()
+            b = next((x for x in mm.node_tree.nodes if x.type == "BSDF_PRINCIPLED"), None)
+            if b is not None and k < 1.0:
+                b.inputs["Base Color"].default_value = (0.05 + 0.6 * k, 0.08 + 0.8 * k, 0.12 + 0.85 * k, 1)
+                b.inputs["Emission Strength"].default_value = 0.0
+                for ln in list(mm.node_tree.links):  # цвет из текстуры — отцепить
+                    if ln.to_socket == b.inputs["Base Color"]:
+                        mm.node_tree.links.remove(ln)
+            parts["Lens"].data.materials[i] = mm
         co = [o.matrix_world @ v.co for o in parts.values() for v in o.data.vertices]
         lo = V([min(c[i] for c in co) for i in range(3)])
         hi = V([max(c[i] for c in co) for i in range(3)])
         cz = (lo.z + hi.z) / 2
         span = max(hi.x - lo.x, hi.z - lo.z, 9.0)
         dist = 1.15 * span / (2 * 18 / 55)
-        views = (("34", -35), ("front", 0)) if name in ("sleep", "combat") else (("34", -35),)
-        if name == "stand":  # глыба с экспонатами: сбоку и сзади в 3/4
+        views = (("34", -35), ("front", 0)) if name == "combat" else (("34", -35),)
+        if name in ("sleep", "alert"):  # глыба стоит справа (+x): снимаем с другой стороны — лицо и руки видны
+            views = (("34", -35), ("34r", 35))
+        if os.environ.get("YETI_VIEWS"):  # отладка ракурсов: YETI_VIEWS="-90,0,90"
+            views = tuple((f"a{v}", float(v)) for v in os.environ["YETI_VIEWS"].split(","))
+        elif name == "stand":  # глыба с экспонатами: сбоку и сзади в 3/4
             views = (("34", -35), ("front", 0), ("side", -90), ("back34", 145))
         for label, ang in views:
             root.rotation_euler = (0, 0, math.radians(ang))
@@ -883,6 +928,7 @@ def shoot(parts, shots, report):
             ck.shot(cam, os.path.join(shots, f"pose_{name}_{label}.png"), (cx, -d2, cz + 1.5), (cx, 0, cz), 55,
                     (700, 700))
         root.rotation_euler = (0, 0, 0)
+        bpy.context.view_layer.update()  # иначе следующая поза ставится от повёрнутого корня (Йети спиной к камере)
         report.setdefault("pose_size", {})[name] = [round(hi[i] - lo[i], 2) for i in range(3)]
 
 
