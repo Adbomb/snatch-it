@@ -3,7 +3,7 @@
 На каждую модель: вид спереди, сбоку, 3/4 (готовые кадры конвейера) рядом с простым силуэтом настоящего зверя,
 список признаков вида (есть / слабо / нет), проблемы, предложение правки и оценка «ок» / «мелкие правки» /
 «переделать». Результат автопроверки суставов (scripts/blender/joint_check.py) берётся из отчётов быстрой сборки.
-Зависит от: assets/concepts/boss5/{creatures_final,creatures_fix,yeti_game,yeti_fix2,audit}, Pillow.
+Зависит от: assets/concepts/boss5/{creatures_before,creatures_fix,yeti_game_before,yeti_fix2,audit,fix_v3}, Pillow.
 Выход: assets/concepts/boss5/sheets/audit_*.png (вне git) и docs/BOSS5_ANATOMY_AUDIT.md.
 Запуск из корня: python scripts/boss5_anatomy_audit.py
 """
@@ -422,10 +422,10 @@ def fit(im, w, h):
 
 def shots(item):
     if item == "Yeti":
-        g, s = os.path.join(C, "yeti_game"), os.path.join(C, "yeti_fix2")
+        g, s = os.path.join(C, "yeti_game_before"), os.path.join(C, "yeti_fix2")  # кадры до правок анатомии
         return [("спереди", os.path.join(g, "pose_stand_front.png")), ("сбоку", os.path.join(g, "pose_stand_side.png")),
                 ("3/4", os.path.join(g, "pose_stand_34.png")), ("сон 3/4", os.path.join(s, "pose_sleep_34.png"))]
-    d = os.path.join(C, "creatures_fix" if item in FIXED else "creatures_final")
+    d = os.path.join(C, "creatures_fix" if item in FIXED else "creatures_before")  # до правок (копия creatures_final)
     return [(n, os.path.join(d, f"{item}_{v}.png")) for n, v in (("спереди", "front"), ("сбоку", "side"),
                                                                 ("3/4", "hero"))]
 
@@ -853,6 +853,86 @@ def yeti_fox_sheet():
     return pair_sheet(rows, "step2_yeti_fox.png", "Шаг 2: Йети по аудиту и доработка песца")
 
 
+YETI_CHANGES = ["ноги ×1.15 длиннее и ×1.4 толще, стопа шире, колено и локоть — шары-суставы, манжета шерсти",
+                "сон: веки закрыты, линза гаснет (часть Lens, канал lens), ладони на коленях",
+                "веки, шипы, цепочка, уголки глыбы утоплены; клипы — без провалов под землю"]
+
+
+def overview(after_dir, yeti_dir, yeti_report, anim_report):
+    """Итоговый лист «до / после» всех 31 моделей: по две модели в строке — до (3/4), после (3/4), лицо после,
+    проверки; Йети — первой строкой. Пишет и раздел «После правок» в docs/BOSS5_ANATOMY_AUDIT.md."""
+    R = reports(after_dir)
+    yr = json.load(open(yeti_report, encoding="utf-8"))
+    ar = json.load(open(anim_report, encoding="utf-8"))
+    cw, rh, tw = 230, 230, 330
+    half = cw * 3 + tw + 20
+    items = [m for m in M if m[0] != "Yeti"]
+    rows = [items[i:i + 2] for i in range(0, len(items), 2)]
+    H = HEAD + rh + 12
+    sheet = Image.new("RGB", (half * 2 + 10, 80 + H * (len(rows) + 1)), "white")
+    d = ImageDraw.Draw(sheet)
+    d.text((14, 12), "Правки анатомии босса 5 — итог: до / после всех 31 моделей", font=font(30, True), fill=(30, 30, 40))
+    y = 64
+    yb = shots("Yeti")
+    d.rectangle([0, y, sheet.width, y + HEAD], fill=(38, 44, 58))
+    d.text((14, y + 4), "Босс Йети-коллекционер", font=font(20, True), fill="white")
+    cells = [("до: стойка", yb[0][1]), ("до: сон", yb[3][1]), ("после: стойка", os.path.join(yeti_dir, "pose_stand_front.png")),
+             ("после: бой", os.path.join(yeti_dir, "pose_combat_34.png")), ("после: сон", os.path.join(yeti_dir, "pose_sleep_34.png"))]
+    x = 0
+    for lab, path in cells:
+        sheet.paste(fit(crop(Image.open(path)), cw - 6, rh - 6), (x + 3, y + HEAD + 3))
+        label(d, x + 8, y + HEAD + 8, lab)
+        x += cw
+    below = sum(c["below_ground_frames"] for c in ar.values())
+    ji = len(yr.get("joint_issues", [])) + sum(len(v) for v in yr.get("joint_issues_by_pose", {}).values())
+    txt = YETI_CHANGES + [f"треугольников {yr['tris_total']} (≤ 8 000); ошибок суставов {ji} (покой и 13 поз); "
+                          f"кадров клипов под землёй {below}"]
+    ty = y + HEAD + 8
+    for ln in txt:
+        for k, w in enumerate(wrap(d, ln, font(15), sheet.width - x - 30)):
+            d.text((x + 12, ty), ("• " if k == 0 else "   ") + w, font=font(15), fill=(35, 35, 45))
+            ty += 19
+    y += H
+    lines_md = ["", "## После правок (2026-11-24)", "",
+                "Набор деталей `scripts/blender/anatomy_kit.py` (стиль D39: ярусы-ступени, глаза-бруски с эмоцией). "
+                "Листы: `assets/concepts/boss5/sheets/fix_*.png`, `step2_yeti_fox.png`, `fix_overview.png`.", "",
+                "| Модель | Было | Что исправлено | Треугольников | Автопроверка |", "|---|---|---|---|---|",
+                f"| Босс Йети-коллекционер | переделать | {'; '.join(YETI_CHANGES)} | {yr['tris_total']} | "
+                f"ошибок {ji}, под землёй {below} |"]
+    for row in rows:
+        d.rectangle([0, y, sheet.width, y + HEAD], fill=(38, 44, 58))
+        for j, m in enumerate(row):
+            x0 = j * (half + 10)
+            d.text((x0 + 14, y + 4), f"№{m[1]}  {m[2]}", font=font(20, True), fill="white")
+            before = shots(m[0])[2][1]
+            for k, (lab, path) in enumerate((("до", before), ("после", os.path.join(after_dir, f"{m[0]}_hero.png")),
+                                             ("лицо", os.path.join(after_dir, f"{m[0]}_face.png")))):
+                im = Image.open(path)
+                sheet.paste(fit(im if k == 2 else crop(im), cw - 6, rh - 6), (x0 + k * cw + 3, y + HEAD + 3))
+                label(d, x0 + k * cw + 8, y + HEAD + 8, lab)
+            r = R.get(m[0], {})
+            jj = [q for q in r.get("joint_issues", []) if q["part"] != "Stand"]
+            chk = (f"треуг. {r.get('tris', '?')}; вывернутых {r.get('flipped', '?')}, вырожденных "
+                   f"{r.get('degenerate', '?')}, совпадающих {len(r.get('coplanar', []))}; суставы: "
+                   f"{'ошибок нет' if not jj else len(jj)}")
+            ty = y + HEAD + 8
+            for ln in CHANGES.get(m[0], [])[:3] + [chk]:
+                for k, w in enumerate(wrap(d, ln, font(14), tw - 10)):
+                    d.text((x0 + cw * 3 + 8, ty), ("• " if k == 0 else "   ") + w, font=font(14),
+                           fill=(35, 35, 45) if ln != chk else (90, 90, 110))
+                    ty += 17
+                if ty > y + HEAD + rh:
+                    break
+            lines_md.append(f"| №{m[1]} {m[2]} | {m[-1]} | {'; '.join(CHANGES.get(m[0], []))} | {r.get('tris', '?')} | "
+                            f"{'ошибок нет' if not jj and not r.get('coplanar') and not r.get('flipped') else 'есть'} |")
+        y += H
+    sheet.save(os.path.join(OUT, "fix_overview.png"))
+    doc = open(DOC, encoding="utf-8").read()
+    doc = doc.split("\n## После правок (2026-11-24)")[0].rstrip("\n") + "\n" + "\n".join(lines_md) + "\n"
+    open(DOC, "w", encoding="utf-8", newline="\n").write(doc)
+    return os.path.join(OUT, "fix_overview.png")
+
+
 if __name__ == "__main__":
     import sys
 
@@ -863,6 +943,9 @@ if __name__ == "__main__":
         r = sys.argv[1]
         ids = sys.argv[2:]  # id моделей редкости
         print(before_after(ids, os.path.join(C, "fix_v3"), f"fix_{r}.png", f"Правки анатомии: {r.capitalize()} — до / после"))
+    elif sys.argv[1:2] == ["overview"]:  # итог: все 31 после полной пересборки
+        print(overview(os.path.join(C, "creatures_final"), os.path.join(C, "yeti_game"),
+                       os.path.join(C, "yeti_game", "report.json"), os.path.join(C, "anim", "anim_report.json")))
     elif sys.argv[1:2] == ["yeti"]:  # шаг 2: Йети + песец
         print(yeti_fox_sheet())
     elif sys.argv[1:2] == ["kit2"]:  # набор v2 — возврат к стилю D39, рядом с эталонами
