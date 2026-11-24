@@ -361,7 +361,7 @@ def facial_disc(a, key, rim_key, c, r, normal=(0, -1, 0), gap=0.55):
     m = _at(c, normal)
     for s in (1, -1):
         x0 = s * r * gap
-        a.prism(rim_key, S.octagon(x0 - r * 1.08, x0 + r * 1.08, -r * 1.12, r * 1.12, r * 0.4), 0.0, SINK + 0.02,
+        a.prism(rim_key, S.octagon(x0 - r * 1.08, x0 + r * 1.08, -r * 1.12, r * 1.12, r * 0.4), 0.006 * s, SINK + 0.02 + 0.006 * s,
                 axis="y", bevel=0.01, matrix=m)
         a.prism(key, S.octagon(x0 - r, x0 + r, 0.04 - r * 1.02, 0.04 + r * 1.02, r * 0.36), -0.04, SINK, axis="y",
                 bevel=0.01, matrix=m)
