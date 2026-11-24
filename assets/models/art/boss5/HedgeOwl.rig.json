@@ -1,0 +1,159 @@
+{
+ "id": "HedgeOwl",
+ "order": [
+  "Stand",
+  "Body",
+  "Quills",
+  "WingL",
+  "WingR",
+  "Face"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.608,
+    0.28,
+    2.608
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.02,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.179,
+    -0.019
+   ],
+   "size": [
+    1.712,
+    1.958,
+    1.614
+   ]
+  },
+  "Quills": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.62,
+    -0.4
+   ],
+   "center": [
+    0.0,
+    0.3241,
+    -0.1553
+   ],
+   "size": [
+    2.5655,
+    1.3141,
+    1.469
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    0.82,
+    1.42,
+    0.0
+   ],
+   "center": [
+    0.06,
+    -0.275,
+    -0.05
+   ],
+   "size": [
+    0.2,
+    1.05,
+    1.0
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    -0.82,
+    1.42,
+    0.0
+   ],
+   "center": [
+    -0.06,
+    -0.275,
+    -0.05
+   ],
+   "size": [
+    0.2,
+    1.05,
+    1.0
+   ]
+  },
+  "Face": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.57,
+    0.7
+   ],
+   "center": [
+    0.0,
+    -0.0191,
+    0.2278
+   ],
+   "size": [
+    1.0435,
+    0.6217,
+    0.1843
+   ]
+  }
+ },
+ "demo_pose": {
+  "Face": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -18,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Quills": {
+   "rot_xyz_blender_deg": [
+    -6,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.04
+   ]
+  }
+ }
+}

@@ -1,0 +1,140 @@
+{
+ "id": "SnowSlime",
+ "order": [
+  "Stand",
+  "Body",
+  "Top",
+  "Eyes",
+  "Fish"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.52,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.282,
+    -0.0348
+   ],
+   "size": [
+    2.5292,
+    1.192,
+    2.4115
+   ]
+  },
+  "Top": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.27,
+    -0.05
+   ],
+   "center": [
+    0.05,
+    0.343,
+    -0.05
+   ],
+   "size": [
+    0.8474,
+    1.114,
+    0.7893
+   ]
+  },
+  "Eyes": {
+   "parent": "Top",
+   "pivot": [
+    0.0,
+    1.42,
+    0.55
+   ],
+   "center": [
+    0.0285,
+    -0.0819,
+    0.3075
+   ],
+   "size": [
+    1.3004,
+    0.9963,
+    0.245
+   ]
+  },
+  "Fish": {
+   "parent": "Body",
+   "pivot": [
+    0.75,
+    0.77,
+    -0.1
+   ],
+   "center": [
+    0.2662,
+    0.0302,
+    -0.0
+   ],
+   "size": [
+    0.8676,
+    0.3995,
+    0.3001
+   ]
+  }
+ },
+ "demo_pose": {
+  "Top": {
+   "rot_xyz_blender_deg": [
+    0,
+    10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.06
+   ]
+  },
+  "Eyes": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Fish": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,140 @@
+{
+ "id": "TwoHeadFox",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "HeadL",
+  "HeadR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8012,
+    0.28,
+    2.8012
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.175,
+    0.2
+   ],
+   "size": [
+    1.56,
+    1.35,
+    1.7
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.55,
+    0.52,
+    -0.55
+   ],
+   "center": [
+    0.4445,
+    0.0066,
+    0.6204
+   ],
+   "size": [
+    1.199,
+    0.8489,
+    1.7592
+   ]
+  },
+  "HeadL": {
+   "parent": "Body",
+   "pivot": [
+    0.38,
+    1.52,
+    0.1
+   ],
+   "center": [
+    0.3639,
+    0.5063,
+    0.3106
+   ],
+   "size": [
+    1.1034,
+    1.2873,
+    1.0553
+   ]
+  },
+  "HeadR": {
+   "parent": "Body",
+   "pivot": [
+    -0.38,
+    1.52,
+    0.1
+   ],
+   "center": [
+    -0.3639,
+    0.5063,
+    0.3106
+   ],
+   "size": [
+    1.1034,
+    1.2873,
+    1.0553
+   ]
+  }
+ },
+ "demo_pose": {
+  "HeadL": {
+   "rot_xyz_blender_deg": [
+    0,
+    12,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "HeadR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -8,
+    -14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -18
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

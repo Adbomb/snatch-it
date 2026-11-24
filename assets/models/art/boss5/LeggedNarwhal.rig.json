@@ -1,0 +1,197 @@
+{
+ "id": "LeggedNarwhal",
+ "order": [
+  "Stand",
+  "Body",
+  "LegFL",
+  "LegFR",
+  "LegBL",
+  "LegBR",
+  "Horn",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.12,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    0.155,
+    0.21
+   ],
+   "size": [
+    1.28,
+    1.01,
+    2.32
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    0.32,
+    0.82,
+    0.55
+   ],
+   "center": [
+    0.0,
+    -0.29,
+    0.0499
+   ],
+   "size": [
+    0.3,
+    0.62,
+    0.3401
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    -0.32,
+    0.82,
+    0.55
+   ],
+   "center": [
+    0.0,
+    -0.29,
+    0.0499
+   ],
+   "size": [
+    0.3,
+    0.62,
+    0.3401
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    0.32,
+    0.82,
+    -0.55
+   ],
+   "center": [
+    -0.0,
+    -0.29,
+    0.0499
+   ],
+   "size": [
+    0.3,
+    0.62,
+    0.3401
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    -0.32,
+    0.82,
+    -0.55
+   ],
+   "center": [
+    0.0,
+    -0.29,
+    0.0499
+   ],
+   "size": [
+    0.3,
+    0.62,
+    0.3401
+   ]
+  },
+  "Horn": {
+   "parent": "Body",
+   "pivot": [
+    0.1,
+    1.42,
+    1.05
+   ],
+   "center": [
+    0.0497,
+    0.157,
+    0.4087
+   ],
+   "size": [
+    0.2613,
+    0.4613,
+    0.8898
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.12,
+    -1.1
+   ],
+   "center": [
+    0.0,
+    0.16,
+    -0.2
+   ],
+   "size": [
+    1.2,
+    0.12,
+    0.4
+   ]
+  }
+ },
+ "demo_pose": {
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    -20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegBR": {
+   "rot_xyz_blender_deg": [
+    15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    12,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,159 @@
+{
+ "id": "ToothBeaver",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "ArmL",
+  "ArmR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8012,
+    0.28,
+    2.8012
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.92,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.054,
+    0.051
+   ],
+   "size": [
+    1.252,
+    1.508,
+    1.214
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.42,
+    -0.6
+   ],
+   "center": [
+    0.0,
+    -0.115,
+    -0.475
+   ],
+   "size": [
+    0.64,
+    0.13,
+    0.95
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    0.5,
+    1.22,
+    0.25
+   ],
+   "center": [
+    -0.075,
+    -0.1,
+    0.175
+   ],
+   "size": [
+    0.3118,
+    0.3216,
+    0.4574
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    -0.5,
+    1.22,
+    0.25
+   ],
+   "center": [
+    0.075,
+    -0.1,
+    0.175
+   ],
+   "size": [
+    0.3118,
+    0.3216,
+    0.4574
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.67,
+    0.1
+   ],
+   "center": [
+    0.0,
+    -0.018,
+    0.1556
+   ],
+   "size": [
+    0.9055,
+    1.464,
+    1.0587
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -12,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    -15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    -20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,109 @@
+{
+ "id": "PenguinStack",
+ "order": [
+  "Stand",
+  "Bottom",
+  "Middle",
+  "Top"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.608,
+    0.28,
+    2.608
+   ]
+  },
+  "Bottom": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.27,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.543,
+    0.1019
+   ],
+   "size": [
+    1.5799,
+    1.186,
+    1.2843
+   ]
+  },
+  "Middle": {
+   "parent": "Bottom",
+   "pivot": [
+    0.0,
+    1.355,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.429,
+    0.0833
+   ],
+   "size": [
+    1.3027,
+    0.958,
+    1.0334
+   ]
+  },
+  "Top": {
+   "parent": "Middle",
+   "pivot": [
+    0.0,
+    2.23,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.4089,
+    0.0709
+   ],
+   "size": [
+    1.4945,
+    0.9178,
+    0.8661
+   ]
+  }
+ },
+ "demo_pose": {
+  "Middle": {
+   "rot_xyz_blender_deg": [
+    0,
+    6,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Top": {
+   "rot_xyz_blender_deg": [
+    0,
+    -10,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

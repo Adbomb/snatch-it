@@ -286,10 +286,10 @@ def tube(a, keys, pts, r, n=8, joints=True):
         p0, p1 = Vector(pts[i]), Vector(pts[i + 1])
         d = p1 - p0
         m = Matrix.Translation(p0) @ d.normalized().to_track_quat("Z", "Y").to_matrix().to_4x4()
-        rr = r * (1.0 + 0.03 * (i % 2))
+        rr = r * (1.0 + 0.03 * (i % 3))  # три соседних звена разной толщины: боковые грани не совпадают
         a.prism(keys[i % len(keys)], ngon(0, 0, rr, n), 0.0, d.length, matrix=m)
         if joints and i > 0:
-            a.prism(keys[i % len(keys)], ngon(0, 0, rr * 0.97, n), -rr * 0.55, rr * 0.55, bevel=0, matrix=m)
+            a.prism(keys[i % len(keys)], ngon(0, 0, rr * 0.94, n), -rr * 0.55, rr * 0.55, bevel=0, matrix=m)
 
 
 

@@ -1,0 +1,140 @@
+{
+ "id": "SealCaterpillar",
+ "order": [
+  "Stand",
+  "Rear",
+  "Mid",
+  "Front",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Rear": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.62,
+    -1.05
+   ],
+   "center": [
+    0.0,
+    0.007,
+    0.0
+   ],
+   "size": [
+    1.64,
+    0.842,
+    1.016
+   ]
+  },
+  "Mid": {
+   "parent": "Rear",
+   "pivot": [
+    0.0,
+    1.07,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    -0.201,
+    0.0
+   ],
+   "size": [
+    1.64,
+    1.258,
+    1.016
+   ]
+  },
+  "Front": {
+   "parent": "Mid",
+   "pivot": [
+    0.0,
+    0.72,
+    0.65
+   ],
+   "center": [
+    0.0,
+    -0.026,
+    -0.996
+   ],
+   "size": [
+    1.64,
+    0.908,
+    3.008
+   ]
+  },
+  "Head": {
+   "parent": "Front",
+   "pivot": [
+    0.0,
+    0.97,
+    1.0
+   ],
+   "center": [
+    0.0,
+    0.307,
+    0.2277
+   ],
+   "size": [
+    0.8474,
+    0.802,
+    0.9447
+   ]
+  }
+ },
+ "demo_pose": {
+  "Mid": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.08
+   ]
+  },
+  "Front": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

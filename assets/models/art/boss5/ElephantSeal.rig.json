@@ -1,0 +1,159 @@
+{
+ "id": "ElephantSeal",
+ "order": [
+  "Stand",
+  "Body",
+  "FlipperL",
+  "FlipperR",
+  "Head",
+  "Nose"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.82,
+    -0.3
+   ],
+   "center": [
+    0.0,
+    0.2106,
+    -0.125
+   ],
+   "size": [
+    1.6,
+    1.6787,
+    2.45
+   ]
+  },
+  "FlipperL": {
+   "parent": "Body",
+   "pivot": [
+    0.7,
+    1.02,
+    0.3
+   ],
+   "center": [
+    0.1154,
+    -0.2857,
+    0.1543
+   ],
+   "size": [
+    0.5135,
+    0.7166,
+    0.425
+   ]
+  },
+  "FlipperR": {
+   "parent": "Body",
+   "pivot": [
+    -0.7,
+    1.02,
+    0.3
+   ],
+   "center": [
+    -0.1154,
+    -0.2857,
+    0.1543
+   ],
+   "size": [
+    0.5135,
+    0.7166,
+    0.425
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.82,
+    0.25
+   ],
+   "center": [
+    0.0,
+    0.307,
+    0.0886
+   ],
+   "size": [
+    0.9442,
+    0.842,
+    0.9828
+   ]
+  },
+  "Nose": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    2.02,
+    0.75
+   ],
+   "center": [
+    0.0,
+    -0.093,
+    0.5101
+   ],
+   "size": [
+    1.192,
+    1.202,
+    1.2319
+   ]
+  }
+ },
+ "demo_pose": {
+  "Nose": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    -0.05,
+    0.05
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -8,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FlipperL": {
+   "rot_xyz_blender_deg": [
+    0,
+    18,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

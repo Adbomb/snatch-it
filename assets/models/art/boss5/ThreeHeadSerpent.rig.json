@@ -1,0 +1,159 @@
+{
+ "id": "ThreeHeadSerpent",
+ "order": [
+  "Stand",
+  "Water",
+  "Body",
+  "HeadMid",
+  "HeadL",
+  "HeadR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.2,
+    0.4354,
+    3.2
+   ]
+  },
+  "Water": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.36,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.09,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    0.18,
+    2.8978
+   ]
+  },
+  "Body": {
+   "parent": "Water",
+   "pivot": [
+    0.0,
+    0.88,
+    -0.3
+   ],
+   "center": [
+    -0.0192,
+    -0.0214,
+    -0.225
+   ],
+   "size": [
+    2.6209,
+    0.8191,
+    0.5417
+   ]
+  },
+  "HeadMid": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.48,
+    0.1
+   ],
+   "center": [
+    0.0,
+    1.7426,
+    0.3356
+   ],
+   "size": [
+    0.496,
+    3.5149,
+    1.2457
+   ]
+  },
+  "HeadL": {
+   "parent": "Body",
+   "pivot": [
+    0.31,
+    0.48,
+    0.1
+   ],
+   "center": [
+    0.196,
+    1.4495,
+    0.335
+   ],
+   "size": [
+    0.724,
+    3.0011,
+    1.247
+   ]
+  },
+  "HeadR": {
+   "parent": "Body",
+   "pivot": [
+    -0.31,
+    0.48,
+    0.1
+   ],
+   "center": [
+    -0.196,
+    1.4495,
+    0.335
+   ],
+   "size": [
+    0.724,
+    3.0011,
+    1.247
+   ]
+  }
+ },
+ "demo_pose": {
+  "HeadL": {
+   "rot_xyz_blender_deg": [
+    0,
+    12,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "HeadR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -10,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "HeadMid": {
+   "rot_xyz_blender_deg": [
+    8,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

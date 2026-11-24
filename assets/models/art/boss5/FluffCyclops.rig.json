@@ -1,0 +1,140 @@
+{
+ "id": "FluffCyclops",
+ "order": [
+  "Stand",
+  "Body",
+  "Eye",
+  "LegL",
+  "LegR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.4148,
+    0.28,
+    2.4148
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    2.42,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.357,
+    0.0
+   ],
+   "size": [
+    2.4,
+    1.762,
+    2.1304
+   ]
+  },
+  "Eye": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.87,
+    0.8
+   ],
+   "center": [
+    0.0,
+    -0.015,
+    0.125
+   ],
+   "size": [
+    1.2,
+    1.27,
+    0.29
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    0.35,
+    2.07,
+    0.0
+   ],
+   "center": [
+    0.05,
+    -0.9174,
+    0.15
+   ],
+   "size": [
+    0.36,
+    1.8653,
+    0.5
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    -0.35,
+    2.07,
+    0.0
+   ],
+   "center": [
+    -0.05,
+    -0.9174,
+    0.15
+   ],
+   "size": [
+    0.36,
+    1.8653,
+    0.5
+   ]
+  }
+ },
+ "demo_pose": {
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    8,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    -0.1
+   ]
+  },
+  "Eye": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    -14,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

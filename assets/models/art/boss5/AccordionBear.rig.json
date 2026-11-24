@@ -1,0 +1,140 @@
+{
+ "id": "AccordionBear",
+ "order": [
+  "Stand",
+  "Rear",
+  "Folds",
+  "Front",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Rear": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.92,
+    -0.9
+   ],
+   "center": [
+    0.0,
+    -0.046,
+    -0.1501
+   ],
+   "size": [
+    1.1379,
+    1.308,
+    0.9476
+   ]
+  },
+  "Folds": {
+   "parent": "Rear",
+   "pivot": [
+    0.0,
+    0.97,
+    -0.5
+   ],
+   "center": [
+    0.0,
+    -0.0,
+    0.4
+   ],
+   "size": [
+    1.12,
+    1.12,
+    1.1
+   ]
+  },
+  "Front": {
+   "parent": "Folds",
+   "pivot": [
+    0.0,
+    0.97,
+    0.55
+   ],
+   "center": [
+    0.0,
+    -0.096,
+    0.05
+   ],
+   "size": [
+    1.0992,
+    1.308,
+    0.7893
+   ]
+  },
+  "Head": {
+   "parent": "Front",
+   "pivot": [
+    0.0,
+    1.22,
+    0.9
+   ],
+   "center": [
+    0.0,
+    0.175,
+    0.2367
+   ],
+   "size": [
+    0.7893,
+    0.798,
+    0.8466
+   ]
+  }
+ },
+ "demo_pose": {
+  "Folds": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0.1,
+    0
+   ]
+  },
+  "Front": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

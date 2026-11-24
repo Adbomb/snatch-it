@@ -1,0 +1,140 @@
+{
+ "id": "IceSpider",
+ "order": [
+  "Stand",
+  "Body",
+  "Head",
+  "LegsL",
+  "LegsR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.62,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    0.057,
+    -0.15
+   ],
+   "size": [
+    1.1766,
+    1.102,
+    1.2928
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.62,
+    0.3
+   ],
+   "center": [
+    0.0,
+    -0.043,
+    0.196
+   ],
+   "size": [
+    0.736,
+    0.642,
+    0.708
+   ]
+  },
+  "LegsL": {
+   "parent": "Body",
+   "pivot": [
+    0.45,
+    1.62,
+    -0.3
+   ],
+   "center": [
+    0.5027,
+    -0.3788,
+    0.025
+   ],
+   "size": [
+    1.0945,
+    1.9623,
+    1.8
+   ]
+  },
+  "LegsR": {
+   "parent": "Body",
+   "pivot": [
+    -0.45,
+    1.62,
+    -0.3
+   ],
+   "center": [
+    -0.5027,
+    -0.3788,
+    0.025
+   ],
+   "size": [
+    1.0945,
+    1.9623,
+    1.8
+   ]
+  }
+ },
+ "demo_pose": {
+  "LegsL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -8,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.08
+   ]
+  }
+ }
+}

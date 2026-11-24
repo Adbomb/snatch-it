@@ -1,0 +1,159 @@
+{
+ "id": "IceCrab",
+ "order": [
+  "Stand",
+  "Body",
+  "EyeL",
+  "EyeR",
+  "ClawBig",
+  "ClawSmall"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    0.213,
+    -0.015
+   ],
+   "size": [
+    2.3796,
+    1.4739,
+    1.27
+   ]
+  },
+  "EyeL": {
+   "parent": "Body",
+   "pivot": [
+    0.22,
+    0.92,
+    0.38
+   ],
+   "center": [
+    0.06,
+    0.3635,
+    0.1102
+   ],
+   "size": [
+    0.2217,
+    0.7347,
+    0.2997
+   ]
+  },
+  "EyeR": {
+   "parent": "Body",
+   "pivot": [
+    -0.22,
+    0.92,
+    0.38
+   ],
+   "center": [
+    -0.06,
+    0.3635,
+    0.1102
+   ],
+   "size": [
+    0.2217,
+    0.7347,
+    0.2997
+   ]
+  },
+  "ClawBig": {
+   "parent": "Body",
+   "pivot": [
+    -0.65,
+    0.87,
+    0.3
+   ],
+   "center": [
+    -0.4668,
+    0.5428,
+    0.8031
+   ],
+   "size": [
+    1.183,
+    1.3704,
+    1.8338
+   ]
+  },
+  "ClawSmall": {
+   "parent": "Body",
+   "pivot": [
+    0.65,
+    0.87,
+    0.3
+   ],
+   "center": [
+    0.1119,
+    0.0802,
+    0.2256
+   ],
+   "size": [
+    0.3348,
+    0.2756,
+    0.522
+   ]
+  }
+ },
+ "demo_pose": {
+  "ClawBig": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    -12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0.1
+   ]
+  },
+  "EyeL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -14,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ClawSmall": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

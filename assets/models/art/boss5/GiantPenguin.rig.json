@@ -1,0 +1,140 @@
+{
+ "id": "GiantPenguin",
+ "order": [
+  "Stand",
+  "Body",
+  "FlipperL",
+  "FlipperR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.1996,
+    0.0
+   ],
+   "size": [
+    3.2,
+    0.3992,
+    3.2
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.64,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.104,
+    0.0361
+   ],
+   "size": [
+    2.8114,
+    2.808,
+    2.6878
+   ]
+  },
+  "FlipperL": {
+   "parent": "Body",
+   "pivot": [
+    1.38,
+    2.24,
+    0.0
+   ],
+   "center": [
+    0.0772,
+    -0.4184,
+    0.0438
+   ],
+   "size": [
+    0.5903,
+    0.9636,
+    0.2465
+   ]
+  },
+  "FlipperR": {
+   "parent": "Body",
+   "pivot": [
+    -1.38,
+    2.24,
+    0.0
+   ],
+   "center": [
+    -0.0772,
+    -0.4184,
+    0.0438
+   ],
+   "size": [
+    0.5903,
+    0.9636,
+    0.2465
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    3.09,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.167,
+    0.076
+   ],
+   "size": [
+    0.376,
+    0.342,
+    0.528
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FlipperL": {
+   "rot_xyz_blender_deg": [
+    0,
+    25,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "FlipperR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

@@ -1,0 +1,159 @@
+{
+ "id": "SwivelOwl",
+ "order": [
+  "Stand",
+  "Branch",
+  "Body",
+  "WingL",
+  "WingR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.608,
+    0.28,
+    2.608
+   ]
+  },
+  "Branch": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.22,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.125,
+    0.0
+   ],
+   "size": [
+    0.9239,
+    0.25,
+    0.9239
+   ]
+  },
+  "Body": {
+   "parent": "Branch",
+   "pivot": [
+    0.0,
+    1.07,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.257,
+    0.172
+   ],
+   "size": [
+    1.452,
+    1.702,
+    1.756
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    0.66,
+    1.72,
+    0.1
+   ],
+   "center": [
+    -0.1,
+    -0.375,
+    0.08
+   ],
+   "size": [
+    0.32,
+    1.15,
+    0.96
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    -0.66,
+    1.72,
+    0.1
+   ],
+   "center": [
+    0.5487,
+    -0.4275,
+    -0.045
+   ],
+   "size": [
+    1.2174,
+    1.6211,
+    1.21
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.02,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.453,
+    0.0897
+   ],
+   "size": [
+    1.1379,
+    1.094,
+    1.2205
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    25
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -15,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    6,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}

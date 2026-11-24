@@ -1,0 +1,140 @@
+{
+ "id": "SkiEarHare",
+ "order": [
+  "Stand",
+  "Body",
+  "Head",
+  "EarL",
+  "EarR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.92,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    0.1,
+    0.0321
+   ],
+   "size": [
+    1.12,
+    1.16,
+    1.5359
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.45,
+    0.4
+   ],
+   "center": [
+    0.0,
+    0.207,
+    0.267
+   ],
+   "size": [
+    0.7893,
+    0.722,
+    0.8059
+   ]
+  },
+  "EarL": {
+   "parent": "Head",
+   "pivot": [
+    0.18,
+    1.85,
+    0.4
+   ],
+   "center": [
+    0.0756,
+    -0.7879,
+    0.2726
+   ],
+   "size": [
+    0.3687,
+    1.6442,
+    2.2548
+   ]
+  },
+  "EarR": {
+   "parent": "Head",
+   "pivot": [
+    -0.18,
+    1.85,
+    0.4
+   ],
+   "center": [
+    -0.0756,
+    -0.7879,
+    0.2726
+   ],
+   "size": [
+    0.3687,
+    1.6442,
+    2.2548
+   ]
+  }
+ },
+ "demo_pose": {
+  "Body": {
+   "rot_xyz_blender_deg": [
+    8,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "EarL": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    4
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ }
+}
