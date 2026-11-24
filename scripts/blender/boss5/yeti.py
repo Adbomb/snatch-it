@@ -185,10 +185,10 @@ def harness(a, M):
     c = V((0.0, front_y(2.2) - 0.25, 2.2))
     m = T(c) @ R("X", 90)
     a.prism("gold", S.octagon(-0.48, 0.48, -0.48, 0.48, 0.16), -0.06, 0.1, axis="z", matrix=m)
-    a.prism("goldD", S.octagon(-0.36, 0.36, -0.36, 0.36, 0.12), 0.1, 0.13, axis="z", matrix=m)
-    for ang in (0, 60, 120):
-        mm = m @ R("Z", ang)
-        a.box("neonCrystal", -0.07, 0.07, -0.42, 0.42, 0.12, 0.2, bevel=0, matrix=mm)
+    a.prism("goldD", S.octagon(-0.36, 0.36, -0.36, 0.36, 0.12), 0.08, 0.135, axis="z", matrix=m)  # утоплен в обод
+    for i, ang in enumerate((0, 60, 120)):  # верх брусков на разной высоте — в перекрестье нет совпадающих граней
+        mm = m @ R("Z", ang)  # (в игре мерцали: замечание владельца 2026-11-24)
+        a.box("neonCrystal", -0.07, 0.07, -0.42, 0.42, 0.12, 0.2 + 0.015 * i, bevel=0, matrix=mm)
     # пояс
     a.frame("leather", S.octagon(-2.22, 2.22, -1.42, 1.15, 0.6), 0.2, 0.38, 0.72, axis="z", bevel=0.008)
     a.box("gold", -0.38, 0.38, -1.52, -1.32, 0.33, 0.78, bevel=0.02)
