@@ -906,22 +906,25 @@ def winged_walrus():
     z = t + 0.7
     part(a, "Body", "Floe", (0, 0.1, z + 0.7))
     blob(a, "walrus", (0, 0.15, z + 0.95), 1.05, 0.95, 0.92, n=5)
-    for s in S2:  # ласты болтаются
-        kchain(a, "walrus", [(s * 0.75, -0.2, z + 0.4), (s * 1.0, -0.4, z + 0.0)], [0.3, 0.22], [0.14, 0.1])
-        spike(a, "walrus", (s * 0.35, 0.95, z + 0.4), (s * 0.6, 1.3, z + 0.1), 0.3)
+    for s in S2:  # ласты болтаются: от плеча, с изгибом и толщиной
+        A.flipper(a, "walrus", (s * 0.62, -0.25, z + 0.55), (s * 1.08, -0.5, z - 0.02), 0.42, 0.14, thick=0.16,
+                  bend=(s * 0.12, -0.08, 0.0), up=(s, 0, 0.3), segments=2)
+        A.flipper(a, "walrus", (s * 0.3, 0.75, z + 0.42), (s * 0.62, 1.25, z + 0.08), 0.4, 0.16, thick=0.14,
+                  up=(0, 0, 1), segments=2)  # задние ласты
     for s, name in ((1, "WingL"), (-1, "WingR")):
-        part(a, name, "Body", (s * 0.75, 0.35, z + 1.55))
-        for k in range(3):  # крошечные крылышки трёх перьев
-            p0 = V((s * 0.75, 0.35, z + 1.55))
-            p1 = p0 + V((s * (0.62 - 0.1 * k), 0.15 + 0.1 * k, 0.6 - 0.18 * k))
-            kchain(a, "wing", [tuple(p0), tuple(p1)], [0.28, 0.12], [0.06, 0.05])
+        part(a, name, "Body", (s * 0.58, 0.35, z + 1.5))
+        for k in range(3):  # крошечные крылышки: три пера ступенями, корень в теле
+            p0 = V((s * 0.5, 0.35, z + 1.48 - 0.06 * k))
+            p1 = p0 + V((s * (0.75 - 0.14 * k), 0.12 + 0.1 * k, 0.58 - 0.2 * k))
+            kchain(a, "wing", [tuple(p0), tuple(p1)], [0.3 - 0.03 * k, 0.14], [0.08, 0.06], cut=A.CUT)
     part(a, "Head", "Body", (0, -0.45, z + 1.55))
     hz = z + 1.55
     blob(a, "walrus", (0, -0.55, hz + 0.2), 0.62, 0.55, 0.5, n=4)
     for s in S2:
-        blob(a, "muzzle", (s * 0.22, -1.05, hz - 0.04 + (0.018 if s < 0 else 0)), 0.25, 0.18, 0.22, n=3)
+        blob(a, "muzzle", (s * 0.22, -1.05, hz - 0.04 + (0.018 if s < 0 else 0)), 0.25, 0.18, 0.22, n=3)  # валики
         spike(a, "ivory", (s * 0.18, -1.12, hz - 0.18), (s * 0.22, -1.2, hz - 0.8), 0.13)
-        round_eye(a, (s * 0.26, -1.0, hz + 0.38), 0.08, look=(0, 0.8))  # смотрит вверх — «лечу!»
+        A.eye(a, (s * 0.27, -0.98, hz + 0.4), 0.1, normal=(s * 0.35, -1, 0.2), look=(0, 0.8), mood="worried", side=s,
+              skin_key="walrus", brow_key="dark")  # тревожно смотрит вверх — «лечу!»
     disc(a, "dark", 0, hz + 0.18, 0.09, -1.2, -1.12, n=6, axis="y")
     a.box("mouth", -0.1, 0.1, -1.22, -1.18, hz - 0.12, hz - 0.04, bevel=0)  # пыхтит
     face_point(a, (0, -1.1, hz + 0.2))
@@ -942,21 +945,20 @@ def owl_totem():
         r = 0.7 - 0.06 * k
         part(a, name, parent, (0, 0, z + 0.05))
         c = V((0, 0.015 * k, z + r))  # каждая сова чуть сдвинута: грани соседних не совпадают
-        blob(a, key_, tuple(c), r, r * 0.9, r, n=4)
-        blob(a, "owlF", (0, -r * 0.55, c.z + 0.05), r * 0.62, r * 0.3, r * 0.55, n=3)
+        A.body(a, key_, (0, c.y, c.z - r), r * 1.04, r * 0.92, 2 * r, "egg", n=4, floor=0.5)  # бочонок шире книзу
+        A.body(a, "owlF", (0, -r * 0.5 + c.y, c.z - r * 0.5), r * 0.64, r * 0.32, r * 1.05, "ball", n=2, floor=0.6)
         for s in S2:
-            if mood == "sleep":
-                closed_eye(a, (s * r * 0.34, -r * 0.85, c.z + 0.12), 0.2, happy=False)
-            else:
-                round_eye(a, (s * r * 0.34, -r * 0.85, c.z + 0.12), 0.15 if mood == "wow" else 0.12, pupil=0.5)
-                a.frame("yellow", ngon(s * r * 0.34, c.z + 0.12, 0.18, 8), 0.05, -r * 0.9, -r * 0.85, axis="y")
-                if mood == "angry":
-                    bar(a, "dark", (s * r * 0.15, -r * 0.92, c.z + 0.28), (s * r * 0.5, -r * 0.92, c.z + 0.38), 0.05)
-        spike(a, "beak", (0, -r * 0.88, c.z - 0.05), (0, -r * 1.05, c.z - 0.22), 0.13)
+            ec = (s * r * 0.34, -r * 0.84 + c.y, c.z + 0.12)
+            a.frame("yellow", S.octagon(ec[0] - 0.2, ec[0] + 0.2, ec[2] - 0.2, ec[2] + 0.2, 0.06), 0.05, ec[1] - 0.04,
+                    ec[1] + 0.06, axis="y")  # жёлтый ободок глаза
+            A.eye(a, ec, 0.13 if mood == "wow" else 0.12, closed=(mood == "sleep"), lid_key="dark", skin_key=key_,
+                  mood={"sleep": "sleepy", "wow": "surprised", "angry": "angry"}[mood], side=s, brow_key="dark")
+        spike(a, "beak", (0, -r * 0.84 + c.y, c.z - 0.05), (0, -r * 1.05 + c.y, c.z - 0.22), 0.13)
+        for s in S2:  # крылья у всех трёх: сложены вдоль боков, перья ступенями
+            A.folded_wing(a, key_, "owlF", (s * r * 0.86, 0.05 + c.y, c.z + r * 0.35), s, r * 1.0, r * 0.5, rows=2,
+                          down=(0, 0.2, -1), thick=0.1)
         if k == 0:
-            for s in S2:  # крылья только у нижней
-                slab(a, key_, [(-0.3, z + 0.2), (-0.4, z + 0.9), (0.0, z + 1.1), (0.5, z + 0.8), (0.5, z + 0.2)],
-                     s * r * 0.92, s * (r + 0.18))
+            for s in S2:  # когти у нижней
                 for dx in (-0.1, 0.1):
                     spike(a, "beak", (s * 0.3 + dx, -0.4, z + 0.05), (s * 0.3 + dx, -0.62, z), 0.1)
         if k == 2:
@@ -977,16 +979,17 @@ def nest_deer():
     t = epic_stand(a, 1.6)
     part(a, "Body", "Stand", (0, 0.1, t + 1.3))
     z = t
-    layered(a, "deer", [(-0.95, z + 1.05), (-1.05, z + 1.55), (-0.7, z + 1.75), (0.75, z + 1.65), (1.05, z + 1.35),
-                        (0.9, z + 0.95), (-0.8, z + 0.95)], [(0.42, 1, 1), (0.54, 0.92, 0.9)], (0, z + 1.35))
+    layered(a, "deer", [(-0.98, z + 1.0), (-1.12, z + 1.45), (-0.85, z + 1.78), (0.55, z + 1.72), (1.0, z + 1.55),
+                        (1.1, z + 1.2), (0.85, z + 0.92), (-0.7, z + 0.9)], [(0.42, 1, 1), (0.54, 0.92, 0.9)],
+            (0, z + 1.35))  # грудь глубже, круп круглее
     for (s, f), name in (((1, -1), "LegFL"), ((-1, -1), "LegFR"), ((1, 1), "LegBL"), ((-1, 1), "LegBR")):
         y = -0.62 if f < 0 else 0.62
         part(a, name, "Body", (s * 0.26, y, z + 1.05))
-        kchain(a, "deer", [(s * 0.26, y, z + 1.1), (s * 0.26, y - 0.05, z + 0.5), (s * 0.26, y, z + 0.1)],
-               [0.24, 0.19, 0.17])
+        kchain(a, "deer", [(s * 0.26, y, z + 1.3), (s * 0.26, y - 0.05, z + 0.5), (s * 0.26, y, z + 0.1)],
+               [0.24, 0.19, 0.17], cut=A.CUT)  # нога заходит в тело
         a.box("hoof", s * 0.26 - 0.11, s * 0.26 + 0.11, y - 0.13, y + 0.09, z, z + 0.12, bevel=0.01)
     part(a, "Tail", "Body", (0, 0.98, z + 1.5))
-    spike(a, "deerL", (0, 0.98, z + 1.5), (0, 1.2, z + 1.7), 0.22)
+    spike(a, "deerL", (0, 0.92, z + 1.48), (0, 1.22, z + 1.72), 0.24)  # хвостик основанием в теле
     part(a, "Head", "Body", (0, -0.85, z + 1.65))
     kchain(a, "deer", [(0, -0.8, z + 1.55), (0, -1.05, z + 2.15)], [0.46, 0.38])
     hz = z + 2.15
@@ -994,7 +997,8 @@ def nest_deer():
     taper(a, "deerL", (0, -1.4, hz + 0.15), (0, -1.72, hz + 0.05), 0.32, 0.22, 0.28, 0.2)
     blob(a, "dark", (0, -1.76, hz + 0.08), 0.1, 0.07, 0.08, n=2)
     for s in S2:
-        round_eye(a, (s * 0.17, -1.42, hz + 0.3), 0.07, look=(0, 0.6))  # косится вверх на жильцов
+        A.eye(a, (s * 0.17, -1.4, hz + 0.3), 0.08, normal=(s * 0.5, -1, 0.1), look=(0, 0.9), mood="worried", side=s,
+              skin_key="deer", brow_key="dark")  # косится вверх на жильцов — тревожно
         spike(a, "deer", (s * 0.28, -1.1, hz + 0.32), (s * 0.65, -1.0, hz + 0.42), 0.2)
     part(a, "Antlers", "Head", (0, -1.1, hz + 0.45))
     for s in S2:
@@ -1011,10 +1015,11 @@ def nest_deer():
         name = f"Bird{k + 1}"
         part(a, name, "Antlers", tuple(nc))
         key_ = "bird" if k == 0 else "birdR"
-        blob(a, key_, (nc.x, nc.y, nc.z + 0.18), 0.16, 0.15, 0.15, n=2)
-        spike(a, "beak", (nc.x, nc.y - 0.15, nc.z + 0.2), (nc.x, nc.y - 0.3, nc.z + 0.18), 0.06)
-        disc(a, "dark", nc.x + 0.06, nc.z + 0.24, 0.03, nc.y - 0.17, nc.y - 0.14, n=6, axis="y", bevel=0)
-        disc(a, "dark", nc.x - 0.06, nc.z + 0.24, 0.03, nc.y - 0.17, nc.y - 0.14, n=6, axis="y", bevel=0)
+        blob(a, key_, (nc.x, nc.y, nc.z + 0.1), 0.16, 0.15, 0.15, n=2)  # сидит в гнезде
+        spike(a, "beak", (nc.x, nc.y - 0.13, nc.z + 0.12), (nc.x, nc.y - 0.3, nc.z + 0.1), 0.06)
+        for e in S2:
+            a.box("dark", nc.x + e * 0.06 - 0.025, nc.x + e * 0.06 + 0.025, nc.y - 0.17, nc.y - 0.12, nc.z + 0.14,
+                  nc.z + 0.19, bevel=0)
     face_point(a, (0, -1.5, hz + 0.25))
     closeup(a, (0.8, -0.9, hz + 1.3), eye_off=(-0.8, -1.6, 0.6))
     a.pose = {"Head": ((8, 0, 10), (0, 0, 0)), "Bird1": ((0, 0, 30), (0, 0, 0.05)), "LegFL": ((-20, 0, 0), (0, 0, 0))}
@@ -1041,7 +1046,8 @@ def giant_penguin():
     A.ball(a, "navy", (0, 0.0, hz), 0.27, n=4, rz=0.25)  # крошечная головка
     for s in S2:
         A.body(a, "white", (s * 0.12, -0.18, hz - 0.15), 0.09, 0.07, 0.26, "egg", n=2)  # белые щёчки под глазами
-        A.eye(a, (s * 0.11, -0.22, hz + 0.06), 0.1, normal=(s * 0.4, -1, 0.15), look=(0, 0.1), pupil=0.55)
+        A.eye(a, (s * 0.11, -0.22, hz + 0.06), 0.1, normal=(s * 0.4, -1, 0.15), look=(0, 0.1), mood="proud", side=s,
+              skin_key="navy", brow_key="dark")  # важный: голова крошечная, а вид — главный
     A.beak(a, "orange", (0, -0.24, hz - 0.06), (0, -1, -0.2), 0.26, 0.16)
     face_point(a, (0, -0.3, hz))
     closeup(a, (0.0, -1.2, z + 1.4))
@@ -1053,20 +1059,24 @@ def ball_bear():
     """26. Медведь-шар: совершенно круглый белый медведь, лапки торчат в стороны, катится."""
     a = new("BallBear", {"fur": ("F4F8FF", True), "furS": ("DCE6F2", False), "nose": ("2E2A38", False)})
     t = epic_stand(a, 1.6)
-    part(a, "Body", "Stand", (0, 0, t + 1.3))
-    c = V((0, 0, t + 1.4))
+    part(a, "Body", "Stand", (0, 0, t + 1.5))
+    c = V((0, 0, t + 1.72))
     blob(a, "fur", tuple(c), 1.35, 1.35, 1.35, n=7)
-    blob(a, "furS", (0, -1.12, c.z + 0.1), 0.42, 0.28, 0.32, n=3)  # мордочка
-    disc(a, "nose", 0, c.z + 0.22, 0.12, -1.42, -1.34, n=8, axis="y")
-    a.box("mouth", -0.12, 0.12, -1.4, -1.36, c.z - 0.06, c.z - 0.02, bevel=0)
-    eyes(a, 0.38, -1.2, c.z + 0.5, 0.11)
-    cheeks(a, 0.65, -1.1, c.z + 0.12, 0.1)
+    for s in S2:  # короткие толстые ножки вместо цоколя
+        A.limb(a, "fur", [(s * 0.5, -0.05, c.z - 0.9), (s * 0.52, -0.1, t + 0.2)], [0.62, 0.56], joints=False)
+        A.foot(a, "furS", (s * 0.52, -0.1, t), (s * 0.1, -1, 0), 0.62, 0.5, toes=3, h=0.18, z=t)
+    A.snout(a, "furS", (0, -1.2, c.z + 0.05), (0, -1, -0.05), 0.42, 0.62, 0.42, 0.44, 0.3, nose_key="nose", nose=0.42,
+            mouth_key="mouth", mouth=0.6)  # морда выступает вперёд
+    for e in S2:
+        A.eye(a, (e * 0.4, -1.22, c.z + 0.52), 0.12, normal=(e * 0.35, -1, 0.15), look=(-e * 0.4, 0.0), mood="goofy",
+              side=e, skin_key="fur", brow_key="nose")  # катится — глаза в кучку
+    cheeks(a, 0.68, -1.12, c.z + 0.1, 0.1)
     for s, name in ((1, "EarL"), (-1, "EarR")):
         part(a, name, "Body", (s * 0.75, -0.2, c.z + 1.05))
         disc(a, "fur", s * 0.75, c.z + 1.15, 0.26, -0.35, -0.08, n=8, axis="y")
         disc(a, "furS", s * 0.75, c.z + 1.15, 0.14, -0.39, -0.34, n=8, axis="y", bevel=0)
     for (sx, sz), name in (((1, 1), "PawFL"), ((-1, 1), "PawFR"), ((1, -1), "PawBL"), ((-1, -1), "PawBR")):
-        p = c + V((sx * 1.15, -0.45, sz * 0.55))
+        p = c + V((sx * 1.15, -0.45, sz * 0.55 + 0.1))
         part(a, name, "Body", tuple(p))
         blob(a, "fur", tuple(p + V((sx * 0.2, -0.05, 0))), 0.26, 0.22, 0.22, n=3)
         disc(a, "furS", p.x + sx * 0.2, p.z, 0.1, p.y - 0.3, p.y - 0.25, n=6, axis="y", bevel=0)
@@ -1087,22 +1097,30 @@ def stilt_whale():
         part(a, name, "Stand", (s * 0.35, 0.0, bz))
         knee = V((s * 0.45, -0.35 if s > 0 else 0.25, z + 1.4))
         foot = V((s * 0.45, -0.1 if s > 0 else 0.15, z + 0.16))
-        kchain(a, "iceL", [(s * 0.35, 0.0, bz), tuple(knee)], [0.18, 0.15])
-        blob(a, "iceS", tuple(knee), 0.14, 0.14, 0.14, n=2)
-        kchain(a, "iceL", [tuple(knee), tuple(foot)], [0.15, 0.12])
-        a.box("iceS", foot.x - 0.2, foot.x + 0.2, foot.y - 0.35, foot.y + 0.15, z, z + 0.16, bevel=0.02)
+        kchain(a, "iceL", [(s * 0.35, 0.0, bz + 0.32), tuple(knee)], [0.2, 0.16], cut=A.CUT)  # бедро из тела
+        A.ball(a, "iceS", tuple(knee), 0.17, n=2)  # колено — шар-сустав
+        kchain(a, "iceL", [tuple(knee), tuple(foot)], [0.15, 0.13], cut=A.CUT)
+        A.foot(a, "iceS", tuple(foot), (0, -1, 0), 0.62, 0.42, toes=3, h=0.16, z=z)  # стопа с пальцами
     part(a, "Body", "Stand", (0, 0.0, bz + 0.2))
     layered(a, "whale", [(-1.0, bz + 0.3), (-1.05, bz + 0.75), (-0.7, bz + 1.05), (0.4, bz + 1.0), (0.95, bz + 0.6),
                          (0.8, bz + 0.15), (-0.7, bz + 0.05)], [(0.5, 1, 1), (0.65, 0.88, 0.85)], (0.0, bz + 0.5))
     slab(a, "belly", [(-1.0, bz + 0.25), (-1.08, bz + 0.5), (0.5, bz + 0.2), (0.4, bz + 0.06), (-0.7, bz + 0.08)],
          -0.45, 0.45)
     for s in S2:
-        round_eye(a, (s * 0.32, -0.98, bz + 0.62), 0.09, look=(0, -0.8))  # смотрит вниз — высоко!
-        kchain(a, "whale", [(s * 0.5, -0.2, bz + 0.35), (s * 0.85, -0.05, bz + 0.15)], [0.28, 0.12], [0.08, 0.06])
+        A.eye(a, (s * 0.32, -0.98, bz + 0.64), 0.1, normal=(s * 0.4, -1, 0.05), look=(0, -0.8), mood="worried",
+              side=s, skin_key="whale", brow_key="dark")  # смотрит вниз — высоко! страшно
+        A.flipper(a, "whale", (s * 0.42, -0.25, bz + 0.38), (s * 1.0, -0.05, bz + 0.05), 0.4, 0.14, thick=0.12,
+                  bend=(0, -0.08, 0.0), up=(s * 0.3, 0, 1), segments=2)  # грудные плавники
+    for k, (dx, h) in enumerate(((0.0, 0.62), (-0.14, 0.42), (0.15, 0.46))):  # фонтан из дыхала
+        taper(a, "iceS" if k else "iceL", (dx * 0.3, -0.25, bz + 0.98), (dx, -0.3, bz + 1.0 + h), 0.14, 0.06, 0.14,
+              0.06)
+    for dx in (-0.2, 0.2):
+        a.box("iceL", dx - 0.07, dx + 0.07, -0.37, -0.23, bz + 1.5, bz + 1.64, bevel=0)  # брызги
     a.box("mouth", -0.18, 0.18, -1.05, -1.01, bz + 0.32, bz + 0.38, bevel=0)
-    part(a, "Tail", "Body", (0, 0.9, bz + 0.5))
-    a.extrude("whale", [(-0.55, 1.3), (-0.1, 0.95), (0, 1.05), (0.1, 0.95), (0.55, 1.3), (0.3, 0.92), (-0.3, 0.92)],
-              bz + 0.55, bz + 0.67, axis="z")
+    part(a, "Tail", "Body", (0, 0.72, bz + 0.48))
+    kchain(a, "whale", [(0, 0.62, bz + 0.46), (0, 1.0, bz + 0.6)], [0.36, 0.24], [0.3, 0.16], up=(0, 0, 1), cut=A.CUT)
+    a.extrude("whale", [(-0.85, 1.45), (-0.15, 1.0), (0, 1.12), (0.15, 1.0), (0.85, 1.45), (0.42, 0.95),
+                        (-0.42, 0.95)], bz + 0.56, bz + 0.68, axis="z")  # лопасть крупнее
     face_point(a, (0, -1.05, bz + 0.55))
     closeup(a, (0.0, 0.0, bz + 0.6), eye_off=(-1.2, -2.0, 0.4))
     a.pose = {"LegL": ((-14, 0, 0), (0, 0, 0)), "LegR": ((12, 0, 0), (0, 0, 0)), "Tail": ((0, 15, 0), (0, 0, 0))}
@@ -1130,17 +1148,22 @@ def three_head_serpent():
     for k, (x, y) in enumerate(((0.75, 0.6), (-0.8, 0.45))):  # кольца над водой
         tube(a, ("serp", "serpL"), [(x - 0.35, y, z), (x - 0.25, y, z + 0.55), (x + 0.25, y, z + 0.6),
                                     (x + 0.35, y, z)], 0.2)
-    for i, (dx, lean, name) in enumerate(((0.0, 0, "HeadMid"), (0.62, 22, "HeadL"), (-0.62, -22, "HeadR"))):
-        base = V((dx * 0.5, -0.1, z))
+    A.body(a, "serp", (0, -0.05, z - 0.02), 0.62, 0.5, 0.5, "dome", n=3, floor=0.4)  # общий бугор: шеи растут из него
+    for i, (dx, lean, name, mood) in enumerate(((0.0, 0, "HeadMid", "angry"), (0.62, 22, "HeadL", "goofy"),
+                                                (-0.62, -22, "HeadR", "sleepy"))):  # три характера
+        base = V((dx * 0.45, -0.1, z + 0.2))
         part(a, name, "Body", tuple(base))
         top = V((dx, -0.35, z + (2.85 if i == 0 else 2.3)))
-        mid = base.lerp(top, 0.5) + V((dx * 0.25, 0.25, 0))
-        kchain(a, "serp", [tuple(base), tuple(mid), tuple(top)], [0.34, 0.3, 0.26])
-        blob(a, "serp", (top.x, top.y - 0.1, top.z + 0.12), 0.26, 0.32, 0.22, n=3)
-        taper(a, "serpL", (top.x, top.y - 0.35, top.z + 0.08), (top.x, top.y - 0.7, top.z + 0.02), 0.26, 0.14, 0.2,
-              0.1)
+        q1 = base.lerp(top, 0.33) + V((dx * 0.22, 0.18, 0))
+        q2 = base.lerp(top, 0.7) + V((dx * 0.18, 0.2, 0))
+        A.limb(a, "serp", [tuple(base - V((0, 0, 0.25))), tuple(q1), tuple(q2), tuple(top)], [0.5, 0.38, 0.32, 0.28],
+               up=(0, -1, 0), joints=False)  # шея-труба: толще у основания, звенья внахлёст
+        blob(a, "serp", (top.x, top.y - 0.1, top.z + 0.12), 0.28, 0.34, 0.24, n=3)
+        taper(a, "serpL", (top.x, top.y - 0.35, top.z + 0.06), (top.x, top.y - 0.72, top.z + 0.0), 0.28, 0.16, 0.2,
+              0.12)
         for s in S2:
-            disc(a, "neonEye", top.x + s * 0.13, top.z + 0.22, 0.06, top.y - 0.4, top.y - 0.34, n=6, axis="y", bevel=0)
+            A.eye(a, (top.x + s * 0.14, top.y - 0.4, top.z + 0.24), 0.075, normal=(s * 0.3, -1, 0.25), mood=mood,
+                  side=s, skin_key="serp", brow_key="crest")
         for k in range(3):  # гребень-сосульки
             spike(a, "crest", (top.x, top.y + 0.05 + 0.12 * k, top.z + 0.28), (top.x, top.y + 0.1 + 0.18 * k,
                                                                                 top.z + 0.65 - 0.1 * k), 0.12)
@@ -1176,18 +1199,20 @@ def iceberg_narwhal():
     slab(a, "belly", [(-1.3, z + 0.2), (-1.38, z + 0.55), (-0.6, z + 0.25), (-0.6, z + 0.08)], -0.5, 0.5)
     for x, y in ((0.25, 0.4), (-0.3, 0.6), (0.6, 0.85), (-0.55, 0.2)):  # пятна на спине (вразброс)
         a.box("spot", x - 0.09, x + 0.09, y - 0.09, y + 0.09, z + 1.18, z + 1.24, bevel=0)
-    for s in S2:
-        round_eye(a, (s * 0.4, -1.18, z + 0.72), 0.09)
+    A.body(a, "whale", (0, -1.0, z + 0.48), 0.52, 0.4, 0.66, "ball", n=3, floor=0.55)  # голова-«дыня» — лоб
+    for e in S2:  # глаза над ртом, гордый взгляд (везёт деревню)
+        A.eye(a, (e * 0.36, -1.35, z + 0.84), 0.11, normal=(e * 0.35, -1, 0.1), look=(0, 0.1), mood="proud", side=e,
+              skin_key="whale", brow_key="spot")
     a.box("dark", -0.32, 0.32, -1.38, -1.34, z + 0.38, z + 0.42, bevel=0)  # улыбка
     for s in S2:
         a.box("dark", s * 0.32 - 0.04, s * 0.32 + 0.04, -1.37, -1.33, z + 0.42, z + 0.5, bevel=0)
-    part(a, "Horn", "Body", (0.1, -1.3, z + 0.82))
+    part(a, "Horn", "Body", (0.05, -1.36, z + 0.6))  # бивень из верхней губы — между ртом и глазами
     for k in range(2):  # бивень-кристалл витками
-        p0 = V((0.1 + 0.07 * k, -1.3 - 0.22 * k, z + 0.82 + 0.1 * k))
-        p1 = V((0.1 + 0.07 * (k + 1), -1.3 - 0.22 * (k + 1), z + 0.82 + 0.1 * (k + 1)))
+        p0 = V((0.05 + 0.07 * k, -1.36 - 0.22 * k, z + 0.6 + 0.1 * k))
+        p1 = V((0.05 + 0.07 * (k + 1), -1.36 - 0.22 * (k + 1), z + 0.6 + 0.1 * (k + 1)))
         taper(a, "neonHorn" if k % 2 else "berg", tuple(p0), tuple(p1), 0.18 - k * 0.035, 0.15 - k * 0.035,
               up=(0, 0, 1))
-    spike(a, "neonHorn", (0.24, -1.74, z + 1.02), (0.28, -1.95, z + 1.1), 0.1)
+    spike(a, "neonHorn", (0.19, -1.8, z + 0.8), (0.23, -2.01, z + 0.88), 0.1)
     for s, name in ((1, "FinL"), (-1, "FinR")):
         part(a, name, "Body", (s * 0.6, -0.5, z + 0.3))
         kchain(a, "whale", [(s * 0.6, -0.5, z + 0.3), (s * 1.05, -0.3, z + 0.15), (s * 1.25, 0.0, z + 0.12)],
@@ -1207,10 +1232,10 @@ def iceberg_narwhal():
         a.frustum("pine", (x - 0.13, x + 0.13, y - 0.13, y + 0.13), (x, x, y, y), zz, zz + 0.4, bevel=0)
     part(a, "Lighthouse", "Iceberg", (0.45, 0.45, z + 1.65))
     a.prism("white", ngon(0.45, 0.45, 0.13, 8), z + 1.65, z + 1.95)
-    a.prism("wallR", ngon(0.45, 0.45, 0.12, 8), z + 1.95, z + 2.2)
-    a.prism("white", ngon(0.45, 0.45, 0.11, 8), z + 2.2, z + 2.4)
-    a.prism("neonWin", ngon(0.45, 0.45, 0.09, 8), z + 2.4, z + 2.55)
-    a.frustum("wallR", (0.33, 0.57, 0.33, 0.57), (0.45, 0.45, 0.45, 0.45), z + 2.55, z + 2.72, bevel=0)
+    a.prism("wallR", ngon(0.45, 0.45, 0.12, 8), z + 1.93, z + 2.2)  # ярусы маяка заходят друг в друга
+    a.prism("white", ngon(0.45, 0.45, 0.11, 8), z + 2.18, z + 2.4)
+    a.prism("neonWin", ngon(0.45, 0.45, 0.09, 8), z + 2.38, z + 2.55)
+    a.frustum("wallR", (0.33, 0.57, 0.33, 0.57), (0.45, 0.45, 0.45, 0.45), z + 2.52, z + 2.72, bevel=0)
     face_point(a, (0, -1.3, z + 0.7))
     closeup(a, (0.0, 0.3, z + 1.9), eye_off=(-1.0, -2.0, 0.8))
     a.pose = {"Body": ((-6, 0, 0), (0, 0, 0.08)), "FinL": ((0, -20, 0), (0, 0, 0)), "Tail": ((15, 0, 0), (0, 0, 0)),
@@ -1234,7 +1259,7 @@ def yeti_cub():
         blob(a, "fur", (s * 0.3, -0.05, z + 0.25), 0.28, 0.34, 0.26, n=3)
         disc(a, "face", s * 0.3, z + 0.14, 0.13, -0.4, -0.36, n=8, axis="y", bevel=0)
     a.group = "Body"  # дальше — снова туловище (после цикла ног)
-    blob(a, "fur", (0, 0.0, z + 0.95), 0.66, 0.56, 0.6, n=5)
+    blob(a, "fur", (0, 0.0, z + 0.95), 0.66, 0.56, 0.6, n=4)
     blob(a, "furS", (0, -0.42, z + 0.9), 0.4, 0.18, 0.42, n=3)
     for i, (x, zz) in enumerate(((-0.55, z + 1.1), (0.58, z + 1.0), (0.0, z + 0.4))):  # пушистые пряди
         spike(a, "fur", (x, -0.1, zz), (x * 1.35, -0.2, zz - 0.25), 0.26)
@@ -1248,26 +1273,33 @@ def yeti_cub():
         a.box("gold", x - 0.04, x + 0.04, 0.48, 0.62, z + 0.73, z + 0.85, bevel=0)
     part(a, "Head", "Body", (0, -0.05, z + 1.48))
     hz = z + 1.48
-    blob(a, "fur", (0, -0.05, hz + 0.55), 0.78, 0.68, 0.66, n=5)
-    for i, x in enumerate((-0.35, -0.12, 0.12, 0.35)):  # хохолок
-        spike(a, "fur", (x, -0.1, hz + 1.1), (x * 1.6, 0.0, hz + 1.5 - 0.06 * (i % 2)), 0.3)
-    blob(a, "face", (0, -0.52, hz + 0.48), 0.52, 0.22, 0.42, n=4)
-    eyes(a, 0.22, -0.76, hz + 0.58, 0.15, look=(0.25, 0.1))
-    cheeks(a, 0.38, -0.72, hz + 0.32, 0.08)
-    a.box("faceD", -0.1, 0.1, -0.78, -0.74, hz + 0.24, hz + 0.28, bevel=0)  # улыбка
-    a.box("white", 0.0, 0.07, -0.78, -0.75, hz + 0.17, hz + 0.24, bevel=0.005)  # один зубик
-    disc(a, "faceD", 0, hz + 0.42, 0.06, -0.78, -0.73, n=6, axis="y")
+    blob(a, "fur", (0, -0.05, hz + 0.6), 0.94, 0.82, 0.79, n=4)  # голова ×1.2 — детёныш (до 1/2 тела)
+    for i, x in enumerate((-0.42, -0.14, 0.14, 0.42)):  # хохолок
+        spike(a, "fur", (x, -0.1, hz + 1.25), (x * 1.6, 0.0, hz + 1.72 - 0.07 * (i % 2)), 0.34)
+    blob(a, "face", (0, -0.62, hz + 0.52), 0.62, 0.26, 0.5, n=3)
+    for e in S2:  # изумлённые глаза: брови вверх, взгляд на лупу
+        A.eye(a, (e * 0.26, -0.86, hz + 0.64), 0.16, normal=(e * 0.25, -1, 0.08), look=(0.5, 0.15), mood="surprised",
+              side=e, skin_key="face", brow_key="faceD")
+    cheeks(a, 0.46, -0.85, hz + 0.36, 0.09)
+    a.box("faceD", -0.13, 0.13, -0.92, -0.86, hz + 0.24, hz + 0.29, bevel=0)  # улыбка-«о»
+    a.box("faceD", -0.13, -0.08, -0.92, -0.86, hz + 0.29, hz + 0.34, bevel=0)
+    a.box("faceD", 0.08, 0.13, -0.92, -0.86, hz + 0.29, hz + 0.34, bevel=0)
+    a.box("white", 0.0, 0.08, -0.93, -0.88, hz + 0.16, hz + 0.24, bevel=0.005)  # один зубик
+    a.box("faceD", -0.07, 0.07, -0.93, -0.86, hz + 0.43, hz + 0.51, bevel=0.01)  # нос
     for s in S2:
-        spike(a, "fur", (s * 0.66, -0.2, hz + 0.6), (s * 1.0, -0.15, hz + 0.75), 0.26)
+        spike(a, "fur", (s * 0.8, -0.2, hz + 0.66), (s * 1.2, -0.15, hz + 0.84), 0.3)
     part(a, "ArmL", "Body", (0.6, -0.1, z + 1.25))
-    kchain(a, "fur", [(0.6, -0.1, z + 1.25), (0.82, -0.45, z + 1.4), (0.8, -0.62, z + 1.62)], [0.28, 0.25, 0.22])
-    part(a, "Loupe", "ArmL", (0.8, -0.65, z + 1.65))
-    bar(a, "gold", (0.8, -0.65, z + 1.55), (0.8, -0.68, z + 1.85), 0.07)
-    a.frame("gold", ngon(0.8, z + 2.05, 0.22, 10), 0.06, -0.72, -0.64, axis="y")
-    a.prism("lens", ngon(0.8, z + 2.05, 0.17, 10), -0.7, -0.66, axis="y")
+    A.ball(a, "fur", (0.6, -0.1, z + 1.25), 0.2, n=2)  # шар-сустав плеча, рука заходит в тело
+    kchain(a, "fur", [(0.48, -0.1, z + 1.25), (0.9, -0.45, z + 1.4), (0.98, -0.66, z + 1.62)], [0.3, 0.26, 0.22],
+           cut=A.CUT)
+    part(a, "Loupe", "ArmL", (0.98, -0.66, z + 1.6))  # ось — в кулачке
+    bar(a, "gold", (0.98, -0.66, z + 1.5), (0.98, -0.72, z + 1.85), 0.08)
+    a.frame("gold", S.octagon(0.76, 1.2, z + 1.83, z + 2.27, 0.13), 0.06, -0.76, -0.68, axis="y")
+    a.prism("lens", S.octagon(0.81, 1.15, z + 1.88, z + 2.22, 0.1), -0.74, -0.7, axis="y")
     part(a, "ArmR", "Body", (-0.6, -0.1, z + 1.25))
-    kchain(a, "fur", [(-0.6, -0.1, z + 1.25), (-0.78, -0.35, z + 0.95)], [0.28, 0.24])
-    face_point(a, (0, -0.78, hz + 0.5))
+    A.ball(a, "fur", (-0.6, -0.1, z + 1.25), 0.2, n=2)
+    kchain(a, "fur", [(-0.48, -0.1, z + 1.25), (-0.82, -0.35, z + 0.95)], [0.3, 0.24], cut=A.CUT)
+    face_point(a, (0, -0.9, hz + 0.55))
     closeup(a, (0.0, 0.7, z + 1.1), eye_off=(-1.2, 2.0, 0.8))
     a.pose = {"Head": ((0, 0, 12), (0, 0, 0)), "ArmL": ((-15, 0, 0), (0, 0, 0)), "Loupe": ((10, 0, 0), (0, 0, 0)),
               "LegR": ((-12, 0, 0), (0, 0, 0)), "Pack": ((0, 0, 0), (0, 0, 0.03))}
