@@ -380,6 +380,8 @@ for _, id in { "VikingFigure", "RuneStone", "Longship", "IceSwan", "NinthWave" }
 	Items[id].legacy = true
 end
 
+-- Заготовки боссов 6–10 с названиями картин удалены (D69, 2026-11-25): «Поцелуй», «Мозаика Александра», «Звёздная
+-- ночь над Роной», «Дама с единорогом». Их id в старых сохранениях загрузка пропускает (Inventory.Normalize).
 -- 6. Джунгли — «Горилла»: Мезоамерика.
 art("MayaVessel", 6, "Common", "Сосуд майя", "Vase", "Light", "Cylinder", "B5653A", V(2, 1.5, 1.5))
 art("JadeMask", 6, "Common", "Нефритовая маска", "Mask", "Light", "Block", "3E9C6B", V(1.8, 2.2, 0.6))
@@ -395,7 +397,6 @@ art("SilverMedal", 7, "Common", "Серебряная медаль", "Jewel", "L
 art("Candelabra", 7, "Common", "Канделябр", "Artifact", "Light", "Block", "D9B45A", V(1.6, 2.8, 1))
 art("JewelCasket", 7, "Rare", "Шкатулка с самоцветами", "Jewel", "Medium", "Block", "7A1F3D", V(2.2, 1.6, 1.6))
 art("GoldenGoblet", 7, "Rare", "Золотой кубок", "Jewel", "Light", "Cylinder", "E8C14A", V(2.4, 1.4, 1.4))
-art("TheKiss", 7, "Epic", "Поцелуй", "Painting", "Medium", "Block", "D6A93A", V(2.8, 2.8, 0.4), "Густав Климт, 1907–1908")
 art("CoronationEgg", 7, "Legendary", "Коронационное яйцо", "Jewel", "Light", "Ball", "E5B93C", V(2, 2, 2),
 	"Карл Фаберже, 1897")
 
@@ -404,8 +405,6 @@ art("MeanderAmphora", 8, "Common", "Амфора с меандром", "Vase", "
 art("IonicColumn", 8, "Common", "Ионическая колонна", "Sculpture", "Medium", "Cylinder", "ECE6D8", V(3, 1.2, 1.2))
 art("HopliteHelmet", 8, "Rare", "Шлем гоплита", "Artifact", "Medium", "Block", "B8862E", V(1.6, 2.2, 1.8))
 art("GreekLyre", 8, "Rare", "Лира", "Instrument", "Light", "Block", "C69C52", V(1.8, 2.6, 0.5))
-art("AlexanderMosaic", 8, "Epic", "Мозаика Александра", "Painting", "Heavy", "Block", "9C6B4E", V(3.4, 2, 0.5),
-	"Помпеи, ок. 100 до н. э.")
 art("WingedVictory", 8, "Legendary", "Ника Самофракийская", "Sculpture", "Heavy", "Block", "F2EEE6", V(2.6, 3.4, 1.8),
 	"Греция, ок. 190 до н. э.")
 art("AgamemnonMask", 8, "Secret", "Маска Агамемнона", "Mask", "Medium", "Block", "E6B83A", V(2, 2.4, 0.8),
@@ -416,8 +415,6 @@ art("SaturnModel", 9, "Common", "Модель Сатурна", "Artifact", "Ligh
 art("Meteorite", 9, "Common", "Метеорит на подставке", "Artifact", "Medium", "Ball", "5B4E4A", V(1.8, 1.8, 1.8))
 art("Astrolabe", 9, "Rare", "Астролябия", "Instrument", "Light", "Cylinder", "C49A3A", V(0.4, 2.4, 2.4))
 art("BrassTelescope", 9, "Rare", "Латунный телескоп", "Instrument", "Medium", "Cylinder", "B5893A", V(3.2, 0.9, 0.9))
-art("StarryRhone", 9, "Epic", "Звёздная ночь над Роной", "Painting", "Medium", "Block", "1F3A6E", V(3.2, 2.2, 0.4),
-	"Винсент ван Гог, 1888")
 art("PragueOrloj", 9, "Legendary", "Пражские куранты", "Artifact", "Heavy", "Cylinder", "2E5D9F", V(0.8, 3, 3),
 	"Микулаш из Кадани, 1410")
 
@@ -426,8 +423,6 @@ art("CrestGoblet", 10, "Common", "Кубок с гербом", "Artifact", "Ligh
 art("DragonShield", 10, "Common", "Щит с драконом", "Artifact", "Medium", "Block", "B3261E", V(2.4, 2.8, 0.5))
 art("SwordInStone", 10, "Rare", "Меч в камне", "Artifact", "Heavy", "Block", "7C7F86", V(1.8, 3.2, 1.8))
 art("MiniThrone", 10, "Rare", "Малый трон", "Artifact", "Heavy", "Block", "8E1F2F", V(2, 3, 2))
-art("LadyUnicorn", 10, "Epic", "Дама с единорогом", "Textile", "Medium", "Block", "A3262A", V(2.6, 3.2, 0.3),
-	"Гобелен, Франция, ок. 1500")
 art("MonomakhCap", 10, "Legendary", "Шапка Мономаха", "Jewel", "Medium", "Cylinder", "D4A23A", V(2.2, 2, 2),
 	"Русь, XIII–XIV века")
 -- «Мона Лиза» черновика босса 10 убрана (D42): это произведение — в коллекции босса 2, id MonaLisa теперь его.
