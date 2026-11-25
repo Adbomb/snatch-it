@@ -3,14 +3,18 @@
 -- нет видимых пар совпадающих граней (World/FaceCheck, D36); у «Барахолки» (D44) и «Подземки» (D54) — части в
 -- бюджете, света мало, круг площадки босса свободен (только плоский пол), в круге, куда босс заходит в бою, нет
 -- ничего выше LOW, у каждой надписи есть табличка, надписи не закрыты столбами, 4 слота на площадке с разными
--- поворотами. Декор не зависит от Random, поэтому здесь он тот же, что в игре. Запуск из корня репозитория: lune run scripts/lune/check_world.luau. Ошибка — код возврата 1.
+-- поворотами. Сквозные полосы (D66, MapLayout.Lane) свободны во всех 10 зонах (зоны 6–10 собираются так же, как в
+-- WorldBuilder: декор ZoneDecor, дорожки, постаменты, столбики). Декор не зависит от Random, поэтому здесь он тот же,
+-- что в игре. Запуск из корня репозитория: lune run scripts/lune/check_world.luau. Ошибка — код возврата 1.
+-- Зависит от env, FaceCheck, MapLayout, GameConfig, Battle, Rarities, World/Models/* (Junkyard, FleaMarket,
+-- SubwayStation, DesertOasis, GlacierHall, ZoneDecor, Tree).
 
 local process = require("@lune/process")
 
 local Env = require("./env")
 
 local roblox = Env.roblox
-local Vector3, CFrame, Vector2 = roblox.Vector3, roblox.CFrame, roblox.Vector2
+local Vector3, CFrame, Vector2, Color3 = roblox.Vector3, roblox.CFrame, roblox.Vector2, roblox.Color3
 
 local FaceCheck = Env.Require("ServerScriptService.Server.World.FaceCheck")
 local MapLayout = Env.Require("ServerScriptService.Server.World.MapLayout")
@@ -19,6 +23,9 @@ local FleaMarket = Env.Require("ServerScriptService.Server.World.Models.FleaMark
 local SubwayStation = Env.Require("ServerScriptService.Server.World.Models.SubwayStation")
 local DesertOasis = Env.Require("ServerScriptService.Server.World.Models.DesertOasis")
 local GlacierHall = Env.Require("ServerScriptService.Server.World.Models.GlacierHall")
+local ZoneDecor = Env.Require("ServerScriptService.Server.World.Models.ZoneDecor")
+local Tree = Env.Require("ServerScriptService.Server.World.Models.Tree")
+local GameConfig = Env.Require("ReplicatedStorage.Shared.Config.GameConfig")
 
 local Battle = Env.Require("ReplicatedStorage.Shared.Config.Battle")
 
@@ -63,6 +70,60 @@ local desert = placed(4, desertBricks)
 local glacierBricks, glacierSigns = GlacierHall.Zone()
 local glacier = placed(5, glacierBricks)
 
+-- Зоны без своего оформления (6–10) — как их собирает WorldBuilder.buildZone: декор ZoneDecor (у «Джунглей» ещё
+-- деревья), дорожки ZoneDecor.Path (середина и сквозные полосы), постаменты на MapLayout.ArtSlots, столбики границы
+-- на ±PylonX у входа. Кирпичи — в мировых координатах.
+local function plainZone(index: number): { any }
+	local zone = GameConfig.Zones[index]
+	local frame = MapLayout.ZoneCFrame(index)
+	local size = MapLayout.ZoneSize
+	local accent = Color3.fromHex(zone.accent)
+	local out = {}
+	local function put(at, bricks: { any }, label: string)
+		for _, brick in bricks do
+			brick.cframe = at * brick.cframe
+			brick.name = brick.name or label
+			table.insert(out, brick)
+		end
+	end
+	local decor = {}
+	if zone.id == "Bank" then
+		decor = ZoneDecor.Bank(size)
+	elseif ZoneDecor[zone.id] then
+		decor = ZoneDecor[zone.id]()
+	end
+	put(frame, decor, "Decor_" .. zone.id)
+	put(frame, ZoneDecor.Path(size, accent), "Path")
+	if zone.id == "Jungle" then
+		-- места деревьев — как в WorldBuilder.buildZone
+		for i, spot in { Vector2.new(-24, -14), Vector2.new(24, -4), Vector2.new(-24, 26), Vector2.new(24, 20) } do
+			put(frame * CFrame.new(spot.X, 0, spot.Y) * CFrame.Angles(0, i, 0), Tree("L", 2), "Tree")
+		end
+	end
+	if not MapLayout.Arenas[index] then
+		for _, spot in MapLayout.ArtSlots do
+			put(frame * CFrame.new(spot.X, 0, spot.Y), ZoneDecor.Pedestal(accent), "Pedestal")
+		end
+	end
+	if index > 1 then
+		-- габариты столбика — как в WorldBuilder.buildZone (светящийся куб — без столкновений)
+		for _, x in { -MapLayout.PylonX, MapLayout.PylonX } do
+			put(CFrame.new(x, MapLayout.Heights.Path, MapLayout.ZoneStartZ(index)), {
+				{ size = Vector3.new(3, 1, 3), cframe = CFrame.new(0, 0.5, 0) },
+				{ size = Vector3.new(1.6, 8, 1.6), cframe = CFrame.new(0, 5, 0) },
+				{ size = Vector3.new(2.6, 0.4, 2.6), cframe = CFrame.new(0, 9, 0) },
+				{ size = Vector3.new(2.2, 2.2, 2.2), cframe = CFrame.new(0, 10.3, 0), collide = false },
+			}, "Pylon")
+		end
+	end
+	return out
+end
+
+local plain = {}
+for index = 6, #GameConfig.Zones do
+	plain[index] = plainZone(index)
+end
+
 print("Грани (D36):")
 local groups = {
 	{ name = "Junk", bricks = junk },
@@ -70,8 +131,15 @@ local groups = {
 	{ name = "Subway", bricks = subway },
 	{ name = "Desert", bricks = desert },
 	{ name = "Glacier", bricks = glacier },
-	{ name = "Floor", bricks = { floorOf(1), floorOf(2), floorOf(3), floorOf(4), floorOf(5) } },
 }
+local floors = {}
+for index = 1, #GameConfig.Zones do
+	table.insert(floors, floorOf(index))
+	if plain[index] then
+		table.insert(groups, { name = ("Zone%d_%s"):format(index, GameConfig.Zones[index].id), bricks = plain[index] })
+	end
+end
+table.insert(groups, { name = "Floor", bricks = floors })
 local pairsCount, found = FaceCheck.Scan(Env.FakeRoot(groups))
 for key, group in found do
 	print(("    %s: %d (%s)"):format(key, group.n, group.example))
@@ -534,6 +602,108 @@ do
 			.. (if #high > 0 then ": " .. table.concat(high, "; ", 1, math.min(#high, 5)) else "")
 	)
 end
+
+-- Сквозные полосы (D66): во всех зонах в полосах |x| MapLayout.Lane по всей длине зоны нет твёрдых деталей на
+-- высоте MapLayout.LaneHeight над полом. У стен обрыва (|x| > 76) зон 1–2 верх твёрдого не выше 24 (у зон 4–5 —
+-- выше; стены станции зоны 3 так задуманы), декор зон 1–2 не уходит в стену обрыва (|x| ≤ ZoneHalfWidth).
+local LANE, LANE_Y = MapLayout.Lane, MapLayout.LaneHeight
+
+-- Центр детали в координатах зоны и половины её габарита по осям зоны.
+local function inZone(frame, brick)
+	local cf, size = frame:ToObjectSpace(brick.cframe), brick.size
+	local function half(axis: string): number
+		return (
+			math.abs(cf.RightVector[axis]) * size.X
+			+ math.abs(cf.UpVector[axis]) * size.Y
+			+ math.abs(cf.LookVector[axis]) * size.Z
+		) / 2
+	end
+	return cf.Position, half("X"), half("Y"), half("Z")
+end
+
+local function listed(items: { string }): string
+	return if #items > 0 then ": " .. table.concat(items, "; ", 1, math.min(#items, 6)) else ""
+end
+
+local function laneFree(index: number, title: string, bricks: { any })
+	local frame = MapLayout.ZoneCFrame(index)
+	local length = MapLayout.ZoneSize / 2
+	local blocked = {}
+	for _, brick in bricks do
+		if brick.collide ~= false then
+			local p, hx, hy, hz = inZone(frame, brick)
+			local lo, hi = math.abs(p.X) - hx, math.abs(p.X) + hx
+			if
+				p.Y - hy < LANE_Y[2]
+				and p.Y + hy > LANE_Y[1]
+				and hi > LANE[1] + 1e-3
+				and lo < LANE[2] - 1e-3
+				and p.Z + hz > -length
+				and p.Z - hz < length
+			then
+				table.insert(blocked, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+			end
+		end
+	end
+	check(
+		#blocked == 0,
+		("%s: сквозные полосы |x| %d–%d свободны (высота %.1f–%d)"):format(
+			title,
+			LANE[1],
+			LANE[2],
+			LANE_Y[1],
+			LANE_Y[2]
+		) .. listed(blocked)
+	)
+end
+
+local function nearWalls(index: number, title: string, bricks: { any })
+	local frame = MapLayout.ZoneCFrame(index)
+	local high, deep = {}, {}
+	for _, brick in bricks do
+		local p, hx, hy = inZone(frame, brick)
+		if brick.collide ~= false and math.abs(p.X) + hx > 76 and p.Y + hy > 24 then
+			table.insert(high, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y + hy, p.Z))
+		end
+		if math.abs(p.X) + hx > MapLayout.ZoneHalfWidth + 1e-3 then
+			table.insert(deep, ("%s (%.1f, %.1f, %.1f)"):format(brick.name or "Brick", p.X, p.Y, p.Z))
+		end
+	end
+	check(#high == 0, title .. ": у стен нет твёрдых уступов выше 24" .. listed(high))
+	check(
+		#deep == 0,
+		("%s: декор не уходит в стену обрыва (|x| ≤ %d)"):format(
+			title,
+			MapLayout.ZoneHalfWidth
+		) .. listed(deep)
+	)
+end
+
+print("Сквозные полосы (D66):")
+local titled = {
+	{ 1, "Свалка", junk },
+	{ 2, "Барахолка", flea },
+	{ 3, "Подземка", subway },
+	{ 4, "Пустыня", desert },
+	{ 5, "Ледник", glacier },
+}
+for index = 6, #GameConfig.Zones do
+	table.insert(titled, { index, GameConfig.Zones[index].name, plain[index] })
+end
+for _, entry in titled do
+	laneFree(entry[1], entry[2], entry[3])
+end
+nearWalls(1, "Свалка", junk)
+nearWalls(2, "Барахолка", flea)
+
+-- Для сведения: части декора по зонам (у 6–10 — с дорожками, постаментами и столбиками; карта целиком ≤ 12 000
+-- вместе с обрывами, лавками и музеями).
+local counts, total = {}, 0
+for _, entry in titled do
+	table.insert(counts, ("%d: %d"):format(entry[1], #entry[3]))
+	total += #entry[3]
+end
+print(("    частей в зонах (%s), всего %d"):format(table.concat(counts, ", "), total))
 
 if failed > 0 then
 	print(("Проверок не прошло: %d"):format(failed))
