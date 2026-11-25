@@ -74,6 +74,11 @@ MapLayout.HologramScale = { Desert = 0.65 } :: { [string]: number }
 MapLayout.HologramHeight = 20
 MapLayout.HologramInset = 10 -- от входа в зону вглубь
 MapLayout.PylonX = 86 -- светящиеся столбики на границах зон, у обрывов
+-- Сквозные полосы (D66): во всех 10 зонах по обе стороны от площадки босса — прямой свободный бег от входа до выхода
+-- зоны. В полосах |x| Lane[1]..Lane[2] нет ни одной твёрдой детали на высоте LaneHeight[1]..LaneHeight[2] над полом
+-- зоны (ступени и поддоны ниже — пробегаются, крыши и мосты выше — не мешают). Проверка — scripts/lune/check_world.
+MapLayout.Lane = { 48, 66 }
+MapLayout.LaneHeight = { 1.1, 7 }
 MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНАЯ ЗОНА» на траве у входа в коридор
 -- Ночной барьер (D41): сплошная стена во всю ширину коридора на входе в опасную зону, только ночью.
 MapLayout.Barrier = { height = 28, thickness = 1 }

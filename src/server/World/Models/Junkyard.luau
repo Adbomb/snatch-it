@@ -1,12 +1,18 @@
 -- Уровень 1 «Свалка» (D41): декор из узнаваемого хлама — ржавые машины, холодильники, стиральные машины, старые
 -- телевизоры, диван, шины, бочки, кран с магнитом (держит машину — ориентир издалека), будка сторожевого пса с миской и
 -- косточкой, сторожка, лужи, фонари; пол — земля с дорогой из бетонных плит, буграми под кучами, мусором и травой
--- (Junkyard.Ground). Всё по краям: проход по центру (|x| < 10), круг босса (r 16 от (0, −5)) и постаменты свободны. Координаты зоны: x — поперёк коридора (±92), z — вдоль (вход −47.5, выход +47.5), y = 0 —
--- пол. Каждая вещь — функция кирпичей в своих координатах (лицо — сторона −Z), ставится через put. Совпадающих
--- граней нет: накладки выступают за грань, стопки — с разными размерами. Зависит от ModelBuilder, Palette, Props.
+-- (Junkyard.Ground). Всё по краям: проход по центру (|x| < 10), место босса (r 16 от (0, −5)) и постаменты свободны;
+-- в бою босс заходит до r 34 (scripts/lune/check_world.luau) — до боковых полос этот круг не достаёт. Боковые полосы
+-- свободного бега |x| 48–66 (MapLayout.Lane, как в остальных зонах) идут от входа до выхода без твёрдых деталей на
+-- высоте 1.1–7: по оси полосы (x ±57) — дорожка из бетонных плит, горы хлама и кран стоят у стен (|x| 69–81),
+-- противовес крана без столкновений, мусор и трава в полосы не попадают. Координаты зоны: x — поперёк коридора (±92),
+-- z — вдоль (вход −47.5, выход +47.5), y = 0 — пол; +x — слева от входящего игрока. Каждая вещь — функция кирпичей в
+-- своих координатах (лицо — сторона −Z), ставится через put. Совпадающих граней нет: накладки выступают за грань,
+-- стопки — с разными размерами. Зависит от MapLayout, ModelBuilder, Palette, Props.
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local Palette = require(ServerScriptService.Server.World.Palette)
 local Props = require(ServerScriptService.Server.World.Models.Props)
@@ -19,6 +25,8 @@ local ROUND = { shape = "Cylinder", collide = false, shadow = false }
 local BALL = { shape = "Ball", collide = false, shadow = false }
 local UPRIGHT = CFrame.Angles(0, 0, math.rad(90)) -- ось цилиндра вертикально
 local ALONG_Z = CFrame.Angles(0, math.rad(90), 0) -- ось цилиндра вдоль Z
+local LANE = MapLayout.Lane -- боковые полосы свободного бега (|x|): твёрдого на высоте 1.1–7 нет
+local LANE_AXIS = (LANE[1] + LANE[2]) / 2 -- ось полосы: дорожка из плит
 
 local function hex(code: string): Color3
 	return Color3.fromHex(code)
@@ -227,9 +235,9 @@ function Junkyard.Crane(reach: number): { Brick }
 			Vector3.new(2, 8, 2),
 			CFrame.new(7, 2 + height + 4.4, 0) * CFrame.Angles(0, 0, math.rad(90)),
 			C.crane,
-			{ shape = "Truss" }
+			{ shape = "Truss", collide = false }
 		),
-		B(Vector3.new(3, 3, 3.2), Vector3.new(7.6, 2 + height + 2.6, 0), C.concrete),
+		B(Vector3.new(3, 3, 3.2), Vector3.new(7.6, 2 + height + 2.6, 0), C.concrete, { collide = false }),
 		-- трос и магнит
 		B(Vector3.new(0.2, 8, 0.2), Vector3.new(-reach, 2 + height - 0.6, 0), C.dark, DECOR),
 		B(
@@ -448,10 +456,10 @@ local KEEP_OUT = {
 	{ 11, -11, 4.5 },
 	{ -9, 7, 4.5 },
 	{ 13, 5, 4.5 },
-	{ 66, 22, 5 },
-	{ -56, 24, 4 },
-	{ 58, -20, 4 },
-	{ -68, -16, 4 },
+	{ 70, 22, 5 },
+	{ -74, 24, 4 },
+	{ 74, -20, 4 },
+	{ -77, -16, 4 },
 	{ -34, -24, 4.5 },
 	{ 34, 30, 4.5 },
 	{ -25, -3, 5 },
@@ -462,27 +470,27 @@ local KEEP_OUT = {
 	{ 78, -40, 2 },
 	{ 31, -2, 3.5 },
 	{ 44, 38, 1.5 },
-	{ 46, -38, 4 },
-	{ -46, 40, 4.5 },
+	{ 40, -38, 4 },
+	{ -42, 40, 4.5 },
 	{ -40, 8, 4.5 },
 	{ 18, -28, 3.5 },
-	{ 50, 6, 4.5 },
+	{ 44, 6, 4.5 },
 	{ -17, -42, 1.2 },
 	{ 17, -42, 1.2 },
 	{ -22, 26, 1.2 },
 	{ 22, 30, 1.2 },
 	{ -64, 36, 2 },
-	{ 50, -28, 2 },
+	{ 44, -27, 2 },
 	{ 72, 30, 2 },
 }
 
 -- Холмы земли (x, z, радиус, поворот): под горами хлама, под краном, под кучкой техники.
 local MOUNDS = {
-	{ -56, 24, 10, 0.3 },
-	{ 58, -20, 10, -0.4 },
-	{ -68, -16, 9, 1.4 },
-	{ 66, 22, 7, 0.2 },
-	{ -46, 40, 6, 0.5 },
+	{ -74, 24, 10, 0.3 },
+	{ 74, -20, 9, -0.4 },
+	{ -77, -16, 8, 1.4 },
+	{ 70, 22, 7, 0.2 },
+	{ -42, 40, 6, 0.5 },
 }
 
 -- Высота земли в точке (верх холма, примерно): мусор ложится на склон, а не прячется внутри.
@@ -497,7 +505,9 @@ local function groundHeight(p: Vector2): number
 end
 
 local function isFree(p: Vector2): boolean
-	if math.abs(p.X) < 7 or math.abs(p.X) > 88 or math.abs(p.Y) > 45 then
+	local x = math.abs(p.X)
+	-- в полосах свободного бега мусора нет (с запасом 1: вещь длиной до 3.2 не свешивается в полосу)
+	if x < 7 or x > 88 or math.abs(p.Y) > 45 or (x > LANE[1] - 1 and x < LANE[2] + 1) then
 		return false
 	end
 	for _, spot in KEEP_OUT do
@@ -531,6 +541,20 @@ function Junkyard.Ground(): { Brick }
 			end
 		end
 	end
+	-- Дорожка по оси каждой боковой полосы (x ±LANE_AXIS): одна колонна таких же плит 5×7 в тех же рядах, одной плиты
+	-- нет; верх 0.23 / 0.29 / 0.35 — не вровень с плитами дороги и буграми. Шире нельзя: бугры гор у стен дадут
+	-- совпадающие грани.
+	for _, s in { -1, 1 } do
+		for row = 0, 11 do
+			if row % 7 ~= 5 then
+				local z = -41.8 + row * 7.6
+				local top = 0.23 + (row % 3) * 0.06
+				local turn = (if row % 2 == 0 then 1 else -1) * 0.015
+				local at = CFrame.new(s * LANE_AXIS, top / 2, z) * CFrame.Angles(0, turn, 0)
+				table.insert(out, B(Vector3.new(5, top, 7), at, GROUND.slab[row % 3 + 1], DECOR))
+			end
+		end
+	end
 	-- Пятно земли неровной формы: count кругов разного размера, сдвинутых в разные стороны; ближе к центру — выше
 	-- (верх top, top + 0.06, …) — пологий бугор, а не ступенчатый «торт».
 	local function blob(x: number, z: number, radius: number, turn: number, count: number, top: number, color: Color3)
@@ -549,7 +573,7 @@ function Junkyard.Ground(): { Brick }
 	end
 	-- Тёмная земля под машинами, бочками, диваном, шинами.
 	for i, spot in
-		{ { -34, -24, 5.5 }, { 34, 30, 5.5 }, { 31, -2, 4.2 }, { 46, -38, 4.6 }, { -21, -37, 4.2 }, { 78, -40, 3.2 } }
+		{ { -34, -24, 5.5 }, { 34, 30, 5.5 }, { 31, -2, 4.2 }, { 40, -38, 4.6 }, { -21, -37, 4.2 }, { 78, -40, 3.2 } }
 	do
 		blob(spot[1], spot[2], spot[3], i * 0.9, 3, 0.09, GROUND.dirt[2])
 	end
@@ -592,8 +616,8 @@ function Junkyard.Ground(): { Brick }
 		local small = CFrame.new(spot[1] + r * 0.8, 0.15, spot[2] + r * 0.5) * UPRIGHT
 		table.insert(out, B(Vector3.new(0.3, r * 1.1, r * 1.1), small, GROUND.oil:Lerp(Palette.White, 0.06), ROUND))
 	end
-	-- Железные листы с заклёпками у крана.
-	for i, spot in { { 58, 30, 0.35 }, { 74, 14, -0.5 }, { 60, 13, 1.1 } } do
+	-- Железные листы с заклёпками у крана (в полосе — рядом с дорожкой из плит, не под ней).
+	for i, spot in { { 64, 30.5, 0.35 }, { 74, 14, -0.5 }, { 62.5, 13, 1.1 } } do
 		local at = CFrame.new(spot[1], 0, spot[2]) * CFrame.Angles(0, spot[3], 0)
 		local h = 0.14 + i * 0.05
 		table.insert(out, B(Vector3.new(4.4, h, 3.2), at * CFrame.new(0, h / 2, 0), SCRAP.sheet[i], DECOR))
@@ -626,7 +650,7 @@ function Junkyard.Ground(): { Brick }
 		end
 	end
 	-- Поддоны (на втором — ещё один поддон сверху).
-	for i, spot in { { -64, 36 }, { 50, -28 }, { 72, 30 } } do
+	for i, spot in { { -64, 36 }, { 44, -27 }, { 72, 30 } } do
 		local at = CFrame.new(spot[1], 0, spot[2]) * CFrame.Angles(0, spot[1] * 0.07, 0)
 		put(out, Junkyard.Pallet(), at)
 		if i == 2 then
@@ -645,7 +669,10 @@ function Junkyard.Ground(): { Brick }
 	for _, m in MOUNDS do
 		for j = 1, 2 do
 			local a = m[4] + j * 2.6
-			weeds(m[1] + math.cos(a) * m[3] * 0.9, m[2] + math.sin(a) * m[3] * 0.9)
+			local x = m[1] + math.cos(a) * m[3] * 0.9
+			if math.abs(x) < LANE[1] - 1 or math.abs(x) > LANE[2] + 1 then -- трава у подножия — не в полосе
+				weeds(x, m[2] + math.sin(a) * m[3] * 0.9)
+			end
 		end
 	end
 	for _, spot in { { -6.4, -32 }, { 6.6, -26 }, { 6.5, 22 }, { -6.6, 30 }, { 6.3, 40 }, { -6.5, 16 } } do
@@ -660,11 +687,11 @@ function Junkyard.Zone(): { Brick }
 	local function at(x: number, z: number, turn: number?): CFrame
 		return CFrame.new(x, 0, z) * CFrame.Angles(0, turn or 0, 0)
 	end
-	-- Ориентиры по краям: кран с висящей машиной справа в глубине, горы хлама.
-	put(out, Junkyard.Crane(26), at(66, 22))
-	put(out, Junkyard.Heap(1), at(-56, 24, 0.3))
-	put(out, Junkyard.Heap(2), at(58, -20, -0.4))
-	put(out, Junkyard.Heap(1), at(-68, -16, 1.4))
+	-- Ориентиры по краям: кран с висящей машиной слева в глубине (у стены, стрела над полосой), горы хлама у стен.
+	put(out, Junkyard.Crane(30), at(70, 22))
+	put(out, Junkyard.Heap(1), at(-74, 24, 0.3))
+	put(out, Junkyard.Heap(2), at(74, -20, -0.4))
+	put(out, Junkyard.Heap(1), at(-77, -16, 1.4))
 	-- Машины.
 	put(out, Junkyard.Car(hex("D84A3A")), at(-34, -24, 0.35))
 	put(out, Junkyard.Car(hex("4CAF7A")), at(34, 30, -0.6))
@@ -686,14 +713,14 @@ function Junkyard.Zone(): { Brick }
 		put(out, Junkyard.Cone(), at(spot.X, spot.Y))
 	end
 	-- Диван и ещё одна кучка техники по краям.
-	put(out, Junkyard.Sofa(hex("C0504D")), at(46, -38, 0.5))
-	put(out, Junkyard.Washer(), at(-46, 40, -0.3))
-	put(out, Junkyard.TV(), at(-42.6, 41.2, 0.4))
-	put(out, Junkyard.Fridge(), at(-49.6, 38, 0.9))
+	put(out, Junkyard.Sofa(hex("C0504D")), at(40, -38, 0.5))
+	put(out, Junkyard.Washer(), at(-42, 40, -0.3))
+	put(out, Junkyard.TV(), at(-38.6, 41.2, 0.4))
+	put(out, Junkyard.Fridge(), at(-45.6, 38, 0.9))
 	-- Лужи.
 	put(out, Junkyard.Puddle(3.4), at(-40, 8, 0.4))
 	put(out, Junkyard.Puddle(2.6), at(18, -28, -0.3))
-	put(out, Junkyard.Puddle(3.6), at(50, 6, 0.9))
+	put(out, Junkyard.Puddle(3.6), at(44, 6, 0.9))
 	-- Фонари вдоль прохода.
 	for _, spot in { Vector2.new(-17, -42), Vector2.new(17, -42), Vector2.new(-22, 26), Vector2.new(22, 30) } do
 		put(out, Props.Lamp(), at(spot.X, spot.Y))
