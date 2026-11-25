@@ -42,15 +42,25 @@ local C = {
 	path = hex("CFE6F6"),
 	tile = hex("8FCDF0"),
 	edge = hex("4FC3F7"),
-	plat = hex("B7ECFF"),
+	-- «замёрзшее глубокое озеро» (замечание 2026-11-25 «белое на белом»): насыщенный синий, к краю темнее
+	lakeRim = hex("0F3B74"),
+	lake = hex("1E5EA6"),
+	lakeRing = hex("16488A"),
+	lakeMid = hex("286CB6"),
+	lakeRing2 = hex("1A5296"),
+	lakeCore = hex("2F79C2"),
+	crack = hex("5FDCFF"), -- тонкие трещины-снежинка (неон)
+	slot = hex("13274B"), -- плита существа: тёмный круг
 	platEdge = hex("3F98D6"),
-	slot = hex("7FCBF0"),
-	mosaic = hex("5FB6E8"),
-	mosaicL = hex("E2FAFF"),
-	glacier = hex("A6E4FA"),
-	glacierM = hex("86D3F3"),
-	glacierD = hex("5BB4E2"),
-	glacierDeep = hex("3C8FCB"),
+	-- ледник: стена за Йети — тёмно-синяя, со щелями-тенями; боковые скалы — средний синий
+	wall1 = hex("2A68AE"),
+	wall2 = hex("22599C"),
+	wall3 = hex("1B4B88"),
+	wallShadow = hex("0F2C58"),
+	glacier = hex("6FAEE0"),
+	glacierM = hex("4E92D0"),
+	glacierD = hex("3577BB"),
+	glacierDeep = hex("1F5596"),
 	glacierE = hex("EAFBFF"),
 	snow = hex("F6FAFF"),
 	snowS = hex("DCE8F7"),
@@ -76,12 +86,12 @@ local C = {
 -- Площадка (диаметры и верх дисков снизу вверх; каждый следующий выше на 0.06 — грани не совпадают, D36). Верх
 -- центрального диска — Arenas[5].floor: на нём стоит Йети.
 local DISCS = {
-	{ 65.6, -0.06, 0.40, C.platEdge },
-	{ 64, -0.055, 0.46, C.plat },
-	{ 53.6, -0.05, 0.52, C.mosaic },
-	{ 52, -0.045, 0.58, C.plat },
-	{ 28.6, -0.04, 0.64, C.mosaicL },
-	{ 27.4, -0.035, 0.70, C.plat },
+	{ 65.6, -0.06, 0.40, C.lakeRim },
+	{ 64, -0.055, 0.46, C.lake },
+	{ 53.6, -0.05, 0.52, C.lakeRing },
+	{ 52, -0.045, 0.58, C.lakeMid },
+	{ 28.6, -0.04, 0.64, C.lakeRing2 },
+	{ 27.4, -0.035, 0.70, C.lakeCore },
 }
 
 local GlacierHall = {}
@@ -456,10 +466,10 @@ end
 -- Ледник за ареной: два массива (|x| 10–46) с воротами между ними — ледяной мост, золотая рама, снежинка-герб.
 -- Массив: ступенчатые глыбы (x от, до, перед, верх, цвет), пики, карниз, сосульки, уступ с витринами.
 local MASSIF = {
-	{ 10.5, 18, 37.4, 18.5, C.glacier },
-	{ 18, 27, 37.8, 21.5, C.glacierM },
-	{ 27, 36, 38.0, 17.5, C.glacier },
-	{ 36, 46, 39.2, 12.5, C.glacierD },
+	{ 10.5, 18, 37.4, 18.5, C.wall1 },
+	{ 18, 27, 37.8, 21.5, C.wall2 },
+	{ 27, 36, 38.0, 17.5, C.wall1 },
+	{ 36, 46, 39.2, 12.5, C.wall3 },
 }
 local PEAKS =
 	{ -- вершина |x|, полуширины к центру и наружу, низ, высота, перед, зад
@@ -483,6 +493,15 @@ local function glacier(out: { Brick })
 			local x0, x1 = X(seg[1], seg[2])
 			local front, top = seg[3], seg[4]
 			table.insert(out, Box(x0, x1, 0, top, front, 47, seg[5], SOFT))
+			-- глубокие тени: две вертикальные щели на лицевой грани (выступают на 0.12) и тёмный цоколь за скатом
+			for k, u in { 0.38, 0.8 } do
+				local x = s * (seg[1] + (seg[2] - seg[1]) * u)
+				local w = 0.7 + ((i + k) % 2) * 0.4
+				table.insert(
+					out,
+					Box(x - w / 2, x + w / 2, 2.2 + k * 0.6, top - 2.6, front - 0.12, front + 0.4, C.wallShadow, DECOR)
+				)
+			end
 			-- снежный карниз-козырёк (низ глыбы закрыт скатом)
 			table.insert(
 				out,
@@ -515,13 +534,13 @@ local function glacier(out: { Brick })
 				p[7] - p[6],
 				p[4],
 				p[5],
-				if i == 2 then C.glacierD else C.glacier,
+				if i == 2 then C.wall3 else (if i >= 5 then C.wall1 else C.wall2),
 				true
 			)
 		end
 		-- уступ перед массивом (ступень 1.2) с двумя витринами
 		local x0, x1 = X(12, 44)
-		table.insert(out, Box(x0, x1, 0, 1.2, 31.0, 37.4, C.glacierE, SOFT))
+		table.insert(out, Box(x0, x1, 0, 1.2, 31.0, 37.4, C.glacierD, SOFT))
 		-- ледяные скаты перед глыбами (низ — на уступе, вне круга боя): ледник «стекает» на уступ
 		for i, seg in MASSIF do
 			local h = seg[4] * 0.5
@@ -531,7 +550,7 @@ local function glacier(out: { Brick })
 				B(
 					V(w, h, 2.6),
 					CFrame.new(s * (seg[1] + seg[2]) / 2, 1.15 + h / 2, seg[3] - 1.25),
-					if i % 2 == 0 then C.ice else C.glacierE,
+					if i % 2 == 0 then C.glacierM else C.glacierD,
 					{ shape = "Wedge", variant = "LegoSquaresSoft" }
 				)
 			)
@@ -546,7 +565,7 @@ local function glacier(out: { Brick })
 	end
 	-- ворота: мост между массивами над проходом (низ GlacierHall.Gate[2]), золотая рама, снежинка-герб, сосульки
 	local hw, gh = GlacierHall.Gate[1], GlacierHall.Gate[2]
-	table.insert(out, Box(-10.6, 10.6, gh, 20.0, GATE_Z0, GATE_Z1, C.glacierM, SOFT))
+	table.insert(out, Box(-10.6, 10.6, gh, 20.0, GATE_Z0, GATE_Z1, C.wall2, SOFT))
 	table.insert(out, Box(-10.8, 10.8, 19.9, 20.8, GATE_Z0 - 0.3, GATE_Z1 + 0.1, C.snow))
 	-- рама: стойки по краям проёма и перекладина (выступают из массивов на 0.4, грани не совпадают)
 	for _, s in { -1, 1 } do -- стойки заходят в массив на 0.2
@@ -579,6 +598,54 @@ local function glacier(out: { Brick })
 	end
 end
 
+-- Конец зоны по бокам (замечание 2026-11-25: сквозь проём видна земляная стена): ледяная стена |x| 68.4–84.6 до
+-- кромки обрыва и арка над каждой боковой полосой (стойки вне полосы |x| 48–66, мост выше 10.2, сосульки выше 7.8 —
+-- проём ниже, соседняя зона меньше видна) — тема не ломается,
+-- полосы свободны. Твёрдое — только низ стены (≤ 12, вне полос).
+local function laneGates(out: { Brick })
+	local z0, z1 = 42.4, 47.3
+	for _, s in { -1, 1 } do
+		local function X(a: number, b: number): (number, number)
+			return math.min(s * a, s * b), math.max(s * a, s * b)
+		end
+		local x0, x1 = X(68.4, 84.6)
+		table.insert(out, Box(x0, x1, 0, 12, z0, z1, C.wall2, SOFT))
+		x0, x1 = X(68.6, 84.4)
+		table.insert(out, Box(x0, x1, 11.9, 33.2, z0 + 0.38, z1 - 0.15, C.wall1, SOFT_DECOR))
+		x0, x1 = X(68.2, 84.8)
+		table.insert(out, Box(x0, x1, 33.1, 34.3, z0 - 0.1, z1 + 0.05, C.snow, DECOR))
+		snowPeak(out, "x", s * 75, 4.5, 4.2, (z0 + z1) / 2 + 0.6, 3.6, 34.2, 10, C.wall3, false)
+		-- щели-тени на стене
+		for k, u in { 0.25, 0.62 } do
+			local x = s * (68.4 + 16.2 * u)
+			table.insert(out, Box(x - 0.45, x + 0.45, 2.4 + k, 30.5, z0 - 0.12, z0 + 0.4, C.wallShadow, DECOR))
+		end
+		-- арка над полосой: стойки (внутренняя у массива, внешняя у стены), мост, снег, сосульки
+		x0, x1 = X(46.2, 47.9)
+		table.insert(out, Box(x0, x1, 0, 10.3, 43.2, 46.9, C.wall3, SOFT_DECOR))
+		x0, x1 = X(66.1, 68.5)
+		table.insert(out, Box(x0, x1, 0, 10.3, 43.1, 47.0, C.wall3, SOFT_DECOR))
+		x0, x1 = X(46.0, 68.6)
+		table.insert(out, Box(x0, x1, 10.2, 16.4, 43.0, 47.1, C.wall2, SOFT_DECOR))
+		x0, x1 = X(45.8, 68.8)
+		table.insert(out, Box(x0, x1, 16.3, 17.2, 42.7, 47.2, C.snow, DECOR))
+		-- стена над аркой до высоты торцевой: сверху не видно обрывов соседней зоны
+		x0, x1 = X(46.1, 68.5)
+		table.insert(out, Box(x0, x1, 17.15, 31.0, 44.3, 47.05, C.wall1, SOFT_DECOR))
+		x0, x1 = X(45.9, 68.7)
+		table.insert(out, Box(x0, x1, 30.9, 32.0, 44.0, 47.1, C.snow, DECOR))
+		for k, u in { 0.3, 0.7 } do
+			local x = s * (46.1 + 22.4 * u)
+			table.insert(out, Box(x - 0.4, x + 0.4, 18.5 + k, 29.0, 44.18, 44.7, C.wallShadow, DECOR))
+		end
+		for i = 0, 5 do
+			local x = s * (50 + i * 3.1)
+			local h = 1.2 + (i % 3) * 0.6
+			table.insert(out, Box(x - 0.4, x + 0.4, 10.25 - h, 10.3, 43.3, 44.0, C.glacierE, DECOR))
+		end
+	end
+end
+
 function GlacierHall.Zone(): ({ Brick }, { Sign })
 	FleaKit.Reset()
 	local out: { Brick } = {}
@@ -599,34 +666,34 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 		local x, z = polar(deg, 17)
 		table.insert(
 			out,
-			B(V(1.1, 0.58, 16), CFrame.new(x, 0.59, z) * CFrame.Angles(0, math.rad(deg), 0), C.mosaicL, DECOR)
+			B(V(0.3, 0.3, 16), CFrame.new(x, 0.68, z) * CFrame.Angles(0, math.rad(deg), 0), C.crack, NEON)
 		)
-		for _, ring in { { 12, 5 }, { 19.5, 4 } } do
+		for _, ring in { { 12, 5, 0.8 }, { 19.5, 4, 0.68 } } do -- длина «ёлочки», верх (диск 0.70 / 0.58 + 0.1)
 			local px, pz = polar(deg, ring[1])
 			for _, side in { -1, 1 } do
 				local a = math.rad(deg + side * 45)
 				local mx, mz = px + math.sin(a) * ring[2] / 2, pz + math.cos(a) * ring[2] / 2
 				table.insert(
 					out,
-					B(V(0.8, 0.5, ring[2]), CFrame.new(mx, 0.55, mz) * CFrame.Angles(0, a, 0), C.mosaicL, DECOR)
+					B(V(0.24, 0.3, ring[2]), CFrame.new(mx, ring[3] - 0.15, mz) * CFrame.Angles(0, a, 0), C.crack, NEON)
 				)
 			end
 		end
 	end
-	-- места четырёх существ: плита с синим ободом (верх — Arenas[5].top)
+	-- места четырёх существ (замечание 2026-11-25 «добыча видна от входа»): тёмный круг с золотым ободом на
+	-- светящемся кольце (подсветка снизу), верх — Arenas[5].top
 	for _, s in arena.slots do
-		table.insert(out, Disc(5.9, 0.3, arena.top - 0.08, s.X, s.Y, C.platEdge, SOLID))
-		table.insert(out, Disc(5.2, 0.31, arena.top, s.X, s.Y, C.slot, SOLID))
+		table.insert(out, Disc(6.9, 0.3, 0.6, s.X, s.Y, C.crack, NEON)) -- выше пола 0.46 на 0.14
+		out[#out].light = { range = 9, brightness = 0.7, color = C.crack }
+		table.insert(out, Disc(6.1, 0.31, arena.top - 0.07, s.X, s.Y, C.gold, SOLID))
+		table.insert(out, Disc(5.3, 0.32, arena.top, s.X, s.Y, C.slot, SOLID))
 	end
-	-- светящееся ледяное кольцо по краю площадки (низкое, по нему пробегают): 24 отрезка, через один светятся
+	-- светящееся ледяное кольцо по краю площадки (низкое, по нему пробегают): 24 неоновых отрезка
 	for k = 0, 23 do
 		local deg = k * 15
 		local x, z = polar(deg + 7.5, 33.7)
 		local at = CFrame.new(x, 0.2, z) * CFrame.Angles(0, math.rad(deg + 7.5 + 90), 0)
-		table.insert(
-			out,
-			B(V(8.6, 0.34, 0.9), at, if k % 2 == 0 then C.neonIce else C.glacierE, if k % 2 == 0 then NEON else DECOR)
-		)
+		table.insert(out, B(V(8.6, 0.34, 0.7), at, C.crack, NEON))
 	end
 
 	-- проходы: центральный и две боковые полосы (светлые, с голубой кромкой и ромбами)
@@ -636,6 +703,7 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 
 	glacier(out)
 	iceCliffs(out)
+	laneGates(out)
 
 	-- у стен (|x| ≥ 70): ели группами, витрины, пруды, кристаллы, сугробы — вне полос бега
 	for _, t in
