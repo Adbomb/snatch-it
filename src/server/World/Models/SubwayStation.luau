@@ -2,14 +2,17 @@
 -- читают кафель, пути, вагоны, тоннели и лампы; ярко, не мрачно. По центру перрон из светлых плит с жёлтыми линиями
 -- безопасности и фиолетовой ковровой дорожкой от входа к боссу; по бокам пути (щебень, шпалы, рельсы, тупиковые
 -- упоры); дальше боковые платформы с колоннами-лампами, рёбрами свода, кассой, турникетами, эскалатором в обрыв,
--- ящиками и крысятами; у обрывов — кафельные стены с тоннелями, табло, плакатами и трубами. В центре — площадка
--- босса «Королевский люк» (кафельное кольцо с огоньками, золотой обод, ковёр, крышка люка с короной под боссом;
--- 4 предмета на бархатных подушках, MapLayout.Arenas[3]); за боссом — тронный вагон короля с горой золота. Слева
--- (для входящего игрока) на пути — вагон с открытой дверью, касса и турникеты; справа — дрезина, вагонетки с
--- золотом и эскалатор. Поперёк коридора ничего нет (D41); в круге,
--- куда босс заходит в бою (r 34, scripts/lune/check_world.luau), — только пол не выше 2 стадов. Света мало
--- (2 прожектора, вагон, 2 тоннеля, касса), частиц нет. Координаты зоны: x — поперёк (±92, стены у обрывов с 86),
--- z — вдоль (вход −47.5, выход +47.5), y = 0 — пол. Надписи вывесок возвращаются списком (их пишет WorldBuilder).
+-- ящиками и крысятами; у обрывов — кафельные стены с тоннелями, табло, плакатами и трубами. По боковым платформам от
+-- входа до выхода идут полосы свободного бега |x| 48–66 (MapLayout.Lane, как в остальных зонах): твёрдого на
+-- высоте 1.1–7 там нет, по ним — фиолетовая дорожка 52–62 с золотыми кромками и ромбами; колонны — у края платформы
+-- (|x| 46.1), эскалатор короткий (подъём 11, низ на |x| 67), касса, турникеты, скамейки, ящики и мусор — у стен
+-- (|x| 69–81). В центре — площадка босса «Королевский люк» (кафельное кольцо с огоньками, золотой обод, ковёр,
+-- крышка люка с короной под боссом; 4 предмета на бархатных подушках, MapLayout.Arenas[3]); за боссом — тронный
+-- вагон короля с горой золота. Слева (для входящего игрока) на пути — вагон с открытой дверью, касса и турникеты;
+-- справа — дрезина, вагонетки с золотом и эскалатор. Поперёк коридора ничего нет (D41); в круге, куда босс заходит
+-- в бою (r 34, scripts/lune/check_world.luau), — только пол не выше 2 стадов. Света мало (2 прожектора, вагон,
+-- 2 тоннеля, касса), частиц нет. Координаты зоны: x — поперёк (±92, стены у обрывов с 86), z — вдоль (вход −47.5,
+-- выход +47.5), y = 0 — пол. Надписи вывесок возвращаются списком (их пишет WorldBuilder).
 -- Зависит от MapLayout, World/Models/SubwayKit, World/Models/SubwayParts.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -36,7 +39,8 @@ local CANOPY = { inner = 66, bottom = 29.5 } -- навес-потолок над
 -- Стены, навес и трубы кончаются на |z| = WALL_END: у границ зон на x = ±MapLayout.PylonX стоят светящиеся столбики,
 -- они не должны тонуть в кафеле.
 local WALL_END = HALF - 1.6
-local COLUMN = 50.5 -- колонны боковых платформ
+local COLUMN = 46.1 -- колонны боковых платформ: у края платформы, перед полосой
+local LANE_PATH = { 52, 62 } -- фиолетовая дорожка по полосе (|x|), ромбы — по её оси
 local BAYS = { -38, -19, 0, 19, 38 } -- колонны, рёбра свода, пилястры стен
 local RUNNER = 4.5 -- полуширина ковровой дорожки
 local WAY = { inner = 16.5, outer = 20.5 } -- боковые пути к соседним уровням (|x|): между киоском и краем перрона
@@ -45,7 +49,7 @@ local SEAM = 0.5
 local L, R = 1, -1 -- лево и право входящего игрока (лицом к выходу): лево — +x зоны
 local TUNNELS = { [L] = 28.5, [R] = -28.5 } -- z тоннеля в левой и правой стене
 local TUNNEL = { half = 7, top = 12 }
-local ESCALATOR = { z = 9.5, half = 3.5, run = 24, rise = 16, landing = 4.4 } -- справа
+local ESCALATOR = { z = 9.5, half = 3.5, run = 15.5, rise = 11, landing = 3.5 } -- справа
 
 -- Высоты верха слоёв пола (D36): шаг 0.05 — грани ближе 0.05 друг к другу мерцают (World/FaceCheck).
 local TOP = {
@@ -143,6 +147,19 @@ function SubwayStation.Ground(): { Brick }
 		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.25, HALF - 0.25, C.concreteDark, DECOR))
 		a, b = X(s, SIDE + 0.9, SIDE + 2.1)
 		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.35, HALF - 0.35, C.yellow, DECOR))
+		-- Полоса свободного бега (MapLayout.Lane): фиолетовая дорожка LANE_PATH с золотыми кромками по 0.6 снаружи и
+		-- 10 ромбами по оси (через один золотой и светло-фиолетовый).
+		a, b = X(s, LANE_PATH[1], LANE_PATH[2])
+		table.insert(out, Box(a, b, 0, TOP.inlay, -HALF + 0.2, HALF - 0.2, C.purple, DECOR))
+		for _, e in { { LANE_PATH[1] - 0.6, LANE_PATH[1] }, { LANE_PATH[2], LANE_PATH[2] + 0.6 } } do
+			a, b = X(s, e[1], e[2])
+			table.insert(out, Box(a, b, 0, TOP.edge, -HALF + 0.7, HALF - 0.7, C.gold, DECOR))
+		end
+		local axis = (LANE_PATH[1] + LANE_PATH[2]) / 2
+		for k = 0, 9 do
+			local at = CFrame.new(s * axis, TOP.rim / 2, -HALF + 4.75 + k * 9.5) * CFrame.Angles(0, math.rad(45), 0)
+			table.insert(out, B(V(2.2, TOP.rim, 2.2), at, if k % 2 == 0 then C.gold else C.purpleLight, DECOR))
+		end
 	end
 
 	-- Ковровая дорожка короля от входа к площадке: фиолетовая, золотая кромка, золотые ромбы.
@@ -501,7 +518,7 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 	table.insert(out, Box(g0, g1, e.rise, e.rise + 4.6, e.z - e.half - 0.6, e.z + e.half + 0.6, C.tunnelDeep, DECOR))
 	local face = if R < 0 then Enum.NormalId.Right else Enum.NormalId.Left -- табличка смотрит в коридор
 	local exitSign = SubwayKit.Label("ВЫХОД ЗАКРЫТ", { face })
-	table.insert(out, SubwayKit.Board(V(0.3, 1.3, 8.6), V(R * (WALL - 0.4), 25.2, e.z), C.signal, exitSign))
+	table.insert(out, SubwayKit.Board(V(0.3, 1.3, 8.6), V(R * (WALL - 0.4), e.rise + 6.3, e.z), C.signal, exitSign))
 
 	-- Вагон на левом пути: открытая дверь с золотом, на крыше ящики и крысёнок.
 	local inward = CFrame.Angles(0, L * math.pi / 2, 0) -- лицом −Z к середине коридора с левой стороны
@@ -520,30 +537,30 @@ function SubwayStation.Zone(): ({ Brick }, { Sign })
 		Put(out, SubwayParts.BufferStop(), CFrame.new(s * TRACK, 0, -HALF + 1.6) * SubwayKit.TURN)
 		Put(out, SubwayParts.BufferStop(), CFrame.new(s * TRACK, 0, HALF - 1.6))
 		local lit = if s == L then C.signal else C.green
-		Put(out, SubwayParts.Signal(lit), CFrame.new(s * (SIDE + 3), 0, -HALF + 4))
+		Put(out, SubwayParts.Signal(lit), CFrame.new(s * (SIDE - 1.4), 0, -HALF + 4))
 	end
 
 	-- Левая платформа: касса, турникеты, скамейка, ящики с добычей, крысята.
-	Put(out, SubwayParts.TicketBooth(), left(-33, 66))
+	Put(out, SubwayParts.TicketBooth(), left(-33, 70))
 	Put(out, SubwayParts.Turnstiles(4), left(-15, 70))
-	Put(out, SubwayKit.Bench(6), left(4.5, 58))
-	Put(out, SubwayKit.Litter(), CFrame.new(L * 57, 0, -22) * CFrame.Angles(0, 0.6, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(L * 62, 0, 35) * CFrame.Angles(0, 0.2, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(L * 62.4, 4.0, 35.3) * CFrame.Angles(0, -0.25, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(L * 57.8, 0, 38.5) * CFrame.Angles(0, 0.55, 0))
-	Put(out, SubwayKit.GoldChest(), left(30, 58, -0.2))
-	Put(out, SubwayKit.RatMinion(), CFrame.new(L * 62.4, 8.0, 35.3) * inward * CFrame.Angles(0, -0.3, 0))
+	Put(out, SubwayKit.Bench(6), left(4.5, 70))
+	Put(out, SubwayKit.Litter(), CFrame.new(L * 75, 0, -24) * CFrame.Angles(0, 0.6, 0))
+	Put(out, SubwayKit.Crate(), CFrame.new(L * 74, 0, 35) * CFrame.Angles(0, 0.2, 0))
+	Put(out, SubwayKit.Crate(), CFrame.new(L * 74.4, 4.0, 35.3) * CFrame.Angles(0, -0.25, 0))
+	Put(out, SubwayKit.Crate(), CFrame.new(L * 69.8, 0, 38.5) * CFrame.Angles(0, 0.55, 0))
+	Put(out, SubwayKit.GoldChest(), left(41.5, 78, -0.2))
+	Put(out, SubwayKit.RatMinion(), CFrame.new(L * 74.4, 8.0, 35.3) * inward * CFrame.Angles(0, -0.3, 0))
 	Put(out, SubwayKit.RatMinion(), left(TUNNELS[L], 80, -0.4)) -- выглядывает из тоннеля между рельсами
 	-- Правая платформа: скамейки, ящики, чемоданы, мусор, крысёнок у эскалатора.
-	Put(out, SubwayKit.Bench(6), right(31, 58))
-	Put(out, SubwayKit.Bench(6), right(39, 58))
-	Put(out, SubwayKit.Crate(), CFrame.new(R * 61, 0, -40) * CFrame.Angles(0, 0.3, 0))
-	Put(out, SubwayKit.Crate(), CFrame.new(R * 65.5, -0.1, -41.5) * CFrame.Angles(0, -0.15, 0)) -- крышки не в одной плоскости
-	Put(out, SubwayKit.CoinSacks(), right(-36, 61, -0.3))
-	Put(out, SubwayKit.Suitcases(), right(-12.5, 66, 0.25))
-	Put(out, SubwayKit.Litter(), CFrame.new(R * 57, 0, 22) * CFrame.Angles(0, 0.4, 0))
-	Put(out, SubwayKit.RatMinion(), CFrame.new(R * 61, 4.0, -40) * CFrame.Angles(0, -L * math.pi / 2 + 0.3, 0))
-	Put(out, SubwayKit.RatMinion(), right(e.z - e.half - 2.2, foot - 1.5, 0.3))
+	Put(out, SubwayKit.Bench(6), right(31, 70))
+	Put(out, SubwayKit.Bench(6), right(39, 70))
+	Put(out, SubwayKit.Crate(), CFrame.new(R * 71, 0, -40) * CFrame.Angles(0, 0.3, 0))
+	Put(out, SubwayKit.Crate(), CFrame.new(R * 75.5, -0.1, -41.5) * CFrame.Angles(0, -0.15, 0)) -- крышки не в одной плоскости
+	Put(out, SubwayKit.CoinSacks(), right(-40, 81, -0.3))
+	Put(out, SubwayKit.Suitcases(), right(-12.5, 69, 0.25))
+	Put(out, SubwayKit.Litter(), CFrame.new(R * 75, 0, 20) * CFrame.Angles(0, 0.4, 0))
+	Put(out, SubwayKit.RatMinion(), CFrame.new(R * 71, 4.0, -40) * CFrame.Angles(0, -L * math.pi / 2 + 0.3, 0))
+	Put(out, SubwayKit.RatMinion(), right(e.z - e.half - 2.2, foot + 1.5, 0.3))
 
 	-- Вход на перрон: скамейки лицом к площадке и урны по углам; немного мусора на перроне за кругом площадки.
 	for _, s in { L, R } do
