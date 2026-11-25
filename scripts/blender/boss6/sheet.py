@@ -13,6 +13,8 @@ import sys
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))  # scripts/blender
+import stand_colors as SC  # noqa: E402  (D71: цвета редкостей из UITokens)
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "dragon10"))
 sys.path.insert(0, HERE)
 import v7_sheet as V  # noqa: E402  (font, fit, para, label, silhouette — общие помощники листов)
@@ -26,7 +28,7 @@ CR1 = os.path.join(RAW1, "creatures")
 V.RAW = RAW
 BG, PANEL, INK, DIM, ACC = V.BG, V.PANEL, V.INK, V.DIM, V.ACC
 W, M = 2400, 24
-RARITY = {"Common": (173, 166, 180), "Rare": (61, 142, 224), "Epic": (154, 62, 240), "Legendary": (245, 162, 21)}
+RARITY = {k: SC.rgb(SC.RARITY[k][1]) for k in ("Common", "Rare", "Epic", "Legendary")}  # D71: из UITokens
 RARITY_RU = {"Common": "Обычное", "Rare": "Редкое", "Epic": "Эпическое", "Legendary": "Легендарное"}
 V1_TAG, V2_TAG = (120, 120, 132), (61, 200, 110)
 

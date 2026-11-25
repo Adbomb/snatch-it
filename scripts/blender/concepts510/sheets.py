@@ -12,17 +12,20 @@
 import ast
 import json
 import os
+import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))  # scripts/blender
+import stand_colors as SC  # noqa: E402  (D71: цвета редкостей из UITokens)
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 OUT = os.path.join(REPO, "assets", "concepts", "bosses_5_10")
 RAW = os.path.join(OUT, "raw")
 FONT = "C:/Windows/Fonts/segoeui.ttf"
 FONTB = "C:/Windows/Fonts/segoeuib.ttf"
 BG, PANEL, INK, DIM = (24, 26, 36), (36, 39, 52), (240, 242, 248), (160, 166, 184)
-RARITY = {"Common": "ADA6B4", "Rare": "3D8EE0", "Epic": "9A3EF0", "Legendary": "F5A215", "Secret": "6A45F5"}
+RARITY = {k: v[1] for k, v in SC.RARITY.items()}  # D71: из UITokens
 RARITY_RU = {"Common": "Обычное", "Rare": "Редкое", "Epic": "Эпическое", "Legendary": "Легендарное", "Secret": "Секретное"}
 NOTE = "Черновой концепт: блок-аут в Blender, кольца D39 процедурные. Не финальная модель, не загружалось в Roblox."
 

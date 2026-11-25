@@ -865,3 +865,6 @@ ojo-serve.ps1`).
   у `GlacierHall` и контроллера сияния в Studio короче комментарии). После «Connect» Rojo перезапишет их с диска.
 - 2026-11-25: `screen_capture` с камерой иногда отдаёт кадр с прошлой камеры или с камеры игрока (после таймаута
   соседнего снимка) — снимать по одному и сверять кадр с ожидаемым ракурсом.
+- 2026-11-25 (босс 6, D71): Rojo всё ещё на «Connect» — `World/SlotGlow` (в Studio — сокращённая копия без комментариев)
+  и правки `ModelBuilder`, `BossLootService`, `Junkyard`, `FleaMarket`, `SubwayStation`, `DesertOasis`, `GlacierHall`
+  перенесены через MCP точечной заменой строк; после «Connect» Rojo перезапишет их с диска.

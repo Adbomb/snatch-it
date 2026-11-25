@@ -21,6 +21,7 @@ local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
 local SubwayKit = require(World.Models.SubwayKit)
 local SubwayParts = require(World.Models.SubwayParts)
+local SlotGlow = require(World.SlotGlow)
 
 type Brick = SubwayKit.Brick
 export type Sign = { name: string, faces: { Enum.NormalId }, text: string }
@@ -259,6 +260,12 @@ function SubwayStation.Ground(): { Brick }
 		for k, offset in { V(-2.9, 0, 1.1), V(2.7, 0, -1.6), V(1.4, 0, 2.9) } do
 			local p = at * CFrame.new(offset)
 			table.insert(out, SubwayKit.Coin(p.Position.X, p.Position.Z, 0.34 + k * 0.05))
+		end
+		-- D71: квадратная светящаяся рамка цвета редкости предмета (красит BossLootService) за монетами, на ковре; пустое
+		-- место — жёлтая разметка (обод подушки — её золотая основа). 4 бруска на место: бюджет зоны 1300 частей.
+		local floor = at * CFrame.new(0, TOP.carpet, 0)
+		for _, brick in SlotGlow.Ring(3, i, floor, 3.6, 3.95, C.yellow, { sides = 4, light = false }) do
+			table.insert(out, brick)
 		end
 	end
 

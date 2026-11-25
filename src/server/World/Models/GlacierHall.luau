@@ -20,6 +20,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
 local FleaKit = require(World.Models.FleaKit)
+local SlotGlow = require(World.SlotGlow)
 
 type Brick = FleaKit.Brick
 export type Sign = FleaKit.Sign
@@ -730,8 +731,9 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 	end
 	-- места четырёх существ (замечание 2026-11-25 «добыча видна от входа»): тёмный круг с золотым ободом на
 	-- светящемся кольце (подсветка снизу), верх — Arenas[5].top
-	for _, s in arena.slots do
-		table.insert(out, Disc(6.9, 0.3, 0.6, s.X, s.Y, C.glow, NEON)) -- выше пола 0.46 на 0.14
+	for i, s in arena.slots do
+		-- D71: неоновое кольцо и свет снизу — цвета редкости существа на плите (красит BossLootService), пусто — голубое
+		table.insert(out, SlotGlow.Mark(Disc(6.9, 0.3, 0.6, s.X, s.Y, C.glow, NEON), 5, i, C.glow)) -- выше пола 0.46 на 0.14
 		out[#out].light = { range = 9, brightness = 0.7, color = C.glow }
 		table.insert(out, Disc(6.1, 0.31, arena.top - 0.07, s.X, s.Y, C.gold, SOLID))
 		table.insert(out, Disc(5.3, 0.32, arena.top, s.X, s.Y, C.slot, SOLID))

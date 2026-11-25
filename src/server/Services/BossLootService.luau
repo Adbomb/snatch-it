@@ -9,7 +9,8 @@
 -- D10: брошенный предмет, который никто не трогает, мигает и исчезает.
 -- Коллекция закрытого босса из живых существ (D64 п. 7) вне Studio и теста владельца не выставляется.
 -- Зависит от BossService (ClosedAllowed), ItemRegistry, CarryService, TimeService, Util/ItemFactory, Util/Validate,
--- Util/Notify, Util/Log, World/MapLayout, Shared/GameTime, Config.
+-- Util/Notify, Util/Log, World/MapLayout, World/SlotGlow, Shared/GameTime, Config.
+-- D71: подсветка места (World/SlotGlow) — цвет редкости предмета на нём, пустое место — нейтральное.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -30,6 +31,7 @@ local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
 local Validate = require(Server.Util.Validate)
 local MapLayout = require(Server.World.MapLayout)
+local SlotGlow = require(Server.World.SlotGlow)
 
 type Slot = { boss: number, slot: number, point: CFrame, drop: number, uid: string?, reservedBy: any? }
 
@@ -38,6 +40,7 @@ local slots: { [number]: { [number]: Slot } } = {}
 local pools: { [number]: { [string]: { string } } } = {} -- [босс][редкость] = id предметов
 local looseTimers: { [string]: number } = {} -- uid → номер таймера D10
 local timerCounter = 0
+local glowOf: { [string]: { boss: number, slot: number } } = {} -- uid предмета у босса → его место (подсветка D71)
 local itemsFolder: Folder
 local random = Random.new()
 
@@ -146,6 +149,8 @@ local function fill(entry: Slot, forced: string?)
 	part:SetAttribute("Drop", entry.drop)
 	part.Parent = itemsFolder
 	entry.uid = ItemRegistry.CreateAtBoss(itemId, part, entry.boss, entry.slot)
+	glowOf[entry.uid :: string] = { boss = entry.boss, slot = entry.slot }
+	SlotGlow.Paint(entry.boss, entry.slot, itemId)
 	addPrompt(part, entry)
 end
 
@@ -314,6 +319,16 @@ local function startLooseTimer(uid: string)
 end
 
 local function onRegistryChanged(uid: string, fromState: string, toState: string?, entry: ItemRegistry.Entry)
+	-- предмет ушёл с места у босса (забрали, поймали, заменили на рассвете) — подсветка места гаснет (D71); реестр к этому
+	-- времени уже стёр bossSlot, поэтому место — из своей таблицы glowOf
+	local place = glowOf[uid]
+	if place and fromState == "AtBoss" and toState ~= "AtBoss" then
+		glowOf[uid] = nil
+		local current = slots[place.boss] and slots[place.boss][place.slot]
+		if not (current and current.uid and current.uid ~= uid) then
+			SlotGlow.Paint(place.boss, place.slot, nil)
+		end
+	end
 	if fromState == "Carried" and toState == "OnMap" then
 		startLooseTimer(uid)
 	elseif looseTimers[uid] and toState ~= "OnMap" then

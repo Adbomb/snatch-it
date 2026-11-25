@@ -13,6 +13,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
+local SlotGlow = require(World.SlotGlow)
 local ModelBuilder = require(World.ModelBuilder)
 local Palette = require(World.Palette)
 local Props = require(World.Models.Props)
@@ -73,10 +74,18 @@ function Junkyard.Arena(): { Brick }
 			* CFrame.Angles(0, a, 0)
 		table.insert(out, B(Vector3.new(3.4, 0.05, 1.2), at, if k % 2 == 0 then C.yellow else hex("23232A"), DECOR))
 	end
-	-- 16 жёлтых ромбиков по кругу r 15 (верх 0.36) — в цвет разметки
+	-- жёлтые ромбики по кругу r 15 (верх 0.36) — в цвет разметки; у мест предметов их нет (кольца D71)
 	for k = 0, 15 do
 		local a = math.rad(k * 22.5)
-		local at = CFrame.new(cx + math.sin(a) * 15, 0.33, cz + math.cos(a) * 15) * CFrame.Angles(0, a + 0.785, 0)
+		local p = Vector2.new(cx + math.sin(a) * 15, cz + math.cos(a) * 15)
+		local underSlot = false -- под кольцом места предмета (D71) ромбика нет
+		for _, spot in MapLayout.ArtSlots do
+			underSlot = underSlot or (p - spot).Magnitude < 4.5
+		end
+		if underSlot then
+			continue
+		end
+		local at = CFrame.new(p.X, 0.33, p.Y) * CFrame.Angles(0, a + 0.785, 0)
 		table.insert(out, B(Vector3.new(1.1, 0.06, 1.1), at, C.yellow, DECOR))
 	end
 	-- люк-«миска» под псом: тёмное кольцо, красная миска, косточка-эмблема
@@ -87,6 +96,17 @@ function Junkyard.Arena(): { Brick }
 	}
 	for _, d in bowl do
 		table.insert(out, B(Vector3.new(0.12, d[1], d[1]), CFrame.new(cx, d[2] - 0.06, cz) * UPRIGHT, d[3], ROUND))
+	end
+	-- места предметов (D71): светящееся кольцо цвета редкости предмета (красит BossLootService) в ржавом ободе; пустое
+	-- место — тёмное железо. Без света снизу: неон и так ярче пёстрого пола.
+	for slot, spot in MapLayout.ArtSlots do
+		local at = CFrame.new(spot.X, ARENA.top, spot.Y)
+		for _, brick in SlotGlow.Ring(1, slot, at, 3.0, 3.5, hex("4A4542"), { light = false, height = 0.14 }) do
+			table.insert(out, brick)
+		end
+		for _, brick in SlotGlow.Rim(at, 3.5, 3.85, C.rust, 0.16) do
+			table.insert(out, brick)
+		end
 	end
 	local bone = CFrame.new(cx, 0.48, cz) * CFrame.Angles(0, math.rad(30), 0)
 	table.insert(out, B(Vector3.new(4.2, 0.1, 0.9), bone, C.bone, DECOR))

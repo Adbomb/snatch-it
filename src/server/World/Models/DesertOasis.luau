@@ -21,6 +21,7 @@ local MapLayout = require(World.MapLayout)
 local FleaKit = require(World.Models.FleaKit)
 local DesertTemple = require(World.Models.DesertTemple)
 local DesertCanyon = require(World.Models.DesertCanyon)
+local SlotGlow = require(World.SlotGlow)
 
 type Brick = FleaKit.Brick
 export type Sign = FleaKit.Sign
@@ -115,9 +116,13 @@ function DesertOasis.Zone(): ({ Brick }, { Sign })
 		table.insert(out, B(V(0.8, 0.49, 2), frame, C.gold, DECOR)) -- до пола: крайние лучи не висят над кромкой
 	end
 	-- места четырёх существ: плита с золотым ободом (верх — Arenas[4].top)
-	for _, s in arena.slots do
+	for i, s in arena.slots do
 		table.insert(out, Disc(6.2, -0.03, arena.top - 0.12, s.X, s.Y, C.gold, SOLID))
 		table.insert(out, Disc(5.2, -0.02, arena.top, s.X, s.Y, C.stoneL, SOLID))
+		-- D71: вокруг золотого обода — светящееся кольцо цвета редкости существа (красит BossLootService)
+		for _, brick in SlotGlow.Ring(4, i, CFrame.new(s.X, arena.floor, s.Y), 3.2, 3.7, C.gold, { height = 0.14 }) do
+			table.insert(out, brick)
+		end
 	end
 
 	-- борт из пяти ярусов: сегменты по внутренней хорде — у внешнего края тонкий шов, совпадающих граней нет

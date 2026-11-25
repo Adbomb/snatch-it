@@ -19,6 +19,7 @@ from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import art_style as S  # noqa: E402
+import stand_colors as SC  # noqa: E402  (D71: цвет подставки = UITokens.Rarity)
 
 PAD, PAD_H = 3.7, 0.12  # площадка существа у босса и её толщина в кадре масштаба
 REPO = SHOTS = MODELS = TEXDIR = ""
@@ -93,13 +94,13 @@ def part(a, name, parent, pivot):
 
 
 def stand(a, rarity, r=1.5):
-    """Круглая подставка-витрина цвета редкости (как у существ босса 3). Возвращает высоту верха."""
+    """Круглая подставка-витрина цвета редкости (D71: тело — насыщенный цвет UITokens.Rarity, кайма — светлый;
+    золота у Common и Rare нет). Возвращает высоту верха."""
     part(a, "Stand", None, (0, 0, 0))
-    body, rim = {"common": ("standC", "standCL"), "rare": ("standR", "standGold")}[rarity]
-    a.paint("standC", "23606B", rings=True)
-    a.paint("standCL", "5CC2CC")
-    a.paint("standR", "6B3FB8", rings=True)
-    a.paint("standGold", "F2C230", rings=True)
+    c = SC.stand({"common": "Common", "rare": "Rare"}[rarity])
+    body, rim = {"common": ("standC", "standCL"), "rare": ("standR", "standRL")}[rarity]
+    a.paint(body, c["body"], rings=True)
+    a.paint(rim, c["rim"])
     a.paint("gold", "F2C230", rings=True)
     # в игре подставку живого существа прячут (как у босса 3) — в карте ей меньше места, существу больше
     for key in (body, rim):
@@ -143,7 +144,7 @@ def d39v2(a):
 
 
 def common_stand(a, r):
-    """Подставка Common (бирюзовая со светлой каймой, как у босса 3); мелкое золото существа — гладкое."""
+    """Подставка Common (D71: серая ADA6B4 с каймой D9D7E3); мелкое золото существа — гладкое."""
     t = stand(a, "common", r)
     a.paint("gold", "F2C230")
     return t
@@ -190,44 +191,51 @@ def petals(a, c, n, length, width, keys, center_key, center_r, normal=(0, 0, 1),
 
 
 def rare_stand(a, r):
-    """Подставка Rare (фиолетовая с золотым ободом, как у №20); мелкое золото существа — гладкое."""
+    """Подставка Rare (D71: синяя 3D8EE0 с каймой 84CAE8, без золотого обода); мелкое золото существа — гладкое."""
     t = stand(a, "rare", r)
     a.paint("gold", "F2C230")
     return t
 
 
 def epic_stand(a, r=1.6):
-    """Подставка Epic — гора золота ступенями с монетами по краю (как у Epic босса 3). Возвращает высоту верха."""
+    """Подставка Epic (D71): фиолетовый ступенчатый холм 9A3EF0 на тёмном цоколе со светлой каймой E2B0FF, по краю —
+    друзы аметистов (вместо прежней горы золота: золото — только Legendary и Secret). Возвращает высоту верха."""
     part(a, "Stand", None, (0, 0, 0))
+    c = SC.stand("Epic")
     a.paint("gold", "F2C230")
-    a.paint("goldS", "F2C230", rings=True)
-    a.paint("gold2", "C9921A")
-    a.paint("goldL", "FFE07A")
-    for key in ("gold2", "goldS", "goldL"):  # в игре подставку живого существа прячут — в карте ей меньше места
+    a.paint("epicS", c["body"], rings=True)
+    a.paint("epicB", c["base"])
+    a.paint("epicL", c["rim"])
+    for key in ("epicB", "epicS", "epicL"):  # в игре подставку живого существа прячут — в карте ей меньше места
         a.uv_boost[key] = 0.4
-    a.prism("gold2", S.octagon(-r, r, -r, r, r * 0.29), 0.0, 0.16)
-    a.prism("goldS", S.octagon(-r + 0.18, r - 0.18, -r + 0.18, r - 0.18, r * 0.26), 0.14, 0.34)
-    for x, y, ang in ((-r * 0.8, -r * 0.58, 20), (r * 0.78, -r * 0.62, -30), (r * 0.55, -r * 0.84, 45)):
-        disc(a, "goldL", x, y, 0.15, 0.3, 0.37, n=6, bevel=0, matrix=tilt((x, y, 0.33), "Y", ang * 0.3))
+    a.prism("epicB", S.octagon(-r, r, -r, r, r * 0.29), 0.0, 0.16)
+    a.prism("epicS", S.octagon(-r + 0.18, r - 0.18, -r + 0.18, r - 0.18, r * 0.26), 0.14, 0.34)
+    for x, y, h, ang in ((-r * 0.74, -r * 0.6, 0.62, 20), (r * 0.72, -r * 0.64, 0.5, -30), (r * 0.5, r * 0.74, 0.44, 45),
+                         (-r * 0.55, r * 0.7, 0.4, -15)):
+        m = tilt((x, y, 0.3), "Y", ang * 0.4)  # друза: высокий острый кристалл и низкий рядом
+        a.frustum("epicL", (x - 0.16, x + 0.16, y - 0.13, y + 0.13), (x, x, y, y), 0.3, 0.3 + h, bevel=0, matrix=m)
+        a.frustum("epicS", (x + 0.1, x + 0.3, y - 0.09, y + 0.1), (x + 0.2, x + 0.2, y, y), 0.28, 0.28 + h * 0.6,
+                  bevel=0, matrix=m)
     return 0.34
 
 
 def legendary_stand(a, r=1.6):
-    """Подставка Legendary (новая для коллекции, 2026-11-13): лазуритовый восьмигранник в золотой кайме, на нём
-    золотой ярус; по углам — бирюзовые камни. Возвращает высоту верха."""
+    """Подставка Legendary (D71): золото F5A215 в светлой кайме FFE27A, на нём светлый золотой ярус; по углам —
+    бирюзовые камни. Форма прежняя (2026-11-13), лазурит заменён золотом редкости. Возвращает высоту верха."""
     part(a, "Stand", None, (0, 0, 0))
+    c = SC.stand("Legendary")
     a.paint("gold", "F2C230")
-    a.paint("lapis", "2B4FC2", rings=True)
-    a.paint("goldS", "F2C230", rings=True)
+    a.paint("legBody", c["body"], rings=True)  # свои ключи подставки: золото существа (gold*) не перекрашивается
+    a.paint("legS", c["rim"], rings=True)
     a.paint("goldD", "C9921A")
-    a.paint("goldSD", "C9921A")
+    a.paint("legB", c["base"])
     a.paint("gemT", "2ED1C0")
-    for key in ("lapis", "goldS", "goldSD", "gemT"):  # в игре подставку прячут — в карте ей меньше места
+    for key in ("legBody", "legS", "legB", "gemT"):  # в игре подставку прячут — в карте ей меньше места
         a.uv_boost[key] = 0.4
-    a.prism("goldSD", S.octagon(-r, r, -r, r, r * 0.29), 0.0, 0.1)
-    a.prism("lapis", S.octagon(-r + 0.06, r - 0.06, -r + 0.06, r - 0.06, r * 0.27), 0.08, 0.24)
-    a.frame("goldSD", S.octagon(-r + 0.02, r - 0.02, -r + 0.02, r - 0.02, r * 0.28), 0.08, 0.2, 0.28, axis="z", bevel=0)
-    a.prism("goldS", S.octagon(-r + 0.32, r - 0.32, -r + 0.32, r - 0.32, r * 0.22), 0.22, 0.36)
+    a.prism("legB", S.octagon(-r, r, -r, r, r * 0.29), 0.0, 0.1)
+    a.prism("legBody", S.octagon(-r + 0.06, r - 0.06, -r + 0.06, r - 0.06, r * 0.27), 0.08, 0.24)
+    a.frame("legB", S.octagon(-r + 0.02, r - 0.02, -r + 0.02, r - 0.02, r * 0.28), 0.08, 0.2, 0.28, axis="z", bevel=0)
+    a.prism("legS", S.octagon(-r + 0.32, r - 0.32, -r + 0.32, r - 0.32, r * 0.22), 0.22, 0.36)
     for k in range(4):
         ang = math.radians(45 + 90 * k)
         gem(a, "gemT", (math.cos(ang) * (r - 0.22), math.sin(ang) * (r - 0.22), 0.3), 0.16, turn=45 + 90 * k)

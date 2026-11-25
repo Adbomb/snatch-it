@@ -516,6 +516,26 @@
   экспонаты Ex* вне проверки — вморожены по замыслу). Лист-аудит — `scripts/boss5_anatomy_audit.py` (быстрая сборка
   `bash scripts/run_glacier.sh assets/concepts/boss5/audit/creatures quick` и
   `YETI_SHOTS=none … boss5_yeti.py -- . assets/concepts/boss5/audit/yeti quick` → отчёты).
+- Подсветка мест добычи цветом редкости (D71, 2026-11-25): `World/SlotGlow` — `Ring(zone, slot, at, rIn, rOut, neutral,
+  {height, sides 8|4, light})` строит кольцо из сторон (8-гранник: хорды по внешнему краю, через одну тоньше — без
+  совпадающих граней; 4 — квадрат из длинных и коротких сторон) с меткой CollectionService `SlotGlow` и атрибутами
+  Zone/Slot/Neutral (+ невидимый кубик со светом снизу), `Rim` — обод в стиле арены, `Mark` — пометить готовый неоновый
+  диск. `ModelBuilder.Brick` понимает `tags` и `attributes`. `BossLootService.fill` красит место
+  (`SlotGlow.Paint` → Neon цвета `UITokens.RarityColor`, свет 0.8), уход предмета из AtBoss (забрали, поймали, замена на
+  рассвете) — нейтральный Plastic, свет 0; место ищется по своей таблице `glowOf` (реестр стирает `bossSlot` до
+  уведомления). Арены: «Свалка» и «Барахолка» — 8-гранник r 3.0–3.5 и обод (ржавый / латунь), без света (бюджет);
+  «Подземка» — квадратная рамка 3.6–3.95 за монетами (пустая — жёлтая разметка), без света; «Оазис» — кольцо r 3.2–3.7
+  вокруг золотого обода, со светом; «Ледник» — прежний неоновый диск под плитой помечен `Mark` (пустой — голубой).
+- Подставки существ (D71): цвета — `scripts/blender/stand_colors.py` (читает `UITokens.Rarity` из UITokens.luau);
+  `creature_kit.stand/epic_stand/legendary_stand` и листы концептов (`boss5/sheet.py`, `boss6/sheet.py`,
+  `concepts510/sheets.py`) берут их оттуда. Epic — фиолетовый холм с друзами аметистов, Legendary — золото редкости
+  (свои ключи `legBody/legS/legB`, золото существа не перекрашивается). Копии в `art_oasis.py` (босс 4) и `art_rats.py`
+  (босс 3, исключение — гора золота трёх эпиков) не трогаем.
+- Коллекция джунглей (босс 6, шаг 2): `scripts/blender/art_jungle.py` (вход, `quick` до утверждения аудита) + пакет
+  `scripts/blender/jungle/`: `jungle_kit.py` (набор из концепта v2), `common/rare/epic/legendary.py` (порядок каталога,
+  `collect` — свои функции и модули существ, сломанный модуль пропускается с `SKIP`), по модулю на существо
+  (`<snake_case>.py` с `ITEM`). Кадры — `assets/concepts/bosses_5_10/boss6_prod/creatures/` (вне git). Лист аудита D64 —
+  `scripts/boss6_anatomy_audit.py` (находки — `boss6_prod/audit.json`, таблица — `docs/BOSS6_ANATOMY_AUDIT.md`).
 - Босс 5 «Йети-коллекционер» подключён 2026-11-24 (`docs/BOSS5_INTEGRATION_PLAN.md`), закрыт до выпуска (D64 п. 7):
   `scripts/boss5_to_luau.py` (rig.json + anim.json + colors.json) → `Config/Boss5YetiRig` (31 часть, 13 поз; поза
   `sleep` — первый кадр клипа сна: в rig.json нет опускания корня; `AttackClips` bite → smash, swipe → ice_clap,

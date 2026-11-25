@@ -4,6 +4,7 @@
 -- в Play шаблоны лежат в ServerStorage.Templates, в предпросмотре — вне DataModel.
 -- Зависит от World/Studs.
 
+local CollectionService = game:GetService("CollectionService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Studs = require(ServerScriptService.Server.World.Studs)
@@ -21,6 +22,8 @@ export type Brick = {
 	name: string?,
 	-- PointLight внутри кирпича; с angle — SpotLight, светит из грани −Z (Front) конусом angle градусов.
 	light: { range: number, brightness: number, color: Color3, angle: number? }?,
+	tags: { string }?, -- метки CollectionService (их находят сервисы: подсветка плит D71 — World/SlotGlow)
+	attributes: { [string]: any }?,
 }
 
 -- collide/shadow — значения по умолчанию для всех кирпичей модели. Мелкий декор: оба false.
@@ -89,6 +92,16 @@ local function makePart(brick: Brick, opts: Options): BasePart
 		light.Color = brick.light.color
 		light.Shadows = false
 		light.Parent = part
+	end
+	if brick.attributes then
+		for key, value in brick.attributes do
+			part:SetAttribute(key, value)
+		end
+	end
+	if brick.tags then
+		for _, tag in brick.tags do
+			CollectionService:AddTag(part, tag)
+		end
 	end
 	return part
 end

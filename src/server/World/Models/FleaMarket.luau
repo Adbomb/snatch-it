@@ -25,6 +25,7 @@ local World = ServerScriptService.Server.World
 local MapLayout = require(World.MapLayout)
 local FleaKit = require(World.Models.FleaKit)
 local FleaStalls = require(World.Models.FleaStalls)
+local SlotGlow = require(World.SlotGlow)
 
 type Brick = FleaKit.Brick
 export type Sign = FleaKit.Sign
@@ -177,6 +178,17 @@ function FleaMarket.Ground(): { Brick }
 	for k = 0, 23 do
 		local at = around(math.rad(7.5 + k * 15), arena.radius - 2, TOP.dash)
 		table.insert(out, B(V(3.4, TOP.dash, 0.5), at, C.goldLight, DECOR))
+	end
+	-- Места предметов (D71): светящееся кольцо цвета редкости предмета (красит BossLootService) в латунном ободе;
+	-- без света снизу — у «Барахолки» бюджет света 10 уже занят.
+	for slot, spot in MapLayout.ArtSlots do
+		local at = CFrame.new(spot.X, arena.top, spot.Y)
+		for _, brick in SlotGlow.Ring(2, slot, at, 3.0, 3.5, C.tealMid, { light = false }) do
+			table.insert(out, brick)
+		end
+		for _, brick in SlotGlow.Rim(at, 3.5, 3.85, C.goldDark, 0.16) do
+			table.insert(out, brick)
+		end
 	end
 	-- Ромб-самоцвет под боссом: золотой, фиолетовый, светлый, золотой центр.
 	local rhomb = CFrame.new(center.X, 0, center.Y) * CFrame.Angles(0, math.rad(45), 0)
