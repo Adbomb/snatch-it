@@ -24,10 +24,10 @@ ZoneAtmosphere.Profiles = {
 		OutdoorAmbient = Color3.new(0.5, 0.58, 0.75),
 		ExposureCompensation = -0.45,
 		Atmosphere = {
-			Color = Color3.new(0.82, 0.82, 0.97),
-			Decay = Color3.new(0.55, 0.52, 0.82),
-			Density = 0.33,
-			Haze = 1.5,
+			Color = Color3.new(0.84, 0.86, 0.99),
+			Decay = Color3.new(0.62, 0.58, 0.88),
+			Density = 0.36,
+			Haze = 1.9,
 			Glare = 0,
 		},
 		ColorCorrection = { TintColor = Color3.new(0.92, 0.96, 1), Brightness = -0.04 },
@@ -35,18 +35,50 @@ ZoneAtmosphere.Profiles = {
 	} :: Profile,
 }
 
--- Сияние: ленты в координатах зоны (x поперёк, z вдоль от входа −47.5 к выходу +47.5, y от пола): x центра, y низа,
--- z, длина, высота, наклон (градусы) и цвет. Бледные, полупрозрачные, медленно колышутся.
+-- Сияние (второй заход 2026-11-25: «мягкое», не бруски): каждая лента — луч Beam без текстуры, изогнутый
+-- S-образно, прозрачность к концам плавно растёт до 1; поверх ядра — вдвое шире и бледнее ореол. Координаты зоны
+-- (x поперёк, z вдоль от входа −47.5 к выходу +47.5, y от пола): x центра, y середины, z, длина, ширина, подъём
+-- правого конца над левым, цвет.
+-- Ленты тонкие, почти параллельные (не скрещиваются), высоко и далеко за ледником; вдоль ленты цвет переходит от
+-- бледно-мятного к бледно-сиреневому (color → color2).
 ZoneAtmosphere.Aurora = {
-	Transparency = 0.62,
-	Segments = 7,
-	Sway = 2.5, -- стадов: колыхание по высоте
-	Period = 9, -- секунд
+	Core = 0.6, -- прозрачность середины ядра (1 — не видно)
+	Halo = 0.88, -- прозрачность середины ореола
+	HaloWidth = 2.2, -- ореол шире ядра во столько раз
+	Curve = 9, -- изгиб ленты (стадов)
+	Sway = 3, -- колыхание изгиба (стадов)
+	Period = 12, -- секунд
 	Ribbons = {
-		{ x = -40, y = 62, z = 80, length = 70, height = 5, tilt = 6, color = Color3.fromRGB(176, 245, 214) },
-		{ x = 25, y = 70, z = 95, length = 80, height = 4, tilt = -5, color = Color3.fromRGB(186, 232, 245) },
-		{ x = -5, y = 78, z = 110, length = 90, height = 3.5, tilt = 3, color = Color3.fromRGB(176, 245, 214) },
-		{ x = 45, y = 58, z = 70, length = 50, height = 3, tilt = -8, color = Color3.fromRGB(214, 200, 245) },
+		{
+			x = -18,
+			y = 78,
+			z = 135,
+			length = 120,
+			width = 4,
+			rise = 12,
+			color = Color3.fromRGB(185, 245, 220),
+			color2 = Color3.fromRGB(220, 205, 255),
+		},
+		{
+			x = -6,
+			y = 92,
+			z = 150,
+			length = 130,
+			width = 3.2,
+			rise = 12,
+			color = Color3.fromRGB(200, 240, 250),
+			color2 = Color3.fromRGB(225, 210, 255),
+		},
+		{
+			x = 30,
+			y = 70,
+			z = 125,
+			length = 70,
+			width = 2.6,
+			rise = 9,
+			color = Color3.fromRGB(185, 245, 220),
+			color2 = Color3.fromRGB(205, 235, 255),
+		},
 	},
 }
 

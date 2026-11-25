@@ -1,18 +1,18 @@
 -- Уровень 5 «Ледник» — «Замёрзшая галерея коллекционера» (D64, D65; концепт-лист boss5_v2/2_arena.png, площадка r 32
 -- и глыба во сне справа от Йети — решение владельца 2026-11-24). Переделка 2026-11-24 по замечаниям владельца: «сделай
 -- намного красивее ледяной биом», «убери сверху ледяную радугу», «чтобы игрок мог спокойно бегать между уровнями».
--- Свободный бег: три прямых прохода через всю зону — центральный (|x| ≤ 7: вход → площадка → ворота в леднике → выход)
+-- Свободный бег: три прямых прохода через всю зону — центральный (|x| ≤ 7: вход → площадка → перевал в леднике → выход)
 -- и две боковые полосы |x| 48–66 (продолжение полос «Пустыни», DesertOasis.Lane) — без твёрдых деталей; на площадке
 -- нет каната и столбиков, весь декор между проходами — без столкновений. Твёрдое — только площадка (ступени ≤ 0.7),
 -- ледник за ареной, витрины и ели у стен.
--- Оформление: в центре «замёрзшее озеро» (r 32) — синяя кромка, кольца, снежинка-мозаика, четыре плиты существ
--- (MapLayout.Arenas[5]), светящееся ледяное кольцо по краю (ниже 0.4); за ареной — ледник из двух массивов с воротами
--- между ними (ледяной мост, золотая рама, снежинка-герб, сосульки), пики со снегом, уступы с витринами; у стен обрыва —
--- ледяные скалы до кромки (закрывают землю обрыва, нижний ярус твёрдый ≤ 12, верх — без столкновений), ели группами,
--- кристаллы, замёрзшие пруды, сугробы; на снегу — голубые наледи. Экспонаты витрин — только предметы (кубок, самоцвет,
--- будильник, корона, ключ, кристалл). Света мало (герб ворот, два пруда, две витрины), частиц нет; поперёк коридора
--- ничего (D41). Координаты зоны: x — поперёк (±92), z — вдоль (вход −47.5, выход +47.5), y = 0 — пол. Надписи
--- возвращаются списком (их пишет WorldBuilder).
+-- Оформление: в центре «замёрзшее озеро» (r 32) — синяя кромка, кольца, снежинка-трещины, четыре плиты существ
+-- (MapLayout.Arenas[5]), светящееся ледяное кольцо по краю (ниже 0.4); за ареной — природный ледник (замечание
+-- 2026-11-25 «не замок»): ступенчатый массив с трещинами, пики разной высоты из-за него, бледный дальний хребет,
+-- уступы с витринами; проходы — перевалы между пиками. У стен
+-- обрыва — ледяные скалы до кромки (нижний ярус твёрдый ≤ 12, верх — без столкновений), ели группами, кристаллы,
+-- замёрзшие пруды, сугробы; на снегу — голубые наледи. Экспонаты витрин — только предметы. Света мало (витрины,
+-- пруды, плиты существ), частиц нет; поперёк коридора ничего (D41). Координаты зоны: x — поперёк (±92), z — вдоль
+-- (вход −47.5, выход +47.5), y = 0 — пол. Надписи возвращаются списком (их пишет WorldBuilder).
 -- Зависит от MapLayout, World/Models/FleaKit.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -41,7 +41,7 @@ end
 local C = {
 	path = hex("CFE6F6"),
 	tile = hex("8FCDF0"),
-	edge = hex("4FC3F7"),
+	edge = hex("8CCBEB"), -- кромка дорожек: спокойный голубой (не «неоновая» полоса)
 	-- «замёрзшее глубокое озеро» (замечание 2026-11-25 «белое на белом»): насыщенный синий, к краю темнее
 	lakeRim = hex("0F3B74"),
 	lake = hex("1E5EA6"),
@@ -49,7 +49,7 @@ local C = {
 	lakeMid = hex("286CB6"),
 	lakeRing2 = hex("1A5296"),
 	lakeCore = hex("2F79C2"),
-	crack = hex("6FB2E8"), -- тонкие трещины-снежинка: чуть светлее льда, без неона (спокойный лёд)
+	crack = hex("1F4E96"), -- тонкие трещины-снежинка: чуть темнее льда, без неона (спокойный лёд)
 	glow = hex("5FDCFF"), -- подсветка плит существ и кольцо по краю (неон)
 	slot = hex("13274B"), -- плита существа: тёмный круг
 	platEdge = hex("3F98D6"),
@@ -58,8 +58,10 @@ local C = {
 	wall2 = hex("22599C"),
 	wall3 = hex("1B4B88"),
 	wallShadow = hex("0F2C58"),
-	far1 = hex("8FB4DD"), -- дальний ряд пиков: светлее (воздушная перспектива)
-	far2 = hex("ADC8E8"),
+	farA = hex("C8D6EE"), -- дальний хребет: бледный, чуть сиреневый (воздушная перспектива)
+	farB = hex("B6C4E4"),
+	crevDeep = hex("14295A"), -- глубина расселины между глыбами массива
+	farSnow = hex("EEF3FA"),
 	glacier = hex("6FAEE0"),
 	glacierM = hex("4E92D0"),
 	glacierD = hex("3577BB"),
@@ -360,7 +362,8 @@ local function path(out: { Brick }, p: { number }, top: number, w: number)
 end
 
 -- Ледяные скалы у стен обрыва (|x| 84–92.6): закрывают землю обрыва до кромки. Нижний ярус твёрдый (≤ 12 — с него
--- не допрыгнуть до кромки), выше — ступенчатые глыбы без столкновений, снежная шапка поверх кромки, сосульки.
+-- не допрыгнуть до кромки), выше — ступенчатые глыбы без столкновений, снежная шапка поверх кромки, над каждой
+-- скалой — пик своей высоты (неровный верх, без сосулек и ровного карниза).
 local function iceCliffs(out: { Brick })
 	for _, s in { -1, 1 } do
 		local z, k = -47.5, 0
@@ -399,44 +402,25 @@ local function iceCliffs(out: { Brick })
 			)
 			x0, x1 = X(inner - 0.18, inner + 1.2)
 			table.insert(out, Box(x0, x1, 1.2, low - 1.15, z - 0.28, z + 0.28, C.glacierDeep, DECOR))
-			x0, x1 = X(inner + 1.6, 92.8)
-			table.insert(
-				out,
-				Box(
-					x0,
-					x1,
-					low - 0.1,
-					mid,
-					z + 0.15,
-					z1 - 0.15,
-					if k % 2 == 0 then C.glacierD else C.glacierM,
-					SOFT_DECOR
-				)
-			)
-			x0, x1 = X(inner + 3.4, 93.0)
-			table.insert(
-				out,
-				Box(
-					x0,
-					x1,
-					mid - 0.1,
-					31.6,
-					z + 0.3,
-					z1 - 0.3,
-					if k % 2 == 0 then C.glacier else C.glacierD,
-					SOFT_DECOR
-				)
-			)
-			-- снежная шапка на кромке (выше травы обрыва 32.7) и снег на уступах
+			-- средний и верхний ярус: наклонены верхом к стене и повёрнуты (у соседних скал — разные углы), низ
+			-- заходит в ярус ниже
+			local lean = -s * (4 + (k % 3) * 2)
+			local turn = s * ((k % 3) - 1) * 4
+			local function tier(a: number, b: number, y0: number, y1: number, inset: number, color: Color3)
+				local at = CFrame.new(s * (a + b) / 2, (y0 + y1) / 2, (z + z1) / 2)
+					* CFrame.Angles(0, math.rad(turn), math.rad(lean))
+				table.insert(out, B(V(b - a, y1 - y0, z1 - z - inset * 2), at, color, SOFT_DECOR))
+			end
+			tier(inner + 1.6, 92.8, low - 0.7, mid, 0.15, if k % 2 == 0 then C.glacierD else C.glacierM)
+			tier(inner + 3.4, 93.0, mid - 0.7, 31.6, 0.3, if k % 2 == 0 then C.glacier else C.glacierD)
+			-- снежная шапка на кромке (выше травы обрыва 32.7)
 			-- соседние шапки заходят друг на друга на 0.1: края и низ через одну сдвинуты (грани не совпадают)
 			local odd = k % 2
 			x0, x1 = X(inner + 2.6 + odd * 0.15, 94.5 + odd * 0.2)
 			table.insert(out, Box(x0, x1, 31.5 - odd * 0.1, 33.5 + odd * 0.4, z - 0.05, z1 + 0.05, C.snow, DECOR))
-			x0, x1 = X(inner - 0.25, inner + 1.9)
-			table.insert(out, Box(x0, x1, low - 0.3, low + 0.35, z + 0.4, z1 - 0.4, C.snow, DECOR))
-			-- пик над скалой (вдоль стены), через один
-			if k % 2 == 1 then
-				local apex = (z + z1) / 2 + ((k % 3) - 1)
+			-- пик над каждой скалой (вдоль стены): высота и смещение вершины разные
+			do
+				local apex = (z + z1) / 2 + ((k % 3) - 1) * 1.5
 				snowPeak(
 					out,
 					"z",
@@ -446,18 +430,9 @@ local function iceCliffs(out: { Brick })
 					s * (inner + 95) / 2,
 					95 - inner - 4.2,
 					33.3,
-					4 + (k * 11 % 4),
+					4 + (k * 11 % 7),
 					C.glacierE,
 					false
-				)
-			end
-			-- сосульки под уступом
-			for _, u in { 0.25, 0.6 } do
-				local zz = z + (z1 - z) * u
-				x0, x1 = X(inner - 0.1, inner + 0.6)
-				table.insert(
-					out,
-					Box(x0, x1, low - 2.1 - (k % 2) * 0.6, low - 0.25, zz - 0.3, zz + 0.3, C.glacierE, DECOR)
 				)
 			end
 			z = z1
@@ -465,133 +440,238 @@ local function iceCliffs(out: { Brick })
 	end
 end
 
--- Ледник за ареной (замечание 2026-11-25: «не замок — природный ледник»): неровные глыбы, повёрнутые и наклонённые
--- по-разному (без ровных стен, зубцов и окон), острые пики разной высоты со смещёнными вершинами, тёмные расселины-клинья
--- на стыках глыб; за ними — дальний ряд пиков светлее (воздушная перспектива). Центральный проход — расселина между
--- массивами под природным снежным мостом (без рамы и герба); левый и правый массивы разные.
--- Глыба: |x| центра, z центра, ширина, высота, глубина, поворот вокруг вертикали, крен (градусы), цвет.
-local ROCKS = {
-	[-1] = {
-		{ 12.6, 40.6, 8.2, 16.5, 8, 6, -4, C.wall2 },
-		{ 19.8, 41.6, 7.4, 21.5, 8.6, -5, 3, C.wall1 },
-		{ 26.6, 41.0, 7.8, 14.5, 7.8, 9, -6, C.wall3 },
-		{ 33.8, 42.2, 7.2, 18, 7.4, -7, 5, C.wall2 },
-		{ 41.2, 42.6, 8.4, 10.5, 7, 4, -3, C.wall1 },
-	},
-	[1] = {
-		{ 12.2, 41.0, 7.8, 14, 8.4, -4, 5, C.wall1 },
-		{ 19.2, 40.8, 7.6, 18.5, 8.2, 7, -4, C.wall3 },
-		{ 26.4, 42.0, 8.2, 22, 8.8, -6, 3, C.wall2 },
-		{ 33.6, 41.4, 7.0, 13, 7.6, 8, -5, C.wall1 },
-		{ 40.8, 42.8, 8.6, 11.5, 7.2, -3, 4, C.wall2 },
-	},
-}
--- Пик над глыбой: сдвиг вершины от центра глыбы и высота (у каждой глыбы своя).
-local ROCK_PEAKS = {
-	[-1] = { { 0.8, 7 }, { -1.2, 11 }, { 1.5, 6 }, { -0.6, 9.5 }, { 1, 5 } },
-	[1] = { { -1, 6 }, { 1.3, 9 }, { -0.4, 12.5 }, { 1.1, 6.5 }, { -0.8, 7.5 } },
-}
--- Дальний ряд (без столкновений, светлее): |x| вершины, полуширины к центру и наружу, низ, высота, z, цвет.
-local FAR = {
-	[-1] = {
-		{ 10.5, 3.5, 5, 12, 21, 45.9, C.far1 },
-		{ 17.5, 5, 4.5, 15, 25, 46.3, C.far2 },
-		{ 25.5, 4, 6, 13, 21.5, 45.6, C.far1 },
-		{ 34, 6.5, 4.5, 12, 27, 46.4, C.far2 },
-		{ 42.5, 4.5, 5, 9, 20, 45.8, C.far1 },
-		{ 57, 7, 8, 12, 24, 46.5, C.far2 },
-	},
-	[1] = {
-		{ 11.5, 3, 4.5, 12, 18.5, 46.1, C.far2 },
-		{ 19, 4.5, 6, 14, 26.5, 45.7, C.far1 },
-		{ 28, 5.5, 4, 15, 23, 46.4, C.far2 },
-		{ 35.5, 4, 5.5, 11, 25.5, 45.9, C.far1 },
-		{ 43, 5, 4, 9, 19, 46.2, C.far2 },
-		{ 58, 8, 6.5, 12, 26, 46.6, C.far1 },
-	},
-}
-local BRIDGE = { center = Vector3.new(0.8, 14, 41.6), size = Vector3.new(24, 3.2, 6.4), yaw = 4, roll = 3 }
+-- Ледник за ареной (замечание 2026-11-25 «не замок — природный ледник»; четвёртый заход по двум кругам разбора
+-- кадров): общий ступенчатый массив — наклонные ярусы-скаты к арене (передний — бледный лёд, второй — синие глыбы с
+-- настоящими расселинами: щель между глыбами и тёмная глубина за ней), из-за массива поднимаются пики разной формы
+-- (иглы, наклонённые, с плечом; снег — на освещённом склоне, на теневом только кончик; силуэт «V»: за Йети низко,
+-- высокие пики по краям), позади отдельно — бледный дальний хребет (воздушная перспектива). Над полосами — перевалы
+-- между двумя пиками с отвесным склоном к полосе. Перед массивом — россыпь обломков льда. Ни стоячих брусков, ни
+-- карнизов, ни сосулек, ни мостов. Проходы — центральный (|x| ≤ 7) и полосы |x| 48–66 — свободны.
 
--- Глыба с центром низа (x, z): повёрнута на yaw, наклонена на roll; низ уходит в землю, чтобы не висеть.
-local function rockFrame(x: number, z: number, w: number, h: number, yaw: number, roll: number): CFrame
+-- Ярус массива (скат к арене): |x| центра, ширина, высота, z центра, глубина, поворот, крен (градусы; справа
+-- зеркально), цвет, снег на верхнем крае (смещение по x или nil). Между глыбами второго яруса — щели 1–1.6.
+local TIER1 = {
+	[-1] = {
+		{ 15, 13, 5.5, 38.8, 6, -4, 2, C.glacier },
+		{ 28, 14, 4.5, 39.2, 6, 5, -3, C.glacierM },
+		{ 40.5, 12, 6, 38.9, 6, -6, 3, C.glacier },
+	},
+	[1] = {
+		{ 14.5, 12, 4.5, 39.0, 6, 6, -2, C.glacierM },
+		{ 27, 15, 6, 38.7, 6.4, -5, 3, C.glacier },
+		{ 40, 13, 5, 39.3, 6, 4, -2, C.glacierM },
+	},
+}
+local TIER2 = {
+	[-1] = {
+		{ 13.6, 10.8, 9, 42.2, 6, 5, -3, C.wall2, -1.5 },
+		{ 26.3, 12.2, 14, 42.6, 6.5, -4, 4, C.wall1, nil },
+		{ 39.55, 11.9, 12, 42.0, 6.5, 6, -3, C.wall2, 2 },
+	},
+	[1] = {
+		{ 13.4, 10.8, 8, 42.4, 6, -5, 3, C.wall1, 1 },
+		{ 26.0, 12.4, 13, 42.0, 6.5, 4, -4, C.wall2, -2 },
+		{ 39.65, 11.7, 15, 42.8, 6.2, -6, 3, C.wall1, nil },
+	},
+}
+-- Пик: |x| вершины, z, полуширина к центру, наружу, высота, толщина, поворот, крен, оттенок (1…3), доля снега на
+-- освещённом склоне, плечо {сдвиг наружу, полуширины к центру и наружу, доля высоты} или nil. Задние углы — не
+-- дальше z 45.9 (дальний хребет начинается с 45.95).
+local PEAKS = {
+	[-1] = {
+		{ 12, 43.6, 3.5, 6.5, 14, 4, 2, 3, 2, 0.35 },
+		{ 21.5, 43.4, 6, 3.5, 24, 4, -2, -5, 1, 0.45, { 4.5, 3, 4, 0.55 } },
+		{ 31, 43.5, 3.5, 7.5, 31, 4, 1.5, 4, 3, 0.3 },
+		{ 40.5, 43.3, 7, 4, 21, 4, -1.5, -3, 2, 0.5, { -5, 3, 3, 0.5 } },
+	},
+	[1] = {
+		{ 13.5, 43.5, 4, 6, 13, 4, -2, -4, 1, 0.4 },
+		{ 23.5, 43.2, 3.5, 8, 26, 4, 2, 5, 3, 0.3, { 5, 3, 4.5, 0.5 } },
+		{ 34, 43.6, 7.5, 4, 33, 4, -1.5, -3, 2, 0.42 },
+		{ 42, 43.4, 5, 4, 20, 4, 2, 4, 1, 0.35 },
+	},
+}
+-- Дальний хребет (без столкновений, бледный, отдельно позади пиков): |x| вершины, z, полуширины, высота.
+local BACK = {
+	[-1] = { { 18, 46.8, 10, 12, 38 }, { 37, 46.6, 9, 9.5, 34 } },
+	[1] = { { 20, 46.75, 12, 10, 40 }, { 38, 46.55, 8, 9, 35 } },
+}
+-- Обломки льда перед массивом (без столкновений, мимо витрин): |x|, z.
+local RUBBLE = {
+	{ 9.5, 36.6 },
+	{ 10.8, 36.2 },
+	{ 13.5, 37.0 },
+	{ 17, 36.5 },
+	{ 21, 36.2 },
+	{ 24.5, 36.9 },
+	{ 27, 36.4 },
+	{ 35.8, 36.8 },
+	{ 44.5, 36.6 },
+}
+local SHADES = {
+	[1] = { C.wall1, C.wall2 },
+	[2] = { C.wall2, C.wall3 },
+	[3] = { C.wall1, C.wall3 },
+}
+local MASS = { shape = "Wedge", variant = "LegoSquaresSoft" }
+local MASS_DECOR = { shape = "Wedge", variant = "LegoSquaresSoft", collide = false, shadow = false }
+
+-- Треугольник из двух клиньев спиной к спине в кадре at (низ, вершина над началом): left/right — полуширины,
+-- depth — толщина.
+local function ridge(
+	out: { Brick },
+	at: CFrame,
+	left: number,
+	right: number,
+	h: number,
+	depth: number,
+	cl: Color3,
+	cr: Color3,
+	extra: { [string]: any }
+)
+	table.insert(
+		out,
+		B(V(depth, h, left), at * CFrame.new(-left / 2, h / 2, 0) * CFrame.Angles(0, math.rad(90), 0), cl, extra)
+	)
+	table.insert(
+		out,
+		B(V(depth, h, right), at * CFrame.new(right / 2, h / 2, 0) * CFrame.Angles(0, math.rad(-90), 0), cr, extra)
+	)
+end
+
+-- Снег на склоне треугольника (side −1 — левый, 1 — правый): клин с вершиной на 0.3 выше вершины горы, низ — на доле
+-- f от верха; шире склона на ≥ 0.06 и толще на 0.2, задняя грань на 0.05 от оси вершины (грани не совпадают).
+local function snowSide(
+	out: { Brick },
+	at: CFrame,
+	side: number,
+	half: number,
+	h: number,
+	depth: number,
+	f: number,
+	c: Color3
+)
+	local w, sh = half * f + 0.3, h * f + 0.4
+	local frame = at
+		* CFrame.new(side * (w / 2 + 0.05), h * (1 - f) - 0.1 + sh / 2, 0)
+		* CFrame.Angles(0, math.rad(-side * 90), 0)
+	table.insert(out, B(V(depth + 0.2, sh, w), frame, c, WEDGE_DECOR))
+end
+
+-- Пик (summit) с вершиной над (x, 0, z): поворот yaw и крен roll (низ уходит в землю), склоны разного оттенка; снег — доля f
+-- на левом (освещённом) склоне и короткий кончик на правом; плечо — пик пониже сбоку, на 0.3 позади.
+local function summit(
+	out: { Brick },
+	x: number,
+	z: number,
+	left: number,
+	right: number,
+	h: number,
+	depth: number,
+	yaw: number,
+	roll: number,
+	cl: Color3,
+	cr: Color3,
+	extra: { [string]: any },
+	f: number
+): CFrame
+	local sink = math.abs(math.sin(math.rad(roll))) * math.max(left, right)
+	local at = CFrame.new(x, -sink, z) * CFrame.Angles(0, math.rad(yaw), math.rad(roll))
+	ridge(out, at, left, right, h, depth, cl, cr, extra)
+	snowSide(out, at, -1, left, h, depth, f, C.snow)
+	snowSide(out, at, 1, right, h, depth, f * 0.4, C.snowS)
+	return at
+end
+
+-- Скат (клин) с низом на полу: поворот yaw, крен roll — верхний край наклонён, низ уходит в пол.
+local function slope(w: number, h: number, x: number, z: number, yaw: number, roll: number): CFrame
 	local sink = math.abs(math.sin(math.rad(roll))) * w / 2
 	return CFrame.new(x, h / 2 - sink, z) * CFrame.Angles(0, math.rad(yaw), math.rad(roll))
 end
 
--- Снег на глыбе (тот же поворот, шире на 0.5, утоплен на 0.3) и две сосульки разной длины у лицевой грани.
-local function snowOn(out: { Brick }, at: CFrame, w: number, h: number, d: number, i: number)
-	table.insert(out, B(V(w + 0.5, 0.9, d + 0.5), at * CFrame.new(0, h / 2 + 0.15, 0), C.snow, DECOR))
-	for k, u in { -0.27, 0.18 } do
-		local len = 1.3 + ((i + k) % 3) * 0.7
-		table.insert(
-			out,
-			B(V(0.6, len, 0.55), at * CFrame.new(u * w, h / 2 - len / 2 - 0.25, -d / 2 - 0.12), C.glacierE, DECOR)
-		)
+-- Снег на верхнем крае клина: клин того же уклона на 0.2 выше ската, задняя грань на 0.15 впереди.
+local function snowTop(out: { Brick }, at: CFrame, w: number, h: number, d: number, u: number, k: number, c: Color3)
+	local top = h / 2 - 0.15 * h / d + 0.2
+	table.insert(
+		out,
+		B(V(w, h * k, d * k), at * CFrame.new(u, top - h * k / 2, d / 2 - 0.15 - d * k / 2), c, WEDGE_DECOR)
+	)
+end
+
+-- Сторона: полуширины «к центру / наружу» → «влево / вправо» (координата x зоны).
+local function sides(s: number, inner: number, outer: number): (number, number)
+	if s > 0 then
+		return inner, outer
 	end
+	return outer, inner
 end
 
 local function glacier(out: { Brick })
 	for _, s in { -1, 1 } do
-		local rocks = ROCKS[s]
-		for i, r in rocks do
-			local x, z, w, h, d, yaw, roll, color = s * r[1], r[2], r[3], r[4], r[5], s * r[6], s * r[7], r[8]
-			local at = rockFrame(x, z, w, h, yaw, roll)
-			table.insert(out, B(V(w, h, d), at, color, SOFT))
-			snowOn(out, at, w, h, d, i)
-			-- пик над глыбой (вершина смещена, полуширины разные)
-			local pk = ROCK_PEAKS[s][i]
-			local half = w * 0.4
-			snowPeak(
-				out,
-				"x",
-				x + s * pk[1],
-				half * (if s > 0 then 1.05 else 0.85),
-				half * (if s > 0 then 0.85 else 1.05),
-				z + 0.6,
-				d * 0.55,
-				h - 1.3,
-				pk[2],
-				if i % 2 == 0 then C.wall3 else C.wall2,
-				false
-			)
-			-- скат у подножия (тот же поворот, средний синий); у крайней к проходу глыбы — нет: круг боя
-			local rh = h * 0.38
-			if i > 1 then
-				table.insert(
-					out,
-					B(
-						V(w - 1.2, rh, 2.8),
-						CFrame.new(x, rh / 2, z - d / 2 - 1.2) * CFrame.Angles(0, math.rad(yaw), 0),
-						if i % 2 == 0 then C.glacierM else C.glacierD,
-						{ shape = "Wedge", variant = "LegoSquaresSoft" }
-					)
-				)
+		-- передний ярус: бледный лёд
+		for _, t in TIER1[s] do
+			local at = slope(t[2], t[3], s * t[1], t[4], s * t[6], s * t[7])
+			table.insert(out, B(V(t[2], t[3], t[5]), at, t[8], MASS))
+		end
+		-- второй ярус: синие глыбы со снегом на верхнем крае; в щели между соседними — тёмная глубина (клин того же
+		-- уклона, на 0.8 позади и на 1.5 ниже)
+		local tiers = TIER2[s]
+		for i, t in tiers do
+			local w, h, d = t[2], t[3], t[5]
+			local at = slope(w, h, s * t[1], t[4], s * t[6], s * t[7])
+			table.insert(out, B(V(w, h, d), at, t[8], MASS))
+			if t[9] then
+				snowTop(out, at, w * 0.55, h, d, s * t[9], 0.3, C.snow)
 			end
-			-- расселина на стыке со следующей глыбой: тёмный клин, сужается кверху
-			local nxt = rocks[i + 1]
+			local nxt = tiers[i + 1]
 			if nxt then
-				local jx = s * ((r[1] + r[3] / 2 + nxt[1] - nxt[3] / 2) / 2)
-				local ch = math.min(h, nxt[4]) - 3.5
-				local jz = math.min(z - d / 2, nxt[2] - nxt[5] / 2) + 0.45
-				table.insert(
-					out,
-					B(
-						V(1.1, ch, 1.4),
-						CFrame.new(jx, 1.2 + ch / 2, jz) * CFrame.Angles(0, math.rad(180 + s * 8), math.rad(s * 3)),
-						C.wallShadow,
-						WEDGE_DECOR
-					)
-				)
+				local gx = ((t[1] + w / 2) + (nxt[1] - nxt[2] / 2)) / 2
+				local gh = math.min(h, nxt[3]) - 1.5
+				local gat = slope(3.2, gh, s * gx, (t[4] + nxt[4]) / 2 + 0.8, s * (t[6] + nxt[6]) / 2, 0)
+				table.insert(out, B(V(3.2, gh, 5), gat, C.crevDeep, MASS))
 			end
 		end
-		-- дальний ряд: светлые пики и масса под ними (без столкновений)
-		for _, f in FAR[s] do
-			local towardC, outward = f[2], f[3]
-			local left, right = if s > 0 then towardC else outward, if s > 0 then outward else towardC
-			snowPeak(out, "x", s * f[1], left, right, f[6], 3.2, f[4], f[5], f[7], false)
+		-- пики из-за массива (с плечом у некоторых)
+		for _, p in PEAKS[s] do
+			local l, r = sides(s, p[3], p[4])
+			local sh = SHADES[p[9]]
+			local at = summit(out, s * p[1], p[2], l, r, p[5], p[6], s * p[7], s * p[8], sh[1], sh[2], MASS, p[10])
+			local sp = p[11]
+			if sp then
+				local sl, sr = sides(s, sp[2], sp[3])
+				local shoulder = at * CFrame.new(s * sp[1], -0.3, 0.3)
+				ridge(out, shoulder, sl, sr, p[5] * sp[4], p[6] * 0.9, sh[1], sh[2], MASS)
+				snowSide(out, shoulder, -1, sl, p[5] * sp[4], p[6] * 0.9, 0.3, C.snow)
+			end
 		end
-		local mass = CFrame.new(s * 28, 9, 46.66) * CFrame.Angles(0, 0, math.rad(s * 1.5))
-		table.insert(out, B(V(38, 18, 1.4), mass, C.far1, SOFT_DECOR))
+		-- дальний хребет: бледный, без поворота, отдельно позади пиков
+		for _, b in BACK[s] do
+			local l, r = sides(s, b[3], b[4])
+			summit(out, s * b[1], b[2], l, r, b[5], 1.2, 0, 0, C.farA, C.farB, MASS_DECOR, 0.3)
+		end
+		-- перевал над полосой: по сторонам — пики с отвесным склоном к полосе (основание до |x| 47.4 и от 66.6)
+		local li, lo = sides(s, 6, 1.9)
+		summit(out, s * 45.5, 42.5, li, lo, 26, 9, s * 2, 0, C.wall2, C.wall3, MASS, 0.3)
+		local oi, oo = sides(s, 1.9, 7)
+		summit(out, s * 68.5, 42.4, oi, oo, 30, 9, -s * 2, 0, C.wall1, C.wall3, MASS, 0.34)
+		-- у стены обрыва: ярусы (твёрдые ≤ 24) и пики (без столкновений)
+		local o1 = slope(18, 10, s * 81, 40.5, -s * 3, s * 2)
+		table.insert(out, B(V(18, 10, 7), o1, C.glacierM, MASS))
+		local o2 = slope(17, 20, s * 81.5, 43.6, s * 4, -s * 3)
+		table.insert(out, B(V(17, 20, 6), o2, C.wall2, MASS))
+		snowTop(out, o2, 9, 20, 6, s * 2, 0.28, C.snow)
+		summit(out, s * 77, 44.6, 5, 6, 34, 4.4, s * 3, -s * 3, C.wall1, C.wall3, MASS_DECOR, 0.45)
+		summit(out, s * 85.5, 44.6, 6, 6, 30, 4.6, -s * 4, s * 4, C.wall2, C.wall3, MASS_DECOR, 0.35)
+		-- обломки льда перед массивом: разного размера, наклонены, наполовину в снегу
+		for i, r in RUBBLE do
+			local w, hh, d = 1.4 + (i * 7 % 5) * 0.35, 0.9 + (i * 3 % 4) * 0.3, 1.2 + (i * 5 % 4) * 0.3
+			local at = CFrame.new(s * r[1], hh / 2 - 0.25, r[2])
+				* CFrame.Angles(math.rad((i * 13 % 25) - 12), math.rad(s * i * 37), math.rad(s * ((i * 17 % 29) - 14)))
+			table.insert(
+				out,
+				B(V(w, hh, d), at, if i % 3 == 0 then C.glacierM elseif i % 2 == 0 then C.ice else C.glacierE, DECOR)
+			)
+		end
 		-- уступ перед массивом — две неровные плиты (верх 1.2 и 1.15), на нём витрины
 		for j, sl in { { 22, 9.5, 1.2, 3 }, { 36.5, 9, 1.15, -4 } } do
 			local at = CFrame.new(s * sl[1], sl[3] / 2, 34.4) * CFrame.Angles(0, math.rad(s * sl[4]), 0)
@@ -603,57 +683,6 @@ local function glacier(out: { Brick })
 			if kind == "gem" then
 				out[#out].light = { range = 12, brightness = 0.9, color = C.neonGem }
 			end
-		end
-	end
-	-- природный снежный мост над расселиной центрального прохода (низ выше 11.8), снег, сосульки
-	local bat = CFrame.new(BRIDGE.center) * CFrame.Angles(0, math.rad(BRIDGE.yaw), math.rad(BRIDGE.roll))
-	table.insert(out, B(BRIDGE.size, bat, C.wall2, SOFT_DECOR))
-	table.insert(out, B(BRIDGE.size + V(0.6, -2.3, 0.6), bat * CFrame.new(0, 1.75, 0), C.snow, DECOR))
-	for i, u in { -0.3, -0.08, 0.12, 0.33 } do
-		local len = 1.4 + (i % 3) * 0.8
-		table.insert(
-			out,
-			B(
-				V(0.7, len, 0.6),
-				bat * CFrame.new(u * BRIDGE.size.X, -BRIDGE.size.Y / 2 - len / 2 + 0.2, -BRIDGE.size.Z / 2 + 0.6),
-				C.glacierE,
-				DECOR
-			)
-		)
-	end
-end
-
--- Конец зоны по бокам (|x| 66–86): нагромождение глыб до кромки обрыва (низ твёрдый ≤ 12, верх без столкновений) и
--- природный снежный мост над каждой боковой полосой (низ выше 9.6); за мостом — светлый дальний пик (FAR). Полосы
--- |x| 48–66 свободны.
-local CRAGS = {
-	{ 71.5, 0, 44.6, 9, 11.5, 5.8, 5, -4, C.wall2, true },
-	{ 80.5, 0, 45.2, 9.5, 10.5, 5, -6, 3, C.wall1, true },
-	{ 73, 10.5, 45.2, 8, 16, 5, -4, 6, C.wall3, false },
-	{ 81, 9.5, 45.6, 8, 19, 4.6, 5, -5, C.wall2, false },
-}
-local function sideCrags(out: { Brick })
-	for _, s in { -1, 1 } do
-		for i, c in CRAGS do
-			local yaw, roll = s * c[7], s * c[8]
-			local at = rockFrame(s * c[1], c[3], c[4], c[5], yaw, roll) * CFrame.new(0, c[2], 0)
-			table.insert(out, B(V(c[4], c[5], c[6]), at, c[9], if c[10] then SOFT else SOFT_DECOR))
-			if not c[10] then
-				snowOn(out, at, c[4], c[5], c[6], i)
-			end
-		end
-		snowPeak(out, "x", s * 74.5, 3.4, 4, 45.2, 3.4, 25.6, 9, C.wall3, false)
-		snowPeak(out, "x", s * 82, 3.8, 3.2, 45.6, 3, 27.4, 7.5, C.wall2, false)
-		-- снежный мост над полосой: концы утоплены в массив и в глыбы
-		local bat = CFrame.new(s * 57, 11.9, 44.9) * CFrame.Angles(0, math.rad(s * 3), math.rad(s * -4))
-		table.insert(out, B(V(24, 2.7, 5.4), bat, C.wall1, SOFT_DECOR))
-		table.insert(out, B(V(24.5, 0.85, 5.9), bat * CFrame.new(0, 1.5, 0), C.snow, DECOR))
-		for k, u in { -0.25, 0.05, 0.3 } do
-			local len = 1.2 + (k % 2) * 0.7
-			table.insert(
-				out,
-				B(V(0.6, len, 0.5), bat * CFrame.new(u * 24, -1.35 - len / 2 + 0.2, -2.3), C.glacierE, DECOR)
-			)
 		end
 	end
 end
@@ -673,27 +702,29 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 	for _, d in DISCS do
 		table.insert(out, Disc(d[1], d[2], d[3], cx, cz, d[4], SOLID))
 	end
+	-- шесть ломаных лучей из четырёх отрезков (изломы 9–14°, через один в другую сторону); верх отрезков через один
+	-- 0.83 / 0.77, «ёлочки» у первого и третьего излома — 0.8 / 0.68 (диски 0.70 / 0.58 ниже, грани не совпадают)
 	for k = 0, 5 do
 		local deg = k * 60 + 30
-		local x, z = polar(deg, 17)
-		table.insert(
-			out,
-			B(V(0.16, 0.3, 16), CFrame.new(x, 0.68, z) * CFrame.Angles(0, math.rad(deg), 0), C.crack, DECOR)
-		)
-		for _, ring in { { 12, 5, 0.8 }, { 19.5, 4, 0.68 } } do -- длина «ёлочки», верх (диск 0.70 / 0.58 + 0.1)
-			local px, pz = polar(deg, ring[1])
-			for _, side in { -1, 1 } do
-				local a = math.rad(deg + side * 45)
-				local mx, mz = px + math.sin(a) * ring[2] / 2, pz + math.cos(a) * ring[2] / 2
-				table.insert(
-					out,
-					B(
-						V(0.13, 0.3, ring[2]),
-						CFrame.new(mx, ring[3] - 0.15, mz) * CFrame.Angles(0, a, 0),
-						C.crack,
-						DECOR
-					)
-				)
+		local sign = if k % 2 == 0 then 1 else -1
+		local px, pz = polar(deg, 8.5)
+		for i, seg in { { 4.6, 0 }, { 4.2, 14 }, { 4.0, -11 }, { 3.4, 9 } } do
+			local a = math.rad(deg + sign * seg[2])
+			local len = seg[1]
+			local top = if i % 2 == 1 then 0.83 else 0.77
+			local mx, mz = px + math.sin(a) * len / 2, pz + math.cos(a) * len / 2
+			table.insert(
+				out,
+				B(V(0.1, 0.3, len + 0.2), CFrame.new(mx, top - 0.15, mz) * CFrame.Angles(0, a, 0), C.crack, DECOR)
+			)
+			px, pz = px + math.sin(a) * len, pz + math.cos(a) * len
+			if i == 1 or i == 3 then
+				local bl, btop = if i == 1 then 3.6 else 3.0, if i == 1 then 0.8 else 0.68
+				for _, side in { -1, 1 } do
+					local br = a + math.rad(side * (40 + i * 4))
+					local at = CFrame.new(px + math.sin(br) * bl / 2, btop - 0.15, pz + math.cos(br) * bl / 2)
+					table.insert(out, B(V(0.08, 0.3, bl), at * CFrame.Angles(0, br, 0), C.crack, DECOR))
+				end
 			end
 		end
 	end
@@ -720,7 +751,6 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 
 	glacier(out)
 	iceCliffs(out)
-	sideCrags(out)
 
 	-- у стен (|x| ≥ 70): ели группами, витрины, пруды, кристаллы, сугробы — вне полос бега
 	for _, t in
@@ -792,7 +822,7 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 		table.insert(out, B(V(len - 2, 0.12, 0.6), at * CFrame.new(0, 0.1, 0), C.neonIce, NEON))
 	end
 
-	-- указатели к следующему уровню: у боковых полос и на снежном мосту над центральным проходом
+	-- указатели к следующему уровню: у боковых полос и у центрального перевала
 	for _, s in { -1, 1 } do
 		local x, z = s * 45.5, 33
 		table.insert(out, Box(x - 0.2, x + 0.2, 0, 3.7, z - 0.2, z + 0.2, C.trunk))
@@ -801,15 +831,11 @@ function GlacierHall.Zone(): ({ Brick }, { Sign })
 			FleaKit.Board(V(4.6, 1.3, 0.3), V(x, 3.3, z - 0.35), C.platEdge, FleaKit.Label("В ДЖУНГЛИ"))
 		)
 	end
-	local bat = CFrame.new(BRIDGE.center) * CFrame.Angles(0, math.rad(BRIDGE.yaw), math.rad(BRIDGE.roll))
+	-- у центрального перевала — столбик слева от прохода (|x| ≤ 7 свободен, круг боя не задет)
+	table.insert(out, Box(-10.8, -10.4, 0, 4.6, 36.2, 36.6, C.trunk))
 	table.insert(
 		out,
-		FleaKit.Board(
-			V(7, 1.1, 0.3),
-			bat * CFrame.new(0, -0.2, -BRIDGE.size.Z / 2 - 0.16),
-			C.platEdge,
-			FleaKit.Label("В ДЖУНГЛИ")
-		)
+		FleaKit.Board(V(5.6, 1.4, 0.3), V(-10.6, 4.1, 36.05), C.platEdge, FleaKit.Label("В ДЖУНГЛИ"))
 	)
 	return out, FleaKit.Signs()
 end
