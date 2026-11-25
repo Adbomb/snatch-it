@@ -431,6 +431,72 @@ function JunkKit.CrushedCar(color: Color3): { Brick }
 	}
 end
 
+-- Силуэты для гор хлама у стен (D68, второй проход): узнаваемые вещи из немногих деталей.
+
+-- Вещь без столкновений (верх горы: по нему не ходят).
+function JunkKit.Decor(bricks: { Brick }): { Brick }
+	for _, brick in bricks do
+		brick.collide = false
+		brick.shadow = false
+	end
+	return bricks
+end
+
+-- Корпус машины без стёкол вдоль X: кузов, кабина, полоса окон, две оси колёс, ржавое пятно.
+function JunkKit.WreckCar(color: Color3): { Brick }
+	return {
+		B(Vector3.new(7, 1.5, 3.6), Vector3.new(0, 1.35, 0), color),
+		B(Vector3.new(3.6, 1.2, 3.2), Vector3.new(-0.3, 2.7, 0), color:Lerp(Palette.White, 0.1)),
+		B(Vector3.new(3.0, 0.7, 3.32), Vector3.new(-0.3, 2.8, 0), C.screen:Lerp(C.dark, 0.45)),
+		B(Vector3.new(3.84, 1.5, 1.5), CFrame.new(2.3, 0.75, 0) * ALONG_Z, C.tire, { shape = "Cylinder" }),
+		B(Vector3.new(3.82, 1.5, 1.5), CFrame.new(-2.3, 0.75, 0) * ALONG_Z, C.tire, { shape = "Cylinder" }),
+		B(Vector3.new(1.4, 0.8, 0.12), Vector3.new(1.6, 1.4, -1.86), C.rust, DECOR),
+	}
+end
+
+-- Старая ванна: белый корпус, тёмная чаша сверху (выступает на 0.05), четыре ножки-шарика.
+function JunkKit.Bathtub(): { Brick }
+	local bricks = {
+		B(Vector3.new(5, 2, 2.4), Vector3.new(0, 1.3, 0), hex("D9DDE0")),
+		B(Vector3.new(4.4, 0.3, 1.8), Vector3.new(0, 2.2, 0), hex("8C949E")),
+	}
+	for _, x in { -2.1, 2.1 } do
+		for _, z in { -0.9, 0.9 } do
+			table.insert(bricks, B(Vector3.new(0.5, 0.5, 0.5), Vector3.new(x, 0.25, z), hex("B08A3E"), BALL))
+		end
+	end
+	return bricks
+end
+
+-- Связка труб вдоль X: три трубы разной длины и толщины (сталь и ржавчина).
+function JunkKit.Pipes(): { Brick }
+	return {
+		B(Vector3.new(7, 0.9, 0.9), Vector3.new(0, 0.45, 0), C.steel, ROUND),
+		B(Vector3.new(5.6, 0.75, 0.75), Vector3.new(0.5, 0.42, 0.85), C.rust, ROUND),
+		B(Vector3.new(6.2, 0.7, 0.7), Vector3.new(-0.3, 1.2, 0.4), C.steel:Lerp(Palette.Black, 0.15), ROUND),
+	}
+end
+
+-- Погнутый дорожный знак: столб наклонён, выцветший ромб повёрнут.
+function JunkKit.BentSign(): { Brick }
+	local pole = CFrame.new(0, 2.4, 0) * CFrame.Angles(0, 0, math.rad(14))
+	return {
+		B(Vector3.new(0.3, 4.8, 0.3), pole, C.steel, DECOR),
+		B(
+			Vector3.new(2.2, 2.2, 0.16),
+			pole * CFrame.new(0, 2.3, -0.24) * CFrame.Angles(math.rad(12), 0, math.rad(45)),
+			hex("C9A23A"),
+			DECOR
+		),
+		B(
+			Vector3.new(1.4, 1.4, 0.18),
+			pole * CFrame.new(0, 2.3, -0.27) * CFrame.Angles(math.rad(12), 0, math.rad(45)),
+			hex("3A3F4A"),
+			DECOR
+		),
+	}
+end
+
 JunkKit.Crate = Props.Crate
 
 return JunkKit
