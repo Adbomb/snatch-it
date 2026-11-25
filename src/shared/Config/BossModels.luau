@@ -173,19 +173,19 @@ local DRAGON_MESHES: { [string]: number } = {
 	WingMembranes = 120947390133081,
 }
 
--- MeshId частей Йети-коллекционера — модель Open Cloud 115856961352655 (Boss5_Yeti.fbx, загружена 2026-11-24;
+-- MeshId частей Йети-коллекционера — модель Open Cloud 81588590365439 (Boss5_Yeti.fbx v2, загружена 2026-11-25;
 -- assets/models/Boss5_meshids.json, вписывает scripts/bind_meshes.py).
 local YETI_MESHES: { [string]: number } = {
-	Block = 105977164972324,
-	BlockFrame = 124643434705095,
-	BlockTop = 78727668818006,
-	BlockTopFrame = 127567874290074,
+	Block = 92018031908899,
+	BlockFrame = 129670003068831,
+	BlockTop = 78753557165025,
+	BlockTopFrame = 95608811130821,
 	BrowL = 127742719894488,
 	BrowR = 98410730061618,
-	ExCritter = 97258883847055,
-	ExCup = 95657324508748,
-	ExGem = 127020399904045,
-	ExLovibum = 124527362780495,
+	ExCritter = 120438780570006,
+	ExCup = 103094086126022,
+	ExGem = 103121246042529,
+	ExLovibum = 72172693210861,
 	EyelidL = 135880482273931,
 	EyelidR = 138408304256772,
 	FingersL = 136742894629751,
@@ -204,7 +204,7 @@ local YETI_MESHES: { [string]: number } = {
 	ShinR = 107427268827355,
 	ThighL = 114709404851630,
 	ThighR = 136101499055448,
-	Torso = 108716682221463,
+	Torso = 127096479016665,
 	UpperArmL = 81337829205729,
 	UpperArmR = 111124413752864,
 }
@@ -264,13 +264,13 @@ return table.freeze({
 		meshes = ids(SPHINX_MESHES),
 		turn = 180,
 	} :: BossModel,
-	-- Йети-коллекционер (D64, шаг 2): меши — модель Open Cloud 115856961352655, карты 1024² загружены 2026-11-24
+	-- Йети-коллекционер (D64, шаг 2): меши — модель Open Cloud 81588590365439, карты 1024² (Body — 2026-11-25)
 	-- (assets/textures/art/Boss5Yeti_maps.json). turn 180 — сверено в Studio по центрам 31 части (отклонение 0.004 ст.).
 	[5] = {
 		name = "Йети-коллекционер",
 		maps = {
 			Head = { color = "rbxassetid://102344471750384", normal = "rbxassetid://126413183189503" },
-			Body = { color = "rbxassetid://93942245151760", normal = "rbxassetid://76219191547989" },
+			Body = { color = "rbxassetid://130027774518374", normal = "rbxassetid://91157337003771" },
 			Limbs = { color = "rbxassetid://110096942919118", normal = "rbxassetid://84860610722819" },
 		},
 		meshes = ids(YETI_MESHES),

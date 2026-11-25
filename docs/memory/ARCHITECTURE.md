@@ -522,7 +522,8 @@
   `AttackDefault`; `Eyes` — линза `Lens` (Neon, гаснет по каналу `lens` клипов); `Body` — выпуклый контур корпуса и ног;
   `Transparent` — лёд глыбы 0.45) и `Config/Boss5YetiClips/*` (10 клипов, в `.styluaignore`). Место глыбы во сне —
   `boss5_yeti.sleep_block` (4.9, 2.4, 145°), подобрано `scripts/blender/boss5_block_clearance.py` (пересечения рук и
-  глыбы по треугольникам в позах sleep / alert / вдох — 0). `BossService.makePart`:
+  глыбы по треугольникам в позах sleep / alert / вдох — 0). Модель Open Cloud — 81588590365439 (v2, 2026-11-25; прежняя 115856961352655 —
+  `Boss5_models.json`, отклонена). `BossService.makePart`:
   часть с `eye` — Neon без карт, `rig.Transparent` — прозрачность меша. `Battle.Bosses[5]`: база 1–4, сила D56,
   `BodyRange` (удар от контура, 3.5 ст.), ходит за игроком (`Leash` 40): погоня останавливает центр дальше на вынос
   контура в сторону игрока (`BattleService`, `outline`). Коллекция: `build_boss5_index.py` (роли ROLES5, OVERRIDE для
