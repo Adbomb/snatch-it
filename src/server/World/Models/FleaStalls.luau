@@ -1,9 +1,12 @@
--- Павильоны и большие вещи «Барахолки» (D44, полировка D45): шесть разных торговых павильонов с крышами, вывесками, витринами,
--- товаром и подсветкой и гигантские декорации — гора сокровищ с огромным сундуком (фон для босса), карманные часы,
--- стопка монет, мачты с ценником и монетой, рекламные щиты на обрывах. Это декорации: настоящие предметы босса
--- стоят только на площадке (MapLayout.ArtSlots). Павильон — функция кирпичей в своих координатах: начало — середина
--- переднего края на полу, ширина вдоль X, глубина в +Z, лицо (витрина) смотрит в −Z. Крупные части (стены, крыши,
--- помосты) твёрдые и с тенью, мелкий товар — без столкновений и тени. Свет — один источник на павильон.
+-- Павильоны и большие вещи «Барахолки» (D44, полировка D45, сквозные полосы D66): шесть разных торговых павильонов
+-- с крышами, витринами, товаром и подсветкой, вывески павильонов у дорожки (щит на двух столбах, мачта с подвесной
+-- «ДЁШЕВО!», ящик «?») и гигантские декорации — гора сокровищ с огромным сундуком (фон для босса), карманные часы,
+-- стопка монет, мачты с ценником и монетой, штабель контейнеров, тележки с зонтами, башни-прожекторы, гирлянды. Это
+-- декорации: настоящие предметы босса стоят только на площадке (MapLayout.ArtSlots). Павильон — функция кирпичей в
+-- своих координатах: начало — середина переднего края на полу, ширина вдоль X, глубина в +Z, лицо (витрина) смотрит
+-- в −Z. Павильоны стоят у стен обрыва (FleaMarket), поэтому их части выше 24 у стены — верхняя крыша и конёк
+-- пагоды, ключ ломбарда — без столкновений. Крупные части (стены, нижние крыши, помосты) твёрдые и с тенью, мелкий
+-- товар — без столкновений и тени. Свет — один источник на павильон.
 -- Зависит от World/Models/FleaKit.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -59,8 +62,8 @@ end
 local FleaStalls = {}
 
 -- «Пагода находок» (28 × 24): помост, бирюзовые стены, четыре столба, прилавок с кубками, двухъярусная крыша с
--- загнутыми золотыми углами, ярус с медальоном-монетой, шпиль с самоцветом, фонарики по краям, вывеска над
--- прилавком и подвесная поперёк фасада.
+-- загнутыми золотыми углами, ярус с медальоном-монетой, шпиль с самоцветом, фонарики по краям. Вывеска «НАХОДКИ» —
+-- у дорожки (FleaStalls.StreetSign).
 function FleaStalls.Pagoda(): { Brick }
 	local out = {
 		Box(-14, 14, 0, 0.8, 0, 24, C.graphite),
@@ -111,7 +114,6 @@ function FleaStalls.Pagoda(): { Brick }
 	-- Нижняя крыша: скаты, пологие свесы с золотой кромкой, загнутые углы, конёк, монеты на торцах.
 	FleaKit.Gable(out, -15.5, 15.5, -1.6, 25.6, 13.4, 5.2, { C.tealDark })
 	eave(out, 31, -1.6, 13.4, 5.2 / 13.6, 3.4, -1, C.tealDark, 1)
-	eave(out, 31, 25.6, 13.4, 5.2 / 13.6, 3.4, 1, C.tealDark, 1)
 	table.insert(out, Box(-15.7, 15.7, 18.35, 18.95, 11.6, 12.4, C.gold))
 	for _, x in { -15.65, 15.65 } do
 		table.insert(out, B(V(0.4, 3.4, 3.4), V(x, 15.3, 12), C.gold, FleaKit.ROUND))
@@ -124,29 +126,25 @@ function FleaStalls.Pagoda(): { Brick }
 	table.insert(out, Round(4.6, 0.5, CFrame.new(0, 18.6, 6.35), C.gold))
 	table.insert(out, Round(3.2, 0.3, CFrame.new(0, 18.6, 6), C.goldLight))
 	table.insert(out, Gem(1.2, V(0, 18.6, 5.6), C.purple))
-	-- Верхняя крыша, свесы, углы, конёк, шпиль.
+	-- Верхняя крыша, свесы, углы, конёк, шпиль. Скаты и конёк — без столкновений: у стены обрыва твёрдое не выше 24
+	-- (scripts/lune/check_world.luau), а верх крыши — 26.4.
+	local roof = #out
 	FleaKit.Gable(out, -9.5, 9.5, 4.2, 19.8, 21.5, 4.6, { C.teal })
+	for i = roof + 1, #out do
+		out[i].collide = false
+	end
 	eave(out, 19, 4.2, 21.5, 4.6 / 7.8, 2.6, -1, C.teal, 0.75)
 	eave(out, 19, 19.8, 21.5, 4.6 / 7.8, 2.6, 1, C.teal, 0.75)
-	table.insert(out, Box(-9.7, 9.7, 25.8, 26.4, 11.6, 12.4, C.gold))
+	table.insert(out, Box(-9.7, 9.7, 25.8, 26.4, 11.6, 12.4, C.gold, DECOR))
 	table.insert(out, Disc(1.6, 26.3, 27.7, 0, 12, C.gold))
 	table.insert(out, B(V(2, 2, 2), V(0, 28.6, 12), C.goldLight, BALL))
 	table.insert(out, Gem(1.4, V(0, 30.3, 12), C.purple))
-	-- Вывески: подвесная поперёк фасада (читается вдоль коридора) и над прилавком.
-	table.insert(out, Box(-13.2, -12.8, 12.3, 12.7, -8.2, 0.9, C.graphiteDark, DECOR))
-	for _, z in { -7.4, -2.6 } do
-		table.insert(out, Box(-13.06, -12.94, 11.4, 12.3, z - 0.06, z + 0.06, C.metal, DECOR))
-	end
-	table.insert(out, Board(V(0.4, 4.4, 6), V(-13, 9.2, -5), C.orange, Label("ДЁШЕВО!", SIDES)))
-	table.insert(out, Box(-13.15, -12.85, 6.8, 11.6, -8.2, -1.8, C.gold, DECOR))
-	table.insert(out, Board(V(7.4, 1.8, 0.3), V(0, 10.9, 0.45), C.orange, Label("НАХОДКИ")))
-	table.insert(out, Box(-3.9, 3.9, 9.85, 11.95, 0.55, 0.75, C.gold, DECOR))
 	return out
 end
 
 -- «Купол редкостей» (24 × 24): круглый помост, фиолетовый барабан с золотыми пилястрами, карниз с неоновым кольцом,
--- бирюзовый купол с золотым поясом, фонарь с огромным кубком наверху, витрина-окно со светящимся фоном, вывеска,
--- стеклянные кубы с самоцветами у входа, подвесные знамёна.
+-- бирюзовый купол с золотым поясом, фонарь с огромным кубком наверху, витрина-окно со светящимся фоном, стеклянные
+-- кубы с самоцветами у входа, подвесные знамёна. Вывеска «РЕДКОСТИ» — у дорожки (FleaStalls.StreetSign).
 function FleaStalls.Rotunda(): { Brick }
 	local cz = 12
 	local out = {
@@ -192,24 +190,19 @@ function FleaStalls.Rotunda(): { Brick }
 	Put(out, FleaKit.Trophy(C.silver, 1.2, true), CFrame.new(-2.5, 2.6, 2.8))
 	table.insert(out, Gem(1.3, V(0, 3.5, 2.8), C.purpleLight))
 	table.insert(out, B(V(1.3, 1.3, 1.3), V(2.5, 3.25, 2.8), C.goldLight, BALL))
-	-- Вывеска на кронштейнах.
-	table.insert(out, Board(V(12, 2.4, 0.5), V(0, 10.6, 1.6), C.orange, Label("РЕДКОСТИ")))
-	table.insert(out, Box(-6.3, 6.3, 9.1, 12.1, 1.8, 2.1, C.gold, DECOR))
-	for _, x in { -5, 5 } do
-		table.insert(out, Box(x - 0.3, x + 0.3, 10.2, 11, 2.1, 6, C.graphite, DECOR))
-	end
 	-- Стеклянные кубы с самоцветами по бокам от входа.
 	for i, x in { -8.6, 8.6 } do
-		table.insert(out, Box(x - 1.2, x + 1.2, 0, 2.4, -2.7, -0.3, C.graphite))
-		table.insert(out, Box(x - 1.1, x + 1.1, 2.4, 5, -2.6, -0.4, C.glass, GLASS))
-		table.insert(out, Gem(1.1, V(x, 3.7, -1.5), if i == 1 then C.teal else C.red))
-		table.insert(out, Box(x - 1.3, x + 1.3, 5, 5.4, -2.8, -0.2, C.gold, DECOR))
+		table.insert(out, Box(x - 1.2, x + 1.2, 0, 2.4, -0.3, 2.1, C.graphite))
+		table.insert(out, Box(x - 1.1, x + 1.1, 2.4, 5, -0.2, 2.0, C.glass, GLASS))
+		table.insert(out, Gem(1.1, V(x, 3.7, 0.9), if i == 1 then C.teal else C.red))
+		table.insert(out, Box(x - 1.3, x + 1.3, 5, 5.4, -0.4, 2.2, C.gold, DECOR))
 	end
 	return out
 end
 
 -- «Сюрпризы» — большой полосатый шатёр (24 × 20): помост, столбы, крыша оранжево-кремовыми полосами, кромка с
--- флажками, флаги на коньке и торцах, вывеска; внутри чемоданы, подарочные коробки и ящик «?»; тёплая лампа.
+-- флажками, флаги на коньке и торцах; внутри чемоданы и подарочные коробки; тёплая лампа. Вывеска «СЮРПРИЗЫ» — у
+-- дорожки (FleaStalls.StreetSign).
 function FleaStalls.Tent(): { Brick }
 	local out = {
 		Box(-12, 12, 0, 0.6, 0, 20, C.graphite),
@@ -240,14 +233,10 @@ function FleaStalls.Tent(): { Brick }
 		table.insert(out, Box(math.min(x0, x1), math.max(x0, x1), top - 1.9, top - 0.1, 9.92, 10.08, color, DECOR))
 		table.insert(out, B(V(0.7, 0.7, 0.7), V(x, top + 0.3, 10), C.gold, BALL))
 	end
-	table.insert(out, Board(V(11, 2.8, 0.4), V(0, 12.3, -1.75), C.purple, Label("СЮРПРИЗЫ")))
-	table.insert(out, Box(-5.8, 5.8, 10.6, 14, -1.5, -1.2, C.gold, DECOR))
-	-- Товар: стол с чемоданами, подарки, ящик «?».
+	-- Товар: стол с чемоданами, подарки (ящик «?» вынесен к дорожке — FleaStalls.MysteryCrate).
 	table.insert(out, Box(-10, -1.5, 0.6, 3.2, 8, 12.5, C.wood))
 	Put(out, FleaKit.Suitcases(), CFrame.new(-5.6, 3.2, 10.2) * CFrame.Angles(0, 0.15, 0))
 	Put(out, FleaKit.GiftBoxes(), CFrame.new(3, 0.6, 9) * CFrame.Angles(0, -0.2, 0))
-	table.insert(out, Box(7, 10.4, 0.6, 4, 5.2, 8.6, C.teal))
-	table.insert(out, Board(V(2.6, 2.6, 0.2), V(8.7, 2.3, 5.1), C.goldLight, Label("?")))
 	-- Лампа под коньком.
 	table.insert(out, Box(-0.06, 0.06, 9.6, 10.3, 9.94, 10.06, C.metal, DECOR))
 	table.insert(out, Neon(V(1.2, 1.2, 1.2), V(0, 9, 10), C.orangeLight))
@@ -256,8 +245,8 @@ function FleaStalls.Tent(): { Brick }
 end
 
 -- «Скупка» — два морских контейнера крест-накрест (26 × 16): нижний бирюзовый — лавка с поднятой шторкой, прилавком,
--- кассой и полками, неоновая лампа под потолком (свет); верхний оранжевый нависает над проходом, на нём вывеска в
--- неоновой раме; сбоку лестница, спереди ящики и мешок.
+-- кассой и полками, неоновая лампа под потолком (свет); верхний оранжевый нависает над проходом; сбоку лестница,
+-- спереди ящики и мешок. Вывеска «СКУПКА» в неоновой раме — у дорожки (FleaStalls.StreetSign).
 function FleaStalls.Containers(): { Brick }
 	local out = {
 		Box(-12, 12, 0, 0.6, 2, 16, C.graphite),
@@ -307,25 +296,17 @@ function FleaStalls.Containers(): { Brick }
 		table.insert(out, Box(-5.75, -5.4, 10.2, 18.6, z - 0.3, z + 0.3, C.orangeDark, DECOR))
 		table.insert(out, Box(5.4, 5.75, 10.2, 18.6, z - 0.3, z + 0.3, C.orangeDark, DECOR))
 	end
-	-- Вывеска в неоновой раме на верхнем контейнере.
-	table.insert(out, Board(V(14, 3.8, 0.5), V(0, 21.6, -2.2), C.graphiteDark, Label("СКУПКА")))
-	table.insert(out, Neon(V(14.4, 0.3, 0.2), V(0, 23.65, -2.5), C.orange))
-	table.insert(out, Neon(V(14.4, 0.3, 0.2), V(0, 19.55, -2.5), C.orange))
-	table.insert(out, Neon(V(0.3, 4.3, 0.3), V(-7.15, 21.6, -2.5), C.orange))
-	table.insert(out, Neon(V(0.3, 4.3, 0.3), V(7.15, 21.6, -2.5), C.orange))
-	for _, x in { -4, 4 } do
-		table.insert(out, Box(x - 0.3, x + 0.3, 19, 19.7, -2, 2, C.graphite, DECOR))
-	end
 	-- Лестница сбоку, ящики и мешок у входа.
 	table.insert(out, B(V(2, 18, 2), V(13.4, 9, 10), C.metal, { shape = "Truss" }))
-	Put(out, FleaKit.NeonCrates(), CFrame.new(-9.5, 0, -3) * CFrame.Angles(0, 0.3, 0))
-	FleaKit.Sack(out, CFrame.new(9.5, 0, -1.6) * CFrame.Angles(0, -0.4, 0), 1.1)
+	Put(out, FleaKit.NeonCrates(), CFrame.new(-8.5, 0.6, 9))
+	FleaKit.Sack(out, CFrame.new(9.6, 0.6, 7) * CFrame.Angles(0, -0.4, 0), 1.1)
 	return out
 end
 
 -- «Ломбард» — сейф (26 × 16): помост, графитовый корпус с золотыми поясами, колонны, огромная круглая дверь сейфа со
--- штурвалом и болтами, вывеска, ступенчатый аттик с башенками, золотой ключ, воткнутый в крышу; у входа слитки и
--- мешок; настенные лампы (тёплый свет).
+-- штурвалом и болтами, ступенчатый аттик с башенками, золотой ключ, воткнутый в крышу (без столкновений: у стены
+-- обрыва твёрдое не выше 24); у входа слитки и мешок; настенные лампы (тёплый свет). Вывеска «ЛОМБАРД» — у дорожки
+-- (FleaStalls.StreetSign).
 function FleaStalls.Vault(): { Brick }
 	local out = {
 		Box(-13, 13, 0, 0.8, 0, 16, C.graphiteDark),
@@ -333,8 +314,6 @@ function FleaStalls.Vault(): { Brick }
 		Box(-11.5, 11.5, 0.8, 14.5, 3, 16, C.graphite),
 		Box(-11.7, 11.7, 0.8, 1.6, 2.8, 16.2, C.gold),
 		Box(-11.7, 11.7, 10.4, 11, 2.8, 16.2, C.gold),
-		Board(V(15, 2.6, 0.4), V(0, 12.6, 2.75), C.graphiteDark, Label("ЛОМБАРД")),
-		Box(-7.8, 7.8, 11.1, 14.1, 2.7, 3.05, C.gold, DECOR),
 		Box(-12.2, 12.2, 14.5, 15.5, 2.4, 16.6, C.gold),
 		Box(-9.5, 9.5, 15.5, 16.8, 4, 15, C.graphite),
 		Box(-6.5, 6.5, 16.8, 18, 5.6, 13.4, C.gold),
@@ -384,15 +363,16 @@ function FleaStalls.Vault(): { Brick }
 		table.insert(out, Neon(V(0.8, 1.2, 0.5), V(x, 8.6, 2.7), C.goldLight))
 	end
 	out[#out].light = lamp(18, C.goldLight)
-	-- Ключ, воткнутый в крышу: стержень, воротник, кольцо-бородка с «дыркой» и самоцветом, зубцы у крыши.
+	-- Ключ, воткнутый в крышу: стержень, воротник, кольцо-бородка с «дыркой» и самоцветом, зубцы у крыши. Весь без
+	-- столкновений: он у стены обрыва и выше 24.
 	local key = {
-		Disc(1.3, 17.6, 27, 0, 0, C.gold, SOLID),
+		Disc(1.3, 17.6, 27, 0, 0, C.gold),
 		Disc(2.2, 26.6, 27.6, 0, 0, C.goldDark),
-		Round(7, 1.4, CFrame.new(0, 30.9, 0), C.gold, SOLID),
+		Round(7, 1.4, CFrame.new(0, 30.9, 0), C.gold),
 		Round(3.6, 1.6, CFrame.new(0, 30.9, 0), C.graphiteDark),
 		Gem(1.8, V(0, 30.9, 0), C.purple),
-		Box(0.6, 2.6, 18.6, 20, -0.4, 0.4, C.gold),
-		Box(0.6, 1.9, 20.6, 21.6, -0.4, 0.4, C.gold),
+		Box(0.6, 2.6, 18.6, 20, -0.4, 0.4, C.gold, DECOR),
+		Box(0.6, 1.9, 20.6, 21.6, -0.4, 0.4, C.gold, DECOR),
 		Disc(2.4, 23.4, 23.9, 0, 0, C.goldLight),
 	}
 	Put(out, key, CFrame.new(0, 0, 9.5) * CFrame.Angles(0, math.rad(-20), 0) * CFrame.Angles(0, 0, math.rad(6)))
@@ -414,16 +394,16 @@ local function gift(size: Vector3, color: Color3, ribbon: Color3): { Brick }
 end
 
 -- «Призы» — призовой терминал (24 × 16): здание-лавка, а не отдельный автомат. Большая открытая витрина — полки с
--- призами на тёмном фоне, стойка выдачи с люком и призом, экран и вывеска «ВЫДАЧА», полосатый
--- навес, световой короб с лампочками (средняя — свет павильона) и вывеской «ПРИЗЫ», звезда наверху, золотые колонны по углам. Куполов с
--- капсулами и рычагов, как у предмета «Легендарный автомат с призами», здесь нет.
+-- призами на тёмном фоне, стойка выдачи с люком и призом, экран, полосатый навес, световой короб с лампочками
+-- (средняя — свет павильона) и неоновой полосой, звезда наверху, золотые колонны по углам. Куполов с капсулами и
+-- рычагов, как у предмета «Легендарный автомат с призами», здесь нет. Вывески «ПРИЗЫ» и «ВЫДАЧА» — у дорожки
+-- (FleaStalls.PrizeSign).
 function FleaStalls.PrizeTerminal(): { Brick }
 	local out = {
 		Box(-12, 12, 0, 0.4, 0, 16, C.purpleDark),
 		Box(-11, 11, 0.4, 15, 5, 16, C.purple),
 		Box(-12, 12, 15, 18.6, 3.6, 16.4, C.graphiteDark),
 		Neon(V(23.6, 0.3, 0.3), V(0, 18.35, 3.45), C.orange),
-		Board(V(14, 2.6, 0.3), V(0, 16.7, 3.45), C.orange, Label("ПРИЗЫ")),
 		Box(-0.3, 0.3, 18.6, 19.6, 9.85, 10.15, C.gold, DECOR), -- тоньше ромба: грани не совпадают
 		B(V(3.4, 3.4, 0.5), V(0, 21.2, 10), C.gold, DECOR),
 		B(V(3.4, 3.4, 0.6), CFrame.new(0, 21.2, 10) * CFrame.Angles(0, 0, math.rad(45)), C.goldLight, DECOR),
@@ -460,14 +440,13 @@ function FleaStalls.PrizeTerminal(): { Brick }
 	Put(out, FleaKit.Trophy(C.silver, 0.9, true), CFrame.new(-7.2, 9.7, 4.2))
 	table.insert(out, B(V(1.5, 1.5, 1.5), V(-4.4, 10.45, 4.2), C.teal, BALL))
 	Put(out, gift(V(1.5, 1.2, 1.1), C.goldLight, C.purple), CFrame.new(-1.5, 9.7, 4.2) * CFrame.Angles(0, -0.25, 0))
-	-- Стойка выдачи: прилавок, люк в золотой раме, приз на прилавке, экран, вывеска, звонок, навес.
+	-- Стойка выдачи: прилавок, люк в золотой раме, приз на прилавке, экран, звонок, навес.
 	table.insert(out, Box(3.4, 11, 0.4, 4, 2.6, 5, C.teal))
 	table.insert(out, Box(3.2, 11.2, 4, 4.3, 2.4, 5.1, C.cream))
 	table.insert(out, Box(5, 9.6, 4.3, 8.9, 4.7, 5.1, C.gold))
 	table.insert(out, Box(5.5, 9.1, 4.5, 8.5, 4.6, 4.9, C.graphiteDark, DECOR))
 	Put(out, gift(V(1.8, 1.4, 1.4), C.purple, C.goldLight), CFrame.new(7.3, 4.3, 3.6) * CFrame.Angles(0, 0.2, 0))
 	table.insert(out, Neon(V(5.8, 2.2, 0.2), V(7.3, 10.5, 4.85), C.teal))
-	table.insert(out, Board(V(5.8, 1.1, 0.2), V(7.3, 12.45, 4.85), C.graphiteDark, Label("ВЫДАЧА")))
 	table.insert(out, Disc(0.9, 4.3, 4.55, 4.2, 3.2, C.gold))
 	table.insert(out, B(V(0.8, 0.8, 0.8), V(4.2, 4.6, 3.2), C.gold, BALL))
 	for i, color in { C.teal, C.cream, C.teal } do
@@ -689,6 +668,82 @@ function FleaStalls.CoinStack(): { Brick }
 	table.insert(out, FleaKit.Coin(4.8, -3.4, 0.3, 2.6))
 	table.insert(out, FleaKit.Coin(2.4, -4.8, 0.4, 2.2))
 	return out
+end
+
+-- Вывеска павильона у дорожки: щит с надписью text (width × height, цвет color, середина на высоте y) в золотой
+-- рамке (или неоновой цвета trim) между двумя столбами с золотыми поясами и шарами. Павильоны стоят у стен обрыва
+-- (за сквозными полосами), и их надписи с камеры игрока далеко — вывеска стоит между бордюром и полосой, лицом к
+-- проходу; низ щита не ниже 9.4 — выше столбов редкостей и фонарей. Начало — середина низа, лицо смотрит в −Z.
+function FleaStalls.StreetSign(
+	text: string,
+	width: number,
+	height: number,
+	color: Color3,
+	y: number,
+	trim: Color3?
+): { Brick }
+	local half = width / 2
+	local frame = if trim then { material = Enum.Material.Neon, collide = false, shadow = false } else DECOR
+	local out = {
+		Board(V(width, height, 0.4), V(0, y, 0), color, Label(text)),
+		-- рамка тоньше щита и шире его: лицевые грани не в одной плоскости (D36)
+		Box(-half - 0.15, half + 0.15, y - height / 2 - 0.15, y + height / 2 + 0.15, -0.1, 0.35, trim or C.gold, frame),
+	}
+	local top = y + height / 2 + 0.6
+	for _, s in { -1, 1 } do
+		local x = s * (half + 0.45) -- столб встык к рамке
+		table.insert(out, Box(x - 0.7, x + 0.7, 0, 0.4, -0.7, 0.7, C.graphite))
+		table.insert(out, Box(x - 0.3, x + 0.3, 0.4, top, -0.3, 0.3, C.graphiteDark))
+		table.insert(out, Box(x - 0.4, x + 0.4, 7, 7.8, -0.4, 0.4, C.gold, DECOR))
+		table.insert(out, B(V(0.9, 0.9, 0.9), V(x, top + 0.35, 0), C.gold, BALL))
+	end
+	return out
+end
+
+-- Вывеска «Призов» у дорожки: щит «ПРИЗЫ» на двух столбах (StreetSign) и под ним, со стороны стойки выдачи (+X),
+-- подвешенная на двух тягах табличка «ВЫДАЧА» в бирюзовой рамке. Начало — середина низа, лицо смотрит в −Z.
+function FleaStalls.PrizeSign(): { Brick }
+	local y = 14.4
+	local out = FleaStalls.StreetSign("ПРИЗЫ", 12, 2.6, C.orange, y)
+	local x, plate = 3, 11.6
+	local hang = y - 2.6 / 2 - 0.15 -- низ рамки щита
+	-- табличка выступает вперёд щита на 0.05: лицевые грани не в одной плоскости (D36)
+	table.insert(out, Board(V(5.8, 1.2, 0.3), V(x, plate, -0.1), C.graphiteDark, Label("ВЫДАЧА")))
+	table.insert(out, Box(x - 3.05, x + 3.05, plate - 0.75, plate + 0.75, -0.1, 0.25, C.teal, DECOR))
+	for _, dx in { -2.2, 2.2 } do
+		table.insert(out, Box(x + dx - 0.06, x + dx + 0.06, plate + 0.75, hang, 0.02, 0.14, C.metal, DECOR))
+	end
+	return out
+end
+
+-- Мачта с подвесной вывеской «ДЁШЕВО!» (раньше висела на торце пагоды): столб, кронштейн к −Z, на двух тягах щит
+-- поперёк кронштейна с надписью с обеих сторон — читается вдоль коридора. Щит висит над бордюром на высоте 7–11.4
+-- и сделан без столкновений. Начало — середина низа столба.
+function FleaStalls.CheapSign(): { Brick }
+	local out = {
+		Box(-1, 1, 0, 0.6, -1, 1, C.graphite),
+		Box(-0.4, 0.4, 0.6, 14, -0.4, 0.4, C.graphiteDark),
+		Box(-0.55, 0.55, 7, 7.8, -0.55, 0.55, C.gold, DECOR),
+		Box(-0.2, 0.2, 12.3, 12.7, -9.8, 0.6, C.graphiteDark, DECOR),
+		B(V(0.9, 0.9, 0.9), V(0, 14.4, 0), C.gold, BALL),
+	}
+	for _, z in { -8.8, -4 } do
+		table.insert(out, Box(-0.06, 0.06, 11.4, 12.3, z - 0.06, z + 0.06, C.metal, DECOR))
+	end
+	table.insert(out, Board(V(0.4, 4.4, 6), V(0, 9.2, -6.4), C.orange, Label("ДЁШЕВО!", SIDES)))
+	out[#out].collide = false
+	table.insert(out, Box(-0.15, 0.15, 6.8, 11.6, -9.6, -3.2, C.gold, DECOR))
+	return out
+end
+
+-- Ящик «?» (раньше стоял в шатре «Сюрпризы»): бирюзовый ящик с золотой крышкой, на лице — табличка «?». Начало —
+-- середина низа, лицо смотрит в −Z.
+function FleaStalls.MysteryCrate(): { Brick }
+	return {
+		Box(-1.7, 1.7, 0, 3.4, -1.7, 1.7, C.teal),
+		Box(-1.8, 1.8, 3.4, 3.7, -1.8, 1.8, C.gold, DECOR),
+		Board(V(2.6, 2.6, 0.2), V(0, 1.7, -1.8), C.goldLight, Label("?")),
+	}
 end
 
 -- Мачта-символ: столб, кронштейн к −Z и подвешенный знак: ценник с надписью text (с обеих сторон) или, без text,
