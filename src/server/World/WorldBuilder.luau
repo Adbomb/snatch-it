@@ -499,7 +499,7 @@ local function buildZone(index: number, parent: Instance)
 	local decor: { ModelBuilder.Brick } = {}
 	local signs: { FleaMarket.Sign } = {}
 	if zone.id == "Junk" then
-		decor = Junkyard.Zone() -- уровень 1 «Свалка» (D41)
+		decor, signs = Junkyard.Zone() -- уровень 1 «Свалка» (D41, D68)
 	elseif zone.id == "Flea" then
 		decor, signs = FleaMarket.Zone() -- уровень 2 «Барахолка» (D43)
 	elseif zone.id == "Subway" then

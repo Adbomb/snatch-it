@@ -60,7 +60,8 @@ local function floorOf(index: number): any
 	}
 end
 
-local junk = placed(1, Junkyard.Zone())
+local junkBricks, junkSigns = Junkyard.Zone()
+local junk = placed(1, junkBricks)
 local fleaBricks, fleaSigns = FleaMarket.Zone()
 local flea = placed(2, fleaBricks)
 local subwayBricks, subwaySigns = SubwayStation.Zone()
@@ -417,6 +418,7 @@ local function checkArenaZone(zone: number, title: string, flea: { any }, fleaBr
 	check(distinct == 4, ("разных поворотов предметов: %d из 4"):format(distinct))
 end
 
+checkArenaZone(1, "Свалка", junk, junkBricks, junkSigns)
 checkArenaZone(2, "Барахолка", flea, fleaBricks, fleaSigns)
 checkArenaZone(3, "Подземка", subway, subwayBricks, subwaySigns)
 checkArenaZone(4, "Пустыня", desert, desertBricks, desertSigns)

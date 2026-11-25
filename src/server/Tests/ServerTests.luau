@@ -3241,7 +3241,18 @@ test(
 			pedestals[1],
 			pedestals[2]
 		)
-		check(pedestals[1] == 4 and pedestals[2] == 0, counted)
+		check(pedestals[1] == 0 and pedestals[2] == 0, counted) -- у пса площадка (D68), постаментов нет
+		local junkY = MapLayout.ZoneCFrame(1).Position.Y + MapLayout.Arenas[1].top
+		for slot = 1, 4 do
+			local uid, part = BossLootService.SlotItem(1, slot)
+			check(uid and part, ("пёс: слот %d пуст"):format(slot))
+			local item = part :: BasePart
+			local bottom = item.Position.Y - item.Size.Y / 2
+			check(
+				math.abs(bottom - junkY) < 0.05,
+				("пёс: слот %d, низ предмета %.2f, площадка %.2f"):format(slot, bottom, junkY)
+			)
+		end
 	end
 )
 
