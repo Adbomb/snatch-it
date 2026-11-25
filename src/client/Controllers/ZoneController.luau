@@ -5,6 +5,7 @@
 -- уровень (из Safe Zone или из соседнего уровня). В какой зоне игрок — по полу зон (workspace.World.Map.Zones,
 -- атрибут Zone у папки зоны). Голограммы (тег Hologram) слегка покачиваются и мерцают — только у этого клиента;
 -- ночью (на карте NightBarrier) надписи уровней гаснут. Теги Spin и Bob — вращение и покачивание украшений магазинов.
+-- Смена зоны — событие ZoneController.Changed, границы пола — ZoneController.Bounds.
 -- Зависит от Config/GameConfig, Config/UITokens, Shared/StudUI, Shared/TextCase.
 
 local CollectionService = game:GetService("CollectionService")
@@ -28,6 +29,10 @@ local BOB_PERIOD = 3
 type ZoneBox = { index: number, min: Vector3, max: Vector3 }
 
 local ZoneController = {}
+
+-- Смена зоны под игроком (номер или nil — вне коридора); слушает свет по зонам (ZoneAtmosphereController).
+local changed = Instance.new("BindableEvent")
+ZoneController.Changed = changed.Event
 
 local zones: { ZoneBox } = {}
 local banner: CanvasGroup
@@ -162,6 +167,16 @@ local function collectZones()
 	end
 end
 
+-- Границы пола зоны index (мин. и макс. углы по x и z, y — уровень пола) или nil, пока зоны не собраны.
+function ZoneController.Bounds(index: number): (Vector3?, Vector3?)
+	for _, zone in zones do
+		if zone.index == index then
+			return zone.min, zone.max
+		end
+	end
+	return nil, nil
+end
+
 local function zoneAt(position: Vector3): number?
 	for _, zone in zones do
 		if
@@ -189,6 +204,7 @@ local function watchZones()
 				if index then
 					ZoneController.Show(index)
 				end
+				changed:Fire(index)
 			end
 		end
 	end

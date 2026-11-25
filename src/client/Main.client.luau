@@ -23,6 +23,7 @@ require(Controllers:WaitForChild("BossVolleyController")).Init() -- босс 10:
 require(Controllers:WaitForChild("BossAuraController")).Init() -- босс 10: прототип ауры C.1 (только по атрибуту)
 require(Controllers:WaitForChild("PlayerSwingController")).Init() -- анимация автоудара (пока без анимации)
 require(Controllers:WaitForChild("ZoneController")).Init()
+require(Controllers:WaitForChild("ZoneAtmosphereController")).Init() -- свет по зонам и сияние «Ледника»
 require(Controllers:WaitForChild("OwnerTagController")).Init()
 require(Controllers:WaitForChild("ItemLabelController")).Init()
 require(Controllers:WaitForChild("PvpController")).Init()
