@@ -149,7 +149,7 @@ def round_ball(a, keys, c, r, n=8, sides=16):
     for k in range(n):
         za, zb = -r + 2 * r * k / n, -r + 2 * r * (k + 1) / n
         zm = (za + zb) / 2
-        rr = max(math.sqrt(max(r * r - zm * zm, 0.0)), r * 0.3)
+        rr = max(math.sqrt(max(r * r - zm * zm, 0.0)), r * 0.3) / math.cos(math.pi / sides)  # ширина по граням = 2r
         pts = [(x + rr * math.cos(math.pi / sides + 2 * math.pi * i / sides),
                 y + rr * math.sin(math.pi / sides + 2 * math.pi * i / sides)) for i in range(sides)]
         a.prism(keys[k % len(keys)], pts, z + za - (0.005 if k else 0), z + zb + 0.005, bevel=0)
@@ -493,16 +493,16 @@ def pearl_otter():
     # жемчужина — одна, крупная, круглая, на груди; блики сверху (видны с ракурса игрока)
     part(a, "Pearl", "Body", P((0, -0.15, t + 0.7)))
     with_matrix(a, rz)
-    pc = V((0, -0.12, t + 0.98))
-    r = 0.34  # шар размером с голову выдры
-    round_ball(a, ["pearlB", "pearlB", "pearl", "pearl", "pearl", "pearl", "pearl", "pearl"], pc, r, n=8)
-    a.prism("pearlP", S.octagon(-0.24, 0.04, pc.y - 0.2, pc.y + 0.06, 0.08), pc.z + r - 0.05, pc.z + r + 0.012,
+    r = 0.3  # шар: диаметр 0.6 — меньше головы выдры (0.66), ширина = высоте
+    pc = V((0, -0.12, t + 0.68 + r - 0.04))  # лежит на груди
+    round_ball(a, ["pearlB", "pearlB", "pearlB"] + ["pearl"] * 9, pc, r, n=12)  # 12 ярусов — круглее
+    a.prism("pearlP", S.octagon(-0.2, 0.04, pc.y - 0.17, pc.y + 0.05, 0.07), pc.z + r - 0.05, pc.z + r + 0.006,
             bevel=0)  # розовый перламутровый блик
-    a.box("white", -0.17, -0.07, pc.y - 0.14, pc.y - 0.04, pc.z + r - 0.03, pc.z + r + 0.022, bevel=0)
+    a.box("white", -0.14, -0.06, pc.y - 0.12, pc.y - 0.04, pc.z + r - 0.03, pc.z + r + 0.01, bevel=0)
     for s, nm in ((1, "ArmL"), (-1, "ArmR")):  # лапки обнимают жемчужину с боков
         part(a, nm, "Body", P((s * 0.32, -0.42, t + 0.62)))
         with_matrix(a, rz)
-        A.limb(a, "ott", [(s * 0.32, -0.42, t + 0.62), (s * 0.5, -0.24, t + 0.84), (s * 0.38, -0.12, t + 1.0)],
+        A.limb(a, "ott", [(s * 0.32, -0.42, t + 0.62), (s * 0.46, -0.24, t + 0.8), (s * 0.35, -0.12, t + 0.94)],
                [0.13, 0.12, 0.11])
     part(a, "Head", "Body", P((0, -0.65, t + 0.55)))
     with_matrix(a, rz)
@@ -673,10 +673,11 @@ def treasure_griffin():
             kchain(a, "wingT", [root.lerp(tip, 0.6) + V((0, 0.06 * k, dz)), tip + V((0, 0.06 * k, dz))],
                    [0.3, 0.12], [0.07, 0.05], up=(0, 1, 0), overlap=0.4)
         a.group = "Body"
+    # львиный хвост: от крупа выходит из-за крыла на сторону игрока (−x) и обвивает горку монет сбоку
     part(a, "Tail", "Body", (0, 1.05, z0 + 0.3))
-    kchain(a, "lion", [(0, 1.02, z0 + 0.32), (0.32, 1.25, z0 + 0.26), (0.62, 1.15, z0 + 0.52)], [0.12, 0.1, 0.09],
-           up=(0, 0, 1))
-    A.ball(a, "lionD", (0.66, 1.13, z0 + 0.66), 0.15, n=2)  # кисточка
+    kchain(a, "lion", [(0, 1.02, z0 + 0.32), (-0.5, 1.2, z0 + 0.16), (-0.98, 0.85, z0 + 0.06), (-1.12, 0.3, z0 + 0.04),
+                       (-1.02, -0.25, z0 + 0.08)], [0.14, 0.13, 0.12, 0.11, 0.1], up=(0, 0, 1), overlap=0.5)
+    A.ball(a, "lionD", (-0.95, -0.42, z0 + 0.12), 0.16, n=2)  # кисточка
     part(a, "Head", "Body", (0, -0.55, z0 + 0.85))
     hc = V((0, -0.64, z0 + 1.15))
     th = A.body(a, "fea", (hc.x, hc.y, hc.z - 0.28), 0.32, 0.34, 0.56, "ball", n=4)
