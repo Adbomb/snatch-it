@@ -2,7 +2,10 @@
  "creatures_model": "109581116064610",
  "uploaded": "2026-11-26",
  "fbx": {
-  "creatures": "assets/models/Boss6Creatures_all.fbx"
+  "creatures": "assets/models/Boss6Creatures_all.fbx",
+  "rework": "assets/models/Boss6Creatures_rework6.fbx"
  },
- "note": "22 существа, утверждённые владельцем 2026-11-26; 8 переделанных (CocoonFruitBat, SnailTurtle, ParadiseDancer, LightningEel, ArchBoto, BigEyeTarsier, CrocLanternfly, BeeHummingbird) — отдельной загрузкой после «ок»"
+ "note": "22 существа — creatures_model; 6 переделанных (SnailTurtle, BeeHummingbird, BigEyeTarsier, CrocLanternfly, ParadiseDancer, LightningEel) — rework_model; CocoonFruitBat и ArchBoto — после «ок» владельца",
+ "rework_model": "89477422239796",
+ "rework_uploaded": "2026-11-26"
 }

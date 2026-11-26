@@ -6,7 +6,7 @@
 привязываются по имени; существа разнесены рядами, чтобы не наслаивались. Пишет assets/models/Boss6Creatures_all.fbx
 и печатает PACK_OK <существ> <частей> <треугольников>; ASYM — пары L/R разного размера (>25 %, проверить глазами:
 ошибка группы или задуманная асимметрия).
-Запуск: blender --background --factory-startup --python scripts/blender/pack_boss6_fbx.py -- <репо>
+Запуск: blender --background --factory-startup --python scripts/blender/pack_boss6_fbx.py -- <репо> [id…] [out=<имя.fbx>]
 """
 
 import glob
@@ -17,9 +17,12 @@ import bpy
 
 argv = sys.argv[sys.argv.index("--") + 1 :]
 REPO = os.path.abspath(argv[0])
+ONLY = [x for x in argv[1:] if not x.startswith("out=")]  # id существ (пусто — все, у кого есть FBX)
+OUT_NAME = next((x[4:] for x in argv[1:] if x.startswith("out=")), "Boss6Creatures_all.fbx")
 ART = os.path.join(REPO, "assets", "models", "art", "boss6")
-OUT = os.path.join(REPO, "assets", "models", "Boss6Creatures_all.fbx")
-files = sorted(glob.glob(os.path.join(ART, "*.fbx")))
+OUT = os.path.join(REPO, "assets", "models", OUT_NAME)
+files = sorted(f for f in glob.glob(os.path.join(ART, "*.fbx"))
+               if not ONLY or os.path.splitext(os.path.basename(f))[0] in ONLY)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 keep, tris = [], 0

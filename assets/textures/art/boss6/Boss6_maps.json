@@ -3,8 +3,14 @@
   "normal": "rbxassetid://88735897159197",
   "color": "rbxassetid://87006960498807"
  },
+ "BeeHummingbird": {
+  "color": "rbxassetid://80048932496500"
+ },
  "BigBeakToucan": {
   "color": "rbxassetid://88847571014108"
+ },
+ "BigEyeTarsier": {
+  "color": "rbxassetid://98392173908542"
  },
  "CatCatfish": {
   "color": "rbxassetid://104048012221964"
@@ -12,6 +18,10 @@
  "ConePangolin": {
   "normal": "rbxassetid://131251733075311",
   "color": "rbxassetid://73830305426180"
+ },
+ "CrocLanternfly": {
+  "color": "rbxassetid://100265803909249",
+  "normal": "rbxassetid://119511337342631"
  },
  "DinoCassowary": {
   "normal": "rbxassetid://116637143113176",
@@ -40,6 +50,10 @@
   "color": "rbxassetid://133773419960905",
   "normal": "rbxassetid://93223478353985"
  },
+ "LightningEel": {
+  "color": "rbxassetid://103244405606019",
+  "normal": "rbxassetid://129128048645746"
+ },
  "LionTamarin": {
   "color": "rbxassetid://132541584485545",
   "normal": "rbxassetid://112042648687059"
@@ -51,6 +65,10 @@
  "NeonStickInsect": {
   "color": "rbxassetid://111271725576700"
  },
+ "ParadiseDancer": {
+  "color": "rbxassetid://120649909521331",
+  "normal": "rbxassetid://107568818247870"
+ },
  "PoodleMoth": {
   "normal": "rbxassetid://103332785245486",
   "color": "rbxassetid://115791072890234"
@@ -61,6 +79,9 @@
  "RhinoBeetle": {
   "normal": "rbxassetid://74675623622552",
   "color": "rbxassetid://85718917173146"
+ },
+ "SnailTurtle": {
+  "color": "rbxassetid://71017867327385"
  },
  "SpaCapybara": {
   "color": "rbxassetid://80078658505681"
