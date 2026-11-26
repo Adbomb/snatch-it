@@ -3,6 +3,10 @@
   "normal": "rbxassetid://88735897159197",
   "color": "rbxassetid://87006960498807"
  },
+ "ArchBoto": {
+  "color": "rbxassetid://104269263903039",
+  "normal": "rbxassetid://85542082044781"
+ },
  "BeeHummingbird": {
   "color": "rbxassetid://80048932496500"
  },
@@ -14,6 +18,9 @@
  },
  "CatCatfish": {
   "color": "rbxassetid://104048012221964"
+ },
+ "CocoonFruitBat": {
+  "color": "rbxassetid://116428250722954"
  },
  "ConePangolin": {
   "normal": "rbxassetid://131251733075311",
