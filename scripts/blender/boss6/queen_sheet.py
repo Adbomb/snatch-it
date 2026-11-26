@@ -5,6 +5,7 @@
   контраст с ареной (кадры арены с игровой королевой), зубы вдвое короче, раскадровка клипа «съесть» (D74), сон /
   пробуждение / засыпание в новой палитре.
   … chew → 11_queen_chew.png: раскадровка жевания клипа «съесть» (кадры chew_<k>.png);
+  … emo → 13_queen_emo.png: эмоции клипа «съесть» веками и бровями крупно (кадры emo_<k>.png; FLY_EAT=emo);
   … maps → 12_queen_maps.png: карты королевы (assets/textures/art/Boss6Flytrap<Карта>_{color,normal}.png) и кадры
   полной сборки с картами (boss6_prod/queen_maps/) — владельцу до загрузки (D70). Кадры — boss6_prod/queen_v2/ (boss6_flytrap.py quick, boss6_flytrap_anim.py
   с FLY_CLIPS=eat,sleep_idle,wake,fall_asleep, arena.py player,approach queen=game out=…/queen_v2/arena).
@@ -238,6 +239,36 @@ def chew_sheet():
     return out, sheet.size
 
 
+EMO = [(1.62, "чавк — блаженство: зажмурилась, брови вверх"), (3.05, "икота — испуг: глаза настежь, брови высоко"),
+       (3.45, "вдох — хитрый прищур, бровь вздёрнута"), (4.15, "финал — довольная: глаза-улыбки")]  # = EMO_SHOTS
+
+
+def emo_sheet():
+    W, M = SH.W, SH.M
+    sheet = Image.new("RGB", (W, 3000), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Клип «съесть»: эмоции веками и бровями", "Карты не менялись · чавки 1.62–2.67 с · икота 3.05 с · "
+              "вдох 3.45 и плевок 3.75 с · финал 4.15 с")
+    y = 128
+    fw = (W - 2 * M - 12) // 2
+    for i, (t, cap) in enumerate(EMO):
+        x = M + (i % 2) * (fw + 12)
+        yy = y + (i // 2) * (fw + 12)
+        p = os.path.join(Q2, "frames", f"emo_{i}.png")
+        if os.path.exists(p):
+            sheet.paste(V.fit(Image.open(p).convert("RGB"), fw, fw), (x, yy))
+        V.label(d, x + 10, yy + fw - 44, f"{t:.2f} с — {cap}")
+    y += 2 * (fw + 12) + 6
+    for ln in ("• Веко — плоская пластина, поэтому «зажмурилась» — прямой шов «— —», а не дуга «^^». Дуга — это "
+               "маленькая тёмная деталь на нижнем веке, то есть новая карта головы.",
+               "• Глаза-гнёзда квадратные: «круглые от испуга» — это веки, убранные целиком, и брови домиком.",):
+        y = V.para(d, M + 12, y, ln, W - 2 * M - 24, size=24, fill=SH.INK) + 8
+    sheet = sheet.crop((0, 0, W, y + M))
+    out = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "13_queen_emo.png")
+    sheet.save(out)
+    return out, sheet.size
+
+
 def maps_sheet():
     W, M = SH.W, SH.M
     tex = os.path.join(SH.REPO, "assets", "textures", "art")
@@ -273,4 +304,5 @@ def maps_sheet():
 if __name__ == "__main__":
     mode = sys.argv[1:2]
     print(eat_sheet() if mode == ["eat"] else chew_sheet() if mode == ["chew"] else maps_sheet() if mode == ["maps"]
+          else emo_sheet() if mode == ["emo"]
           else main())

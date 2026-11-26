@@ -762,6 +762,9 @@ def _split_keep(obj, art, col):
     return out
 
 
+LONE_MAX = 0.6  # одинокая грань крупнее (ед.²) — видимая деталь (белок глаза 0.84), не остаток (торцы створок ≤ 0.43)
+
+
 def _drop_enclosed(parts):
     """Грани, которых не видно ни в одной позе (все лучи упираются в ту же часть), — долой (как у Йети)."""
     dirs = []
@@ -784,8 +787,9 @@ def _drop_enclosed(parts):
         if dead:
             removed += len(dead)
             bmesh.ops.delete(bm, geom=dead, context="FACES")
-            # одинокая грань — остаток детали, чьи соседние грани спрятаны (торец канта створки): долой
-            lone = [f for f in bm.faces if not any(len(e.link_faces) > 1 for e in f.edges)]
+            # одинокая грань — остаток детали, чьи соседние грани спрятаны (торец канта створки): долой; крупная
+            # (белок глаза: бока в рамке, перед виден) — остаётся
+            lone = [f for f in bm.faces if not any(len(e.link_faces) > 1 for e in f.edges) and f.calc_area() < LONE_MAX]
             orphans += len(lone)
             bmesh.ops.delete(bm, geom=lone, context="FACES")
             bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")

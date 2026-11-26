@@ -217,20 +217,21 @@ def clips():
 
     def chomp(side_):  # «чавк»: створки-щёки расходятся, мантия и венчик пышнеют, голова вскинута и повёрнута
         return pose(gulp, lean=14.0, head=(-4.0, side_ * 8.0, side_ * 5.0), jaw=(12, 16), mantle=(8.0, 10.0),
-                    petals=6.0, arm=chew_arm)
+                    petals=6.0, arm=chew_arm, **BLISS)
 
     def munch(side_):  # сомкнула: голова кивает вниз в такт, листья опадают
         return pose(gulp, lean=18.0, head=(12.0, side_ * 3.0, side_ * 2.0), jaw=(0, 0), mantle=(-2.0, 0.0),
-                    petals=-10.0, arm=chew_arm)
+                    petals=-10.0, arm=chew_arm, **BLISS)
 
-    hic = pose("stand", lean=2.0, head=(-22.0, 0.0, 0.0), jaw=(8, 14), **happy, petals=-18.0, mantle=(14.0, 10.0),
+    hic = pose("stand", lean=2.0, head=(-22.0, 0.0, 0.0), jaw=(8, 14), **FRIGHT, petals=-18.0, mantle=(14.0, 10.0),
                arm={-1: (48.0, 20.0, 40.0, 0.0, 10.0)})  # икота: вздрогнула, голова вверх, листья торчком
-    after_hic = pose(gulp, lean=12.0, head=(8.0, 0.0, 0.0), arm={-1: (44.0, 0.0, 34.0, -10.0, 20.0)})
-    breath = pose("stand", lean=0.0, head=(-18.0, 0.0, 0.0), jaw=(0, 0), lid=SQUINT_, brow=Q.SMUG, petals=-14.0,
+    after_hic = pose(gulp, lean=12.0, head=(8.0, 0.0, 0.0), arm={-1: (44.0, 0.0, 34.0, -10.0, 20.0)},
+                     lid=Q.both((0.2, 0.08, 0.0)), brow={1: (10.0, 0.14), -1: (-10.0, 0.14)})  # испуг отходит
+    breath = pose("stand", lean=0.0, head=(-18.0, 0.0, 0.0), jaw=(0, 0), **SLY, petals=-14.0,
                   mantle=(12.0, 8.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})
-    spit = pose("stand", lean=14.0, head=(-4.0, 0.0, 0.0), jaw=(34, 50), tongue=(1.0, 0.0), **happy, petals=8.0,
+    spit = pose("stand", lean=14.0, head=(-4.0, 0.0, 0.0), jaw=(34, 50), tongue=(1.0, 0.0), **SLY, petals=8.0,
                 mantle=(-6.0, 2.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})  # пасть смотрит вперёд, лоза в сторону
-    proud = pose("stand", head=(-6.0, 0.0, 4.0), petals=-6.0, mantle=(6.0, 6.0))
+    proud = pose("stand", head=(-6.0, 0.0, 4.0), petals=-6.0, mantle=(6.0, 6.0), **CONTENT)
     chew = []
     for i in range(4):  # 4 «чавка» по 0.35 с (1.5–2.9)
         t0 = 1.5 + 0.35 * i
@@ -247,7 +248,14 @@ def clips():
 
 
 SPIT_T = 3.75  # «съесть»: миг плевка — капсула появляется в CapsuleSpawn
-SQUINT_ = {1: (0.55, 0.15, -6.0), -1: (0.55, 0.15, 6.0)}  # довольный прищур (жуёт)
+SQUINT_ = {1: (0.55, 0.15, -6.0), -1: (0.55, 0.15, 6.0)}  # довольный прищур (проглотила)
+# эмоции «съесть» — только веки и брови (карты не меняются). Веко — плоская пластина: «зажмурены» — шов прямой.
+BLISS = dict(lid=Q.both((1.0, 1.0, 0.0)), brow={1: (10.0, 0.22), -1: (-10.0, 0.22)})  # чавки: зажмурилась, брови вверх
+FRIGHT = dict(lid=Q.both((0.0, 0.0, 0.0)), brow={1: (18.0, 0.3), -1: (-18.0, 0.3)})  # икота: глаза настежь, брови
+# высоко и домиком
+SLY = dict(lid={1: (0.66, 0.3, -10.0), -1: (0.42, 0.22, 4.0)},
+           brow={1: (-18.0, -0.06), -1: (4.0, 0.26)})  # вдох и плевок: хитрый прищур, одна бровь вздёрнута
+CONTENT = dict(lid=Q.both((0.28, 0.5, 0.0)), brow={1: (10.0, 0.16), -1: (-10.0, 0.16)})  # довольная: глаза-улыбки
 
 
 # ── Экспорт и проверки ──────────────────────────────────────────────────────────────────────────────────────
@@ -357,6 +365,8 @@ EAT_SHOTS = [(0.0, "стойка"), (0.35, "рывок лозой"), (0.6, "от
 CHEW_SHOTS = [(1.5, "захлоп"), (1.62, "чавк 1"), (1.85, "кивок"), (1.97, "чавк 2"), (2.2, "кивок"), (2.32, "чавк 3"),
               (2.55, "кивок"), (2.67, "чавк 4"), (2.9, "проглотила"), (3.05, "ик!"), (3.2, "после икоты"),
               (3.45, "набрала воздух")]
+# эмоции крупно (лицо): кадры emo_<k>.png; FLY_EAT=emo — только они
+EMO_SHOTS = [(1.62, "чавк: блаженство"), (3.05, "икота: испуг"), (3.45, "вдох: хитрый прищур"), (4.15, "финал: довольная")]
 PLAYER_AT = V((-1.4, -7.4, 1.4))  # макет: Ловибум у игрока перед королевой (в игре его подтягивает сама игра)
 MOUTH_AT = V((0, -1.9, 0.45))  # макет: Ловибум внутри пасти (система головы)
 
@@ -404,9 +414,12 @@ def eat_strip(parts, frames, cam, fdir, turn, ck):
                   ("ball", (0.62,), (0, 0.55, 0), None, pink), ("ball", (0.62,), (0, -0.55, 0), None, pink)],
                  "PropCapsule")
     props = (lovi, caps)
-    _eat_frames(parts, frames, cam, fdir, turn, ck, props, EAT_SHOTS, "eat", (6.0, -36.0, 8.0), (-1.8, -3.0, 5.2), 72)
-    _eat_frames(parts, frames, cam, fdir, turn, ck, props, CHEW_SHOTS, "chew", (6.0, -34.0, 9.5), (-1.4, -2.4, 6.6),
-                95)
+    if os.environ.get("FLY_EAT") != "emo":
+        _eat_frames(parts, frames, cam, fdir, turn, ck, props, EAT_SHOTS, "eat", (6.0, -36.0, 8.0), (-1.8, -3.0, 5.2),
+                    72)
+        _eat_frames(parts, frames, cam, fdir, turn, ck, props, CHEW_SHOTS, "chew", (6.0, -34.0, 9.5),
+                    (-1.4, -2.4, 6.6), 95)
+    _eat_frames(parts, frames, cam, fdir, turn, ck, props, EMO_SHOTS, "emo", None, None, 120)
 
 
 def _eat_frames(parts, frames, cam, fdir, turn, ck, props, shots, prefix, eye, tgt, lens):
@@ -445,6 +458,12 @@ def _eat_frames(parts, frames, cam, fdir, turn, ck, props, shots, prefix, eye, t
         for c in [caps, *caps.children]:
             c.hide_render = not show
         bpy.context.view_layer.update()
+        if eye is None:  # крупно: камера перед лицом (следит за головой)
+            face = turn @ (F["Head"] @ V((0.0, Q.FACE_Y, Q.EYE_Z + 0.2)))
+            ahead = (turn.to_3x3() @ F["Head"].to_3x3() @ V((0.25, -1.0, 0.12))).normalized()
+            ck.shot(cam, os.path.join(fdir, f"{prefix}_{k}.png"), tuple(face + ahead * 30.0), tuple(face), lens,
+                    (600, 600))
+            continue
         ck.shot(cam, os.path.join(fdir, f"{prefix}_{k}.png"), eye, tgt, lens, (600, 600))
     print("STRIP", prefix, flush=True)
 
