@@ -16,6 +16,7 @@ local MapLayout = require(ServerScriptService.Server.World.MapLayout)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
 local Palette = require(ServerScriptService.Server.World.Palette)
 local Props = require(ServerScriptService.Server.World.Models.Props)
+local SlotGlow = require(ServerScriptService.Server.World.SlotGlow)
 
 type Brick = ModelBuilder.Brick
 
@@ -724,6 +725,18 @@ function Junkyard.Zone(): { Brick }
 	-- Фонари вдоль прохода.
 	for _, spot in { Vector2.new(-17, -42), Vector2.new(17, -42), Vector2.new(-22, 26), Vector2.new(22, 30) } do
 		put(out, Props.Lamp(), at(spot.X, spot.Y))
+	end
+	-- Подсветка редкости у постаментов (D71): на полу вокруг основания 4.4 × 4.4 — тонкое яркое неоновое кольцо и
+	-- шире мягкий полупрозрачный ореол; цвет — редкость существа, нет существа — не видно; медленно пульсирует.
+	for slot, spot in MapLayout.ArtSlots do
+		local base = at(spot.X, spot.Y)
+		local ring = { height = 0.14, light = false, hideEmpty = true, pulse = true }
+		for _, brick in SlotGlow.Ring(1, slot, base, 3.25, 3.55, Palette.White, ring) do
+			table.insert(out, brick)
+		end
+		for _, brick in SlotGlow.Halo(1, slot, base, 3.55, 4.3, Palette.White, true) do
+			table.insert(out, brick)
+		end
 	end
 	return out
 end

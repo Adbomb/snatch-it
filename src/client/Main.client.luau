@@ -24,6 +24,7 @@ require(Controllers:WaitForChild("BossAuraController")).Init() -- босс 10: �
 require(Controllers:WaitForChild("PlayerSwingController")).Init() -- анимация автоудара (пока без анимации)
 require(Controllers:WaitForChild("ZoneController")).Init()
 require(Controllers:WaitForChild("ZoneAtmosphereController")).Init() -- свет по зонам и сияние «Ледника»
+require(Controllers:WaitForChild("SlotGlowController")).Init() -- D71: пульсация подсветки постаментов
 require(Controllers:WaitForChild("OwnerTagController")).Init()
 require(Controllers:WaitForChild("ItemLabelController")).Init()
 require(Controllers:WaitForChild("PvpController")).Init()
