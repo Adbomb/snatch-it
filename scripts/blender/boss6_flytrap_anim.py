@@ -12,11 +12,17 @@
   grab 1.4 — «Хватает» (особая атака, только анимация D64 п. 3): лозы выброшены вперёд, листья-пальцы раскрыты
          веером (0.5), сжимаются в кулак из листьев (0.75);
   hit 0.47; victory 2.2 (торжествует → stand); defeat 2.4 (увяла, корона упала → медленно поднимается → stand);
-  fall_asleep 1.6 (stand → sleep).
+  fall_asleep 1.6 (stand → sleep);
+  eat 3.8 — катсцена D74 «съесть» (stand → stand): правая лоза рывком вперёд на всю длину, ладонь раскрыта (0.35) →
+         листья-пальцы сжались — игра в этот миг крепит Ловибум к LovibumHold (0.6) → подносит к пасти, голова
+         склонилась к ладони, створки широко (1.05) → пальцы разжались, Ловибум в пасти (1.3) → захлоп — Ловибум
+         скрыть (1.5) → жуёт: створки и голова ходят, мантия и венчик колышутся (1.75–2.5) → набрала воздух (2.8) →
+         выплюнула капсулу этажа вперёд из CapsuleSpawn (3.05) → довольная, прищур (3.5) → стойка.
+  D74: боя нет — боевые клипы (combat_idle, turn, snap, grab, hit, victory, defeat) не удаляются, но не дорабатываются.
 Выход: <папка>/Boss6_Flytrap.anim.json (до «ок» владельца на лист — не в assets; формат как у Boss5_Yeti.anim.json:
 кадры — Transform суставов в осях Roblox, [x, y, z, qx, qy, qz, qw]), anim_report.json (провал под землю ниже стойки),
 раскадровка <папка>/frames/<клип>_<k>.png (8 кадров, 3/4).
-Режимы: (пусто) — расчёт, экспорт и кадры; check — только проверка. FLY_CLIPS="grab,snap" — выбор клипов.
+Режимы: (пусто) — расчёт, экспорт и кадры; check — только проверка. FLY_CLIPS="eat,wake" — клипы для кадров.
 Запуск: blender --background --factory-startup --python scripts/blender/boss6_flytrap_anim.py -- <репо> <папка> [check]
 Зависит от boss6_flytrap.py, concepts510/ck.py (студия и кадр).
 """
@@ -195,7 +201,36 @@ def clips():
     nod = pose("sleep", lid=Q.both((0.7, 0.6, 0.0)), head=(14.0, 4.0, 4.0))
     C.append(Clip("fall_asleep", "Засыпание", 1.6, [(0.0, STAND), (0.5, yawn), (1.0, nod), (1.6, SLEEP)],
                   events={"зевок": 0.5}, start="stand", end="sleep"))
+    # «съесть» (D74): отобрала Ловибум → в пасть → захлоп → жуёт → выплюнула капсулу этажа → довольная
+    happy = dict(lid={1: (0.0, 0.0, 0.0), -1: (0.0, 0.0, 0.0)}, brow={1: (-12.0, 0.12), -1: (12.0, 0.12)})
+    reach = pose("stand", lean=24.0, head=(8.0, 0.0, 0.0), jaw=(20, 34), **happy, rosette=4.0,
+                 arm={-1: (120.0, 80.0, 0.0, -40.0, 20.0)}, fing={-1: (0.55, 12.0)})
+    snatch = pose(reach, lean=22.0, arm={-1: (112.0, 76.0, 14.0, -40.0, 30.0)}, fing={-1: (-0.4, 95.0)})
+    lift = pose("stand", lean=20.0, head=(12.0, 0.0, 0.0), jaw=(40, 58), **happy, petals=-6.0,
+                arm={-1: (20.0, 90.0, 30.0, -20.0, -40.0)}, fing={-1: (-0.3, 80.0)})
+    drop = pose(lift, fing={-1: (0.45, 8.0)})
+    gulp = pose("stand", lean=22.0, head=(16.0, 0.0, 0.0), jaw=(0, 0), lid=SQUINT_, brow=Q.SMUG, petals=-10.0,
+                arm={-1: (44.0, 40.0, 40.0, 0.0, 10.0)}, fing={-1: (0.2, 20.0)})
+    chew_a = pose(gulp, lean=16.0, head=(8.0, 7.0, 5.0), jaw=(9, 13), mantle=(6.0, 5.0), petals=4.0,
+                  arm={-1: (52.0, 30.0, 40.0, 0.0, 10.0)})
+    chew_b = pose(gulp, lean=15.0, head=(8.0, -7.0, -5.0), jaw=(0, 0), mantle=(-3.0, 0.0), petals=-8.0,
+                  arm={-1: (56.0, 26.0, 40.0, 0.0, 10.0)})
+    breath = pose("stand", lean=0.0, head=(-18.0, 0.0, 0.0), jaw=(0, 0), lid=SQUINT_, brow=Q.SMUG, petals=-14.0,
+                  mantle=(12.0, 8.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})
+    spit = pose("stand", lean=14.0, head=(-4.0, 0.0, 0.0), jaw=(34, 50), tongue=(1.0, 0.0), **happy, petals=8.0,
+                mantle=(-6.0, 2.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})  # пасть смотрит вперёд, лоза в сторону
+    proud = pose("stand", head=(-6.0, 0.0, 4.0), petals=-6.0, mantle=(6.0, 6.0))
+    C.append(Clip("eat", "Съесть", 3.8, [(0.0, STAND), (0.35, reach), (0.6, snatch), (1.05, lift), (1.3, drop),
+                                         (1.5, gulp), (1.75, chew_a), (2.0, chew_b), (2.25, chew_a), (2.5, gulp),
+                                         (2.8, breath), (3.05, spit), (3.5, proud), (3.8, STAND)],
+                  events={"отобрала: крепить Ловибум к LovibumHold": 0.6, "Ловибум в пасти: открепить": 1.3,
+                          "захлоп: Ловибум скрыть": 1.5, "капсула этажа вылетает из CapsuleSpawn": 3.05,
+                          "довольная": 3.5},
+                  start="stand", end="stand"))
     return C
+
+
+SQUINT_ = {1: (0.55, 0.15, -6.0), -1: (0.55, 0.15, 6.0)}  # довольный прищур (жуёт)
 
 
 # ── Экспорт и проверки ──────────────────────────────────────────────────────────────────────────────────────
@@ -255,7 +290,7 @@ def main():
     bpy.context.scene.collection.children.link(col)
     Q.rest_frames()
     only = [c for c in os.environ.get("FLY_CLIPS", "").split(",") if c]
-    baked = [(c, c.frames()) for c in clips() if not only or c.name in only]
+    baked = [(c, c.frames()) for c in clips()]  # проверка и экспорт — все клипы; FLY_CLIPS выбирает только кадры
     parts = {}
     for m in ("Head", "Body", "Limbs"):
         a = Q.build(m)
@@ -268,9 +303,8 @@ def main():
     print("CHECK", json.dumps(rep, ensure_ascii=False), flush=True)
     if mode == "check":
         return
-    if not only:
-        export(os.path.join(out, "Boss6_Flytrap.anim.json"), baked)
-    strips(parts, baked, out)
+    export(os.path.join(out, "Boss6_Flytrap.anim.json"), baked)
+    strips(parts, [b for b in baked if not only or b[0].name in only], out)
 
 
 def strips(parts, baked, out):
@@ -284,6 +318,9 @@ def strips(parts, baked, out):
     bpy.context.scene.view_settings.exposure = -0.3
     turn = Q.R("Z", -30)
     for clip, frames in baked:
+        if clip.name == "eat":
+            eat_strip(parts, frames, cam, fdir, turn, ck)
+            continue
         idx = [round(i * (len(frames) - 1) / 7) for i in range(8)]
         for k, i in enumerate(idx):
             W = Q.pose_world(frames[i])
@@ -293,6 +330,95 @@ def strips(parts, baked, out):
             ck.shot(cam, os.path.join(fdir, f"{clip.name}_{k}.png"), (0.0, -30.0, 7.5), (0.0, 0.0, 5.6), 50,
                     (420, 520))
         print("STRIP", clip.name, flush=True)
+
+
+# раскадровка «съесть»: (время, подпись) — кадры eat_<k>.png 600×600; подписи берёт лист королевы
+EAT_SHOTS = [(0.0, "стойка"), (0.35, "рывок лозой к Ловибуму"), (0.6, "отобрала: пальцы сжались"),
+             (1.05, "несёт к пасти"), (1.3, "пальцы разжались — Ловибум в пасти"), (1.5, "захлоп"),
+             (1.75, "жуёт"), (2.0, "жуёт"), (2.8, "набрала воздух"), (3.05, "выплюнула капсулу этажа"),
+             (3.3, "капсула летит вперёд"), (3.5, "довольная")]
+PLAYER_AT = V((-1.4, -7.4, 1.4))  # макет: Ловибум у игрока перед королевой (в игре его подтягивает сама игра)
+MOUTH_AT = V((0, -1.9, 0.45))  # макет: Ловибум внутри пасти (система головы)
+
+
+def _mat(name, rgb, emit=0.0):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    b = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+    b.inputs["Base Color"].default_value = (*rgb, 1)
+    b.inputs["Roughness"].default_value = 0.35
+    if emit:
+        b.inputs["Emission Color"].default_value = (*rgb, 1)
+        b.inputs["Emission Strength"].default_value = emit
+    return m
+
+
+def _prop(parts_spec, name):
+    """Макет из примитивов (только для раскадровки): [(тип, размеры, сдвиг, поворот, материал)] → пустышка-родитель."""
+    root = bpy.data.objects.new(name, None)
+    bpy.data.collections["Flytrap"].objects.link(root)
+    for kind, dims, off, rot, mat in parts_spec:
+        if kind == "cyl":
+            bpy.ops.mesh.primitive_cylinder_add(vertices=dims[2], radius=dims[0], depth=dims[1], location=off,
+                                                rotation=rot)
+        elif kind == "cone":
+            bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=dims[0], radius2=0, depth=dims[1], location=off,
+                                            rotation=rot)
+        else:
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=dims[0], location=off)
+        o = bpy.context.active_object
+        o.data.materials.append(mat)
+        o.parent = root
+    return root
+
+
+def eat_strip(parts, frames, cam, fdir, turn, ck):
+    import math
+
+    steel, neon = _mat("propSteel", (0.42, 0.45, 0.52)), _mat("propNeon", (0.2, 0.9, 1.0), emit=3.0)
+    gold, pink = _mat("propGold", (0.96, 0.66, 0.08)), _mat("propPink", (1.0, 0.35, 0.6))
+    lovi = _prop([("cyl", (0.6, 0.42, 8), (0, 0, 0), (0, 0, 0), steel),
+                  ("cone", (0.48, 1.0), (0, 0, 0.7), (0, 0, math.radians(45)), neon),
+                  ("cone", (0.48, 0.42), (0, 0, 0.0), (math.pi, 0, math.radians(45)), neon)], "PropLovibum")
+    caps = _prop([("cyl", (0.62, 1.1, 16), (0, 0, 0), (math.pi / 2, 0, 0), gold),
+                  ("ball", (0.62,), (0, 0.55, 0), None, pink), ("ball", (0.62,), (0, -0.55, 0), None, pink)],
+                 "PropCapsule")
+    for k, (t, _) in enumerate(EAT_SHOTS):
+        P = frames[min(round(t * FPS), len(frames) - 1)]
+        W = Q.pose_world(P)
+        F = Q.frames(P)
+        for n, o in parts.items():
+            o.matrix_world = turn @ W[n] @ Q.T(Q.PIVOTS[n])
+        hold = F["PalmR"] @ Q.ATTACH["LovibumHold"][1]
+        if t < 0.35:
+            p = PLAYER_AT
+        elif t < 0.6:
+            p = PLAYER_AT.lerp(hold, (t - 0.35) / 0.25)
+        elif t < 1.3:
+            p = hold
+        else:
+            p = F["Head"] @ MOUTH_AT
+        lovi.hide_render = t >= 1.5
+        for c in lovi.children:
+            c.hide_render = lovi.hide_render
+        lovi.matrix_world = turn @ Q.T(p)
+        show = t >= 3.05
+        if show:
+            spawn = F["Head"] @ Q.ATTACH["CapsuleSpawn"][1] if t < 3.1 else None
+            if spawn is None:  # полёт макета: от точки появления в кадре 3.05 вперёд и вниз по дуге
+                P0 = frames[round(3.05 * FPS)]
+                F0 = Q.frames(P0)
+                s0 = F0["Head"] @ Q.ATTACH["CapsuleSpawn"][1]
+                d0 = (F0["Head"].to_3x3() @ V((0, -1, 0))).normalized()
+                dt = t - 3.05
+                spawn = s0 + d0 * 10.0 * dt + V((0, 0, 4.0 * dt - 16.0 * dt * dt))
+                spawn.z = max(spawn.z, 0.5)
+            caps.matrix_world = turn @ Q.T(spawn)
+        for c in [caps, *caps.children]:
+            c.hide_render = not show
+        bpy.context.view_layer.update()
+        ck.shot(cam, os.path.join(fdir, f"eat_{k}.png"), (6.0, -36.0, 8.0), (-1.8, -3.0, 5.2), 72, (600, 600))
+    print("STRIP eat", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,10 @@
 """Лист игровой модели королевы-мухоловки (босс 6, шаг 2 D64) — владельцу до запекания карт (читается с телефона).
 
   python scripts/blender/boss6/queen_sheet.py → assets/concepts/bosses_5_10/boss6_prod/9_queen.png (вне git)
+  python scripts/blender/boss6/queen_sheet.py eat → boss6_prod/10_queen_eat.png: правки владельца 2026-11-26 —
+  контраст с ареной (кадры арены с игровой королевой), зубы вдвое короче, раскадровка клипа «съесть» (D74), сон /
+  пробуждение / засыпание в новой палитре. Кадры — boss6_prod/queen_v2/ (boss6_flytrap.py quick, boss6_flytrap_anim.py
+  с FLY_CLIPS=eat,sleep_idle,wake,fall_asleep, arena.py player,approach queen=game out=…/queen_v2/arena).
 Кадры: быстрая сборка scripts/blender/boss6_flytrap.py (виды, силуэты, позы, ладони) и раскадровка клипов
 scripts/blender/boss6_flytrap_anim.py (frames/<клип>_<k>.png) в boss6_prod/queen/; числа — report.json и
 anim_report.json там же. Оформление — sheet.py (шапка, ряды кадров, панели).
@@ -94,5 +98,106 @@ def main():
     return OUT, sheet.size
 
 
+Q2 = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "queen_v2")
+OUT_EAT = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "10_queen_eat.png")
+EAT = [(0.0, "стойка"), (0.35, "рывок лозой"), (0.6, "отобрала"), (1.05, "несёт к пасти"), (1.3, "в пасти"),
+       (1.5, "захлоп"), (1.75, "жуёт"), (2.0, "жуёт"), (2.8, "вдох"), (3.05, "плевок"), (3.3, "капсула летит"),
+       (3.5, "довольная")]  # = EAT_SHOTS в anim
+
+
+def q2(name):
+    return os.path.join(Q2, name + ".png")
+
+
+def eat_sheet():
+    W, M = SH.W, SH.M
+    anim = json.load(open(os.path.join(Q2, "anim_report.json"), encoding="utf-8"))
+    rep = json.load(open(os.path.join(Q2, "report.json"), encoding="utf-8"))
+    rig = json.load(open(os.path.join(Q2, "Boss6_Flytrap.rig.json"), encoding="utf-8"))
+    # голова крупно «было → стало»: одна и та же рамка кадров спереди
+    for src, dst in ((q("stand_front"), q2("head_before")), (q2("stand_front"), q2("head_after"))):
+        Image.open(src).convert("RGB").crop((190, 40, 710, 460)).save(dst)
+    sheet = Image.new("RGB", (W, 9000), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Королева-мухоловка: контраст с ареной, короткие зубы, клип «съесть» (D74)",
+              f"Быстрая сборка без карт · {rep['tris_total']} треугольников (≤ 8000) · суставы без щелей · "
+              "карты — после «ок»")
+    y = 128
+    y = SH.section(d, y, "Стойка на арене «Джунгли»", "кадр игрока у входа")
+    sheet.paste(V.fit(Image.open(os.path.join(Q2, "arena", "arena6_player.png")).convert("RGB"), W - 2 * M,
+                      (W - 2 * M) * 9 // 16), (M, y))
+    y += (W - 2 * M) * 9 // 16 + 16
+    half = (W - 2 * M - 12) // 2
+    sheet.paste(V.fit(Image.open(os.path.join(Q2, "arena", "arena6_approach.png")).convert("RGB"), half,
+                      half * 9 // 16), (M, y))
+    V.label(d, M + 12, y + half * 9 // 16 - 44, "с подхода, ближе")
+    x = M + half + 12
+    d.rectangle((x, y, W - M, y + half * 9 // 16), fill=SH.PANEL)
+    lines = [
+        "• Голова-ловушка снаружи — тёмная бутылочная зелень; мантия за головой — тёмная.",
+        "• Стебель, лозы, узлы на лозах и побеги бутонов — тёмные оливково-коричневые.",
+        "• Светлые сочные — только листья розетки на земле и ладони с листьями-пальцами.",
+        "• Главные пятна — малиновая пасть, розовые лепестки венчика, золотая корона.",
+        "• Маска лица — средняя зелень (чуть темнее прежней), глаза и брови читаются.",
+        "• На светлом храме и тёмном проёме силуэт королевы не сливается с кронами.",
+    ]
+    ty = y + 12
+    d.text((x + 18, ty), "Что изменено в цвете", font=V.font(28, True), fill=SH.ACC)
+    ty += 50
+    for ln in lines:
+        ty = V.para(d, x + 18, ty, ln, W - M - x - 36, size=22, fill=SH.INK) + 8
+    y += half * 9 // 16 + 16
+    y = SH.section(d, y, "Было → стало", "палитра и зубы-реснички (вдвое короче: злая, но не страшная)")
+    size = (W - 2 * M - 4 * 12) // 5
+    y = SH.tiles(sheet, d, y, [(q("stand_34"), "было 3/4"), (q2("stand_34"), "стало 3/4"),
+                               (q2("stand_front"), "стало спереди"), (q2("head_before"), "было: зубы"),
+                               (q2("head_after"), "стало: зубы вдвое короче")], size)
+    r = anim.get("eat", {})
+    y = SH.section(d, y, "Клип «съесть» — 3.8 с (D74)",
+                   f"стойка → стойка · кадров {r.get('frames', '?')} · ниже земли: {r.get('below_ground_frames', '?')}"
+                   " · Ловибум и капсула — макеты только для раскадровки")
+    fw = (W - 2 * M - 5 * 12) // 6
+    for i, (t, cap) in enumerate(EAT):
+        x = M + (i % 6) * (fw + 12)
+        yy = y + (i // 6) * (fw + 12)
+        p = os.path.join(Q2, "frames", f"eat_{i}.png")
+        if os.path.exists(p):
+            sheet.paste(V.fit(Image.open(p).convert("RGB"), fw, fw), (x, yy))
+        V.label(d, x + 10, yy + fw - 44, f"{t:.2f} с — {cap}")
+    y += 2 * (fw + 12) + 6
+    att = rig.get("attachments", {})
+    ev = ["• 0.60 с — «отобрала»: игра крепит Ловибум к точке LovibumHold (правая ладонь, перед листьями-пальцами). "
+          "Лоза тянется на всю длину, но до игрока не достаёт — Ловибум подлетает к ладони сам.",
+          "• 1.30 с — пальцы разжались: Ловибум открепить, он в пасти; 1.50 с — захлоп: Ловибум скрыть.",
+          "• 1.75–2.5 с — жуёт: створки ходят, голова качается, мантия и венчик колышутся, довольный прищур.",
+          "• 3.05 с — капсула этажа появляется в точке CapsuleSpawn (перед кончиками створок) и летит вперёд по её "
+          "направлению; дальше — прокрутка редкости (D74).",
+          f"• Точки в риге Boss6_Flytrap.rig.json → attachments: " + ", ".join(
+              f"{k} (деталь {v['part']})" for k, v in att.items()) + "; клип eat — в Boss6_Flytrap.anim.json.",
+          "• Боевые клипы (стойка, поворот, захлоп, хватает, урон, победа, поражение) по D74 не удалены и не "
+          "дорабатываются."]
+    ty = y
+    for ln in ev:
+        ty = V.para(d, M + 12, ty, ln, W - 2 * M - 24, size=22, fill=SH.INK) + 6
+    y = ty + 14
+    y = SH.section(d, y, "Сон, пробуждение, засыпание", "в новой палитре, по 8 кадров, вид 3/4")
+    fw = (W - 2 * M - 7 * 8) // 8
+    fh = int(fw * 520 / 420)
+    for name, title in (("sleep_idle", "Сон (цикл 6.4 с)"), ("wake", "Пробуждение 2.4 с"),
+                        ("fall_asleep", "Засыпание 1.6 с")):
+        r = anim.get(name, {})
+        d.text((M, y), f"{title} — кадров {r.get('frames', '?')}, ниже земли: {r.get('below_ground_frames', '?')}",
+               font=V.font(24, True), fill=SH.INK)
+        y += 36
+        for k in range(8):
+            p = os.path.join(Q2, "frames", f"{name}_{k}.png")
+            if os.path.exists(p):
+                sheet.paste(V.fit(Image.open(p).convert("RGB"), fw, fh), (M + k * (fw + 8), y))
+        y += fh + 18
+    sheet = sheet.crop((0, 0, W, y + M))
+    sheet.save(OUT_EAT)
+    return OUT_EAT, sheet.size
+
+
 if __name__ == "__main__":
-    print(main())
+    print(eat_sheet() if sys.argv[1:] == ["eat"] else main())

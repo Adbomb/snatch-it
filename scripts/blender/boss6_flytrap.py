@@ -70,9 +70,22 @@ FINGER_W = 0.92  # ширина листа-пальца (крупные: лад�
 KNUCKLE_Z = -0.9  # линия пальцев на ладони (система кисти: лоза по −z, ладонь смотрит в −y)
 BUD_AT = {1: (3.75, -4.4), -1: (-3.75, -4.4)}  # бутоны-фрейлины (как в концепте)
 BUD_HINGE = V((0, 0.05, 1.7))  # петля передней створки бутона в системе побега
-BUD_LOBE = dict(L=1.55, H=0.55, W=1.2, n_cil=4, cil=0.24, cil_w=0.11, out_key="petal", rim=0.16)
+# точки крепления для катсцены D74 «съесть» (подключает игра): Ловибум в правой ладони — перед лицом ладони у основания
+# пальцев (система ладони); капсула этажа — перед кончиками сомкнутых створок (система головы), летит вперёд (−y)
+ATTACH = {"LovibumHold": ("PalmR", V((0, -0.6, -0.9)), V((0, -1, 0))),
+          "CapsuleSpawn": ("Head", V((0, -3.35, 0.32)), V((0, -1, 0)))}
+BUD_LOBE = dict(L=1.55, H=0.55, W=1.2, n_cil=4, cil=0.12, cil_w=0.1, out_key="petal", rim=0.16)
 
 PALETTE = dict(C6.PALETTE)
+# контраст с зелёной ареной (правка владельца 2026-11-26: «снова зелёное на зелёном»): голова-ловушка и мантия —
+# тёмные бутылочные, стебель и лозы — тёмные оливково-коричневые; светлые сочные — только листья розетки и ладони;
+# главные пятна — малиновая пасть, розовые лепестки, золотая корона
+PALETTE.update({
+    "pod": ("1E5C34", True), "podD": ("174D2B", True), "trap": ("123F24", True), "leafD": ("1A4F2D", True),
+    "stem": ("4E4522", True), "stemD": ("362F16", False), "vine": ("5E4F26", True),
+    "face": ("528F40", False), "lid": ("2C6A34", False), "brow": ("10281A", False),
+    "palm": ("BDEB6E", True),  # ладони и листья-пальцы — светлые сочные
+})
 
 # ── Скелет игры: часть → (родитель, карта) ───────────────────────────────────────────────────────────────────
 RIG_TREE = {"Root": (None, "Body")}
@@ -490,9 +503,9 @@ def build_head(a, F):
         at(a, F[f"Brow{L}"], f"Brow{L}")
         a.box("brow", -0.52, 0.52, -0.1, 0.17, -0.11, 0.11, bevel=0.03)
     at(a, H, "TrapUpper")
-    lobe(a, T(HINGE), True, seam=True)
+    lobe(a, T(HINGE), True, seam=True, cil=0.19, cil_w=0.13)  # реснички вдвое короче концепта: злая, не страшная
     at(a, H, "TrapLower")
-    lobe(a, T(HINGE), False, seam=True)
+    lobe(a, T(HINGE), False, seam=True, cil=0.19, cil_w=0.13)
     at(a, F["Tongue"], "Tongue")
     key("tongue")
     K.chain(a, [(0, 0.0, 0.0), (0, -0.8, 0.09), (0, -1.45, 0.11)], [0.95, 0.9, 0.72], [0.22] * 3, up=(0, 0, 1),
@@ -512,8 +525,8 @@ def build_limbs(a, F):
         key("vine")
         K.chain(a, [(0, 0, 0.1), (s * 0.08, -0.14, -0.8), (0, 0, -UPPER)], [0.8, 0.72, 0.66], up=(0, -1, 0), cut=0.3,
                 overlap=0.3)
-        a.prism("leaf", S.octagon(-0.44, 0.44, -0.44, 0.44, 0.15), -UPPER - 0.26, -UPPER + 0.2)  # узел лозы
-        leaf(a, "leafL", frame((s * 0.18, -0.1, -0.55), (s * 0.9, -0.3, 0.6), (0, -1, 0.3)), 1.0, 0.55, 0.1,
+        a.prism("stemD", S.octagon(-0.44, 0.44, -0.44, 0.44, 0.15), -UPPER - 0.26, -UPPER + 0.2)  # узел лозы
+        leaf(a, "leafD", frame((s * 0.18, -0.1, -0.55), (s * 0.9, -0.3, 0.6), (0, -1, 0.3)), 1.0, 0.55, 0.1,
              bends=(0, 14), ts=(0.5,), rib="rib", root_w=0.35)  # листочек-прилистник на лозе
         at(a, el, f"VineLower{L}")
         key("vine")
@@ -523,10 +536,10 @@ def build_limbs(a, F):
             q = [V((s * (0.28 + 0.28 * math.cos(t)), 0.28 * math.sin(t), -0.35 - 0.5 * j - 0.1 * t))
                  for t in (0.0, 1.6, 3.2)]
             K.chain(a, [V((0, 0, -0.35 - 0.5 * j))] + q, [0.2, 0.17, 0.14, 0.1], up=(0, -1, 0), cut=0.3, overlap=0.3)
-        a.prism("leaf", S.octagon(-0.38, 0.38, -0.38, 0.38, 0.13), -FORE - 0.22, -FORE + 0.14)  # узел у ладони
+        a.prism("stemD", S.octagon(-0.38, 0.38, -0.38, 0.38, 0.13), -FORE - 0.22, -FORE + 0.14)  # узел у ладони
         # ладонь — широкий лист-основание (смотрит в −y), светлые жилки веером к каждому пальцу
         at(a, wr, f"Palm{L}")
-        a.prism("vine", [(-0.48, 0.12), (0.48, 0.12), (0.86, -0.42), (0.76, -1.06), (-0.76, -1.06), (-0.86, -0.42)],
+        a.prism("palm", [(-0.48, 0.12), (0.48, 0.12), (0.86, -0.42), (0.76, -1.06), (-0.76, -1.06), (-0.86, -0.42)],
                 -0.15, 0.15, axis="y")
         for kx, _, _ in KNUCKLES:
             p0, p1 = V((0, 0, -0.08)), V((kx, 0, KNUCKLE_Z))
@@ -535,7 +548,7 @@ def build_limbs(a, F):
             a.box("leaf", -0.055, 0.055, -0.21, -0.14, -ln / 2, ln / 2, bevel=0, matrix=T(mid) @ R("Y", ang))
         for j, (kx, ka, ln) in enumerate(KNUCKLES):  # пальцы-листья: длинные, заострённые, с жилкой; в сгибе — к ладони
             at(a, F[f"Finger{L}{j + 1}"], f"Finger{L}{j + 1}")
-            leaf(a, "vine", frame((0, 0, 0.2), (0, 0, -1), (0, -1, 0)), ln, FINGER_W, 0.18, bends=(0, 14), ts=(0.45,),
+            leaf(a, "palm", frame((0, 0, 0.2), (0, 0, -1), (0, -1, 0)), ln, FINGER_W, 0.18, bends=(0, 14), ts=(0.45,),
                  rib="leaf", root_w=0.45, rib_w=0.06)
 
 
@@ -546,18 +559,18 @@ def build_buds(a, F):
         L = side(s)
         Fs = F[f"BudStem{L}"]
         at(a, Fs, f"BudStem{L}")
-        key("leaf")
+        key("stem")  # побег тёмный, как стебель королевы (контраст с ареной)
         K.chain(a, [(0, 0, 0.02), (0.08, -0.05, 0.8), (0, 0.05, BUD_HINGE.z - 0.1)], [0.42, 0.36, 0.32], up=(0, -1, 0),
                 cut=0.3, overlap=0.3)
         for ss, ln in ((1, 1.3), (-1, 1.1)):
-            leaf(a, "leafL", frame((ss * 0.15, 0, 0.3), (ss * 1, -0.25, 0.25), (0, 0, 1)), ln, 0.7, 0.1, bends=(0,),
+            leaf(a, "leafD", frame((ss * 0.15, 0, 0.3), (ss * 1, -0.25, 0.25), (0, 0, 1)), ln, 0.7, 0.1, bends=(0,),
                  ts=(), root_w=0.3)
         hb = T(BUD_HINGE)
         a.prism("trap", S.octagon(-0.42, 0.42, -0.42, 0.42, 0.15), -0.4, 0.05, bevel=0, matrix=hb)  # донце чаши
         for i in range(4):  # чашелистики — низкая чаша под бутоном
             t = math.radians(45 + 90 * i)
             d = V((math.cos(t), math.sin(t), 0))
-            leaf(a, "trap" if i % 2 else "leaf", frame(BUD_HINGE + d * 0.3 + V((0, 0, -0.3)), d * 0.5 + V((0, 0, 1)), d),
+            leaf(a, "trap" if i % 2 else "leafD", frame(BUD_HINGE + d * 0.3 + V((0, 0, -0.3)), d * 0.5 + V((0, 0, 1)), d),
                  0.8, 0.72, 0.13, bends=(0,), ts=(), root_w=0.8)
         lobe(a, hb @ R("X", -90), True, **BUD_LOBE)  # задняя створка (вверх: длина створки по +z)
         at(a, F[f"BudLid{L}"], f"BudLid{L}")
@@ -866,6 +879,13 @@ def write_rig(path, parts, report):
             t = AX @ (off * SCALE)
             out["poses"][name][n] = [round(x, 4) for x in [t.x, t.y, t.z] + [r[i][j] for i in range(3) for j in range(3)]]
         report.setdefault("pose_low", {})[name] = round(low, 3)
+    rf = rest_frames()
+    out["attachments"] = {}
+    for name, (part, p, d) in ATTACH.items():  # в осях детали от её точки вращения (как Attachment.Position), стады
+        w = rf[part] @ p
+        out["attachments"][name] = {"part": part, "position": [round(c, 4) for c in AX @ ((w - PIVOTS[part]) * SCALE)],
+                                    "direction": [round(c, 4) for c in AX @ (rf[part].to_3x3() @ d).normalized()]}
+    out["eat_clip"] = "eat"
     report["body_points"] = len(out["body"])
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
@@ -964,6 +984,10 @@ def shoot(parts, shots, report):
             pts = _points(parts, hand)
             c = sum(pts, V()) / len(pts)
             ck.shot(cam, os.path.join(shots, f"hand_{name}.png"), c + V((2.6, -7.2, 2.2)), c, 55, (700, 700))
+        if name == "stand":  # лицо и пасть крупно: длина ресничек-зубов (злая, но не страшная)
+            pts = _points(parts, ["Head", "TrapUpper", "TrapLower"])
+            c = sum(pts, V()) / len(pts)
+            ck.shot(cam, os.path.join(shots, "face_stand.png"), c + V((2.4, -9.5, 1.2)), c, 55, (700, 700))
     if "grab" in names or "grab2" in names:  # «хватает»: от игрока чуть сверху (камера телефона)
         for name in ("grab", "grab2"):
             if name not in names:

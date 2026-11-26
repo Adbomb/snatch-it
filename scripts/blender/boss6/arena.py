@@ -43,6 +43,7 @@ import arenas as A  # noqa: E402
 import ck as C  # noqa: E402
 
 BOSS, HL, HW = A.BOSS, A.HL, A.HW
+HERE_DIR = os.path.dirname(os.path.abspath(__file__))
 LANE_X, LANE_W = 57.0, 18.0  # полосы свободного бега |x| 48–66 насквозь: вход → выход (D66, MapLayout.Lane)
 LANE_IN, LANE_OUT = LANE_X - LANE_W / 2, LANE_X + LANE_W / 2  # 48 и 66
 LINK_W = 10.0  # перемычки площадка ↔ полосы
@@ -1178,6 +1179,28 @@ def queen_scale(out):
         return QUEEN_SCALE
 
 
+def game_queen(col, k, pose_name):
+    """Игровая королева (быстрая сборка без карт, цвета палитры) в позе pose_name на месте босса."""
+    from mathutils import Matrix
+
+    sys.path.insert(0, os.path.dirname(HERE_DIR))
+    import boss6_flytrap as Q  # noqa: E402
+
+    Q.rest_frames()
+    parts, tris = {}, 0
+    for m in ("Head", "Body", "Limbs"):
+        a = Q.build(m)
+        obj = a.build(col)
+        tris += a.stats["tris"]
+        parts.update(Q._split_keep(obj, a, col))
+    W = Q.pose_world(Q.POSES[pose_name])
+    place = Matrix.Translation((BOSS[0], BOSS[1], 0.58)) @ Matrix.Scale(k, 4)
+    for n, o in parts.items():
+        o.matrix_world = place @ W[n] @ Q.T(Q.PIVOTS[n])
+    bpy.context.view_layer.update()
+    return {"tris": tris, "scale": k, "model": "game", "pose": pose_name}
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
     repo = os.path.abspath(argv[0])
@@ -1187,6 +1210,10 @@ def main():
                  ["player", "approach", "lane", "top"])
     out = os.path.join(repo, "assets", "concepts", "bosses_5_10", "boss6_v2", "raw")
     os.makedirs(out, exist_ok=True)
+    k_queen = queen_scale(out)
+    if "out" in opts:  # свои кадры (например, игровая королева на арене) — в другую папку
+        out = os.path.abspath(opts["out"])
+        os.makedirs(out, exist_ok=True)
 
     A.ARTS.clear()
     A.EXIT_PATHS[:] = []  # свои пути: мостки насквозь (lanes), без диагоналей каркаса
@@ -1230,14 +1257,16 @@ def main():
         tris[a.name] = a.stats["tris"]
     queen = {}
     try:
-        import flytrap  # noqa: E402
+        if opts.get("queen") == "game":  # игровая модель (scripts/blender/boss6_flytrap.py), поза из queen_pose=…
+            queen = game_queen(col, k_queen, opts.get("queen_pose", "stand"))
+        else:
+            import flytrap  # noqa: E402
 
-        qa = flytrap.flytrap("sleep")
-        qo = C.finish(qa, col, glow=4.0)
-        k = queen_scale(out)
-        qo.scale = (k,) * 3
-        qo.location = (BOSS[0], BOSS[1], 0.58)
-        queen = {"tris": qa.stats["tris"], "scale": k}
+            qa = flytrap.flytrap("sleep")
+            qo = C.finish(qa, col, glow=4.0)
+            qo.scale = (k_queen,) * 3
+            qo.location = (BOSS[0], BOSS[1], 0.58)
+            queen = {"tris": qa.stats["tris"], "scale": k_queen}
     except Exception as e:  # noqa: BLE001 — королеву правит другой поток; арена рендерится и без неё
         print("BUILD queen failed:", repr(e)[:300], flush=True)
     picked = []
