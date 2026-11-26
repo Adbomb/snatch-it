@@ -32,7 +32,9 @@ os.makedirs(OUT, exist_ok=True)
 STEP, HERO_STEP, STEP_FAR = 0.5, 0.25, 2.0
 COLORS = 22  # палитра этажа после квантования
 MESH_LIMIT = 20000
-DITHER = 0.0 if "nodither" in sys.argv else 0.09  # второй оттенок (0 — без фактуры: флаг nodither)
+DITHER = 0.09 if "dither" in sys.argv else 0.0  # второй оттенок геометрией (дорого); по умолчанию — текстурой
+CELLS = 64  # клеток-вокселей в одной плитке текстуры «кубик»
+CELL_PX = 8
 X, Z = 18.12, 17.12
 H = [20, 27, 32, 38, 46, 60]
 NAMES = ["Деревянный", "Каменный", "Мраморный", "Золотой", "Мифический", "Космический"]
@@ -227,8 +229,38 @@ def greedy(grid, origin, step):
     return quads
 
 
+_cell_img = None
+
+
+def cell_image():
+    """Плитка «кубики»: CELLS × CELLS вокселей по CELL_PX пикселей. У каждого — свой оттенок (0.9…1.08), тёмный шов по
+    краю и скос (светлее сверху-слева, темнее снизу-справа): каждый воксель читается отдельным кубиком, как на
+    референсе, а треугольников не прибавляется (склеенная грань несёт столько клеток, сколько вокселей)."""
+    global _cell_img
+    if _cell_img is not None:
+        return _cell_img
+    n = CELLS * CELL_PX
+    rng = np.random.default_rng(11)
+    shade = rng.uniform(0.9, 1.08, (CELLS, CELLS))
+    y, x = np.mgrid[0:n, 0:n]
+    v = shade[y // CELL_PX, x // CELL_PX]
+    cx, cy = x % CELL_PX, y % CELL_PX
+    v = np.where((cx == 1) | (cy == CELL_PX - 2), v * 1.08, v)
+    v = np.where((cx == CELL_PX - 2) | (cy == 1), v * 0.9, v)
+    v = np.where((cx == 0) | (cy == 0) | (cx == CELL_PX - 1) | (cy == CELL_PX - 1), v * 0.7, v)
+    px = np.ones((n, n, 4), dtype=np.float32)
+    px[..., 0] = px[..., 1] = px[..., 2] = np.clip(v, 0, 1)
+    img = bpy.data.images.new("VoxelCells", n, n)
+    img.colorspace_settings.name = "Non-Color"
+    img.pixels[:] = px.ravel().tolist()
+    img.update()
+    img.pack()
+    _cell_img = img
+    return img
+
+
 def palette_material(name, palette):
-    """Карта-палитра: по одному текселю на цвет (ближайший без сглаживания)."""
+    """Цвет — карта-палитра (тексель на цвет, UV «UV»), × плитка «кубики» (UV «Cell», клетка = воксель)."""
     n = len(palette)
     img = bpy.data.images.new(name, n, 1)
     px = np.ones((n, 4))
@@ -241,32 +273,54 @@ def palette_material(name, palette):
     m.use_nodes = True
     nt = m.node_tree
     bsdf = next(nd for nd in nt.nodes if nd.type == "BSDF_PRINCIPLED")
+    uv_a = nt.nodes.new("ShaderNodeUVMap")
+    uv_a.uv_map = "UV"
+    uv_b = nt.nodes.new("ShaderNodeUVMap")
+    uv_b.uv_map = "Cell"
     tex = nt.nodes.new("ShaderNodeTexImage")
     tex.image = img
     tex.interpolation = "Closest"
-    nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    cells = nt.nodes.new("ShaderNodeTexImage")
+    cells.image = cell_image()
+    cells.interpolation = "Closest"
+    nt.links.new(uv_a.outputs["UV"], tex.inputs["Vector"])
+    nt.links.new(uv_b.outputs["UV"], cells.inputs["Vector"])
+    mix = nt.nodes.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    mix.blend_type = "MULTIPLY"
+    mix.inputs[0].default_value = 1.0
+    nt.links.new(tex.outputs["Color"], mix.inputs[6])
+    nt.links.new(cells.outputs["Color"], mix.inputs[7])
+    nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
     bsdf.inputs["Roughness"].default_value = 0.7
     return m
 
 
-def build_mesh(name, quads, palette, coll):
+def build_mesh(name, quads, palette, coll, step):
     n = len(palette)
-    verts, faces, uvs = [], [], []
+    verts, faces, uvs, cuv = [], [], [], []
     for p, col in quads:
         k = len(verts)
         verts.extend(p)
         faces.append((k, k + 1, k + 2, k + 3))
         u = (col + 0.5) / n
         uvs.extend([(u, 0.5)] * 4)
+        arr = np.array(p)
+        a = int(np.argmin(arr.max(axis=0) - arr.min(axis=0)))  # ось нормали: координата не меняется
+        b, c = [i for i in range(3) if i != a]
+        for q in p:
+            cuv.append((q[b] / step / CELLS, q[c] / step / CELLS))
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
     uv = me.uv_layers.new(name="UV")
     uv.data.foreach_set("uv", np.array(uvs, dtype=np.float32).ravel())
+    uv2 = me.uv_layers.new(name="Cell")
+    uv2.data.foreach_set("uv", np.array(cuv, dtype=np.float32).ravel())
     me.materials.append(palette_material(name + "_Pal", palette))
     glow = palette_material(name + "_Glow", palette)
     bsdf = next(nd for nd in glow.node_tree.nodes if nd.type == "BSDF_PRINCIPLED")
-    tex = next(nd for nd in glow.node_tree.nodes if nd.type == "TEX_IMAGE")
-    glow.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Emission Color"])
+    mixn = next(nd for nd in glow.node_tree.nodes if nd.type == "MIX")
+    glow.node_tree.links.new(mixn.outputs[2], bsdf.inputs["Emission Color"])
     bsdf.inputs["Emission Strength"].default_value = 0.8
     me.materials.append(glow)
     lit = (palette[:, 0] > 0.85) & (palette[:, 1] > 0.75) & (palette[:, 2] < 0.75)  # тёплое стекло окон
@@ -415,7 +469,7 @@ if MODE == "build":
     q6 = greedy(grid6, org6, st6)
     vox_coll = bpy.data.collections.new("VOX6")
     scene.collection.children.link(vox_coll)
-    vox6 = build_mesh("Vox6", q6, pal6, vox_coll)
+    vox6 = build_mesh("Vox6", q6, pal6, vox_coll, st6)
     for o in crisp6:
         vox_coll.objects.link(o)
     n6 = report("Космический (этаж целиком, шаг %.2f)" % STEP, grid6, q6)
@@ -449,7 +503,7 @@ if MODE == "build":
     hero4 = hero((0.0, 19.5, -Z - 1.6), 1.5, work, "4")
     grid4, org4, st4, pal4 = voxelize(hero4, HERO_STEP, colors_k=8)
     q4 = greedy(grid4, org4, st4)
-    vox4 = build_mesh("Vox4Hero", q4, pal4, gold)
+    vox4 = build_mesh("Vox4Hero", q4, pal4, gold, st4)
     n4 = report("Золотой — герой (шаг %.2f)" % HERO_STEP, grid4, q4)
     far4 = downsample(grid4, int(STEP_FAR / HERO_STEP))
     report("Золотой — герой, дальняя версия (шаг %.1f)" % STEP_FAR, far4, greedy(far4, org4, STEP_FAR))
