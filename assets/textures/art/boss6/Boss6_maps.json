@@ -1,0 +1,83 @@
+{
+ "AntStrongman": {
+  "normal": "rbxassetid://88735897159197",
+  "color": "rbxassetid://87006960498807"
+ },
+ "BigBeakToucan": {
+  "color": "rbxassetid://88847571014108"
+ },
+ "CatCatfish": {
+  "color": "rbxassetid://104048012221964"
+ },
+ "ConePangolin": {
+  "normal": "rbxassetid://131251733075311",
+  "color": "rbxassetid://73830305426180"
+ },
+ "DinoCassowary": {
+  "normal": "rbxassetid://116637143113176",
+  "color": "rbxassetid://111471800787477"
+ },
+ "FlowerJaguar": {
+  "color": "rbxassetid://132164299944551",
+  "normal": "rbxassetid://83264895921977"
+ },
+ "FrillLizard": {
+  "normal": "rbxassetid://104277845139132",
+  "color": "rbxassetid://93847104713799"
+ },
+ "FrogBubble": {
+  "normal": "rbxassetid://131462169358940",
+  "color": "rbxassetid://130207666192130"
+ },
+ "GreedyPitcher": {
+  "normal": "rbxassetid://134684097937200",
+  "color": "rbxassetid://92294495541252"
+ },
+ "KnotSloth": {
+  "color": "rbxassetid://130459872885746"
+ },
+ "LickyOkapi": {
+  "color": "rbxassetid://133773419960905",
+  "normal": "rbxassetid://93223478353985"
+ },
+ "LionTamarin": {
+  "color": "rbxassetid://132541584485545",
+  "normal": "rbxassetid://112042648687059"
+ },
+ "ManyEyeCaterpillar": {
+  "color": "rbxassetid://127622257278935",
+  "normal": "rbxassetid://123823189878549"
+ },
+ "NeonStickInsect": {
+  "color": "rbxassetid://111271725576700"
+ },
+ "PoodleMoth": {
+  "normal": "rbxassetid://103332785245486",
+  "color": "rbxassetid://115791072890234"
+ },
+ "RainbowChameleon": {
+  "color": "rbxassetid://97346222212971"
+ },
+ "RhinoBeetle": {
+  "normal": "rbxassetid://74675623622552",
+  "color": "rbxassetid://85718917173146"
+ },
+ "SpaCapybara": {
+  "color": "rbxassetid://80078658505681"
+ },
+ "SproutFlytrap": {
+  "color": "rbxassetid://81493725746922",
+  "normal": "rbxassetid://88341668491857"
+ },
+ "ThreeHeadParrot": {
+  "color": "rbxassetid://116692778652387",
+  "normal": "rbxassetid://115789794621232"
+ },
+ "TinyArmsBoa": {
+  "color": "rbxassetid://76092726509612"
+ },
+ "WheelMonkey": {
+  "color": "rbxassetid://109393457214447",
+  "normal": "rbxassetid://106303100850777"
+ }
+}

@@ -868,3 +868,9 @@ ojo-serve.ps1`).
 - 2026-11-25 (босс 6, D71): Rojo всё ещё на «Connect» — `World/SlotGlow` (в Studio — сокращённая копия без комментариев)
   и правки `ModelBuilder`, `BossLootService`, `Junkyard`, `FleaMarket`, `SubwayStation`, `DesertOasis`, `GlacierHall`
   перенесены через MCP точечной заменой строк; после «Connect» Rojo перезапишет их с диска.
+- 2026-11-26 (босс 6): `screen_capture` с камерой отвечал «Request timed out», пока окно Studio было маленьким и не
+  впереди (600×300); `scripts/studio/window.ps1 -Action front -Process RobloxStudioBeta` — и снимок сразу пришёл.
+  `upload_image` пачкой из 19 картинок не дождался ответа — грузить по 4–5.
+- Нормали существ (2026-11-26, лягушка Common, 512²): с картой нормалей и без — на самом существе разницы почти нет
+  (фаски — геометрия, кольца D39 — в цветовой карте); у 7 Common босса 6 нормали не загружены, со следующего босса
+  нормали существ не делаем (решение владельца при «почти нет разницы»). Кадр — `boss6_prod/8_normals_frog.png`.
