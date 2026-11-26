@@ -84,7 +84,7 @@ def bee_hummingbird():
            [0.16, 0.14, 0.12], [0.16, 0.14, 0.12], up=(0, -1, 0), cut=0.3)
     legs = []  # лапки: верх в брюшке → ступня
     for s in S2:
-        legs.append((s, mb @ V((s * 0.17, -0.3, -0.42)), mb @ V((s * 0.19, -0.4, -0.62))))
+        legs.append((s, mb @ V((s * 0.24, -0.4, -0.4)), mb @ V((s * 0.33, -0.6, -0.66))))  # вынесены из-под брюшка вперёд-вбок
     lroot = V((0.86, -0.86, t + 0.94))
     mid = (legs[0][2] + legs[1][2]) / 2
     ldir = V((mid.x - lroot.x, mid.y - lroot.y, 0.0)).normalized()
@@ -117,8 +117,8 @@ def bee_hummingbird():
     for s, top, foot in legs:
         fz = leaf_z(foot.x, foot.y) + LT / 2 + 0.07
         foot = V((foot.x, foot.y, fz))
-        taper(a, "leg", top, foot, 0.12, 0.1, 0.12, 0.1, cut=0.2)
-        knob(a, "feet", tuple(foot), 0.1)
+        taper(a, "leg", top, foot, 0.15, 0.13, 0.15, 0.13, cut=0.2)
+        knob(a, "feet", tuple(foot), 0.12)
         for e in (-1, 1):  # пальчики вперёд, чуть врозь, лежат на листе
             tx, ty = foot.x + e * 0.065, foot.y - 0.11
             tz = leaf_z(tx, ty) + LT / 2
@@ -153,7 +153,7 @@ def bee_hummingbird():
         blunt(a, "crest", b, b + V((0, dy + 0.06, dz)), w0, w1)
     # лобная ступень: от лба сужается к корню клюва (0.22 → 0.13)
     taper(a, "head", hc + V((0, -0.24, -0.08)), broot_l, 0.24, 0.14, 0.2, 0.13, cut=0.28)
-    taper(a, "beak", broot_l - bdir_l * 0.06, broot_l + bdir_l * BEAK, 0.12, 0.075, 0.1, 0.07, cut=0.25)
+    taper(a, "beak", broot_l - bdir_l * 0.06, broot_l + bdir_l * BEAK, 0.14, 0.1, 0.12, 0.1, cut=0.25)  # ≥ 0.1
     # переливчатое горлышко (горжетка): ряды чешуек-пёрышек уголком вниз, малиновые и фиолетовые вперемешку;
     # верхний ряд впереди нижнего (черепица), соседние чешуйки на разной глубине — грани не совпадают
     rows = ((-0.2, (-0.12, 0.0, 0.12)), (-0.28, (-0.18, -0.06, 0.06, 0.18)), (-0.36, (-0.12, 0.0, 0.12)),

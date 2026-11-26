@@ -1,5 +1,6 @@
 """Птица-танцор (ParadiseDancer, Legendary, №29 каталога docs/BOSS6_CATALOG.md) — лофорина раскрыла за головой
-бархатно-чёрный плащ огромным овалом (вдвое выше себя), на груди сияет бирюзовый щит-полумесяц, и она пританцовывает
+бархатно-чёрный плащ огромным овалом с синим отливом по краю и бирюзовым «смайликом» поперёк (улыбка-полумесяц
+и два «глаза»; правка владельца 2026-11-26), на груди сияет бирюзовый щит-полумесяц, и она пританцовывает
 боком: тело развёрнуто к игроку боком, таз сдвинут к опорной лапке, другая лапка согнута и поднята над подставкой,
 голова склонена к плечу и повёрнута к игроку.
 Признаки вида: плащ — вертикальный вогнутый овал из трёх широких сегментов (середина за головой, края выходят вперёд,
@@ -27,8 +28,8 @@ PELVIS = 0.15  # таз сдвинут к опорной лапке (по x)
 HEAD_YAW = -12.0  # голова повёрнута обратно к игроку (итоговый поворот головы вокруг z)
 HEAD_ROLL = 10.0  # голова склонена к плечу
 CAPE_X = 0.06  # середина плаща по x (за головой)
-CAPE_Y = 0.52  # передняя грань середины плаща
-CAPE_ZC = 2.66  # центр овала над верхом подставки
+CAPE_Y = 0.74  # передняя грань середины плаща (за увеличенным телом)
+CAPE_ZC = 2.7  # центр овала над верхом подставки
 CAPE_R = (1.24, 1.83)  # полуоси наружного (сине-фиолетового) овала: ширина ≈ 2.4, высота ≈ 3.65
 CAPE_RIM = 0.11  # ширина сине-фиолетовой каймы
 CAPE_MID = 0.44  # полуширина среднего сегмента
@@ -148,8 +149,27 @@ def _cape(a, t):
         a.prism("velvetB", _clip_x(outer, lo, hi), y0 + 0.045, y0 + 0.125, axis="y", matrix=hinge)
         lo2, hi2 = (lo + 0.004, hi) if s > 0 else (lo, hi - 0.004)
         a.prism("velvet", _clip_x(inner, lo2, hi2), y0 + 0.012, y0 + 0.087, axis="y", matrix=hinge)
-    # светлый ореол за головой (фиолетово-синий отлив, светлее плаща): голова не сливается с плащом
-    a.prism("halo", _oval(0.62, 0.72, CAPE_X, t + 1.56, n=16), y0 - 0.035, y0 + 0.03, axis="y")
+    # светлый ореол за головой (синий отлив, светлее плаща): голова не сливается с плащом
+    a.prism("halo", _oval(0.74, 0.84, CAPE_X, t + 1.95, n=16), y0 - 0.035, y0 + 0.03, axis="y")
+    # «смайлик» лофорины (правка владельца 2026-11-26): поперёк плаща — крупная бирюзовая улыбка-полумесяц и два
+    # бирюзовых «глаза» над головой птицы; светятся (neon*). Куски на боковых сегментах лежат на них (тот же поворот)
+    zs = t + 3.52
+    smile = []
+    for i in range(13):
+        ang = math.radians(195 + 150 * i / 12)
+        smile.append((0.98 * math.cos(ang), zs + 0.56 * math.sin(ang)))
+    for i in range(13):
+        ang = math.radians(345 - 150 * i / 12)
+        smile.append((0.86 * math.cos(ang), zs + 0.06 + 0.36 * math.sin(ang)))
+    eyes = [_oval(0.17, 0.24, sx * 0.44, t + 3.98, n=10) for sx in (-1, 1)]
+    a.prism("neonT", _clip_x(smile, -CAPE_MID, CAPE_MID), y0 - 0.045, y0 + 0.02, axis="y", matrix=base)
+    for e in eyes:
+        a.prism("neonT", e, y0 - 0.045, y0 + 0.02, axis="y", matrix=base)
+    for sg in S2:
+        hinge = Matrix.Translation((CAPE_X + sg * CAPE_MID, y0 + 0.06, 0)) @ Matrix.Rotation(
+            math.radians(-sg * CAPE_BEND), 4, "Z") @ Matrix.Translation((-sg * CAPE_MID, -(y0 + 0.06), 0))
+        lo, hi = (CAPE_MID - 0.02, 2.0) if sg > 0 else (-2.0, -CAPE_MID + 0.02)
+        a.prism("neonT", _clip_x(smile, lo, hi), y0 - 0.033, y0 + 0.032, axis="y", matrix=hinge)
 
 
 def _size_report(a):
@@ -177,7 +197,7 @@ def _size_report(a):
 
 
 def paradise_dancer():
-    a = new("ParadiseDancer", {"velvet": ("1E1A33", True), "velvetB": ("3E37A0", True), "halo": ("4C44A8", True),
+    a = new("ParadiseDancer", {"velvet": ("15131F", True), "velvetB": ("2F55E0", True), "velvetS": ("252A55", True), "halo": ("263E9E", True),
                                "headV": ("29234A", True), "neonT": ("19F0DA", False), "teal": ("12C4BE", False),
                                "gape": ("FFD21C", False), "beak": ("121019", False), "leg": ("5A5570", False)})
     glow(a, GLOW * GLOW_K)
@@ -189,20 +209,20 @@ def paradise_dancer():
     fwd = (bm.to_3x3() @ V((0, -1, 0))).normalized()
 
     # ── тело: бархатное яйцо, ярусы через один чёрный и с фиолетово-синим отливом ──
-    z0 = t + 0.42
-    part(a, "Body", "Stand", tuple(bm @ V((0, 0.05, t + 0.85))))
+    z0 = t + 0.5
+    part(a, "Body", "Stand", tuple(bm @ V((0, 0.05, t + 1.05))))
     with_matrix(a, bm)
-    tiers = A.body(a, "velvet", (0, 0.05, z0), 0.47, 0.43, 0.92, "egg", n=5, lean=-0.06,
-                   keys=("velvet", "velvetB", "velvet", "velvetB", "velvet"))
+    tiers = A.body(a, "velvet", (0, 0.05, z0), 0.6, 0.55, 1.18, "egg", n=5, lean=-0.06,
+                   keys=("velvet", "velvetS", "velvet", "velvetS", "velvet"))
     # нагрудный щит-полумесяц: выступ над грудью ≤ 0.11, выгнут по груди — средний кусок на передней грани,
     # боковые (с рогами) лежат на скошенных углах ярусов; рога не шире корпуса
-    zc = z0 + 0.6
+    zc = z0 + 0.78
     under = [tr for tr in tiers if tr[1] > zc - 0.28 + 0.03 and tr[0] < zc + 0.14 - 0.03]
     back = max(under, key=lambda tr: tr[3] - tr[5])  # самый узкий (задний) ярус под щитом
     za, zb, tx, ty, wx, wy, cut = back
     fy = ty - wy
     hx = wx - cut
-    cres = _crescent(zc, hx + cut * 0.9, 0.28, hx + 0.03, 0.08, (hx + cut * 0.92, 0.14))
+    cres = _crescent(zc, hx + cut * 0.9, 0.35, hx + 0.03, 0.1, (hx + cut * 0.92, 0.18))
     y_front, y_back = fy - 0.11, fy + 0.05
     a.extrude("neonT", _clip_x(cres, -hx, hx), y_front, y_back, axis="y")
     for s in S2:
@@ -210,29 +230,29 @@ def paradise_dancer():
         lo, hi = (hx - 0.03, 2.0) if s > 0 else (-2.0, -hx + 0.03)
         a.extrude("neonT", _clip_x(cres, lo, hi), y_front + 0.004, y_back - 0.004, axis="y", matrix=bend)
     for s in S2:  # сложенные крылья по бокам, из-под рогов щита
-        A.folded_wing(a, "velvetB", "velvet", (s * 0.45, 0.16, z0 + 0.72), s, 0.56, 0.34, rows=2,
-                      down=(0, 0.35, -1), thick=0.11)
+        A.folded_wing(a, "velvetS", "velvet", (s * 0.58, 0.2, z0 + 0.92), s, 0.7, 0.42, rows=2,
+                      down=(0, 0.35, -1), thick=0.13)
     with_matrix(a, None)
 
     # ── хвостик: короткий и толстый, торчит назад-вниз из-под плаща ──
-    part(a, "Tail", "Body", tuple(bm @ V((0, 0.36, z0 + 0.2))))
+    part(a, "Tail", "Body", tuple(bm @ V((0, 0.45, z0 + 0.25))))
     with_matrix(a, bm)
-    A.flipper(a, "velvet", (0, 0.3, z0 + 0.26), (0, 0.62, z0 + 0.02), 0.34, 0.3, thick=0.2, up=(0, 0.4, 1))
+    A.flipper(a, "velvet", (0, 0.38, z0 + 0.32), (0, 0.78, z0 + 0.03), 0.42, 0.38, thick=0.24, up=(0, 0.4, 1))
     with_matrix(a, None)
 
     # ── лапки: левая — опорная прямо под телом, правая согнута в колене и поднята над подставкой ──
-    hipL = bm @ V((0.17, 0.06, t + 0.55))
+    hipL = bm @ V((0.22, 0.06, t + 0.64))
     footL = V((hipL.x - 0.06, hipL.y - 0.03, t))
     _leg(a, "LegL", hipL, hipL.lerp(footL, 0.38) + V((0.02, -0.02, 0)), footL, fwd, t)
-    hipR = bm @ V((-0.17, 0.06, t + 0.55))
+    hipR = bm @ V((-0.22, 0.06, t + 0.64))
     kneeR = hipR + V((-0.13, -0.07, -0.15))
     footR = hipR + V((-0.4, -0.04, -0.36))  # ступня в 0.15 над подставкой, колено согнуто ≈ 30°
     _leg(a, "LegR", hipR, kneeR, footR, fwd, footR.z - 0.02, hang=True)
 
     # ── голова: одна округлая ступенчатая, ширина ≈ 0.7; повёрнута к игроку и склонена к плечу ──
-    top = bm @ V((0, 0.02, z0 + 0.92))
-    hc = top + V((0.0, -0.02, 0.17))
-    HX, HY, HZ = 0.35, 0.33, 0.31
+    top = bm @ V((0, 0.02, z0 + 1.18))
+    hc = top + V((0.0, -0.02, 0.22))
+    HX, HY, HZ = 0.45, 0.43, 0.4
     part(a, "Head", "Body", tuple(top + V((0, 0, 0.02))))
     hm = Matrix.Translation(hc) @ Matrix.Rotation(math.radians(HEAD_YAW), 4, "Z") @ Matrix.Rotation(
         math.radians(-HEAD_ROLL), 4, "Y")
@@ -242,35 +262,38 @@ def paradise_dancer():
     za_t, zb_t, x_t, y_t, wx_t, wy_t, cut_t = htiers[-1]
     a.prism("neonT", S.octagon(-wx_t * 0.8, wx_t * 0.8, y_t - wy_t * 0.86, y_t + wy_t * 0.55, cut_t * 0.8),
             zb_t - 0.03, zb_t + 0.035, axis="z")
-    ze = 0.07
+    ze = 0.09
     for s in S2:
-        fe = front_y(htiers, s * 0.15, ze)
-        _eye(a, (s * 0.155, fe + 0.025, ze), 0.11, (s * 0.32, -1, 0.04), s, look=-0.45)
+        fe = front_y(htiers, s * 0.19, ze)
+        _eye(a, (s * 0.2, fe + 0.025, ze), 0.14, (s * 0.32, -1, 0.04), s, look=-0.45)
     # клюв: короткий чёрный клин ступенями вперёд с жёлтым кончиком; приоткрыт — между надклювьем и подклювьем
     # жёлтый зев полосой-улыбкой (уголки выше середины)
-    zb = -0.08
+    zb = -0.1
     fb = front_y(htiers, 0, zb)
-    up1 = [(-0.125, zb + 0.035), (0.125, zb + 0.035), (0.095, zb - 0.055), (0.0, zb - 0.1), (-0.095, zb - 0.055)]
+    up1 = _scaled([(-0.125, zb + 0.035), (0.125, zb + 0.035), (0.095, zb - 0.055), (0.0, zb - 0.1),
+                   (-0.095, zb - 0.055)], 1.25, (0, zb))
     a.prism("beak", up1, fb - 0.08, fb + 0.05, axis="y", bevel=0.01)
     a.prism("beak", _scaled(up1, 0.72, (0, zb - 0.04)), fb - 0.15, fb - 0.07, axis="y", bevel=0.01)
     a.prism("gape", _scaled(up1, 0.44, (0, zb - 0.06)), fb - 0.2, fb - 0.14, axis="y", bevel=0.01)
-    a.prism("gape", [(-0.14, zb + 0.01), (0.14, zb + 0.01), (0.11, zb - 0.13), (0.0, zb - 0.23), (-0.11, zb - 0.13)],
+    a.prism("gape", _scaled([(-0.14, zb + 0.01), (0.14, zb + 0.01), (0.11, zb - 0.13), (0.0, zb - 0.23),
+                             (-0.11, zb - 0.13)], 1.25, (0, zb)),
             fb - 0.065, fb + 0.04, axis="y", bevel=0.01)  # зев
     with_matrix(a, None)
 
     part(a, "Jaw", "Head", tuple(hm @ V((0, fb + 0.1, zb - 0.13))))
     with_matrix(a, hm)
-    a.extrude("beak", [(-0.12, zb - 0.1), (0.0, zb - 0.2), (0.12, zb - 0.1), (0.09, zb - 0.19),
-                       (0.0, zb - 0.27), (-0.09, zb - 0.19)], fb - 0.12, fb + 0.14, axis="y")  # подклювье-улыбка
+    a.extrude("beak", _scaled([(-0.12, zb - 0.1), (0.0, zb - 0.2), (0.12, zb - 0.1), (0.09, zb - 0.19),
+                               (0.0, zb - 0.27), (-0.09, zb - 0.19)], 1.25, (0, zb)), fb - 0.12, fb + 0.14,
+              axis="y")  # подклювье-улыбка
     with_matrix(a, None)
 
     # ── плащ за головой: фронтально к игроку ──
-    part(a, "Cape", "Body", (CAPE_X, 0.4, t + 1.15))
+    part(a, "Cape", "Body", (CAPE_X, 0.6, t + 1.45))
     _cape(a, t)
 
     fpt = hm @ V((0, fb, 0.0))
     face_point(a, tuple(fpt))
-    closeup(a, (CAPE_X + 0.6, CAPE_Y - 0.1, t + 2.6), eye_off=(-1.0, -2.4, 0.6))
+    closeup(a, (CAPE_X + 0.6, CAPE_Y - 0.1, t + 3.4), eye_off=(-1.0, -2.6, 0.4))
     # поза — другая фаза танца: прыжок в другую сторону (зеркальный шаг), голова к другому плечу, клюв шире
     a.pose = {"Body": ((0, -10, -16), (-0.22, 0, 0.08)), "LegR": ((0, -38, 0), (0, 0, 0)),
               "LegL": ((0, -34, 0), (0, 0, 0)), "Head": ((0, 22, -10), (0, 0, 0)), "Jaw": ((18, 0, 0), (0, 0, 0)),
