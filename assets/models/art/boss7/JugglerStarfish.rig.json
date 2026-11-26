@@ -1,0 +1,47 @@
+{
+ "id": "JugglerStarfish",
+ "order": [
+  "Stand",
+  "Body"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.02,
+    0.0
+   ],
+   "center": [
+    -0.0054,
+    0.1786,
+    0.05
+   ],
+   "size": [
+    1.8773,
+    1.9227,
+    0.42
+   ]
+  }
+ },
+ "demo_pose": {},
+ "transparent": []
+}

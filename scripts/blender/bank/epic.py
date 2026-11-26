@@ -14,8 +14,8 @@ def mirror_morpho():
     тельце, булавовидные усики, хоботок. v3 (владелец 2026-11-26, «читается как стрекоза»): ярко-синий металлический
     цвет, широкая чёрная кайма с белыми точками; передние крылья треугольные со скруглённым краем, задние круглые,
     подняты буквой V ~30°; тельце толще и пушистее, ноги почти не видны."""
-    a = new("MirrorMorpho", {"mor": ("232A40", True), "morF": ("3A4466", False), "morB": ("2A8CFF", False),
-                             "morL": ("5AB4FF", False), "morK": ("0E1220", False)})
+    a = new("MirrorMorpho", {"mor": ("232A40", True), "morF": ("3A4466", False), "morB": ("0A46E6", False), "morM": ("07247F", False),
+                             "morL": ("2F7BFF", False), "morK": ("0E1220", False)})
     t = epic_stand(a, 1.6)
     part(a, "Body", "Stand", (0, 0.05, t + 0.28))
     A.ball(a, "mor", (0, -0.02, t + 0.3), 0.24, n=3)  # грудь — толстая, пушистая
@@ -47,10 +47,12 @@ def mirror_morpho():
             cy = sum(p[1] for p in q) / len(q)
             inner = [(cx + (px - cx) * 0.76, cy + (py - cy) * 0.76) for px, py in q]  # широкая чёрная кайма
             shine = [(cx + (px - cx) * 0.3 - s * 0.08, cy + (py - cy) * 0.3 - 0.05) for px, py in q]
+            root_band = [(px * 0.35, py * 0.35) for px, py in inner]  # тёмно-синий у корня — металлический перелив
             a.extrude("morK", q, -0.025, 0.0, axis="z", matrix=m)
             a.extrude("morB", inner, 0.0, 0.025, axis="z", matrix=m)
             a.extrude("morB", inner, -0.05, -0.025, axis="z", matrix=m)
-            a.extrude("morL", shine, 0.025, 0.04, axis="z", matrix=m)  # металлический блик
+            a.extrude("morM", root_band, 0.025, 0.035, axis="z", matrix=m)
+            a.extrude("morL", shine, 0.035, 0.045, axis="z", matrix=m)  # металлический отблеск (насыщенный)
             for i in range(len(q)):  # белые точки на кайме — по середине каждого края
                 (x0, y0), (x1, y1) = q[i], q[(i + 1) % len(q)]
                 if abs(x0) + abs(x1) < 0.2:

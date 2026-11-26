@@ -1,0 +1,98 @@
+{
+ "id": "HandstandSkunk",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    0.2
+   ],
+   "center": [
+    0.0,
+    0.3008,
+    -0.2672
+   ],
+   "size": [
+    0.7844,
+    1.6016,
+    0.9344
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.42,
+    -0.4
+   ],
+   "center": [
+    0.0,
+    0.2221,
+    -0.4834
+   ],
+   "size": [
+    0.8664,
+    0.9589,
+    1.3132
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.77,
+    0.35
+   ],
+   "center": [
+    0.0,
+    -0.0946,
+    0.2
+   ],
+   "size": [
+    0.48,
+    0.4892,
+    0.68
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    -15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,110 @@
+{
+ "id": "BeadGila",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.457,
+    0.0
+   ],
+   "size": [
+    3.3,
+    0.914,
+    3.3
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    -0.0657,
+    -0.0184
+   ],
+   "size": [
+    1.22,
+    0.6508,
+    1.4369
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.7
+   ],
+   "center": [
+    0.0388,
+    -0.0308,
+    -0.4124
+   ],
+   "size": [
+    0.9658,
+    0.5816,
+    1.2058
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.84,
+    0.6
+   ],
+   "center": [
+    0.0,
+    0.1197,
+    0.2141
+   ],
+   "size": [
+    0.72,
+    0.6713,
+    0.8038
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

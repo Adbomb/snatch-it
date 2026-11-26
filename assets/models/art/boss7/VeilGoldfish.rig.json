@@ -1,0 +1,119 @@
+{
+ "id": "VeilGoldfish",
+ "order": [
+  "Stand",
+  "Splash",
+  "Body",
+  "Fins",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.457,
+    0.0
+   ],
+   "size": [
+    3.2,
+    0.914,
+    3.2
+   ]
+  },
+  "Splash": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.34,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.265,
+    0.0
+   ],
+   "size": [
+    1.7,
+    0.53,
+    1.7
+   ]
+  },
+  "Body": {
+   "parent": "Splash",
+   "pivot": [
+    0.0,
+    1.24,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    0.0225,
+    0.0
+   ],
+   "size": [
+    0.9186,
+    0.885,
+    0.8756
+   ]
+  },
+  "Fins": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.26,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    -0.001,
+    -0.3891
+   ],
+   "size": [
+    2.0883,
+    1.5759,
+    1.2787
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.26,
+    0.3
+   ],
+   "center": [
+    0.0,
+    0.058,
+    0.0001
+   ],
+   "size": [
+    0.7123,
+    0.5159,
+    0.3176
+   ]
+  }
+ },
+ "demo_pose": {
+  "Fins": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": [
+  "Fins"
+ ]
+}

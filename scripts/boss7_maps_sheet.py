@@ -31,7 +31,7 @@ def main(only=()):
     items = [it for it in AU.items() if (not only or it["id"] in only) and has_maps(it["id"])]
     outs = []
     pic, gap = 400, 12
-    cols = 2
+    cols = 1 if only else 2  # выборка: по существу в ряд, с видами сверху и спереди
     cw_ = (SH.W - 2 * SH.M - (cols - 1) * 24) // cols
     for g in range(0, len(items), PER):
         grp = items[g:g + PER]
@@ -45,8 +45,12 @@ def main(only=()):
             x = SH.M + (i % cols) * (cw_ + 24)
             y = 130 + (i // cols) * row_h
             col = SH.RARITY[it["rarity"]]
-            for path, cap in ((os.path.join(TEX, f"{it['id']}_color.png"), "цвет"),
-                              (os.path.join(AU.SHOTS, f"{it['id']}_hero.png"), "модель с картами")):
+            views = [(os.path.join(TEX, f"{it['id']}_color.png"), "цвет"),
+                     (os.path.join(AU.SHOTS, f"{it['id']}_hero.png"), "модель с картами")]
+            if only:
+                views += [(os.path.join(AU.SHOTS, f"{it['id']}_top.png"), "сверху"),
+                          (os.path.join(AU.SHOTS, f"{it['id']}_front.png"), "спереди")]
+            for path, cap in views:
                 if os.path.exists(path):
                     sheet.paste(V.fit(Image.open(path).convert("RGB"), pic, pic), (x, y))
                 V.label(d, x + 8, y + pic - 40, cap)
@@ -61,7 +65,8 @@ def main(only=()):
             ty = V.para(d, tx, ty + 4, f"карта {size[0]}×{size[1]}", tw, size=20, fill=SH.DIM)
             V.para(d, tx, ty + 4, f"треугольников без подставки: {rep.get('tris_without_stand')}", tw, size=18,
                    fill=SH.DIM)
-        out = os.path.join(AU.PROD, f"8_maps_{g // PER + 1}.png")
+        tag = f"{g // PER + 1}" if not only else "_".join(only)[:60]  # выборка — свой файл, общий лист не затирается
+        out = os.path.join(AU.PROD, f"8_maps_{tag}.png")
         sheet = sheet.crop((0, 0, SH.W, 130 + rows * row_h + 10))
         sheet.save(out)
         outs.append(out)

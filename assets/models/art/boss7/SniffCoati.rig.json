@@ -1,0 +1,110 @@
+{
+ "id": "SniffCoati",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.82,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    -0.1879,
+    0.0033
+   ],
+   "size": [
+    0.57,
+    0.8958,
+    1.0535
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.92,
+    -0.6
+   ],
+   "center": [
+    0.0,
+    0.5765,
+    -0.0115
+   ],
+   "size": [
+    0.2425,
+    1.4047,
+    0.2655
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.97,
+    0.45
+   ],
+   "center": [
+    0.0,
+    0.0879,
+    0.411
+   ],
+   "size": [
+    0.48,
+    0.4841,
+    1.102
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    10,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,98 @@
+{
+ "id": "CapeRatel",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.77,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    -0.0631,
+    -0.0664
+   ],
+   "size": [
+    0.96,
+    1.0735,
+    1.2728
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.92,
+    -0.65
+   ],
+   "center": [
+    0.0,
+    0.1465,
+    -0.1182
+   ],
+   "size": [
+    0.16,
+    0.3113,
+    0.3241
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.92,
+    0.5
+   ],
+   "center": [
+    0.0,
+    0.0028,
+    0.24
+   ],
+   "size": [
+    0.56,
+    0.4743,
+    0.72
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

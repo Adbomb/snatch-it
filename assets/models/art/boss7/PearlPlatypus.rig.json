@@ -1,0 +1,110 @@
+{
+ "id": "PearlPlatypus",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.62,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.0065,
+    -0.0924
+   ],
+   "size": [
+    1.46,
+    0.793,
+    1.4648
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.56,
+    -0.78
+   ],
+   "center": [
+    0.0,
+    -0.0201,
+    -0.2796
+   ],
+   "size": [
+    0.56,
+    0.3602,
+    0.819
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.77,
+    0.45
+   ],
+   "center": [
+    0.0,
+    0.1505,
+    0.4472
+   ],
+   "size": [
+    0.64,
+    0.699,
+    1.2755
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

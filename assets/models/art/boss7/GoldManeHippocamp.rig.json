@@ -1,0 +1,148 @@
+{
+ "id": "GoldManeHippocamp",
+ "order": [
+  "Stand",
+  "Wave",
+  "Body",
+  "ArmL",
+  "ArmR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.4,
+    0.4354,
+    3.4
+   ]
+  },
+  "Wave": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.36,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.22,
+    -0.05
+   ],
+   "size": [
+    1.8,
+    0.44,
+    1.8
+   ]
+  },
+  "Body": {
+   "parent": "Wave",
+   "pivot": [
+    0.0,
+    1.16,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.008,
+    -0.2036
+   ],
+   "size": [
+    0.7159,
+    1.504,
+    1.4427
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    0.2,
+    1.71,
+    0.2
+   ],
+   "center": [
+    0.0274,
+    -0.09,
+    0.2918
+   ],
+   "size": [
+    0.1914,
+    0.68,
+    0.6164
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    -0.2,
+    1.71,
+    0.2
+   ],
+   "center": [
+    -0.0274,
+    -0.09,
+    0.2918
+   ],
+   "size": [
+    0.1914,
+    0.68,
+    0.6164
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.86,
+    0.15
+   ],
+   "center": [
+    0.0,
+    0.3792,
+    0.093
+   ],
+   "size": [
+    0.4372,
+    1.0409,
+    1.186
+   ]
+  }
+ },
+ "demo_pose": {
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    -20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

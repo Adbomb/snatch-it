@@ -1,0 +1,79 @@
+{
+ "id": "PearlGuineafowl",
+ "order": [
+  "Stand",
+  "Body",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8978,
+    0.28,
+    2.8978
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.02,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    -0.1053,
+    -0.0
+   ],
+   "size": [
+    1.134,
+    1.3706,
+    1.1732
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.52,
+    0.25
+   ],
+   "center": [
+    0.0,
+    0.2389,
+    0.1227
+   ],
+   "size": [
+    0.3445,
+    0.7222,
+    0.4276
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    12
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

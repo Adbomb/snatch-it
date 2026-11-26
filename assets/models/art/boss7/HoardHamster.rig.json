@@ -1,0 +1,129 @@
+{
+ "id": "HoardHamster",
+ "order": [
+  "Stand",
+  "Body",
+  "Head",
+  "ArmL",
+  "ArmR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.15
+   ],
+   "center": [
+    0.0,
+    0.005,
+    -0.1085
+   ],
+   "size": [
+    1.2329,
+    1.01,
+    1.2452
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.22,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.3146,
+    0.17
+   ],
+   "size": [
+    1.8908,
+    1.1509,
+    1.02
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    0.4,
+    0.97,
+    0.1
+   ],
+   "center": [
+    0.0888,
+    0.1079,
+    0.224
+   ],
+   "size": [
+    0.4375,
+    0.4841,
+    0.7078
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    -0.4,
+    0.97,
+    0.1
+   ],
+   "center": [
+    -0.0888,
+    0.1105,
+    0.224
+   ],
+   "size": [
+    0.4375,
+    0.479,
+    0.7078
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    8
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    -15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

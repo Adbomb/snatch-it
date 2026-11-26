@@ -1,0 +1,79 @@
+{
+ "id": "FleeceAlpaca",
+ "order": [
+  "Stand",
+  "Body",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.457,
+    0.0
+   ],
+   "size": [
+    3.3,
+    0.914,
+    3.3
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.24,
+    -0.15
+   ],
+   "center": [
+    0.0,
+    0.095,
+    -0.06
+   ],
+   "size": [
+    1.84,
+    1.99,
+    1.82
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.89,
+    0.35
+   ],
+   "center": [
+    0.0,
+    0.6417,
+    0.2615
+   ],
+   "size": [
+    0.5919,
+    1.5833,
+    0.8689
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

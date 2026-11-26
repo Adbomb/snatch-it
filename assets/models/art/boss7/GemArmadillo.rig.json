@@ -1,0 +1,110 @@
+{
+ "id": "GemArmadillo",
+ "order": [
+  "Stand",
+  "Body",
+  "Head",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.2841,
+    0.28,
+    3.2841
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.62,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.395,
+    0.0
+   ],
+   "size": [
+    1.5,
+    1.59,
+    1.56
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.67,
+    0.65
+   ],
+   "center": [
+    0.0,
+    0.2785,
+    0.38
+   ],
+   "size": [
+    0.6742,
+    0.7686,
+    0.94
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.52,
+    -0.75
+   ],
+   "center": [
+    0.0644,
+    -0.086,
+    -0.287
+   ],
+   "size": [
+    0.3287,
+    0.3624,
+    0.735
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

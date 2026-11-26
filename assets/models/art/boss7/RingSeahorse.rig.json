@@ -1,0 +1,79 @@
+{
+ "id": "RingSeahorse",
+ "order": [
+  "Stand",
+  "Body",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.8012,
+    0.28,
+    2.8012
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    0.2708,
+    0.0037
+   ],
+   "size": [
+    0.5175,
+    1.5383,
+    0.8361
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.72,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.3071,
+    0.235
+   ],
+   "size": [
+    0.5322,
+    0.5458,
+    0.99
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

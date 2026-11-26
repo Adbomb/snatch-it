@@ -1,0 +1,98 @@
+{
+ "id": "GoldToothHippo",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.457,
+    0.0
+   ],
+   "size": [
+    3.3,
+    0.914,
+    3.3
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.09,
+    -0.1
+   ],
+   "center": [
+    0.0,
+    -0.1197,
+    -0.0655
+   ],
+   "size": [
+    1.12,
+    1.2799,
+    1.4311
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.19,
+    -0.72
+   ],
+   "center": [
+    0.0,
+    -0.0325,
+    -0.0803
+   ],
+   "size": [
+    0.08,
+    0.135,
+    0.1994
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.29,
+    0.6
+   ],
+   "center": [
+    0.0,
+    0.1807,
+    0.2892
+   ],
+   "size": [
+    0.96,
+    0.9813,
+    0.9216
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -8,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

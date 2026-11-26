@@ -1,0 +1,8 @@
+{
+ "creatures_model": "107309108829187",
+ "uploaded": "2026-11-26",
+ "fbx": {
+  "creatures": "assets/models/Boss7Creatures_all.fbx"
+ },
+ "note": "28 из 30 (утверждены 2026-11-26); MirrorMorpho и SapphireTiger — отдельной загрузкой после «ок» карт v3; карты — assets/textures/art/boss7/Boss7_maps.json (только цвет, без нормалей)"
+}

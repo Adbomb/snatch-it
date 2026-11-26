@@ -1,0 +1,98 @@
+{
+ "id": "ZebraTapir",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.02,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    -0.245,
+    -0.0985
+   ],
+   "size": [
+    0.686,
+    1.11,
+    1.197
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.12,
+    -0.72
+   ],
+   "center": [
+    0.0,
+    -0.1482,
+    -0.0984
+   ],
+   "size": [
+    0.1559,
+    0.4287,
+    0.259
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.17,
+    0.55
+   ],
+   "center": [
+    0.0,
+    0.057,
+    0.3171
+   ],
+   "size": [
+    0.6,
+    0.666,
+    0.8942
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

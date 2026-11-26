@@ -1,0 +1,110 @@
+{
+ "id": "StashSquirrel",
+ "order": [
+  "Stand",
+  "Body",
+  "Head",
+  "Tail"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.67,
+    0.0
+   ],
+   "center": [
+    0.0,
+    -0.053,
+    0.0536
+   ],
+   "size": [
+    0.7943,
+    0.786,
+    0.7434
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.0,
+    0.05
+   ],
+   "center": [
+    0.0,
+    0.3837,
+    0.1033
+   ],
+   "size": [
+    0.52,
+    0.7926,
+    0.6266
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.42,
+    -0.3
+   ],
+   "center": [
+    -0.01,
+    0.9054,
+    -0.3251
+   ],
+   "size": [
+    1.3701,
+    2.1892,
+    1.1499
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    15,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    15
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

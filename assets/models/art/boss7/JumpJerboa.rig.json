@@ -1,0 +1,110 @@
+{
+ "id": "JumpJerboa",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.97,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    -0.2125,
+    0.1421
+   ],
+   "size": [
+    0.5617,
+    1.065,
+    0.9738
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.87,
+    -0.28
+   ],
+   "center": [
+    0.0,
+    0.1827,
+    -0.5404
+   ],
+   "size": [
+    0.2,
+    0.8147,
+    1.2593
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.22,
+    0.05
+   ],
+   "center": [
+    0.0,
+    0.4543,
+    0.1221
+   ],
+   "size": [
+    0.6473,
+    0.9437,
+    0.5242
+   ]
+  }
+ },
+ "demo_pose": {
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    -10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,79 @@
+{
+ "id": "GoldAxolotl",
+ "order": [
+  "Stand",
+  "Body",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.1876,
+    0.28,
+    3.1876
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.52,
+    -0.4
+   ],
+   "center": [
+    0.0,
+    -0.0021,
+    -0.1036
+   ],
+   "size": [
+    1.5285,
+    0.6253,
+    1.8652
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.62,
+    0.3
+   ],
+   "center": [
+    0.0,
+    0.3275,
+    0.2696
+   ],
+   "size": [
+    2.0442,
+    1.11,
+    0.8792
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}
