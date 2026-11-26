@@ -3,7 +3,10 @@
   python scripts/blender/boss6/queen_sheet.py → assets/concepts/bosses_5_10/boss6_prod/9_queen.png (вне git)
   python scripts/blender/boss6/queen_sheet.py eat → boss6_prod/10_queen_eat.png: правки владельца 2026-11-26 —
   контраст с ареной (кадры арены с игровой королевой), зубы вдвое короче, раскадровка клипа «съесть» (D74), сон /
-  пробуждение / засыпание в новой палитре. Кадры — boss6_prod/queen_v2/ (boss6_flytrap.py quick, boss6_flytrap_anim.py
+  пробуждение / засыпание в новой палитре.
+  … chew → 11_queen_chew.png: раскадровка жевания клипа «съесть» (кадры chew_<k>.png);
+  … maps → 12_queen_maps.png: карты королевы (assets/textures/art/Boss6Flytrap<Карта>_{color,normal}.png) и кадры
+  полной сборки с картами (boss6_prod/queen_maps/) — владельцу до загрузки (D70). Кадры — boss6_prod/queen_v2/ (boss6_flytrap.py quick, boss6_flytrap_anim.py
   с FLY_CLIPS=eat,sleep_idle,wake,fall_asleep, arena.py player,approach queen=game out=…/queen_v2/arena).
 Кадры: быстрая сборка scripts/blender/boss6_flytrap.py (виды, силуэты, позы, ладони) и раскадровка клипов
 scripts/blender/boss6_flytrap_anim.py (frames/<клип>_<k>.png) в boss6_prod/queen/; числа — report.json и
@@ -199,5 +202,75 @@ def eat_sheet():
     return OUT_EAT, sheet.size
 
 
+CHEW = [(1.5, "захлоп"), (1.62, "чавк 1"), (1.85, "кивок"), (1.97, "чавк 2"), (2.2, "кивок"), (2.32, "чавк 3"),
+        (2.55, "кивок"), (2.67, "чавк 4"), (2.9, "проглотила"), (3.05, "ик!"), (3.2, "после икоты"),
+        (3.45, "набрала воздух")]  # = CHEW_SHOTS в anim
+
+
+def chew_sheet():
+    W, M = SH.W, SH.M
+    anim = json.load(open(os.path.join(Q2, "anim_report.json"), encoding="utf-8"))
+    r = anim.get("eat", {})
+    sheet = Image.new("RGB", (W, 3000), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Клип «съесть»: жевание 1.4 с — 4 «чавка» и икота",
+              f"Весь клип 4.45 с · кадров {r.get('frames', '?')} · ниже земли: {r.get('below_ground_frames', '?')} · "
+              "плевок капсулой — 3.75 с")
+    y = 128
+    fw = (W - 2 * M - 3 * 12) // 4
+    for i, (t, cap) in enumerate(CHEW):
+        x = M + (i % 4) * (fw + 12)
+        yy = y + (i // 4) * (fw + 12)
+        p = os.path.join(Q2, "frames", f"chew_{i}.png")
+        if os.path.exists(p):
+            sheet.paste(V.fit(Image.open(p).convert("RGB"), fw, fw), (x, yy))
+        V.label(d, x + 10, yy + fw - 44, f"{t:.2f} с — {cap}")
+    y += 3 * (fw + 12) + 6
+    for ln in ("• «Чавк» каждые 0.35 с: створки-щёки расходятся («раздуваются»), мантия и венчик пышнеют, голова "
+               "вскидывается и поворачивается — по очереди вправо и влево; «кивок» — створки сомкнуты, голова "
+               "кивает вниз в такт.",
+               "• Масштаба в скелете нет (как у всех боссов): раздувание — движением створок и листьев.",
+               "• Икота 3.05 с: вздрогнула, голова вверх, глаза круглые, листья торчком; затем вдох и плевок 3.75 с."):
+        y = V.para(d, M + 12, y, ln, W - 2 * M - 24, size=24, fill=SH.INK) + 8
+    sheet = sheet.crop((0, 0, W, y + M))
+    out = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "11_queen_chew.png")
+    sheet.save(out)
+    return out, sheet.size
+
+
+def maps_sheet():
+    W, M = SH.W, SH.M
+    tex = os.path.join(SH.REPO, "assets", "textures", "art")
+    qm = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "queen_maps")
+    rep = json.load(open(os.path.join(qm, "report.json"), encoding="utf-8"))
+    sheet = Image.new("RGB", (W, 4000), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Королева-мухоловка: карты — на просмотр до загрузки",
+              f"Три карты (голова, тело, лозы) · {rep['tris_total']} треугольников · ничего не загружено; загрузка — "
+              "после «ок»")
+    y = 128
+    y = SH.section(d, y, "Модель с картами", "спереди · 3/4 · сбоку · сзади")
+    size = (W - 2 * M - 3 * 12) // 4
+    y = SH.tiles(sheet, d, y, [(os.path.join(qm, f"stand_{v}.png"), c) for v, c in
+                               (("front", "спереди"), ("34", "3/4"), ("side", "сбоку"), ("back", "сзади"))], size)
+    pic = (W - 2 * M - 2 * 12) // 3
+    for m, title in (("Head", "Голова: ловушка, маска, веки, брови, корона, венчик"),
+                     ("Body", "Тело: клубень, розетка, стебель, мантия, бутоны"),
+                     ("Limbs", "Лозы, ладони и листья-пальцы")):
+        y = SH.section(d, y, title, f"Boss6Flytrap{m}")
+        items = []
+        for kind, cap in (("color", "цвет"), ("normal", "нормали")):
+            p = os.path.join(tex, f"Boss6Flytrap{m}_{kind}.png")
+            if os.path.exists(p):
+                items.append((p, f"{cap} {Image.open(p).size[0]}×{Image.open(p).size[1]}"))
+        y = SH.tiles(sheet, d, y, items, pic)
+    sheet = sheet.crop((0, 0, W, y + M))
+    out = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "12_queen_maps.png")
+    sheet.save(out)
+    return out, sheet.size
+
+
 if __name__ == "__main__":
-    print(eat_sheet() if sys.argv[1:] == ["eat"] else main())
+    mode = sys.argv[1:2]
+    print(eat_sheet() if mode == ["eat"] else chew_sheet() if mode == ["chew"] else maps_sheet() if mode == ["maps"]
+          else main())

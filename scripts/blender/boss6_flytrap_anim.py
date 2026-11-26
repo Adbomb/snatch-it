@@ -13,11 +13,13 @@
          веером (0.5), сжимаются в кулак из листьев (0.75);
   hit 0.47; victory 2.2 (торжествует → stand); defeat 2.4 (увяла, корона упала → медленно поднимается → stand);
   fall_asleep 1.6 (stand → sleep);
-  eat 3.8 — катсцена D74 «съесть» (stand → stand): правая лоза рывком вперёд на всю длину, ладонь раскрыта (0.35) →
+  eat 4.45 — катсцена D74 «съесть» (stand → stand): правая лоза рывком вперёд на всю длину, ладонь раскрыта (0.35) →
          листья-пальцы сжались — игра в этот миг крепит Ловибум к LovibumHold (0.6) → подносит к пасти, голова
          склонилась к ладони, створки широко (1.05) → пальцы разжались, Ловибум в пасти (1.3) → захлоп — Ловибум
-         скрыть (1.5) → жуёт: створки и голова ходят, мантия и венчик колышутся (1.75–2.5) → набрала воздух (2.8) →
-         выплюнула капсулу этажа вперёд из CapsuleSpawn (3.05) → довольная, прищур (3.5) → стойка.
+         скрыть (1.5) → жуёт 1.4 с: 4 «чавка» по 0.35 с — створки-щёки расходятся («раздуваются»), мантия и венчик
+         пышнеют, голова вскидывается и в такт кивает вниз, качаясь то вправо, то влево (1.5–2.9) → икота (3.05) →
+         набрала воздух (3.45) → выплюнула капсулу этажа вперёд из CapsuleSpawn (3.75) → довольная (4.15) → стойка.
+         (Масштаба в риге нет: «раздувание» — створки и листья, не растяжение детали.)
   D74: боя нет — боевые клипы (combat_idle, turn, snap, grab, hit, victory, defeat) не удаляются, но не дорабатываются.
 Выход: <папка>/Boss6_Flytrap.anim.json (до «ок» владельца на лист — не в assets; формат как у Boss5_Yeti.anim.json:
 кадры — Transform суставов в осях Roblox, [x, y, z, qx, qy, qz, qw]), anim_report.json (провал под землю ниже стойки),
@@ -211,25 +213,40 @@ def clips():
     drop = pose(lift, fing={-1: (0.45, 8.0)})
     gulp = pose("stand", lean=22.0, head=(16.0, 0.0, 0.0), jaw=(0, 0), lid=SQUINT_, brow=Q.SMUG, petals=-10.0,
                 arm={-1: (44.0, 40.0, 40.0, 0.0, 10.0)}, fing={-1: (0.2, 20.0)})
-    chew_a = pose(gulp, lean=16.0, head=(8.0, 7.0, 5.0), jaw=(9, 13), mantle=(6.0, 5.0), petals=4.0,
-                  arm={-1: (52.0, 30.0, 40.0, 0.0, 10.0)})
-    chew_b = pose(gulp, lean=15.0, head=(8.0, -7.0, -5.0), jaw=(0, 0), mantle=(-3.0, 0.0), petals=-8.0,
-                  arm={-1: (56.0, 26.0, 40.0, 0.0, 10.0)})
+    chew_arm = {-1: (54.0, 28.0, 40.0, 0.0, 10.0)}
+
+    def chomp(side_):  # «чавк»: створки-щёки расходятся, мантия и венчик пышнеют, голова вскинута и повёрнута
+        return pose(gulp, lean=14.0, head=(-4.0, side_ * 8.0, side_ * 5.0), jaw=(12, 16), mantle=(8.0, 10.0),
+                    petals=6.0, arm=chew_arm)
+
+    def munch(side_):  # сомкнула: голова кивает вниз в такт, листья опадают
+        return pose(gulp, lean=18.0, head=(12.0, side_ * 3.0, side_ * 2.0), jaw=(0, 0), mantle=(-2.0, 0.0),
+                    petals=-10.0, arm=chew_arm)
+
+    hic = pose("stand", lean=2.0, head=(-22.0, 0.0, 0.0), jaw=(8, 14), **happy, petals=-18.0, mantle=(14.0, 10.0),
+               arm={-1: (48.0, 20.0, 40.0, 0.0, 10.0)})  # икота: вздрогнула, голова вверх, листья торчком
+    after_hic = pose(gulp, lean=12.0, head=(8.0, 0.0, 0.0), arm={-1: (44.0, 0.0, 34.0, -10.0, 20.0)})
     breath = pose("stand", lean=0.0, head=(-18.0, 0.0, 0.0), jaw=(0, 0), lid=SQUINT_, brow=Q.SMUG, petals=-14.0,
                   mantle=(12.0, 8.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})
     spit = pose("stand", lean=14.0, head=(-4.0, 0.0, 0.0), jaw=(34, 50), tongue=(1.0, 0.0), **happy, petals=8.0,
                 mantle=(-6.0, 2.0), arm={-1: (40.0, -10.0, 30.0, -10.0, 20.0)})  # пасть смотрит вперёд, лоза в сторону
     proud = pose("stand", head=(-6.0, 0.0, 4.0), petals=-6.0, mantle=(6.0, 6.0))
-    C.append(Clip("eat", "Съесть", 3.8, [(0.0, STAND), (0.35, reach), (0.6, snatch), (1.05, lift), (1.3, drop),
-                                         (1.5, gulp), (1.75, chew_a), (2.0, chew_b), (2.25, chew_a), (2.5, gulp),
-                                         (2.8, breath), (3.05, spit), (3.5, proud), (3.8, STAND)],
+    chew = []
+    for i in range(4):  # 4 «чавка» по 0.35 с (1.5–2.9)
+        t0 = 1.5 + 0.35 * i
+        chew += [(t0 + 0.12, chomp(1 if i % 2 == 0 else -1)), (t0 + 0.35, munch(1 if i % 2 == 0 else -1))]
+    C.append(Clip("eat", "Съесть", 4.45, [(0.0, STAND), (0.35, reach), (0.6, snatch), (1.05, lift), (1.3, drop),
+                                          (1.5, gulp), *chew, (3.05, hic), (3.2, after_hic), (3.45, breath),
+                                          (SPIT_T, spit), (4.15, proud), (4.45, STAND)],
                   events={"отобрала: крепить Ловибум к LovibumHold": 0.6, "Ловибум в пасти: открепить": 1.3,
-                          "захлоп: Ловибум скрыть": 1.5, "капсула этажа вылетает из CapsuleSpawn": 3.05,
-                          "довольная": 3.5},
+                          "захлоп: Ловибум скрыть": 1.5, "чавк": 1.62, "чавк 2": 1.97, "чавк 3": 2.32,
+                          "чавк 4": 2.67, "икота": 3.05, "капсула этажа вылетает из CapsuleSpawn": SPIT_T,
+                          "довольная": 4.15},
                   start="stand", end="stand"))
     return C
 
 
+SPIT_T = 3.75  # «съесть»: миг плевка — капсула появляется в CapsuleSpawn
 SQUINT_ = {1: (0.55, 0.15, -6.0), -1: (0.55, 0.15, 6.0)}  # довольный прищур (жуёт)
 
 
@@ -333,10 +350,13 @@ def strips(parts, baked, out):
 
 
 # раскадровка «съесть»: (время, подпись) — кадры eat_<k>.png 600×600; подписи берёт лист королевы
-EAT_SHOTS = [(0.0, "стойка"), (0.35, "рывок лозой к Ловибуму"), (0.6, "отобрала: пальцы сжались"),
-             (1.05, "несёт к пасти"), (1.3, "пальцы разжались — Ловибум в пасти"), (1.5, "захлоп"),
-             (1.75, "жуёт"), (2.0, "жуёт"), (2.8, "набрала воздух"), (3.05, "выплюнула капсулу этажа"),
-             (3.3, "капсула летит вперёд"), (3.5, "довольная")]
+EAT_SHOTS = [(0.0, "стойка"), (0.35, "рывок лозой"), (0.6, "отобрала"), (1.05, "несёт к пасти"), (1.3, "в пасти"),
+             (1.5, "захлоп"), (1.62, "чавк"), (1.97, "чавк"), (3.05, "икота"), (3.75, "плевок"), (4.0, "капсула летит"),
+             (4.15, "довольная")]
+# раскадровка жевания крупнее: кадры chew_<k>.png
+CHEW_SHOTS = [(1.5, "захлоп"), (1.62, "чавк 1"), (1.85, "кивок"), (1.97, "чавк 2"), (2.2, "кивок"), (2.32, "чавк 3"),
+              (2.55, "кивок"), (2.67, "чавк 4"), (2.9, "проглотила"), (3.05, "ик!"), (3.2, "после икоты"),
+              (3.45, "набрала воздух")]
 PLAYER_AT = V((-1.4, -7.4, 1.4))  # макет: Ловибум у игрока перед королевой (в игре его подтягивает сама игра)
 MOUTH_AT = V((0, -1.9, 0.45))  # макет: Ловибум внутри пасти (система головы)
 
@@ -383,7 +403,15 @@ def eat_strip(parts, frames, cam, fdir, turn, ck):
     caps = _prop([("cyl", (0.62, 1.1, 16), (0, 0, 0), (math.pi / 2, 0, 0), gold),
                   ("ball", (0.62,), (0, 0.55, 0), None, pink), ("ball", (0.62,), (0, -0.55, 0), None, pink)],
                  "PropCapsule")
-    for k, (t, _) in enumerate(EAT_SHOTS):
+    props = (lovi, caps)
+    _eat_frames(parts, frames, cam, fdir, turn, ck, props, EAT_SHOTS, "eat", (6.0, -36.0, 8.0), (-1.8, -3.0, 5.2), 72)
+    _eat_frames(parts, frames, cam, fdir, turn, ck, props, CHEW_SHOTS, "chew", (6.0, -34.0, 9.5), (-1.4, -2.4, 6.6),
+                95)
+
+
+def _eat_frames(parts, frames, cam, fdir, turn, ck, props, shots, prefix, eye, tgt, lens):
+    lovi, caps = props
+    for k, (t, _) in enumerate(shots):
         P = frames[min(round(t * FPS), len(frames) - 1)]
         W = Q.pose_world(P)
         F = Q.frames(P)
@@ -402,23 +430,23 @@ def eat_strip(parts, frames, cam, fdir, turn, ck):
         for c in lovi.children:
             c.hide_render = lovi.hide_render
         lovi.matrix_world = turn @ Q.T(p)
-        show = t >= 3.05
+        show = t >= SPIT_T
         if show:
-            spawn = F["Head"] @ Q.ATTACH["CapsuleSpawn"][1] if t < 3.1 else None
-            if spawn is None:  # полёт макета: от точки появления в кадре 3.05 вперёд и вниз по дуге
-                P0 = frames[round(3.05 * FPS)]
+            spawn = F["Head"] @ Q.ATTACH["CapsuleSpawn"][1] if t < SPIT_T + 0.05 else None
+            if spawn is None:  # полёт макета: от точки появления в миг плевка вперёд и вниз по дуге
+                P0 = frames[round(SPIT_T * FPS)]
                 F0 = Q.frames(P0)
                 s0 = F0["Head"] @ Q.ATTACH["CapsuleSpawn"][1]
                 d0 = (F0["Head"].to_3x3() @ V((0, -1, 0))).normalized()
-                dt = t - 3.05
+                dt = t - SPIT_T
                 spawn = s0 + d0 * 10.0 * dt + V((0, 0, 4.0 * dt - 16.0 * dt * dt))
                 spawn.z = max(spawn.z, 0.5)
             caps.matrix_world = turn @ Q.T(spawn)
         for c in [caps, *caps.children]:
             c.hide_render = not show
         bpy.context.view_layer.update()
-        ck.shot(cam, os.path.join(fdir, f"eat_{k}.png"), (6.0, -36.0, 8.0), (-1.8, -3.0, 5.2), 72, (600, 600))
-    print("STRIP eat", flush=True)
+        ck.shot(cam, os.path.join(fdir, f"{prefix}_{k}.png"), eye, tgt, lens, (600, 600))
+    print("STRIP", prefix, flush=True)
 
 
 if __name__ == "__main__":
