@@ -49,7 +49,7 @@ JunkKit.C = {
 	green = hex("4CAF7A"),
 	steel = hex("8C949E"),
 	concrete = hex("A9A39A"),
-	kennel = hex("2BA39A"), -- будка пса — бирюзовая, яркий акцент у площадки
+	kennel = hex("4F8580"), -- будка пса — приглушённая бирюза (D72: яркое — только пёс, существа и подсветка)
 	roof = hex("D84A3A"),
 	bone = hex("F6F0E1"),
 	bowl = hex("E53935"),
@@ -504,6 +504,41 @@ function JunkKit.BentSign(): { Brick }
 			DECOR
 		),
 	}
+end
+
+-- Ориентиры «Свалки» (D72): стопка из трёх сплющенных машин (приглушённые цвета, корпуса твёрдые) и гора покрышек
+-- (семь стопок разной высоты вокруг центра, сверху две покрышки набок).
+function JunkKit.CarStack(): { Brick }
+	local bricks = {}
+	for i, color in { hex("8A4A3A"), hex("4E6582"), hex("7D8389") } do
+		local car = JunkKit.CrushedCar(color)
+		car[1].collide = true
+		local at = CFrame.new(((i * 37) % 3 - 1) * 0.3, (i - 1) * 1.85, ((i * 53) % 3 - 1) * 0.3)
+			* CFrame.Angles(0, (i - 2) * 0.18, (i % 2 * 2 - 1) * 0.03)
+		put(bricks, car, at)
+	end
+	return bricks
+end
+
+function JunkKit.TireMountain(): { Brick }
+	local bricks = {}
+	for j, spot in
+		{
+			{ 0, 0, 5 },
+			{ 3.6, 0.4, 4 },
+			{ -3.4, 0.4, 3 },
+			{ 1.6, 3.2, 3 },
+			{ -1.8, -3.1, 4 },
+			{ 1.8, -3.2, 2 },
+			{ -1.7, 3.3, 2 },
+		}
+	do
+		put(bricks, JunkKit.Tires(spot[3]), CFrame.new(spot[1], j * 0.03, spot[2]))
+	end
+	for i, tilt in { 0.55, -0.7 } do
+		put(bricks, JunkKit.Tires(1), CFrame.new((i - 1.5) * 1.6, 5.1 + i * 0.4, 0.4) * CFrame.Angles(tilt, i, 0.2))
+	end
+	return bricks
 end
 
 JunkKit.Crate = Props.Crate
