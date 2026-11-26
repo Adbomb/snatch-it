@@ -115,6 +115,54 @@ def main():
     return outs
 
 
+V3 = {
+    "MirrorMorpho": "v3: ярко-синий металлический цвет, широкая чёрная кайма с белыми точками; передние крылья "
+                    "треугольные со скруглённым краем, задние круглые, подняты буквой V ~30°; тельце толще и пушистее, "
+                    "ножки почти не видны.",
+    "SapphireTiger": "v3: голова крупнее и круглее по-кошачьи — широкие щёки с белыми бакенбардами, морда вперёд; "
+                     "тело сужается к пояснице, хвост толще; полосы светятся и спускаются по бокам.",
+}
+
+
+def again(ids=("MirrorMorpho", "SapphireTiger")):
+    """Лист «ещё раз» — только морфо и тигр (v3), четыре вида и грифон рядом для сравнения силы образа."""
+    its = {it["id"]: it for it in AU.items()}
+    pic, gap = 420, 10
+    sheet = Image.new("RGB", (SH.W, 130 + len(ids) * (pic + 170) + 600), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Босс 7 — морфо и тигр ещё раз (v3, до карт)",
+              "По замечаниям владельца 2026-11-26. Быстрая сборка без карт: 3/4, спереди, сбоку, лицо.")
+    y = 130
+    for item in ids:
+        it = its[item]
+        x = SH.M
+        for view in ("hero", "front", "side", "face"):
+            im = shot(AU.SHOTS, item, view)
+            if im is not None:
+                sheet.paste(V.fit(im, pic, pic), (x, y))
+            x += pic + gap
+        tx = x + 10
+        tw = SH.W - SH.M - tx
+        d.rectangle((tx - 12, y, tx - 5, y + pic), fill=SH.RARITY[it["rarity"]])
+        ty = V.para(d, tx, y + 4, f"№{it['n']} {it['name']}", tw, size=28, fill=SH.INK, bold=True)
+        ty = V.para(d, tx, ty + 6, V3[item], tw, size=20, fill=SH.INK) + 6
+        lines, bad = AU.numbers(AU.report(item))
+        V.para(d, tx, ty, " · ".join(lines), tw, size=18, fill=(235, 120, 120) if bad else SH.DIM)
+        y += pic + 16
+    y = SH.section(d, y, "Рядом — легендарные для сравнения", "грифон и гиппокамп (приняты), тигр v3")
+    for i, item in enumerate(("TreasureGriffin", "GoldManeHippocamp", "SapphireTiger")):
+        im = shot(AU.SHOTS, item, "hero")
+        if im is not None:
+            sheet.paste(V.fit(im, 560, 560), (SH.M + i * (560 + 12), y))
+    y += 560 + SH.M
+    out = os.path.join(AU.PROD, "7_redo_v3.png")
+    sheet.crop((0, 0, SH.W, y)).save(out)
+    return out
+
+
 if __name__ == "__main__":
-    for o in main():
-        print(o)
+    if sys.argv[1:] == ["again"]:
+        print(again())
+    else:
+        for o in main():
+            print(o)
