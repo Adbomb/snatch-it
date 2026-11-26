@@ -36,14 +36,17 @@ LIMITS = {"tris": 3000, "size": (3.7, 3.7, 4.55)}  # D64 и каталог: бе
 
 
 def report(item_id):
-    """Отчёт сборки существа: самый свежий из общего report.json (сборка всех) и report_<Id>.json (точечная)."""
+    """Отчёт сборки существа: самый свежий из всех report*.json папки кадров, где оно есть (общая и точечные сборки)."""
     best, when = {}, -1.0
-    for name in ("report.json", f"report_{item_id}.json"):
+    for name in os.listdir(SHOTS):
+        if not (name.startswith("report") and name.endswith(".json")):
+            continue
         p = os.path.join(SHOTS, name)
-        if os.path.exists(p) and os.path.getmtime(p) > when:
-            rep = json.load(open(p, encoding="utf-8")).get(item_id)
-            if rep:
-                best, when = rep, os.path.getmtime(p)
+        if os.path.getmtime(p) <= when:
+            continue
+        rep = json.load(open(p, encoding="utf-8")).get(item_id)
+        if rep:
+            best, when = rep, os.path.getmtime(p)
     return best
 
 
@@ -102,18 +105,14 @@ def row(sheet, d, y, it, a, col):
                 size=18, fill=col) + 6
     # признаки вида: цветная метка + текст, в две колонки
     signs = a.get("signs") or []
-    half = (len(signs) + 1) // 2
-    cw = tw // 2
-    sy = ty
-    for i, (text, mark) in enumerate(signs):
-        cx = tx + (i // half) * cw if half else tx
-        cy = sy + (i % half) * 30 if half else sy
+    for text, mark in signs:  # один столбец: длинный признак переносится и не налезает на соседний
         word, mc = MARK.get(mark, ("?", (150, 150, 150)))
-        d.rectangle((cx, cy + 4, cx + 70, cy + 28), fill=mc)
-        d.text((cx + 6, cy + 3), word, font=V.font(17, True), fill=(255, 255, 255))
-        V.para(d, cx + 80, cy + 2, text, cw - 90, size=18, fill=SH.INK)
-    ty = sy + max(half, 1) * 30 + 6
-    ty = V.para(d, tx, ty, "Эмоция: " + it["emotion"] + (" — " + a["emotion"] if a.get("emotion") else ""), tw, size=18,
+        d.rectangle((tx, ty + 4, tx + 70, ty + 28), fill=mc)
+        d.text((tx + 6, ty + 3), word, font=V.font(17, True), fill=(255, 255, 255))
+        ty = max(V.para(d, tx + 80, ty + 2, text, tw - 90, size=18, fill=SH.INK), ty + 28) + 2
+    ty += 4
+    seen = a.get("emotion")
+    ty = V.para(d, tx, ty, "Эмоция (каталог): " + it["emotion"] + (". На лице: " + seen if seen else ""), tw, size=18,
                 fill=SH.DIM) + 4
     lines, bad = numbers(report(it["id"]))
     ty = V.para(d, tx, ty, " · ".join(lines), tw, size=17, fill=(235, 120, 120) if bad else SH.DIM) + 4
@@ -127,7 +126,7 @@ def row(sheet, d, y, it, a, col):
 def page(items, audit, rar):
     group = [it for it in items if it["rarity"] == rar]
     col = SH.RARITY[rar]
-    sheet = Image.new("RGB", (SH.W, 400 * len(group) + 400), SH.BG)
+    sheet = Image.new("RGB", (SH.W, 520 * len(group) + 400), SH.BG)
     d = ImageDraw.Draw(sheet)
     ok = sum(1 for it in group if audit.get(it["id"], {}).get("rating") == "ок")
     SH.header(d, f"Аудит анатомии D64 — {SH.RARITY_RU[rar]} ({len(group)})",
