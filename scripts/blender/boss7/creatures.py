@@ -132,6 +132,29 @@ def gemstone(a, key, keyL, c, r, h, turn=0.0, tilt_deg=0.0):
             matrix=m)
 
 
+def jewel(a, key, c, r, tilt_deg=0.0):
+    """Гранёный самоцвет в золотой оправе на поверхности: оправа — низкий золотой восьмигранник шире камня, камень —
+    восьмигранник с гранёной верхушкой (усечённая пирамида, повёрнутая на 22.5°), блик; tilt_deg — наклон вокруг y."""
+    m = Matrix.Translation(V(c)) @ Matrix.Rotation(math.radians(tilt_deg), 4, "Y")
+    hexa = [(r * 1.3 * math.cos(math.radians(60 * i)), r * 1.3 * math.sin(math.radians(60 * i))) for i in range(6)]
+    a.prism("gold", hexa, -0.03 - 0.004 * (int(abs(c[1]) * 37) % 5), 0.04, bevel=0, matrix=m)  # оправа
+    a.prism(key, S.octagon(-r, r, -r, r, r * 0.4), 0.0, 0.08, bevel=0, matrix=m)
+    a.frustum(key, (-r * 0.8, r * 0.8, -r * 0.8, r * 0.8), (-r * 0.3, r * 0.3, -r * 0.3, r * 0.3), 0.075, 0.15,
+              bevel=0, matrix=m @ Matrix.Rotation(math.radians(22.5), 4, "Z"))  # гранёная верхушка
+
+
+def round_ball(a, keys, c, r, n=8, sides=16):
+    """Круглый шар: n ярусов-16-угольников (силуэт круглый, ступени D39); keys — цвета ярусов снизу вверх."""
+    x, y, z = c
+    for k in range(n):
+        za, zb = -r + 2 * r * k / n, -r + 2 * r * (k + 1) / n
+        zm = (za + zb) / 2
+        rr = max(math.sqrt(max(r * r - zm * zm, 0.0)), r * 0.3)
+        pts = [(x + rr * math.cos(math.pi / sides + 2 * math.pi * i / sides),
+                y + rr * math.sin(math.pi / sides + 2 * math.pi * i / sides)) for i in range(sides)]
+        a.prism(keys[k % len(keys)], pts, z + za - (0.005 if k else 0), z + zb + 0.005, bevel=0)
+
+
 def tri_ear(a, key, inner, base, tip, w, th=0.07, up=(0, -1, 0)):
     """Ухо-лист: от основания к кончику сужается, с внутренней светлой вставкой."""
     b, t = V(base), V(tip)
@@ -387,8 +410,9 @@ def gem_armadillo():
     """6. Броненосец-самоцвет: вся его броня — ряды огранённых самоцветов в золотой оправе; носит богатство на себе
     и гордо задрал нос. Признаки: поясной панцирь из колец (5 поясов), щиток на голове, длинная узкая морда, большие
     торчащие уши, короткие лапы с когтями, хвост в кольцах."""
-    a = new("GemArmadillo", {"dil": ("F2C3A8", True), "dilD": ("C98E72", False), "gemT": ("2ED1C0", False),
-                             "gemTL": ("A6FFF4", False), "gemB": ("3D7BFF", False), "gemBL": ("A9C6FF", False),
+    a = new("GemArmadillo", {"dil": ("F2C3A8", True), "dilD": ("C98E72", False), "shell": ("B8875A", True),
+                             "gemR": ("E8283C", False), "gemS": ("2E6FE0", False), "gemE": ("2FC46A", False),
+                             "gemA": ("A64BFF", False), "gemT": ("2ED1C0", False), "gemTL": ("A6FFF4", False),
                              "gold": ("F5B21C", False), "claw": ("F3E9D2", False)})
     t = rare_stand(a, 1.65)
     part(a, "Body", "Stand", (0, 0.1, t + 0.4))
@@ -398,18 +422,22 @@ def gem_armadillo():
             A.limb(a, "dil", [(s * 0.42, y0, t + 0.35), (s * 0.5, y0 - 0.05, t + 0.1)], [0.2, 0.18], joints=False)
             for dx in (-0.06, 0.06):
                 spike(a, "claw", (s * 0.5 + dx, y0 - 0.12, t + 0.05), (s * 0.5 + dx, y0 - 0.25, t + 0.0), 0.06)
-    # панцирь: 5 поясов-арок, в каждом — ряд камней одного цвета; между поясами — золотые ободки
+    # панцирь: 5 поясов-арок цвета панциря, между поясами — золотые ободки; на каждом поясе — 4 гранёных камня
+    # разных цветов в золотой оправе (на верху и скосах — видны с ракурса игрока)
+    cols = ("gemR", "gemS", "gemE", "gemA", "gemT")
+    g = 0
     for k in range(5):
         y = -0.55 + 0.27 * k
         w, h = 0.72 - 0.04 * abs(k - 2), 0.62 - 0.05 * abs(k - 2)
-        key, keyL = (("gemT", "gemTL"), ("gemB", "gemBL"))[k % 2]
-        a.prism(key, A._clip(S.octagon(-w, w, t + 0.2, t + 0.2 + 2 * h, w * 0.5), (0, -1), -(t + 0.3)),
-                y - 0.13, y + 0.13, axis="y", bevel=0.01)
+        a.prism("shell", A._clip(S.octagon(-w, w, t + 0.2, t + 0.2 + 2 * h, w * 0.5), (0, -1), -(t + 0.3)),
+                y - 0.13, y + 0.13, axis="y", bevel=0)
         a.frame("gold", S.octagon(-w - 0.03, w + 0.03, t + 0.17, t + 0.23 + 2 * h, w * 0.5), 0.05, y + 0.12,
                 y + 0.15, axis="y", bevel=0)
         zc, c = t + 0.2 + h, w * 0.5
-        for gx, gz, tl in ((0.0, zc + h, 0), (w - c / 2, zc + h - c / 2, -45), (-(w - c / 2), zc + h - c / 2, 45)):  # огранка: светлые камни на верху и скосах пояса
-            gemstone(a, keyL, "white", (gx, y, gz), 0.1, 0.16, turn=0, tilt_deg=tl)
+        for gx, gz, tl in ((-0.17, zc + h, 0), (0.17, zc + h, 0), (w - c / 2, zc + h - c / 2, -45),
+                           (-(w - c / 2), zc + h - c / 2, 45)):
+            jewel(a, cols[g % len(cols)], (gx, y, gz), 0.1, tl)
+            g += 1
     part(a, "Head", "Body", (0, -0.65, t + 0.45))
     hc = V((0, -0.82, t + 0.55))
     th = A.body(a, "dil", (hc.x, hc.y, hc.z - 0.22), 0.28, 0.26, 0.44, "ball", n=3)
@@ -425,7 +453,7 @@ def gem_armadillo():
     part(a, "Tail", "Body", (0, 0.75, t + 0.3))
     pts = [(0, 0.7, t + 0.3), (0, 0.95, t + 0.22), (0.1, 1.2, t + 0.12), (0.2, 1.38, t + 0.06)]
     for i in range(3):
-        kchain(a, "gemB" if i % 2 else "dil", [pts[i], pts[i + 1]], [0.2 - 0.05 * i, 0.15 - 0.05 * i], up=(0, 0, 1))
+        kchain(a, "gemS" if i % 2 else "shell", [pts[i], pts[i + 1]], [0.2 - 0.05 * i, 0.15 - 0.05 * i], up=(0, 0, 1))
     face_point(a, (0, fy - 0.1, hc.z))
     closeup(a, (0.3, -0.3, t + 0.9))
     a.pose = {"Head": ((0, 0, 10), (0, 0, 0)), "Tail": ((0, 0, 15), (0, 0, 0))}
@@ -433,43 +461,54 @@ def gem_armadillo():
 
 
 def pearl_otter():
-    """7. Выдра-жемчужница: лежит на спине на маленькой волне и обнимает жемчужину больше своей головы — любуется
-    ею и никому не отдаст. Признаки: светлая голова и морда калана, тёмное длинное тело, перепончатые задние лапы
-    торчат вверх, плоский хвост, маленькие передние лапки, усы."""
+    """7. Выдра-жемчужница: лежит на спине на маленькой волне и обнимает лапками на груди одну крупную круглую
+    блестящую жемчужину — любуется ею и никому не отдаст. Признаки: светлая голова и морда калана, тёмное длинное
+    тело, перепончатые задние лапы торчат вверх, плоский хвост, маленькие передние лапки, усы.
+    v2 (владелец 2026-11-26): жемчужина одна, крупная, на груди в лапках; выдра лежит поперёк кадра (голова влево) —
+    жемчужина не прячется за головой."""
     a = new("PearlOtter", {"ott": ("7A4E33", True), "ottL": ("F0DFC4", True), "ottD": ("4E3020", False),
-                           "pearl": ("F1DDFF", False), "pearlP": ("FFD6EC", False), "water": ("3BA7E0", True),
-                           "foam": ("E6F7FF", False)})
+                           "pearl": ("F1E8FF", False), "pearlP": ("FFD3EC", False), "pearlB": ("C9BCF0", False),
+                           "pearlW": ("FFFFFF", False),
+                           "water": ("3BA7E0", True), "foam": ("E6F7FF", False)})
     t = rare_stand(a, 1.6)
-    part(a, "Body", "Stand", (0, 0.1, t + 0.4))
-    a.prism("water", S.octagon(-1.0, 1.0, -1.2, 1.25, 0.5), t, t + 0.14, bevel=0.01)  # волна-лужица
+    rz = Matrix.Rotation(math.radians(-90), 4, "Z")  # голова (−y модели) смотрит влево, к камере 3/4
+
+    def P(p):
+        return tuple(rz @ V(p))
+
+    part(a, "Body", "Stand", P((0, 0.1, t + 0.4)))
+    with_matrix(a, rz)
+    a.prism("water", S.octagon(-1.0, 1.0, -1.25, 1.25, 0.5), t, t + 0.14, bevel=0.01)  # волна-лужица
     for x, y in ((-0.8, -0.6), (0.85, 0.4), (-0.55, 0.95), (0.6, -0.95)):
         a.prism("foam", S.octagon(x - 0.14, x + 0.14, y - 0.09, y + 0.09, 0.04), t + 0.12, t + 0.2, bevel=0)
-    m = Matrix.Translation((0, 0.15, t + 0.38)) @ Matrix.Rotation(math.radians(-90), 4, "X")
-    A.body(a, "ott", (0, 0, -0.55), 0.48, 0.3, 1.25, "egg", n=5, matrix=m)  # тело лёжа на спине, голова к −y
-    a.prism("ottL", S.octagon(-0.34, 0.34, -0.45, 0.5, 0.12), t + 0.6, t + 0.68, bevel=0)  # светлое брюхо
+    m = Matrix.Translation((0, 0.2, t + 0.38)) @ Matrix.Rotation(math.radians(-90), 4, "X")
+    A.body(a, "ott", (0, 0, -0.6), 0.5, 0.3, 1.3, "egg", n=5, matrix=m)  # тело лёжа на спине, голова к −y
+    a.prism("ottL", S.octagon(-0.36, 0.36, -0.45, 0.6, 0.12), t + 0.6, t + 0.68, bevel=0)  # светлое брюхо
     for s in S2:  # перепончатые задние лапы вверх
-        kchain(a, "ott", [(s * 0.2, 0.75, t + 0.45), (s * 0.28, 0.95, t + 0.75)], [0.16, 0.14], up=(0, 1, 0))
-        kchain(a, "ottD", [(s * 0.28, 0.95, t + 0.75), (s * 0.34, 1.05, t + 1.0)], [0.26, 0.32], [0.06, 0.05],
+        kchain(a, "ott", [(s * 0.2, 0.8, t + 0.45), (s * 0.28, 1.0, t + 0.75)], [0.16, 0.14], up=(0, 1, 0))
+        kchain(a, "ottD", [(s * 0.28, 1.0, t + 0.75), (s * 0.34, 1.1, t + 1.0)], [0.26, 0.32], [0.06, 0.05],
                up=(0, 1, 0.3), overlap=0.3)
-    kchain(a, "ottD", [(0, 0.9, t + 0.35), (0, 1.2, t + 0.3), (0, 1.4, t + 0.28)], [0.28, 0.26, 0.2],
+    kchain(a, "ottD", [(0, 0.95, t + 0.35), (0, 1.22, t + 0.3), (0, 1.42, t + 0.28)], [0.28, 0.26, 0.2],
            [0.08, 0.08, 0.07], up=(0, 0, 1))  # плоский хвост
-    part(a, "Pearl", "Body", (0.6, -0.6, t + 0.7))
-    pc = V((0.72, -0.72, t + 0.98))
-    A.ball(a, "pearl", tuple(pc), 0.36, n=5)
-    a.box("pearlP", -0.18, -0.06, pc.y - 0.34, pc.y - 0.3, pc.z + 0.1, pc.z + 0.22, bevel=0)  # отблеск
-    a.box("white", -0.12, -0.04, pc.y - 0.37, pc.y - 0.33, pc.z + 0.14, pc.z + 0.21, bevel=0)
-    a.group = "Body"
-    for s, nm in ((1, "ArmL"), (-1, "ArmR")):  # лапки обнимают жемчужину
-        part(a, nm, "Body", (s * 0.3, -0.35, t + 0.62))
-        A.limb(a, "ott", [(s * 0.3, -0.3, t + 0.62), (0.3 + s * 0.1, -0.5, t + 0.9), (0.62 + s * 0.12, -0.6 - s * 0.1, t + 1.0)],
+    # жемчужина — одна, крупная, круглая, на груди; блики сверху (видны с ракурса игрока)
+    part(a, "Pearl", "Body", P((0, -0.15, t + 0.7)))
+    with_matrix(a, rz)
+    pc = V((0, -0.12, t + 1.0))
+    round_ball(a, ["pearlB", "pearlB", "pearlP", "pearl", "pearl", "pearl", "pearl", "pearlW"], pc, 0.38, n=8)
+    a.box("white", -0.16, -0.02, pc.y - 0.2, pc.y - 0.06, pc.z + 0.37, pc.z + 0.4, bevel=0)  # блик сверху
+    for s, nm in ((1, "ArmL"), (-1, "ArmR")):  # лапки обнимают жемчужину с боков
+        part(a, nm, "Body", P((s * 0.32, -0.42, t + 0.62)))
+        with_matrix(a, rz)
+        A.limb(a, "ott", [(s * 0.32, -0.42, t + 0.62), (s * 0.5, -0.25, t + 0.92), (s * 0.34, -0.08, t + 1.15)],
                [0.13, 0.12, 0.11])
-    part(a, "Head", "Body", (0, -0.6, t + 0.55))
-    hc = V((0, -0.72, t + 0.66))
+    part(a, "Head", "Body", P((0, -0.65, t + 0.55)))
+    with_matrix(a, rz)
+    hc = V((0, -0.8, t + 0.64))
     th = A.body(a, "ottL", (hc.x, hc.y, hc.z - 0.27), 0.33, 0.3, 0.52, "ball", n=4)
     fy = front_y(th, 0, hc.z)
     for s in S2:
         eye2(a, (s * 0.15, front_y(th, s * 0.15, hc.z + 0.12) + 0.02, hc.z + 0.12), 0.07, (s * 0.2, -1, 0.35),
-             "proud", s, "ottL", "ottD", look=(0.8, 0.5))
+             "proud", s, "ottL", "ottD", look=(0.0, 0.8))
         A.ball(a, "ott", (s * 0.3, hc.y + 0.05, hc.z + 0.24), 0.08, n=2)
         for k in range(2):  # усы
             taper(a, "ottD", (s * 0.1, fy - 0.04, hc.z - 0.08 + 0.05 * k), (s * 0.36, fy - 0.1, hc.z - 0.03 + 0.08 * k),
@@ -477,8 +516,9 @@ def pearl_otter():
     a.prism("ottD", S.octagon(-0.08, 0.08, -0.05, 0.05, 0.02), fy - 0.05, fy + 0.04, axis="y", bevel=0,
             matrix=Matrix.Translation((0, 0, hc.z - 0.02)))
     grin(a, (0, fy - 0.01, hc.z - 0.15), 0.14, h=0.05)
-    face_point(a, (0, fy, hc.z))
-    closeup(a, (0.0, -0.2, t + 0.9))
+    a.transform = None
+    face_point(a, P((0, fy, hc.z)))
+    closeup(a, P((0.0, -0.15, t + 1.0)))
     a.pose = {"Head": ((0, 0, 12), (0, 0, 0)), "Pearl": ((0, 0, 0), (0, 0, 0.05))}
     return a
 
@@ -588,11 +628,12 @@ def fleece_alpaca():
 
 def treasure_griffin():
     """10. Грифон-казначей: перед — орёл, зад — лев; сидит на своей горке золотых монет, раскрыл крылья «моё!», на
-    лбу светится бирюзовый самоцвет. Признаки: орлиная голова с крючковатым клювом и перьями-хохлом, передние лапы
+    лбу светится бирюзовый самоцвет. v2 (владелец 2026-11-26): не «жёлтое на золотом» — белая орлиная голова и
+    грудь, синее львиное тело, крылья бирюзовые с золотыми концами; золото — только монеты под ним. Признаки: орлиная голова с крючковатым клювом и перьями-хохлом, передние лапы
     с птичьими когтями, львиное тело и задние лапы, хвост с кисточкой, большие крылья."""
-    a = new("TreasureGriffin", {"fea": ("FFE7A8", True), "feaD": ("E0B04A", False), "lion": ("E7A23C", True),
-                                "lionD": ("B9741F", False), "wing": ("FFC23A", True), "wingT": ("2ED1C0", False),
-                                "beak": ("FF9A2E", False), "talon": ("FFD23F", False), "neonGem": ("39F5E0", False),
+    a = new("TreasureGriffin", {"fea": ("F7F7FA", True), "feaD": ("B9C6E2", False), "lion": ("2F62D6", True),
+                                "lionD": ("1C3C92", False), "wing": ("2ED1C0", True), "wingT": ("FFC23A", False),
+                                "beak": ("FF9A2E", False), "talon": ("FF9A2E", False), "neonGem": ("39F5E0", False),
                                 "goldH": ("F5B21C", True)})
     glow(a, 2.0)
     t = legendary_stand(a, 1.7)

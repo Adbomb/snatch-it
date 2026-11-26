@@ -1,11 +1,13 @@
 """Босс 7 «Банк» — Копилка-громила, концепт (D64 шаг 1 для босса 7): одна модель в позах стойка / сон / бой /
 особая атака / поражение.
 
-Образ: огромная бронированная свинья-копилка на четырёх коротких толстых ногах. Тело — бочка ярусами D39 (ярко-розовая),
-поперёк бочки — два стальных обруча с золотыми заклёпками, между ними на спине — стальное «седло» с прорезью для монет
-в золотой рамке, из прорези торчит монета. Голова — широкая, с большим светлым пятачком (две ноздри), уши-треугольники
-загнуты вперёд, на лбу — стальной щиток с заклёпками, тяжёлые брови, маленькие злые глаза, рот-ухмылка с двумя тупыми
-клычками. Ноги — розовые, с копытами и стальными наголенниками; хвост — пружинка-завиток. Розовое — главное пятно
+Образ (v2 по замечаниям владельца 2026-11-26): огромная бронированная свинья-копилка на четырёх толстых ногах. Тело —
+круглое яйцо из 16-гранных ярусов D39 (ярко-розовое): самое широкое место ближе к груди, массивные плечи и грудь,
+зад меньше — тяжёлый перёд «бульдога»; голова опущена и выдвинута вперёд, передние ноги толще, стойка шире.
+Поперёк тела — два стальных обруча с золотыми заклёпками, между ними на спине — изогнутое стальное седло с тёмной
+щелью в золотой рамке, круглая монета вставлена в щель наполовину. Голова — круглая, с крупным светлым пятачком
+(ноздри вырезаны: тёмные ямки в ободках), широкие уши с изгибом вперёд, на лбу — стальной щиток с заклёпками, тяжёлые
+брови, маленькие злые глаза, челюсть «громилы» с двумя тупыми клычками. v1 (восьмигранная бочка) — в git-истории. Ноги — розовые, с копытами и стальными наголенниками; хвост — пружинка-завиток. Розовое — главное пятно
 (≈ 2/3 видимой поверхности), сталь и золото — акценты; на тёмном мраморе и тёмной стали хранилища свинья читается.
 Монеты сыплются из прорези только в позах и анимации (правила боя, добычи и краж не меняются, D64 п. 5).
 
@@ -49,6 +51,7 @@ PALETTE = {  # ключ: (цвет, кольца D39 на крупных пов�
     "gold": ("F5B21C", True), "goldD": ("C9820E", False),  # рамка прорези, заклёпки
     "coin": ("FFC93A", False), "coinL": ("FFE27A", False),  # монеты: обод и середина
     "slot": ("1A1626", False),  # тёмная прорезь
+    "snoutD": ("F28AB0", False),  # ободки ноздрей
     "brow": ("5A2142", False),
     "mouth": ("5A1E2E", False), "tongue": ("FF5F8A", False), "tusk": ("FFF4DA", False),
     "crack": ("3A1026", False),  # трещины (поражение)
@@ -97,33 +100,61 @@ def stud(a, key, p, normal, s=0.13, h=0.1):
 def coin(a, c, normal, r=0.5, th=0.14, spin=0.0):
     """Монета: восьмигранный диск (обод) и выпуклая середина, плоскость поперёк normal."""
     m = T(c) @ V(normal).normalized().to_track_quat("Z", "Y").to_matrix().to_4x4() @ R("Z", spin)
-    a.prism("coin", S.octagon(-r, r, -r, r, r * 0.29), -th / 2, th / 2, bevel=0, matrix=m)
+    n = 16 if r > 0.6 else 10  # крупная монета в прорези — круглая, россыпь — проще
+    a.prism("coin", ring(0, 0, r, r, n), -th / 2, th / 2, bevel=0, matrix=m)
     q = r * 0.66
-    a.prism("coinL", S.octagon(-q, q, -q, q, q * 0.29), th / 2 - 0.02, th / 2 + 0.035, bevel=0, matrix=m)
+    a.prism("coinL", ring(0, 0, q, q, n + 2), th / 2 - 0.02, th / 2 + 0.035, bevel=0, matrix=m)
+    a.prism("coinL", ring(0, 0, q, q, n + 2), -th / 2 - 0.035, -th / 2 + 0.02, bevel=0, matrix=m)
 
 
-# ── Пропорции ─────────────────────────────────────────────────────────────────────────────────────────────────
-BODY_Y = (-3.1, 3.9)  # бочка от груди до крупа
-BODY_Z = 3.95  # ось бочки
-BODY_R = (3.05, 2.9)  # полуширина, полувысота
-BODY_N = 9
-CORNER = 0.52  # скос ярусов бочки — почти правильный восьмиугольник (круглее, чем у ящика)
-HIP = V((0, 2.35, 2.3))  # тазобедренная ось — вокруг неё встаёт на дыбы
-SHOULDER_Y, HIP_Y, LEG_X = -1.75, 2.35, 1.95
-NECK = V((0, -2.7, 4.3))
-BANDS = (-0.95, 1.8)  # обручи
-LEG_TOP = 2.3  # верх ноги (внутри тела)
+# ── Пропорции (v2: яйцо, тяжёлый перёд «бульдога») ──────────────────────────────────────────────────────────
+ROUND = 16  # сечения тела и головы — 16-угольники: силуэт круглый, ступени ярусов D39 остаются
+BODY_Y = (-3.4, 3.7)  # яйцо от груди до крупа
+BODY_Z = 4.1  # ось тела
+BODY_R = (3.25, 3.05)  # полуширина, полувысота в самом широком месте
+BODY_N = 12
+EGG_PEAK = 0.36  # самое широкое место — ближе к груди: перёд тяжёлый, зад меньше
+HIP = V((0, 2.3, 2.6))  # тазобедренная ось — вокруг неё встаёт на дыбы
+SHOULDER_Y, HIP_Y = -1.45, 2.3
+LEG_XF, LEG_XB = 2.45, 2.0  # передние ноги шире — широкая стойка
+LEG_X = LEG_XF
+NECK = V((0, -3.2, 3.6))
+BANDS = (-0.7, 1.9)  # обручи
+LEG_TOP = 2.6  # верх ноги (внутри тела)
 
 
-BODY_TIERS = ((-3.1, -2.6, 0.56), (-2.6, -1.95, 0.83), (-1.95, -1.3, 0.96), (-1.3, 2.3, 1.0), (2.3, 2.95, 0.94),
-              (2.95, 3.45, 0.8), (3.45, 3.9, 0.56))  # (от y, до y, доля радиуса): торцы ступенями, середина — ровная
+def ring(cx, cz, rx, rz, n=ROUND):
+    """Многоугольник-«круг» (n углов) с плоской гранью сверху и снизу, точки (x, z) или (x, y)."""
+    return [(cx + rx * math.cos(math.pi / n + 2 * math.pi * k / n), cz + rz * math.sin(math.pi / n + 2 * math.pi * k / n))
+            for k in range(n)]
+
+
+def egg_prof(t):
+    u = (t - EGG_PEAK) / (EGG_PEAK + 0.04 if t < EGG_PEAK else 1.0 - EGG_PEAK + 0.04)
+    return max(math.sqrt(max(1.0 - u * u, 0.0)), 0.3)
+
+
+BODY_TIERS = []
+for _k in range(BODY_N):
+    _t = (_k + 0.5) / BODY_N
+    _w = 1.0 + 0.08 * (EGG_PEAK - _t)  # перёд чуть шире
+    BODY_TIERS.append((BODY_Y[0] + (BODY_Y[1] - BODY_Y[0]) * _k / BODY_N,
+                       BODY_Y[0] + (BODY_Y[1] - BODY_Y[0]) * (_k + 1) / BODY_N, egg_prof(_t) * _w, egg_prof(_t)))
 
 
 def slice_at(y):
-    """Полуширина, полувысота и скос яруса бочки в точке y (вдоль оси)."""
-    r = next((r for y0, y1, r in BODY_TIERS if y0 - 1e-6 <= y <= y1 + 1e-6), BODY_TIERS[-1][2])
-    wx, wz = BODY_R[0] * r, BODY_R[1] * r
-    return wx, wz, min(wx, wz) * CORNER
+    """Полуширина и полувысота яруса тела в точке y (третье значение — для совместимости)."""
+    for y0, y1, fx, fz in BODY_TIERS:
+        if y0 - 1e-6 <= y <= y1 + 1e-6:
+            return BODY_R[0] * fx, BODY_R[1] * fz, 0.0
+    y0, y1, fx, fz = BODY_TIERS[-1]
+    return BODY_R[0] * fx, BODY_R[1] * fz, 0.0
+
+
+def hull_point(wx, wz, c, d):
+    """Точка на 16-угольном сечении (полуоси wx, wz) в направлении d (плоскость xz, вокруг оси тела)."""
+    s = 1.0 / math.sqrt((d.x / wx) ** 2 + (d.z / wz) ** 2)
+    return V((d.x * s, 0, d.z * s)) * math.cos(math.pi / ROUND)
 
 
 # ── Позы ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -131,15 +162,15 @@ def slice_at(y):
 # head — (наклон вниз +, поворот, крен); front/back — ноги: (мах вперёд −/назад +, развод в стороны); face — лицо;
 # mouth — "grin" / "roar" / "tongue"; coins — "slot" / "burst" / "fountain" / "spill"; ears — 0 торчат … 1 повисли.
 POSES = {
-    "stand": dict(lift=0.0, pitch=0, roll=0, head=(-4, 0, 0), front=(0, 4), back=(0, 4), face="angry", mouth="grin",
+    "stand": dict(lift=0.0, pitch=2, roll=0, head=(4, 0, 0), front=(0, 6), back=(0, 5), face="angry", mouth="grin",
                   coins="slot", ears=0.0),
-    "sleep": dict(lift=-1.55, pitch=3, roll=0, head=(16, 8, 4), front=(-82, 8), back=(84, 8), face="sleep",
+    "sleep": dict(lift=-1.75, pitch=3, roll=0, head=(14, 8, 4), front=(-82, 8), back=(84, 8), face="sleep",
                   mouth="sleep", coins="slot", ears=0.6),
-    "combat": dict(lift=-0.15, pitch=7, roll=0, head=(16, 0, 0), front=(-14, 16), back=(14, 6), face="angry",
+    "combat": dict(lift=-0.2, pitch=8, roll=0, head=(14, 0, 0), front=(-14, 16), back=(14, 6), face="angry",
                    mouth="roar", coins="burst", ears=0.0),
-    "special": dict(lift=0.0, pitch=-38, roll=0, head=(-12, 0, 0), front=(-48, 12), back=(0, 8), face="angry",
+    "special": dict(lift=0.0, pitch=-38, roll=0, head=(-14, 0, 0), front=(-48, 12), back=(0, 8), face="angry",
                     mouth="roar", coins="fountain", ears=0.0),
-    "defeat": dict(lift=-1.45, pitch=5, roll=7, head=(26, -14, -10), front=(-30, 58), back=(30, 58), face="dizzy",
+    "defeat": dict(lift=-1.6, pitch=5, roll=7, head=(22, -14, -10), front=(-30, 58), back=(30, 58), face="dizzy",
                    mouth="tongue", coins="spill", ears=1.0),
 }
 
@@ -152,173 +183,183 @@ def skeleton(P):
     for s in S2:
         fs, fo = P["front"]
         bs, bo = P["back"]
-        M[("F", s)] = M["body"] @ about((s * LEG_X, SHOULDER_Y, LEG_TOP), R("X", fs) @ R("Y", -s * fo))
+        M[("F", s)] = M["body"] @ about((s * LEG_XF, SHOULDER_Y, LEG_TOP), R("X", fs) @ R("Y", -s * fo))
         # задние ноги: тело встаёт на дыбы вокруг таза, ноги остаются вертикально на земле
-        M[("B", s)] = M["body"] @ about((s * LEG_X, HIP_Y, LEG_TOP),
+        M[("B", s)] = M["body"] @ about((s * LEG_XB, HIP_Y, LEG_TOP),
                                         R("Y", -P["roll"]) @ R("X", -P["pitch"]) @ R("X", bs) @ R("Y", -s * bo))
     return M
+
+
+def egg_y(a, key, y0, y1, cx, cz, rx, rz, n, prof=egg_prof):
+    """Яйцо лёжа: n ярусов-16-угольников вдоль y (ступени D39), ярусы заходят друг в друга на 0.01."""
+    for k in range(n):
+        f = prof((k + 0.5) / n)
+        ya, yb = y0 + (y1 - y0) * k / n, y0 + (y1 - y0) * (k + 1) / n
+        a.prism(key, ring(cx, cz, rx * f, rz * f), ya - (0.01 if k else 0), yb + 0.01, axis="y", bevel=0)
 
 
 # ── Тело ──────────────────────────────────────────────────────────────────────────────────────────────────────
 def body(a, M, P):
     a.transform, a.group = M["body"], "Body"
-    y0, y1 = BODY_Y
-    for i, (ya, yb, r) in enumerate(BODY_TIERS):  # ярусы вдоль оси y (бочка лёжа), заходят друг в друга на 0.01
-        wx, wz = BODY_R[0] * r, BODY_R[1] * r
-        a.prism("pig", S.octagon(-wx, wx, BODY_Z - wz, BODY_Z + wz, min(wx, wz) * CORNER), ya - (0.01 if i else 0),
-                yb + 0.01, axis="y", bevel=0.02)
-    # обручи: восьмигранная рамка чуть шире яруса, золотые заклёпки по верхней половине
+    for i, (ya, yb, fx, fz) in enumerate(BODY_TIERS):  # яйцо лёжа: перёд шире и выше, зад меньше
+        a.prism("pig", ring(0, BODY_Z, BODY_R[0] * fx, BODY_R[1] * fz), ya - (0.01 if i else 0), yb + 0.01,
+                axis="y", bevel=0)
+    # мощная грудь внизу спереди и массивные плечи над передними ногами
+    egg_y(a, "pig", -3.75, -1.0, 0, 3.15, 2.35, 2.0, 6)
+    for sx in S2:
+        egg_y(a, "pig", -2.75, -0.15, sx * 2.35, 4.0, 1.5, 1.8, 6)
+    # обручи: 16-угольная рамка чуть шире яруса, золотые заклёпки по верхней половине
     for yb in BANDS:
-        wx, wz, c = slice_at(yb)
-        wx, wz = wx + 0.2, wz + 0.2
-        pts = S.octagon(-wx, wx, BODY_Z - wz, BODY_Z + wz, c + 0.08)
-        a.frame("steel", pts, 0.55, yb - 0.42, yb + 0.42, axis="y", bevel=0.02)
-        a.frame("steelL", S.octagon(-wx - 0.06, wx + 0.06, BODY_Z - wz - 0.06, BODY_Z + wz + 0.06, c + 0.1), 0.2,
-                yb - 0.5, yb - 0.3, axis="y", bevel=0)  # светлая кромка спереди обруча
-        for ang in (10, 38, 66, 90, 114, 142, 170):
+        wx = max(slice_at(yb - 0.42)[0], slice_at(yb + 0.42)[0]) + 0.2
+        wz = max(slice_at(yb - 0.42)[1], slice_at(yb + 0.42)[1]) + 0.2
+        a.frame("steel", ring(0, BODY_Z, wx, wz), 0.6, yb - 0.42, yb + 0.42, axis="y", bevel=0)
+        a.frame("steelL", ring(0, BODY_Z, wx + 0.06, wz + 0.06), 0.2, yb - 0.5, yb - 0.3, axis="y", bevel=0)
+        for ang in (8, 34, 60, 90, 120, 146, 172):
             t = math.radians(ang)
             d = V((math.cos(t), 0, math.sin(t)))
-            p = hull_point(wx, wz, c + 0.08, d) + V((0, yb + 0.02, BODY_Z))
+            p = hull_point(wx, wz, 0, d) + V((0, yb + 0.02, BODY_Z))
             stud(a, "gold", p, d, s=0.13, h=0.1)
-    # наплечники «громилы»: стальные щиты на боках у плеч, золотой обод и заклёпка
-    wx, wz, c = slice_at(-1.6)
+    # наплечники «громилы»: стальные щиты на плечах, золотой обод и заклёпка
     for sx in S2:
-        m = T((sx * (wx - 0.08), -1.75, BODY_Z + 0.55)) @ R("Y", sx * 90)
-        a.prism("steel", S.octagon(-1.2, 1.2, -1.2, 1.2, 0.5), 0.0, 0.32, bevel=0.03, matrix=m)
-        a.frame("gold", S.octagon(-1.28, 1.28, -1.28, 1.28, 0.53), 0.16, 0.12, 0.38, axis="z", bevel=0, matrix=m)
-        stud(a, "gold", m @ V((0, 0, 0.32)), (sx, 0, 0), s=0.2, h=0.12)
-    # седло со щелью-прорезью на спине (между обручами)
-    _, wz_top, _ = slice_at(0.5)
-    top = BODY_Z + wz_top
-    a.box("steel", -1.6, 1.6, BANDS[0] + 0.35, BANDS[1] - 0.35, top - 0.25, top + 0.15, bevel=0.03)
-    yc = (BANDS[0] + BANDS[1]) / 2  # прорезь поперёк спины: монета в ней смотрит на игрока
-    a.frame("gold", [(-1.12, yc - 0.42), (1.12, yc - 0.42), (1.12, yc + 0.42), (-1.12, yc + 0.42)], 0.24,
-            top + 0.18, top + 0.42, axis="z", bevel=0)
-    a.box("slot", -0.9, 0.9, yc - 0.19, yc + 0.19, top + 0.1, top + 0.34, bevel=0)
-    for x, y in ((-1.35, BANDS[0] + 0.55), (1.35, BANDS[0] + 0.55), (-1.35, BANDS[1] - 0.55),
-                 (1.35, BANDS[1] - 0.55)):
-        stud(a, "gold", (x, y, top + 0.18), (0, 0, 1), s=0.13, h=0.1)
+        m = T((sx * 3.05, -1.5, 5.15)) @ R("Y", sx * 52)  # лежит на верху плеча, смотрит вверх-наружу
+        a.prism("steel", ring(0, 0, 1.25, 1.05), 0.0, 0.3, bevel=0, matrix=m)
+        a.frame("gold", ring(0, 0, 1.32, 1.12), 0.16, 0.12, 0.38, axis="z", bevel=0, matrix=m)
+        stud(a, "gold", m @ V((0, 0, 0.3)), m.to_3x3() @ V((0, 0, 1)), s=0.2, h=0.12)
+    # седло на спине — изогнутая стальная пластина между обручами; поперёк — прорезь в золотой рамке
+    yc = (BANDS[0] + BANDS[1]) / 2
+    wx, wz, _ = slice_at(yc)
+    arc = [((wx + 0.16) * math.cos(math.radians(g)), BODY_Z + (wz + 0.16) * math.sin(math.radians(g)))
+           for g in range(54, 127, 8)]
+    arc += [((wx - 0.3) * math.cos(math.radians(g)), BODY_Z + (wz - 0.3) * math.sin(math.radians(g)))
+            for g in range(126, 53, -8)]
+    a.extrude("steel", arc, BANDS[0] + 0.4, BANDS[1] - 0.4, axis="y")
+    top = BODY_Z + (wz + 0.16) * math.sin(math.radians(86))
+    a.frame("gold", [(-1.08, yc - 0.42), (1.08, yc - 0.42), (1.08, yc + 0.42), (-1.08, yc + 0.42)], 0.22,
+            top - 0.06, top + 0.2, axis="z", bevel=0)
+    a.box("slot", -0.86, 0.86, yc - 0.18, yc + 0.18, top - 0.3, top + 0.1, bevel=0)  # тёмная щель
+    for x, y in ((-1.45, BANDS[0] + 0.6), (1.45, BANDS[0] + 0.6), (-1.45, BANDS[1] - 0.6), (1.45, BANDS[1] - 0.6)):
+        stud(a, "gold", (x, y, BODY_Z + (wz + 0.16) * 0.93), (x / 3, 0, 1), s=0.13, h=0.1)
     # хвост-завиток на крупе
     pts = []
     for i in range(9):
         t = math.radians(-30 + i * 52)
         r = 0.55 - 0.03 * i
-        pts.append((r * math.cos(t), BODY_Y[1] + 0.25 + 0.06 * i, BODY_Z + 1.2 + r * math.sin(t)))
-    pts[0] = (0.2, BODY_Y[1] - 0.35, BODY_Z + 0.95)
+        pts.append((r * math.cos(t), BODY_Y[1] + 0.3 + 0.06 * i, BODY_Z + 0.9 + r * math.sin(t)))
+    pts[0] = (0.2, BODY_Y[1] - 0.4, BODY_Z + 0.6)
     a.group = "Tail"
-    chain(a, "pig", pts, [0.42] + [0.32] * 7 + [0.24], up=(0, 1, 0), overlap=0.5)
+    chain(a, "pig", pts, [0.44] + [0.34] * 7 + [0.26], up=(0, 1, 0), overlap=0.5)
     a.group = "Body"
     return top
 
 
-def hull_point(wx, wz, c, d):
-    """Точка на восьмиграннике (полуоси wx, wz, скос c) в направлении d (в плоскости xz, вокруг начала)."""
-    best = None
-    pts = S.octagon(-wx, wx, -wz, wz, c)
-    for i in range(len(pts)):
-        (x0, z0), (x1, z1) = pts[i], pts[(i + 1) % len(pts)]
-        ex, ez = x1 - x0, z1 - z0
-        den = d.x * ez - d.z * ex
-        if abs(den) < 1e-9:
-            continue
-        t = (x0 * ez - z0 * ex) / den
-        u = (x0 * d.z - z0 * d.x) / den if abs(den) > 1e-9 else -1
-        if t > 0 and -1e-6 <= u <= 1 + 1e-6 and (best is None or t < best):
-            best = t
-    return V((d.x * best, 0, d.z * best))
-
-
 # ── Голова ────────────────────────────────────────────────────────────────────────────────────────────────────
-HEAD_C = V((0, -3.75, 2.45))  # низ головы
-HEAD_R = (2.3, 2.0, 3.7)
+HEAD_C = V((0, -4.45, 1.75))  # низ головы: опущена и выдвинута вперёд
+HEAD_R = (2.35, 2.15, 3.5)
+
+
+def round_z(a, key, base, rx, ry, h, prof, n):
+    """Тело-«шар» вертикально: n ярусов-16-угольников; возвращает ярусы (za, zb, x, y, wx, wy)."""
+    bx, by, bz = base
+    tiers = []
+    for k in range(n):
+        f = max(prof((k + 0.5) / n), 0.45)
+        za, zb = bz + h * k / n, bz + h * (k + 1) / n
+        a.prism(key, ring(bx, by, rx * f, ry * f), za - (0.01 if k else 0), zb + 0.01, axis="z", bevel=0)
+        tiers.append((za, zb, bx, by, rx * f, ry * f))
+    return tiers
 
 
 def front_y(tiers, x, z):
-    for za, zb, bx, y, wx, wy, c in tiers:
-        if za - 1e-6 <= z <= zb + 1e-6:
-            flat = wx - c
-            dx = abs(x - bx)
-            return y - wy + max(0.0, dx - flat)
-    za, zb, bx, y, wx, wy, c = tiers[-1]
-    return y - wy
+    """Передняя (−y) поверхность 16-угольных ярусов в точке (x, z)."""
+    za, zb, bx, by, wx, wy = min(tiers, key=lambda tr: abs((tr[0] + tr[1]) / 2 - z))
+    u = min(abs(x - bx) / wx, 0.99)
+    return by - wy * math.sqrt(1 - u * u) * math.cos(math.pi / ROUND)
+
+
+def head_prof(t):
+    """Голова: широкие щёки-брыли внизу, круглый лоб."""
+    return math.sqrt(max(1.0 - ((t - 0.42) / (0.5 if t < 0.42 else 0.6)) ** 2, 0.0))
 
 
 def head(a, M, P):
     a.transform, a.group = M["head"], "Head"
-    tiers = A.body(a, "pig", tuple(HEAD_C), HEAD_R[0], HEAD_R[1], HEAD_R[2], "egg", n=6, floor=0.45, corner=0.46)
-    # пятачок: светлый восьмигранный «пятак» вперёд, на нём две ноздри
-    sz = HEAD_C.z + 1.5
+    tiers = round_z(a, "pig", tuple(HEAD_C), HEAD_R[0], HEAD_R[1], HEAD_R[2], head_prof, 8)
+    # пятачок: крупный светлый «пятак» вперёд, кайма, ноздри — тёмные ямки в розовых ободках (вырезаны)
+    sz = HEAD_C.z + 1.3
     fy = front_y(tiers, 0, sz)
     sm = T((0, 0, sz))
-    a.prism("snout", S.octagon(-1.2, 1.2, -0.9, 0.9, 0.5), fy - 0.85, fy + 0.35, axis="y", bevel=0.02,
-            matrix=sm)  # ось y: от fy−0.72 (наружу) до fy+0.35 (в голове)
+    a.prism("pigD", ring(0, 0, 1.55, 1.18), fy - 0.15, fy + 0.4, axis="y", bevel=0, matrix=sm)
+    a.prism("snout", ring(0, 0, 1.45, 1.1), fy - 1.0, fy + 0.3, axis="y", bevel=0, matrix=sm)
+    a.frame("snout", ring(0, 0, 1.47, 1.12), 0.2, fy - 1.12, fy - 0.95, axis="y", bevel=0, matrix=sm)
     for s in S2:
-        a.prism("nostril", S.octagon(s * 0.45 - 0.18, s * 0.45 + 0.18, -0.28, 0.28, 0.09), fy - 0.89, fy - 0.83,
-                axis="y", bevel=0, matrix=sm)
-    a.prism("pigD", S.octagon(-1.27, 1.27, -0.97, 0.97, 0.52), fy - 0.1, fy + 0.2, axis="y", bevel=0,
-            matrix=sm)  # тёмная «шея» пятачка у головы
+        a.prism("nostril", ring(s * 0.52, 0.0, 0.25, 0.4, 12), fy - 1.02, fy - 0.9, axis="y", bevel=0, matrix=sm)
+        a.frame("snoutD", ring(s * 0.52, 0.0, 0.36, 0.52, 12), 0.11, fy - 1.1, fy - 0.96, axis="y", bevel=0,
+                matrix=sm)
     # глаза — маленькие, злые; брови тяжёлые
-    ez = HEAD_C.z + 2.7
+    ez = HEAD_C.z + 2.6
     for s in S2:
-        x = s * 0.88
-        p = V((x, front_y(tiers, x, ez) + 0.02, ez))
+        x = s * 0.95
+        n = V((s * 0.3, -1, 0.05))
+        p = V((x, front_y(tiers, x, ez) + 0.03, ez))
         if P["face"] == "sleep":
-            A.eye(a, p, 0.27, normal=(s * 0.25, -1, 0.05), closed=True, lid_key="dark", skin_key="pig",
-                  mood="calm", side=s, brow_key="brow")
+            A.eye(a, p, 0.3, normal=n, closed=True, lid_key="dark", skin_key="pig", mood="calm", side=s,
+                  brow_key="brow")
         elif P["face"] == "dizzy":
-            m = T(p) @ A.facing((s * 0.25, -1, 0.05))
-            a.box("white", -0.3, 0.3, -0.03, 0.08, -0.3, 0.3, bevel=0, matrix=m)
+            m = T(p) @ A.facing(n)
+            a.box("white", -0.32, 0.32, -0.03, 0.08, -0.32, 0.32, bevel=0, matrix=m)
             for ang in (45, -45):
-                a.box("dark", -0.36, 0.36, -0.08, -0.02, -0.07, 0.07, bevel=0, matrix=m @ R("Y", ang))
+                a.box("dark", -0.38, 0.38, -0.08, -0.02, -0.07, 0.07, bevel=0, matrix=m @ R("Y", ang))
         else:
-            A.eye(a, p, 0.33, normal=(s * 0.25, -1, 0.05), mood="angry", side=s, skin_key="pig", brow_key="brow",
+            A.eye(a, p, 0.34, normal=n, mood="angry", side=s, skin_key="pig", brow_key="brow",
                   look=(0.0, -0.2), lid=0.32, brow_tilt=30, brow_lift=0.05, h=1.15)
     # стальной щиток на лбу с тремя заклёпками
-    fz = HEAD_C.z + 3.3
+    fz = HEAD_C.z + 3.1
     fyy = front_y(tiers, 0, fz)
-    mf = T((0, fyy + 0.1, fz)) @ R("X", 32)
-    a.box("steel", -1.15, 1.15, -0.2, 0.25, -0.42, 0.42, bevel=0.03, matrix=mf)
-    a.box("steelL", -1.2, 1.2, -0.24, 0.0, -0.48, -0.3, bevel=0, matrix=mf)
-    for x in (-0.75, 0.0, 0.75):
+    mf = T((0, fyy + 0.12, fz)) @ R("X", 34)
+    a.box("steel", -1.2, 1.2, -0.2, 0.25, -0.42, 0.42, bevel=0.03, matrix=mf)
+    a.box("steelL", -1.25, 1.25, -0.24, 0.0, -0.48, -0.3, bevel=0, matrix=mf)
+    for x in (-0.8, 0.0, 0.8):
         stud(a, "gold", (mf @ V((x, -0.2, 0.08))), mf.to_3x3() @ V((0, -1, 0)), s=0.11, h=0.08)
-    # нижняя челюсть «громилы» чуть выступает вперёд; рот — щель над ней, клычки из челюсти вверх по бокам пятачка
+    # нижняя челюсть «громилы» выступает вперёд; рот — щель над ней, клычки из челюсти вверх по бокам пятачка
     mouth = P["mouth"]
-    jz = HEAD_C.z + 0.22
-    jy = front_y(tiers, 0, jz)
+    jz = HEAD_C.z + 0.02
+    jy = front_y(tiers, 0, jz + 0.3)
     pivot = V((0, jy + 1.3, jz + 0.3))
     a.transform = M["head"] @ about(pivot, R("X", {"roar": 26, "tongue": 14}.get(mouth, 0)))
     a.group = "Jaw"
-    a.prism("pig", S.octagon(-1.45, 1.45, -0.42, 0.36, 0.3), jy - 0.32, jy + 1.4, axis="y", bevel=0.02,
-            matrix=T((0, 0, jz)))
-    a.box("mouth", -1.25, 1.25, jy - 0.24, jy + 0.9, jz + 0.3, jz + 0.4, bevel=0)  # нёбо-щель на челюсти
+    a.prism("pig", ring(0, 0, 1.6, 0.42), jy - 0.4, jy + 1.4, axis="y", bevel=0, matrix=T((0, 0, jz)))
+    a.box("mouth", -1.35, 1.35, jy - 0.3, jy + 0.9, jz + 0.3, jz + 0.4, bevel=0)  # нёбо-щель на челюсти
     if mouth in ("roar", "tongue"):
-        a.box("tongue", -0.6, 0.6, jy - 0.05, jy + 0.8, jz + 0.34, jz + 0.46, bevel=0)
+        a.box("tongue", -0.65, 0.65, jy - 0.1, jy + 0.8, jz + 0.34, jz + 0.46, bevel=0)
     if mouth == "tongue":  # язык набок через губу
-        taper(a, "tongue", (0.55, jy + 0.1, jz + 0.42), (0.95, jy - 0.55, jz - 0.35), 0.5, 0.42, 0.13, 0.11)
+        taper(a, "tongue", (0.55, jy + 0.1, jz + 0.42), (0.95, jy - 0.6, jz - 0.35), 0.5, 0.42, 0.13, 0.11)
     if mouth != "sleep":
         for sx in S2:
             K.KEY = "tusk"
-            b = V((sx * 1.38, jy - 0.1, jz + 0.2))
-            K.taper(a, b, b + V((sx * 0.1, -0.1, 0.72)), 0.26, 0.13, 0.24, 0.12, up=(0, -1, 0), cut=0.2)
+            b = V((sx * 1.52, jy - 0.15, jz + 0.2))
+            K.taper(a, b, b + V((sx * 0.1, -0.1, 0.8)), 0.28, 0.14, 0.26, 0.13, up=(0, -1, 0), cut=0.2)
     a.transform, a.group = M["head"], "Head"
     if mouth in ("roar", "tongue"):  # тёмная глотка за открытой челюстью
-        a.box("mouth", -1.2, 1.2, jy - 0.05, jy + 0.9, jz + 0.25, jz + 0.85, bevel=0)
+        a.box("mouth", -1.25, 1.25, jy - 0.05, jy + 0.9, jz + 0.25, jz + 0.85, bevel=0)
     else:  # уголки рта приподняты — ухмылка (во сне ровно)
-        up = 0.22 if mouth == "grin" else 0.0
+        up = 0.24 if mouth == "grin" else 0.0
         for sx in S2:
-            x0, x1 = sx * 1.2, sx * 1.55
-            taper(a, "mouth", (x0, front_y(tiers, x0, jz + 0.4) - 0.02, jz + 0.38),
-                  (x1, front_y(tiers, x1, jz + 0.4 + up) - 0.02, jz + 0.4 + up), 0.09, 0.08, 0.09, 0.08,
+            x0, x1 = sx * 1.4, sx * 1.75
+            taper(a, "mouth", (x0, front_y(tiers, x0, jz + 0.42) - 0.02, jz + 0.4),
+                  (x1, front_y(tiers, x1, jz + 0.42 + up) - 0.02, jz + 0.42 + up), 0.1, 0.09, 0.1, 0.09,
                   up=(0, -1, 0))
-    # уши: треугольные, загнуты вперёд; в поражении повисли
+    # уши: широкие, с изгибом — вверх-наружу, потом загнуты вперёд-вниз; в поражении повисли
     droop = P["ears"]
     for s in S2:
-        base = V((s * 1.35, HEAD_C.y + 0.45, HEAD_C.z + 3.45))
-        mid = base + V((s * (0.75 + 0.35 * droop), -0.35 - 0.2 * droop, 1.0 - 1.4 * droop))
-        tip = mid + V((s * (0.35 + 0.3 * droop), -1.0 + 0.4 * droop, -0.15 - 0.9 * droop))
-        chain(a, "pig", [base, mid, tip], [1.75, 1.3, 0.3], [0.34, 0.3, 0.16], up=(0, -1, 0.5), overlap=0.4)
-        inner = [base + V((0, -0.17, 0.05)), mid + V((0, -0.17, 0.0)), tip + V((0, -0.1, 0.0))]
-        chain(a, "pigD", inner, [1.15, 0.85, 0.15], [0.08, 0.08, 0.06], up=(0, -1, 0.5), overlap=0.3)
+        base = V((s * 1.4, HEAD_C.y + 0.6, HEAD_C.z + 3.15))
+        p1 = base + V((s * 0.6, -0.1, 0.9 - 1.2 * droop))
+        p2 = p1 + V((s * 0.45, -0.6, 0.3 - 0.9 * droop))
+        tip = p2 + V((s * 0.15, -0.55 + 0.3 * droop, -0.4 - 0.6 * droop))
+        chain(a, "pig", [base, p1, p2, tip], [1.9, 1.6, 1.05, 0.26], [0.36, 0.32, 0.27, 0.15], up=(0, -1, 0.5),
+              overlap=0.4)
+        n = V((0, -0.16, 0.06))
+        chain(a, "pigD", [base + n, p1 + n, p2 + n, tip + n * 0.6], [1.25, 1.05, 0.68, 0.12], [0.08] * 4,
+              up=(0, -1, 0.5), overlap=0.3)
     return tiers
 
 
@@ -327,29 +368,31 @@ def leg(a, M, s, front):
     m = M[("F" if front else "B", s)]
     a.transform, a.group = m, ("Leg" + ("F" if front else "B") + ("L" if s > 0 else "R"))
     y = SHOULDER_Y if front else HIP_Y
-    x = s * LEG_X
+    x = s * (LEG_XF if front else LEG_XB)
+    k = 1.0 if front else 0.82  # передние толще: тяжёлый перёд
     top = V((x, y, LEG_TOP))
-    knee = V((x, y - 0.05, 1.1))
-    ank = V((x, y - 0.1, 0.62))
-    chain(a, "pig", [top, knee, ank], [1.55, 1.3, 1.15], up=(0, -1, 0), overlap=0.5)
-    # копыто — тёмный восьмигранник с раздвоенным носком
-    a.prism("hoof", S.octagon(x - 0.66, x + 0.66, y - 0.78, y + 0.52, 0.3), 0.0, 0.66, bevel=0.02)
-    a.box("pig", x - 0.06, x + 0.06, y - 0.83, y - 0.3, 0.02, 0.6, bevel=0)  # щель между пальцами копыта
+    knee = V((x, y - 0.05, 1.2))
+    ank = V((x, y - 0.1, 0.66))
+    chain(a, "pig", [top, knee, ank], [2.05 * k, 1.8 * k, 1.55 * k], up=(0, -1, 0), overlap=0.5)
+    # копыто — тёмное, широкое, с раздвоенным носком
+    hw = 0.86 * k
+    a.prism("hoof", ring(x, y - 0.15, hw, hw * 0.92, 12), 0.0, 0.7, bevel=0)
+    a.box("pig", x - 0.07, x + 0.07, y - 0.15 - hw * 0.95, y - 0.15 - hw * 0.5, 0.02, 0.62, bevel=0)  # щель копыта
     # стальной наголенник спереди с двумя заклёпками
-    a.box("steel", x - 0.6, x + 0.6, y - 0.82, y - 0.45, 0.78, 1.75, bevel=0.02)
-    for zz in (1.0, 1.5):
-        stud(a, "gold", (x, y - 0.82, zz), (0, -1, 0), s=0.1, h=0.08)
+    a.box("steel", x - 0.72 * k, x + 0.72 * k, y - 0.98 * k, y - 0.55 * k, 0.82, 1.85, bevel=0.02)
+    for zz in (1.05, 1.6):
+        stud(a, "gold", (x, y - 0.98 * k, zz), (0, -1, 0), s=0.11, h=0.08)
 
 
 # ── Эффекты позы: монеты, трещины, «Z» ────────────────────────────────────────────────────────────────────────
 def coins_fx(a, M, P, top):
     kind = P["coins"]
     mb = M["body"]
-    slot_c = V((0, (BANDS[0] + BANDS[1]) / 2, top + 0.2))
+    slot_c = V((0, (BANDS[0] + BANDS[1]) / 2, top + 0.08))
     a.group = "Fx"
     if kind in ("slot", "burst", "fountain"):
         a.transform = mb  # монета в прорези: наполовину торчит
-        coin(a, slot_c + V((0, 0, 0.5)), (0, -1, 0), r=0.78, th=0.16)
+        coin(a, slot_c, (0, -1, 0), r=0.72, th=0.16)  # наполовину в щели
     if kind == "burst":  # выскакивают дугой вверх-назад
         a.transform = mb
         for i, (dx, dy, dz, ang) in enumerate(((0.5, -0.4, 1.6, 20), (-0.7, 0.3, 2.4, -35), (0.3, 0.8, 3.2, 60),
@@ -412,7 +455,7 @@ def spill(a, M):
 
 def zzz(a, M):
     zp = [(0, 0), (0.7, 0), (0.12, -0.62), (0.72, -0.62), (0.72, -0.78), (-0.05, -0.78), (0.52, -0.16), (0, -0.16)]
-    base_m = T(M["head"] @ V((2.6, -3.0, 6.6)))
+    base_m = T(M["head"] @ V((2.8, -3.8, 5.8)))
     for i, (dx, dz, sc) in enumerate(((0.6, 0.4, 1.0), (1.4, 1.4, 0.8), (2.1, 2.2, 0.62))):
         a.transform, a.group = base_m @ T((dx, 0, dz)) @ R("Y", -12 * i) @ Matrix.Scale(sc, 4), "Fx"
         a.extrude("zz", zp, -0.07, 0.07, axis="y")
