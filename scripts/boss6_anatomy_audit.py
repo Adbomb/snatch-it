@@ -36,10 +36,15 @@ LIMITS = {"tris": 3000, "size": (3.7, 3.7, 4.55)}  # D64 и каталог: бе
 
 
 def report(item_id):
-    p = os.path.join(SHOTS, f"report_{item_id}.json")
-    if not os.path.exists(p):
-        return {}
-    return json.load(open(p, encoding="utf-8")).get(item_id, {})
+    """Отчёт сборки существа: самый свежий из общего report.json (сборка всех) и report_<Id>.json (точечная)."""
+    best, when = {}, -1.0
+    for name in ("report.json", f"report_{item_id}.json"):
+        p = os.path.join(SHOTS, name)
+        if os.path.exists(p) and os.path.getmtime(p) > when:
+            rep = json.load(open(p, encoding="utf-8")).get(item_id)
+            if rep:
+                best, when = rep, os.path.getmtime(p)
+    return best
 
 
 def frame(item_id, view):

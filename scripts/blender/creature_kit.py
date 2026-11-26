@@ -559,6 +559,13 @@ def pad(collection, x, y=0.0):
     return o
 
 
+def clear_studio():
+    """Убрать студию прошлого кадра (S.Preview): свет, камеру и пол — у каждого существа своя студия."""
+    for o in list(bpy.context.scene.objects):
+        if o.type in ("LIGHT", "CAMERA") or o.name.startswith("Floor"):
+            bpy.data.objects.remove(o, do_unlink=True)
+
+
 def run(items, repo, shots, models, texdir, quick=False, report_name="report.json"):
     """Собрать существа items = [(id, функция, название, редкость)]: запекание (кроме quick), FBX, rig.json, кадры."""
     global REPO, SHOTS, MODELS, TEXDIR, QUICK
@@ -626,6 +633,7 @@ def run(items, repo, shots, models, texdir, quick=False, report_name="report.jso
             rig_json(item_id, art, parts, os.path.join(MODELS, f"{item_id}.rig.json"))
 
         # — кадры: части связаны скелетом, повороты — вращением подставки (камера всегда спереди, к студии) —
+        clear_studio()  # свет, камера и пол прошлого существа (иначе свет копится и кадры пересвечены)
         prev = S.Preview(collection)
         whole = list(parts.values())
         pose_parts(parts, art, False)
