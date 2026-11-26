@@ -442,6 +442,15 @@ function JunkKit.Decor(bricks: { Brick }): { Brick }
 	return bricks
 end
 
+-- Вещь в масштабе f (размеры и положения деталей; повороты те же): крупные вещи на горах читаются от входа.
+function JunkKit.Scale(bricks: { Brick }, f: number): { Brick }
+	for _, brick in bricks do
+		brick.size *= f
+		brick.cframe = CFrame.new(brick.cframe.Position * f) * brick.cframe.Rotation
+	end
+	return bricks
+end
+
 -- Корпус машины без стёкол вдоль X: кузов, кабина, полоса окон, две оси колёс, ржавое пятно.
 function JunkKit.WreckCar(color: Color3): { Brick }
 	return {
@@ -450,7 +459,7 @@ function JunkKit.WreckCar(color: Color3): { Brick }
 		B(Vector3.new(3.0, 0.7, 3.32), Vector3.new(-0.3, 2.8, 0), C.screen:Lerp(C.dark, 0.45)),
 		B(Vector3.new(3.84, 1.5, 1.5), CFrame.new(2.3, 0.75, 0) * ALONG_Z, C.tire, { shape = "Cylinder" }),
 		B(Vector3.new(3.82, 1.5, 1.5), CFrame.new(-2.3, 0.75, 0) * ALONG_Z, C.tire, { shape = "Cylinder" }),
-		B(Vector3.new(1.4, 0.8, 0.12), Vector3.new(1.6, 1.4, -1.86), C.rust, DECOR),
+		B(Vector3.new(1.4, 0.8, 0.12), Vector3.new(0.4, 1.4, -1.88), C.rust, DECOR), -- между колёсами: не в плоскости торцов осей
 	}
 end
 

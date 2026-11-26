@@ -28,7 +28,6 @@ local DECOR, ROUND, BALL, UPRIGHT = JunkKit.DECOR, JunkKit.ROUND, JunkKit.BALL, 
 local C, SCRAP, hex, put = JunkKit.C, JunkKit.SCRAP, JunkKit.hex, JunkKit.put
 local LANE = MapLayout.Lane -- боковые полосы свободного бега (|x|): твёрдого на высоте 1.1–7 нет
 local LANE_AXIS = (LANE[1] + LANE[2]) / 2 -- ось полосы: дорожка из плит
-local WALL = MapLayout.ZoneHalfWidth -- грань обрыва (|x| = 92): декор до неё не доходит
 
 local Junkyard = {}
 
@@ -347,27 +346,86 @@ function Junkyard.Ground(): { Brick }
 	return out
 end
 
--- Горы хлама вдоль стен (|x| 67–92), отрезками вдоль z: низ — контейнер или стопка сплющенных машин (твёрдый, ≤ 24),
--- выше — наклонённые ярусы хлама без столкновений до кромки обрыва (≥ 33.4, закрывают траву 32.7), сверху — шины,
--- бочки, лист железа. У соседних отрезков разные наклоны и цвета. Место крана (+x, z 18–26) и сторожки (−x,
--- z −40…−32) — гора отступает к стене; у столбиков границы (z > 45.9) гор нет.
-local HEAP_COLORS = { C.rustOrange, C.red, C.blue, C.yellow, C.teal, C.green, C.rust, C.steel }
--- Ярусы гор — приглушённые цвета старого железа (ржавчина, сталь, выцветшие краски); яркие — только низ и акценты.
-local JUNK_TONES = {
-	hex("A0522D"),
-	hex("7A4A2E"),
-	hex("7D8790"),
-	hex("525A64"),
-	hex("A8443A"),
-	hex("3E5F8A"),
-	hex("3A7F78"),
-	hex("B88A2E"),
+-- Горы хлама вдоль стен (D68, второй проход по замечаниям владельца 2026-11-25): не «стена цветных коробок», а груда
+-- узнаваемого хлама. Отрезками вдоль z (8–11): два склона без столкновений — нижний (от |x| ≈ 72 до 88.8, высота
+-- 13–19) и верхний, круче, до кромки обрыва (верх 34.4 у |x| 91.3 — песочная клетчатая стена нигде не видна); впереди
+-- твёрдое основание ≤ 5 (контейнер, корпус машины, стопка покрышек или холодильник со стиральной машиной); на склонах —
+-- три вещи вперемешку (ванна, трубы, погнутый знак, телевизор, холодильник, покрышки, машина, ящик). Палитра куч
+-- приглушённая (ржавчина, серый металл, выцветший синий); яркие только акценты — красная машина, жёлтые бочки,
+-- оранжевый конус. Место крана (+x, z 18–26) и сторожки (−x, z −40…−32) — гора отступает к стене; у столбиков
+-- границы (x ±86, z > 45.9) — только верхний склон у самой стены.
+local MUTED = {
+	rust = hex("8A5A3C"),
+	rustD = hex("6E4630"),
+	brown = hex("5E4A3A"),
+	steel = hex("7D8389"),
+	steelD = hex("575D64"),
+	blue = hex("4E6582"),
+	olive = hex("6B6A4E"),
+}
+local WEDGE_DECOR = { shape = "Wedge", collide = false, shadow = false }
+-- склоны — тёмные и тусклые (уходят в тень; на виду — вещи и пёс)
+local SLOPES = { hex("4E3B2E"), hex("3F444A"), hex("47402F"), hex("4A4F55"), hex("553A2A"), hex("44463A") }
+local BODY = { MUTED.blue, MUTED.steel, MUTED.rust, MUTED.olive, MUTED.steelD }
+
+-- Склон-клин: скат к полю (поворот s · 90° плюс сдвиг jitter), передний нижний край на |x| = front, задний верхний —
+-- на |x| = back, низ на высоте base, верх top, вдоль z — от z0 до z1.
+local function slope(
+	out: { Brick },
+	s: number,
+	front: number,
+	back: number,
+	base: number,
+	top: number,
+	zc: number,
+	zl: number,
+	jitter: number,
+	color: Color3
+)
+	local d = back - front
+	local at = CFrame.new(s * (front + back) / 2, (base + top) / 2, zc) * CFrame.Angles(0, math.rad(s * 90 + jitter), 0)
+	table.insert(out, B(Vector3.new(zl, top - base, d), at, color, WEDGE_DECOR))
+end
+
+-- Вещь на склоне: n-я из списка (без столкновений), низ чуть утоплен в склон, повёрнута и наклонена.
+local ITEM_SCALE = 1.7 -- вещи на склонах крупнее: силуэты читаются от входа
+local ITEMS = {
+	function(_k: number)
+		return JunkKit.Bathtub()
+	end,
+	function(_k: number)
+		return JunkKit.Pipes()
+	end,
+	function(_k: number)
+		return JunkKit.BentSign()
+	end,
+	function(_k: number)
+		return JunkKit.TV()
+	end,
+	function(_k: number)
+		return JunkKit.Tires(3)
+	end,
+	function(k: number)
+		return JunkKit.WreckCar(BODY[k % #BODY + 1])
+	end,
+	function(_k: number)
+		return JunkKit.Washer()
+	end,
+	function(_k: number)
+		return JunkKit.Crate()
+	end,
+	function(_k: number)
+		return JunkKit.Fridge()
+	end,
+	function(_k: number)
+		return JunkKit.Barrel(C.yellow, hex("23232A")) -- акцент
+	end,
 }
 
 function Junkyard.WallJunk(): { Brick }
 	local out = {}
 	for _, s in { -1, 1 } do
-		local z, k = -47.4, 0
+		local z, k = -46.9, 0 -- от начала зоны с запасом: повёрнутые склоны не выходят за её край
 		while z < 45.9 do
 			k += 1
 			local len = 8 + (k * 37 % 4)
@@ -375,98 +433,78 @@ function Junkyard.WallJunk(): { Brick }
 			local zc, zl = (z + z1) / 2, z1 - z
 			local blocked = (s > 0 and zc > 14 and zc < 30) or (s < 0 and zc > -44 and zc < -28)
 			local inner = (if blocked then 78 else 67.2) + (k * 53 % 3) -- передний край горы (|x|)
-			local function color(n: number): Color3
-				return HEAP_COLORS[(k * 3 + n) % #HEAP_COLORS + 1]
-			end
-			-- низ: контейнер вдоль стены или стопка из двух сплющенных машин (твёрдые, верх ≤ 9.5)
-			if k % 2 == 0 then
+			local jitter = ((k * 7) % 5 - 2) * 1.7 + 0.8 -- у соседних отрезков разный, ни один не ровно 90°
+			-- склоны: нижний и верхний (круче, до кромки обрыва)
+			local front = math.min(inner + 5, 84)
+			local h1 = 13 + (k * 5 % 7) -- у соседних отрезков разная высота
+			slope(out, s, front, 88.8, -0.3, h1, zc, zl, jitter, SLOPES[k % #SLOPES + 1])
+			local upFront = front + (88.8 - front) * 0.45
+			local upBase = h1 * 0.45 - 0.6
+			slope(
+				out,
+				s,
+				upFront,
+				91.3,
+				upBase,
+				34.4 + (k % 2) * 0.5,
+				zc,
+				zl - 0.2,
+				-jitter,
+				SLOPES[(k + 3) % #SLOPES + 1]
+			)
+			-- твёрдое основание (≤ 5): контейнер, корпус машины, стопка покрышек или холодильник со стиральной машиной
+			local kind = k % 4
+			if kind == 0 then
 				local at = CFrame.new(s * (inner + 2.4), 0, zc)
 					* CFrame.Angles(0, math.rad(90 + s * ((k % 3) * 2 + 3.5)), 0)
-				put(out, JunkKit.Container(color(0), math.min(zl - 0.6, 9.6), true), at)
+				put(out, JunkKit.Container(BODY[k % #BODY + 1], math.min(zl - 0.6, 9.6), true), at)
+			elseif kind == 1 then
+				local red = k % 3 == 1 -- красная машина — акцент
+				local at = CFrame.new(s * (inner + 2.2), 0, zc) * CFrame.Angles(0, math.rad(90 + s * 6), 0)
+				put(out, JunkKit.WreckCar(if red then C.red else BODY[k % #BODY + 1]), at)
+			elseif kind == 2 then
+				put(out, JunkKit.Tires(4), CFrame.new(s * (inner + 2.2), 0, zc - zl * 0.2))
+				put(out, JunkKit.Tires(2), CFrame.new(s * (inner + 2.4), 0, zc + zl * 0.25))
+			else
 				put(
 					out,
-					JunkKit.Container(color(1), math.min(zl - 1.4, 8.2), false),
-					at * CFrame.new(0.3, 4.65, 0.2) * CFrame.Angles(0, 0.06, 0.04)
+					JunkKit.Fridge(),
+					CFrame.new(s * (inner + 1.8), 0, zc - zl * 0.2) * CFrame.Angles(0, s * 0.3, 0)
 				)
-			else
-				for j = 0, 1 do
-					local at = CFrame.new(s * (inner + 2.2 + j * 0.4), j * 1.95, zc + (j - 0.5) * 0.6)
-						* CFrame.Angles(0, math.rad(90 + (j * 2 - 1) * 5), math.rad((j * 2 - 1) * 3))
-					local car = JunkKit.CrushedCar(color(j))
-					if j == 0 then
-						car[1].collide = true -- корпус нижней машины — твёрдый
-					end
-					put(out, car, at)
-				end
-			end
-			-- ярусы хлама к стене: от земли (низ уходит в пол — при наклоне край не висит), наклонены верхом к стене,
-			-- у соседних отрезков — разные углы и цвета
-			local lean = -s * (5 + (k % 3) * 3)
-			local turn = s * ((k % 3) - 1) * 5
-			local tiers = {
-				{ inner + 4.6, -2, 10 + (k * 11 % 4) },
-				{ inner + 9, 8, 20 + (k * 7 % 4) },
-				{ inner + 13.6, 17, 34.2 },
-			}
-			for t, tier in tiers do
-				-- ярус — два куска «сплющенных машин» вдоль z: свои наклон, поворот, высота и приглушённый цвет; на
-				-- лицевой грани нижних кусков — полоса окон и колесо (читается как машина в стопке)
-				for piece = 1, 2 do
-					local h = tier[3] - tier[2] - (if piece == 2 then 1.6 else 0)
-					local depth = zl / 2 - 0.25 - t * 0.1
-					local pl = lean + s * (if piece == 1 then 2 else -2) - s * t * 1.5
-					local pt = turn + (piece * 2 - 3) * 3 + t
-					-- задний край: с учётом наклона и поворота кусок не доходит до грани обрыва (≤ |x| 91.7)
-					local b = WALL
-						- 0.3
-						- h / 2 * math.abs(math.sin(math.rad(pl)))
-						- depth / 2 * math.abs(math.sin(math.rad(pt)))
-					local a = math.min(tier[1] + (piece - 1) * 0.8, b - 4)
-					local w = b - a
-					local at = CFrame.new(s * (a + b) / 2, tier[2] + h / 2, zc + (piece - 1.5) * (zl / 2))
-						* CFrame.Angles(0, math.rad(pt), math.rad(pl))
-					table.insert(
-						out,
-						B(Vector3.new(w, h, depth), at, JUNK_TONES[(k * 5 + t * 3 + piece) % #JUNK_TONES + 1], DECOR)
-					)
-					if t <= 2 then
-						local face = -s * (w / 2 + 0.06)
-						table.insert(
-							out,
-							B(
-								Vector3.new(0.14, 0.9, depth * 0.7),
-								at * CFrame.new(face, h / 2 - 1.5, 0),
-								C.screen:Lerp(C.dark, 0.35),
-								DECOR
-							)
-						)
-					end
-					if t == 1 then
-						local wheel = at * CFrame.new(-s * (w / 2 + 0.25), h / 2 - 4, depth * 0.25 * (piece * 2 - 3))
-						table.insert(out, B(Vector3.new(0.5, 1.7, 1.7), wheel, C.tire, ROUND))
-					end
-				end
-			end
-			-- сверху: шина, бочка или лист железа (без столкновений)
-			local topAt = CFrame.new(s * (inner + 6.5), 10.4 + (k * 11 % 4), zc + ((k % 3) - 1) * 1.5)
-			if k % 3 == 0 then
-				local tires = JunkKit.Tires(2)
-				for _, brick in tires do
-					brick.collide = false
-				end
-				put(out, tires, topAt * CFrame.Angles(0.2, 0, 0.15))
-			elseif k % 3 == 1 then
-				local barrel = JunkKit.Barrel(C.yellow, hex("23232A"))
-				barrel[1].collide = false
-				put(out, barrel, topAt * CFrame.Angles(0, 0, s * 0.5))
-			else
-				table.insert(
+				put(
 					out,
-					B(Vector3.new(4.6, 0.18, 3.4), topAt * CFrame.Angles(0.25, 0.3, s * 0.3), SCRAP.sheet[2], DECOR)
+					JunkKit.Washer(),
+					CFrame.new(s * (inner + 2), 0, zc + zl * 0.25) * CFrame.Angles(0, -s * 0.4, 0)
 				)
+			end
+			-- оранжевый конус у подножия — через три отрезка
+			if k % 3 == 0 then
+				put(out, JunkKit.Cone(), CFrame.new(s * (inner - 0.6), 0, zc + zl * 0.4))
+			end
+			-- три вещи на склонах (вперемешку)
+			for n, u in { 0.2, 0.55, 0.85 } do
+				local x, y
+				if n < 3 then
+					x = front + (88.8 - front) * u
+					y = h1 * u
+				else
+					x = upFront + (91.3 - upFront) * 0.35
+					y = upBase + (34.4 - upBase) * 0.35
+				end
+				x = math.min(x, 84)
+				local item = JunkKit.Scale(JunkKit.Decor(ITEMS[(k * 3 + n) % #ITEMS + 1](k)), ITEM_SCALE)
+				local at = CFrame.new(s * x, y - 0.4, zc + (n - 2) * zl * 0.28)
+					* CFrame.Angles(
+						math.rad(((k + n) * 23) % 30 - 15),
+						math.rad(k * 47 + n * 71),
+						math.rad(s * (10 + (n * 9 % 12)))
+					)
+				put(out, item, at)
 			end
 			z = z1
 		end
+		-- у столбиков границы: только верхний склон у самой стены (z 45.9–47.3)
+		slope(out, s, 88.4, 91.3, -0.3, 34.6, 46.6, 1.4, 2.1, MUTED.steelD)
 	end
 	return out
 end
