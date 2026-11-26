@@ -1,0 +1,191 @@
+{
+ "id": "DinoCassowary",
+ "order": [
+  "Stand",
+  "LegL",
+  "LegR",
+  "Body",
+  "Tail",
+  "Head",
+  "Wattles"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.457,
+    0.0
+   ],
+   "size": [
+    3.4,
+    0.914,
+    3.4
+   ]
+  },
+  "LegL": {
+   "parent": "Stand",
+   "pivot": [
+    0.5867,
+    1.68,
+    -0.3061
+   ],
+   "center": [
+    0.1658,
+    -0.6023,
+    0.059
+   ],
+   "size": [
+    0.8174,
+    1.4866,
+    0.8954
+   ]
+  },
+  "LegR": {
+   "parent": "Stand",
+   "pivot": [
+    0.0297,
+    1.68,
+    0.084
+   ],
+   "center": [
+    0.0249,
+    -0.6023,
+    0.1681
+   ],
+   "size": [
+    0.7979,
+    1.4866,
+    0.9302
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.3426,
+    1.84,
+    -0.0619
+   ],
+   "center": [
+    -0.045,
+    0.138,
+    -0.0375
+   ],
+   "size": [
+    1.7414,
+    1.6774,
+    1.8458
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0845,
+    1.92,
+    -0.4305
+   ],
+   "center": [
+    -0.5559,
+    0.2793,
+    -0.4159
+   ],
+   "size": [
+    1.9985,
+    1.3858,
+    1.6155
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.7556,
+    2.2,
+    0.5279
+   ],
+   "center": [
+    0.1668,
+    0.465,
+    0.4241
+   ],
+   "size": [
+    0.9141,
+    1.61,
+    1.4124
+   ]
+  },
+  "Wattles": {
+   "parent": "Head",
+   "pivot": [
+    0.9457,
+    2.43,
+    1.0372
+   ],
+   "center": [
+    -0.0097,
+    -0.1796,
+    0.0349
+   ],
+   "size": [
+    0.4046,
+    0.6392,
+    0.3116
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    8,
+    0,
+    -14
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Wattles": {
+   "rot_xyz_blender_deg": [
+    20,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    6,
+    0,
+    20
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    -22,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    -0.04,
+    0.1
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,172 @@
+{
+ "id": "SproutFlytrap",
+ "order": [
+  "Stand",
+  "Body",
+  "ArmL",
+  "ArmR",
+  "Head",
+  "Jaw"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.5,
+    0.4354,
+    3.5
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.76,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.6759,
+    -0.1406
+   ],
+   "size": [
+    3.3363,
+    2.1099,
+    3.1989
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    0.12,
+    1.98,
+    0.02
+   ],
+   "center": [
+    0.6271,
+    0.1366,
+    0.1154
+   ],
+   "size": [
+    1.3216,
+    0.6508,
+    0.3469
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    -0.12,
+    1.98,
+    0.02
+   ],
+   "center": [
+    -0.6271,
+    0.1366,
+    0.1154
+   ],
+   "size": [
+    1.3216,
+    0.6508,
+    0.3469
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.41,
+    -0.02
+   ],
+   "center": [
+    0.0,
+    0.5355,
+    0.383
+   ],
+   "size": [
+    2.8877,
+    2.8875,
+    1.686
+   ]
+  },
+  "Jaw": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    2.66,
+    -0.22
+   ],
+   "center": [
+    0.0,
+    -0.3556,
+    0.7202
+   ],
+   "size": [
+    1.24,
+    0.7233,
+    1.4519
+   ]
+  }
+ },
+ "demo_pose": {
+  "Jaw": {
+   "rot_xyz_blender_deg": [
+    18,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -8,
+    0,
+    6
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -18,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    0,
+    14,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,191 @@
+{
+ "id": "SpaCapybara",
+ "order": [
+  "Stand",
+  "Haze",
+  "Body",
+  "ArmL",
+  "ArmR",
+  "Head",
+  "Lemon"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Haze": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.22,
+    0.0
+   ],
+   "center": [
+    0.0459,
+    0.4311,
+    0.0501
+   ],
+   "size": [
+    2.5958,
+    0.9022,
+    2.5929
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.44,
+    -0.12
+   ],
+   "center": [
+    0.0,
+    0.225,
+    -0.0
+   ],
+   "size": [
+    1.25,
+    0.83,
+    1.37
+   ]
+  },
+  "ArmL": {
+   "parent": "Body",
+   "pivot": [
+    0.36,
+    0.56,
+    0.3
+   ],
+   "center": [
+    0.1286,
+    -0.0373,
+    0.3692
+   ],
+   "size": [
+    0.4851,
+    0.2739,
+    0.8295
+   ]
+  },
+  "ArmR": {
+   "parent": "Body",
+   "pivot": [
+    -0.36,
+    0.56,
+    0.3
+   ],
+   "center": [
+    -0.1285,
+    -0.0365,
+    0.3692
+   ],
+   "size": [
+    0.4849,
+    0.2722,
+    0.8295
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.8,
+    0.2
+   ],
+   "center": [
+    0.0,
+    0.285,
+    0.311
+   ],
+   "size": [
+    0.9,
+    0.83,
+    1.2169
+   ]
+  },
+  "Lemon": {
+   "parent": "Head",
+   "pivot": [
+    0.0,
+    1.36,
+    0.14
+   ],
+   "center": [
+    -0.0977,
+    0.17,
+    0.0028
+   ],
+   "size": [
+    1.1156,
+    0.42,
+    0.5432
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -14,
+    0,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Lemon": {
+   "rot_xyz_blender_deg": [
+    0,
+    16,
+    0
+   ],
+   "offset_blender": [
+    0.03,
+    0,
+    0.02
+   ]
+  },
+  "ArmL": {
+   "rot_xyz_blender_deg": [
+    -38,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ArmR": {
+   "rot_xyz_blender_deg": [
+    6,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

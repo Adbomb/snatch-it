@@ -1,0 +1,81 @@
+{
+ "id": "FrogBubble",
+ "order": [
+  "Stand",
+  "Body",
+  "Sac"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    3.091,
+    0.28,
+    3.091
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.72,
+    -0.2
+   ],
+   "center": [
+    0.0,
+    0.3851,
+    0.2491
+   ],
+   "size": [
+    2.1828,
+    1.7621,
+    1.7728
+   ]
+  },
+  "Sac": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.07,
+    0.42
+   ],
+   "center": [
+    0.0,
+    -0.1954,
+    0.18
+   ],
+   "size": [
+    0.84,
+    0.7907,
+    0.8
+   ]
+  }
+ },
+ "demo_pose": {
+  "Sac": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    -0.05,
+    0.04
+   ]
+  }
+ },
+ "transparent": [
+  "Sac"
+ ]
+}
