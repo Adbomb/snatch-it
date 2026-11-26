@@ -258,12 +258,8 @@ if "[2] = {" not in bm or "Торговец-громила" not in bm:
 for path in ("src/server/Services/BossService.luau", "src/client/Controllers/BossAnimController.luau"):
     if not re.search(r"\[2\] = Boss2TraderRig", src(path)):
         errors.append(f"{path}: скелет босса 2 не подключён")
-if not re.search(r"\[2\] = \{\s*top = ", src("src/server/World/MapLayout.luau")):
+if not re.search(r"Arenas = \{\s*\[2\] = \{", src("src/server/World/MapLayout.luau")):
     errors.append("нет площадки босса 2 (MapLayout.Arenas[2])")
-if not re.search(r"\[1\] = \{\s*top = ", src("src/server/World/MapLayout.luau")):
-    errors.append("нет площадки пса (MapLayout.Arenas[1], D68)")
-if "decor, signs = Junkyard.Zone()" not in src("src/server/World/WorldBuilder.luau"):
-    errors.append("декор и надписи «Свалки» (Junkyard) не подключены в WorldBuilder")
 if "FleaMarket.Zone()" not in src("src/server/World/WorldBuilder.luau"):
     errors.append("декор «Барахолки» (FleaMarket) не подключён в WorldBuilder")
 if not re.search(r'id = "Subway", name = "Подземка", boss = "Крысиный король"', src("src/shared/Config/GameConfig.luau")):

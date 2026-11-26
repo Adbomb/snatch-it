@@ -42,6 +42,7 @@ local RUNNER = 7 -- полуширина дорожки от входа к пл�
 local SLAB = V(12, 0, HALF * 2 / 16) -- плита мощения: 12 поперёк, 16 рядов вдоль
 local SEAM = 0.5
 local HOARD = Vector2.new(0, 36.4) -- гора сокровищ за боссом (крышка сундука — у конца зоны)
+local HOARD_RADIUS = 6.5 -- холм нижнего яруса (их три в ряд)
 -- Путь к следующему уровню (|x|): полуширина перехода от кольца, дорожки по бокам горы сокровищ — от inner до outer
 -- (гора — до 15.5, часы и стопка монет — от 21.9).
 local EXIT = { spine = 2.4, inner = 16.5, outer = 20.5 }
@@ -74,12 +75,14 @@ function FleaMarket.Ground(): { Brick }
 	-- Плита целиком под другой плоскостью (площадка, дорожка, гора) не нужна.
 	local function hidden(x0: number, x1: number, z0: number, z1: number): boolean
 		local corners = { Vector2.new(x0, z0), Vector2.new(x1, z0), Vector2.new(x0, z1), Vector2.new(x1, z1) }
-		local inArena = true
+		local inArena, inHoard = true, true
 		for _, corner in corners do
 			inArena = inArena and (corner - center).Magnitude < outer
+			local hill = Vector2.new(math.clamp(corner.X, HOARD.X - 9, HOARD.X + 9), HOARD.Y)
+			inHoard = inHoard and (corner - hill).Magnitude < HOARD_RADIUS
 		end
 		local onRunner = x0 >= -RUNNER and x1 <= RUNNER and z1 <= center.Y - outer + 1
-		return inArena or onRunner
+		return inArena or inHoard or onRunner
 	end
 
 	-- Мощение: ряды плит со сдвигом на полплиты по тёплой подложке (швы), редкие плиты темнее; в стыках рядов —
@@ -149,13 +152,33 @@ function FleaMarket.Ground(): { Brick }
 		table.insert(out, B(V(3.2, TOP.pattern, 3.2), at, if k % 2 == 0 then C.gold else C.orange, DECOR))
 	end
 
-	-- Площадка торговца (D72: один основной цвет и одна кайма): бирюзовое кольцо, золотой обод, бирюзовое поле.
+	-- Площадка-монета: кольцо, обод, поле (на нём предметы).
 	local function disc(diameter: number, top: number, color: Color3): Brick
 		return Disc(diameter, 0, top, center.X, center.Y, color)
 	end
-	table.insert(out, disc(outer * 2, TOP.porch, C.tealDeep))
-	table.insert(out, disc((arena.radius + 1.4) * 2, TOP.pattern, C.gold))
+	table.insert(out, disc(outer * 2, TOP.porch, C.graphiteDark))
+	table.insert(out, disc((arena.radius + 1.4) * 2, TOP.pattern, C.goldDark))
 	table.insert(out, disc(arena.radius * 2, arena.top, C.tealMid))
+	-- Насечка обода: золотые зубцы по кругу.
+	local function around(angle: number, radius: number, top: number): CFrame
+		return CFrame.new(center.X, top / 2, center.Y) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0, radius)
+	end
+	for k = 0, 31 do
+		local at = around(math.rad(k * 360 / 32), arena.radius + 0.7, TOP.teeth)
+		table.insert(out, B(V(1.6, TOP.teeth, 1.1), at, if k % 2 == 0 then C.gold else C.goldLight, DECOR))
+	end
+	-- Огоньки по графитовому кольцу.
+	for k = 0, 7 do
+		table.insert(
+			out,
+			Neon(V(0.9, TOP.dot, 0.9), around(math.rad(22.5 + k * 45), outer - 0.8, TOP.dot), C.purpleLight)
+		)
+	end
+	-- Пунктир между предметами и ободом.
+	for k = 0, 23 do
+		local at = around(math.rad(7.5 + k * 15), arena.radius - 2, TOP.dash)
+		table.insert(out, B(V(3.4, TOP.dash, 0.5), at, C.goldLight, DECOR))
+	end
 	-- Места предметов (D71): светящееся кольцо цвета редкости предмета (красит BossLootService) в латунном ободе;
 	-- без света снизу — у «Барахолки» бюджет света 10 уже занят.
 	for slot, spot in MapLayout.ArtSlots do
@@ -167,6 +190,14 @@ function FleaMarket.Ground(): { Brick }
 			table.insert(out, brick)
 		end
 	end
+	-- Ромб-самоцвет под боссом: золотой, фиолетовый, светлый, золотой центр.
+	local rhomb = CFrame.new(center.X, 0, center.Y) * CFrame.Angles(0, math.rad(45), 0)
+	for i, layer in { { 11.6, C.gold }, { 10.2, C.purple }, { 5.6, C.purpleLight } } do
+		local top = TOP.dash + (i - 1) * 0.05
+		table.insert(out, B(V(layer[1], top, layer[1]), rhomb * CFrame.new(0, top / 2, 0), layer[2], DECOR))
+	end
+	table.insert(out, Disc(2.6, 0, TOP.dash + 0.15, center.X, center.Y, C.goldLight))
+
 	-- Путь к следующему уровню (запрос владельца 2026-11-14: от каждого босса к следующему — видимый путь): от
 	-- графитового кольца за боссом — перемычка перед горой сокровищ, от неё две дорожки по бокам горы (между горой и
 	-- часами / стопкой монет) до выхода. Бирюза на высоте площадок (porch), золотая кромка (pattern), ромбы (dot) —
@@ -238,12 +269,18 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 	local function right(z: number, x: number, turn: number?): CFrame
 		return CFrame.new(x, 0, z) * CFrame.Angles(0, math.pi / 2 + (turn or 0), 0)
 	end
+	local function facing(x: number, z: number, target: Vector2): CFrame
+		return CFrame.lookAt(V(x, 0, z), V(target.X, 0, target.Y))
+	end
 
 	-- Павильоны у стен обрыва, за сквозными полосами (передний край — |x| 63.7–66.4, у каждого свой: задом к стене):
 	-- слева пагода, ломбард, шатёр; справа контейнеры, купол, призы (просветы в разных местах).
+	Put(out, FleaStalls.Pagoda(), left(-30, 65.2))
 	Put(out, FleaStalls.Vault(), left(7, 65.8))
+	Put(out, FleaStalls.Tent(), left(32, 65.7))
 	Put(out, FleaStalls.Containers(), right(-31, 64.5))
 	Put(out, FleaStalls.Rotunda(), right(-6, 66.4))
+	Put(out, FleaStalls.PrizeTerminal(), right(32, 63.7))
 
 	-- Площадки перед павильонами на променаде: у каждого свой узор (полосы, кант, клетка, «осторожно»).
 	local function porch(side: number, z: number, width: number, base: Color3, accent: Color3, kind: string)
@@ -273,28 +310,86 @@ function FleaMarket.Zone(): ({ Brick }, { Sign })
 			end
 		end
 	end
+	porch(-1, -30, 22, C.tealDeep, C.gold, "frame")
 	porch(-1, 7, 20, C.graphiteDark, C.gold, "check")
+	porch(-1, 32, 20, C.orangeDark, C.cream, "stripes")
 	porch(1, -31, 22, C.graphiteDark, C.gold, "stripes")
 	porch(1, -6, 20, C.purpleDark, C.goldLight, "frame")
+	porch(1, 32, 20, C.purpleDark, C.teal, "check")
 
-	-- Крупные вывески трёх павильонов у дорожки (между бордюром и полосой, в полосе фасада своего павильона).
+	-- Вывески у дорожки (между бордюром и полосой): павильоны отъехали к стенам, и их надписи с камеры игрока стали
+	-- далеко — у каждого павильона его щит в полосе его фасада, на разной высоте (низ не ниже 9.4) и не напротив
+	-- соседа: слева подвесная «ДЁШЕВО!» на мачте у входа (щит над бордюром), «НАХОДКИ», мачта «−50%» в просвете,
+	-- «ЛОМБАРД», «СЮРПРИЗЫ» и ящик «?» из шатра; справа «СКУПКА» в неоновой раме, «РЕДКОСТИ», «ПРИЗЫ» с табличкой
+	-- «ВЫДАЧА».
+	Put(out, FleaStalls.CheapSign(), left(-43, STREET + 1.5))
+	Put(out, FleaStalls.StreetSign("НАХОДКИ", 11, 2.4, C.orange, 12.2), left(-29, STREET))
 	Put(out, FleaStalls.StreetSign("ЛОМБАРД", 12, 2.4, C.graphiteDark, 10.6), left(2, STREET))
+	Put(out, FleaStalls.StreetSign("СЮРПРИЗЫ", 11, 2.8, C.purple, 11.2), left(30, STREET))
+	Put(out, FleaStalls.MysteryCrate(), left(40.7, STREET))
 	Put(out, FleaStalls.StreetSign("СКУПКА", 12, 3, C.graphiteDark, 13, C.orange), right(-32, STREET))
 	Put(out, FleaStalls.StreetSign("РЕДКОСТИ", 12, 2.4, C.orange, 11.4), right(-6, STREET))
+	Put(out, FleaStalls.PrizeSign(), right(29, STREET)) -- при z 31–34 щит закрывает правая башня-прожектор
 
-	-- За боссом — гора золотых монет вдвое меньше прежней горы сокровищ и одним цветом (D72): четыре яруса-диска
-	-- (каждый следующий меньше и выше), сверху закрытый сундук. Без столкновений, без света.
-	for i, tier in { { 16, 1.0 }, { 12, 2.2 }, { 8, 3.4 }, { 4.4, 4.4 } } do
-		table.insert(out, Disc(tier[1], 0, tier[2], HOARD.X, HOARD.Y, if i % 2 == 1 then C.gold else C.goldDark))
+	-- Просвет слева (между пагодой и ломбардом): мачта с ценником «−50%» у дорожки (ценник над бордюром), за полосой
+	-- у стены — сундук и мешки. Щиты на обрывах («БАРАХОЛКА», «ЗОЛОТО И ТРОФЕИ») убраны — этап C.2, решение
+	-- владельца 2026-11-16: их закрывала свисающая трава обрыва.
+	Put(out, FleaStalls.SymbolMast("−50%"), left(-11, STREET))
+	Put(out, FleaKit.GoldChest(), left(-13.4, 72, 0.35))
+	Put(out, FleaKit.CoinSacks(), left(-9.6, 80, math.pi / 2 - 0.3))
+	-- Просвет справа (между куполом и призами) — тоже у стены: мачта с монетой, ящики, сундук.
+	Put(out, FleaStalls.SymbolMast(), right(13, 68.5))
+	Put(out, FleaKit.NeonCrates(), right(16.6, 75, 0.3))
+	Put(out, FleaKit.GoldChest(), right(8, 70.5, -0.4))
+	-- Склад рынка у обрыва — один штабель контейнеров в правом просвете (остальные три убраны: им не хватило места
+	-- за павильонами у стен).
+	Put(out, FleaStalls.ContainerStack({ C.teal, C.orange, C.purple }, 0.2), right(12.6, 86))
+
+	-- Входная площадь: тележки с зонтами по бокам от дорожки, лицом к ней.
+	Put(out, FleaStalls.UmbrellaCart(C.orange, C.cream), facing(-20, -41, Vector2.new(0, -41)))
+	Put(out, FleaStalls.UmbrellaCart(C.purple, C.goldLight), facing(22, -40, Vector2.new(0, -40)))
+
+	-- Фонари у бордюров (слева тёплые, справа холодные), столбы с вывесками редкостей справа и гирлянды флажков
+	-- между ними вдоль променадов (поперёк коридора ничего нет).
+	-- Фонарь у входа слева — между бордюром и полосой, рядом с мачтой «ДЁШЕВО!» (x 44): на линии бордюра он стоит
+	-- прямо перед подвесной вывеской (она над бордюром, x 37–43) и закрывает её с камеры игрока.
+	Put(out, FleaKit.Lamp(C.orangeLight), left(-46, STREET - 1))
+	for _, z in { -16, 20, 45 } do
+		Put(out, FleaKit.Lamp(C.orangeLight), left(z, CURB - 1.8))
 	end
-	local chest = CFrame.new(HOARD.X, 4.4, HOARD.Y) * CFrame.Angles(0, math.rad(12), 0)
-	table.insert(out, B(V(3.6, 2, 2.4), chest * CFrame.new(0, 1, 0), C.goldDark, DECOR))
-	table.insert(out, B(V(3.8, 0.7, 2.6), chest * CFrame.new(0, 2.25, 0), C.gold, DECOR))
+	for _, z in { -45.5, 45 } do
+		Put(out, FleaKit.Lamp(C.tealLight), right(z, CURB - 1.8))
+	end
+	local poles = { -18, 6.5, 20 }
+	for i, rarity in { "Common", "Rare", "Epic" } do
+		Put(out, FleaKit.RarityPole(rarity), right(poles[i], CURB - 1.8))
+	end
+	local function bunting(side: number, z0: number, z1: number, colors: { Color3 })
+		if z1 - z0 < 6 then
+			return -- слишком короткий пролёт
+		end
+		local at = CFrame.new(side * (CURB - 1.8), 0, z0) * CFrame.Angles(0, -math.pi / 2, 0)
+		Put(out, FleaStalls.Bunting(z1 - z0, 10.1, 1.6, 2.4, colors), at)
+	end
+	local warm = { C.orange, C.goldLight, C.teal }
+	bunting(-1, -16, 20, warm) -- у пагоды гирлянды нет: там над бордюром висит «ДЁШЕВО!»
+	bunting(-1, 20, 45, warm)
+	local cold = { C.purpleLight, C.teal, C.goldLight }
+	local east = { -45.5, poles[1], poles[2], poles[3], 45 }
+	for i = 1, #east - 1 do
+		bunting(1, east[i], east[i + 1], cold)
+	end
 
-	-- Задник (D72): ровная графитовая стена одного цвета у конца зоны — закрывает шум следующей зоны; открыты только
-	-- проходы — дорожки к выходу (|x| 16.5–20.5) и сквозные полосы (|x| 48–66).
-	for _, seg in { { -15.6, 15.6 }, { 21.4, 47.4 }, { 66.6, 91.6 }, { -47.4, -21.4 }, { -91.6, -66.6 } } do
-		table.insert(out, Box(seg[1], seg[2], 0, 14, HALF - 1.2, HALF - 0.3, C.graphiteDark))
+	-- За боссом: гора сокровищ, по бокам гигантские часы и стопка монет, перед ними башни-прожекторы на босса.
+	Put(out, FleaStalls.TreasureHoard(), CFrame.new(HOARD.X, 0, HOARD.Y))
+	local boss = MapLayout.BossSpot
+	-- часы и монеты — на 3 дальше от середины (было ±25): между ними и горой — дорожки к выходу
+	Put(out, FleaStalls.PocketWatch(), facing(-28, 38, boss))
+	Put(out, FleaStalls.CoinStack(), facing(28, 37, boss))
+	local target = V(boss.X, 5, boss.Y) -- середина корпуса торговца, не макушка
+	for _, tower in { { -28, 22, C.orange }, { 28, 22, C.purple } } do
+		local at = V(tower[1], 0, tower[2])
+		Put(out, FleaStalls.LightTower(target - at, tower[3]), CFrame.new(at))
 	end
 	return out, FleaKit.Signs()
 end
