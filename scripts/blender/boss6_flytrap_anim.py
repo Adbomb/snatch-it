@@ -71,7 +71,8 @@ def unflat(f):
     P["tongue"] = tuple(max(0.0, min(1.0, v)) for v in P["tongue"])
     for k, n in SIDE_KEYS.items():
         P[k] = {s: tuple(f[f"{k}{s}_{i}"] for i in range(n)) for s in S2}
-    P["lid"] = {s: (max(0.0, min(1.0, a)), max(0.0, min(1.0, b)), c) for s, (a, b, c) in P["lid"].items()}
+    P["lid"] = {s: (max(0.0, min(1.0, a)), max(0.0, min(2.0, b)), c) for s, (a, b, c) in P["lid"].items()}  # нижнее
+    # веко до 2: блаженство — поднято до верха гнезда (дуга «^^»)
     return P
 
 
@@ -143,7 +144,8 @@ def clips():
     inhale = pose("sleep", lean=9.0, head=(20.0, 6.0, 8.0), petals=16.0, mantle=(-4.0, 3.0))
     C.append(Clip("sleep_idle", "Сон", 6.4, [(0.0, SLEEP), (3.2, inhale), (6.4, SLEEP)], loop=True))
     # пробуждение: моргнула, открыла глаза, выпрямилась, развела лозы и раскрыла бутоны
-    blink = pose("sleep", lid={1: (0.55, 0.5, 0.0), -1: (0.6, 0.55, 0.0)}, head=(14.0, 4.0, 6.0))
+    blink = pose("sleep", lid={1: (0.55, 0.3, 0.0), -1: (0.6, 0.3, 0.0)}, head=(14.0, 4.0, 6.0))  # нижнее ≤ 0.34:
+    # дуга «^^» на нём остаётся в маске
     awake = pose("stand", lean=6.0, head=(6.0, 0.0, 0.0), jaw=(6, 10), lid=Q.both((0.15, 0.05, 0.0)),
                  brow={1: (-6.0, 0.05), -1: (6.0, 0.05)})
     stretch = pose("victory", jaw=(30, 50), lid=Q.SQUINT, brow=Q.ANGRY, bud=Q.both((60.0, -6.0)))
@@ -200,7 +202,7 @@ def clips():
                   end="stand"))
     # засыпание: зевает, бутоны закрываются, клонится, глаза закрываются
     yawn = pose("stand", jaw=(34, 54), lid=Q.both((0.5, 0.3, 0.0)), head=(-8.0, 0.0, 0.0))
-    nod = pose("sleep", lid=Q.both((0.7, 0.6, 0.0)), head=(14.0, 4.0, 4.0))
+    nod = pose("sleep", lid=Q.both((0.7, 0.3, 0.0)), head=(14.0, 4.0, 4.0))
     C.append(Clip("fall_asleep", "Засыпание", 1.6, [(0.0, STAND), (0.5, yawn), (1.0, nod), (1.6, SLEEP)],
                   events={"зевок": 0.5}, start="stand", end="sleep"))
     # «съесть» (D74): отобрала Ловибум → в пасть → захлоп → жуёт → выплюнула капсулу этажа → довольная
@@ -250,12 +252,13 @@ def clips():
 SPIT_T = 3.75  # «съесть»: миг плевка — капсула появляется в CapsuleSpawn
 SQUINT_ = {1: (0.55, 0.15, -6.0), -1: (0.55, 0.15, 6.0)}  # довольный прищур (проглотила)
 # эмоции «съесть» — только веки и брови (карты не меняются). Веко — плоская пластина: «зажмурены» — шов прямой.
-BLISS = dict(lid=Q.both((1.0, 1.0, 0.0)), brow={1: (10.0, 0.22), -1: (-10.0, 0.22)})  # чавки: зажмурилась, брови вверх
+BLISS = dict(lid=Q.both((0.0, 1.98, 0.0)), brow={1: (10.0, 0.22), -1: (-10.0, 0.22)})  # чавки: зажмурилась дугами
+# «^^» (нижнее веко с дугой — до верха гнезда, верхнее убрано), брови вверх
 FRIGHT = dict(lid=Q.both((0.0, 0.0, 0.0)), brow={1: (18.0, 0.3), -1: (-18.0, 0.3)})  # икота: глаза настежь, брови
 # высоко и домиком
 SLY = dict(lid={1: (0.66, 0.3, -10.0), -1: (0.42, 0.22, 4.0)},
            brow={1: (-18.0, -0.06), -1: (4.0, 0.26)})  # вдох и плевок: хитрый прищур, одна бровь вздёрнута
-CONTENT = dict(lid=Q.both((0.28, 0.5, 0.0)), brow={1: (10.0, 0.16), -1: (-10.0, 0.16)})  # довольная: глаза-улыбки
+CONTENT = dict(lid=Q.both((0.28, 0.3, 0.0)), brow={1: (10.0, 0.16), -1: (-10.0, 0.16)})  # довольная: глаза-улыбки
 
 
 # ── Экспорт и проверки ──────────────────────────────────────────────────────────────────────────────────────
@@ -320,7 +323,10 @@ def main():
     for m in ("Head", "Body", "Limbs"):
         a = Q.build(m)
         obj = a.build(col)
-        parts.update(Q._split_keep(obj, a, col))
+        split = Q._split_keep(obj, a, col)
+        if m == "Head":
+            Q.face_fix(split, list(a.colors), baked=False)  # кант створок, дуга «^^», полоса сна — как в игре
+        parts.update(split)
     sample = {n: [v.co.copy() for v in o.data.vertices][::3] for n, o in parts.items()}
     rep = check(baked, sample)
     with open(os.path.join(out, "anim_report.json"), "w", encoding="utf-8") as f:

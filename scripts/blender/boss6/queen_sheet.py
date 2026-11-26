@@ -6,6 +6,8 @@
   пробуждение / засыпание в новой палитре.
   … chew → 11_queen_chew.png: раскадровка жевания клипа «съесть» (кадры chew_<k>.png);
   … emo → 13_queen_emo.png: эмоции клипа «съесть» веками и бровями крупно (кадры emo_<k>.png; FLY_EAT=emo);
+  … face → 14_queen_face.png: правки головы 2026-11-26 — кант створок тёмно-зелёный, дуги «^^» на нижнем веке,
+  «— —» сна на верхнем (кадры с картами boss6_prod/queen_maps/face_*.png) и эмоции «съесть» (emo_<k>.png);
   … maps → 12_queen_maps.png: карты королевы (assets/textures/art/Boss6Flytrap<Карта>_{color,normal}.png) и кадры
   полной сборки с картами (boss6_prod/queen_maps/) — владельцу до загрузки (D70). Кадры — boss6_prod/queen_v2/ (boss6_flytrap.py quick, boss6_flytrap_anim.py
   с FLY_CLIPS=eat,sleep_idle,wake,fall_asleep, arena.py player,approach queen=game out=…/queen_v2/arena).
@@ -239,7 +241,7 @@ def chew_sheet():
     return out, sheet.size
 
 
-EMO = [(1.62, "чавк — блаженство: зажмурилась, брови вверх"), (3.05, "икота — испуг: глаза настежь, брови высоко"),
+EMO = [(1.62, "чавк — блаженство: дуги «^^», брови вверх"), (3.05, "икота — испуг: глаза настежь, брови высоко"),
        (3.45, "вдох — хитрый прищур, бровь вздёрнута"), (4.15, "финал — довольная: глаза-улыбки")]  # = EMO_SHOTS
 
 
@@ -265,6 +267,36 @@ def emo_sheet():
         y = V.para(d, M + 12, y, ln, W - 2 * M - 24, size=24, fill=SH.INK) + 8
     sheet = sheet.crop((0, 0, W, y + M))
     out = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "13_queen_emo.png")
+    sheet.save(out)
+    return out, sheet.size
+
+
+def face_sheet():
+    W, M = SH.W, SH.M
+    qm = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "queen_maps")
+    sheet = Image.new("RGB", (W, 5200), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Королева: голова — кант створок и дуги «^^»", "С картами (карты не менялись) · перезалив только меша "
+              "головы — после «ок»")
+    y = 128
+    pic = (W - 2 * M - 12) // 2
+    y = SH.section(d, y, "Лицо крупно, с картами", "пасть сомкнута · стойка · блаженство · сон")
+    y = SH.tiles(sheet, d, y, [(os.path.join(qm, "face_closed.png"), "пасть сомкнута: кант тёмно-зелёный"),
+                               (os.path.join(qm, "face_stand.png"), "стойка: малиновое — только внутри")], pic)
+    y = SH.tiles(sheet, d, y, [(os.path.join(qm, "face_bliss.png"), "блаженство: дуги «^^» на нижнем веке"),
+                               (os.path.join(qm, "face_sleep.png"), "сон: «— —» по краю верхнего века")], pic)
+    y = SH.section(d, y, "Клип «съесть»: эмоции", "чавк · икота · вдох · финал")
+    y = SH.tiles(sheet, d, y, [(os.path.join(Q2, "frames", f"emo_{i}.png"), f"{t:.2f} с — {c}")
+                               for i, (t, c) in enumerate(EMO)][:2], pic)
+    y = SH.tiles(sheet, d, y, [(os.path.join(Q2, "frames", f"emo_{i}.png"), f"{t:.2f} с — {c}")
+                               for i, (t, c) in enumerate(EMO)][2:], pic)
+    for ln in ("• Кант створок берёт цвет век с той же карты (перенос развёртки), малиновое нутро и реснички-зубчики "
+               "на месте; ресницы и румянец не тронуты.",
+               "• Дуга и полоса сна — новые маленькие детали с цветом бровей с той же карты. В блаженстве верхнее веко "
+               "уходит вверх, нижнее с дугой поднимается до верха глаза; во сне — наоборот."):
+        y = V.para(d, M + 12, y, ln, W - 2 * M - 24, size=24, fill=SH.INK) + 8
+    sheet = sheet.crop((0, 0, W, y + M))
+    out = os.path.join(SH.REPO, "assets", "concepts", "bosses_5_10", "boss6_prod", "14_queen_face.png")
     sheet.save(out)
     return out, sheet.size
 
@@ -304,5 +336,5 @@ def maps_sheet():
 if __name__ == "__main__":
     mode = sys.argv[1:2]
     print(eat_sheet() if mode == ["eat"] else chew_sheet() if mode == ["chew"] else maps_sheet() if mode == ["maps"]
-          else emo_sheet() if mode == ["emo"]
+          else emo_sheet() if mode == ["emo"] else face_sheet() if mode == ["face"]
           else main())

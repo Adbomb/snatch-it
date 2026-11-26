@@ -147,7 +147,7 @@ SMUG = {1: (-20.0, 0.1), -1: (22.0, -0.05)}  # брови: вредная, од�
 ANGRY = {1: (-24.0, -0.08), -1: (24.0, -0.08)}  # злые: к переносице ниже
 SQUINT = {1: (0.6, 0.12, -10.0), -1: (0.6, 0.12, 10.0)}  # прищур: верхнее веко на треть, к переносице ниже
 GLARE = {1: (0.35, 0.08, -12.0), -1: (0.35, 0.08, 12.0)}
-SHUT = both((1.0, 1.0, 0.0))
+SHUT = both((1.0, 0.0, 0.0))  # глаза закрыты: верхнее веко с полосой «—»; нижнее спрятано (на нём дуга «^^»)
 
 POSES = {
     # лозы несимметричны (модерация: не силуэт фигуры с руками): одна высоко и закручена усиком, другая ниже,
@@ -616,6 +616,7 @@ def main():
             report["maps"][m] = a.stats
             continue
         if mode == "":
+            tag_keys(obj)
             _explode(obj, a, 1)
             uv = S.bake(obj, a, texdir, a.name, **a.bake_opts)
             _explode(obj, a, -1)
@@ -624,6 +625,8 @@ def main():
         else:
             report["maps"][m] = a.stats
             split = _split_keep(obj, a, col)
+        if m == "Head":
+            report["face_fix"] = face_fix(split, list(a.colors), baked=mode == "")
         parts.update(split)
     if mode == "check":
         report["tris_total"] = sum(r["tris"] for r in report["maps"].values())
@@ -724,6 +727,125 @@ def confirm_floating(parts, issues):
         if not any(mine.overlap(t) for t in trees):
             out.append({**it, "island": info})
     return out
+
+
+# ── Правки лица после запекания (карты не меняются) ──────────────────────────────────────────────────────────
+# Кант створок «rim» (малиновый) снаружи читался как накрашенные губы → тёмно-зелёный: грани канта берут цвет
+# с однотонного участка карты — передней грани века («lid»). Дуга «^^» блаженства — арка на нижнем веке с цветом
+# бровей («brow»); прямой шов нижнего века убран, «— —» сна — полоса по краю верхнего века (цвет бровей).
+# В сне нижнее веко спрятано (SHUT = верхнее веко), в блаженстве верхнее убрано, нижнее поднято до верха (low ≈ 2).
+FKEY = "fkey"  # номер ключа цвета у каждой грани (после запекания material_index обнуляется)
+ARCH = (0.33, 0.25, 0.095, -0.9)  # дуга: полуширина, высота, толщина, низ ножек (система нижнего века)
+LID_BAR = (0.42, 0.49, 0.55)  # полоса сна по краю верхнего века: полуширина, низ, верх (система века)
+
+
+def tag_keys(obj):
+    attr = obj.data.attributes.new(FKEY, "INT", "FACE")
+    attr.data.foreach_set("value", [p.material_index for p in obj.data.polygons])
+
+
+def _face_keys(bm, keys):
+    lay = bm.faces.layers.int.get(FKEY)
+    return lambda f: keys[f[lay] if lay is not None else f.material_index]
+
+
+def _uv_anchor(o, keys, key_name):
+    """Центр и размер острова самой крупной передней грани цвета key_name (для переноса развёртки)."""
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    kf = _face_keys(bm, keys)
+    uvl = bm.loops.layers.uv.active
+    f = max((f for f in bm.faces if kf(f) == key_name and f.normal.y < -0.9), key=lambda f: f.calc_area())
+    us = [lp[uvl].uv.copy() for lp in f.loops]
+    c = sum(us, Vector((0, 0))) / len(us)
+    span = min(max(u.x for u in us) - min(u.x for u in us), max(u.y for u in us) - min(u.y for u in us))
+    bm.free()
+    return c, span
+
+
+def _set_uv(f, uvl, anchor):
+    """Грань целиком — в маленький квадрат в центре острова-образца (форма сохранена: касательные не вырождаются)."""
+    c, span = anchor
+    n = f.normal
+    t1 = (n.cross(V((0, 0, 1))) if abs(n.z) < 0.9 else n.cross(V((1, 0, 0)))).normalized()
+    t2 = n.cross(t1)
+    fc = f.calc_center_median()
+    pts = [((v.co - fc).dot(t1), (v.co - fc).dot(t2)) for v in f.verts]
+    ext = max(max(abs(a), abs(b)) for a, b in pts) or 1.0
+    k = span * 0.15 / ext
+    for lp, (a, b) in zip(f.loops, pts):
+        lp[uvl].uv = (c.x + a * k, c.y + b * k)
+
+
+def _prism_xz(bm, outline, y0, y1, m):
+    """Плоская деталь: контур (x, z) в системе m, толщина по y от y0 до y1; грани наружу."""
+    front = [bm.verts.new(m @ V((x, y0, z))) for x, z in outline]
+    back = [bm.verts.new(m @ V((x, y1, z))) for x, z in outline]
+    faces = [bm.faces.new(front), bm.faces.new(back[::-1])]
+    k = len(outline)
+    for i in range(k):
+        j = (i + 1) % k
+        faces.append(bm.faces.new((front[i], back[i], back[j], front[j])))
+    bmesh.ops.recalc_face_normals(bm, faces=faces)
+    tri = bmesh.ops.triangulate(bm, faces=faces[:2], quad_method="BEAUTY", ngon_method="EAR_CLIP")
+    return faces[2:] + tri["faces"]
+
+
+def face_fix(split, keys, baked):
+    """Кант створок — цвет века; шов нижнего века — долой; дуга на нижнем веке и полоса сна на верхнем — цвет бровей.
+    baked: развёртка есть — цвет переносится развёрткой (карты те же); иначе — ключом материала (кадры без карт)."""
+    stats = {"rim_faces": 0, "seam_faces": 0, "added_faces": 0}
+    anchors = {}
+    if baked:
+        anchors = {"lid": _uv_anchor(split["EyelidL"], keys, "lid"), "brow": _uv_anchor(split["BrowL"], keys, "brow")}
+
+    def paint(f, uvl, key_name, lay):
+        if baked:
+            _set_uv(f, uvl, anchors[key_name])
+        else:
+            f.material_index = keys.index(key_name)
+        if lay is not None:
+            f[lay] = keys.index(key_name)
+
+    rx, rz, t, z0 = ARCH
+    arch = [(rx * math.cos(math.radians(a)), z0 + rz * math.sin(math.radians(a))) for a in range(0, 181, 18)]
+    arch += [((rx - t) * math.cos(math.radians(a)), z0 + (rz - t) * math.sin(math.radians(a)))
+             for a in range(180, -1, -18)]
+    bx, b0, b1 = LID_BAR
+    bar = [(-bx, b0), (bx, b0), (bx, b1), (-bx, b1)]
+    for name, o in split.items():
+        if not (name.startswith("Trap") or name.startswith("Eyelid")):
+            continue
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bm.normal_update()
+        kf = _face_keys(bm, keys)
+        uvl = bm.loops.layers.uv.active
+        lay = bm.faces.layers.int.get(FKEY)
+        if name.startswith("Trap"):
+            for f in bm.faces:
+                if kf(f) == "rim":
+                    paint(f, uvl, "lid", lay)
+                    stats["rim_faces"] += 1
+        else:
+            m = REST_F[name].to_3x3().to_4x4()  # меш части — в системе покоя минус точка вращения
+            if name.startswith("EyelidLow"):
+                seam = [f for f in bm.faces if kf(f) == "dark"]
+                stats["seam_faces"] += len(seam)
+                bmesh.ops.delete(bm, geom=seam, context="FACES")
+                bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+                new = _prism_xz(bm, arch, 0.012, 0.032, m)
+            else:
+                new = _prism_xz(bm, bar, 0.008, 0.022, m)
+            bm.normal_update()
+            for f in new:
+                paint(f, uvl, "brow", lay)
+            stats["added_faces"] += len(new)
+        bm.to_mesh(o.data)
+        o.data.update()
+        bm.free()
+    print("STATS FACE_FIX", stats, flush=True)
+    return stats
 
 
 def _explode(obj, art, sign):
@@ -988,10 +1110,18 @@ def shoot(parts, shots, report):
             pts = _points(parts, hand)
             c = sum(pts, V()) / len(pts)
             ck.shot(cam, os.path.join(shots, f"hand_{name}.png"), c + V((2.6, -7.2, 2.2)), c, 55, (700, 700))
-        if name == "stand":  # лицо и пасть крупно: длина ресничек-зубов (злая, но не страшная)
-            pts = _points(parts, ["Head", "TrapUpper", "TrapLower"])
-            c = sum(pts, V()) / len(pts)
-            ck.shot(cam, os.path.join(shots, "face_stand.png"), c + V((2.4, -9.5, 1.2)), c, 55, (700, 700))
+        if name in ("stand", "sleep"):  # лицо и пасть крупно: длина ресничек-зубов (злая, но не страшная)
+            faces = [(name, None)]
+            if name == "stand":  # пасть сомкнута: кант створок; блаженство — дуги «^^» (клип «съесть»)
+                faces += [("closed", pose(lean=4.0, head=(-4.5, 0, 0))),
+                          ("bliss", pose(jaw=(0, 0), lid=both((0.0, 1.98, 0.0)), brow={1: (10.0, 0.22), -1: (-10.0, 0.22)}))]
+            for label, P2 in faces:
+                if P2 is not None:
+                    apply(parts, P2)
+                pts = _points(parts, ["Head", "TrapUpper", "TrapLower"])
+                c = sum(pts, V()) / len(pts)
+                ck.shot(cam, os.path.join(shots, f"face_{label}.png"), c + V((2.4, -9.5, 1.2)), c, 55, (700, 700))
+            apply(parts, POSES[name])
     if "grab" in names or "grab2" in names:  # «хватает»: от игрока чуть сверху (камера телефона)
         for name in ("grab", "grab2"):
             if name not in names:
