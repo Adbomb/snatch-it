@@ -2,7 +2,8 @@
 
 На существо — ряд: «было» (3/4 и спереди, кадры до правки из boss6_prod/before_redo/) и «стало» (3/4, спереди, лицо —
 свежая быстрая сборка из boss6_prod/creatures/), подпись — что сделано, и числа отчёта сборки.
-Запуск из корня: python scripts/boss6_redo_sheet.py → assets/concepts/bosses_5_10/boss6_prod/6_redo.png (вне git).
+Запуск из корня: python scripts/boss6_redo_sheet.py → assets/concepts/bosses_5_10/boss6_prod/6_redo.png (вне git);
+python scripts/boss6_redo_sheet.py round2 → 6_redo2.png: второй круг правок (2 существа, крупно: спереди, 3/4, сбоку, лицо).
 Зависит от Pillow, scripts/blender/boss6/sheet.py, scripts/boss6_anatomy_audit.py (отчёты сборки).
 """
 
@@ -44,6 +45,17 @@ REDO = [
      "«Крокодилья морда» зелёно-бурая: бурые пятна, крупные ноздри-бугорки, ряд нарисованных сомкнутых "
      "зубов-полосок вдоль пасти."),
     ("BeeHummingbird", 5, "Колибри-шмель", "Клюв 0.1–0.14 стада (был 0.07), лапки толще и вынесены из-под брюшка."),
+]
+
+
+# второй круг (замечания владельца 2026-11-26 к листу «было → стало»)
+REDO2 = [
+    ("CocoonFruitBat", 10, "Крылан-кокон",
+     "Никаких столбов: висит под толстой короткой веткой маленького дерева — толстый ствол по центру сзади, большая "
+     "круглая крона, на ветке листья, рядом манго. Глаза открыты: хитрый прищур и широкая улыбка («хихиканье»)."),
+    ("ArchBoto", 14, "Дельфин-арка",
+     "Крупные глаза с белком и чёрным зрачком, длинный тонкий клюв с тёмным кончиком (главный признак речного "
+     "дельфина), заметный светлый лоб-«дыня»."),
 ]
 
 
@@ -89,5 +101,32 @@ def main():
     return out
 
 
+def round2():
+    pic, gap = 560, 12
+    W = SH.W
+    row_h = pic + 110
+    sheet = Image.new("RGB", (W, 130 + len(REDO2) * (row_h + 14) + 20), SH.BG)
+    d = ImageDraw.Draw(sheet)
+    SH.header(d, "Джунгли: второй круг правок — крылан и дельфин",
+              "Быстрая сборка без карт (2026-11-26): спереди, 3/4, сбоку, лицо крупно.")
+    y = 130
+    for item_id, n, name, what in REDO2:
+        x = SH.M
+        for view, cap in (("front", "спереди"), ("hero", "3/4"), ("side", "сбоку"), ("face", "лицо")):
+            sheet.paste(V.fit(img(AFTER, item_id, view), pic, pic), (x, y))
+            V.label(d, x + 8, y + pic - 40, cap)
+            x += pic + gap
+        rep = AU.report(item_id)
+        nums = f"треугольников без подставки {rep.get('tris_without_stand')} (≤ 3000) · суставы: " + (
+            "без щелей" if not rep.get("joint_issues") else f"{len(rep['joint_issues'])} замечаний")
+        ty = V.para(d, SH.M, y + pic + 8, f"№{n} {name} — " + what, W - 2 * SH.M, size=22, fill=SH.INK, bold=True)
+        V.para(d, SH.M, ty + 2, nums, W - 2 * SH.M, size=18, fill=SH.DIM)
+        y += row_h + 14
+    sheet = sheet.crop((0, 0, W, y + 10))
+    out = os.path.join(PROD, "6_redo2.png")
+    sheet.save(out)
+    return out
+
+
 if __name__ == "__main__":
-    print(main())
+    print(round2() if sys.argv[1:] == ["round2"] else main())

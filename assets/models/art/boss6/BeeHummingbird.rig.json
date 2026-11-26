@@ -1,0 +1,194 @@
+{
+ "id": "BeeHummingbird",
+ "order": [
+  "Stand",
+  "Haze",
+  "Body",
+  "Tail",
+  "WingL",
+  "WingR",
+  "Head"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Haze": {
+   "parent": "Stand",
+   "pivot": [
+    0.8,
+    0.22,
+    0.75
+   ],
+   "center": [
+    -0.4425,
+    1.0936,
+    -0.4134
+   ],
+   "size": [
+    1.2285,
+    2.2587,
+    1.9824
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    1.94,
+    -0.58
+   ],
+   "center": [
+    0.0,
+    -0.1455,
+    -0.01
+   ],
+   "size": [
+    1.2765,
+    1.7857,
+    1.3435
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    1.5291,
+    -0.8819
+   ],
+   "center": [
+    0.0,
+    -0.2466,
+    -0.1828
+   ],
+   "size": [
+    0.953,
+    0.6851,
+    0.4664
+   ]
+  },
+  "WingL": {
+   "parent": "Body",
+   "pivot": [
+    0.36,
+    2.2276,
+    -0.5342
+   ],
+   "center": [
+    0.5191,
+    0.5447,
+    -0.1978
+   ],
+   "size": [
+    1.3399,
+    1.2637,
+    0.5866
+   ]
+  },
+  "WingR": {
+   "parent": "Body",
+   "pivot": [
+    -0.36,
+    2.2276,
+    -0.5342
+   ],
+   "center": [
+    -0.5191,
+    0.5447,
+    -0.1978
+   ],
+   "size": [
+    1.3399,
+    1.2637,
+    0.5866
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    2.52,
+    -0.18
+   ],
+   "center": [
+    0.0453,
+    0.3072,
+    0.4179
+   ],
+   "size": [
+    1.0579,
+    1.2686,
+    1.6401
+   ]
+  }
+ },
+ "demo_pose": {
+  "WingL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "WingR": {
+   "rot_xyz_blender_deg": [
+    0,
+    20,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -6,
+    0,
+    6
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    10,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": [
+  "WingL",
+  "WingR"
+ ]
+}

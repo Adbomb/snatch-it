@@ -1,0 +1,303 @@
+{
+ "id": "SnailTurtle",
+ "order": [
+  "Stand",
+  "Body",
+  "LegFL",
+  "LegFR",
+  "LegBL",
+  "LegBR",
+  "Tail",
+  "Shell",
+  "Head",
+  "HornL",
+  "HornR"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.14,
+    0.0
+   ],
+   "size": [
+    2.9944,
+    0.28,
+    2.9944
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.0,
+    0.67,
+    -0.05
+   ],
+   "center": [
+    0.0,
+    0.0479,
+    -0.0
+   ],
+   "size": [
+    1.29,
+    0.5043,
+    1.48
+   ]
+  },
+  "LegFL": {
+   "parent": "Body",
+   "pivot": [
+    0.46,
+    0.58,
+    0.38
+   ],
+   "center": [
+    0.035,
+    -0.133,
+    0.0369
+   ],
+   "size": [
+    0.5425,
+    0.446,
+    0.5462
+   ]
+  },
+  "LegFR": {
+   "parent": "Body",
+   "pivot": [
+    -0.46,
+    0.58,
+    0.38
+   ],
+   "center": [
+    -0.035,
+    -0.133,
+    0.0369
+   ],
+   "size": [
+    0.5425,
+    0.446,
+    0.5462
+   ]
+  },
+  "LegBL": {
+   "parent": "Body",
+   "pivot": [
+    0.48,
+    0.58,
+    -0.46
+   ],
+   "center": [
+    0.035,
+    -0.133,
+    0.0369
+   ],
+   "size": [
+    0.5425,
+    0.446,
+    0.5462
+   ]
+  },
+  "LegBR": {
+   "parent": "Body",
+   "pivot": [
+    -0.48,
+    0.58,
+    -0.46
+   ],
+   "center": [
+    -0.035,
+    -0.133,
+    0.0369
+   ],
+   "size": [
+    0.5425,
+    0.446,
+    0.5462
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.64,
+    -0.74
+   ],
+   "center": [
+    0.0,
+    -0.0345,
+    -0.1657
+   ],
+   "size": [
+    0.2616,
+    0.3171,
+    0.575
+   ]
+  },
+  "Shell": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.84,
+    -0.2
+   ],
+   "center": [
+    0.0016,
+    0.9708,
+    -0.1871
+   ],
+   "size": [
+    1.4805,
+    1.9811,
+    1.8246
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.0,
+    0.72,
+    0.6
+   ],
+   "center": [
+    0.0,
+    0.4554,
+    0.303
+   ],
+   "size": [
+    0.94,
+    1.374,
+    1.081
+   ]
+  },
+  "HornL": {
+   "parent": "Head",
+   "pivot": [
+    0.2,
+    1.5583,
+    0.7924
+   ],
+   "center": [
+    0.1258,
+    0.1918,
+    0.1064
+   ],
+   "size": [
+    0.3757,
+    0.4482,
+    0.3492
+   ]
+  },
+  "HornR": {
+   "parent": "Head",
+   "pivot": [
+    -0.2,
+    1.5583,
+    0.7924
+   ],
+   "center": [
+    -0.1258,
+    0.1918,
+    0.1064
+   ],
+   "size": [
+    0.3757,
+    0.4482,
+    0.3492
+   ]
+  }
+ },
+ "demo_pose": {
+  "Head": {
+   "rot_xyz_blender_deg": [
+    -12,
+    0,
+    16
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "HornL": {
+   "rot_xyz_blender_deg": [
+    0,
+    18,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "HornR": {
+   "rot_xyz_blender_deg": [
+    10,
+    -12,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    0,
+    0,
+    28
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegFL": {
+   "rot_xyz_blender_deg": [
+    -22,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegBR": {
+   "rot_xyz_blender_deg": [
+    16,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Shell": {
+   "rot_xyz_blender_deg": [
+    0,
+    -6,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}

@@ -1,0 +1,246 @@
+{
+ "id": "ParadiseDancer",
+ "order": [
+  "Stand",
+  "Body",
+  "Tail",
+  "LegL",
+  "LegR",
+  "Head",
+  "Jaw",
+  "Cape"
+ ],
+ "parts": {
+  "Stand": {
+   "parent": null,
+   "pivot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "center": [
+    0.0,
+    0.2177,
+    0.0
+   ],
+   "size": [
+    3.5,
+    0.4354,
+    3.5
+   ]
+  },
+  "Body": {
+   "parent": "Stand",
+   "pivot": [
+    0.2075,
+    1.407,
+    -0.05
+   ],
+   "center": [
+    -0.0524,
+    0.0475,
+    -0.0372
+   ],
+   "size": [
+    1.6472,
+    1.2494,
+    1.5582
+   ]
+  },
+  "Tail": {
+   "parent": "Body",
+   "pivot": [
+    -0.0796,
+    1.1355,
+    -0.3564
+   ],
+   "center": [
+    -0.1066,
+    -0.0661,
+    -0.1161
+   ],
+   "size": [
+    0.6709,
+    0.4884,
+    0.6613
+   ]
+  },
+  "LegL": {
+   "parent": "Body",
+   "pivot": [
+    0.3258,
+    0.9823,
+    -0.1991
+   ],
+   "center": [
+    -0.0045,
+    -0.2536,
+    0.0814
+   ],
+   "size": [
+    0.462,
+    0.7746,
+    0.4981
+   ]
+  },
+  "LegR": {
+   "parent": "Body",
+   "pivot": [
+    -0.0094,
+    1.0175,
+    0.0838
+   ],
+   "center": [
+    -0.2177,
+    -0.1239,
+    0.0915
+   ],
+   "size": [
+    0.72,
+    0.6474,
+    0.5038
+   ]
+  },
+  "Head": {
+   "parent": "Body",
+   "pivot": [
+    0.2925,
+    2.0515,
+    -0.027
+   ],
+   "center": [
+    0.0095,
+    0.214,
+    0.0968
+   ],
+   "size": [
+    0.9969,
+    0.9072,
+    1.0835
+   ]
+  },
+  "Jaw": {
+   "parent": "Head",
+   "pivot": [
+    0.2658,
+    2.025,
+    0.3107
+   ],
+   "center": [
+    -0.0196,
+    -0.0867,
+    0.0879
+   ],
+   "size": [
+    0.343,
+    0.2353,
+    0.3157
+   ]
+  },
+  "Cape": {
+   "parent": "Body",
+   "pivot": [
+    0.06,
+    1.81,
+    -0.6
+   ],
+   "center": [
+    0.0,
+    1.25,
+    -0.0279
+   ],
+   "size": [
+    2.2751,
+    3.6287,
+    0.5052
+   ]
+  }
+ },
+ "demo_pose": {
+  "Body": {
+   "rot_xyz_blender_deg": [
+    0,
+    -10,
+    -16
+   ],
+   "offset_blender": [
+    -0.22,
+    0,
+    0.08
+   ]
+  },
+  "LegR": {
+   "rot_xyz_blender_deg": [
+    0,
+    -38,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "LegL": {
+   "rot_xyz_blender_deg": [
+    0,
+    -34,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Head": {
+   "rot_xyz_blender_deg": [
+    0,
+    22,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Jaw": {
+   "rot_xyz_blender_deg": [
+    18,
+    0,
+    0
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Cape": {
+   "rot_xyz_blender_deg": [
+    0,
+    6,
+    10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Tail": {
+   "rot_xyz_blender_deg": [
+    12,
+    0,
+    -10
+   ],
+   "offset_blender": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "transparent": []
+}
