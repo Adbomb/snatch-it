@@ -255,13 +255,13 @@ local function facePart(rig: any, dna): string?
 	return if rig.Parts.Body and not rig.Parts.Body.hidden then "Body" else nil
 end
 
--- Высота головы монстра-дома (Алмазный) и её множитель: ширина до 17, высота до 15.
+-- Высота головы монстра-дома (Алмазный) и её множитель: ширина до 21, высота и глубина до 17.
 local function headScale(rig: any, dna): (number, number)
 	local size = sizeOf(rig, facePart(rig, dna))
 	if not size then
 		return 0, 0
 	end
-	local k = math.min(17 / size.X, 15 / size.Y, 15 / size.Z)
+	local k = math.min(21 / size.X, 17 / size.Y, 17 / size.Z)
 	return k, size.Y * k
 end
 

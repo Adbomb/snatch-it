@@ -396,7 +396,7 @@ function ZoneRooms.Build(
 	if tier <= 2 then
 		zone.decor(out, -8, f + 10.4, 1.0, 1)
 		zone.decor(out, 8, f + 10.6, 0.9, 2)
-		zone.lamp(out, 0, top - 4.0, clearOfBeams(rz + 6), 3.0, top)
+		zone.lamp(out, -8, top - 4.0, clearOfBeams(rz + 6), 3.0, top) -- сбоку: не сливается с головой жильца
 	end
 	if tier >= 2 then -- крупный предмет зоны и фонари
 		zone.big(out, 4.6, f, BACK - 3.0, 1.0)
@@ -415,7 +415,7 @@ function ZoneRooms.Build(
 		zone.decor(out, -5.5, g1 + 6.2, 1.0, 1)
 		zone.decor(out, 5.5, g1 + 6.4, 1.0, 2)
 		if tier == 3 then
-			zone.lamp(out, 0, headY + 6.6, clearOfBeams(rz + 3.2), 3.2, top)
+			zone.lamp(out, -8, headY + 6.6, clearOfBeams(rz + 3.2), 3.2, top)
 		end
 	end
 	if tier >= 4 then -- атриум: крылья галереи, большой светильник; показной предмет — золотая черта существа

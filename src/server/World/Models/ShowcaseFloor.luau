@@ -516,7 +516,8 @@ function ShowcaseFloor.Cap(): { Brick }
 	-- кристалл-бипирамида из восьми угловых клиньев
 	local crystalColor = hex("38D6E0")
 	local r, yMid, yLow, yTop = 7.6, 19.5, 5.2, 36
-	local GEMC = { material = Enum.Material.Glass, transparency = 0.18, shape = "CornerWedge", collide = false }
+	-- Foil, а не стекло: прозрачный кристалл с земли сливался с небом (снимок башни с 300 стадов, 2026-11-27)
+	local GEMC = { material = Enum.Material.Foil, shape = "CornerWedge", collide = false }
 	for q = 0, 3 do
 		local rot = CFrame.Angles(0, math.rad(90 * q), 0)
 		local up = CFrame.new(0, (yMid + yTop) / 2, 0) * rot * CFrame.new(r / 2, 0, -r / 2) * WEDGE_TURN
