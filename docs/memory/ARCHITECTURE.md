@@ -138,6 +138,12 @@
   `Config/CreatureRigs`) → `World/Models/MonsterFloor.Build(itemId, tier)` (общий тёмный скелет, облицовка по семье,
   свои меши существа через `World/MonsterParts`) + комната зоны `World/Models/ZoneRooms`; предпросмотр —
   `World/ShowcasePreview` (режимы `monsters`, `mtower`). К башне (`TowerBuilder`) не подключено.
+- Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
+  Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
+  `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/
+  Diamond, Rise; Beam; пояс у подножия), `Arrive` (точка `FloorArrival`); клиент — `FloorSignalController`
+  (пульсация, значок `UITokens.TowerBadge`, дальний луч табличкой, вспышка); `Services/AnnounceService` —
+  объявления (`FloorWon` из `DevourService`, `Receive` с других серверов, подмены `Audience`/`Publish` в тестах).
 - Живые существа (D55, этап D): поза у босса — `Shared/CreatureMotion` (общее время + зерно uid), сервер пишет на
   корень предмета атрибуты Home (CFrame низа места), Drop (высота места над полом), CatchMode / CatchSince /
   CatchFace / CatchAnchor; `Controllers/CreatureController` двигает корень локально у всех клиентов (у сервера он на
