@@ -128,6 +128,15 @@
   Сторож раз в 0.5 с (бездействие, сторож, «кончились», нокаут). Бой Крысиного короля: `RIGS[3]` в BossService и
   BossAnimController, `BossModels[3]` (мешей нет — блоки), `Battle.Bosses[3]` (как у боссов 1–2, сила
   Progression.Bosses[3]). Тесты: `PlayerSession.Join(…, { veteran = true })`, `CatchService.Handlers.SetRoll`.
+- После поимки (D74, этап А): `Services/DevourService.Begin` — в кадре поимки бросает редкость этажа (`FloorRules.Roll`,
+  подмена `DevourService.Roll`) и выдаёт существо (`BossLootService.Award` с редкостью); затем катсцена-показ: состояния
+  босса Wake → StandUp → Eat → FallAsleep → Sleep по времени (`Config/Battle.Timeline`, `Config/Devour`), событие
+  `DevourCutscene` игрокам рядом; `DevourService.Eating(зона)` запрещает новую поимку до засыпания;
+  `DevourService.TimeScale` (тесты: 0 — без катсцены). Поза `Eat` — `Shared/BossAnim` (у скелетов с клипами — стойка).
+- Этаж — продолжение монстра (D74): `Shared/FloorDna.Of(itemId)` (палитра, семья силуэта, главная черта — из
+  `Config/CreatureRigs`) → `World/Models/MonsterFloor.Build(itemId, tier)` (общий тёмный скелет, облицовка по семье,
+  свои меши существа через `World/MonsterParts`) + комната зоны `World/Models/ZoneRooms`; предпросмотр —
+  `World/ShowcasePreview` (режимы `monsters`, `mtower`). К башне (`TowerBuilder`) не подключено.
   DevTools: `Lovibums`, `Tutorial`, `CatchRoll`.
 - Живые существа (D55, этап D): поза у босса — `Shared/CreatureMotion` (общее время + зерно uid), сервер пишет на
   корень предмета атрибуты Home (CFrame низа места), Drop (высота места над полом), CatchMode / CatchSince /

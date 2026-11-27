@@ -441,6 +441,9 @@ GameConfig.Tower = {
 -- 4–10 — D56; продаются только уровни готовых боссов).
 GameConfig.Catch = require(script.Parent.Catch)
 
+-- Катсцена «босс съел существо и отрыгнул этаж» (D74, этап А) — Config/Devour.
+GameConfig.Devour = require(script.Parent.Devour)
+
 -- Долгая прогрессия (D29–D31): боссы, гантель, музей, сила музея, доход, редкость, каталог, скорость.
 -- Отдельный файл, чтобы его читал симулятор scripts/sim/progression.py.
 GameConfig.Progression = require(script.Parent.Progression)

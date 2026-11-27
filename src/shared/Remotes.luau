@@ -29,6 +29,9 @@ Remotes.Names = {
 	CatchAction = "CatchAction", -- клиент → сервер: ("Throw", вид, точка прилёта Vector3, время отпускания) | ("Leave")
 	CatchState = "CatchState", -- сервер → ловящему: { state, boss, slot, uid, since, throws, max, face, … } | nil
 	CatchEffect = "CatchEffect", -- сервер → игрокам рядом: { kind = "Throw" | "Result" | …, … } (видят все рядом)
+	-- D74: сервер → игрокам рядом с боссом и поймавшему: { boss, user, itemId, floor, at, wake, eat, burp, sleep }
+	-- (время сервера: начало катсцены, начало «ест», отрыжка, засыпание) — только показ, решает DevourService
+	DevourCutscene = "DevourCutscene",
 	TutorialChanged = "TutorialChanged", -- сервер → ученику: { step, target?, … }
 	-- D56: улучшение музея
 	MuseumUpgrade = "MuseumUpgrade", -- клиент → сервер: (уровень, который хочу купить, — только следующий)

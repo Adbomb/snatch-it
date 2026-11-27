@@ -4316,6 +4316,74 @@ test(
 )
 
 test(
+	"D74 катсцена: после поимки босс проснулся → встал → ест → засыпает → спит; пока ест — поимки нет; событие",
+	function(A, B)
+		ensureDay()
+		check(waitBossHome(1), "пёс не дома")
+		BossLootService.Handlers.Refresh()
+		giveLovibums(A, 1, "Turbo", 2)
+		giveLovibums(B, 1, "Turbo", 1)
+		local boss = BossService.Get(1) :: BossService.Boss
+		local uid = BossLootService.SlotItem(1, 1) :: string
+		local seen: { string } = {}
+		local connection = boss.model:GetAttributeChangedSignal("State"):Connect(function()
+			table.insert(seen, boss.model:GetAttribute("State"))
+		end)
+		CatchService.Handlers.SetRoll(0)
+		DevourService.TimeScale = 0.25 -- вся катсцена ≈ 1.7 с
+		A:ClearSent()
+		check(beginCatch(A, 1, 1), "поимка не началась")
+		throw(A, "Turbo", true)
+		local carried = waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) == uid
+		end, CG.FlightTime + CG.CaptureTime + 3)
+		CatchService.Handlers.SetRoll(nil)
+		local busy = DevourService.Eating(1) and BattleService.Busy(1)
+		-- второй игрок, пока босс ест: поимка не начинается
+		B:ClearSent()
+		local refused = BossLootService.SlotItem(1, 2) == nil or not beginCatch(B, 1, 2)
+		local told = BossLootService.SlotItem(1, 2) == nil or B:WasNotified("Босс ест")
+		local slept = waitUntil(function()
+			return boss.state == "Sleep"
+		end, 8)
+		task.wait(0.1) -- сигнал атрибута может прийти кадром позже
+		connection:Disconnect()
+		check(carried, "после поимки существо не в руках")
+		check(busy, "после поимки босс не занят катсценой")
+		check(
+			refused and told,
+			"пока босс ест, второй начал поимку или не получил отказ «Босс ест»"
+		)
+		check(slept, "босс не уснул после катсцены: " .. boss.state)
+		local order = table.concat(seen, ">")
+		check(order == "Wake>StandUp>Eat>FallAsleep>Sleep", "порядок состояний: " .. order)
+		check(
+			not DevourService.Eating(1) and not BattleService.Busy(1) and BossLootService.IsOpen(1),
+			"после катсцены босс остался занят"
+		)
+		local event
+		for _, sent in A.Sent do
+			if sent.name == Remotes.Names.DevourCutscene then
+				event = sent.args[1]
+			end
+		end
+		check(event, "поймавший не получил событие катсцены")
+		check(
+			event.boss == 1 and event.user == A.UserId and event.floor == ItemRegistry.Get(uid).floorRarity,
+			"событие катсцены: не тот босс, игрок или редкость этажа"
+		)
+		check(
+			event.eat > event.at and event.burp > event.eat and event.sleep > event.burp,
+			"событие катсцены: времена не по порядку"
+		)
+		check(
+			ItemRegistry.Get(uid).state == "Carried",
+			"катсцена изменила состояние предмета"
+		)
+	end
+)
+
+test(
 	"D55 занятый босс: второй не ловит, не начинает бой; подделки бросков — отказ без списания",
 	function(A, B)
 		ensureDay()
@@ -8115,6 +8183,8 @@ function ServerTests.Run(filter: string?): string
 				table.insert(notes, text)
 			end,
 		}
+		-- D74: катсцена «босс ест» в тестах выключена (иначе каждая поимка держит босса ~7 с); свой тест включает сам
+		DevourService.TimeScale = 0
 		local started = DateTime.now().UnixTimestampMillis
 		local ok, err = pcall(function()
 			check(join(A), "A не вошёл")
@@ -8148,6 +8218,7 @@ function ServerTests.Run(filter: string?): string
 			table.insert(lines, "       · " .. text)
 		end
 	end
+	DevourService.TimeScale = 1
 	table.insert(lines, 1, ("Серверные тесты: %d из %d пройдено"):format(passed, total))
 	return table.concat(lines, "\n")
 end

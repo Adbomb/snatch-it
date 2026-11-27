@@ -284,6 +284,9 @@ local function refusal(player: any, boss: number): string?
 	if byBoss[boss] then
 		return ("Босс занят: ловит %s"):format(byBoss[boss].player.Name)
 	end
+	if DevourService.Eating(boss) then
+		return "Босс ест — подождите, пока уснёт"
+	end
 	if BattleService.Busy(boss) or not BossLootService.IsOpen(boss) then
 		return "Босс занят: дождитесь конца боя"
 	end

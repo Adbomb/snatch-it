@@ -2,7 +2,8 @@
 -- (Motor6D) между ключевыми позами скелета (Config/Boss<N>…Rig, имена поз у всех боссов одни). Считается на каждом
 -- клиенте одинаково (состояние и время приходят атрибутами модели), поэтому все игроки видят одно и то же, а по сети
 -- идут только атрибуты.
--- Состояния (как в BossService): Sleep, Wake, StandUp, ToCombat, Combat, Victory, Defeat, Return, FallAsleep.
+-- Состояния (как в BossService): Sleep, Wake, StandUp, ToCombat, Combat, Victory, Defeat, Return, FallAsleep и
+-- Eat (D74: съел существо и отрыгнул этаж — тянется, жуёт, выпрямляется; длительности — Config/Devour).
 -- Удары и попадания — короткие наложения поверх Combat (номера AttackSeq / HitSeq и время их начала).
 -- Шаг (Combat и Return) включается и гаснет за один шаг цикла от смены Moving (атрибут MovingAt); каждый переход
 -- начинается с живой позы того, что играло (сон с дыханием, бой с выпадом, шаг домой, головокружение, танец), —
@@ -15,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local BossClips = require(ReplicatedStorage.Shared.BossClips)
 local Battle = require(ReplicatedStorage.Shared.Config.Battle)
+local Devour = require(ReplicatedStorage.Shared.Config.Devour)
 
 export type Rig = {
 	Order: { string },
@@ -278,6 +280,19 @@ function BossAnim.Sample(rig: Rig, input: Input): { [string]: CFrame }
 			pose = dizzy(rig, t)
 		else
 			pose = bridge(rig, "dizzy", dizzy(rig, t), "stand", nil, smooth((t - (tl.Defeat - 0.6)) / 0.6))
+		end
+	elseif state == "Eat" then
+		-- D74: из стойки тянется к добыче (пасть открыта), жуёт, в конце выпрямляется в стойку — с неё начнётся
+		-- засыпание
+		local total = Devour.Grab + Devour.Chew + Devour.Burp
+		if t < Devour.Grab then
+			pose = ramp(rig, "stand", "bark", t, Devour.Grab)
+		else
+			local chew = cycle(rig, "bark", "bark2", t - Devour.Grab, Devour.ChewPeriod)
+			local settle = total - Devour.SettleTime
+			pose = if t < settle
+				then chew
+				else bridge(rig, "bark", chew, "stand", nil, smooth((t - settle) / Devour.SettleTime))
 		end
 	elseif state == "Return" then
 		pose = returning(rig, input)
