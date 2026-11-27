@@ -637,7 +637,9 @@ local function resolveWaitingOnce(player: any, ids: { string }): { string }
 							present.state
 						)
 					)
-				elseif not ItemRegistry.Restore(action.uid, record.id, player.UserId, "storage", nil, nil) then
+				elseif
+					not ItemRegistry.Restore(action.uid, record.id, player.UserId, "storage", nil, nil, record.floor)
+				then
 					Log.Warn(
 						"TheftService",
 						("%s: %s не поставлен в инвентарь (реестр отказал)"):format(

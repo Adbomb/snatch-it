@@ -1,12 +1,13 @@
 -- Серверный реестр экземпляров предметов: uid → состояние и данные (DESIGN.md §1).
 -- Единственное место, где меняется состояние; недопустимый переход = отказ + warn.
--- Зависит от HttpService, Config/Items, Util/Log.
+-- Зависит от HttpService, Config/Items, Config/FloorRarity, Util/Log.
 
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local FloorRarity = require(ReplicatedStorage.Shared.Config.FloorRarity)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Log = require(ServerScriptService.Server.Util.Log)
 
@@ -25,6 +26,9 @@ export type Entry = {
 	part: BasePart?, -- видимый предмет в мире (у Stored его нет)
 	boss: number?, -- босс-источник (D37): с какого уровня предмет (для дохода, этап 6)
 	bossSlot: number?, -- слот у босса, пока предмет там (AtBoss)
+	-- редкость этажа (D74): ключ Config/FloorRarity; задаётся один раз при выдаче после поимки (AtBoss → Carried)
+	-- и дальше живёт вместе с записью (перенос, витрина, кража, сохранение); nil — Деревянный
+	floorRarity: string?,
 }
 
 type Listener = (uid: string, fromState: State, toState: State?, entry: Entry) -> ()
@@ -159,7 +163,8 @@ function ItemRegistry.Restore(
 	owner: number,
 	place: string,
 	slot: number?,
-	part: BasePart?
+	part: BasePart?,
+	floorRarity: string?
 ): (boolean, string?)
 	if entries[uid] then
 		return refuse(uid, entries[uid].state, "Restore", "uid уже есть на сервере")
@@ -182,9 +187,13 @@ function ItemRegistry.Restore(
 	else
 		return refuse(uid, "-", "Restore", "неизвестное place: " .. tostring(place))
 	end
+	if type(floorRarity) == "string" and FloorRarity.Mult[floorRarity] then
+		entry.floorRarity = floorRarity
+	end
 	entries[uid] = entry
 	if part then
 		part:SetAttribute("ItemUid", uid)
+		part:SetAttribute("FloorRarity", entry.floorRarity)
 	end
 	return true, nil
 end
@@ -298,6 +307,11 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 		detach(entry)
 		entry.carrier = carrier
 		carrierIndex[carrier] = uid
+		-- D74: редкость этажа назначается один раз — при выдаче после поимки
+		local floorRarity = params.floorRarity
+		if fromState == "AtBoss" and type(floorRarity) == "string" and FloorRarity.Mult[floorRarity] then
+			entry.floorRarity = floorRarity
+		end
 	elseif toState == "OnMap" then
 		detach(entry)
 	elseif toState == "Displayed" then
@@ -351,6 +365,9 @@ function ItemRegistry.Transition(uid: string, toState: State, args: { [string]: 
 	end
 
 	entry.state = toState
+	if entry.part and entry.floorRarity then
+		entry.part:SetAttribute("FloorRarity", entry.floorRarity) -- подписи и клиент читают с предмета
+	end
 	Log.Debug("ItemRegistry", ("%s: %s → %s"):format(uid, fromState, toState))
 	notify(uid, fromState, toState, entry)
 	return true, nil

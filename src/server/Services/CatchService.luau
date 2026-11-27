@@ -36,6 +36,7 @@ local BattleService = require(Server.Services.BattleService)
 local BossLootService = require(Server.Services.BossLootService)
 local BossService = require(Server.Services.BossService)
 local DataService = require(Server.Services.DataService)
+local DevourService = require(Server.Services.DevourService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local ShopService = require(Server.Services.ShopService)
 local TimeService = require(Server.Services.TimeService)
@@ -219,13 +220,13 @@ local function finish(a: Active, reason: string)
 			return
 		end
 		setAttrs(part, "Hidden", now())
-		-- бой: слот уже закреплён за ловящим (BossLootService.Reserve в начале поимки)
+		-- D74: боя нет — босс «съедает» существо и «отрыгивает» этаж: сервер сразу бросает редкость этажа и отдаёт
+		-- существо в руки (слот уже закреплён за ловящим — BossLootService.Reserve в начале поимки)
 		if BossService.Get(target.boss) then
-			local fight = BattleService.Begin(player, target.boss, target.slot, { caught = true })
-			if not fight then
+			if not DevourService.Begin(player, target.boss, target.slot) then
 				BossLootService.Release(target.boss, target.slot)
-				BossLootService.SetOpen(target.boss, true)
 			end
+			BossLootService.SetOpen(target.boss, true)
 		elseif BossLootService.FreeTakeAllowed() then
 			-- тестовый режим Studio: у босса нет боя — поймал, значит забрал
 			if not BossLootService.Award(target.boss, target.slot, player) then

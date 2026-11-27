@@ -166,13 +166,13 @@ end
 
 -- Отдать предмет слота игроку в руки (после победы или в тестовом режиме). false — не получилось (руки заняты,
 -- предмета уже нет); предмет тогда остаётся у босса.
-local function give(player: Player, entry: Slot): boolean
+local function give(player: Player, entry: Slot, floorRarity: string?): boolean
 	local uid = entry.uid
 	local item = uid and ItemRegistry.Get(uid)
 	if not uid or not item or item.state ~= "AtBoss" or not item.part then
 		return false
 	end
-	if not ItemRegistry.Transition(uid, "Carried", { carrier = player }) then
+	if not ItemRegistry.Transition(uid, "Carried", { carrier = player, floorRarity = floorRarity }) then
 		return false
 	end
 	entry.uid = nil -- слот пуст до рассвета
@@ -273,13 +273,14 @@ function BossLootService.Release(boss: number, slot: number)
 	end
 end
 
--- Победа: предмет слота — в руки победителю. false — не получилось, предмет остаётся у босса.
-function BossLootService.Award(boss: number, slot: number, player: Player): boolean
+-- Предмет слота — в руки тому, за кем он закреплён (поимка, D74: floorRarity — редкость этажа из броска
+-- DevourService; без неё — Деревянный). false — не получилось, предмет остаётся у босса.
+function BossLootService.Award(boss: number, slot: number, player: Player, floorRarity: string?): boolean
 	local entry = slots[boss] and slots[boss][slot]
 	if not entry or entry.reservedBy ~= player then
 		return false
 	end
-	if not give(player, entry) then
+	if not give(player, entry, floorRarity) then
 		entry.reservedBy = nil
 		return false
 	end

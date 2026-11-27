@@ -174,6 +174,7 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		acquiredAt = os.time(),
 		source = if entry.boss then "boss" else "map",
 		boss = entry.boss, -- уровень босса-источника (D37, доход — этап 6)
+		floor = entry.floorRarity, -- редкость этажа (D74); пусто — Деревянный
 	})
 	if not recorded then
 		Notify.Send(
@@ -434,14 +435,14 @@ function MuseumService.LoadMuseum(player: Player)
 				)
 			else
 				local part = ItemFactory.Create(record.id)
-				if ItemRegistry.Restore(uid, record.id, player.UserId, "slot", slot, part) then
+				if ItemRegistry.Restore(uid, record.id, player.UserId, "slot", slot, part, record.floor) then
 					MuseumService.PlaceExhibit(part, plot, slot, record.rot or 0)
 				else
 					part:Destroy()
 				end
 			end
 		else
-			ItemRegistry.Restore(uid, record.id, player.UserId, record.place, nil, nil)
+			ItemRegistry.Restore(uid, record.id, player.UserId, record.place, nil, nil, record.floor)
 		end
 	end
 	Log.Debug(

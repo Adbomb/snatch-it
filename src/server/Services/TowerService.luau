@@ -157,7 +157,7 @@ function TowerService.LoadTower(player: any): boolean
 	-- реестр: всё — как в инвентаре (постаментов в башне нет), затем этажи по порядку → Floor
 	for uid, record in data.items do
 		if type(record) == "table" and Items[record.id] and record.pending == nil then
-			ItemRegistry.Restore(uid, record.id, player.UserId, "storage", nil, nil)
+			ItemRegistry.Restore(uid, record.id, player.UserId, "storage", nil, nil, record.floor)
 		end
 	end
 	local order = TowerRules.Order(data)

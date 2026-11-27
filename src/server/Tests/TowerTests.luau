@@ -153,8 +153,8 @@ function TowerTests.Register(test: (string, (any, any, any) -> ()) -> (), h: { [
 				"модель этажа 1"
 			)
 			check(math.abs(model:GetAttribute("BaseY") - TowerRules.BaseY(1, cfg)) < 1e-6, "высота этажа 1")
-			check(IncomeService.TotalFor(A.UserId) == Items.GoldenThrone.income, "доход этажа")
-			check(A:GetAttribute("Income") == Items.GoldenThrone.income, "атрибут Income")
+			check(IncomeService.TotalFor(A.UserId) == IncomeService.Of("GoldenThrone"), "доход этажа")
+			check(A:GetAttribute("Income") == IncomeService.Of("GoldenThrone"), "атрибут Income")
 			check(t.model:GetAttribute("FloorCount") == 1, "FloorCount")
 			check(countUid(uid) == 1, "экспонат этажа в мире — один")
 			task.wait(cfg.BuildSeconds + 0.2)
@@ -185,7 +185,7 @@ function TowerTests.Register(test: (string, (any, any, any) -> ()) -> (), h: { [
 				local m = t.models[uid]
 				check(m:GetAttribute("Index") == i, "Index этажа " .. i)
 				check(math.abs(m:GetAttribute("BaseY") - TowerRules.BaseY(i, cfg)) < 1e-6, "BaseY этажа " .. i)
-				income += Items[ItemRegistry.Get(uid).itemId].income
+				income += IncomeService.Of(ItemRegistry.Get(uid).itemId)
 			end
 			check(IncomeService.TotalFor(A.UserId) == income, "сумма доходов 10 этажей")
 			check(t.model:GetAttribute("FloorCount") == 10, "в лифте не 11 пунктов (холл + 10)")

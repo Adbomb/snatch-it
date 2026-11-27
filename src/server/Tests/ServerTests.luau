@@ -30,6 +30,8 @@ local BossLootService = require(Server.Services.BossLootService)
 local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
+local DevourService = require(Server.Services.DevourService)
+local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local GymService = require(Server.Services.GymService)
 local HandDumbbell = require(Server.World.HandDumbbell)
 local IncomeService = require(Server.Services.IncomeService)
@@ -3773,7 +3775,7 @@ test(
 	function(A, B, ctx)
 		local moai = displayOwn(ctx, A, 1, "Moai")
 		local starry = displayOwn(ctx, A, 2, "StarryNight")
-		local m, s = Items.Moai.income, Items.StarryNight.income
+		local m, s = IncomeService.Of("Moai"), IncomeService.Of("StarryNight")
 		local coins = DataService.GetData(A).coins
 		IncomeService.Handlers.Tick({ A })
 		check(DataService.GetData(A).coins == coins + m + s, "за секунду начислено не m + s")
@@ -3823,7 +3825,7 @@ test(
 		local coins = DataService.GetData(A).coins
 		IncomeService.Handlers.Tick({ A })
 		check(
-			DataService.GetData(A).coins == coins + Items[itemId].income,
+			DataService.GetData(A).coins == coins + IncomeService.Of(itemId),
 			"доход добычи не начислен"
 		)
 		local userId = A.UserId
@@ -3843,7 +3845,7 @@ test(
 		coins = DataService.GetData(again).coins
 		IncomeService.Handlers.Tick({ again })
 		check(
-			DataService.GetData(again).coins == coins + Items[itemId].income,
+			DataService.GetData(again).coins == coins + IncomeService.Of(itemId),
 			"после входа доход не идёт"
 		)
 		check(waitDogHome(), "пёс не вернулся")
@@ -4208,49 +4210,106 @@ test(
 )
 
 test(
-	"D55 поимка → бой: победа — в руки; поражение — существо на месте, Ловибумы не вернулись",
-	function(A)
+	"D74 поимка → без боя: существо сразу в руках с редкостью этажа; постамент, доход с множителем, вход",
+	function(A, _B, ctx)
 		ensureDay()
 		check(waitBossHome(1), "пёс не дома")
 		BossLootService.Handlers.Refresh()
 		giveLovibums(A, 1, "Turbo", 2)
-		CatchService.Handlers.SetRoll(0)
 		local uid = BossLootService.SlotItem(1, 1) :: string
+		local itemId = ItemRegistry.Get(uid).itemId
+		local def = Items[itemId]
+		local roll = 0.9995 -- у любого существа это самая редкая ступень
+		local want = FloorRules.Roll(def.rarity, roll)
+		check(want == "Diamond", "бросок 0.9995 — не Алмазный: " .. tostring(want))
+		CatchService.Handlers.SetRoll(0)
+		DevourService.Roll = function()
+			return roll
+		end
 		check(beginCatch(A, 1, 1), "поимка не началась")
 		throw(A, "Turbo", true)
 		local part = (ItemRegistry.Get(uid) :: any).part
-		check(
-			waitUntil(function()
-				return BattleService.Handlers.FightOf(A) ~= nil
-			end, CG.FlightTime + CG.CaptureTime + 3),
-			"бой не начался после поимки"
-		)
-		check(part:GetAttribute("CatchMode") == "Hidden", "пойманное не спрятано в Ловибум")
-		local fight = BattleService.Handlers.FightOf(A)
-		BattleService.Handlers.Finish(fight, "lose")
-		check(
-			BossLootService.SlotItem(1, 1) == uid and part:GetAttribute("CatchMode") == nil,
-			"после поражения существо не на месте"
-		)
-		check(stockOf(A, 1, "Turbo") == 1, "Ловибум вернули после поражения")
-		check(waitBossHome(1), "пёс не вернулся")
-		check(
-			beginCatch(A, 1, 1),
-			"после поражения нельзя ловить снова (без паузы)"
-		)
-		throw(A, "Turbo", true)
-		check(
-			waitUntil(function()
-				return BattleService.Handlers.FightOf(A) ~= nil
-			end, CG.FlightTime + CG.CaptureTime + 3),
-			"второй бой не начался"
-		)
-		BattleService.Handlers.Finish(BattleService.Handlers.FightOf(A), "win")
+		local carried = waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) == uid
+		end, CG.FlightTime + CG.CaptureTime + 3)
+		DevourService.Roll = nil
 		CatchService.Handlers.SetRoll(nil)
-		check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
-		check(part:GetAttribute("Home") == nil, "у существа в руках остался Home")
-		check(stockOf(A, 1, "Turbo") == 0, "Ловибумы посчитаны неверно")
-		CarryService.LoseCarried(A, "уборка после теста")
+		check(carried, "после поимки существо не в руках")
+		check(
+			BattleService.Handlers.FightOf(A) == nil and not BattleService.InBattle(A),
+			"после поимки начался бой"
+		)
+		local entry = ItemRegistry.Get(uid)
+		check(
+			entry.floorRarity == want,
+			"редкость этажа не записана в реестр: " .. tostring(entry.floorRarity)
+		)
+		check(part:GetAttribute("FloorRarity") == want, "редкости этажа нет на предмете")
+		check(
+			part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil,
+			"в руках — атрибуты босса"
+		)
+		check(stockOf(A, 1, "Turbo") == 1, "Ловибумы посчитаны неверно")
+		check(BossLootService.SlotItem(1, 1) == nil, "слот не опустел до рассвета")
+		check(
+			BossLootService.IsOpen(1) and not BattleService.Busy(1),
+			"после поимки босс остался занят"
+		)
+		-- доход: существо ÷ средний множитель × множитель редкости этажа; у Деревянного — меньше каталога
+		local rich = IncomeService.Of(itemId, want)
+		local expected = math.max(1, math.floor(FloorRules.Income(def.income, def.rarity, want) + 0.5))
+		check(
+			rich == expected,
+			("доход Алмазного %s, ждали %s"):format(tostring(rich), tostring(expected))
+		)
+		check(
+			IncomeService.Of(itemId) < def.income and rich > def.income,
+			"нормировка: Деревянный не ниже каталога или Алмазный не выше"
+		)
+		check(
+			IncomeService.Of(itemId, "Golden") == IncomeService.Of(itemId),
+			"чужой ключ редкости — не Деревянный"
+		)
+		-- постамент: редкость уходит в профиль, доход идёт с множителем
+		local plotA = plotOf(A)
+		near(A, plotA.showcases[1])
+		MuseumService.Handlers.Display(A, plotA, 1)
+		entry = ItemRegistry.Get(uid)
+		check(
+			entry.state == "Displayed" and entry.floorRarity == want,
+			"на постаменте редкость этажа потерялась"
+		)
+		local record = DataService.GetData(A).items[uid]
+		check(record and record.floor == want, "редкости этажа нет в профиле")
+		local coins = DataService.GetData(A).coins
+		IncomeService.Handlers.Tick({ A })
+		check(
+			DataService.GetData(A).coins == coins + rich,
+			"доход с множителем редкости не начислен"
+		)
+		check(A:GetAttribute("Income") == rich, "атрибут Income без множителя редкости")
+		-- хранилище и обратно: редкость та же
+		InventoryService.Handlers.StoreDisplayed(A, plotA, 1)
+		check(
+			ItemRegistry.Get(uid).floorRarity == want,
+			"в хранилище редкость этажа потерялась"
+		)
+		-- повторный вход: редкость восстановлена из профиля
+		local userId = A.UserId
+		leave(A)
+		local again = TestPlayer.new("Тест_A_снова")
+		again.UserId = userId
+		ctx.track(again)
+		check(join(again), "A не вошёл повторно")
+		entry = ItemRegistry.Get(uid)
+		check(
+			entry and entry.itemId == itemId and entry.floorRarity == want,
+			"после входа редкость этажа не восстановлена"
+		)
+		check(
+			entry.state == "Stored" and countUid(uid) == 0,
+			"после входа существо не в хранилище или есть дубль"
+		)
 		check(waitBossHome(1), "пёс не вернулся")
 		TimeService.ResetClock()
 	end
@@ -4646,10 +4705,10 @@ test(
 			local coins = DataService.GetData(A).coins
 			IncomeService.Handlers.Tick({ A })
 			local got = DataService.GetData(A).coins - coins
-			if got ~= def.income or def.income <= 0 then
+			if got ~= IncomeService.Of(id) or def.income <= 0 then
 				table.insert(
 					problems,
-					("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(def.income))
+					("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(IncomeService.Of(id)))
 				)
 			end
 			task.wait(0.3)
@@ -4890,10 +4949,10 @@ test(
 			local coins = DataService.GetData(A).coins
 			IncomeService.Handlers.Tick({ A })
 			local got = DataService.GetData(A).coins - coins - base
-			if got ~= def.income then
+			if got ~= IncomeService.Of(id) then
 				table.insert(
 					problems,
-					("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(def.income))
+					("%s: доход %s, ждали %s"):format(id, tostring(got), tostring(IncomeService.Of(id)))
 				)
 			end
 			task.wait(0.3)
@@ -4994,7 +5053,6 @@ test(
 		end
 		local ok, err = pcall(function()
 			for _, id in boss3Ids() do
-				local def = Items[id]
 				local reference = ItemFactory.Create(id) -- Part-версия
 				local refPivots = creatureJoints(reference)
 				local parts, visible = stand(id)
@@ -5073,7 +5131,7 @@ test(
 				end
 				local coins = DataService.GetData(A).coins
 				IncomeService.Handlers.Tick({ A })
-				if DataService.GetData(A).coins - coins ~= def.income then
+				if DataService.GetData(A).coins - coins ~= IncomeService.Of(id) then
 					table.insert(problems, id .. ": доход не как в каталоге")
 				end
 				task.wait(0.3)
@@ -5140,7 +5198,6 @@ test(
 		end
 		local ok, err = pcall(function()
 			for _, id in boss4Ids() do
-				local def = Items[id]
 				local reference = ItemFactory.Create(id) -- Part-версия
 				local refPivots = creatureJoints(reference)
 				local parts, visible = stand(id)
@@ -5222,7 +5279,7 @@ test(
 				end
 				local coins = DataService.GetData(A).coins
 				IncomeService.Handlers.Tick({ A })
-				if DataService.GetData(A).coins - coins ~= def.income then
+				if DataService.GetData(A).coins - coins ~= IncomeService.Of(id) then
 					table.insert(problems, id .. ": доход не как в каталоге")
 				end
 				task.wait(0.3)
@@ -5348,7 +5405,7 @@ test(
 -- A и B — серверные NPC-игроки (TestPlayer): проверяются правила сервера, а не игра двух настоящих клиентов.
 
 test(
-	"Сфинкс занят для второго: B не ловит, не дерётся и не забирает, пока A ловит, дерётся и Сфинкс идёт домой",
+	"Сфинкс занят для второго (D74, после поимки боя нет): B не ловит, не дерётся и не забирает, пока A ловит, дерётся и Сфинкс идёт домой",
 	function(A, B)
 		local shifted = ensureDay()
 		check(waitBossHome(4), "Сфинкс не дома")
@@ -5379,30 +5436,19 @@ test(
 		CatchService.Handlers.SetRoll(0)
 		check(beginCatch(A, 4, 1), "поимка A не началась: " .. table.concat(A:Notices(), "; "))
 		blocked("поимка A", "ловит")
-		-- 2) A поймал — бой со Сфинксом
+		-- 2) A поймал — боя нет (D74): существо сразу в руках, Сфинкс свободен
 		throw(A, "Boom", true)
-		local fight
-		local fought = waitUntil(function()
-			fight = BattleService.Handlers.FightOf(A)
-			return fight ~= nil
+		local caught = waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) ~= nil
 		end, CG.FlightTime + CG.CaptureTime + 3)
 		CatchService.Handlers.SetRoll(nil)
+		check(caught, "после поимки существо не в руках у A")
 		check(
-			fought and fight and fight.zone == 4,
-			"бой A со Сфинксом не начался после поимки"
+			not BattleService.InBattle(A) and not BattleService.Busy(4),
+			"после поимки начался бой"
 		)
-		if not fight then
-			return
-		end
-		blocked("бой A", "занят")
-		-- 3) A проиграл — Сфинкс празднует победу и идёт домой: для B он всё ещё занят. (Прерванный в самом начале бой
-		-- этапа возврата не даёт: Сфинкс ещё не сходил с места и засыпает сразу.)
-		BattleService.Handlers.Finish(fight, "lose")
-		check(
-			BattleService.Handlers.IsReturning(4),
-			"после победы Сфинкс не празднует и не идёт домой"
-		)
-		blocked("победа и возврат Сфинкса", "занят")
+		check(BossLootService.IsOpen(4), "после поимки Сфинкс остался занят")
+		CarryService.LoseCarried(A, "уборка: дальше A проверяет занятость")
 		-- 4) Сфинкс дома — B ловит; теперь занят для A
 		check(waitBossHome(4), "Сфинкс не вернулся домой")
 		check(
@@ -5426,7 +5472,7 @@ test(
 )
 
 test(
-	"Сфинкс: Ловибум ур. 4 → бой → поражение (отброс) → домой, сон, полное HP → сразу снова → победа → в руках",
+	"Сфинкс (D74): Ловибум ур. 4 → поимка при силе 0 → в руки без боя, редкость этажа, Сфинкс дома и свободен",
 	function(A)
 		local shifted = ensureDay()
 		check(waitBossHome(4), "Сфинкс не дома")
@@ -5440,100 +5486,38 @@ test(
 		check(not beginCatch(A, 4, 2), "поимка у Сфинкса с Ловибумом уровня 3")
 		check(A:WasNotified("уровня 4"), "нет подсказки про Ловибум уровня 4")
 		check(stockOf(A, 3, "Mega") == 1, "Ловибум уровня 3 списан")
-		local humanoid = A.Character:FindFirstChildOfClass("Humanoid") :: Humanoid
-		local savedMax = humanoid.MaxHealth
-		local function caughtFight(kind: string): any
-			CatchService.Handlers.SetRoll(0)
-			check(beginCatch(A, 4, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
-			throw(A, kind, true)
-			local fight
-			waitUntil(function()
-				fight = BattleService.Handlers.FightOf(A)
-				return fight ~= nil
-			end, CG.FlightTime + CG.CaptureTime + 3)
-			CatchService.Handlers.SetRoll(nil)
-			return fight
-		end
-		-- поражение при силе 0
 		giveLovibums(A, 4, "Turbo", 1)
-		local started = os.clock()
-		local lost = caughtFight("Turbo")
-		check(lost and lost.zone == 4, "бой со Сфинксом не начался после поимки")
-		if not lost then
-			return
+		CatchService.Handlers.SetRoll(0)
+		DevourService.Roll = function()
+			return 0
 		end
+		check(beginCatch(A, 4, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
+		throw(A, "Turbo", true)
+		local carried = waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) == uid
+		end, CG.FlightTime + CG.CaptureTime + 3)
+		DevourService.Roll = nil
+		CatchService.Handlers.SetRoll(nil)
+		check(carried, "после поимки существо не в руках")
 		check(
-			part:GetAttribute("CatchMode") == "Hidden",
-			"пойманное существо не спрятано в Ловибум"
+			not BattleService.InBattle(A) and BattleService.Handlers.FightOf(A) == nil,
+			"после поимки начался бой"
 		)
 		check(
-			fightTo(lost, 60) and lost.result == "lose",
-			"при силе 0 Сфинкса победили: " .. tostring(lost.result)
+			(ItemRegistry.Get(uid) :: any).floorRarity == "Wood",
+			"бросок 0 — не Деревянный этаж"
 		)
-		check(
-			boss.state == "Victory",
-			"после поражения игрока не победа Сфинкса: " .. boss.state
-		)
-		local knockedAt = A:GetAttribute("KnockedAt")
-		check(
-			typeof(knockedAt) == "number" and knockedAt >= started,
-			"проигравшего не отбросило"
-		)
-		check(typeof(A:GetAttribute("KnockedFrom")) == "Vector3", "отброс не от Сфинкса")
-		check(
-			A:GetAttribute("Knocked") == nil,
-			"поражение от Сфинкса — нокаут, а нужен только отброс"
-		)
-		check(
-			BossLootService.SlotItem(4, 2) == uid and part:GetAttribute("CatchMode") == nil,
-			"существо не вернулось на плиту"
-		)
-		check(ItemRegistry.GetCarriedBy(A) == nil, "проигравшему отдали существо")
-		check(stockOf(A, 4, "Turbo") == 0, "Ловибум вернули после поражения")
-		-- восстановление: дома, спит, бой снят, здоровье игрока прежнее
-		check(waitBossHome(4), "Сфинкс не вернулся домой и не уснул")
-		check(
-			BossService.DistanceHome(boss) <= Battle.ArriveDistance + 0.05,
-			"Сфинкс уснул не на своём месте"
-		)
-		check(boss.model:GetAttribute("TargetUserId") == nil, "у Сфинкса осталась цель")
-		check(BossLootService.IsOpen(4) and not BattleService.Busy(4), "Сфинкс дома, но занят")
-		check(
-			A:GetAttribute("InBattle") == nil and A:GetAttribute("BattleHP") == nil,
-			"игрок всё ещё в бою"
-		)
-		check(
-			math.abs(humanoid.MaxHealth - savedMax) < 0.01 and humanoid.Health > 0,
-			"здоровье игрока после боя не вернулось"
-		)
-		-- повтор сразу, без паузы (D37); сила Сфинкса — победа
-		DataService.AddStrength(A, GameConfig.Progression.Bosses[4])
-		giveLovibums(A, 4, "Boom", 1)
-		local won = caughtFight("Boom")
-		check(
-			won and won.zone == 4,
-			"после поражения нельзя сразу ловить и драться снова"
-		)
-		if not won then
-			return
-		end
-		check(
-			won.bossHp == won.bossMax and boss.model:GetAttribute("MaxHP") == won.bossMax,
-			"HP Сфинкса не полное"
-		)
-		check(
-			fightTo(won, 90) and won.result == "win",
-			"при равной силе Сфинкса не победили: " .. tostring(won.result)
-		)
-		check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
 		check(
 			part:GetAttribute("Home") == nil and part:GetAttribute("CatchMode") == nil,
 			"в руках — атрибуты Сфинкса"
 		)
 		check(BossLootService.SlotItem(4, 2) == nil, "слот не опустел до рассвета")
-		check(stockOf(A, 4, "Boom") == 0, "Ловибум ур. 4 не списан")
+		check(stockOf(A, 4, "Turbo") == 0, "Ловибум ур. 4 не списан")
+		check(waitBossHome(4), "Сфинкс не дома после поимки")
+		check(boss.model:GetAttribute("TargetUserId") == nil, "у Сфинкса осталась цель")
+		check(BossLootService.IsOpen(4) and not BattleService.Busy(4), "Сфинкс дома, но занят")
+		check(A:GetAttribute("InBattle") == nil and A:GetAttribute("BattleHP") == nil, "игрок в бою")
 		CarryService.LoseCarried(A, "уборка после теста")
-		check(waitBossHome(4), "Сфинкс не вернулся после победы игрока")
 		if shifted then
 			TimeService.ResetClock()
 		end
@@ -5541,7 +5525,7 @@ test(
 )
 
 test(
-	"Босс 3: Ловибум ур. 3 → поимка → бой с королём (равная сила) → постамент → доход → вход",
+	"Босс 3 (D74): Ловибум ур. 3 → поимка → в руки без боя → постамент → доход с редкостью этажа → вход",
 	function(A, _B, ctx)
 		local shifted = ensureDay()
 		check(waitBossHome(3), "король не дома")
@@ -5553,24 +5537,27 @@ test(
 		check(not beginCatch(A, 3, 1), "поимка у короля с Ловибумом уровня 1")
 		check(A:WasNotified("уровня 3"), "нет подсказки про Ловибум уровня 3")
 		check(stockOf(A, 1, "Mega") == 1, "Ловибум уровня 1 списан")
-		DataService.AddStrength(A, GameConfig.Progression.Bosses[3])
 		giveLovibums(A, 3, "Boom", 2)
+		local want = FloorRules.Roll(Items[itemId].rarity, 0.75)
 		CatchService.Handlers.SetRoll(0)
+		DevourService.Roll = function()
+			return 0.75
+		end
 		check(beginCatch(A, 3, 1), "поимка не началась: " .. table.concat(A:Notices(), "; "))
 		throw(A, "Boom", true)
-		local fight
-		local fought = waitUntil(function()
-			fight = BattleService.Handlers.FightOf(A)
-			return fight ~= nil
+		local carried = waitUntil(function()
+			return ItemRegistry.GetCarriedBy(A) == uid
 		end, CG.FlightTime + CG.CaptureTime + 3)
+		DevourService.Roll = nil
 		CatchService.Handlers.SetRoll(nil)
-		check(fought, "бой с королём не начался после поимки")
+		check(carried, "после поимки существо не в руках")
+		check(not BattleService.InBattle(A), "после поимки начался бой с королём")
 		check(stockOf(A, 3, "Boom") == 1, "Ловибум ур. 3 не списан")
-		check(fight.zone == 3, "бой не с королём")
 		check(
-			fightTo(fight, 90) and fight.result == "win",
-			"при равной силе не победили: " .. tostring(fight.result)
+			want ~= "Wood" and (ItemRegistry.Get(uid) :: any).floorRarity == want,
+			"редкость этажа не из броска"
 		)
+		local pay = IncomeService.Of(itemId, want)
 		check(ItemRegistry.GetCarriedBy(A) == uid, "после победы существо не в руках")
 		local part = (ItemRegistry.Get(uid) :: any).part
 		check(
@@ -5590,15 +5577,12 @@ test(
 		)
 		local record = DataService.GetData(A).items[uid]
 		check(
-			record and record.id == itemId and record.boss == 3 and record.source == "boss",
+			record and record.id == itemId and record.boss == 3 and record.source == "boss" and record.floor == want,
 			"запись в профиле неполная"
 		)
 		local coins = DataService.GetData(A).coins
 		IncomeService.Handlers.Tick({ A })
-		check(
-			DataService.GetData(A).coins == coins + Items[itemId].income,
-			"доход существа не начислен"
-		)
+		check(DataService.GetData(A).coins == coins + pay, "доход существа не начислен")
 		local userId = A.UserId
 		leave(A)
 		local again = TestPlayer.new("Тест_A_снова")
@@ -5607,7 +5591,11 @@ test(
 		check(join(again), "A не вошёл снова")
 		entry = ItemRegistry.Get(uid)
 		check(
-			entry and entry.state == "Displayed" and entry.slot == 1 and entry.itemId == itemId,
+			entry
+				and entry.state == "Displayed"
+				and entry.slot == 1
+				and entry.itemId == itemId
+				and entry.floorRarity == want,
 			"не восстановлено"
 		)
 		check(countUid(uid) == 1, "дубли существа после входа")
@@ -5617,55 +5605,8 @@ test(
 		)
 		coins = DataService.GetData(again).coins
 		IncomeService.Handlers.Tick({ again })
-		check(
-			DataService.GetData(again).coins == coins + Items[itemId].income,
-			"после входа доход не идёт"
-		)
+		check(DataService.GetData(again).coins == coins + pay, "после входа доход не идёт")
 		check(waitBossHome(3), "король не вернулся домой")
-		if shifted then
-			TimeService.ResetClock()
-		end
-	end
-)
-
-test(
-	"Босс 3: поражение от короля (сила 0) — существо на месте, Ловибум не вернули, можно ловить снова",
-	function(A)
-		local shifted = ensureDay()
-		check(waitBossHome(3), "король не дома")
-		BossLootService.Handlers.Refresh()
-		local uid = BossLootService.SlotItem(3, 2) :: string
-		giveLovibums(A, 3, "Turbo", 1)
-		CatchService.Handlers.SetRoll(0)
-		check(beginCatch(A, 3, 2), "поимка не началась: " .. table.concat(A:Notices(), "; "))
-		throw(A, "Turbo", true)
-		local fight
-		local fought = waitUntil(function()
-			fight = BattleService.Handlers.FightOf(A)
-			return fight ~= nil
-		end, CG.FlightTime + CG.CaptureTime + 3)
-		CatchService.Handlers.SetRoll(nil)
-		check(fought, "бой не начался")
-		check(
-			fightTo(fight, 60) and fight.result == "lose",
-			"при силе 0 короля победили: " .. tostring(fight.result)
-		)
-		local part = (ItemRegistry.Get(uid) :: any).part
-		check(
-			BossLootService.SlotItem(3, 2) == uid and part:GetAttribute("CatchMode") == nil,
-			"существо не на месте"
-		)
-		check(ItemRegistry.GetCarriedBy(A) == nil, "проигравшему отдали существо")
-		check(stockOf(A, 3, "Turbo") == 0, "Ловибум вернули после поражения")
-		check(waitBossHome(3), "король не вернулся домой")
-		giveLovibums(A, 3, "Boom", 1)
-		-- поражение — только отброс (не нокаут), повтор без таймеров (D37): паузы, как после неудачной мини-игры, нет
-		check(
-			beginCatch(A, 3, 2),
-			"после поражения нельзя ловить снова: " .. table.concat(A:Notices(), "; ")
-		)
-		CatchService.Handlers.Action(A, "Leave")
-		check(waitCatchEnd(A, 3), "«Уйти» не закончило поимку")
 		if shifted then
 			TimeService.ResetClock()
 		end
@@ -6927,7 +6868,7 @@ do
 			local income = IncomeService.TotalFor(A.UserId)
 			local power = GymService.MuseumPower(A)
 			check(
-				income == 2 * Items[TEST_ITEM].income,
+				income == 2 * IncomeService.Of(TEST_ITEM),
 				"доход двух экспонатов до улучшения"
 			)
 			DataService.AddCoins(A, prices[1] + prices[2] + prices[3] + prices[4] + 500 - data.coins)
@@ -6991,14 +6932,14 @@ do
 				"на новое место 9 не выставилось"
 			)
 			check(
-				IncomeService.TotalFor(A.UserId) == 3 * Items[TEST_ITEM].income,
+				IncomeService.TotalFor(A.UserId) == 3 * IncomeService.Of(TEST_ITEM),
 				"доход с новым местом"
 			)
 			local coins, userId = data.coins, A.UserId
 			ctx.note(
 				("до выхода: уровень 5, монеты %d, экспонаты на местах 1, 6, 9, в инвентаре 1, доход %d/с"):format(
 					coins,
-					3 * Items[TEST_ITEM].income
+					3 * IncomeService.Of(TEST_ITEM)
 				)
 			)
 			leave(A)
@@ -7045,7 +6986,7 @@ do
 				"после входа экспонатов на участке не 3"
 			)
 			check(
-				IncomeService.TotalFor(again.UserId) == 3 * Items[TEST_ITEM].income,
+				IncomeService.TotalFor(again.UserId) == 3 * IncomeService.Of(TEST_ITEM),
 				"после входа доход другой"
 			)
 			ctx.note(

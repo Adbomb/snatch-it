@@ -228,6 +228,7 @@ local function tryStoreCarried(player: Player, plot: PlotService.Plot)
 		acquiredAt = os.time(),
 		source = if entry.boss then "boss" else "map",
 		boss = entry.boss, -- уровень босса-источника: локация происхождения (D37, D46)
+		floor = entry.floorRarity, -- редкость этажа (D74); пусто — Деревянный
 	})
 	if not recorded then
 		Notify.Send(

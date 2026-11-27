@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
 local Server = ServerScriptService.Server
@@ -24,10 +25,16 @@ local LABEL_COLOR = Color3.fromHex("5BEA72")
 
 local IncomeService = {}
 
--- Доход предмета в секунду.
-function IncomeService.Of(itemId: string): number
+-- Доход предмета в секунду (D74): доход существа ÷ средний множитель его редкости × множитель редкости этажа
+-- (Shared/FloorRules.Income; матожидание по броску — доход существа из каталога). floorRarity пусто — Деревянный.
+-- Целое число монет, у доходного предмета — не меньше 1.
+function IncomeService.Of(itemId: string, floorRarity: string?): number
 	local def = Items[itemId]
-	return if def then def.income or 0 else 0
+	local base = if def then def.income or 0 else 0
+	if base <= 0 then
+		return 0
+	end
+	return math.max(1, math.floor(FloorRules.Income(base, def.rarity, floorRarity) + 0.5))
 end
 
 -- Общий доход владельца в секунду: сумма по экспонатам на витринах и построенным этажам (Floor — этап B, режим
@@ -37,7 +44,7 @@ function IncomeService.TotalFor(userId: number): number
 	for _, uid in ItemRegistry.GetOwnedBy(userId) do
 		local entry = ItemRegistry.Get(uid)
 		if entry and (entry.state == "Displayed" or entry.state == "Floor") then
-			total += IncomeService.Of(entry.itemId)
+			total += IncomeService.Of(entry.itemId, entry.floorRarity)
 		end
 	end
 	return total
@@ -45,7 +52,9 @@ end
 
 -- Надпись «+X/сек» над экспонатом (видна всем).
 function IncomeService.Label(part: BasePart, itemId: string)
-	local income = IncomeService.Of(itemId)
+	local uid = part:GetAttribute("ItemUid")
+	local entry = if type(uid) == "string" then ItemRegistry.Get(uid) else nil
+	local income = IncomeService.Of(itemId, if entry then entry.floorRarity else nil)
 	local billboard = part:FindFirstChild(LABEL_NAME) :: BillboardGui?
 	if income <= 0 then
 		if billboard then
