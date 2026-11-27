@@ -150,6 +150,25 @@ function DevTools.Init()
 			folder:SetAttribute("TestReport", if ok then report else "ошибка: " .. tostring(report))
 		end)
 	end)
+	-- Предпросмотр этажей-витрин (D74, вариант B) атрибутом (MCP): folder.Showcase = CFrame низа стопки (перед — −Z)
+	-- или false — убрать. Строит поток этого скрипта: у потока MCP свои копии модулей без загруженных мешей существ.
+	-- Отчёт — атрибут ShowcaseReport (число деталей или текст ошибки).
+	folder:GetAttributeChangedSignal("Showcase"):Connect(function()
+		local at = folder:GetAttribute("Showcase")
+		if at == nil then
+			return
+		end
+		folder:SetAttribute("Showcase", nil)
+		local ok, report = pcall(function()
+			local preview = require(ServerScriptService.Server.World.ShowcasePreview)
+			if typeof(at) ~= "CFrame" then
+				preview.Clear()
+				return "убрано"
+			end
+			return ("деталей %d"):format(preview.Build(at))
+		end)
+		folder:SetAttribute("ShowcaseReport", if ok then report else "ошибка: " .. tostring(report))
+	end)
 	local TimeService = require(ServerScriptService.Server.Services.TimeService)
 	for name, handler in
 		{
