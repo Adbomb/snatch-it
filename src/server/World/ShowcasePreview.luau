@@ -2,12 +2,14 @@
 -- (папка workspace.__ShowcasePreview, Archivable = false). Режимы (строка mode, слова через пробел):
 --   "row Saloon" | "row Ocean"  — шесть редкостей темы в ряд (у каждой плита-кровля), с живыми жильцами;
 --   "tower"                     — башня из 12 этажей вперемешку, плита-кровля и колпак C;
+--   "monsters <ItemId> [t=146]" — этаж-монстр существа (генератор MonsterFloor) в редкостях из t (по умолчанию 1, 4, 6);
+--   "mtower"                    — башня из 12 этажей-монстров четырёх существ вперемешку и колпак C;
 --   добавка "far"               — дальние версии этажей (без жильцов), "stage" — площадка-земля под снимки.
 -- В Play строит поток игры (атрибуты ServerStorage.DevTools: ShowcaseMode, затем Showcase = CFrame): у потока MCP свои
 -- копии модулей без загруженных мешей существ. В Edit — через FreshRequire (жильцы там — заглушки):
 --   local W = game.ServerScriptService.Server.World
 --   require(W.FreshRequire)(W.ShowcasePreview).Build(CFrame.new(0, 0, 0), "row Saloon stage")
--- Зависит от World/Models/ShowcaseFloor, ModelBuilder, Util/ItemFactory.
+-- Зависит от World/Models/ShowcaseFloor, MonsterFloor, World/MonsterParts, ModelBuilder, Util/ItemFactory, FloorDna.
 
 local HttpService = game:GetService("HttpService")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -16,6 +18,9 @@ local Server = ServerScriptService.Server
 local ItemFactory = require(Server.Util.ItemFactory)
 local ModelBuilder = require(Server.World.ModelBuilder)
 local ShowcaseFloor = require(Server.World.Models.ShowcaseFloor)
+local MonsterFloor = require(Server.World.Models.MonsterFloor)
+local MonsterParts = require(Server.World.MonsterParts)
+local FloorDna = require(game:GetService("ReplicatedStorage").Shared.FloorDna)
 
 local ShowcasePreview = {}
 
@@ -76,6 +81,34 @@ function ShowcasePreview.Clear()
 	end
 end
 
+-- Башня из 12 этажей-монстров (снизу вверх): существо и редкость. Четыре существа трёх зон и четырёх семей силуэта.
+ShowcasePreview.MonsterTower = {
+	{ "CactusBoxer", 1 },
+	{ "PizzaRat", 4 },
+	{ "YetiCub", 1 },
+	{ "BlazeOstrich", 1 },
+	{ "CactusBoxer", 6 },
+	{ "PizzaRat", 1 },
+	{ "YetiCub", 4 },
+	{ "BlazeOstrich", 4 },
+	{ "CactusBoxer", 4 },
+	{ "YetiCub", 6 },
+	{ "PizzaRat", 1 },
+	{ "BlazeOstrich", 6 },
+}
+
+-- Этаж-монстр существа itemId на месте frame: кирпичи, собственные части существа, жилец. Возвращает высоту.
+local function placeMonster(folder: Instance, frame: CFrame, itemId: string, tier: number, far: boolean): number
+	local built = if far then MonsterFloor.Far(itemId, tier) else MonsterFloor.Build(itemId, tier)
+	assert(built, "нет ДНК существа " .. itemId)
+	local name = ("%s_%d%s"):format(itemId, tier, if far then "_Far" else "")
+	local model = ModelBuilder.Place(ModelBuilder.Build(name, built.bricks), frame, folder)
+	MonsterParts.Add(model, frame, itemId, built.parts)
+	model:SetAttribute("MeshRequests", #built.parts) -- в Play каждая заявка — одна деталь-меш
+	resident(folder, built.item, frame * CFrame.new(built.resident), built.scale)
+	return built.height
+end
+
 -- Один этаж на месте frame (низ плиты, перед — −Z). Возвращает высоту этажа.
 local function place(folder: Instance, frame: CFrame, theme: string, tier: number, far: boolean): number
 	local name = ("%s_%d%s"):format(theme, tier, if far then "_Far" else "")
@@ -111,7 +144,39 @@ function ShowcasePreview.Build(at: CFrame, mode: string?): string
 		ground.TopSurface = Enum.SurfaceType.Smooth
 		ground.Parent = folder
 	end
-	if words.tower then
+	if words.mtower then
+		local y, last = 0, 1
+		for i, spec in ShowcasePreview.MonsterTower do
+			y += placeMonster(folder, at * CFrame.new(0, y, 0), spec[1], spec[2], far)
+			last = spec[2]
+			if i % 3 == 0 then
+				task.wait()
+			end
+		end
+		ModelBuilder.Place(ModelBuilder.Build("Roof", MonsterFloor.Roof(last)), at * CFrame.new(0, y, 0), folder)
+		local cap = ModelBuilder.Build("Cap", ShowcaseFloor.Cap())
+		ModelBuilder.Place(cap, at * CFrame.new(0, y + ShowcaseFloor.Slab, 0), folder)
+	elseif words.monsters then
+		local tiers = { 1, 4, 6 }
+		local itemId = "CactusBoxer"
+		for word in (mode or ""):gmatch("%S+") do
+			local list = word:match("^t=(%d+)$")
+			if list then
+				tiers = {}
+				for digit in list:gmatch("%d") do
+					table.insert(tiers, tonumber(digit) :: number)
+				end
+			elseif FloorDna.Has(word) then
+				itemId = word
+			end
+		end
+		for i, tier in tiers do
+			local frame = at * CFrame.new(((#tiers + 1) / 2 - i) * ShowcasePreview.Pitch, 0, 0)
+			local h = placeMonster(folder, frame, itemId, tier, far)
+			ModelBuilder.Place(ModelBuilder.Build("Roof", MonsterFloor.Roof(tier)), frame * CFrame.new(0, h, 0), folder)
+			task.wait()
+		end
+	elseif words.tower then
 		local y, last = 0, 1
 		for i, spec in ShowcasePreview.Tower do
 			y += place(folder, at * CFrame.new(0, y, 0), spec[2], spec[1], far)
@@ -142,7 +207,17 @@ function ShowcasePreview.Build(at: CFrame, mode: string?): string
 					lights += 1
 				end
 			end
-			table.insert(counts, ("%s=%d/%d"):format(model.Name, ModelBuilder.CountParts(model), lights))
+			local parts = ModelBuilder.CountParts(model)
+			local requests = model:GetAttribute("MeshRequests")
+			if requests then -- собственные части существа считаются по заявкам (в Edit они собраны из блоков)
+				parts = requests
+				for _, d in model:GetDescendants() do
+					if d:IsA("BasePart") and d.Name:sub(1, 8) ~= "Monster_" then
+						parts += 1
+					end
+				end
+			end
+			table.insert(counts, ("%s=%d/%d"):format(model.Name, parts, lights))
 		end
 	end
 	return ("деталей %d; этажи (детали/свет): %s"):format(
