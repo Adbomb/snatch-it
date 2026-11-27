@@ -3,9 +3,10 @@
 -- материал каркаса и высота; тема комнаты одна на все редкости (салун остаётся салуном):
 --   1 Деревянный — тёплое дерево, простые капители;            2 Каменный — серый камень, руст, кованые фонари;
 --   3 Мраморный — белый мрамор, каннелюры, бронза;              4 Золотой — слоновая кость и золото;
---   5 Мифический — тёмный камень, аметист, светлые прожилки;    6 Космический — ночное небо и золото, радужный кант.
--- След у всех один; у Космического каркас выходит за след на 1 стад. Выше верхней плиты ничего нет; купол — только у
--- колпака башни (Cap). Источников света на этаже — 2 (у Космического 3). Дальняя версия (Far) — каркас, светлый проём
+--   5 Мифический — аметист: фиолетовый камень, друзы, прожилки;   6 Алмазный — ночное небо и золото, гранёные
+--   голубые кристаллы, бело-голубой сверкающий кант. Золото, латунь и бронза — Foil (исключение из «всё Plastic»).
+-- След у всех один; у Алмазного каркас выходит за след на 1 стад. Выше верхней плиты ничего нет; купол — только у
+-- колпака башни (Cap). Источников света на этаже — 2 (у Алмазного 3). Дальняя версия (Far) — каркас, светлый проём
 -- и кант, до 40 деталей. Координаты — в осях этажа: начало — центр низа плиты, перед — −Z.
 -- Только кирпичи: жильца ставит World/ShowcasePreview. Зависит от ShowcaseKit, ShowcaseSaloon, ShowcaseOcean,
 -- ModelBuilder, GameConfig.
@@ -30,7 +31,7 @@ local DECO = Kit.DECO
 -- Высота этажа по редкости (D74): FloorHeight × 1 / 1.35 / 1.6 / 1.9 / 2.3 / 3.
 ShowcaseFloor.HeightFactor = { 1, 1.35, 1.6, 1.9, 2.3, 3 }
 ShowcaseFloor.Slab = SLAB
-ShowcaseFloor.Keys = { "Wood", "Stone", "Marble", "Gold", "Mythic", "Cosmic" } -- порядок Config/FloorRarity.Order
+ShowcaseFloor.Keys = { "Wood", "Stone", "Marble", "Gold", "Mythic", "Diamond" } -- порядок Config/FloorRarity.Order
 ShowcaseFloor.Budget = { 250, 300, 350, 400, 450, 500 } -- деталей на этаж (телефон)
 ShowcaseFloor.FarBudget = 40
 ShowcaseFloor.Themes = { Saloon = ShowcaseSaloon, Ocean = ShowcaseOcean }
@@ -43,18 +44,19 @@ end
 local F = {
 	{ main = hex("E2BE86"), second = hex("C9A06A"), accent = hex("5A3A20"), core = hex("8A5A2B"), out = 0 },
 	{ main = hex("9EA2AA"), second = hex("7C8089"), accent = hex("2B2C30"), core = hex("5F636B"), out = 0 },
-	{ main = hex("F5F2EC"), second = hex("DDDAD3"), accent = hex("B07A3C"), core = hex("C9C6BF"), out = 0 },
-	{ main = hex("F3E9D2"), second = hex("E9B43A"), accent = hex("B98A1E"), core = hex("D9CDB2"), out = 0 },
-	{ main = hex("2F2B3A"), second = hex("423B52"), accent = hex("9B5DE5"), core = hex("221F2B"), out = 0 },
-	{ main = hex("0F1634"), second = hex("1B2552"), accent = hex("E9B43A"), core = hex("0B1026"), out = 1.0 },
+	{ main = hex("F5F2EC"), second = hex("DDDAD3"), accent = Kit.BRONZE, core = hex("C9C6BF"), out = 0 },
+	{ main = hex("F3E9D2"), second = Kit.GOLD, accent = Kit.GOLD2, core = hex("D9CDB2"), out = 0 },
+	{ main = hex("6F4DAE"), second = hex("553A8C"), accent = hex("C9A0FF"), core = hex("3A2760"), out = 0 },
+	{ main = hex("0F1634"), second = hex("1B2552"), accent = Kit.GOLD, core = hex("0B1026"), out = 1.0 },
 }
 local VEIN_MARBLE = hex("A9A7A3")
-local VEIN_MYTHIC = hex("CDB0FF")
+local VEIN_MYTHIC = hex("F1E2FF")
+local KANT_DIAMOND, KANT_DIAMOND2 = hex("F2FAFF"), hex("A8E0FF")
+local SPARK = { material = Enum.Material.Foil, collide = false, shadow = false } -- сверкающий бело-голубой кант
 local STAR_PALE = hex("FFF1C4")
 local LAMP = hex("FFD98A")
 local GLASS_COLOR = hex("D6F0FF")
 local GLOW = { material = Enum.Material.SmoothPlastic, collide = false, shadow = false } -- светлые прожилки и контур
-local GEM = { material = Enum.Material.Glass, transparency = 0.12, collide = false } -- аметист
 
 ShowcaseFloor.Frame = F
 
@@ -62,26 +64,12 @@ local function colW(tier: number): number
 	return if tier == 6 then W + 0.6 else W
 end
 
--- Ступенчатый кристалл: тело и более узкое остриё вдоль dir (резкие ступени D39), от точки base.
-local function crystal(out: { Brick }, base: Vector3, dir: Vector3, len: number, r: number, color: Color3, extra: any?)
-	local d = dir.Unit
-	local up = if math.abs(d.Y) > 0.95 then Vector3.xAxis else Vector3.yAxis
-	local cf = CFrame.lookAt(base, base + d, up) * CFrame.Angles(math.rad(-90), 0, 0) -- ось Y бруска вдоль dir
-	local spin = CFrame.Angles(0, math.rad(45), 0)
-	local e = extra or GEM
-	tilt(out, r * 2, len * 0.72, r * 2, cf * CFrame.new(0, len * 0.36, 0) * spin, color, e)
-	tilt(out, r * 1.3, len * 0.36, r * 1.3, cf * CFrame.new(0, len * 0.82, 0) * spin, color, e)
-end
-
--- Радужный цвет по доле круга (тонкий кант Космического).
-local function rainbow(t: number): Color3
-	return Color3.fromHSV(t % 1, 0.62, 1)
-end
+local crystal = Kit.crystal
 
 -- Плита этажа на высоте y: сердцевина по следу и пояс-кант по кромке (материал — по названию редкости).
 local function slab(out: { Brick }, tier: number, y: number)
 	local f = F[tier]
-	local ix, iz = HX + f.out / 2, HZ + f.out / 2 -- край сердцевины (у Космического шире — не под порогом стекла)
+	local ix, iz = HX + f.out / 2, HZ + f.out / 2 -- край сердцевины (у Алмазного шире — не под порогом стекла)
 	local e = 0.6 + f.out / 2
 	box(out, ix * 2, SLAB, iz * 2, 0, y + SLAB / 2, 0, f.core)
 	-- ряд пояса вдоль стороны side (1 — перед, 2 — зад, 3 — лево, 4 — право): n сегментов, цвет и вынос — от номера
@@ -162,22 +150,28 @@ local function slab(out: { Brick }, tier: number, y: number)
 	elseif tier == 5 then -- тёмный камень, тонкий аметистовый кант
 		belt(1, 1, plain(f.second, e), SLAB, mid)
 		belt(1, 1, plain(f.accent, e + 0.14), 0.34, mid, DECO)
-	else -- ночное небо: золотые кромки, тонкий радужный кант
+	else -- ночное небо: золотые кромки, сверкающий бело-голубой кант с гранёными камнями, кристаллы на углах
 		belt(1, 1, plain(f.second, e), SLAB, mid)
 		belt(1, 1, plain(f.accent, e + 0.12), 0.2, y + SLAB - 0.2, DECO)
 		belt(1, 1, plain(f.accent, e + 0.12), 0.2, y + 0.2, DECO)
-		row(1, 8, function(k)
-			return rainbow(k / 8), e + 0.22
-		end, 0.3, mid, GLOW)
-		row(2, 8, function(k)
-			return rainbow(1 - k / 8), e + 0.22
-		end, 0.3, mid, GLOW)
-		row(3, 7, function(k)
-			return rainbow(k / 7 + 0.5), e + 0.22
-		end, 0.3, mid, GLOW)
-		row(4, 7, function(k)
-			return rainbow(0.5 - k / 7), e + 0.22
-		end, 0.3, mid, GLOW)
+		belt(1, 1, plain(KANT_DIAMOND, e + 0.2), 0.32, mid, SPARK)
+		local turnZ, turnX = CFrame.Angles(0, 0, math.rad(45)), CFrame.Angles(math.rad(45), 0, 0)
+		for k = 0, 4 do -- камни-ромбы по канту
+			local x = (k - 2) * 8
+			for _, s in { -1, 1 } do
+				tilt(out, 0.75, 0.75, 0.3, CFrame.new(x, mid, s * (iz + e + 0.25)) * turnZ, KANT_DIAMOND2, Kit.GEM)
+			end
+		end
+		for k = 0, 2 do
+			local z = (k - 1) * 10
+			for _, s in { -1, 1 } do
+				tilt(out, 0.3, 0.75, 0.75, CFrame.new(s * (ix + e + 0.25), mid, z) * turnX, KANT_DIAMOND2, Kit.GEM)
+			end
+		end
+		for _, s in { -1, 1 } do -- кристаллы на передних углах плиты
+			local corner = Vector3.new(s * (ix + e - 0.2), mid, -(iz + e - 0.2))
+			crystal(out, corner, Vector3.new(s, 0.2, -1), 3.0, 0.6, Kit.DIAMOND)
+		end
 	end
 end
 
@@ -325,9 +319,9 @@ local function column(out: { Brick }, tier: number, sx: number, sz: number, y0: 
 		box(out, 0.14, yl, 0.14, cx + sx * edge, ym, cz - sz * (edge - 0.3), STAR_PALE, GLOW)
 		-- золотые звёзды-ромбы на наружных гранях ствола и по одной крупной на тумбе
 		local turnZ, turnX = CFrame.Angles(0, 0, math.rad(45)), CFrame.Angles(math.rad(45), 0, 0)
-		for k = 1, 9 do
+		for k = 1, 5 do
 			local r1, r2, r3 = Kit.rand(seed * 31 + k), Kit.rand(seed * 17 + k * 3), Kit.rand(seed * 7 + k * 5)
-			local yc = s0 + 1.4 + (s1 - s0 - 2.8) * (k - 0.5 + (r1 - 0.5) * 0.7) / 9
+			local yc = s0 + 1.4 + (s1 - s0 - 2.8) * (k - 0.5 + (r1 - 0.5) * 0.7) / 5
 			local a = (r2 - 0.5) * (sw - 1.8)
 			local size = 0.45 + r3 * 0.65
 			local color = if k % 3 == 0 then STAR_PALE else f.accent
@@ -348,6 +342,21 @@ local function column(out: { Brick }, tier: number, sx: number, sz: number, y0: 
 		level(w + 1.6, 0.5, y1 - 1.5, f.accent)
 		level(w + 1.3, 0.4, y1 - 1.0, f.main)
 		level(w + 1.8, 0.6, y1 - 0.6, f.accent)
+		-- крупные гранёные кристаллы: под капителью и (у передних колонн) у подножия
+		local under = Vector3.new(cx + sx * (w / 2 + 0.5), y1 - 2.4, cz + sz * (w / 2 + 0.5))
+		crystal(out, under, Vector3.new(sx * 0.45, -1, sz * 0.45), 5.6, 0.8, Kit.DIAMOND)
+		if sz < 0 then
+			local foot = Vector3.new(cx + sx * (w / 2 + 0.3), y0 + 2.0, cz + sz * (w / 2 + 0.3))
+			crystal(out, foot, Vector3.new(sx * 0.3, 1, sz * 0.3), 5.2, 0.75, Kit.DIAMOND)
+			crystal(
+				out,
+				foot + Vector3.new(-sx * 1.5, 0, 0.2 * sz),
+				Vector3.new(-sx * 0.2, 1, sz * 0.45),
+				3.4,
+				0.55,
+				Kit.DIAMOND
+			)
+		end
 	end
 end
 
@@ -424,39 +433,38 @@ function ShowcaseFloor.Far(theme: string, tier: number): Built
 	local e = 0.6 + f.out / 2
 	local FAR = { variant = "LegoSquaresFar", collide = false }
 	local band = if tier <= 3 then f.main else f.second
-	box(out, ix * 2, SLAB, iz * 2, 0, SLAB / 2, 0, f.core, FAR)
+	-- низ плиты — тёмная полоса во весь след: отделяет этажи друг от друга и от неба (контраст с 300 стадов)
+	local sof = 0.4
+	local bh, by = SLAB - sof, (SLAB + sof) / 2
+	box(out, (ix + e) * 2, sof, (iz + e) * 2, 0, sof / 2, 0, f.core:Lerp(Color3.new(0, 0, 0), 0.4), FAR)
+	box(out, ix * 2, bh, iz * 2, 0, by, 0, f.core, FAR)
 	for _, s in { -1, 1 } do
-		box(out, (ix + e) * 2, SLAB, e, 0, SLAB / 2, s * (iz + e / 2), band, FAR)
-		box(out, e, SLAB, iz * 2, s * (ix + e / 2), SLAB / 2, 0, band, FAR)
+		box(out, (ix + e) * 2, bh, e, 0, by, s * (iz + e / 2), band, FAR)
+		box(out, e, bh, iz * 2, s * (ix + e / 2), by, 0, band, FAR)
 	end
 	if tier == 5 then
-		box(out, (ix + e) * 2 + 0.3, 0.4, (iz + e) * 2 + 0.3, 0, SLAB / 2, 0, f.accent, FAR)
+		box(out, (ix + e) * 2 + 0.3, 0.4, (iz + e) * 2 + 0.3, 0, by, 0, f.accent, FAR)
 	elseif tier == 6 then
-		local full = (ix + e + 0.2) * 2
-		for k = 0, 5 do
-			box(
-				out,
-				full / 6,
-				0.4,
-				(iz + e) * 2 + 0.4,
-				-full / 2 + full * (k + 0.5) / 6,
-				SLAB / 2,
-				0,
-				rainbow(k / 6),
-				FAR
-			)
-		end
+		box(out, (ix + e) * 2 + 0.4, 0.4, (iz + e) * 2 + 0.4, 0, by, 0, KANT_DIAMOND, SPARK)
 	end
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			local cx, cz = sx * (HX + f.out - w / 2), sz * (HZ + f.out - w / 2)
-			local cap = if tier == 6 then f.accent else f.second
+			local cap = if tier == 2 or tier == 3 or tier == 6 then f.accent else f.second
 			box(out, w + 0.8, 1.4, w + 0.8, cx, SLAB + 0.7, cz, if tier == 1 then f.second else f.main, FAR)
 			box(out, w - 0.1, h - SLAB - 3.4, w - 0.1, cx, (SLAB + 1.4 + h - 2.0) / 2, cz, f.main, FAR)
 			box(out, w + 1.2, 2.0, w + 1.2, cx, h - 1.0, cz, cap, FAR)
-			if tier == 5 and sz < 0 then -- друза аметиста у передних колонн
+			if tier >= 5 and sz < 0 then -- друза у передних колонн: аметист или алмаз
 				local base = Vector3.new(cx + sx * (w / 2 + 0.3), SLAB + 1.2, cz + sz * (w / 2 + 0.3))
-				crystal(out, base, Vector3.new(sx * 0.3, 1, sz * 0.3), 4.0, 0.6, f.accent, FAR)
+				crystal(
+					out,
+					base,
+					Vector3.new(sx * 0.3, 1, sz * 0.3),
+					4.8,
+					0.7,
+					if tier == 5 then f.accent else Kit.DIAMOND,
+					FAR
+				)
 			end
 		end
 	end
@@ -467,7 +475,7 @@ function ShowcaseFloor.Far(theme: string, tier: number): Built
 	local floorY = SLAB + 0.36
 	local at, _, sz = t.Spot(tier, floorY)
 	local zg = at.Z + sz / 2 + 0.6 -- светлая стена — сразу за подиумом жильца
-	local tone = frameTone(tier)
+	local tone = frameTone(tier):Lerp(Color3.new(0, 0, 0), 0.22) -- рама темнее: проём читается на фоне неба
 	local glow = with(GLOW, { name = "Glow" })
 	box(out, xs * 2, h - floorY - 1.35, zb - zg, 0, (floorY + h - 1.35) / 2, (zg + zb) / 2, t.Glow[tier], glow)
 	box(out, xs * 2 + 0.6, 1.35, zb - zf + 0.6, 0, h - 0.725, zc - 0.05, tone, FAR)

@@ -54,8 +54,8 @@ for rarity, value in expected do
 	)
 end
 check(near(FloorRules.Weights("Common")[1], 0.6, 1e-9), "Common без сдвига: Деревянный 60 %")
-check(near(FloorRules.Chance("Legendary", "Cosmic"), 0.0055, 0.0001), "Legendary: Космический 0.55 %")
-check(near(FloorRules.Chance("Secret", "Cosmic"), 0.0110, 0.0001), "Secret: Космический 1.10 %")
+check(near(FloorRules.Chance("Legendary", "Diamond"), 0.0055, 0.0001), "Legendary: Алмазный 0.55 %")
+check(near(FloorRules.Chance("Secret", "Diamond"), 0.0110, 0.0001), "Secret: Алмазный 1.10 %")
 check(
 	near(FloorRules.ExpectedMult(nil), 2.060, 0.001),
 	"неизвестная редкость существа — без сдвига"
@@ -68,10 +68,10 @@ check(
 	"граница 60 %"
 )
 check(
-	FloorRules.Roll("Common", 0.9989) == "Mythic" and FloorRules.Roll("Common", 0.9991) == "Cosmic",
+	FloorRules.Roll("Common", 0.9989) == "Mythic" and FloorRules.Roll("Common", 0.9991) == "Diamond",
 	"граница 99.9 %"
 )
-check(FloorRules.Roll("Common", 0.999999) == "Cosmic", "roll у 1 — Космический")
+check(FloorRules.Roll("Common", 0.999999) == "Diamond", "roll у 1 — Алмазный")
 check(FloorRules.Roll("Common", 0 / 0) == "Wood", "NaN — ступень по умолчанию")
 check(FloorRules.Roll("Common", "x") == "Wood", "не число — ступень по умолчанию")
 local counts, n = {}, 200000
@@ -101,8 +101,8 @@ for rarity in expected do
 end
 check(near(FloorRules.Income(206, "Common", "Wood"), 100, 0.01), "Деревянный этаж Common: 206 → 100")
 check(
-	near(FloorRules.Income(206, "Common", "Cosmic"), 6000, 0.5),
-	"Космический этаж Common: 206 → 6000"
+	near(FloorRules.Income(206, "Common", "Diamond"), 6000, 0.5),
+	"Алмазный этаж Common: 206 → 6000"
 )
 check(
 	FloorRules.Income(100, "Common", nil) == FloorRules.Income(100, "Common", "Wood"),

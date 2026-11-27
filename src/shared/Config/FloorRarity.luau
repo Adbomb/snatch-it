@@ -1,11 +1,11 @@
--- Редкость этажа (D74): лестница Деревянный … Космический — шансы прокрутки, множители дохода и сдвиг шансов вверх от
+-- Редкость этажа (D74): лестница Деревянный … Алмазный — шансы прокрутки, множители дохода и сдвиг шансов вверх от
 -- редкости съеденного существа (решения владельца 2026-11-26/27). Названия — только ярлыки, не стиль этажа.
 -- Правила — Shared/FloorRules, проверка — scripts/lune/check_floor_rules.luau. Ни от чего не зависит.
 
 local FloorRarity = {}
 
 -- Порядок ступеней: от частой к редкой. Запись предмета хранит ключ (пусто — Wood).
-FloorRarity.Order = { "Wood", "Stone", "Marble", "Gold", "Mythic", "Cosmic" }
+FloorRarity.Order = { "Wood", "Stone", "Marble", "Gold", "Mythic", "Diamond" }
 FloorRarity.Default = "Wood"
 
 FloorRarity.Names = {
@@ -14,12 +14,12 @@ FloorRarity.Names = {
 	Marble = "Мраморный",
 	Gold = "Золотой",
 	Mythic = "Мифический",
-	Cosmic = "Космический",
+	Diamond = "Алмазный",
 }
 
 -- Шанс ступени, % (без сдвига; в сумме 100), и множитель дохода этажа.
-FloorRarity.Chance = { Wood = 60, Stone = 25, Marble = 10, Gold = 4, Mythic = 0.9, Cosmic = 0.1 }
-FloorRarity.Mult = { Wood = 1, Stone = 2, Marble = 4, Gold = 8, Mythic = 20, Cosmic = 60 }
+FloorRarity.Chance = { Wood = 60, Stone = 25, Marble = 10, Gold = 4, Mythic = 0.9, Diamond = 0.1 }
+FloorRarity.Mult = { Wood = 1, Stone = 2, Marble = 4, Gold = 8, Mythic = 20, Diamond = 60 }
 
 -- Сдвиг от редкости существа: вес ступени k (0 — Wood) умножается на Shift ^ k, затем веса нормируются.
 FloorRarity.Shift = { Common = 1, Rare = 1.15, Epic = 1.3, Legendary = 1.5, Secret = 1.8 }

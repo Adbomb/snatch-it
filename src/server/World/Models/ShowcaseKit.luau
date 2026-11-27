@@ -32,6 +32,26 @@ function Kit.hex(code: string): Color3
 	return Color3.fromHex(code)
 end
 
+-- Металл (решение владельца 2026-11-27, исключение из «всё Plastic»): золото, латунь и бронза — встроенный материал
+-- Roblox Foil, без загрузок. Цвет, заведённый через Kit.metal, красится фольгой во всех функциях набора.
+local metals: { [string]: boolean } = {}
+function Kit.metal(code: string): Color3
+	local color = Color3.fromHex(code)
+	metals[color:ToHex()] = true
+	return color
+end
+Kit.GOLD, Kit.GOLD2 = Kit.metal("F0BC3C"), Kit.metal("C4922A")
+Kit.BRASS, Kit.BRONZE = Kit.metal("D0A84E"), Kit.metal("C08444")
+Kit.DIAMOND = Color3.fromHex("8FD8FF") -- кристаллы Алмазного
+Kit.GEM = { material = Enum.Material.Glass, transparency = 0.28, collide = false } -- гранёный прозрачный кристалл
+
+local function finish(color: Color3, extra: { [string]: any }): { [string]: any }
+	if extra.material == nil and metals[color:ToHex()] then
+		return { material = Enum.Material.Foil, collide = extra.collide, shadow = extra.shadow, name = extra.name }
+	end
+	return extra
+end
+
 function Kit.with(base: { [string]: any }, more: { [string]: any }): { [string]: any }
 	local t = table.clone(base)
 	for k, v in more do
@@ -52,40 +72,43 @@ function Kit.box(
 	color: Color3,
 	extra: any?
 )
-	table.insert(out, ModelBuilder.Brick(Vector3.new(sx, sy, sz), Vector3.new(x, y, z), color, extra or Kit.ARCH))
+	table.insert(
+		out,
+		ModelBuilder.Brick(Vector3.new(sx, sy, sz), Vector3.new(x, y, z), color, finish(color, extra or Kit.ARCH))
+	)
 end
 
 -- Повёрнутый брусок: cf — положение и поворот центра.
 function Kit.tilt(out: { Brick }, sx: number, sy: number, sz: number, cf: CFrame, color: Color3, extra: any?)
-	table.insert(out, ModelBuilder.Brick(Vector3.new(sx, sy, sz), cf, color, extra or Kit.TRIM))
+	table.insert(out, ModelBuilder.Brick(Vector3.new(sx, sy, sz), cf, color, finish(color, extra or Kit.TRIM)))
 end
 
 -- Вертикальный цилиндр радиуса r и высоты h с низом на y.
 function Kit.cyl(out: { Brick }, r: number, h: number, x: number, y: number, z: number, color: Color3, extra: any?)
-	local e = Kit.with(extra or Kit.PROP, { shape = "Cylinder" })
+	local e = Kit.with(finish(color, extra or Kit.PROP), { shape = "Cylinder" })
 	table.insert(out, ModelBuilder.Brick(Vector3.new(h, r * 2, r * 2), CFrame.new(x, y + h / 2, z) * UPRIGHT, color, e))
 end
 
 -- Цилиндр с осью вдоль Z: центр (x, y, z), длина len.
 function Kit.cylZ(out: { Brick }, r: number, len: number, x: number, y: number, z: number, color: Color3, extra: any?)
-	local e = Kit.with(extra or Kit.PROP, { shape = "Cylinder" })
+	local e = Kit.with(finish(color, extra or Kit.PROP), { shape = "Cylinder" })
 	table.insert(out, ModelBuilder.Brick(Vector3.new(len, r * 2, r * 2), CFrame.new(x, y, z) * ALONG_Z, color, e))
 end
 
 -- Цилиндр с осью вдоль X: центр (x, y, z), длина len.
 function Kit.cylX(out: { Brick }, r: number, len: number, x: number, y: number, z: number, color: Color3, extra: any?)
-	local e = Kit.with(extra or Kit.PROP, { shape = "Cylinder" })
+	local e = Kit.with(finish(color, extra or Kit.PROP), { shape = "Cylinder" })
 	table.insert(out, ModelBuilder.Brick(Vector3.new(len, r * 2, r * 2), CFrame.new(x, y, z), color, e))
 end
 
 function Kit.ball(out: { Brick }, r: number, x: number, y: number, z: number, color: Color3, extra: any?)
-	local e = Kit.with(extra or Kit.PROP, { shape = "Ball" })
+	local e = Kit.with(finish(color, extra or Kit.PROP), { shape = "Ball" })
 	table.insert(out, ModelBuilder.Brick(Vector3.new(r * 2, r * 2, r * 2), Vector3.new(x, y, z), color, e))
 end
 
 -- Стержень-цилиндр радиуса r от точки a до точки b.
 function Kit.rod(out: { Brick }, r: number, a: Vector3, b: Vector3, color: Color3, extra: any?)
-	local e = Kit.with(extra or Kit.PROP, { shape = "Cylinder" })
+	local e = Kit.with(finish(color, extra or Kit.PROP), { shape = "Cylinder" })
 	local cf = CFrame.lookAt((a + b) / 2, b) * ALONG_Z
 	table.insert(out, ModelBuilder.Brick(Vector3.new((b - a).Magnitude, r * 2, r * 2), cf, color, e))
 end
@@ -98,6 +121,24 @@ function Kit.limb(out: { Brick }, r: number, points: { Vector3 }, color: Color3,
 			Kit.ball(out, r, points[i].X, points[i].Y, points[i].Z, color, extra)
 		end
 	end
+end
+
+-- Ступенчатый гранёный кристалл: тело и более узкое остриё вдоль dir (резкие ступени D39), от точки base.
+function Kit.crystal(out: { Brick }, base: Vector3, dir: Vector3, len: number, r: number, color: Color3, extra: any?)
+	local d = dir.Unit
+	local up = if math.abs(d.Y) > 0.95 then Vector3.xAxis else Vector3.yAxis
+	local cf = CFrame.lookAt(base, base + d, up) * CFrame.Angles(math.rad(-90), 0, 0) -- ось Y бруска вдоль dir
+	local spin = CFrame.Angles(0, math.rad(45), 0)
+	local e = extra or Kit.GEM
+	Kit.tilt(out, r * 2, len * 0.72, r * 2, cf * CFrame.new(0, len * 0.36, 0) * spin, color, e)
+	Kit.tilt(out, r * 1.3, len * 0.36, r * 1.3, cf * CFrame.new(0, len * 0.82, 0) * spin, color, e)
+end
+
+-- Друза из трёх кристаллов на полу у точки (x, y, z): высокий и два пониже; s — размер.
+function Kit.druse(out: { Brick }, x: number, y: number, z: number, s: number, color: Color3)
+	Kit.crystal(out, Vector3.new(x, y, z), Vector3.new(0.1, 1, -0.1), 3.6 * s, 0.55 * s, color)
+	Kit.crystal(out, Vector3.new(x + 0.9 * s, y, z - 0.3 * s), Vector3.new(0.45, 1, -0.2), 2.4 * s, 0.42 * s, color)
+	Kit.crystal(out, Vector3.new(x - 0.8 * s, y, z - 0.5 * s), Vector3.new(-0.4, 1, -0.3), 2.0 * s, 0.38 * s, color)
 end
 
 -- Плафон без источника света (свет этажа — два общих источника, бюджет телефона).
@@ -200,7 +241,7 @@ end
 
 -- Свет этажа (2 источника): общий тёплый в глубине комнаты и прожектор сверху на жильца; ярче с редкостью.
 function Kit.lights(out: { Brick }, tier: number, y0: number, y1: number, at: Vector3, headY: number, warm: Color3)
-	local bright = ({ 1.0, 1.0, 1.05, 1.15, 1.25, 1.4 })[tier]
+	local bright = ({ 1.0, 1.05, 1.15, 1.3, 1.45, 1.6 })[tier]
 	local span = y1 - y0
 	local top = y1 - 0.4
 	local main = Vector3.new(0, math.min(top - 3, y0 + span * 0.6), 3)

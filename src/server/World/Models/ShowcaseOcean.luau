@@ -5,8 +5,8 @@
 --   4 + атриум: крылья галереи, большая медуза-люстра, большой иллюминатор с рыбой;
 --   5 + второй ярус, лампы-медузы на цепях, гигантская ламинария;   6 + героический объект — золотая раковина с
 --   жемчужиной. Жилец стоит у самого стекла на низком островке — его ничто не перекрывает. Свет: общий тёплый и
--- прожектор на жильца (у Космического третий — на жемчужину). Наружные выросты (Grow): у Мифического коралл оплетает
--- переднюю колонну, у Космического из-за колонн выходят изогнутые коралловые ветви с шарами-аквариумами.
+-- прожектор на жильца (у Алмазного третий — на жемчужину). Наружные выросты (Grow): у Мифического коралл оплетает
+-- переднюю колонну, у Алмазного из-за колонн выходят изогнутые коралловые ветви с шарами-аквариумами.
 -- Только кирпичи. Зависит от ShowcaseKit.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -22,9 +22,9 @@ local PROP, TRIM = Kit.PROP, Kit.TRIM
 local Ocean = {}
 
 Ocean.Item = "AquariumCamel"
-Ocean.Scale = { 4.0, 4.9, 5.6, 6.3, 7.2, 8.4 } -- масштаб показа жильца по редкости
+Ocean.Scale = { 4.0, 4.5, 5.0, 5.5, 6.0, 6.6 } -- масштаб показа жильца по редкости
 -- Цвет светлого проёма дальней версии: тёплая бирюза, ярче с редкостью.
-Ocean.Glow = { hex("7FC4BE"), hex("8CCDC6"), hex("9AD6CE"), hex("A9DFD6"), hex("B8E7DE"), hex("CBF1E8") }
+Ocean.Glow = { hex("2F9C9A"), hex("36A5A0"), hex("3EAEA6"), hex("48B8AC"), hex("54C2B3"), hex("62CCBB") }
 -- (Dado — цвет цоколя стены для дальней версии — задан ниже, после палитры.)
 local SIZE = Vector3.new(2.868, 2.876, 1.228) -- размер жильца в натуральную величину (Config/Items)
 
@@ -46,9 +46,9 @@ local C = {
 	rock = hex("8C8F96"),
 	wood = hex("8A5A2B"),
 	wood2 = hex("6B4524"),
-	gold = hex("E9B43A"),
-	gold2 = hex("B98A1E"),
-	brass = hex("C9A24A"),
+	gold = Kit.GOLD,
+	gold2 = Kit.GOLD2,
+	brass = Kit.BRASS,
 	iron = hex("3A3F48"),
 	red = hex("D9483B"),
 	lamp = hex("FFE3A0"),
@@ -65,7 +65,9 @@ local WATER = { material = Enum.Material.Glass, transparency = 0.45, collide = f
 local BOWL = { material = Enum.Material.Glass, transparency = 0.5, collide = false, shadow = false }
 
 -- Оболочка комнаты: песочный пол, бирюзовая стена с плиточным поясом, светлый потолок с балками.
-local function shell(out, y0: number, y1: number, o: number)
+local function shell(out, y0: number, y1: number, o: number, tier: number)
+	local lift = ({ 0, 0, 0.08, 0.16, 0.24, 0.32 })[tier] -- на высших редкостях зал светлее
+	local wall, wall2 = C.wall:Lerp(C.tile, lift), C.wall2:Lerp(C.tile, lift)
 	local x1, z0 = HX - 1.4 + o, -(HZ - 1.4 + o)
 	local n = 12
 	local w = x1 * 2 / n
@@ -76,8 +78,8 @@ local function shell(out, y0: number, y1: number, o: number)
 	end
 	local half = HX + o - 3.0
 	local wy0, wy1 = y0, y1 - 0.4
-	box(out, half * 2, wy1 - wy0, 0.3, 0, (wy0 + wy1) / 2, BACK + 0.15, C.wall)
-	box(out, half * 2 - 1, 4.4, 0.15, 0, wy0 + 2.5, BACK - 0.075, C.wall2) -- цоколь
+	box(out, half * 2, wy1 - wy0, 0.3, 0, (wy0 + wy1) / 2, BACK + 0.15, wall)
+	box(out, half * 2 - 1, 4.4, 0.15, 0, wy0 + 2.5, BACK - 0.075, wall2) -- цоколь
 	box(out, half * 2 - 0.6, 0.9, 0.3, 0, wy0 + 5.15, BACK - 0.15, C.tile, TRIM) -- плиточный пояс
 	box(out, half * 2 - 1.8, 0.5, 0.25, 0, wy1 - 1.6, BACK - 0.125, C.tile, TRIM) -- пояс под потолком
 	box(out, (HX + o) * 2 - 1.4, 0.36, (HZ + o) * 2 - 1.4, 0, y1 - 0.22, 0, C.ceiling) -- потолок: с земли виден он
@@ -235,6 +237,20 @@ local function island(out, tier: number, f: number): (Vector3, number, number)
 	return Vector3.new(0, f + ph + 0.25, zc), sx / 2, zc + sz / 2
 end
 
+-- Золотая раковина с жемчужиной на камне (героический объект Алмазного): створки, рёбра, жемчужина. s — размер.
+local function pearlShell(out, x: number, y: number, z: number, s: number)
+	cyl(out, 2.5 * s, 1.4 * s, x, y, z, C.rock)
+	cylX(out, 1.5 * s, 4.6 * s, x, y + 2.3 * s, z, C.gold) -- нижняя створка
+	box(out, 4.8 * s, 0.3 * s, 3.2 * s, x, y + 3.0 * s, z, C.gold2, TRIM)
+	ball(out, 1.6 * s, x, y + 4.5 * s, z - 0.2 * s, C.pearl, Kit.LAMP) -- жемчужина
+	local lid = CFrame.new(x, y + 6.0 * s, z + 1.5 * s) * CFrame.Angles(math.rad(-66), 0, 0)
+	tilt(out, 5.2 * s, 0.4 * s, 4.8 * s, lid, C.gold, PROP) -- верхняя створка
+	for k = -1, 1 do -- рёбра створки веером
+		local rib = lid * CFrame.new(k * 1.6 * s, -0.3 * s, 0.3 * s) * CFrame.Angles(0, math.rad(-k * 9), 0)
+		tilt(out, 0.6 * s, 0.3 * s, 4.4 * s, rib, C.gold2, TRIM)
+	end
+end
+
 -- Место жильца у стекла: точка (низ существа), размеры подиума sx × sz и его высота. f — верх пола.
 function Ocean.Spot(tier: number, f: number): (Vector3, number, number, number)
 	local s = Ocean.Scale[tier]
@@ -248,7 +264,7 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 	local o = if tier == 6 then 1.0 else 0
 	local f = y0 + 0.36 -- верх пола
 	local top = y1 - 0.4 -- низ потолка
-	shell(out, y0, y1, o)
+	shell(out, y0, y1, o, tier)
 	local at, rx, rz = island(out, tier, f)
 	local headY = at.Y + Ocean.Scale[tier] * SIZE.Y
 	local rim = if tier >= 4 then C.gold else C.brass
@@ -260,7 +276,7 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 	if tier < 5 then
 		coralBush(out, -14.2, f, -12.0, 0.8 + tier * 0.06, 2)
 	end
-	if tier < 6 then
+	if tier < 4 then
 		coralBush(out, 14.2, f, -11.9, 0.75 + tier * 0.05, 3)
 	end
 	for _, x in { 0.8, 13.6 } do
@@ -268,7 +284,8 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 		cylZ(out, 0.72, 0.4, x, f + 9.6, BACK - 0.2, C.lamp, Kit.LAMP)
 	end
 
-	local g1, g2 -- высоты галерей
+	local g1, g2 -- высоты галерей: невысоко, чтобы второй уровень был виден с ракурса игрока
+	local side = rx + 3.3 -- место «на виду» рядом с жильцом (между островком и боковым стеклом)
 	if tier <= 2 then
 		lifeRing(out, 7.2, f + 9.4, 1.9)
 		box(out, 5.0, 0.4, 1.6, -11.5, f + 1.5, rz + 5.0, C.white, PROP) -- скамья
@@ -286,7 +303,7 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 	end
 	if tier >= 3 then -- галерея-мостик и лестница: диорама в два уровня
 		local zF = math.max(rz + 3.4, BACK - 7.5)
-		g1 = f + ({ 0, 0, 15.5, 17.5, 19.5, 24 })[tier]
+		g1 = f + 11.5 + tier
 		Kit.gallery(out, PAL, f, g1, zF, HX - 3.6 + o, true)
 		Kit.stairs(out, PAL, f, g1, -1.5, 11.5, zF - 1.7)
 		for i, x in { -10, -4, 2 } do
@@ -296,33 +313,38 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 		coralBush(out, -12.6, g1, BACK - 2.4, 1.0, 5)
 		chest(out, 9.4, g1, BACK - 2.4)
 		if tier == 3 then
-			jelly(out, 0, top - 5.0, rz + 3.2, 2.3, top, C.jelly)
+			jelly(out, 0, headY + 7.2, rz + 3.2, 2.3, top, C.jelly)
 		end
 	end
 	if tier >= 4 then -- атриум в два света: крылья галереи, большая медуза-люстра, большой иллюминатор
 		local zF = math.max(rz + 3.4, BACK - 7.5)
 		for _, s in { -1, 1 } do
-			Kit.wing(out, PAL, g1, s, HX - 5.6 + o, HX - 1.6 + o, at.Z - 2, zF)
+			Kit.wing(out, PAL, g1, s, HX - 5.6 + o, HX - 1.6 + o, at.Z + 4, zF)
 		end
 		if tier == 4 then
-			local cy = top - 6.5
+			local cy = headY + 9.5
 			jelly(out, 0, cy, rz + 3.6, 3.6, top, C.jelly)
 			jelly(out, -5.4, cy + 1.5, rz + 5.2, 1.5, top, C.lamp)
 			jelly(out, 5.4, cy + 2.2, rz + 5.2, 1.5, top, C.lamp)
-			porthole(out, 2.5, g1 + 12.5, 3.4, rim, FISH[1])
+			porthole(out, 2.5, g1 + 11.5, 3.2, rim, FISH[1])
+			-- на виду рядом с жильцом: сундук с сокровищами на песчаной горке
+			cyl(out, 2.6, 1.0, side, f, at.Z + 1, C.sand2)
+			chest(out, side, f + 1.0, at.Z + 1)
 		end
 	end
-	if tier >= 5 then -- второй ярус, лампы-медузы на цепях, гигантская ламинария в переднем углу
-		g2 = f + (if tier == 5 then 31.5 else 37)
+	if tier >= 5 then -- второй ярус, лампы-медузы на цепях, гигантская ламинария в переднем углу, полотна
+		g2 = g1 + 12
 		local zF2 = BACK - 6.5
 		Kit.gallery(out, PAL, f, g2, zF2, HX - 3.6 + o, false)
 		tubeTank(out, -9.5, g2, BACK - 2.8, 1.7, 6.0)
-		if tier == 5 then
-			porthole(out, -3.5, g2 + 5.0, 2.0, rim, FISH[4])
-		end
 		for _, s in { -1, 1 } do
-			local jx, jy, jz = s * (HX - 6.5 + o), math.max(headY + 7, g1 + 9), rz - 1.5
+			local jx, jy, jz = s * (HX - 6.5 + o), headY + 8, rz - 1.5
 			jelly(out, jx, jy, jz, 2.6, top, if s < 0 then C.jelly else C.lamp)
+		end
+		for i, x in { -9.5, 0, 9.5 } do -- полотна-волны на верхней стене: зал не пустой до потолка
+			local len = top - g2 - 9
+			box(out, 5, len, 0.2, x, top - 2.4 - len / 2, BACK - 0.1, if i == 2 then C.white else C.tile, TRIM)
+			cylZ(out, 1.5, 0.3, x, top - 2.4 - len * 0.35, BACK - 0.3, rim, TRIM)
 		end
 		local kx, kz = -(HX - 3.0 + o), -(HZ - 5.4 + o)
 		local kh = (g1 - f) * 0.92
@@ -339,25 +361,17 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 			Vector3.new(kx + 0.6, f + kh * 0.55, kz + 2.4),
 		}, C.kelp2, TRIM)
 		if tier == 5 then
-			jelly(out, 0, top - 6, rz + 3.2, 3.4, top, C.jelly)
+			jelly(out, 0, headY + 9, rz + 3.2, 3.4, top, C.jelly)
+			tubeTank(out, side, f, at.Z + 1, 1.8, 8.0) -- на виду рядом с жильцом
 		end
 	end
-	if tier == 6 then -- героический объект: золотая раковина с жемчужиной, аквариум-колонна, большой иллюминатор
-		local gz = BACK - 3.3
-		local py = g2 + 8.2
-		box(out, 13.6, 1.0, 5.6, 0, g2 + 0.5, gz, C.wall2, PROP)
-		cylX(out, 3.9, 13.0, 0, g2 + 3.2, gz - 0.6, C.gold) -- нижняя створка
-		box(out, 13.4, 0.5, 6.2, 0, g2 + 4.85, gz - 0.2, C.gold2, TRIM)
-		ball(out, 4.3, 0, py + 0.9, gz - 0.6, C.pearl, Kit.LAMP) -- жемчужина
-		local lid = CFrame.new(0, py + 7.6, gz + 2.4) * CFrame.Angles(math.rad(-68), 0, 0)
-		tilt(out, 14.4, 0.7, 12.4, lid, C.gold, PROP) -- верхняя створка
-		for k = -2, 2 do -- рёбра створки веером
-			local rib = lid * CFrame.new(k * 2.8, -0.5, 0.6) * CFrame.Angles(0, math.rad(-k * 7), 0)
-			tilt(out, 1.0, 0.4, 11.4, rib, C.gold2, TRIM)
-		end
-		tubeTank(out, 11.2, g2, BACK - 2.8, 1.6, 9.0)
-		porthole(out, 8.6, g1 + 11.6, 3.4, rim, FISH[1])
-		Kit.light(out, Vector3.new(0, py + 9, BACK - 14), 34, 1.7, C.warm, 70, Vector3.new(0, -0.3, 1))
+	if tier == 6 then -- героические объекты рядом с жильцом: золотая раковина с жемчужиной и аквариум-колонна
+		local hz = at.Z + 1
+		pearlShell(out, -side, f, hz, 1.15)
+		Kit.druse(out, -side + 1.6, f, hz - 3.6, 1.3, Kit.DIAMOND)
+		tubeTank(out, side, f, hz, 1.9, 11.0)
+		Kit.druse(out, side - 1.2, f, hz - 3.4, 1.2, Kit.DIAMOND)
+		Kit.light(out, Vector3.new(-side, f + 19, hz - 6), 28, 1.7, C.warm, 60, Vector3.new(0, -1, 0.35))
 	end
 
 	Kit.lights(out, tier, y0, y1, at, headY, C.warm)

@@ -4,8 +4,8 @@
 --   3 + галерея с лестницей (два уровня);                   4 + атриум: галерея буквой П, большая люстра, пояс чемпиона;
 --   5 + второй ярус, гигантские перчатки, большой кактус;   6 + героический объект — золотая перчатка чемпиона.
 -- Жилец стоит у самого стекла на ринге без передних канатов — его ничто не перекрывает. Свет: общий тёплый и
--- прожектор на жильца (у Космического третий — на трофей). Наружные выросты (Grow): у Мифического кактус оплетает
--- переднюю колонну, у Космического из-за колонн выходят изогнутые руки-кактусы с золотыми перчатками.
+-- прожектор на жильца (у Алмазного третий — на трофей). Наружные выросты (Grow): у Мифического кактус оплетает
+-- переднюю колонну, у Алмазного из-за колонн выходят изогнутые руки-кактусы с золотыми перчатками.
 -- Только кирпичи. Зависит от ShowcaseKit.
 
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -13,15 +13,15 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Kit = require(ServerScriptService.Server.World.Models.ShowcaseKit)
 
 local HX, HZ, BACK, W = Kit.HX, Kit.HZ, Kit.BACK, Kit.W
-local box, cyl, cylZ, cylX, ball, rod, limb, tilt, lamp =
-	Kit.box, Kit.cyl, Kit.cylZ, Kit.cylX, Kit.ball, Kit.rod, Kit.limb, Kit.tilt, Kit.lamp
+local box, cyl, cylZ, cylX, ball, rod, limb, lamp =
+	Kit.box, Kit.cyl, Kit.cylZ, Kit.cylX, Kit.ball, Kit.rod, Kit.limb, Kit.lamp
 local hex = Kit.hex
 local PROP, TRIM = Kit.PROP, Kit.TRIM
 
 local Saloon = {}
 
 Saloon.Item = "CactusBoxer"
-Saloon.Scale = { 4.0, 5.0, 5.8, 6.6, 7.6, 9.0 } -- масштаб показа жильца по редкости
+Saloon.Scale = { 4.0, 4.6, 5.2, 5.8, 6.4, 7.0 } -- масштаб показа жильца по редкости
 -- Цвет светлого проёма дальней версии: тёплый, ярче с редкостью.
 Saloon.Glow = { hex("D9A25E"), hex("E0AC66"), hex("E8B670"), hex("F0C27C"), hex("F5CC8A"), hex("FFD99A") }
 -- (Dado — цвет цоколя стены для дальней версии — задан ниже, после палитры.)
@@ -41,11 +41,11 @@ local C = {
 	cream = hex("F2E6D0"),
 	green = hex("3FA14B"),
 	green2 = hex("2E8A3E"),
-	brass = hex("C9A24A"),
+	brass = Kit.BRASS,
 	iron = hex("3A3A3F"),
 	lamp = hex("FFD98A"),
-	gold = hex("E9B43A"),
-	gold2 = hex("B98A1E"),
+	gold = Kit.GOLD,
+	gold2 = Kit.GOLD2,
 	pot = hex("B5653A"),
 	pink = hex("F27BA5"),
 	warm = hex("FFD9A0"),
@@ -56,7 +56,9 @@ local PAL: Kit.Palette =
 local BOTTLES = { hex("43A047"), hex("FB8C00"), hex("E53935"), hex("1E88E5"), hex("FDD835") }
 
 -- Оболочка комнаты: пол из досок, задняя стена с панелями, потолок с балками. o — вынос каркаса за след.
-local function shell(out, y0: number, y1: number, o: number)
+local function shell(out, y0: number, y1: number, o: number, tier: number)
+	local lift = ({ 0, 0, 0.1, 0.2, 0.3, 0.4 })[tier] -- на высших редкостях зал светлее
+	local wall, wall2 = C.wall:Lerp(C.cream, lift), C.wall2:Lerp(C.cream, lift)
 	local x1, z0 = HX - 1.4 + o, -(HZ - 1.4 + o)
 	local n = 12
 	local w = x1 * 2 / n
@@ -75,11 +77,11 @@ local function shell(out, y0: number, y1: number, o: number)
 	end
 	local half = HX + o - 3.0
 	local wy0, wy1 = y0, y1 - 0.4
-	box(out, half * 2, wy1 - wy0, 0.3, 0, (wy0 + wy1) / 2, BACK + 0.15, C.wall)
-	box(out, half * 2 - 1, 5, 0.15, 0, wy0 + 2.8, BACK - 0.075, C.wall2) -- панель низа
+	box(out, half * 2, wy1 - wy0, 0.3, 0, (wy0 + wy1) / 2, BACK + 0.15, wall)
+	box(out, half * 2 - 1, 5, 0.15, 0, wy0 + 2.8, BACK - 0.075, wall2) -- панель низа
 	box(out, half * 2 - 0.6, 0.4, 0.3, 0, wy0 + 5.5, BACK - 0.15, C.dark, TRIM) -- рейка
 	for _, x in { -12, -4, 4, 12 } do -- вертикальные доски стены
-		box(out, 2.2, wy1 - wy0 - 6.2, 0.12, x, (wy0 + 5.8 + wy1 - 0.4) / 2, BACK - 0.06, C.wall2, TRIM)
+		box(out, 2.2, wy1 - wy0 - 6.2, 0.12, x, (wy0 + 5.8 + wy1 - 0.4) / 2, BACK - 0.06, wall2, TRIM)
 	end
 	box(out, (HX + o) * 2 - 1.4, 0.36, (HZ + o) * 2 - 1.4, 0, y1 - 0.22, 0, C.ceiling) -- потолок: с земли виден он
 	for _, z in { -9, 0, 9 } do
@@ -225,12 +227,21 @@ function Saloon.Spot(tier: number, f: number): (Vector3, number, number, number)
 	return Vector3.new(0, f + ph + 0.2, -(HZ - 1.8) + sz / 2), sx, sz, ph
 end
 
--- Точка жильца — низ существа на ринге. o — вынос каркаса за след (у Космического 1 стад).
+-- Пояс чемпиона на стойке (лицом к стеклу): тумба, столб, золотой медальон на красной ленте. s — размер.
+local function beltStand(out, x: number, y: number, z: number, s: number)
+	box(out, 3.6 * s, 1.2 * s, 3.0 * s, x, y + 0.6 * s, z, C.dark, PROP)
+	box(out, 0.7 * s, 5.2 * s, 0.7 * s, x, y + 3.8 * s, z + 0.4 * s, C.dark, TRIM)
+	box(out, 5.0 * s, 1.5 * s, 0.3 * s, x, y + 6.2 * s, z, C.red, TRIM)
+	cylZ(out, 2.1 * s, 0.5 * s, x, y + 6.2 * s, z - 0.2 * s, C.gold)
+	cylZ(out, 1.3 * s, 0.3 * s, x, y + 6.2 * s, z - 0.5 * s, C.gold2, TRIM)
+end
+
+-- Точка жильца — низ существа на ринге. o — вынос каркаса за след (у Алмазного 1 стад).
 function Saloon.Build(out, tier: number, y0: number, y1: number): Vector3
 	local o = if tier == 6 then 1.0 else 0
 	local f = y0 + 0.36 -- верх досок пола
 	local top = y1 - 0.4 -- низ потолка
-	shell(out, y0, y1, o)
+	shell(out, y0, y1, o, tier)
 	local at, rx, rz = ring(out, tier, f, if tier >= 4 then C.gold2 else C.dark)
 	local headY = at.Y + Saloon.Scale[tier] * SIZE.Y -- макушка жильца
 
@@ -261,7 +272,8 @@ function Saloon.Build(out, tier: number, y0: number, y1: number): Vector3
 		box(out, 1.2, 0.25, 1.2, x, f + 10.4, BACK - 0.75, C.iron, TRIM)
 	end
 
-	local g1, g2 -- высоты галерей
+	local g1, g2 -- высоты галерей: невысоко, чтобы второй уровень был виден с ракурса игрока
+	local side = rx + 3.3 -- место «на виду» рядом с жильцом (между рингом и боковым стеклом)
 	if tier <= 2 then
 		barrel(out, 9.4, f, BACK - 2.2, 1.3, 2.8)
 		tableSet(out, -11.5, f, rz + 5.2)
@@ -281,7 +293,7 @@ function Saloon.Build(out, tier: number, y0: number, y1: number): Vector3
 	end
 	if tier >= 3 then -- галерея и лестница: диорама в два уровня
 		local zF = math.max(rz + 3.4, BACK - 7.5)
-		g1 = f + ({ 0, 0, 15.5, 17.5, 19.5, 24 })[tier]
+		g1 = f + 11.5 + tier
 		Kit.gallery(out, PAL, f, g1, zF, HX - 3.6 + o, true)
 		Kit.stairs(out, PAL, f, g1, -1.5, 11.5, zF - 1.7)
 		tableSet(out, -8, g1, BACK - 3.6)
@@ -289,33 +301,41 @@ function Saloon.Build(out, tier: number, y0: number, y1: number): Vector3
 		barrel(out, 7.6, g1, BACK - 2.4, 1.2, 2.6)
 		cactusPot(out, -13, g1, BACK - 2.4, 3.2, 1)
 		gloveSign(out, 1.5, g1 + 7.4, BACK - 0.5, 1.15)
-		flags(out, -(HX - 4.2), HX - 4.2, 9, top - 2.2, BACK - 0.35)
+		if tier <= 4 then
+			flags(out, -(HX - 4.2), HX - 4.2, 9, top - 2.2, BACK - 0.35)
+		end
 		if tier == 3 then
-			chandelier(out, 0, top - 4.6, rz + 3.2, 3.4, top, 4, C.dark)
+			chandelier(out, 0, headY + 6.4, rz + 3.2, 3.4, top, 4, C.dark)
 		end
 	end
 	if tier >= 4 then -- атриум в два света: крылья галереи вдоль стёкол, большая люстра, пояс чемпиона
 		local zF = math.max(rz + 3.4, BACK - 7.5)
 		for _, s in { -1, 1 } do
-			Kit.wing(out, PAL, g1, s, HX - 5.6 + o, HX - 1.6 + o, at.Z - 2, zF)
+			Kit.wing(out, PAL, g1, s, HX - 5.6 + o, HX - 1.6 + o, at.Z + 4, zF)
 		end
 		belt(out, -7.5, g1 + 7.6, 2.3)
 		if tier == 4 then
-			local cy = math.max(headY + 4.5, top - 9)
+			local cy = headY + 7
 			chandelier(out, 0, cy, rz + 3.6, 5.2, top, 8, C.gold2)
 			chandelier(out, 0, cy - 2.4, rz + 3.6, 2.6, cy, 4, C.gold2)
+			beltStand(out, side, f, at.Z + 1, 1.0) -- на виду рядом с жильцом
 		end
 	end
-	if tier >= 5 then -- второй ярус, гигантские перчатки на цепях, большой кактус в переднем углу
-		g2 = f + (if tier == 5 then 31.5 else 41)
+	if tier >= 5 then -- второй ярус, гигантские перчатки на цепях, большой кактус в переднем углу, знамёна
+		g2 = g1 + 12
 		local zF2 = BACK - 6.5
 		Kit.gallery(out, PAL, f, g2, zF2, HX - 3.6 + o, false)
 		barrel(out, -10.5, g2, BACK - 2.6, 1.4, 3.0)
 		barrel(out, -7.6, g2, BACK - 2.4, 1.2, 2.6)
 		for _, s in { -1, 1 } do
-			local gx, gy, gz = s * (HX - 6.5 + o), math.max(headY + 7, g1 + 9), rz - 1.5
+			local gx, gy, gz = s * (HX - 6.5 + o), headY + 6, math.min(rz - 1.5, -1.4)
 			box(out, 0.3, top - gy - 3.4, 0.3, gx, (top + gy + 3.4) / 2, gz, C.iron, TRIM)
 			glove3(out, gx, gy, gz, 0.82, C.red, C.redDark, C.cream)
+		end
+		for i, x in { -9.5, 0, 9.5 } do -- знамёна на верхней стене: зал не пустой до потолка
+			local len = top - g2 - 7
+			box(out, 5, len, 0.2, x, top - 1 - len / 2, BACK - 0.1, if i == 2 then C.cream else C.red, TRIM)
+			cylZ(out, 1.5, 0.3, x, top - 1 - len * 0.35, BACK - 0.3, C.gold, TRIM)
 		end
 		-- большой кактус за передней левой колонной: ствол и руки
 		local kx, kz = -(HX - 3.0 + o), -(HZ - 5.4 + o)
@@ -326,30 +346,29 @@ function Saloon.Build(out, tier: number, y0: number, y1: number): Vector3
 		box(out, 1.2, kh * 0.3, 1.2, kx, f + 1.6 + kh * 0.45 + kh * 0.15, kz + 3.0, C.green2, TRIM)
 		ball(out, 0.8, kx, f + 1.6 + kh + 0.5, kz, C.pink, TRIM)
 		if tier == 5 then
-			local cy = math.max(headY + 5, g2 - 4)
+			local cy = headY + 7.5
 			chandelier(out, 0, cy, rz + 3.2, 5.0, top, 8, C.iron)
 			chandelier(out, 0, cy - 2.4, rz + 3.2, 2.5, cy, 4, C.iron)
+			-- на виду рядом с жильцом: большая красная перчатка на тумбе
+			box(out, 4.2, 2.6, 4.2, side, f + 1.3, at.Z + 1, C.dark, PROP)
+			glove3(out, side, f + 6.3, at.Z + 1, 0.6, C.red, C.redDark, C.cream)
 		end
 	end
-	if tier == 6 then -- героический объект: золотая перчатка чемпиона на постаменте, лучи на стене, люстра
-		local gz = BACK - 3.2
-		box(out, 9, 2.2, 5.2, 0, g2 + 1.1, gz, C.dark, PROP)
-		box(out, 9.6, 0.4, 5.8, 0, g2 + 2.4, gz, C.gold, PROP)
-		cyl(out, 2.9, 2.6, 0, g2 + 2.6, gz, C.gold2) -- манжета
-		ball(out, 4.6, 0, g2 + 9.0, gz, C.gold, PROP) -- кулак
-		ball(out, 2.0, -4.3, g2 + 7.6, gz - 1.4, C.gold2, TRIM) -- большой палец
-		cylX(out, 1.5, 7.0, 0, g2 + 12.2, gz - 0.6, C.gold, TRIM) -- костяшки
-		for k = 0, 11 do -- лучи за трофеем
-			local a = math.rad(k * 30 + 15)
-			local dir = Vector3.new(math.cos(a), math.sin(a), 0)
-			local cf = CFrame.new(Vector3.new(0, g2 + 9.0, BACK - 0.14) + dir * 10.6) * CFrame.Angles(0, 0, a)
-			tilt(out, 4.6, if k % 2 == 0 then 0.9 else 0.55, 0.2, cf, C.gold, TRIM)
-		end
-		belt(out, 7.5, g1 + 8.2, 2.6)
-		local cy = math.max(headY + 6, g1 + 12)
+	if tier == 6 then -- героические объекты рядом с жильцом: золотая перчатка чемпиона и пояс, алмазные друзы
+		local hz = at.Z + 1
+		box(out, 4.8, 4.2, 4.8, -side, f + 2.1, hz, C.dark, PROP)
+		box(out, 5.4, 0.4, 5.4, -side, f + 4.4, hz, C.gold, PROP)
+		cyl(out, 1.6, 1.5, -side, f + 4.6, hz, C.gold2) -- манжета
+		ball(out, 2.7, -side, f + 8.3, hz, C.gold, PROP) -- кулак
+		ball(out, 1.15, -side + 2.5, f + 7.5, hz - 0.9, C.gold2, TRIM) -- большой палец
+		cylX(out, 0.9, 4.0, -side, f + 10.2, hz - 0.4, C.gold, TRIM) -- костяшки
+		Kit.druse(out, -side + 1.2, f, hz - 3.4, 1.3, Kit.DIAMOND)
+		beltStand(out, side, f, hz, 1.35)
+		Kit.druse(out, side - 1.0, f, hz - 3.2, 1.2, Kit.DIAMOND)
+		local cy = headY + 8
 		chandelier(out, 0, cy, rz + 1.6, 5.6, top, 8, C.gold2)
 		chandelier(out, 0, cy - 2.6, rz + 1.6, 2.8, cy, 4, C.gold2)
-		Kit.light(out, Vector3.new(0, g2 + 12, BACK - 12), 30, 1.6, C.warm, 70, Vector3.new(0, -0.25, 1))
+		Kit.light(out, Vector3.new(-side, f + 19, hz - 6), 28, 1.7, C.warm, 60, Vector3.new(0, -1, 0.35))
 	end
 
 	Kit.lights(out, tier, y0, y1, at, headY, C.warm)
@@ -399,10 +418,10 @@ function Saloon.Grow(out, tier: number, h: number, _frame, _crystal)
 		ball(out, 0.5, last.X, last.Y + 1.9, last.Z, C.gold, TRIM)
 		-- рука с перчаткой из середины лозы
 		local mid = points[math.floor(#points / 2)]
-		local hand = mid + Vector3.new(-2.0, 2.2, -1.6)
+		local hand = mid + Vector3.new(0.6, 2.4, 0.6)
 		rod(out, 0.6, mid, hand, C.green2, TRIM)
-		ball(out, 1.3, hand.X - 0.4, hand.Y + 1.0, hand.Z - 0.4, C.red, TRIM)
-		ball(out, 0.6, hand.X + 0.5, hand.Y + 0.9, hand.Z - 1.2, C.redDark, TRIM)
+		ball(out, 1.0, hand.X, hand.Y + 0.9, hand.Z, C.red, TRIM)
+		ball(out, 0.5, hand.X + 0.7, hand.Y + 0.8, hand.Z - 0.5, C.redDark, TRIM)
 		-- росток у правой колонны
 		local px, pz = HX - W / 2 + 0.6, -(HZ - W / 2) - reach
 		limb(out, 0.6, {
@@ -413,7 +432,7 @@ function Saloon.Grow(out, tier: number, h: number, _frame, _crystal)
 		}, C.green2, TRIM)
 		ball(out, 0.75, px - 1.2, 11.8, pz, C.pink, TRIM)
 	elseif tier == 6 then
-		local face = HX + 1.0 -- наружная грань колонны Космического
+		local face = HX + 1.0 -- наружная грань колонны Алмазного
 		local z = -(HZ + 1.0) + 2.6
 		for i, s in { -1, 1 } do
 			local ay = h * (if i == 1 then 0.36 else 0.5)

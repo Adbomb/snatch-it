@@ -2,13 +2,12 @@
 -- (папка workspace.__ShowcasePreview, Archivable = false). Режимы (строка mode, слова через пробел):
 --   "row Saloon" | "row Ocean"  — шесть редкостей темы в ряд (у каждой плита-кровля), с живыми жильцами;
 --   "tower"                     — башня из 12 этажей вперемешку, плита-кровля и колпак C;
---   "old"                       — новый Космический салун и рядом прошлый вариант (ShowcaseFloorV1);
 --   добавка "far"               — дальние версии этажей (без жильцов), "stage" — площадка-земля под снимки.
 -- В Play строит поток игры (атрибуты ServerStorage.DevTools: ShowcaseMode, затем Showcase = CFrame): у потока MCP свои
 -- копии модулей без загруженных мешей существ. В Edit — через FreshRequire (жильцы там — заглушки):
 --   local W = game.ServerScriptService.Server.World
 --   require(W.FreshRequire)(W.ShowcasePreview).Build(CFrame.new(0, 0, 0), "row Saloon stage")
--- Зависит от World/Models/ShowcaseFloor, ShowcaseFloorV1, ModelBuilder, Util/ItemFactory.
+-- Зависит от World/Models/ShowcaseFloor, ModelBuilder, Util/ItemFactory.
 
 local HttpService = game:GetService("HttpService")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -17,7 +16,6 @@ local Server = ServerScriptService.Server
 local ItemFactory = require(Server.Util.ItemFactory)
 local ModelBuilder = require(Server.World.ModelBuilder)
 local ShowcaseFloor = require(Server.World.Models.ShowcaseFloor)
-local ShowcaseFloorV1 = require(Server.World.Models.ShowcaseFloorV1)
 
 local ShowcasePreview = {}
 
@@ -125,18 +123,6 @@ function ShowcasePreview.Build(at: CFrame, mode: string?): string
 		roof(folder, at * CFrame.new(0, y, 0), last)
 		local cap = ModelBuilder.Build("Cap", ShowcaseFloor.Cap())
 		ModelBuilder.Place(cap, at * CFrame.new(0, y + ShowcaseFloor.Slab, 0), folder)
-	elseif words.old then
-		local h = place(folder, at * CFrame.new(-30, 0, 0), "Saloon", 6, false)
-		roof(folder, at * CFrame.new(-30, h, 0), 6)
-		local old = ShowcaseFloorV1.Saloon(6)
-		local frame = at * CFrame.new(30, 0, 0)
-		ModelBuilder.Place(ModelBuilder.Build("Old_6", old.bricks), frame, folder)
-		resident(folder, "CactusBoxer", frame * CFrame.new(old.resident), old.scale)
-		ModelBuilder.Place(
-			ModelBuilder.Build("OldRoof", ShowcaseFloorV1.Roof(6)),
-			frame * CFrame.new(0, old.height, 0),
-			folder
-		)
 	else
 		local theme = if words.Ocean then "Ocean" else "Saloon"
 		for tier = 1, 6 do
