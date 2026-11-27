@@ -41,8 +41,5 @@ require(Controllers:WaitForChild("MuseumCameraController")).Init()
 -- музей-небоскрёб (этап B, режим башни DEV): убранство башен по уровням детализации и окно лифта; без башен в мире
 -- (обычная игра) ничего не строят
 require(Controllers:WaitForChild("TowerController")).Init()
--- D74: сигналы редкости этажей; в своём потоке — в Play ещё не проверен, ошибка не должна задеть остальные
-task.spawn(function()
-	require(Controllers:WaitForChild("FloorSignalController")).Init()
-end)
+require(Controllers:WaitForChild("FloorSignalController")).Init() -- D74: сигналы редкости этажей
 require(Controllers:WaitForChild("ElevatorController")).Init()

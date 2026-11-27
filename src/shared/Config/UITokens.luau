@@ -216,6 +216,13 @@ UITokens.TowerBadge = {
 	Size = Vector2.new(260, 82),
 	MaxDistance = 400,
 	Lift = 16,
+	-- вблизи значок съезжает по оси башни вниз, чтобы оставаться в кадре: не выше этого угла над взглядом по
+	-- горизонту (градусы) и не ниже MinHeight стадов над землёй; издалека он над башней
+	MaxElevation = 24,
+	MinHeight = 26,
+	-- дальше FullDistance стадов по земле значок уменьшается (до MinScale), чтобы значки соседних башен не слипались
+	FullDistance = 170,
+	MinScale = 0.5,
 	NameSize = 28,
 	NameStroke = Color3.fromHex("1E2433"),
 	CountSize = 26,

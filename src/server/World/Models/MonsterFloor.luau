@@ -32,6 +32,10 @@ local ZoneRooms = require(Models.ZoneRooms)
 
 local MonsterFloor = {}
 
+-- Золотой бюст (Золотой, Мифический): "Foil" — целиком золото без карты (решение владельца 2026-11-27);
+-- "Tint" — позолота поверх карты существа (вариант на сравнение: черты лица видны и на уровне графики 1).
+MonsterFloor.BustStyle = "Foil"
+
 local HX, HZ, SLAB, W = Kit.HX, Kit.HZ, Kit.SLAB, Kit.W
 local box, tilt, cylZ, cylX, hex = Kit.box, Kit.tilt, Kit.cylZ, Kit.cylX, Kit.hex
 local DECO = Kit.DECO
@@ -52,6 +56,8 @@ local KANT_GEM = hex("A8E0FF")
 local NEON = { material = Enum.Material.Neon, collide = false, shadow = false }
 local PULSE = { material = Enum.Material.Neon, collide = false, shadow = false, name = "Pulse" }
 local GLASS_COLOR = hex("D6F0FF")
+local BUST_OUT = 1.8 -- золотой бюст выступает перед фасадом, стадов (как капители)
+local BUST_LEAN = 20 -- и наклонён вперёд, градусов
 local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 
 -- Набор облицовки колонн по семье силуэта.
@@ -197,7 +203,7 @@ end
 
 -- Высота перемычки над стеклом: эмблема (1–3), золотой бюст (4–5), голова (6 — по высоте головы).
 local function lintelOf(tier: number, headTall: number): number
-	return if tier <= 3 then 2.6 elseif tier <= 5 then 6.8 else headTall + 0.6
+	return if tier <= 3 then 2.6 elseif tier <= 5 then 8.2 else headTall + 0.6
 end
 
 -- Цельное стекло фасада и боков, порог и перемычка в цветах монстра; задняя стена — его «спина».
@@ -243,22 +249,32 @@ local function facePart(rig: any, dna): string?
 end
 
 -- Заявки на часть name и всё, что к ней крепится (глаза, уши, шляпа — потомки в скелете): центр части — at, множитель
--- k; потомки встают на свои места относительно неё. Так голова получается целиком, а не «лысой».
+-- k; потомки встают на свои места относительно неё. Так голова получается целиком, а не «лысой». У существ с мордой
+-- на теле (головы нет) конечности и хвост не берутся: бюст — туловище с лицом.
 local RIG_FACE = CFrame.Angles(0, math.pi, 0) -- скелет смотрит в +Z, этаж — в −Z
+local LIMB =
+	{ arm = true, leg = true, paw = true, tail = true, wing = true, wheel = true, bogie = true, tentacle = true }
+
+-- Входит ли часть other в группу части name: потомок (или она сама); trim — без конечностей и того, что на них.
+local function inGroup(rig: any, name: string, other: string, trim: boolean): boolean
+	local up = other
+	while up and up ~= name do
+		local spec = rig.Parts[up]
+		if not spec or (trim and LIMB[spec.role]) then
+			return false
+		end
+		up = spec.parent
+	end
+	return up == name
+end
+
 local function group(requests, rig: any, name: string, at: CFrame, k: number, gold: boolean?)
 	local root = rig.Parts[name]
 	local origin = root.pivot + root.center
+	local trim = root.role ~= "head"
 	for _, other in rig.Order do
 		local spec = rig.Parts[other]
-		local up, inside = other, false
-		while up do
-			if up == name then
-				inside = true
-				break
-			end
-			up = rig.Parts[up] and rig.Parts[up].parent
-		end
-		if inside and not spec.hidden and spec.role ~= "stand" then
+		if not spec.hidden and spec.role ~= "stand" and inGroup(rig, name, other, trim) then
 			local offset = RIG_FACE * ((spec.pivot + spec.center - origin) * k)
 			table.insert(requests, { part = other, at = at * CFrame.new(offset), scale = k, gold = gold })
 		end
@@ -269,18 +285,11 @@ end
 local function groupSize(rig: any, name: string): (Vector3, Vector3)
 	local root = rig.Parts[name]
 	local origin = root.pivot + root.center
+	local trim = root.role ~= "head"
 	local lo, hi = -root.size / 2, root.size / 2
 	for _, other in rig.Order do
 		local spec = rig.Parts[other]
-		local up, inside = spec.parent, false
-		while up do
-			if up == name then
-				inside = true
-				break
-			end
-			up = rig.Parts[up] and rig.Parts[up].parent
-		end
-		if inside and not spec.hidden then
+		if other ~= name and not spec.hidden and spec.role ~= "stand" and inGroup(rig, name, other, trim) then
 			local c = spec.pivot + spec.center - origin
 			lo = lo:Min(c - spec.size / 2)
 			hi = hi:Max(c + spec.size / 2)
@@ -400,21 +409,30 @@ local function monsterParts(out, requests, dna, rig, tier: number, y0: number, y
 		cylZ(out, 1.75, 0.3, 0, yc, zf - 0.15, accent, DECO)
 		cylZ(out, 1.5, 0.5, 0, yc, zf - 0.25, second, DECO)
 		local whole, shift = groupSize(rig, face)
-		local k = math.min(2.5 / math.max(whole.X, whole.Y), 0.85 / whole.Z)
-		local centre = Vector3.new(0, yc, zf - 0.35 - whole.Z * k / 2) - RIG_FACE * (shift * k)
+		-- голова заполняет медальон; перед — не дальше кромки плиты, остальное утоплено в перемычку
+		local k = math.min(2.9 / math.max(whole.X, whole.Y), 1.7 / whole.Z)
+		local centre = Vector3.new(0, yc, -HZ - 0.7 + whole.Z * k / 2) - RIG_FACE * (shift * k)
 		group(requests, rig, face, CFrame.new(centre), k)
 	end
 	if (tier == 4 or tier == 5) and face and faceSize and not far then
-		-- золотой бюст: собственная голова существа целиком в золоте (Foil), в нише перемычки на золотой полке;
-		-- за общий след башни не выходит (перед — не дальше кромки плиты)
+		-- золотой бюст: собственная голова существа целиком в золоте (Foil) на золотой полке, выступает из тёмной
+		-- ниши перемычки не дальше капителей (BUST_OUT стадов от фасада), задняя часть утоплена в перемычку
 		local whole, shift = groupSize(rig, face)
-		local k = math.min(12 / whole.X, (lintel - 1.1) / whole.Y, 5.4 / whole.Z)
-		local yc = y1 - 0.4 - lintel / 2 + 0.25
-		local front = -HZ - 0.6
-		local centre = Vector3.new(0, yc, front + whole.Z * k / 2) - RIG_FACE * (shift * k)
-		box(out, whole.X * k + 2.2, lintel - 0.5, 0.2, 0, y1 - 0.4 - lintel / 2, zf - 0.1, shade(body, 0.55), DECO)
-		box(out, whole.X * k + 1.2, 0.5, 1.5, 0, yc - whole.Y * k / 2 - 0.25, -HZ + 0.15, Kit.GOLD2, DECO)
-		group(requests, rig, face, CFrame.new(centre), k, true)
+		local k = math.min(13 / whole.X, (lintel - 0.9) / whole.Y, 7 / whole.Z)
+		local yc = y1 - 0.4 - lintel / 2
+		local front = -HZ - BUST_OUT
+		-- наклон вперёд: бюст смотрит на игрока внизу (полки под ним нет — она закрывала бы его снизу)
+		local lean = CFrame.Angles(math.rad(-BUST_LEAN), 0, 0)
+		local centre = Vector3.new(0, yc, front + whole.Z * k / 2) - lean * (RIG_FACE * (shift * k))
+		box(out, whole.X * k + 2.2, lintel - 0.5, 0.2, 0, yc, zf - 0.1, shade(body, 0.55), DECO)
+		group(
+			requests,
+			rig,
+			face,
+			CFrame.new(centre) * lean,
+			k,
+			if MonsterFloor.BustStyle == "Tint" then "tint" else true
+		)
 	end
 	local arms = if #dna.limbs.arm > 0 then dna.limbs.arm else { feature, dna.featurePair or feature }
 	if tier >= 5 then -- тело прорастает сквозь каркас: руки по бокам, хвост сзади, пояса на колоннах

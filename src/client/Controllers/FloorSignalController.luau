@@ -2,7 +2,10 @@
 --   пульсация свечения — детали с меткой FloorPulse медленно переходят от своего цвета к PulseTo и обратно
 --     (Мифический, Алмазный); считается здесь, по сети идут только метка и два атрибута;
 --   значок над башней — у точки с меткой TowerBeacon: имя владельца и счётчики Золотых, Мифических и Алмазных этажей
---     (иконки Stud-UI), поверх мира, виден до TowerBadge.MaxDistance стадов по земле;
+--     (иконки Stud-UI), поверх мира, виден до TowerBadge.MaxDistance стадов по земле; вблизи съезжает по оси башни
+--     вниз (не выше TowerBadge.MaxElevation над горизонтом взгляда) — с точки появления верх башни не виден;
+--   дальний луч — та же точка: дальше FloorRarity.Beam.FarFrom луч рисуется табличкой (её видно с любой точки карты
+--     и на самой низкой графике, где движок издалека не рисует ни башню, ни Beam), вблизи — Beam сервера;
 --   момент получения — у точки с меткой FloorArrival: вспышка, столб света и звук (видят все рядом).
 -- Числа вида — Config/UITokens.TowerBadge, числа сигнала — Config/FloorRarity.
 -- Зависит от Shared/StudUI (StudUI, CheckUIIcons), Config/UITokens, Config/FloorRarity.
@@ -133,6 +136,42 @@ local function fill(gui: BillboardGui, anchor: Instance)
 	end
 end
 
+-- Дальний луч табличкой: полоса в стадах над маяком, к верху гаснет.
+local farBeams: { [Instance]: BillboardGui } = {}
+
+local function addFarBeam(anchor: BasePart)
+	local signal = FloorRarity.Signal[anchor:GetAttribute("Best")]
+	if not signal or not signal.beam or farBeams[anchor] then
+		return
+	end
+	local cfg = FloorRarity.Beam
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "TowerBeamFar"
+	gui.Adornee = anchor
+	gui.Size = UDim2.fromScale(cfg.FarWidth, signal.beam)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, signal.beam / 2, 0)
+	gui.LightInfluence = 0
+	gui.Brightness = 2
+	gui.ResetOnSpawn = false
+	gui.Enabled = false
+	local bar = Instance.new("Frame")
+	bar.Name = "Bar"
+	bar.Size = UDim2.fromScale(1, 1)
+	bar.BackgroundColor3 = Color3.fromHex(signal.glow)
+	bar.BorderSizePixel = 0
+	local fade = Instance.new("UIGradient")
+	fade.Rotation = 90
+	fade.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.35, 0.3),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	fade.Parent = bar
+	bar.Parent = gui
+	gui.Parent = player:WaitForChild("PlayerGui")
+	farBeams[anchor] = gui
+end
+
 local function addBeacon(anchor: Instance)
 	if not anchor:IsA("BasePart") or badges[anchor] then
 		return
@@ -157,6 +196,7 @@ local function addBeacon(anchor: Instance)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	badges[anchor] = gui
 	fill(gui, anchor)
+	addFarBeam(anchor)
 	anchor.AttributeChanged:Connect(function()
 		if badges[anchor] then
 			fill(gui, anchor)
@@ -164,11 +204,49 @@ local function addBeacon(anchor: Instance)
 	end)
 end
 
+-- Высота значков: над башней, но в поле зрения — не выше угла MaxElevation от камеры.
+local function badgeLoop()
+	local slope = math.tan(math.rad(BADGE.MaxElevation))
+	while true do
+		local camera = workspace.CurrentCamera
+		if camera then
+			local eye = camera.CFrame.Position
+			for anchor, gui in badges do
+				local top = (anchor :: BasePart).Position
+				local flat = Vector2.new(top.X - eye.X, top.Z - eye.Z).Magnitude
+				local y = math.min(top.Y + BADGE.Lift, math.max(BADGE.MinHeight, eye.Y + flat * slope))
+				gui.StudsOffsetWorldSpace = Vector3.new(0, y - top.Y, 0)
+				local s = screenScale() * math.clamp(BADGE.FullDistance / math.max(flat, 1), BADGE.MinScale, 1)
+				gui.Size = UDim2.fromOffset(BADGE.Size.X * s, BADGE.Size.Y * s)
+				local scale = gui:FindFirstChild("WindowScale", true)
+				if scale and scale:IsA("UIScale") then
+					scale.Scale = s
+				end
+				local far = farBeams[anchor]
+				if far then
+					local distant = flat > FloorRarity.Beam.FarFrom
+					far.Enabled = distant
+					local beam = anchor:FindFirstChild("RarityBeam")
+					if beam and beam:IsA("Beam") then
+						beam.Enabled = not distant
+					end
+				end
+			end
+		end
+		task.wait(PULSE_STEP)
+	end
+end
+
 local function removeBeacon(anchor: Instance)
 	local gui = badges[anchor]
 	if gui then
 		badges[anchor] = nil
 		gui:Destroy()
+	end
+	local far = farBeams[anchor]
+	if far then
+		farBeams[anchor] = nil
+		far:Destroy()
 	end
 end
 
@@ -268,6 +346,7 @@ function FloorSignalController.Init()
 	end)
 	task.spawn(pulseLoop)
 	watch(BEACON_TAG, addBeacon, removeBeacon)
+	task.spawn(badgeLoop)
 	watch(ARRIVAL_TAG, arrive)
 end
 

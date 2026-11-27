@@ -4,7 +4,11 @@
 --              Controllers/FloorSignalController), у Мифического и Алмазного — искры (одна система на этаж);
 --   Beacon   — маяк над башней: невидимая точка с меткой TowerBeacon и атрибутами (владелец, счётчики Золотых,
 --              Мифических и Алмазных этажей, лучший этаж) — по ним клиент рисует значок; луч в цвет лучшего этажа
---              (Мифический — средний, Алмазный — высокий; у Золотого луча нет);
+--              (Мифический — средний, Алмазный — высокий; у Золотого луча нет); издалека клиент показывает луч
+--              табличкой — на низкой графике дальше ~600 стадов движок не рисует ни детали, ни Beam (проверено в
+--              Play на уровне 1), а табличка видна с любой точки карты; у подножия башни — светящийся пояс
+--              в цвет лучшего этажа (Золотой и выше): с точки появления верх высокой башни не виден, пояс — на
+--              уровне глаз;
 --   Arrive   — момент получения: редкий этаж встал на место — метка FloorArrival, клиенты рядом показывают вспышку,
 --              столб света и звук; точка сама исчезает.
 -- Числа — Config/FloorRarity (Signal, Beam, Sparks, Arrival). Текстур и звуков из загрузок нет: частица — встроенная.
@@ -91,8 +95,8 @@ function FloorSignal.Decorate(model: Model, tier: number, frame: CFrame, height:
 end
 
 -- Маяк над башней: top — верх башни (над колпаком), tiers — редкости её этажей (1…6), owner — имя владельца для
--- значка. Возвращает точку маяка.
-function FloorSignal.Beacon(parent: Instance, top: CFrame, tiers: { number }, owner: string): BasePart
+-- значка, base — низ башни (центр следа; nil — без пояса у подножия). Возвращает точку маяка.
+function FloorSignal.Beacon(parent: Instance, top: CFrame, tiers: { number }, owner: string, base: CFrame?): BasePart
 	local counts = { 0, 0, 0, 0, 0, 0 }
 	local best = 1
 	for _, tier in tiers do
@@ -136,6 +140,34 @@ function FloorSignal.Beacon(parent: Instance, top: CFrame, tiers: { number }, ow
 			NumberSequenceKeypoint.new(1, 1),
 		})
 		beam.Parent = anchor
+	end
+	if base and signal.glow then
+		-- пояс у подножия: четыре светящиеся полосы вокруг следа башни
+		local cfg = FloorRarity.Halo
+		local color = Color3.fromHex(signal.glow)
+		local function strip(size: Vector3, offset: Vector3)
+			local part = point("Pulse", base * CFrame.new(offset), size)
+			part.Transparency = 0
+			part.Material = Enum.Material.Neon
+			part.Color = color
+			if signal.pulse then
+				part:SetAttribute("PulseTo", Color3.fromHex(signal.pulse.color))
+				part:SetAttribute("PulsePeriod", signal.pulse.period)
+				CollectionService:AddTag(part, FloorSignal.PulseTag)
+			end
+			part.Parent = anchor
+		end
+		local y = cfg.Lift + cfg.Height / 2
+		for _, s in { -1, 1 } do
+			strip(
+				Vector3.new((HX + cfg.Out) * 2, cfg.Height, cfg.Depth),
+				Vector3.new(0, y, s * (HZ + cfg.Out - cfg.Depth / 2))
+			)
+			strip(
+				Vector3.new(cfg.Depth, cfg.Height, (HZ + cfg.Out - cfg.Depth) * 2),
+				Vector3.new(s * (HX + cfg.Out - cfg.Depth / 2), y, 0)
+			)
+		end
 	end
 	CollectionService:AddTag(anchor, FloorSignal.BeaconTag)
 	anchor.Parent = parent

@@ -79,7 +79,19 @@ FloorRarity.Signal = {
 }
 
 -- Луч над башней (цвет лучшего этажа): ширина у основания и наверху, стадов; яркость и прозрачность у основания.
-FloorRarity.Beam = { Width = 12, TopWidth = 5, Brightness = 3, Transparency = 0.1 }
+-- FarFrom — с какого расстояния по земле луч рисуется табличкой (BillboardGui): на низкой графике дальше ~600 стадов
+-- движок не рисует ни детали, ни Beam; FarWidth — её ширина, стадов.
+FloorRarity.Beam = {
+	Width = 12,
+	TopWidth = 5,
+	Brightness = 3,
+	Transparency = 0.1,
+	FarFrom = 420,
+	FarWidth = 14,
+}
+-- Светящийся пояс у подножия башни (цвет лучшего этажа, Золотой и выше): вынос за след, высота и толщина полосы,
+-- подъём над землёй, стадов.
+FloorRarity.Halo = { Out = 2.2, Height = 1.2, Depth = 1.0, Lift = 0.3 }
 -- Искры этажа: время жизни частицы, с; размер, стадов; скорость и ускорение вверх; яркость.
 FloorRarity.Sparks = { Lifetime = 2.6, Size = 1.6, Speed = 2, Rise = 1.5, Brightness = 3 }
 

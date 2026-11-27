@@ -4,7 +4,8 @@
 -- только в потоке игры: Util/ItemFactory.Preload). Если меша нет (режим редактирования, меш не загрузился) — часть
 -- собирается из блоков скелета Config/CreatureRigs в тех же цветах (Part-версия) с кольцами D39.
 -- Заявка: { part = имя части, at = CFrame центра габарита части в осях этажа (существо лицом в −Z), scale = множитель,
--- gold = true — золотая скульптура (Foil, без карты) }.
+-- gold = true — золотая скульптура (Foil, без карты); gold = "tint" — позолота: карта существа остаётся, но
+-- окрашена в золото (черты лица читаются и на низкой графике) }.
 -- Зависит от Util/ItemFactory, Config/CreatureRigs, World/Models/ShowcaseKit.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,19 +16,21 @@ local Server = ServerScriptService.Server
 local ItemFactory = require(Server.Util.ItemFactory)
 local Kit = require(Server.World.Models.ShowcaseKit)
 
-export type Request = { part: string, at: CFrame, scale: number, gold: boolean? }
+export type Request = { part: string, at: CFrame, scale: number, gold: (boolean | string)? }
 
 local MonsterParts = {}
 
 local FACE = CFrame.Angles(0, math.pi, 0) -- скелет смотрит в +Z, существо в игре — в −Z
 
-local function finish(part: BasePart, gold: boolean?)
+local function finish(part: BasePart, gold: (boolean | string)?)
 	part.Anchored = true
 	part.CanCollide = false
 	part.CanQuery = false
 	part.CanTouch = false
 	part.Massless = true
-	if gold then
+	if gold == "tint" and part:FindFirstChildOfClass("SurfaceAppearance") then
+		(part:FindFirstChildOfClass("SurfaceAppearance") :: SurfaceAppearance).Color = Kit.GOLD
+	elseif gold then
 		local look = part:FindFirstChildOfClass("SurfaceAppearance")
 		if look then
 			look:Destroy()

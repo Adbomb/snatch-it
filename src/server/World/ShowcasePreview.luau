@@ -172,7 +172,7 @@ local function monsterTower(folder: Instance, at: CFrame, spec: { { any } }, far
 	ModelBuilder.Place(ModelBuilder.Build("Roof", MonsterFloor.Roof(last)), at * CFrame.new(0, y, 0), folder)
 	local cap = ModelBuilder.Build("Cap", ShowcaseFloor.Cap())
 	ModelBuilder.Place(cap, at * CFrame.new(0, y + ShowcaseFloor.Slab, 0), folder)
-	FloorSignal.Beacon(folder, at * CFrame.new(0, y + ShowcaseFloor.Slab + CAP_HEIGHT, 0), tiers, owner)
+	FloorSignal.Beacon(folder, at * CFrame.new(0, y + ShowcaseFloor.Slab + CAP_HEIGHT, 0), tiers, owner, at)
 end
 
 -- 20 этажей башни номер k для замера: существа по кругу, редкости — по весам, близким к игре, но с редкими этажами.
@@ -219,6 +219,7 @@ function ShowcasePreview.Build(at: CFrame, mode: string?): string
 		words[word] = true
 	end
 	local far = words.far == true
+	MonsterFloor.BustStyle = if words.tint then "Tint" else "Foil" -- добавка "tint": бюст-позолота (сравнение)
 	local folder = Instance.new("Folder")
 	folder.Name = FOLDER
 	folder.Archivable = false
