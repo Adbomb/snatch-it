@@ -150,9 +150,9 @@ function DevTools.Init()
 			folder:SetAttribute("TestReport", if ok then report else "ошибка: " .. tostring(report))
 		end)
 	end)
-	-- Предпросмотр этажей-витрин (D74, вариант B) атрибутом (MCP): folder.Showcase = CFrame низа стопки (перед — −Z)
-	-- или false — убрать. Строит поток этого скрипта: у потока MCP свои копии модулей без загруженных мешей существ.
-	-- Отчёт — атрибут ShowcaseReport (число деталей или текст ошибки).
+	-- Предпросмотр этажей-витрин (D74, вариант B) атрибутом (MCP): folder.ShowcaseMode = режим (см. ShowcasePreview),
+	-- затем folder.Showcase = CFrame низа (перед — −Z) или false — убрать. Строит поток этого скрипта: у потока MCP
+	-- свои копии модулей без загруженных мешей существ. Отчёт — атрибут ShowcaseReport (счёт деталей или ошибка).
 	folder:GetAttributeChangedSignal("Showcase"):Connect(function()
 		local at = folder:GetAttribute("Showcase")
 		if at == nil then
@@ -165,7 +165,7 @@ function DevTools.Init()
 				preview.Clear()
 				return "убрано"
 			end
-			return ("деталей %d"):format(preview.Build(at))
+			return preview.Build(at, folder:GetAttribute("ShowcaseMode"))
 		end)
 		folder:SetAttribute("ShowcaseReport", if ok then report else "ошибка: " .. tostring(report))
 	end)

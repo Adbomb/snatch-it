@@ -1,169 +1,371 @@
--- Этаж башни в формате «витрина» (D74, вариант B, решение владельца 2026-11-27): единый каркас (плита с кантом по
--- редкости, четыре угловые колонны с базой и капителью), фасад и бока — большое стекло, за ним тематическая
--- комната-диорама; потолок комнаты отделан (с земли виден он). Пока одна тема — салун Кактуса-боксёра — и две
--- редкости: Деревянный (1) и Космический (6: каркас шире, радужный, светится; по бокам — руки-кактусы с перчатками).
--- Координаты — в осях этажа: начало — центр низа плиты, перед (стекло фасада) — −Z, высота — FloorHeight × множитель.
--- Архитектура — LegoSquaresBold, предметы — кольца D39 (LegoRingsD39Boss), стекло — Glass; неона нет.
--- Только кирпичи: жильца ставит World/ShowcasePreview. Зависит от ModelBuilder, GameConfig.
+-- Этаж башни в формате «витрина» (D74, вариант B): единый каркас на общих осях (плита с кантом, четыре угловые
+-- колонны, цельное стекло фасада и боков — рама только по краям) и комната-диорама темы за стеклом. Редкость этажа —
+-- материал каркаса и высота; тема комнаты одна на все редкости (салун остаётся салуном):
+--   1 Деревянный — тёплое дерево, простые капители;            2 Каменный — серый камень, руст, кованые фонари;
+--   3 Мраморный — белый мрамор, каннелюры, бронза;              4 Золотой — слоновая кость и золото;
+--   5 Мифический — тёмный камень, аметист, светлые прожилки;    6 Космический — ночное небо и золото, радужный кант.
+-- След у всех один; у Космического каркас выходит за след на 1 стад. Выше верхней плиты ничего нет; купол — только у
+-- колпака башни (Cap). Источников света на этаже — 2 (у Космического 3). Дальняя версия (Far) — каркас, светлый проём
+-- и кант, до 40 деталей. Координаты — в осях этажа: начало — центр низа плиты, перед — −Z.
+-- Только кирпичи: жильца ставит World/ShowcasePreview. Зависит от ShowcaseKit, ShowcaseSaloon, ShowcaseOcean,
+-- ModelBuilder, GameConfig.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local ModelBuilder = require(ServerScriptService.Server.World.ModelBuilder)
+local Kit = require(ServerScriptService.Server.World.Models.ShowcaseKit)
+local ShowcaseOcean = require(ServerScriptService.Server.World.Models.ShowcaseOcean)
+local ShowcaseSaloon = require(ServerScriptService.Server.World.Models.ShowcaseSaloon)
 
 type Brick = ModelBuilder.Brick
 
 local ShowcaseFloor = {}
 
-local HX, HZ = GameConfig.Tower.Half.X, GameConfig.Tower.Half.Y
+local HX, HZ, SLAB, W = Kit.HX, Kit.HZ, Kit.SLAB, Kit.W
+local box, tilt, cylZ, cylX, hex, with = Kit.box, Kit.tilt, Kit.cylZ, Kit.cylX, Kit.hex, Kit.with
+local DECO = Kit.DECO
+
 -- Высота этажа по редкости (D74): FloorHeight × 1 / 1.35 / 1.6 / 1.9 / 2.3 / 3.
 ShowcaseFloor.HeightFactor = { 1, 1.35, 1.6, 1.9, 2.3, 3 }
-ShowcaseFloor.Slab = 1.6 -- толщина плиты этажа
-local SLAB = ShowcaseFloor.Slab
-
-local function hex(code: string): Color3
-	return Color3.fromHex(code)
-end
-
-local C = {
-	woodLight = hex("E2BE86"),
-	woodMid = hex("C9A06A"),
-	woodCore = hex("8A5A2B"),
-	graphite = hex("3E3F45"),
-	wall = hex("9A6A3E"),
-	wall2 = hex("835632"),
-	dark = hex("5A3A20"),
-	board1 = hex("A8743F"),
-	board2 = hex("96653A"),
-	ceiling = hex("EAD7B0"),
-	beam = hex("6B4524"),
-	red = hex("C0392B"),
-	redDark = hex("962D22"),
-	cream = hex("F2E6D0"),
-	green = hex("3FA14B"),
-	green2 = hex("2E8A3E"),
-	brass = hex("C9A24A"),
-	iron = hex("3A3A3F"),
-	lamp = hex("FFD98A"),
-	glass = hex("CFEFFF"),
-	gold = hex("E9B43A"),
-	pot = hex("B5653A"),
-}
-local RAINBOW = { hex("E53935"), hex("FB8C00"), hex("FDD835"), hex("43A047"), hex("1E88E5"), hex("8E24AA") }
-local BOTTLES = { hex("43A047"), hex("FB8C00"), hex("E53935"), hex("1E88E5"), hex("FDD835") }
-
-local ARCH = { variant = "LegoSquaresBold" } -- архитектура
-local PROP = { variant = "LegoRingsD39Boss" } -- предметы
-local TRIM = { variant = "LegoRingsD39Boss", collide = false }
-local UPRIGHT = CFrame.Angles(0, 0, math.rad(90)) -- ось цилиндра вертикально
-local ALONG_Z = CFrame.Angles(0, math.rad(90), 0) -- ось цилиндра вдоль Z
-
-local function with(base: { [string]: any }, more: { [string]: any }): { [string]: any }
-	local t = table.clone(base)
-	for k, v in more do
-		t[k] = v
-	end
-	return t
-end
-
--- Брусок по центру (x, y, z) размером (sx, sy, sz).
-local function box(
-	out: { Brick },
-	sx: number,
-	sy: number,
-	sz: number,
-	x: number,
-	y: number,
-	z: number,
-	color: Color3,
-	extra: any?
-)
-	table.insert(out, ModelBuilder.Brick(Vector3.new(sx, sy, sz), Vector3.new(x, y, z), color, extra or ARCH))
-end
-
--- Вертикальный цилиндр радиуса r и высоты h с низом на y.
-local function cyl(out: { Brick }, r: number, h: number, x: number, y: number, z: number, color: Color3, extra: any?)
-	local e = with(extra or PROP, { shape = "Cylinder" })
-	table.insert(out, ModelBuilder.Brick(Vector3.new(h, r * 2, r * 2), CFrame.new(x, y + h / 2, z) * UPRIGHT, color, e))
-end
+ShowcaseFloor.Slab = SLAB
+ShowcaseFloor.Keys = { "Wood", "Stone", "Marble", "Gold", "Mythic", "Cosmic" } -- порядок Config/FloorRarity.Order
+ShowcaseFloor.Budget = { 250, 300, 350, 400, 450, 500 } -- деталей на этаж (телефон)
+ShowcaseFloor.FarBudget = 40
+ShowcaseFloor.Themes = { Saloon = ShowcaseSaloon, Ocean = ShowcaseOcean }
 
 function ShowcaseFloor.Height(tier: number): number
 	return math.floor(GameConfig.Tower.FloorHeight * ShowcaseFloor.HeightFactor[tier] + 0.5)
 end
 
--- Цвет каркаса по редкости: k — номер сегмента (дерево — два тона досок, радужный — по кругу).
-local function frameColor(tier: number, k: number): Color3
-	if tier == 6 then
-		return RAINBOW[k % 6 + 1]
-	end
-	return if k % 2 == 0 then C.woodLight else C.woodMid
+-- Палитра каркаса: два основных цвета и один акцент на редкость (core — сердцевина плиты, почти не видна).
+local F = {
+	{ main = hex("E2BE86"), second = hex("C9A06A"), accent = hex("5A3A20"), core = hex("8A5A2B"), out = 0 },
+	{ main = hex("9EA2AA"), second = hex("7C8089"), accent = hex("2B2C30"), core = hex("5F636B"), out = 0 },
+	{ main = hex("F5F2EC"), second = hex("DDDAD3"), accent = hex("B07A3C"), core = hex("C9C6BF"), out = 0 },
+	{ main = hex("F3E9D2"), second = hex("E9B43A"), accent = hex("B98A1E"), core = hex("D9CDB2"), out = 0 },
+	{ main = hex("2F2B3A"), second = hex("423B52"), accent = hex("9B5DE5"), core = hex("221F2B"), out = 0 },
+	{ main = hex("0F1634"), second = hex("1B2552"), accent = hex("E9B43A"), core = hex("0B1026"), out = 1.0 },
+}
+local VEIN_MARBLE = hex("A9A7A3")
+local VEIN_MYTHIC = hex("CDB0FF")
+local STAR_PALE = hex("FFF1C4")
+local LAMP = hex("FFD98A")
+local GLASS_COLOR = hex("D6F0FF")
+local GLOW = { material = Enum.Material.SmoothPlastic, collide = false, shadow = false } -- светлые прожилки и контур
+local GEM = { material = Enum.Material.Glass, transparency = 0.12, collide = false } -- аметист
+
+ShowcaseFloor.Frame = F
+
+local function colW(tier: number): number
+	return if tier == 6 then W + 0.6 else W
 end
 
--- Плита этажа с кантом по редкости на высоте y: сердцевина по следу, кант — доски-сегменты снаружи (через одну выше и
--- дальше на 0.1 — без совпадающих граней).
+-- Ступенчатый кристалл: тело и более узкое остриё вдоль dir (резкие ступени D39), от точки base.
+local function crystal(out: { Brick }, base: Vector3, dir: Vector3, len: number, r: number, color: Color3, extra: any?)
+	local d = dir.Unit
+	local up = if math.abs(d.Y) > 0.95 then Vector3.xAxis else Vector3.yAxis
+	local cf = CFrame.lookAt(base, base + d, up) * CFrame.Angles(math.rad(-90), 0, 0) -- ось Y бруска вдоль dir
+	local spin = CFrame.Angles(0, math.rad(45), 0)
+	local e = extra or GEM
+	tilt(out, r * 2, len * 0.72, r * 2, cf * CFrame.new(0, len * 0.36, 0) * spin, color, e)
+	tilt(out, r * 1.3, len * 0.36, r * 1.3, cf * CFrame.new(0, len * 0.82, 0) * spin, color, e)
+end
+
+-- Радужный цвет по доле круга (тонкий кант Космического).
+local function rainbow(t: number): Color3
+	return Color3.fromHSV(t % 1, 0.62, 1)
+end
+
+-- Плита этажа на высоте y: сердцевина по следу и пояс-кант по кромке (материал — по названию редкости).
 local function slab(out: { Brick }, tier: number, y: number)
-	local wide = if tier == 6 then 2.0 else 0
-	local e = 0.5 + wide
-	box(out, HX * 2, SLAB, HZ * 2, 0, y + SLAB / 2, 0, if tier == 6 then C.graphite else C.woodCore)
-	local seg = 3
-	local function row(a0: number, a1: number, alongX: boolean, fixed: number, sign: number)
-		local n = math.max(1, math.floor((a1 - a0) / seg + 0.5))
+	local f = F[tier]
+	local ix, iz = HX + f.out / 2, HZ + f.out / 2 -- край сердцевины (у Космического шире — не под порогом стекла)
+	local e = 0.6 + f.out / 2
+	box(out, ix * 2, SLAB, iz * 2, 0, y + SLAB / 2, 0, f.core)
+	-- ряд пояса вдоль стороны side (1 — перед, 2 — зад, 3 — лево, 4 — право): n сегментов, цвет и вынос — от номера
+	local function row(
+		side: number,
+		n: number,
+		paint: (k: number) -> (Color3, number),
+		h: number,
+		yc: number,
+		extra: any?
+	)
+		local alongX = side <= 2
+		local sign = if side % 2 == 1 then -1 else 1
+		local a0 = if alongX then -ix - e else -iz
+		local a1 = -a0
 		for k = 0, n - 1 do
 			local s0, s1 = a0 + (a1 - a0) * k / n, a0 + (a1 - a0) * (k + 1) / n
-			local bump = if k % 2 == 0 then 0.1 else 0
-			local depth, h = e + bump, SLAB + bump
-			local c = fixed + sign * depth / 2
-			if alongX then
-				box(out, s1 - s0, h, depth, (s0 + s1) / 2, y + h / 2, c, frameColor(tier, k))
+			local color, depth = paint(k + side)
+			if alongX then -- крайние сегменты длиннее на свой вынос: торцы накладок не совпадают с торцом пояса
+				s0 -= if k == 0 then depth - e else 0
+				s1 += if k == n - 1 then depth - e else 0
+				box(out, s1 - s0, h, depth, (s0 + s1) / 2, yc, sign * (iz + depth / 2), color, extra)
 			else
-				box(out, depth, h, s1 - s0, c, y + h / 2, (s0 + s1) / 2, frameColor(tier, k + 1))
+				box(out, depth, h, s1 - s0, sign * (ix + depth / 2), yc, (s0 + s1) / 2, color, extra)
 			end
 		end
 	end
-	row(-HX - e, HX + e, true, -HZ, -1)
-	row(-HX - e, HX + e, true, HZ, 1)
-	row(-HZ, HZ, false, -HX, -1)
-	row(-HZ, HZ, false, HX, 1)
-end
-
--- Угловая колонна от плиты до верха этажа: плинт, база, ствол с накладками, шейка, капитель, абака.
-local function column(out: { Brick }, tier: number, sx: number, sz: number, y0: number, y1: number)
-	local w = if tier == 6 then 4.6 else 3.0
-	local outFace = if tier == 6 then 2.0 else 0
-	local cx, cz = sx * (HX + outFace - w / 2), sz * (HZ + outFace - w / 2)
-	local idx = (if sx > 0 then 1 else 0) + (if sz > 0 then 2 else 0)
-	box(out, w + 0.6, 1.2, w + 0.6, cx, y0 + 0.6, cz, frameColor(tier, idx + 1))
-	box(out, w + 0.3, 0.4, w + 0.3, cx, y0 + 1.4, cz, frameColor(tier, idx))
-	local s0, s1 = y0 + 1.6, y1 - 1.7
-	if tier == 6 then -- радужный ствол: сегменты по 6, через один уже на 0.2; у части — мягкий свет
-		local n = math.max(1, math.floor((s1 - s0) / 6 + 0.5))
-		for k = 0, n - 1 do
-			local a, b = s0 + (s1 - s0) * k / n, s0 + (s1 - s0) * (k + 1) / n
-			local ww = if k % 2 == 0 then w else w - 0.2
-			local extra = if k % 3 == 1
-				then with(ARCH, { light = { range = 14, brightness = 0.45, color = frameColor(tier, k + idx) } })
-				else ARCH
-			box(out, ww, b - a, ww, cx, (a + b) / 2, cz, frameColor(tier, k + idx), extra)
-		end
-	else
-		box(out, w, s1 - s0, w, cx, (s0 + s1) / 2, cz, frameColor(tier, 0))
-		-- накладки на двух наружных гранях ствола
-		box(out, w - 1.2, s1 - s0 - 1.2, 0.15, cx, (s0 + s1) / 2, cz + sz * (w / 2 + 0.075), frameColor(tier, 1), TRIM)
-		box(out, 0.15, s1 - s0 - 1.2, w - 1.2, cx + sx * (w / 2 + 0.075), (s0 + s1) / 2, cz, frameColor(tier, 1), TRIM)
+	local function belt(
+		nX: number,
+		nZ: number,
+		paint: (k: number) -> (Color3, number),
+		h: number,
+		yc: number,
+		extra: any?
+	)
+		row(1, nX, paint, h, yc, extra)
+		row(2, nX, paint, h, yc, extra)
+		row(3, nZ, paint, h, yc, extra)
+		row(4, nZ, paint, h, yc, extra)
 	end
-	box(out, w + 0.3, 0.4, w + 0.3, cx, y1 - 1.5, cz, frameColor(tier, idx + 1))
-	box(out, w + 0.8, 0.7, w + 0.8, cx, y1 - 0.95, cz, frameColor(tier, idx))
-	box(out, w + 1.3, 0.6, w + 1.3, cx, y1 - 0.3, cz, frameColor(tier, idx + 1))
+	local function plain(color: Color3, depth: number): (k: number) -> (Color3, number)
+		return function()
+			return color, depth
+		end
+	end
+	local mid = y + SLAB / 2
+	if tier == 1 then -- доски двух тонов
+		belt(8, 7, function(k)
+			return if k % 2 == 0 then f.main else f.second, e + (if k % 2 == 0 then 0.1 else 0)
+		end, SLAB, mid)
+	elseif tier == 2 then -- каменные блоки
+		belt(6, 5, function(k)
+			return if k % 2 == 0 then f.main else f.second, e + (if k % 2 == 0 then 0.15 else 0)
+		end, SLAB, mid)
+	elseif tier == 3 then -- белый мрамор с прожилками, бронзовая кромка снизу
+		belt(1, 1, plain(f.main, e), SLAB, mid)
+		belt(1, 1, plain(f.accent, e + 0.12), 0.22, y + 0.21, DECO)
+		for i = 0, 5 do -- прожилки на переднем и заднем поясе
+			local x = -15 + i * 6 + Kit.rand(i) * 2
+			local a = math.rad(if i % 2 == 0 then 24 else -31)
+			for _, s in { -1, 1 } do
+				local cf = CFrame.new(x * s, mid + 0.15, s * (iz + e + 0.01)) * CFrame.Angles(0, 0, a)
+				tilt(out, 2.6, 0.13, 0.06, cf, VEIN_MARBLE, DECO)
+			end
+		end
+		for i = 0, 3 do
+			local z = -12 + i * 8 + Kit.rand(i + 9) * 2
+			local a = math.rad(if i % 2 == 0 then -27 else 22)
+			for _, s in { -1, 1 } do
+				local cf = CFrame.new(s * (ix + e + 0.01), mid + 0.15, z * s) * CFrame.Angles(a, 0, 0)
+				tilt(out, 0.06, 0.13, 2.6, cf, VEIN_MARBLE, DECO)
+			end
+		end
+	elseif tier == 4 then -- золотой карниз: пояс и два валика
+		belt(1, 1, plain(f.second, e), SLAB, mid)
+		belt(1, 1, plain(f.accent, e + 0.28), 0.36, y + SLAB - 0.3, DECO)
+		belt(1, 1, plain(f.accent, e + 0.14), 0.26, y + 0.25, DECO)
+	elseif tier == 5 then -- тёмный камень, тонкий аметистовый кант
+		belt(1, 1, plain(f.second, e), SLAB, mid)
+		belt(1, 1, plain(f.accent, e + 0.14), 0.34, mid, DECO)
+	else -- ночное небо: золотые кромки, тонкий радужный кант
+		belt(1, 1, plain(f.second, e), SLAB, mid)
+		belt(1, 1, plain(f.accent, e + 0.12), 0.2, y + SLAB - 0.2, DECO)
+		belt(1, 1, plain(f.accent, e + 0.12), 0.2, y + 0.2, DECO)
+		row(1, 8, function(k)
+			return rainbow(k / 8), e + 0.22
+		end, 0.3, mid, GLOW)
+		row(2, 8, function(k)
+			return rainbow(1 - k / 8), e + 0.22
+		end, 0.3, mid, GLOW)
+		row(3, 7, function(k)
+			return rainbow(k / 7 + 0.5), e + 0.22
+		end, 0.3, mid, GLOW)
+		row(4, 7, function(k)
+			return rainbow(0.5 - k / 7), e + 0.22
+		end, 0.3, mid, GLOW)
+	end
 end
 
--- Стекло фасада и боков: низкий цоколь, стёкла, импосты и ригели в цвет каркаса, верхняя балка.
+-- Угловая колонна от плиты до верха этажа. sx, sz — знаки угла; оси колонн у всех редкостей общие.
+local function column(out: { Brick }, tier: number, sx: number, sz: number, y0: number, y1: number)
+	local f = F[tier]
+	local w = colW(tier)
+	local cx, cz = sx * (HX + f.out - w / 2), sz * (HZ + f.out - w / 2)
+	local seed = (if sx > 0 then 1 else 0) + (if sz > 0 then 2 else 0)
+	-- ярус: квадрат стороны side высотой h с низом на y
+	local function level(side: number, h: number, y: number, color: Color3, extra: any?)
+		box(out, side, h, side, cx, y + h / 2, cz, color, extra)
+	end
+	-- накладка на обеих наружных гранях ствола стороны side: ширина along, высота tall, вынос proud, сдвиг a
+	local function plate(side: number, along: number, tall: number, proud: number, a: number, yc: number, color: Color3)
+		box(out, along, tall, proud, cx + a, yc, cz + sz * (side / 2 + proud / 2), color, DECO)
+		box(out, proud, tall, along, cx + sx * (side / 2 + proud / 2), yc, cz + a, color, DECO)
+	end
+	-- четыре «листа» по углам капители
+	local function leaves(side: number, size: number, h: number, y: number, color: Color3)
+		for _, a in { -1, 1 } do
+			for _, b in { -1, 1 } do
+				box(out, size, h, size, cx + a * side / 2, y + h / 2, cz + b * side / 2, color, DECO)
+			end
+		end
+	end
+	if tier == 1 then
+		level(w + 0.6, 1.2, y0, f.second)
+		level(w + 0.3, 0.4, y0 + 1.2, f.main)
+		local s0, s1 = y0 + 1.6, y1 - 1.7
+		level(w, s1 - s0, s0, f.main)
+		plate(w, w - 1.2, s1 - s0 - 1.2, 0.15, 0, (s0 + s1) / 2, f.second)
+		level(w + 0.3, 0.4, y1 - 1.7, f.second)
+		level(w + 0.8, 0.7, y1 - 1.3, f.main)
+		level(w + 1.3, 0.6, y1 - 0.6, f.second)
+	elseif tier == 2 then
+		level(w + 0.9, 1.4, y0, f.second)
+		local y = y0 + 1.4
+		for k = 1, 4 do -- руст: блоки через один шире
+			level(if k % 2 == 1 then w + 0.5 else w + 0.1, 1.8, y, if k % 2 == 1 then f.main else f.second)
+			y += 1.8
+		end
+		level(w - 0.3, y1 - 2.0 - y, y, f.main)
+		level(w, 0.45, y1 - 2.0, f.second)
+		level(w + 0.7, 0.85, y1 - 1.55, f.main)
+		level(w + 1.3, 0.7, y1 - 0.7, f.second)
+		if sz < 0 then -- кованый фонарь на кронштейне у передних колонн
+			local face = cz - (w - 0.3) / 2
+			local ly = y0 + (y1 - y0) * 0.56
+			box(out, 0.25, 0.25, 1.6, cx, ly, face - 0.8, f.accent, DECO)
+			box(out, 0.25, 0.9, 0.25, cx, ly - 0.575, face - 0.3, f.accent, DECO)
+			box(out, 0.12, 0.5, 0.12, cx, ly - 0.375, face - 1.3, f.accent, DECO)
+			box(out, 1.0, 0.22, 1.0, cx, ly - 0.735, face - 1.3, f.accent, DECO)
+			Kit.lamp(out, 0.72, 1.1, 0.72, cx, ly - 1.395, face - 1.3, LAMP)
+			box(out, 0.9, 0.2, 0.9, cx, ly - 2.045, face - 1.3, f.accent, DECO)
+		end
+	elseif tier == 3 then
+		level(w + 0.8, 1.0, y0, f.main)
+		level(w + 0.5, 0.35, y0 + 1.0, f.accent)
+		level(w + 0.2, 0.45, y0 + 1.35, f.second)
+		local s0, s1 = y0 + 1.8, y1 - 2.2
+		local sw = w - 0.5
+		level(sw, s1 - s0, s0, f.second)
+		for _, a in { -0.95, 0, 0.95 } do -- каннелюры
+			plate(sw, 0.5, s1 - s0 - 0.5, 0.14, a, (s0 + s1) / 2, f.main)
+		end
+		level(w - 0.2, 0.3, y1 - 2.2, f.accent)
+		level(w + 0.4, 0.9, y1 - 1.9, f.main)
+		local half = (w + 0.4) / 2
+		for _, a in { -1, 1 } do -- волюты
+			cylZ(out, 0.5, 0.3, cx + a * (half - 0.35), y1 - 1.8, cz + sz * (half + 0.1), f.second, DECO)
+			cylX(out, 0.5, 0.3, cx + sx * (half + 0.1), y1 - 1.8, cz + a * (half - 0.35), f.second, DECO)
+		end
+		level(w + 0.9, 0.18, y1 - 1.0, f.accent)
+		level(w + 1.3, 0.82, y1 - 0.82, f.main)
+		-- прожилки на плинте
+		local pf = (w + 0.8) / 2 + 0.01
+		local a1 = CFrame.new(cx + 0.3, y0 + 0.5, cz + sz * pf) * CFrame.Angles(0, 0, math.rad(21))
+		tilt(out, 1.7, 0.12, 0.06, a1, VEIN_MARBLE, DECO)
+		local a2 = CFrame.new(cx + sx * pf, y0 + 0.5, cz - 0.3) * CFrame.Angles(math.rad(-24), 0, 0)
+		tilt(out, 0.06, 0.12, 1.7, a2, VEIN_MARBLE, DECO)
+	elseif tier == 4 then
+		level(w + 0.8, 1.2, y0, f.main)
+		level(w + 1.0, 0.3, y0 + 1.2, f.second)
+		level(w + 0.5, 0.4, y0 + 1.5, f.accent)
+		local s0, s1 = y0 + 1.9, y1 - 2.6
+		local sw = w - 0.3
+		level(sw, s1 - s0, s0, f.main)
+		plate(sw, 0.8, s1 - s0 - 1.6, 0.12, 0, (s0 + s1) / 2, f.second)
+		level(w, 0.35, y1 - 2.6, f.accent)
+		level(w + 0.5, 1.1, y1 - 2.25, f.second)
+		leaves(w + 0.5, 1.0, 0.9, y1 - 2.0, f.accent)
+		level(w + 1.2, 0.55, y1 - 1.15, f.main)
+		level(w + 1.5, 0.6, y1 - 0.6, f.second)
+	elseif tier == 5 then
+		level(w + 1.0, 1.6, y0, f.main)
+		level(w + 0.5, 0.5, y0 + 1.6, f.second)
+		local s0, s1 = y0 + 2.1, y1 - 2.4
+		local sw = w - 0.1
+		level(sw, s1 - s0, s0, f.main)
+		level(w + 0.3, 0.7, y0 + (y1 - y0) * 0.5, f.second)
+		-- светлые прожилки зигзагом по наружным граням
+		local n = math.max(4, math.floor((s1 - s0) / 5))
+		local step = (s1 - s0 - 2) / n
+		local lean = math.atan(1.1 / step)
+		local len = math.sqrt(step * step + 1.21) + 0.1
+		local fz, fx = cz + sz * (sw / 2 + 0.03), cx + sx * (sw / 2 + 0.03)
+		for k = 0, n - 1 do
+			local yc = s0 + 1 + step * (k + 0.5)
+			local a = if (k + seed) % 2 == 0 then lean else -lean
+			tilt(out, 0.2, len, 0.06, CFrame.new(cx, yc, fz) * CFrame.Angles(0, 0, a), VEIN_MYTHIC, GLOW)
+			tilt(out, 0.06, len, 0.2, CFrame.new(fx, yc, cz) * CFrame.Angles(a, 0, 0), VEIN_MYTHIC, GLOW)
+		end
+		level(w + 0.3, 0.4, y1 - 2.4, f.second)
+		level(w + 0.9, 1.2, y1 - 2.0, f.main)
+		level(w + 1.4, 0.8, y1 - 0.8, f.second)
+		-- друзы аметиста: у подножия и под капителью
+		local corner = Vector3.new(cx + sx * (w / 2 + 0.2), y0 + 1.5, cz + sz * (w / 2 + 0.2))
+		crystal(out, corner, Vector3.new(sx * 0.3, 1, sz * 0.3), 3.6, 0.5, f.accent)
+		if sz < 0 then
+			local c2 = corner + Vector3.new(-sx * 1.3, 0, 0.2 * sz)
+			crystal(out, c2, Vector3.new(-sx * 0.15, 1, sz * 0.45), 2.6, 0.4, f.accent)
+			local c3 = corner + Vector3.new(0.2 * sx, 0, -sz * 1.3)
+			crystal(out, c3, Vector3.new(sx * 0.45, 1, -sz * 0.15), 2.3, 0.38, f.accent)
+		end
+		local under = Vector3.new(cx + sx * (w / 2 + 0.3), y1 - 2.2, cz + sz * (w / 2 + 0.3))
+		crystal(out, under, Vector3.new(sx * 0.35, -1, sz * 0.35), 2.4, 0.36, f.accent)
+	else
+		-- пьедестал: плинт, золотая ступень, тумба со звездой, золотой карниз
+		level(w + 0.8, 2.2, y0, f.main)
+		level(w + 1.0, 0.35, y0 + 2.2, f.accent)
+		level(w + 0.3, 1.5, y0 + 2.55, f.second)
+		level(w + 0.7, 0.35, y0 + 4.05, f.accent)
+		local s0, s1 = y0 + 4.4, y1 - 4.6
+		local sw = w - 0.3
+		level(sw, s1 - s0, s0, f.main)
+		for _, t in { 0.34, 0.67 } do -- тонкие золотые пояски
+			level(sw + 0.3, 0.3, s0 + (s1 - s0) * t, f.accent, DECO)
+		end
+		-- мягкий светлый контур: тонкие рейки по наружному ребру и краям наружных граней
+		local edge = sw / 2 + 0.02
+		local ym, yl = (s0 + s1) / 2, s1 - s0 - 0.4
+		box(out, 0.2, yl, 0.2, cx + sx * edge, ym, cz + sz * edge, STAR_PALE, GLOW)
+		box(out, 0.14, yl, 0.14, cx - sx * (edge - 0.3), ym, cz + sz * edge, STAR_PALE, GLOW)
+		box(out, 0.14, yl, 0.14, cx + sx * edge, ym, cz - sz * (edge - 0.3), STAR_PALE, GLOW)
+		-- золотые звёзды-ромбы на наружных гранях ствола и по одной крупной на тумбе
+		local turnZ, turnX = CFrame.Angles(0, 0, math.rad(45)), CFrame.Angles(math.rad(45), 0, 0)
+		for k = 1, 9 do
+			local r1, r2, r3 = Kit.rand(seed * 31 + k), Kit.rand(seed * 17 + k * 3), Kit.rand(seed * 7 + k * 5)
+			local yc = s0 + 1.4 + (s1 - s0 - 2.8) * (k - 0.5 + (r1 - 0.5) * 0.7) / 9
+			local a = (r2 - 0.5) * (sw - 1.8)
+			local size = 0.45 + r3 * 0.65
+			local color = if k % 3 == 0 then STAR_PALE else f.accent
+			if k % 2 == 0 then
+				tilt(out, size, size, 0.1, CFrame.new(cx + a, yc, cz + sz * (sw / 2 + 0.03)) * turnZ, color, DECO)
+			else
+				tilt(out, 0.1, size, size, CFrame.new(cx + sx * (sw / 2 + 0.03), yc, cz + a) * turnX, color, DECO)
+			end
+		end
+		local die = (w + 0.3) / 2 + 0.03
+		tilt(out, 0.95, 0.95, 0.1, CFrame.new(cx, y0 + 3.3, cz + sz * die) * turnZ, f.accent, DECO)
+		tilt(out, 0.1, 0.95, 0.95, CFrame.new(cx + sx * die, y0 + 3.3, cz) * turnX, f.accent, DECO)
+		-- капитель: золотая шейка, колокол с листьями, ступенчатая золотая корона
+		level(w, 0.5, y1 - 4.6, f.accent)
+		level(w + 0.5, 2.0, y1 - 4.1, f.second)
+		leaves(w + 0.5, 1.3, 1.7, y1 - 3.8, f.accent)
+		level(w + 1.2, 0.6, y1 - 2.1, f.main)
+		level(w + 1.6, 0.5, y1 - 1.5, f.accent)
+		level(w + 1.3, 0.4, y1 - 1.0, f.main)
+		level(w + 1.8, 0.6, y1 - 0.6, f.accent)
+	end
+end
+
+-- Цвет рамы стекла: тёмное дерево, камень, бронза, золото, тёмный камень, золото.
+local function frameTone(tier: number): Color3
+	local f = F[tier]
+	return if tier == 2 or tier == 5 then f.second else f.accent
+end
+
+-- Цельное стекло фасада и боков: низкий порог и верхняя балка — рама только по краям (жильца ничто не перекрывает).
+-- Задняя стена снаружи — в материале каркаса, с лопатками.
 local function glazing(out: { Brick }, tier: number, y0: number, y1: number)
-	local GLASS = { material = Enum.Material.Glass, transparency = 0.72, shadow = false }
-	local sill, head = 1.0, 1.4 -- не вровень с плинтом и шейкой колонн
+	local f = F[tier]
+	local w = colW(tier)
+	local sill, head = 0.7, 1.0
 	local g0, g1 = y0 + sill, y1 - 0.4 - head
-	local tone = if tier == 6 then C.graphite else C.dark
-	local function run(alongX: boolean, half: number, fixed: number, mullions: { number })
+	local tone = frameTone(tier)
+	local function run(alongX: boolean, half: number, fixed: number)
 		local function put(sa: number, sy: number, sd: number, a: number, y: number, color: Color3, extra: any?)
 			if alongX then
 				box(out, sa, sy, sd, a, y, fixed, color, extra)
@@ -171,245 +373,32 @@ local function glazing(out: { Brick }, tier: number, y0: number, y1: number)
 				box(out, sd, sy, sa, fixed, y, a, color, extra)
 			end
 		end
-		put(half * 2, sill, 0.7, 0, y0 + sill / 2, tone)
+		put(half * 2, sill, 0.8, 0, y0 + sill / 2, tone)
 		put(half * 2, head, 0.8, 0, y1 - 0.4 - head / 2, tone)
-		put(half * 2, g1 - g0, 0.2, 0, (g0 + g1) / 2, C.glass, GLASS)
-		for _, a in mullions do
-			put(0.5, g1 - g0, 0.5, a, (g0 + g1) / 2, if tier == 6 then C.graphite else frameColor(tier, 0), TRIM)
-		end
-		local n = math.floor((g1 - g0) / 20) -- ригели у высоких этажей
-		for k = 1, n do
-			put(
-				half * 2,
-				0.5,
-				0.3,
-				0,
-				g0 + (g1 - g0) * k / (n + 1),
-				if tier == 6 then C.graphite else frameColor(tier, k),
-				TRIM
-			)
+		put(half * 2, g1 - g0, 0.2, 0, (g0 + g1) / 2, GLASS_COLOR, Kit.GLASS)
+		if tier == 4 or tier == 6 then -- золотая рама: тонкие стойки вплотную к колоннам
+			for _, s in { -1, 1 } do
+				put(0.45, g1 - g0, 0.5, s * (half - 0.62), (g0 + g1) / 2, f.accent, DECO)
+			end
 		end
 	end
-	local inset = if tier == 6 then 2.6 else 3.0 -- до внутренней грани колонны
-	run(true, HX - inset, -HZ + 0.5, { -5, 5 })
-	run(false, HZ - inset, -HX + 0.5, { 0 })
-	run(false, HZ - inset, HX - 0.5, { 0 })
-end
-
--- Оболочка комнаты салуна: пол из досок, задняя стена с панелями, потолок с балками.
-local function shell(out: { Brick }, tier: number, y0: number, y1: number)
-	local n = 12
-	local w = (HX * 2 - 1) / n
-	for k = 0, n - 1 do -- доски пола: через одну выше на 0.06; крайние короче — не заходят под плинты колонн
-		local h = if k % 2 == 0 then 0.3 else 0.36
-		local len = if k == 0 or k == n - 1 then 27.2 else HZ * 2 - 1
-		box(out, w, h, len, -HX + 0.5 + w * (k + 0.5), y0 + h / 2, 0, if k % 2 == 0 then C.board1 else C.board2)
-	end
-	local wy0, wy1 = y0 + 0.3, y1 - 0.4
-	local inset = if tier == 6 then 2.6 else 3.0 -- стена — между внутренними гранями колонн
-	box(out, (HX - inset) * 2, wy1 - wy0, 0.8, 0, (wy0 + wy1) / 2, HZ - 0.4, C.wall)
-	box(out, HX * 2 - 7, 5, 0.3, 0, wy0 + 2.5, HZ - 0.95, C.wall2) -- панель низа
-	box(out, HX * 2 - 6.6, 0.4, 0.5, 0, wy0 + 5.2, HZ - 1.05, C.dark, TRIM) -- рейка
-	for k = 0, 7 do -- вертикальные доски стены
-		if k % 2 == 0 then
-			local x = -HX + 4.5 + k * (HX * 2 - 9) / 7
-			box(out, 2.2, wy1 - wy0 - 6.2, 0.14, x, (wy0 + 5.4 + wy1) / 2, HZ - 0.87, C.wall2, TRIM)
-		end
-	end
-	box(out, HX * 2 - 1, 0.36, HZ * 2 - 1, 0, y1 - 0.22, 0, C.ceiling) -- потолок (верх на 0.04 ниже абак колонн)
-	for _, z in { -9, 0, 9 } do
-		box(out, HX * 2 - 1.4, 0.9, 1.2, 0, y1 - 0.75, z, C.beam, TRIM) -- верх утоплен в потолок на 0.1
-	end
-	for _, x in { -8, 8 } do
-		box(out, 1.0, 0.65, HZ * 2 - 1.4, x, y1 - 0.675, 0, C.dark, TRIM)
+	run(true, HX + f.out - w + 0.4, -(HZ + f.out) + 1.0)
+	run(false, HZ + f.out - w + 0.4, -(HX + f.out) + 1.0)
+	run(false, HZ + f.out - w + 0.4, HX + f.out - 1.0)
+	local zb = HZ + f.out - 0.45
+	local half = HX + f.out - w + 0.4
+	box(out, half * 2, y1 - y0 - 0.45, 0.5, 0, (y0 + y1 - 0.45) / 2, zb, f.second)
+	for _, x in { -8, 0, 8 } do
+		box(out, 2.4, y1 - y0 - 1.4, 0.25, x, (y0 + y1 - 0.45) / 2, zb + 0.375, f.main, DECO)
 	end
 end
 
-local function barrel(out: { Brick }, x: number, y: number, z: number, r: number, h: number)
-	cyl(out, r, h, x, y, z, C.wall)
-	cyl(out, r + 0.08, 0.3, x, y + h * 0.2, z, C.iron, TRIM)
-	cyl(out, r + 0.08, 0.3, x, y + h * 0.72, z, C.iron, TRIM)
-	cyl(out, r - 0.25, 0.1, x, y + h, z, C.wall2, TRIM)
-end
+export type Built = { bricks: { Brick }, height: number, resident: Vector3, scale: number, item: string }
 
-local function stool(out: { Brick }, x: number, y: number, z: number)
-	cyl(out, 0.2, 1.5, x, y, z, C.dark, TRIM)
-	cyl(out, 0.85, 0.4, x, y + 1.5, z, C.red, TRIM)
-end
-
-local function tableSet(out: { Brick }, x: number, y: number, z: number)
-	cyl(out, 1.0, 0.2, x, y, z, C.dark, TRIM)
-	cyl(out, 0.3, 2.2, x, y + 0.2, z, C.dark, TRIM)
-	cyl(out, 2.2, 0.35, x, y + 2.4, z, C.wall2)
-	cyl(out, 0.35, 0.7, x + 0.7, y + 2.75, z - 0.4, C.cream, TRIM) -- кружка
-	cyl(out, 0.3, 0.9, x - 0.6, y + 2.75, z + 0.5, BOTTLES[1], TRIM)
-	stool(out, x - 3.2, y, z + 0.6)
-	stool(out, x + 3.0, y, z - 1.0)
-end
-
--- Люстра-колесо: обод, спицы, ступица, четыре фонаря со светом, подвес до потолка.
-local function chandelier(out: { Brick }, x: number, y: number, z: number, r: number, ceilingY: number)
-	cyl(out, r, 0.35, x, y, z, C.dark)
-	cyl(out, r - 0.6, 0.1, x, y + 0.35, z, C.wall2, TRIM)
-	cyl(out, 0.5, 0.9, x, y - 0.3, z, C.iron, TRIM)
-	box(out, 0.2, ceilingY - y - 0.35, 0.2, x, (y + 0.35 + ceilingY) / 2, z, C.iron, TRIM)
-	for k = 0, 3 do
-		local a = math.rad(45 + k * 90)
-		local lx, lz = x + math.cos(a) * (r - 0.5), z + math.sin(a) * (r - 0.5)
-		box(out, 0.8, 1.0, 0.8, lx, y - 0.5, lz, C.lamp, {
-			collide = false,
-			shadow = false,
-			material = Enum.Material.SmoothPlastic,
-			light = { range = 18, brightness = 0.3, color = C.lamp },
-		})
-		box(out, 1.0, 0.2, 1.0, lx, y - 1.1, lz, C.iron, TRIM)
-	end
-end
-
-local function cactusPot(out: { Brick }, x: number, y: number, z: number, h: number)
-	cyl(out, 1.1, 1.2, x, y, z, C.pot)
-	box(out, 1.1, h, 1.1, x, y + 1.2 + h / 2, z, C.green, PROP)
-	box(out, 1.6, 0.8, 0.8, x + 1.0, y + 1.2 + h * 0.5, z, C.green2, TRIM)
-	box(out, 0.8, 1.6, 0.6, x + 1.5, y + 1.2 + h * 0.5 + 0.8, z, C.green2, TRIM)
-end
-
--- Перчатка-эмблема на стене z (плоская, лицом в −Z): кулак, большой палец, манжета.
-local function gloveSign(out: { Brick }, x: number, y: number, z: number, s: number)
-	box(out, 4.2 * s, 3.6 * s, 0.9, x, y, z, C.red, PROP)
-	box(out, 3.4 * s, 0.9 * s, 0.7, x, y + 2.2 * s, z + 0.05, C.red, TRIM)
-	box(out, 1.2 * s, 1.9 * s, 0.7, x - 2.6 * s, y - 0.3 * s, z + 0.05, C.redDark, TRIM)
-	box(out, 3.2 * s, 1.1 * s, 0.8, x, y - 2.35 * s, z + 0.02, C.cream, TRIM)
-end
-
--- Ринг-подиум жильца: помост, настил, столбы, два ряда канатов. Возвращает высоту верха настила.
-local function ring(out: { Brick }, x: number, y: number, z: number, sx: number, sz: number): number
-	box(out, sx, 0.8, sz, x, y + 0.4, z, C.red, PROP)
-	box(out, sx - 0.6, 0.2, sz - 0.6, x, y + 0.9, z, C.cream, PROP)
-	local px, pz = sx / 2 - 0.5, sz / 2 - 0.5
-	for _, a in { -1, 1 } do
-		for _, b in { -1, 1 } do
-			box(out, 0.6, 3.4, 0.6, x + a * px, y + 1.0 + 1.7, z + b * pz, C.dark, TRIM)
-			cyl(out, 0.45, 0.3, x + a * px, y + 4.4, z + b * pz, C.brass, TRIM)
-		end
-		for _, ry in { 2.2, 3.5 } do
-			box(out, 0.16, 0.16, pz * 2 - 0.6, x + a * px, y + ry, z, C.cream, TRIM)
-			box(out, px * 2 - 0.6, 0.16, 0.16, x, y + ry + 0.05, z + a * pz, C.cream, TRIM)
-		end
-	end
-	return y + 1.0
-end
-
--- Диорама салуна; богатство — по редкости. Возвращает точку жильца (низ) и его масштаб показа.
-local function saloon(out: { Brick }, tier: number, y0: number, y1: number): (Vector3, number)
-	local f = y0 + 0.36 -- верх досок пола
-	local back = HZ - 0.8
-	-- стойка с подножкой и табуретами, полки с бутылками
-	box(out, 12, 3.6, 2.4, -8, f + 1.8, back - 3.4, C.dark, PROP)
-	box(out, 12.8, 0.4, 3.0, -8, f + 3.8, back - 3.4, C.woodLight, PROP)
-	table.insert(
-		out,
-		ModelBuilder.Brick(
-			Vector3.new(12, 0.3, 0.3),
-			Vector3.new(-8, f + 0.8, back - 4.9),
-			C.brass,
-			with(TRIM, { shape = "Cylinder" })
-		)
-	)
-	for _, x in { -12, -8, -4 } do
-		stool(out, x, f, back - 6.4)
-	end
-	box(out, 12, 6.4, 0.3, -8, f + 8.6, back - 0.35, C.wall2, PROP)
-	for row = 0, 1 do
-		local sy = f + 6.4 + row * 2.6
-		box(out, 12.4, 0.3, 1.1, -8, sy, back - 0.95, C.dark, TRIM)
-		for k = 0, 5 do
-			cyl(out, 0.32, 1.3, -12.5 + k * 1.8, sy + 0.15, back - 0.95, BOTTLES[(k + row) % 5 + 1], TRIM)
-		end
-	end
-	-- бочки, столы, кактусы в горшках, перчатка-эмблема, настенные фонари
-	barrel(out, 12.5, f, back - 2.4, 1.5, 3.2)
-	barrel(out, 9.2, f, back - 2.2, 1.3, 2.8)
-	barrel(out, 14.0, f, back - 5.6, 1.2, 2.6)
-	tableSet(out, -10.5, f, -1.5)
-	tableSet(out, 11, f, 2.5)
-	cactusPot(out, -14.2, f, -13.2, 3.4)
-	cactusPot(out, 14.0, f, -13.4, 2.6)
-	gloveSign(out, 7.5, f + 9.4, back - 0.5, 1.0)
-	for _, x in { -1.5, 12.8 } do
-		box(out, 0.9, 1.3, 0.9, x, f + 9.6, back - 0.9, C.lamp, {
-			collide = false,
-			shadow = false,
-			material = Enum.Material.SmoothPlastic,
-			light = { range = 14, brightness = 0.25, color = C.lamp },
-		})
-		box(out, 1.2, 0.25, 1.2, x, f + 10.4, back - 0.9, C.iron, TRIM)
-	end
-	chandelier(out, 0, y1 - 4.4, 5, 3.2, y1 - 0.4)
-	if tier < 6 then
-		local top = ring(out, 0, f, -7.5, 10, 8)
-		return Vector3.new(0, top, -7.5), 4.0
-	end
-	-- Космический: большой ринг, две галереи с перилами, гигантские перчатки, флаги, золотой пояс чемпиона, люстры
-	local top = ring(out, 0, f, -5.5, 16, 13)
-	for i, gy in { y0 + 21, y0 + 39 } do
-		local depth = if i == 1 then 8 else 6
-		box(out, HX * 2 - 7, 0.7, depth, 0, gy, back - 0.4 - depth / 2, C.wall2)
-		box(out, HX * 2 - 7, 0.3, 0.3, 0, gy + 2.3, back - 0.4 - depth + 0.2, C.dark, TRIM)
-		for k = 0, 8 do
-			box(out, 0.35, 2.0, 0.35, -HX + 4 + k * (HX * 2 - 8) / 8, gy + 1.3, back - 0.4 - depth + 0.2, C.dark, TRIM)
-		end
-		barrel(out, -11 + i * 2, gy + 0.35, back - 3.2, 1.3, 2.8)
-		barrel(out, 12 - i * 2, gy + 0.35, back - 3.0, 1.4, 3.0)
-		tableSet(out, 2 - i * 3, gy + 0.35, back - 3.6)
-	end
-	for k = 0, 7 do -- флаги под потолком
-		local x = -14 + k * 4
-		box(out, 2.6, 3.4, 0.25, x, y1 - 3.4, back - 0.6, if k % 2 == 0 then C.red else C.cream, TRIM)
-	end
-	for _, sx in { -1, 1 } do -- гигантские перчатки на цепях
-		box(out, 0.3, 9, 0.3, sx * 9, y1 - 5.0, 3, C.iron, TRIM)
-		box(out, 6, 6.6, 5, sx * 9, y1 - 12.8, 3, C.red, PROP)
-		box(out, 2.0, 3.2, 2.4, sx * 9 - sx * 3.6, y1 - 13.4, 2.2, C.redDark, TRIM)
-		box(out, 4.6, 1.8, 4.0, sx * 9, y1 - 17.0, 3, C.cream, PROP)
-	end
-	-- пояс чемпиона на задней стене: золотой медальон (ось цилиндра — в стену) на красной ленте
-	table.insert(
-		out,
-		ModelBuilder.Brick(
-			Vector3.new(0.6, 6.8, 6.8),
-			CFrame.new(0, y0 + 30, back - 0.75) * ALONG_Z,
-			C.gold,
-			with(PROP, { shape = "Cylinder" })
-		)
-	)
-	box(out, 16, 2.4, 0.4, 0, y0 + 30, back - 0.62, C.red, TRIM)
-	chandelier(out, -8, y0 + 17.5, -3, 3.0, y0 + 20.65)
-	chandelier(out, 8, y0 + 35.5, -3, 3.0, y0 + 38.65)
-	chandelier(out, 0, y1 - 22, -9, 4.0, y1 - 0.4)
-	cactusPot(out, -13.5, f, 4, 6.5)
-	cactusPot(out, 13.5, f, -1, 5.0)
-	return Vector3.new(0, top, -5.5), 8.4
-end
-
--- Руки-кактусы с перчатками по бокам Космического этажа: растут из передних колонн, вынос ≤ 6 от следа башни.
-local function wings(out: { Brick }, y0: number, h: number)
-	local z = -(HZ + 2.0 - 2.3) -- ось передних колонн
-	for _, sx in { -1, 1 } do
-		local face = sx * (HX + 2.0) -- наружная грань колонны
-		local ay = y0 + h * 0.42
-		box(out, 2.4, 2.8, 2.8, face + sx * 1.2, ay, z, C.green, PROP)
-		box(out, 2.6, h * 0.2, 2.6, face + sx * 2.6, ay + h * 0.1 + 1.4, z, C.green, PROP)
-		box(out, 3.4, 1.4, 3.4, face + sx * 2.3, ay + h * 0.2 + 2.1, z, C.cream, PROP)
-		box(out, 4.0, 5.0, 4.4, face + sx * 2.0, ay + h * 0.2 + 5.3, z, C.red, PROP)
-		box(out, 1.6, 2.4, 1.8, face + sx * 2.0, ay + h * 0.2 + 4.6, z - 3.1, C.redDark, TRIM)
-	end
-end
-
-export type Built = { bricks: { Brick }, height: number, resident: Vector3, scale: number }
-
--- Этаж-витрина салуна редкости tier (1 или 6).
-function ShowcaseFloor.Saloon(tier: number): Built
+-- Этаж-витрина темы theme ("Saloon" | "Ocean") редкости tier (1…6).
+function ShowcaseFloor.Build(theme: string, tier: number): Built
 	local out: { Brick } = {}
+	local t = ShowcaseFloor.Themes[theme]
 	local h = ShowcaseFloor.Height(tier)
 	slab(out, tier, 0)
 	for _, sx in { -1, 1 } do
@@ -417,19 +406,130 @@ function ShowcaseFloor.Saloon(tier: number): Built
 			column(out, tier, sx, sz, SLAB, h)
 		end
 	end
-	shell(out, tier, SLAB, h)
-	glazing(out, tier, SLAB + 0.3, h)
-	local at, scale = saloon(out, tier, SLAB, h)
-	if tier == 6 then
-		wings(out, 0, h)
-	end
-	return { bricks = out, height = h, resident = at, scale = scale }
+	glazing(out, tier, SLAB, h)
+	local at = t.Build(out, tier, SLAB, h)
+	t.Grow(out, tier, h, F[tier], crystal)
+	return { bricks = out, height = h, resident = at, scale = t.Scale[tier], item = t.Item }
 end
 
--- Плита-кровля над верхним этажом (до колпака башни): та же плита с кантом редкости.
+-- Дальняя версия (от 150 стадов): каркас, кант и светлый проём — тёплая стена сразу за жильцом (жилец остаётся
+-- настоящей моделью); без стекла, мебели и источников света.
+function ShowcaseFloor.Far(theme: string, tier: number): Built
+	local out: { Brick } = {}
+	local t = ShowcaseFloor.Themes[theme]
+	local f = F[tier]
+	local h = ShowcaseFloor.Height(tier)
+	local w = colW(tier)
+	local ix, iz = HX + f.out / 2, HZ + f.out / 2
+	local e = 0.6 + f.out / 2
+	local FAR = { variant = "LegoSquaresFar", collide = false }
+	local band = if tier <= 3 then f.main else f.second
+	box(out, ix * 2, SLAB, iz * 2, 0, SLAB / 2, 0, f.core, FAR)
+	for _, s in { -1, 1 } do
+		box(out, (ix + e) * 2, SLAB, e, 0, SLAB / 2, s * (iz + e / 2), band, FAR)
+		box(out, e, SLAB, iz * 2, s * (ix + e / 2), SLAB / 2, 0, band, FAR)
+	end
+	if tier == 5 then
+		box(out, (ix + e) * 2 + 0.3, 0.4, (iz + e) * 2 + 0.3, 0, SLAB / 2, 0, f.accent, FAR)
+	elseif tier == 6 then
+		local full = (ix + e + 0.2) * 2
+		for k = 0, 5 do
+			box(
+				out,
+				full / 6,
+				0.4,
+				(iz + e) * 2 + 0.4,
+				-full / 2 + full * (k + 0.5) / 6,
+				SLAB / 2,
+				0,
+				rainbow(k / 6),
+				FAR
+			)
+		end
+	end
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			local cx, cz = sx * (HX + f.out - w / 2), sz * (HZ + f.out - w / 2)
+			local cap = if tier == 6 then f.accent else f.second
+			box(out, w + 0.8, 1.4, w + 0.8, cx, SLAB + 0.7, cz, if tier == 1 then f.second else f.main, FAR)
+			box(out, w - 0.1, h - SLAB - 3.4, w - 0.1, cx, (SLAB + 1.4 + h - 2.0) / 2, cz, f.main, FAR)
+			box(out, w + 1.2, 2.0, w + 1.2, cx, h - 1.0, cz, cap, FAR)
+			if tier == 5 and sz < 0 then -- друза аметиста у передних колонн
+				local base = Vector3.new(cx + sx * (w / 2 + 0.3), SLAB + 1.2, cz + sz * (w / 2 + 0.3))
+				crystal(out, base, Vector3.new(sx * 0.3, 1, sz * 0.3), 4.0, 0.6, f.accent, FAR)
+			end
+		end
+	end
+	-- светлый проём: пол и потолок комнаты, тёплая светлая стена сразу за жильцом, порог по краям, задняя стена
+	local zf, xs = -(HZ + f.out) + 1.0, HX + f.out - 1.0
+	local zb = HZ + f.out - 0.7
+	local zc = (zf + zb) / 2
+	local floorY = SLAB + 0.36
+	local at, _, sz = t.Spot(tier, floorY)
+	local zg = at.Z + sz / 2 + 0.6 -- светлая стена — сразу за подиумом жильца
+	local tone = frameTone(tier)
+	local glow = with(GLOW, { name = "Glow" })
+	box(out, xs * 2, h - floorY - 1.35, zb - zg, 0, (floorY + h - 1.35) / 2, (zg + zb) / 2, t.Glow[tier], glow)
+	box(out, xs * 2 + 0.6, 1.35, zb - zf + 0.6, 0, h - 0.725, zc - 0.05, tone, FAR)
+	box(out, xs * 2 + 0.6, 0.36, zb - zf + 0.3, 0, SLAB + 0.18, zc - 0.15, t.Glow[tier]:Lerp(tone, 0.45), FAR)
+	box(out, xs * 2 - 1, 0.7, 0.8, 0, SLAB + 0.35, zf, tone, FAR)
+	for _, s in { -1, 1 } do
+		box(out, 0.8, 0.7, zg - zf, s * xs, SLAB + 0.35, (zf + zg) / 2 + 0.2, tone, FAR)
+	end
+	box(out, xs * 2 - 0.5, h - SLAB - 0.1, 0.5, 0, (SLAB + h - 0.1) / 2, zb + 0.25, f.second, FAR)
+	box(out, xs * 2 - 0.4, 5.2, 0.3, 0, floorY + 2.6, zg - 0.15, t.Dado, FAR) -- цоколь стены: читается как комната
+	t.Far(out, tier, floorY, h, F[tier])
+	return { bricks = out, height = h, resident = at, scale = t.Scale[tier], item = t.Item }
+end
+
+-- Плита-кровля над верхним этажом (под колпак башни): плита с кантом редкости верхнего этажа.
 function ShowcaseFloor.Roof(tier: number): { Brick }
 	local out: { Brick } = {}
 	slab(out, tier, 0)
+	return out
+end
+
+-- Поворот углового клина: его вершина — над углом (+X, −Z); разворот ставит её на ось кристалла (проверено в Studio).
+local WEDGE_TURN = CFrame.Angles(0, math.rad(180), 0)
+
+-- Колпак башни C «Ловибум-кристалл»: сад на кровле, золотое кольцо, четыре когтя держат кристалл (знак игры).
+-- Начало — центр верха плиты-кровли. Купола и шпили есть только здесь.
+function ShowcaseFloor.Cap(): { Brick }
+	local out: { Brick } = {}
+	local green, green2 = hex("4E9A3A"), hex("3C8230")
+	local gold, gold2 = hex("E9B43A"), hex("B98A1E")
+	box(out, HX * 2 - 2, 1.2, HZ * 2 - 2, 0, 0.6, 0, green, Kit.PROP)
+	for k = 0, 9 do -- живая изгородь
+		local a = math.pi * 2 * k / 10
+		Kit.ball(out, 2.1, math.cos(a) * 13.6, 2.2, math.sin(a) * 12.6, if k % 2 == 0 then green2 else green, Kit.TRIM)
+	end
+	Kit.cyl(out, 10, 2.4, 0, 1.2, 0, gold)
+	Kit.cyl(out, 8.8, 0.5, 0, 3.6, 0, gold2, Kit.TRIM)
+	-- кристалл-бипирамида из восьми угловых клиньев
+	local crystalColor = hex("38D6E0")
+	local r, yMid, yLow, yTop = 7.6, 19.5, 5.2, 36
+	local GEMC = { material = Enum.Material.Glass, transparency = 0.18, shape = "CornerWedge", collide = false }
+	for q = 0, 3 do
+		local rot = CFrame.Angles(0, math.rad(90 * q), 0)
+		local up = CFrame.new(0, (yMid + yTop) / 2, 0) * rot * CFrame.new(r / 2, 0, -r / 2) * WEDGE_TURN
+		table.insert(out, ModelBuilder.Brick(Vector3.new(r, yTop - yMid, r), up, crystalColor, GEMC))
+		local down = CFrame.new(0, (yMid + yLow) / 2, 0)
+			* CFrame.Angles(math.rad(180), 0, 0)
+			* rot
+			* CFrame.new(r / 2, 0, -r / 2)
+			* WEDGE_TURN
+		table.insert(out, ModelBuilder.Brick(Vector3.new(r, yMid - yLow, r), down, crystalColor, GEMC))
+	end
+	for k = 0, 3 do -- когти
+		local a = math.rad(45 + 90 * k)
+		local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+		local foot, tip = dir * 9.2 + Vector3.new(0, 3.4, 0), dir * 6.9 + Vector3.new(0, 22, 0)
+		local cf = CFrame.lookAt((foot + tip) / 2, tip) * CFrame.Angles(math.rad(-90), 0, 0)
+		tilt(out, 2.0, (tip - foot).Magnitude, 2.0, cf, gold, Kit.PROP)
+		tilt(out, 2.6, 1.5, 2.6, cf * CFrame.new(0, -(tip - foot).Magnitude / 2 + 1.2, 0), gold2, Kit.TRIM)
+		local hook = CFrame.lookAt(tip, tip - dir * 3 + Vector3.new(0, 2.4, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+		tilt(out, 1.5, 3.6, 1.5, hook * CFrame.new(0, 1.3, 0), gold2, Kit.TRIM)
+	end
 	return out
 end
 
