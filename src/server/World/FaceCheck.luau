@@ -150,7 +150,7 @@ local NQ = 50 -- шаг корзин нормалей 0.02
 local DQ = 20 -- шаг корзин плоскостей 0.05
 local CAP = 16 -- торец цилиндра — правильный 16-угольник
 
-type Face = { part: any, n: Vector3, d: number, pts: { Vector3 }, axisPart: boolean }
+type Face = { part: any, n: Vector3, d: number, mid: Vector3, pts: { Vector3 }, axisPart: boolean }
 type Solid = { part: any, cf: CFrame, half: Vector3, lo: Vector3, hi: Vector3, shape: any }
 
 -- Многоугольник a, обрезанный выпуклым многоугольником clip (оба — точки на плоскости {x, y}, clip против часовой).
@@ -277,7 +277,7 @@ function FaceCheck.ScanAny(root: Instance): (number, { [string]: { n: number, ex
 						if n:Dot(mid - center) < 0 then
 							n = -n
 						end
-						local f: Face = { part = p, n = n, d = n:Dot(mid), pts = pts, axisPart = axisPart }
+						local f: Face = { part = p, n = n, d = n:Dot(mid), mid = mid, pts = pts, axisPart = axisPart }
 						table.insert(faces, f)
 						local key = bucketKey(n, f.d, 0, 0, 0, 0)
 						buckets[key] = buckets[key] or {}
@@ -386,7 +386,10 @@ function FaceCheck.ScanAny(root: Instance): (number, { [string]: { n: number, ex
 								g.part ~= f.part
 								and not (f.axisPart and g.axisPart)
 								and f.n:Dot(g.n) >= SAME
-								and math.abs(f.d - g.d) <= PLANE
+								-- расстояние между плоскостями — от точки к точке: разность d = n·mid вдали от начала
+								-- координат (предпросмотр у x = 4000) ошибается на десятые доли стада — крошечная
+								-- погрешность нормали умножается на тысячи стадов (ложные пары, 2026-11-27)
+								and math.abs(f.n:Dot(g.mid - f.mid)) <= PLANE
 							then
 								local a, b = id(f.part), id(g.part)
 								local poly = {}
