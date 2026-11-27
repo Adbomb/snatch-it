@@ -275,7 +275,7 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 		for _, s in { -1, 1 } do
 			box(out, 0.4, 1.3, 1.4, -11.5 + s * 2.0, f + 0.65, rz + 5.0, C.deck, TRIM)
 		end
-		jelly(out, 7.5, top - 4.6, rz + 5, 2.0, top, C.jelly)
+		jelly(out, -9, top - 4.0, rz + 5, 2.0, top, C.jelly)
 	end
 	if tier >= 2 then -- аквариум-колонна с пузырями, якорь у стены, фонари
 		tubeTank(out, if tier == 2 then 3.2 else 3.6, f, BACK - 2.8, 1.9, 8.5)
@@ -305,7 +305,7 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 			Kit.wing(out, PAL, g1, s, HX - 5.6 + o, HX - 1.6 + o, at.Z - 2, zF)
 		end
 		if tier == 4 then
-			local cy = math.max(headY + 5.5, top - 8)
+			local cy = top - 6.5
 			jelly(out, 0, cy, rz + 3.6, 3.6, top, C.jelly)
 			jelly(out, -5.4, cy + 1.5, rz + 5.2, 1.5, top, C.lamp)
 			jelly(out, 5.4, cy + 2.2, rz + 5.2, 1.5, top, C.lamp)
@@ -313,11 +313,13 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 		end
 	end
 	if tier >= 5 then -- второй ярус, лампы-медузы на цепях, гигантская ламинария в переднем углу
-		g2 = f + (if tier == 5 then 31.5 else 41)
+		g2 = f + (if tier == 5 then 31.5 else 37)
 		local zF2 = BACK - 6.5
 		Kit.gallery(out, PAL, f, g2, zF2, HX - 3.6 + o, false)
 		tubeTank(out, -9.5, g2, BACK - 2.8, 1.7, 6.0)
-		porthole(out, -3.5, g2 + 5.0, 2.0, rim, FISH[4])
+		if tier == 5 then
+			porthole(out, -3.5, g2 + 5.0, 2.0, rim, FISH[4])
+		end
 		for _, s in { -1, 1 } do
 			local jx, jy, jz = s * (HX - 6.5 + o), math.max(headY + 7, g1 + 9), rz - 1.5
 			jelly(out, jx, jy, jz, 2.6, top, if s < 0 then C.jelly else C.lamp)
@@ -337,25 +339,25 @@ function Ocean.Build(out, tier: number, y0: number, y1: number): Vector3
 			Vector3.new(kx + 0.6, f + kh * 0.55, kz + 2.4),
 		}, C.kelp2, TRIM)
 		if tier == 5 then
-			jelly(out, 0, math.max(headY + 6, g2 - 3), rz + 3.2, 3.4, top, C.jelly)
+			jelly(out, 0, top - 6, rz + 3.2, 3.4, top, C.jelly)
 		end
 	end
 	if tier == 6 then -- героический объект: золотая раковина с жемчужиной, аквариум-колонна, большой иллюминатор
 		local gz = BACK - 3.3
-		local py = g2 + 6.6
-		box(out, 11.6, 1.0, 5.6, 0, g2 + 0.5, gz, C.wall2, PROP)
-		cylX(out, 3.1, 11.0, 0, g2 + 2.6, gz, C.gold) -- нижняя створка
-		box(out, 11.4, 0.5, 5.9, 0, g2 + 3.85, gz, C.gold2, TRIM)
-		ball(out, 3.6, 0, py + 0.9, gz - 0.2, C.pearl, Kit.LAMP) -- жемчужина
-		local lid = CFrame.new(0, py + 6.4, gz + 2.5) * CFrame.Angles(math.rad(-66), 0, 0)
-		tilt(out, 12.0, 0.7, 10.4, lid, C.gold, PROP) -- верхняя створка
+		local py = g2 + 8.2
+		box(out, 13.6, 1.0, 5.6, 0, g2 + 0.5, gz, C.wall2, PROP)
+		cylX(out, 3.9, 13.0, 0, g2 + 3.2, gz - 0.6, C.gold) -- нижняя створка
+		box(out, 13.4, 0.5, 6.2, 0, g2 + 4.85, gz - 0.2, C.gold2, TRIM)
+		ball(out, 4.3, 0, py + 0.9, gz - 0.6, C.pearl, Kit.LAMP) -- жемчужина
+		local lid = CFrame.new(0, py + 7.6, gz + 2.4) * CFrame.Angles(math.rad(-68), 0, 0)
+		tilt(out, 14.4, 0.7, 12.4, lid, C.gold, PROP) -- верхняя створка
 		for k = -2, 2 do -- рёбра створки веером
-			local rib = lid * CFrame.new(k * 2.3, -0.5, 0.6) * CFrame.Angles(0, math.rad(-k * 7), 0)
-			tilt(out, 0.9, 0.4, 9.4, rib, C.gold2, TRIM)
+			local rib = lid * CFrame.new(k * 2.8, -0.5, 0.6) * CFrame.Angles(0, math.rad(-k * 7), 0)
+			tilt(out, 1.0, 0.4, 11.4, rib, C.gold2, TRIM)
 		end
 		tubeTank(out, 11.2, g2, BACK - 2.8, 1.6, 9.0)
 		porthole(out, 8.6, g1 + 11.6, 3.4, rim, FISH[1])
-		Kit.light(out, Vector3.new(0, py + 8, BACK - 13), 32, 1.7, C.warm, 70, Vector3.new(0, -0.3, 1))
+		Kit.light(out, Vector3.new(0, py + 9, BACK - 14), 34, 1.7, C.warm, 70, Vector3.new(0, -0.3, 1))
 	end
 
 	Kit.lights(out, tier, y0, y1, at, headY, C.warm)

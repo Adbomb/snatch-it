@@ -405,18 +405,12 @@ function Saloon.Grow(out, tier: number, h: number, _frame, _crystal)
 		ball(out, 0.6, hand.X + 0.5, hand.Y + 0.9, hand.Z - 1.2, C.redDark, TRIM)
 		-- росток у правой колонны
 		local px, pz = HX - W / 2 + 0.6, -(HZ - W / 2) - reach
-		limb(
-			out,
-			0.6,
-			{
-				Vector3.new(px, 3.2, pz),
-				Vector3.new(px, 7.4, pz),
-				Vector3.new(px - 1.2, 8.6, pz),
-				Vector3.new(px - 1.2, 11, pz),
-			},
-			C.green2,
-			TRIM
-		)
+		limb(out, 0.6, {
+			Vector3.new(px, 3.2, pz),
+			Vector3.new(px, 7.4, pz),
+			Vector3.new(px - 1.2, 8.6, pz),
+			Vector3.new(px - 1.2, 11, pz),
+		}, C.green2, TRIM)
 		ball(out, 0.75, px - 1.2, 11.8, pz, C.pink, TRIM)
 	elseif tier == 6 then
 		local face = HX + 1.0 -- наружная грань колонны Космического
