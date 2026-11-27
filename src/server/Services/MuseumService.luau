@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local FloorRarity = require(ReplicatedStorage.Shared.Config.FloorRarity)
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local GameTime = require(ReplicatedStorage.Shared.GameTime)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
@@ -24,6 +25,7 @@ local Prompts = require(ServerScriptService.Server.Util.Prompts)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local RateLimiter = require(ServerScriptService.Server.Util.RateLimiter)
 local Validate = require(ServerScriptService.Server.Util.Validate)
+local FloorSignal = require(ServerScriptService.Server.World.FloorSignal)
 
 local displayLimiter = RateLimiter.new(GameConfig.RateLimits.Display)
 local moveLimiter = RateLimiter.new(GameConfig.RateLimits.Move)
@@ -207,6 +209,12 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 		"Go"
 	)
 	MuseumService.Present(player, plot, slot, entry.itemId)
+	-- D74, момент получения: редкий этаж встал на место (до этапа В место — постамент) — вспышка, столб света и
+	-- звук у всех рядом (World/FloorSignal; у частых редкостей момента нет)
+	local tier = table.find(FloorRarity.Order, entry.floorRarity or FloorRarity.Default)
+	if tier then
+		FloorSignal.Arrive(plot.exhibits, plot.showcases[slot].CFrame * CFrame.new(0, 4, 0), tier)
+	end
 end
 
 -- Сброс выбора «Переставить». Атрибут MoveSlot видит клиент (подсветка и «Сюда»), сервер на него не смотрит.

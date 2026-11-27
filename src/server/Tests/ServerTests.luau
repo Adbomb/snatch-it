@@ -30,6 +30,7 @@ local BossLootService = require(Server.Services.BossLootService)
 local BossService = require(Server.Services.BossService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
+local AnnounceService = require(Server.Services.AnnounceService)
 local DevourService = require(Server.Services.DevourService)
 local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local GymService = require(Server.Services.GymService)
@@ -4380,6 +4381,143 @@ test(
 			ItemRegistry.Get(uid).state == "Carried",
 			"катсцена изменила состояние предмета"
 		)
+	end
+)
+
+test(
+	"D74 объявления: Мифический — всем на сервере, Алмазный — ещё и на все серверы, не чаще положенного; момент получения",
+	function(A, B)
+		ensureDay()
+		check(waitBossHome(1), "пёс не дома")
+		BossLootService.Handlers.Refresh()
+		giveLovibums(A, 1, "Turbo", 4)
+		local published: { any } = {}
+		AnnounceService.Reset()
+		AnnounceService.Audience = function()
+			return { A, B }
+		end
+		AnnounceService.Publish = function(payload)
+			table.insert(published, payload)
+		end
+		local function restore()
+			AnnounceService.Audience, AnnounceService.Publish = nil, nil
+			DevourService.Roll = nil
+			CatchService.Handlers.SetRoll(nil)
+		end
+		local ok, err = pcall(function()
+			-- бросок, дающий нужную редкость существу этого слота
+			local function rollFor(itemId: string, key: string): number
+				for i = 0, 99999 do
+					local r = i / 100000
+					if FloorRules.Roll(Items[itemId].rarity, r) == key then
+						return r
+					end
+				end
+				error("нет броска для " .. key)
+			end
+			local function catch(slot: number, key: string): string
+				local uid = BossLootService.SlotItem(1, slot) :: string
+				local itemId = ItemRegistry.Get(uid).itemId
+				local roll = rollFor(itemId, key)
+				DevourService.Roll = function()
+					return roll
+				end
+				CatchService.Handlers.SetRoll(0)
+				A:ClearSent()
+				B:ClearSent()
+				check(beginCatch(A, 1, slot), "поимка не началась")
+				throw(A, "Turbo", true)
+				check(
+					waitUntil(function()
+						return ItemRegistry.GetCarriedBy(A) == uid
+					end, CG.FlightTime + CG.CaptureTime + 3),
+					"существо не в руках"
+				)
+				check(ItemRegistry.Get(uid).floorRarity == key, "редкость этажа не та")
+				return uid
+			end
+			-- Деревянный: объявления нет
+			local uid = catch(1, "Wood")
+			check(
+				not B:WasNotified("выбил") and not A:WasNotified("выбил"),
+				"объявление о частом этаже"
+			)
+			CarryService.Drop(A)
+			local dropped = ItemRegistry.Get(uid)
+			ItemRegistry.Discard(uid, "тест объявлений")
+			if dropped and dropped.part then
+				dropped.part:Destroy()
+			end
+			-- Мифический: всем на сервере, на другие серверы не уходит
+			uid = catch(2, "Mythic")
+			local text = AnnounceService.Text(A.Name, "Mythic")
+			check(
+				text == A.Name .. " выбил Мифический этаж!",
+				"текст объявления: " .. text
+			)
+			check(
+				A:WasNotified(text) and B:WasNotified(text),
+				"Мифический не объявлен всем на сервере"
+			)
+			check(#published == 0, "Мифический ушёл на другие серверы")
+			-- момент получения: редкий этаж поставлен — точка эффекта у постамента
+			local plotA = plotOf(A)
+			near(A, plotA.showcases[1])
+			MuseumService.Handlers.Display(A, plotA, 1)
+			local arrival = plotA.exhibits:FindFirstChild("FloorArrival")
+			check(
+				arrival and arrival:GetAttribute("Rarity") == "Mythic",
+				"нет момента получения Мифического"
+			)
+			-- Алмазный: всем на сервере и одно сообщение на другие серверы; второй подряд — без публикации
+			uid = catch(3, "Diamond")
+			text = AnnounceService.Text(A.Name, "Diamond")
+			check(
+				A:WasNotified(text) and B:WasNotified(text),
+				"Алмазный не объявлен на сервере"
+			)
+			check(
+				#published == 1 and published[1].rarity == "Diamond" and published[1].name == A.Name,
+				"Алмазный не ушёл на другие серверы одним сообщением"
+			)
+			AnnounceService.FloorWon(A, "Diamond")
+			check(
+				#published == 1,
+				"второй Алмазный подряд опубликован (ограничение частоты)"
+			)
+			-- приём с другого сервера: показ, мусор и частые сообщения отбрасываются
+			B:ClearSent()
+			check(
+				AnnounceService.Receive({ name = "Гость", rarity = "Diamond", job = "другой" }),
+				"чужое не показано"
+			)
+			check(
+				B:WasNotified("Гость выбил Алмазный этаж!"),
+				"текст чужого объявления"
+			)
+			check(
+				not AnnounceService.Receive({ name = "Гость2", rarity = "Diamond", job = "другой" }),
+				"чужие объявления чаще положенного"
+			)
+			AnnounceService.Reset()
+			check(
+				not AnnounceService.Receive({ name = "Гость", rarity = "Mythic", job = "x" }),
+				"принят Мифический"
+			)
+			check(
+				not AnnounceService.Receive({ name = string.rep("я", 60), rarity = "Diamond" }),
+				"принято длинное имя"
+			)
+			check(
+				not AnnounceService.Receive("мусор") and not AnnounceService.Receive({ name = 5 }),
+				"принят мусор"
+			)
+		end)
+		restore()
+		AnnounceService.Reset()
+		if not ok then
+			error(err, 0)
+		end
 	end
 )
 

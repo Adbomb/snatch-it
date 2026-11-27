@@ -8,7 +8,8 @@
 -- катсцена молча отступает.
 -- DevourService.Roll — подмена случайного числа 0…1 (тесты и DEV); nil — обычный Random.
 -- DevourService.TimeScale — множитель длительностей катсцены (тесты): 0 — без катсцены, состояние босса не меняется.
--- Зависит от BossLootService, BossService, ItemRegistry, Remotes, Config/Items, Config/FloorRarity, Config/Battle,
+-- Редкий этаж объявляется игрокам (AnnounceService).
+-- Зависит от AnnounceService, BossLootService, BossService, ItemRegistry, Remotes, Config/Items, Config/FloorRarity, Config/Battle,
 -- Config/Devour, Shared/FloorRules, Util/Validate, Util/Log.
 
 local Players = game:GetService("Players")
@@ -22,6 +23,7 @@ local Items = require(ReplicatedStorage.Shared.Config.Items)
 local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Server = ServerScriptService.Server
+local AnnounceService = require(Server.Services.AnnounceService)
 local BossLootService = require(Server.Services.BossLootService)
 local BossService = require(Server.Services.BossService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
@@ -132,6 +134,7 @@ function DevourService.Begin(player: Player, boss: number, slot: number): string
 		"DevourService",
 		("%s: босс %d съел %s — этаж «%s»"):format(player.Name, boss, itemId, FloorRarity.Names[key])
 	)
+	AnnounceService.FloorWon(player, key) -- Мифический — всем на сервере, Алмазный — на все серверы
 	-- показ: после выдачи и без yield в этом кадре (состояния идут в своём потоке)
 	local model = BossService.Get(boss)
 	local scale = DevourService.TimeScale
