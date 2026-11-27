@@ -58,6 +58,7 @@ local PULSE = { material = Enum.Material.Neon, collide = false, shadow = false, 
 local GLASS_COLOR = hex("D6F0FF")
 local BUST_OUT = 1.8 -- золотой бюст выступает перед фасадом, стадов (как капители)
 local BUST_LEAN = 20 -- и наклонён вперёд, градусов
+local ALCOVE = 5 -- глубина ниши бюста в перемычке, стадов
 local WHITE, BLACK = Color3.new(1, 1, 1), Color3.new(0, 0, 0)
 
 -- Набор облицовки колонн по семье силуэта.
@@ -207,7 +208,8 @@ local function lintelOf(tier: number, headTall: number): number
 end
 
 -- Цельное стекло фасада и боков, порог и перемычка в цветах монстра; задняя стена — его «спина».
-local function glazing(out, dna, y0: number, y1: number, lintel: number, niche: boolean)
+-- alcove — ширина ниши золотого бюста в перемычке фасада (nil — перемычка сплошная).
+local function glazing(out, dna, y0: number, y1: number, lintel: number, niche: boolean, alcove: number?)
 	local body, second = dna.palette[1], dna.palette[2]
 	local sill = 0.7
 	local function run(alongX: boolean, half: number, fixed: number, tall: number)
@@ -220,7 +222,32 @@ local function glazing(out, dna, y0: number, y1: number, lintel: number, niche: 
 		end
 		local g0, g1 = y0 + sill, y1 - 0.4 - tall
 		put(half * 2, sill, 0.8, y0 + sill / 2, shade(body, 0.4))
-		put(half * 2, tall, 0.9, y1 - 0.4 - tall / 2, if niche and alongX then shade(body, 0.45) else body)
+		if alongX and alcove then
+			-- ниша бюста: перемычка по бокам, за ней тёмные стенки, дно и задняя стенка в глубине комнаты
+			local yl = y1 - 0.4 - tall / 2
+			local side = half - alcove / 2
+			local back = fixed + 0.45 -- задняя грань перемычки
+			local deep = ALCOVE - 0.9
+			for _, s in { -1, 1 } do
+				box(out, side, tall, 0.9, s * (alcove / 2 + side / 2), yl, fixed, body)
+				box(
+					out,
+					0.3,
+					tall - 0.3,
+					deep,
+					s * (alcove / 2 + 0.15),
+					yl + 0.15,
+					back + deep / 2,
+					shade(body, 0.5),
+					DECO
+				)
+			end
+			box(out, alcove + 0.6, 0.3, deep, 0, g1 + 0.15, back + deep / 2, shade(body, 0.5), DECO)
+			box(out, alcove, 0.3, deep, 0, y1 - 0.55, back + deep / 2, shade(body, 0.6), DECO) -- потолок ниши
+			box(out, alcove + 0.6, tall, 0.3, 0, yl, back + deep + 0.15, shade(body, 0.6), DECO)
+		else
+			put(half * 2, tall, 0.9, y1 - 0.4 - tall / 2, if niche and alongX then shade(body, 0.45) else body)
+		end
 		put(half * 2, 0.34, 1.1, g1 + 0.05, second, DECO)
 		put(half * 2, g1 - g0, 0.2, (g0 + g1) / 2, GLASS_COLOR, Kit.GLASS)
 	end
@@ -296,6 +323,14 @@ local function groupSize(rig: any, name: string): (Vector3, Vector3)
 		end
 	end
 	return hi - lo, (hi + lo) / 2
+end
+
+-- Золотой бюст (Золотой, Мифический): множитель и габарит головы с потомками. Глубина — от выноса перед фасадом до
+-- задней стенки ниши, ширина ниши — по ширине бюста.
+local function bustScale(rig: any, face: string, lintel: number): (number, Vector3, Vector3)
+	local whole, shift = groupSize(rig, face)
+	local depth = BUST_OUT + ALCOVE - 0.6
+	return math.min(13 / whole.X, (lintel - 1.1) / whole.Y, depth / whole.Z), whole, shift
 end
 
 -- Выросты каркаса за след башни (Мифический — до 4 стадов на сторону, Алмазный — до 8; соседние башни — через 75):
@@ -415,16 +450,13 @@ local function monsterParts(out, requests, dna, rig, tier: number, y0: number, y
 		group(requests, rig, face, CFrame.new(centre), k)
 	end
 	if (tier == 4 or tier == 5) and face and faceSize and not far then
-		-- золотой бюст: собственная голова существа целиком в золоте (Foil) на золотой полке, выступает из тёмной
-		-- ниши перемычки не дальше капителей (BUST_OUT стадов от фасада), задняя часть утоплена в перемычку
-		local whole, shift = groupSize(rig, face)
-		local k = math.min(13 / whole.X, (lintel - 0.9) / whole.Y, 7 / whole.Z)
+		-- золотой бюст: собственная голова существа целиком в золоте, в тёмной нише перемычки (MonsterFloor.Build
+		-- вырезает её по ширине бюста); выступает перед фасадом не дальше капителей и наклонён к игроку внизу
+		local k, whole, shift = bustScale(rig, face, lintel)
 		local yc = y1 - 0.4 - lintel / 2
 		local front = -HZ - BUST_OUT
-		-- наклон вперёд: бюст смотрит на игрока внизу (полки под ним нет — она закрывала бы его снизу)
 		local lean = CFrame.Angles(math.rad(-BUST_LEAN), 0, 0)
 		local centre = Vector3.new(0, yc, front + whole.Z * k / 2) - lean * (RIG_FACE * (shift * k))
-		box(out, whole.X * k + 2.2, lintel - 0.5, 0.2, 0, yc, zf - 0.1, shade(body, 0.55), DECO)
 		group(
 			requests,
 			rig,
@@ -540,7 +572,13 @@ function MonsterFloor.Build(itemId: string, tier: number): Built?
 			column(out, dna, sx, sz, SLAB, h)
 		end
 	end
-	glazing(out, dna, SLAB, h, lintel, tier == 6)
+	local alcove: number? = nil
+	local bustFace = if tier == 4 or tier == 5 then facePart(rig, dna) else nil
+	if bustFace then
+		local k, whole = bustScale(rig, bustFace, lintel)
+		alcove = math.min(whole.X * k + 1.6, (HX - W) * 2 - 2)
+	end
+	glazing(out, dna, SLAB, h, lintel, tier == 6, alcove)
 	local at = ZoneRooms.Build(out, dna, tier, SLAB, h, requests, sizeOf(rig, dna.feature))
 	monsterParts(out, requests, dna, rig, tier, SLAB, h, lintel, false)
 	if tier == 6 then -- выросты каркаса у задних колонн (у передних — руки): тело монстра с алмазными остриями
