@@ -209,6 +209,38 @@ UITokens.OwnerTag = {
 	MaxDistance = 260,
 }
 
+-- Значок над башней (D74, сигнал редкости): имя владельца и счётчики редких этажей. Размеры — пиксели при масштабе
+-- экрана 1 (значок на экране одного размера с любого расстояния); MaxDistance — стадов по земле; Lift — над маяком.
+-- Иконки — Stud-UI (CheckUIIcons), цвета счётчиков — по редкости этажа, обводка — тёмный оттенок того же цвета.
+UITokens.TowerBadge = {
+	Size = Vector2.new(260, 82),
+	MaxDistance = 400,
+	Lift = 16,
+	NameSize = 28,
+	NameStroke = Color3.fromHex("1E2433"),
+	CountSize = 26,
+	CountWidth = 40,
+	Icon = 34,
+	Gap = 8,
+	Rarity = {
+		Gold = {
+			icon = "Currency/Diamond/Golden Diamond 1st Outline",
+			color = Color3.fromHex("FFD23F"),
+			stroke = Color3.fromHex("3A2602"),
+		},
+		Mythic = {
+			icon = "Currency/Diamond/Purple Diamond 1st Outline",
+			color = Color3.fromHex("D9B8FF"),
+			stroke = Color3.fromHex("22093F"),
+		},
+		Diamond = {
+			icon = "Currency/Diamond/Blue Diamond 1st Outline",
+			color = Color3.fromHex("BFF2FF"),
+			stroke = Color3.fromHex("062A3A"),
+		},
+	},
+}
+
 -- Обводка живых существ у боссов (визуальный QA босса 3): тонкий светлый контур, чтобы силуэт не сливался с
 -- подушкой и ковром (красные существа на красном бархате). Только контур (заливки нет), сквозь стены не виден.
 UITokens.CreatureOutline = {
