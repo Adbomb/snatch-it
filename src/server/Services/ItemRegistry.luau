@@ -9,6 +9,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local FloorRarity = require(ReplicatedStorage.Shared.Config.FloorRarity)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
+local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
 local Log = require(ServerScriptService.Server.Util.Log)
 
 -- Floor — построенный этаж музея-небоскрёба (этап B, только режим башни DEV): у владельца не больше одного Floor
@@ -132,6 +133,38 @@ function ItemRegistry.CreateOnMap(itemId: string, part: BasePart): string
 	part:SetAttribute("ItemUid", uid)
 	Log.Debug("ItemRegistry", ("Появился %s (%s)"):format(itemId, uid))
 	return uid
+end
+
+-- Награда броска (D75): новый экземпляр существа зоны zone с уже разыгранной редкостью этажа. Состояние OnMap —
+-- дальше обычный переход в руки (OnMap → Carried, граф §1 не меняется). uid выдаётся здесь.
+function ItemRegistry.CreateReward(itemId: string, part: BasePart, zone: number, floorRarity: string?): string
+	local uid = ItemRegistry.CreateOnMap(itemId, part)
+	local entry = entries[uid]
+	entry.boss = zone
+	if type(floorRarity) == "string" and FloorRarity.Mult[floorRarity] then
+		entry.floorRarity = floorRarity
+		part:SetAttribute("FloorRarity", floorRarity)
+	end
+	return uid
+end
+
+-- Такой же этаж в башне владельца (D75: двух одинаковых — то же существо и та же редкость этажа — быть не может):
+-- uid выставленного экспоната или построенного этажа, кроме exceptUid; nil — такого нет. Два предмета без разыгранной
+-- редкости этажа (до D74: с карты, из старых сохранений, тестовые) между собой не сравниваются — у наград броска и
+-- поимки редкость задана всегда; предмет без неё против предмета с ней считается Деревянным.
+function ItemRegistry.FindTwin(owner: number, itemId: string, floorRarity: string?, exceptUid: string?): string?
+	for uid, entry in entries do
+		if
+			uid ~= exceptUid
+			and entry.owner == owner
+			and (entry.state == "Displayed" or entry.state == "Floor" or entry.state == "Lifting")
+			and (floorRarity ~= nil or entry.floorRarity ~= nil)
+			and ThrowRules.SameFloor(entry.itemId, entry.floorRarity, itemId, floorRarity)
+		then
+			return uid
+		end
+	end
+	return nil
 end
 
 -- Новый экземпляр у босса boss в слоте slot (D37). uid выдаётся здесь.

@@ -32,6 +32,7 @@ local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local AnnounceService = require(Server.Services.AnnounceService)
 local DevourService = require(Server.Services.DevourService)
+local ThrowService = require(Server.Services.ThrowService)
 local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local GymService = require(Server.Services.GymService)
 local HandDumbbell = require(Server.World.HandDumbbell)
@@ -58,6 +59,7 @@ local VaultService = require(Server.Services.VaultService)
 local CharacterGroups = require(Server.Util.CharacterGroups)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
 local CatchRules = require(ReplicatedStorage.Shared.CatchRules)
 local DefenseRules = require(ReplicatedStorage.Shared.DefenseRules)
 local CatchThrow = require(ReplicatedStorage.Shared.CatchThrow)
@@ -4515,6 +4517,384 @@ test(
 		end)
 		restore()
 		AnnounceService.Reset()
+		if not ok then
+			error(err, 0)
+		end
+	end
+)
+
+-- D75, бросок вдаль: игрок на площадке, случайные числа по очереди (существо, предмет, этаж, босс), шкала с заданным
+-- началом (phase 0.25 — маркер в середине шкалы: идеально; 0 — край: точность 0).
+local function onPad(player: any)
+	player:MoveTo(MapLayout.ThrowPad.position + Vector3.new(0, 3, 0))
+end
+
+local function throwRolls(...: number)
+	local rolls, i = { ... }, 0
+	ThrowService.Random = function()
+		i += 1
+		return rolls[i] or 0.5
+	end
+end
+
+local function lastSent(player: any, name: string): any
+	local found
+	for _, sent in player.Sent do
+		if sent.name == name then
+			found = sent.args[1]
+		end
+	end
+	return found
+end
+
+-- Бросок Ловибумом (уровень, вид) с заданным качеством шкалы; возвращает событие результата.
+local function throwOnce(player: any, level: number, kind: string, perfect: boolean): any
+	ThrowService.Scale = { period = 2, phase = if perfect then 0.25 else 0 }
+	player:ClearSent()
+	check(
+		ThrowService.Start(player, level, kind),
+		"бросок не начался: " .. table.concat(player:Notices(), "; ")
+	)
+	check(ThrowService.Press(player, workspace:GetServerTimeNow()), "нажатие не принято")
+	local result = lastSent(player, Remotes.Names.ThrowResult)
+	check(result, "нет события результата: " .. table.concat(player:Notices(), "; "))
+	return result
+end
+
+local function throwCleanup()
+	ThrowService.Random, ThrowService.Scale = nil, nil
+	AnnounceService.Audience, AnnounceService.Publish = nil, nil
+	AnnounceService.Reset()
+end
+
+test(
+	"D75 бросок: шкала на времени сервера, Ловибум списан, капсула в руках с редкостью этажа, рекорд, продажа из рук",
+	function(A, _B)
+		ensureDay()
+		local ok, err = pcall(function()
+			onPad(A)
+			giveLovibums(A, 1, "Boom", 3)
+			DataService.GetData(A).strength = 0
+			local coins = DataService.GetData(A).coins
+			throwRolls(0.1, 0, 0, 0.9) -- Common, первый предмет зоны, Деревянный, не босс
+			local result = throwOnce(A, 1, "Boom", true)
+			check(stockOf(A, 1, "Boom") == 2, "Ловибум не списан")
+			check(result.quality == 1 and result.zone == 1, "идеальное нажатие, зона 1")
+			check(
+				math.abs(result.distance - ThrowRules.Distance(0, 1, "Boom", 1)) < 1e-6,
+				"дальность не по правилам: " .. tostring(result.distance)
+			)
+			check(result.rarity == "Common" and result.floor == "Wood" and not result.sold, "награда не та")
+			check(
+				math.abs(result.luck - ThrowRules.Luck(result.depth)) < 1e-9 and result.luck > 1,
+				"удача по глубине"
+			)
+			check(result.oneIn == ThrowRules.OneIn(result.chance) and result.chance > 0, "«1 из N»")
+			check(
+				result.record == true and A:GetAttribute("ThrowRecord") == math.floor(result.distance + 0.5),
+				"рекорд"
+			)
+			check(DataService.Throw(A).record == result.distance, "рекорд не в профиле")
+			local uid = ItemRegistry.GetCarriedBy(A)
+			local entry = uid and ItemRegistry.Get(uid)
+			check(entry and uid == result.uid, "капсула не в руках")
+			check(
+				entry.itemId == result.itemId and Items[entry.itemId].boss == 1,
+				"существо не из набора зоны 1"
+			)
+			check(
+				entry.floorRarity == "Wood" and entry.boss == 1,
+				"редкость этажа или зона не записаны"
+			)
+			check(
+				entry.part:GetAttribute("FloorRarity") == "Wood",
+				"редкости этажа нет на предмете"
+			)
+			local flight = lastSent(A, Remotes.Names.ThrowFlight)
+			check(
+				flight and flight.user == A.UserId and flight.zone == 1 and flight.name == A.Name,
+				"полёт не разослан"
+			)
+			-- руки заняты — второй бросок не начинается, Ловибум цел
+			A:ClearSent()
+			check(
+				not ThrowService.Start(A, 1, "Boom") and A:WasNotified("Руки заняты"),
+				"бросок с занятыми руками"
+			)
+			check(stockOf(A, 1, "Boom") == 2, "отказ списал Ловибум")
+			-- продажа капсулы из рук: доход этажа за SellSeconds секунд
+			local price = ThrowRules.SellPrice(IncomeService.Of(entry.itemId, "Wood"))
+			check(result.price == price, "цена продажи в событии")
+			check(ThrowService.SellCarried(A), "капсула не продалась")
+			check(
+				ItemRegistry.GetCarriedBy(A) == nil and ItemRegistry.Get(uid) == nil,
+				"после продажи капсула осталась"
+			)
+			check(DataService.GetData(A).coins == coins + price, "монеты за продажу")
+			check(not ThrowService.SellCarried(A), "продажа пустых рук")
+			-- край шкалы и подделанный момент нажатия: точность 0, не больше идеала
+			throwRolls(0.1, 0, 0, 0.9)
+			ThrowService.Scale = { period = 2, phase = 0 }
+			A:ClearSent()
+			check(ThrowService.Start(A, 1, "Boom"), "второй бросок не начался")
+			local session = ThrowService.Handlers.Session(A)
+			local state = lastSent(A, Remotes.Names.ThrowState)
+			check(
+				session and state and state.period == 2 and state.at == session.startedAt,
+				"шкала не отправлена"
+			)
+			check(
+				ThrowService.Press(A, workspace:GetServerTimeNow() + 100),
+				"нажатие «из будущего» не принято"
+			)
+			local second = lastSent(A, Remotes.Names.ThrowResult)
+			check(
+				second and second.quality < 0.2,
+				"подделанный момент дал точность " .. tostring(second and second.quality)
+			)
+			check(
+				second.distance <= ThrowRules.Distance(0, 1, "Boom", 1) and second.record == false,
+				"подделка побила рекорд"
+			)
+			check(not ThrowService.Press(A, 0), "повторное нажатие после броска")
+			ThrowService.SellCarried(A)
+			-- отказы: не на площадке, нет Ловибума, чужой уровень и вид
+			A:MoveTo(MapLayout.ThrowPad.position + Vector3.new(200, 3, 0))
+			A:ClearSent()
+			check(
+				not ThrowService.Start(A, 1, "Boom") and A:WasNotified("с площадки"),
+				"бросок не с площадки"
+			)
+			onPad(A)
+			check(not ThrowService.Start(A, 1, "Mega"), "бросок без Ловибума этого вида")
+			check(
+				not ThrowService.Start(A, 99, "Boom") and not ThrowService.Start(A, 1, "Нет"),
+				"чужой уровень или вид"
+			)
+			check(
+				not ThrowService.Start(A, 0 / 0, "Boom") and not ThrowService.Start(A, "1", "Boom"),
+				"мусор вместо уровня"
+			)
+			check(stockOf(A, 1, "Boom") == 1, "отказы списали Ловибум")
+			-- уровень Ловибума — потолок: сила на зону 10, Ловибум уровня 1 — конец зоны 1, удача ×2
+			DataService.GetData(A).strength = 1e12
+			throwRolls(0.1, 0, 0, 0.9)
+			local capped = throwOnce(A, 1, "Boom", true)
+			check(
+				capped.zone == 1 and capped.depth == 1 and capped.luck == 2,
+				"уровень 1 улетел дальше зоны 1"
+			)
+			check(
+				capped.distance == ThrowRules.Mark(2),
+				"дальность не упёрлась в конец зоны"
+			)
+			ThrowService.SellCarried(A)
+			DataService.GetData(A).strength = 0
+		end)
+		throwCleanup()
+		if not ok then
+			error(err, 0)
+		end
+	end
+)
+
+test(
+	"D75 повтор «Уже есть», авто-продажа, запрет одинаковых этажей при установке, продажа из инвентаря",
+	function(A, _B)
+		ensureDay()
+		local ok, err = pcall(function()
+			giveLovibums(A, 1, "Boom", 8)
+			DataService.GetData(A).strength = 0
+			local plotA = plotOf(A)
+			local function throwSame(floorRoll: number): any
+				onPad(A)
+				throwRolls(0.1, 0, floorRoll, 0.9)
+				return throwOnce(A, 1, "Boom", false)
+			end
+			-- первый — на постамент
+			local first = throwSame(0)
+			check(first.duplicate == false, "первый экземпляр помечен повтором")
+			near(A, plotA.showcases[1])
+			MuseumService.Handlers.Display(A, plotA, 1)
+			check(ItemRegistry.Get(first.uid).state == "Displayed", "первый этаж не встал")
+			-- второй такой же: «Уже есть», на постамент не ставится
+			local second = throwSame(0)
+			check(second.duplicate == true and second.itemId == first.itemId, "повтор не помечен")
+			near(A, plotA.showcases[2])
+			A:ClearSent()
+			MuseumService.Handlers.Display(A, plotA, 2)
+			check(
+				ItemRegistry.Get(second.uid).state == "Carried" and A:WasNotified("Уже есть"),
+				"повтор встал на постамент"
+			)
+			check(
+				DataService.GetData(A).items[second.uid] == nil,
+				"повтор попал в профиль как экспонат"
+			)
+			-- в инвентарь, оттуда — не выставить и не заменить другой постамент, но можно продать
+			near(A, plotA.chest)
+			InventoryService.Handlers.StoreCarried(A, plotA)
+			check(ItemRegistry.Get(second.uid).state == "Stored", "повтор не лёг в инвентарь")
+			A:ClearSent()
+			InventoryService.Handlers.Action(A, "Display", second.uid, 2)
+			check(
+				ItemRegistry.Get(second.uid).state == "Stored" and A:WasNotified("Уже есть"),
+				"повтор выставлен из инвентаря"
+			)
+			local coins = DataService.GetData(A).coins
+			local price = ThrowRules.SellPrice(IncomeService.Of(second.itemId, "Wood"))
+			InventoryService.Handlers.Action(A, "Sell", second.uid)
+			check(
+				ItemRegistry.Get(second.uid) == nil and DataService.GetData(A).items[second.uid] == nil,
+				"продажа не убрала предмет"
+			)
+			check(
+				DataService.GetData(A).coins == coins + price,
+				"монеты за продажу из инвентаря"
+			)
+			InventoryService.Handlers.Action(A, "Sell", first.uid)
+			check(ItemRegistry.Get(first.uid).state == "Displayed", "продан выставленный этаж")
+			InventoryService.Handlers.Action(A, "Sell", "нет такого")
+			-- то же существо на другом этаже — не повтор, ставится рядом
+			local stone = throwSame(0.999999)
+			check(
+				stone.itemId == first.itemId and stone.floor ~= "Wood" and stone.duplicate == false,
+				"другая редкость — не повтор"
+			)
+			near(A, plotA.showcases[2])
+			MuseumService.Handlers.Display(A, plotA, 2)
+			check(
+				ItemRegistry.Get(stone.uid).state == "Displayed",
+				"то же существо на другом этаже не встало"
+			)
+			-- авто-продажа повторов
+			check(
+				ThrowService.SetAutoSell(A, { duplicates = true, creature = "Нет" }),
+				"фильтр не принят"
+			)
+			check(
+				DataService.Throw(A).autoSell.duplicates == true and DataService.Throw(A).autoSell.creature == nil,
+				"фильтр не очищен"
+			)
+			coins = DataService.GetData(A).coins
+			local stock = stockOf(A, 1, "Boom")
+			local third = throwSame(0)
+			check(
+				third.duplicate and third.sold and third.uid == nil,
+				"повтор не ушёл в авто-продажу"
+			)
+			check(
+				ItemRegistry.GetCarriedBy(A) == nil,
+				"после авто-продажи в руках капсула"
+			)
+			check(
+				DataService.GetData(A).coins == coins + third.price and stockOf(A, 1, "Boom") == stock - 1,
+				"монеты и Ловибум"
+			)
+			-- авто-продажа по редкости: обычное существо на Деревянном этаже — продаётся, даже не повтор
+			ThrowService.SetAutoSell(A, { creature = "Common", floor = "Wood" })
+			onPad(A)
+			throwRolls(0.1, 0.6, 0, 0.9)
+			local other = throwOnce(A, 1, "Boom", false)
+			check(
+				other.itemId ~= first.itemId and other.sold and not other.duplicate,
+				"фильтр редкости не сработал"
+			)
+			-- выше фильтра — остаётся в руках
+			onPad(A)
+			throwRolls(0.1, 0.6, 0.999999, 0.9)
+			local kept = throwOnce(A, 1, "Boom", false)
+			check(
+				not kept.sold and ItemRegistry.GetCarriedBy(A) == kept.uid,
+				"награда выше фильтра продана"
+			)
+			ThrowService.SetAutoSell(A, nil)
+			check(DataService.Throw(A).autoSell == nil, "фильтр не выключился")
+		end)
+		throwCleanup()
+		if not ok then
+			error(err, 0)
+		end
+	end
+)
+
+test(
+	"D75 босс и редкий этаж: босс 1 из 2 500 — в профиль и на крышу, доход, объявления; доход наград с калибровкой зоны",
+	function(A, B)
+		ensureDay()
+		local published: { any } = {}
+		local ok, err = pcall(function()
+			AnnounceService.Reset()
+			AnnounceService.Audience = function()
+				return { A, B }
+			end
+			AnnounceService.Publish = function(payload)
+				table.insert(published, payload)
+			end
+			giveLovibums(A, 1, "Mega", 3)
+			DataService.GetData(A).strength = 0
+			onPad(A)
+			IncomeService.Handlers.Refresh(A)
+			local before = A:GetAttribute("Income") or 0
+			B:ClearSent()
+			throwRolls(0.1, 0, 0, 0) -- босс
+			local result = throwOnce(A, 1, "Mega", true)
+			check(result.boss == 1, "босс не выпал")
+			local record = DataService.Throw(A)
+			check(
+				record.bosses.Z1 == 1 and record.roof == 1,
+				"босс не в профиле или не на крыше"
+			)
+			local roof = IncomeService.RoofOf(A)
+			check(roof == math.max(1, math.floor(ThrowRules.BossIncome(1) + 0.5)) and roof > 0, "доход босса")
+			check(A:GetAttribute("Income") == before + roof, "доход босса не в общем доходе")
+			local text = AnnounceService.BossText(A.Name, 1)
+			check(A:WasNotified(text) and B:WasNotified(text), "босс не объявлен всем")
+			check(
+				#published == 1 and published[1].boss == 1 and published[1].name == A.Name,
+				"босс не ушёл на все серверы"
+			)
+			check(ItemRegistry.GetCarriedBy(A) == result.uid, "вместе с боссом нет капсулы")
+			ThrowService.SellCarried(A)
+			check(
+				not ThrowService.SetRoof(A, 5) and DataService.Throw(A).roof == 1,
+				"на крышу поставлен чужой босс"
+			)
+			check(ThrowService.SetRoof(A, 1), "свой босс не ставится на крышу")
+			-- приём объявления о боссе с другого сервера
+			AnnounceService.Reset()
+			B:ClearSent()
+			check(
+				AnnounceService.Receive({ name = "Гость", boss = 4, job = "другой" }),
+				"чужой босс не показан"
+			)
+			check(B:WasNotified(AnnounceService.BossText("Гость", 4)), "текст чужого босса")
+			check(
+				not AnnounceService.Receive({ name = "Гость", boss = 99 }),
+				"принят босс несуществующей зоны"
+			)
+			-- Алмазный этаж с броска — объявление всем
+			AnnounceService.Reset()
+			B:ClearSent()
+			onPad(A)
+			throwRolls(0.1, 0, 0.9999999, 0.9)
+			local diamond = throwOnce(A, 1, "Mega", true)
+			check(diamond.floor == "Diamond" and diamond.boss == nil, "Алмазный не выпал")
+			check(B:WasNotified(AnnounceService.Text(A.Name, "Diamond")), "Алмазный не объявлен")
+			ThrowService.SellCarried(A)
+			-- калибровка дохода по зонам (Config/Throw.IncomeK)
+			for itemId, def in Items do
+				if def.income > 0 and not def.legacy and (def.boss == 1 or def.boss == 3 or def.boss == 4) then
+					local expected =
+						math.max(1, math.floor(ThrowRules.Income(def.income, def.rarity, "Gold", def.boss) + 0.5))
+					check(
+						IncomeService.Of(itemId, "Gold") == expected,
+						"доход с калибровкой: " .. itemId
+					)
+				end
+			end
+		end)
+		throwCleanup()
 		if not ok then
 			error(err, 0)
 		end

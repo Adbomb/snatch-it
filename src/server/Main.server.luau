@@ -33,6 +33,7 @@ local MuseumUpgradeService = require(Server.Services.MuseumUpgradeService)
 local ShopService = require(Server.Services.ShopService)
 local AnnounceService = require(Server.Services.AnnounceService)
 local CatchService = require(Server.Services.CatchService)
+local ThrowService = require(Server.Services.ThrowService)
 local TutorialService = require(Server.Services.TutorialService)
 local VaultService = require(Server.Services.VaultService)
 local TimeService = require(Server.Services.TimeService)
@@ -112,6 +113,7 @@ mark("боссы")
 BattleService.Init()
 AnnounceService.Init() -- D74: объявления о редких этажах с других серверов
 CatchService.Init() -- поимка «Ловибум» (D55): «Поймать» у существа → мини-игра → бой
+ThrowService.Init() -- D75: бросок вдаль
 TutorialService.Init(world) -- обязательное обучение новичка (D55)
 IncomeService.Init()
 GymService.Init()

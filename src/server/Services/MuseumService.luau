@@ -164,6 +164,15 @@ local function tryDisplay(player: Player, plot: PlotService.Plot, slot: number)
 	if not entry or not entry.part or not entry.part.Parent then
 		return
 	end
+	-- D75: двух одинаковых этажей (то же существо и та же редкость этажа) в башне быть не может
+	if ItemRegistry.FindTwin(player.UserId, entry.itemId, entry.floorRarity, uid) then
+		Notify.Send(
+			player,
+			"Уже есть такой этаж — продайте капсулу или оставьте в инвентаре",
+			"Stop"
+		)
+		return
+	end
 
 	-- Сначала запись в профиль, потом переход. Между ними нет yield, поэтому откат записи
 	-- не успевает попасть в DataStore, а обратного перехода Displayed → Carried в графе нет.

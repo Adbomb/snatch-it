@@ -23,4 +23,7 @@ return {
 	lovibums = {},
 	-- Обучение новичка (D55, Shared/TutorialRules): шаг, учебное существо и его uid (защита от кражи).
 	tutorial = { step = "Intro" },
+	-- Бросок вдаль (D75): рекорд дальности, м; боссы (Z<зона> → количество); roof — зона босса на крыше;
+	-- autoSell — фильтр авто-продажи { creature, floor, duplicates } или пусто (DataService.Throw проверяет запись).
+	throw = { record = 0, bosses = {} },
 }

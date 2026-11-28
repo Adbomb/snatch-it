@@ -15,6 +15,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
+local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
+local IncomeService = require(ServerScriptService.Server.Services.IncomeService)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local CarryService = require(ServerScriptService.Server.Services.CarryService)
@@ -362,6 +364,10 @@ local function display(player: Player, plot: PlotService.Plot, data: any, uid: a
 		return
 	end
 	local entry = ItemRegistry.Get(uid) :: ItemRegistry.Entry
+	if ItemRegistry.FindTwin(player.UserId, entry.itemId, entry.floorRarity, uid) then
+		Notify.Send(player, "Уже есть такой этаж — этот можно продать", "Stop") -- D75
+		return
+	end
 	-- Шаблоны мешей загружены при старте (ItemFactory.Preload), Create не ждёт; но если когда-нибудь начнёт ждать —
 	-- после него всё, включая фазу, проверяется заново.
 	local part = ItemFactory.Create(entry.itemId)
@@ -410,6 +416,11 @@ local function replace(player: Player, plot: PlotService.Plot, data: any, uid: a
 		return
 	end
 	local entry = ItemRegistry.Get(uid) :: ItemRegistry.Entry
+	local twin = ItemRegistry.FindTwin(player.UserId, entry.itemId, entry.floorRarity, uid)
+	if twin and twin ~= oldUid then -- D75: такой же этаж стоит на другом постаменте
+		Notify.Send(player, "Уже есть такой этаж — этот можно продать", "Stop")
+		return
+	end
 	local part = ItemFactory.Create(entry.itemId)
 	if not MuseumService.ExhibitsUnlocked(player) then
 		part:Destroy()
@@ -459,6 +470,33 @@ local function replace(player: Player, plot: PlotService.Plot, data: any, uid: a
 end
 
 -- RemoteEvent InventoryAction: (действие, uid, постамент). Всё проверяет сервер; лишние вызовы режет limiter.
+-- Окно «Инвентарь»: продать предмет из инвентаря (D75): монеты — доход этажа за Throw.SellSeconds секунд.
+-- Порядок: проверки → профиль (запись убрана, монеты начислены) → реестр; отказ реестра возвращает запись.
+local function sell(player: Player, data: any, uid: any)
+	local entry = storedItem(player, data, uid)
+	if not entry then
+		return
+	end
+	local record = data.items[uid]
+	local price = ThrowRules.SellPrice(IncomeService.Of(entry.itemId, entry.floorRarity))
+	DataService.RemoveItem(player, uid)
+	if data.items[uid] ~= nil or not DataService.AddCoins(player, price) then
+		data.items[uid] = record
+		Notify.Send(player, "Не удалось продать предмет", "Stop")
+		return
+	end
+	if not ItemRegistry.Unload(uid) then
+		data.items[uid] = record
+		DataService.AddCoins(player, -price)
+		Notify.Send(player, "Не удалось продать предмет", "Stop")
+		return
+	end
+	player:SetAttribute("Coins", data.coins)
+	DataService.RequestSave(player)
+	InventoryService.Sync(player)
+	Notify.Send(player, ("Продано: %s — +%d"):format(nameOf(entry.itemId), price), "Go")
+end
+
 local function tryAction(player: Player, action: any, uid: any, slot: any)
 	if not limiter:Allow(player) then
 		return
@@ -472,7 +510,7 @@ local function tryAction(player: Player, action: any, uid: any, slot: any)
 		end
 		return
 	end
-	if action ~= "Display" and action ~= "Remove" and action ~= "Replace" then
+	if action ~= "Display" and action ~= "Remove" and action ~= "Replace" and action ~= "Sell" then
 		Log.Warn(
 			"InventoryService",
 			("%s: неизвестное действие %s — отклонено"):format(
@@ -488,6 +526,10 @@ local function tryAction(player: Player, action: any, uid: any, slot: any)
 		return
 	end
 	if not MuseumService.ExhibitsUnlocked(player) then
+		return
+	end
+	if action == "Sell" then
+		sell(player, data, uid)
 		return
 	end
 	if action == "Remove" then

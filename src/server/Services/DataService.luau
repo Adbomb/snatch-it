@@ -845,6 +845,51 @@ function DataService.SpendLovibum(player: Player, level: number, kind: string): 
 	return true
 end
 
+-- Вернуть один Ловибум (D75: бросок не состоялся после списания — откат записи). false — нечего возвращать.
+function DataService.RefundLovibum(player: Player, level: number, kind: string): boolean
+	local lovibums = DataService.Lovibums(player)
+	if not lovibums or not CatchRules.IsLevel(level) or not CatchRules.IsKind(kind) then
+		return false
+	end
+	local key = CatchRules.LevelKey(level)
+	lovibums[key] = lovibums[key] or {}
+	lovibums[key][kind] = CatchRules.Stock(lovibums, level, kind) + 1
+	return true
+end
+
+-- Запись броска вдаль (D75), проверенная: { record = рекорд дальности, м; bosses = { Z<зона> → количество };
+-- roof = зона босса на крыше или nil; autoSell = фильтр авто-продажи или nil }. nil — профиль не загружен.
+function DataService.Throw(player: Player): any
+	local data = DataService.GetData(player)
+	if not data then
+		return nil
+	end
+	local t = data.throw
+	if type(t) ~= "table" then
+		t = {}
+		data.throw = t
+	end
+	if type(t.record) ~= "number" or t.record ~= t.record or t.record < 0 then
+		t.record = 0
+	end
+	if type(t.bosses) ~= "table" then
+		t.bosses = {}
+	end
+	for key, n in t.bosses do
+		local zone = type(key) == "string" and tonumber(key:match("^Z(%d+)$"))
+		if not zone or zone < 1 or zone > 10 or type(n) ~= "number" or n < 1 or n ~= math.floor(n) then
+			t.bosses[key] = nil
+		end
+	end
+	if type(t.roof) ~= "number" or (t.bosses["Z" .. t.roof] or 0) < 1 then
+		t.roof = nil
+	end
+	if t.autoSell ~= nil and type(t.autoSell) ~= "table" then
+		t.autoSell = nil
+	end
+	return t
+end
+
 -- ── Обучение (D55) ─────────────────────────────────────────────────────────────────────────────────────────
 
 -- Запись обучения (проверенная); nil — профиль не загружен. Менять — через SetTutorial.

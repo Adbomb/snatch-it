@@ -142,7 +142,14 @@
   `IncomeK` по зонам); правила — `Shared/ThrowRules`: `Metres`/`Mark`/`Landing` (трасса), `ScalePosition`/`Quality`/
   `PressTime` (шкала на времени сервера), `Distance`/`Luck`/`SuggestLevel`, `CreatureWeights`/`FloorWeights`/`Roll…`/
   `IsBoss`/`Chance`/`OneIn` (розыгрыш), `Income`/`BossIncome`/`SellPrice`, `SameFloor`/`HasFloor`/`AutoSell`.
-  Сервис броска, площадка и трасса — следующие шаги; старый цикл (поимка, слоты, бой) ещё в коде.
+  Сервер — `Services/ThrowService`: `Start` (отказы: обучение, ночь, руки, площадка `MapLayout.ThrowPad`, запас, 5 мест)
+  → шкала (`ThrowState`; период и начало — свои у каждого броска) → `Press` (момент нажатия — `ThrowRules.PressTime`)
+  или истечение времени → `resolve`: Ловибум, рекорд, монеты авто-продажи и босс — в профиль (`DataService.Throw`),
+  затем `ItemRegistry.CreateReward` → Carried; отказ реестра откатывает запись. События `ThrowResult` (бросавшему) и
+  `ThrowFlight` (всем). `SellCarried`, `SetAutoSell`, `SetRoof`; подмены `ThrowService.Random` и `.Scale` — тесты.
+  Запрет одинаковых этажей — `ItemRegistry.FindTwin` в `MuseumService` (из рук) и `InventoryService` (выставить,
+  заменить); продажа из инвентаря — действие `Sell`. Доход — `IncomeService.Of` (× `Throw.IncomeK` зоны существа) +
+  `RoofOf` (босс на крыше). Площадка и трасса у клиента — шаги 3–4; старый цикл включён флагом `Throw.OldLoop`.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

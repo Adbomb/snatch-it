@@ -62,6 +62,10 @@ MapLayout.ShopScale = 1.45 -- павильоны World/Models/Shops крупне
 -- Точка появления посередине поля, лицом к музеям.
 MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), size = Vector3.new(8, 0.4, 8) }
 
+-- Площадка броска вдаль (D75): общая, у входа в коридор, между точкой появления и зоной 1. radius — откуда можно
+-- бросать (сервер). Сама площадка строится на шаге 3 плана D75.
+MapLayout.ThrowPad = { position = Vector3.new(0, MapLayout.Heights.Ground, 14), radius = 16 }
+
 -- Коридор зон: длина зоны. Вход в зону 1 — граница безопасной зоны (z = 0).
 MapLayout.ZoneSize = 95
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf

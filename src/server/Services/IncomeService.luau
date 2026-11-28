@@ -9,9 +9,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local FloorRules = require(ReplicatedStorage.Shared.FloorRules)
 local Items = require(ReplicatedStorage.Shared.Config.Items)
 local NumberFormat = require(ReplicatedStorage.Shared.NumberFormat)
+local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
 local Server = ServerScriptService.Server
 local DataService = require(Server.Services.DataService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
@@ -34,7 +34,15 @@ function IncomeService.Of(itemId: string, floorRarity: string?): number
 	if base <= 0 then
 		return 0
 	end
-	return math.max(1, math.floor(FloorRules.Income(base, def.rarity, floorRarity) + 0.5))
+	-- D75: доход наград зоны умножается на калибровку темпа (Config/Throw.IncomeK по зоне существа)
+	return math.max(1, math.floor(ThrowRules.Income(base, def.rarity, floorRarity, def.boss) + 0.5))
+end
+
+-- Доход босса на крыше башни игрока (D75): как у Легендарного существа на Золотом этаже своей зоны; 0 — босса нет.
+function IncomeService.RoofOf(player: any): number
+	local throw = DataService.Throw(player)
+	local zone = throw and throw.roof
+	return if zone then math.max(1, math.floor(ThrowRules.BossIncome(zone) + 0.5)) else 0
 end
 
 -- Общий доход владельца в секунду: сумма по экспонатам на витринах и построенным этажам (Floor — этап B, режим
@@ -114,7 +122,7 @@ end
 
 -- Обновить общий доход игрока.
 local function refreshIncome(player: any)
-	publishIncome(player, IncomeService.TotalFor(player.UserId))
+	publishIncome(player, IncomeService.TotalFor(player.UserId) + IncomeService.RoofOf(player))
 end
 
 -- Один такт начисления для списка игроков. Возвращает начисленное по игрокам (для тестов).
@@ -123,7 +131,7 @@ local function tick(players: { any }): { [any]: number }
 	ticks += 1
 	local paid = {}
 	for _, player in players do
-		local total = IncomeService.TotalFor(player.UserId)
+		local total = IncomeService.TotalFor(player.UserId) + IncomeService.RoofOf(player)
 		publishIncome(player, total)
 		if total > 0 then
 			local coins = DataService.AddCoins(player, total)

@@ -272,6 +272,9 @@ local function refusal(player: any, boss: number): string?
 	if TutorialRules.IsActive(data) then
 		return "Сначала пройдите обучение"
 	end
+	if not GameConfig.Throw.OldLoop then -- D75: существ добывают броском с площадки
+		return "Существ теперь добывают броском с площадки"
+	end
 	if active[player] then
 		return "Вы уже ловите"
 	end

@@ -23,6 +23,16 @@ Remotes.Names = {
 	PvpAttack = "PvpAttack", -- клиент → сервер: «ударь» (без аргументов, цель выбирает сервер), D46
 	PvpEffect = "PvpEffect", -- сервер → игрокам рядом: { kind = "Swing" | "Hit" | "Knock", attacker, target?, damage }
 	OpenWindow = "OpenWindow", -- сервер → владельцу: открыть окно ("Inventory" | "Defense") — подсказки хранилища D48-C
+	-- D75, бросок вдаль. ThrowAction — клиент → сервер: ("Start", уровень, вид) | ("Press", момент нажатия по
+	-- времени сервера) | ("Cancel") | ("Sell") | ("AutoSell", фильтр) | ("Roof", зона босса).
+	-- ThrowState — сервер → бросающему: { level, kind, at, period, phase, timeout } (шкала идёт) | nil.
+	-- ThrowResult — сервер → бросавшему: { distance, zone, depth, luck, itemId, rarity, floor, chance, oneIn,
+	-- duplicate, sold, price, uid?, boss?, record, … }. ThrowFlight — сервер → всем: { user, name, level, kind,
+	-- distance, zone, at } (чужие полёты видны всем).
+	ThrowAction = "ThrowAction",
+	ThrowState = "ThrowState",
+	ThrowResult = "ThrowResult",
+	ThrowFlight = "ThrowFlight",
 	-- D55: магазин Ловибумов, поимка, обучение
 	ShopAction = "ShopAction", -- клиент → сервер: ("Buy", уровень, вид) — набор из 3 (D61) | ("Open")
 	LovibumsChanged = "LovibumsChanged", -- сервер → владельцу: { lovibums, coins, prices?, open, reason? }

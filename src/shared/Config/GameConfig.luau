@@ -388,6 +388,7 @@ GameConfig.RateLimits = {
 	MuseumUpgrade = 2, -- запросы «Улучшить музей» (D56)
 	TowerBuild = 4, -- «Построить этаж» (этап B, режим башни DEV)
 	Elevator = 3, -- запросы лифта (этап B)
+	Throw = 6, -- действия броска вдаль (D75): шкала, нажатие, продажа
 }
 
 -- Музей-небоскрёб (этап B, docs/TOWER_PLAN.md v3): технический прототип только в Studio с DevMode, для явно
@@ -443,6 +444,9 @@ GameConfig.Catch = require(script.Parent.Catch)
 
 -- Катсцена «босс съел существо и отрыгнул этаж» (D74, этап А) — Config/Devour.
 GameConfig.Devour = require(script.Parent.Devour)
+
+-- «Бросок вдаль» (D75, основной цикл) — Config/Throw.
+GameConfig.Throw = require(script.Parent.Throw)
 
 -- Долгая прогрессия (D29–D31): боссы, гантель, музей, сила музея, доход, редкость, каталог, скорость.
 -- Отдельный файл, чтобы его читал симулятор scripts/sim/progression.py.

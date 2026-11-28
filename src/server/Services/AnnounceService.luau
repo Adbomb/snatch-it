@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local FloorRarity = require(ReplicatedStorage.Shared.Config.FloorRarity)
+local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Server = ServerScriptService.Server
 local Log = require(Server.Util.Log)
 local Notify = require(Server.Util.Notify)
@@ -31,6 +32,15 @@ function AnnounceService.Text(name: string, key: string): string
 	return ("%s выбил %s этаж!"):format(name, FloorRarity.Names[key])
 end
 
+-- Текст объявления о боссе.
+function AnnounceService.BossText(name: string, zone: number): string
+	local def = GameConfig.Zones[zone]
+	return ("%s выбил БОССА: %s!"):format(
+		name,
+		if def and def.boss then def.boss else "босс зоны " .. zone
+	)
+end
+
 local function everyone(): { any }
 	local hook = AnnounceService.Audience
 	return if hook then hook() else Players:GetPlayers()
@@ -41,6 +51,35 @@ local function show(name: string, key: string)
 	for _, player in everyone() do
 		Notify.Send(player, text, "Go")
 	end
+end
+
+-- Игрок player выбил босса зоны zone (D75): всем на сервере и на все серверы (с тем же ограничением частоты).
+function AnnounceService.BossWon(player: any, zone: number)
+	local name = player.DisplayName or player.Name
+	local text = AnnounceService.BossText(name, zone)
+	for _, other in everyone() do
+		Notify.Send(other, text, "Go")
+	end
+	local now = os.clock()
+	if now - lastPublish < CFG.PublishGap then
+		return
+	end
+	lastPublish = now
+	local payload = { name = name, boss = zone, job = game.JobId }
+	local hook = AnnounceService.Publish
+	if hook then
+		hook(payload)
+		return
+	end
+	task.spawn(function()
+		local ok, err = pcall(MessagingService.PublishAsync, MessagingService, CFG.Topic, payload)
+		if not ok then
+			Log.Debug(
+				"AnnounceService",
+				"объявление о боссе на другие серверы не ушло: " .. tostring(err)
+			)
+		end
+	end)
 end
 
 -- Игрок player выбил этаж редкости key: объявление по правилу его редкости (у частых редкостей объявления нет).
@@ -79,7 +118,25 @@ end
 
 -- Объявление с другого сервера: проверка содержимого и частоты. Возвращает, показано ли оно.
 function AnnounceService.Receive(data: any): boolean
-	if type(data) ~= "table" or type(data.name) ~= "string" or type(data.rarity) ~= "string" then
+	if type(data) ~= "table" or type(data.name) ~= "string" or #data.name == 0 or #data.name > NAME_MAX then
+		return false
+	end
+	if type(data.boss) == "number" and data.boss == math.floor(data.boss) and data.boss >= 1 and data.boss <= 10 then
+		if data.job == game.JobId and game.JobId ~= "" then
+			return false
+		end
+		local t = os.clock()
+		if t - lastShow < CFG.ShowGap then
+			return false
+		end
+		lastShow = t
+		local text = AnnounceService.BossText(data.name, data.boss)
+		for _, other in everyone() do
+			Notify.Send(other, text, "Go")
+		end
+		return true
+	end
+	if type(data.rarity) ~= "string" then
 		return false
 	end
 	local signal = FloorRarity.Signal[data.rarity]
