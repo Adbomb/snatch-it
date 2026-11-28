@@ -3,7 +3,8 @@
 --   трасса    — Metres (дальность по силе), Mark (отметка зоны), Landing (зона и глубина приземления);
 --   шкала     — ScalePosition (где маркер в момент t), Quality (качество нажатия 0…1), PressTime (момент нажатия с
 --               учётом задержки и защитой от подделки), AccuracyMult;
---   бросок    — Distance (сила × точность × вид, не дальше зоны уровня Ловибума), Luck, SuggestLevel (подсказка магазина);
+--   бросок    — Distance (сила × точность × вид, не дальше зоны уровня Ловибума), Luck (удача по глубине), Hunt
+--               (охота вида: Бум — фарм, Турбо и Мега поднимают верхние редкости), SuggestLevel (подсказка магазина);
 --   розыгрыш  — CreatureWeights / RollCreature (редкость существа, D37 + удача), FloorWeights / RollFloor (редкость этажа,
 --               D74 + удача), IsBoss, Chance и OneIn («1 из N» для экрана выпадения и окна шансов);
 --   награда   — Income (доход этажа с калибровкой зоны), BossIncome, SellPrice;
@@ -115,10 +116,16 @@ function ThrowRules.Distance(strength: number, quality: number, kind: string, le
 	return math.min(d, ThrowRules.Mark(lv + 1))
 end
 
--- Удача броска: глубина в зоне приземления и вид Ловибума.
-function ThrowRules.Luck(depth: number, kind: string): number
+-- Удача броска по глубине в зоне приземления: ×1 у начала зоны … ×(1 + Depth) у конца.
+function ThrowRules.Luck(depth: number): number
 	local f = if number(depth) then math.clamp(depth, 0, 1) else 0
-	return (1 + Throw.Luck.Depth * f) * Throw.KindLuck[kindOf(kind)]
+	return 1 + Throw.Luck.Depth * f
+end
+
+-- Охота вида Ловибума: множители весов верхних редкостей существ и этажей (Бум — 1 и 1).
+function ThrowRules.Hunt(kind: any): (number, number)
+	local hunt = Throw.KindHunt[kindOf(kind)]
+	return hunt.creature, hunt.floor
 end
 
 -- Уровень Ловибума, который стоит купить: самая дальняя зона, до которой игрок добивает при любом нажатии.
@@ -142,12 +149,14 @@ local function tierOf(zone: number): { [string]: number }
 	return Progression.BossLoot.Tiers[1].chances
 end
 
--- Шансы редкости существа в зоне (в порядке Rarities.Order, в сумме 1): D37, вес каждой следующей ступени × удача^Power.
-function ThrowRules.CreatureWeights(zone: number, luck: number?): { number }
+-- Шансы редкости существа в зоне (в порядке Rarities.Order, в сумме 1): D37, вес каждой следующей ступени × удача^Power,
+-- веса верхних редкостей × охота вида kind (без kind — Бум).
+function ThrowRules.CreatureWeights(zone: number, luck: number?, kind: string?): { number }
 	local chances, s = tierOf(zone), step(luck)
+	local hunt = ThrowRules.Hunt(kind)
 	local weights, total = {}, 0
 	for i, rarity in Rarities.Order do
-		local w = (chances[rarity] or 0) * s ^ (i - 1)
+		local w = (chances[rarity] or 0) * s ^ (i - 1) * (if Throw.HuntCreatures[rarity] then hunt else 1)
 		weights[i] = w
 		total += w
 	end
@@ -157,12 +166,14 @@ function ThrowRules.CreatureWeights(zone: number, luck: number?): { number }
 	return weights
 end
 
--- Шансы редкости этажа (в порядке FloorRarity.Order, в сумме 1): D74 со сдвигом от редкости существа и от удачи.
-function ThrowRules.FloorWeights(creatureRarity: string?, luck: number?): { number }
+-- Шансы редкости этажа (в порядке FloorRarity.Order, в сумме 1): D74 со сдвигом от редкости существа и от удачи,
+-- веса верхних редкостей × охота вида kind (без kind — Бум).
+function ThrowRules.FloorWeights(creatureRarity: string?, luck: number?, kind: string?): { number }
 	local shift = (FloorRarity.Shift[creatureRarity or ""] or 1) * step(luck)
+	local _, hunt = ThrowRules.Hunt(kind)
 	local weights, total = {}, 0
 	for i, key in FloorRarity.Order do
-		local w = FloorRarity.Chance[key] * shift ^ (i - 1)
+		local w = FloorRarity.Chance[key] * shift ^ (i - 1) * (if Throw.HuntFloors[key] then hunt else 1)
 		weights[i] = w
 		total += w
 	end
@@ -192,13 +203,13 @@ local function pick(weights: { number }, order: { string }, roll: number): strin
 end
 
 -- Редкость существа: roll — случайное число 0 ≤ roll < 1 (сервер).
-function ThrowRules.RollCreature(zone: number, luck: number?, roll: number): string
-	return pick(ThrowRules.CreatureWeights(zone, luck), Rarities.Order, roll)
+function ThrowRules.RollCreature(zone: number, luck: number?, kind: string?, roll: number): string
+	return pick(ThrowRules.CreatureWeights(zone, luck, kind), Rarities.Order, roll)
 end
 
 -- Редкость этажа: roll — случайное число 0 ≤ roll < 1 (сервер).
-function ThrowRules.RollFloor(creatureRarity: string?, luck: number?, roll: number): string
-	return pick(ThrowRules.FloorWeights(creatureRarity, luck), FloorRarity.Order, roll)
+function ThrowRules.RollFloor(creatureRarity: string?, luck: number?, kind: string?, roll: number): string
+	return pick(ThrowRules.FloorWeights(creatureRarity, luck, kind), FloorRarity.Order, roll)
 end
 
 -- Выпал ли босс зоны: roll — своё случайное число 0 ≤ roll < 1 (сервер).
@@ -206,19 +217,25 @@ function ThrowRules.IsBoss(roll: number): boolean
 	return number(roll) and roll >= 0 and roll < Throw.BossChance
 end
 
--- Шанс сочетания «существо редкости creatureRarity на этаже floorRarity» в зоне при удаче, доля 0…1. Без floorRarity —
--- шанс редкости существа.
-function ThrowRules.Chance(zone: number, luck: number?, creatureRarity: string, floorRarity: string?): number
+-- Шанс сочетания «существо редкости creatureRarity на этаже floorRarity» в зоне при удаче и виде Ловибума, доля
+-- 0…1. Без floorRarity — шанс редкости существа.
+function ThrowRules.Chance(
+	zone: number,
+	luck: number?,
+	kind: string?,
+	creatureRarity: string,
+	floorRarity: string?
+): number
 	local i = table.find(Rarities.Order, creatureRarity)
 	if not i then
 		return 0
 	end
-	local p = ThrowRules.CreatureWeights(zone, luck)[i]
+	local p = ThrowRules.CreatureWeights(zone, luck, kind)[i]
 	if floorRarity == nil then
 		return p
 	end
 	local k = table.find(FloorRarity.Order, floorRarity)
-	return if k then p * ThrowRules.FloorWeights(creatureRarity, luck)[k] else 0
+	return if k then p * ThrowRules.FloorWeights(creatureRarity, luck, kind)[k] else 0
 end
 
 -- «1 из N» по шансу (доля 0…1): целое N ≥ 1; нулевой шанс — math.huge.

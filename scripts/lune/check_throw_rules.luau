@@ -120,12 +120,14 @@ do
 	local ze, fe = ThrowRules.Landing(1e9)
 	check(ze == 10 and fe == 1, "дальше конца трассы — конец зоны 10")
 end
-check(ThrowRules.Luck(0, "Boom") == 1 and ThrowRules.Luck(1, "Boom") == 2, "удача Бума: ×1 … ×2")
 check(
-	near(ThrowRules.Luck(1, "Mega"), 2.6, 1e-9) and near(ThrowRules.Luck(0, "Turbo"), 1.15, 1e-9),
-	"удача Меги и Турбо"
+	ThrowRules.Luck(0) == 1 and ThrowRules.Luck(1) == 2 and near(ThrowRules.Luck(0.5), 1.5, 1e-9),
+	"удача: ×1 … ×2"
 )
-check(ThrowRules.Luck(NAN, "Нет") == 1 and ThrowRules.Luck(7, "Boom") == 2, "мусор и глубина > 1")
+check(
+	ThrowRules.Luck(NAN) == 1 and ThrowRules.Luck(7) == 2 and ThrowRules.Luck(-3) == 1,
+	"мусор и глубина вне 0…1"
+)
 check(
 	ThrowRules.SuggestLevel(0) == 1 and ThrowRules.SuggestLevel(139) == 1,
 	"подсказка: до порога — уровень 1"
@@ -200,9 +202,9 @@ print("· шансы редкости существа и этажа")
 local tiers = Progression.BossLoot.Tiers
 for zone = 1, 10 do
 	local tier
-	for _, t in tiers do
-		if zone >= t.from and zone <= t.to then
-			tier = t.chances
+	for _, tr in tiers do
+		if zone >= tr.from and zone <= tr.to then
+			tier = tr.chances
 		end
 	end
 	local w = ThrowRules.CreatureWeights(zone, 1)
@@ -212,15 +214,12 @@ for zone = 1, 10 do
 		same = same and near(w[i] * 100, tier[rarity], 1e-6)
 	end
 	check(near(sum, 1, 1e-9) and same, ("зона %d без удачи — шансы D37"):format(zone))
-	local lucky = ThrowRules.CreatureWeights(zone, 2)
-	check(lucky[1] < w[1], ("зона %d: с удачей Common реже"):format(zone))
+	local lucky = ThrowRules.CreatureWeights(zone, 2, "Mega")
+	check(lucky[1] < w[1], ("зона %d: с удачей и Мегой Common реже"):format(zone))
 	for i, rarity in Rarities.Order do
 		check(
 			(tier[rarity] == 0) == (lucky[i] == 0),
-			("зона %d: удача не открывает закрытую редкость %s"):format(
-				zone,
-				rarity
-			)
+			("зона %d: удача и охота не открывают редкость %s"):format(zone, rarity)
 		)
 	end
 end
@@ -232,10 +231,10 @@ for _, rarity in Rarities.Order do
 		sum += a[i]
 	end
 	check(same and near(sum, 1, 1e-9), ("этаж без удачи = D74 (%s)"):format(rarity))
-	local lucky = ThrowRules.FloorWeights(rarity, 2.6)
+	local lucky = ThrowRules.FloorWeights(rarity, 2)
 	check(
-		lucky[6] > a[6] * 2.5 and lucky[1] < a[1],
-		("удача ×2.6 поднимает Алмазный (%s)"):format(rarity)
+		lucky[6] > a[6] * 2 and lucky[1] < a[1],
+		("удача ×2 поднимает Алмазный (%s)"):format(rarity)
 	)
 end
 check(
@@ -251,41 +250,104 @@ check(
 	"мусор вместо удачи — ×1"
 )
 
+print("· охота: Бум — фарм, Турбо и Мега поднимают верхние редкости")
+do
+	local c1, f1 = ThrowRules.Hunt("Boom")
+	local c2, f2 = ThrowRules.Hunt("Turbo")
+	local c3, f3 = ThrowRules.Hunt("Mega")
+	local c0, f0 = ThrowRules.Hunt("Нет")
+	check(c1 == 1 and f1 == 1, "Бум без охоты")
+	check(c0 == 1 and f0 == 1, "чужой вид — как Бум")
+	check(
+		c3 > c2 and c2 > 1 and f3 > f2 and f2 > 1,
+		"Мега сильнее Турбо, Турбо сильнее Бума"
+	)
+	local boom, mega = ThrowRules.CreatureWeights(5, 1.5, "Boom"), ThrowRules.CreatureWeights(5, 1.5, "Mega")
+	check(near(mega[4] / boom[4], c3 / (1 + boom[4] * (c3 - 1)), 1e-9), "Legendary у Меги: вес × охота")
+	check(
+		mega[1] < boom[1] and near(mega[2] / mega[1], boom[2] / boom[1], 1e-9),
+		"нижние редкости между собой — как были"
+	)
+	local plain = ThrowRules.CreatureWeights(2, 1.5)
+	check(
+		near(ThrowRules.CreatureWeights(2, 1.5, "Mega")[1], plain[1], 1e-12),
+		"в зоне без Legendary охота существ не меняет"
+	)
+	local fb, fm = ThrowRules.FloorWeights("Common", 1, "Boom"), ThrowRules.FloorWeights("Common", 1, "Mega")
+	check(
+		fm[6] > fb[6] * 3 and fm[5] > fb[5] * 3,
+		"Мифический и Алмазный у Меги — больше чем втрое чаще"
+	)
+	check(
+		near(fm[2] / fm[1], fb[2] / fb[1], 1e-9),
+		"нижние редкости этажа между собой — как были"
+	)
+	-- роли за монету (Турбо = 2 Бума, Мега = 3): доход чуть хуже, редкий этаж — лучше (зона 5, середина зоны)
+	local base = { 1115, 3615, 14784, 44352, 0 } -- Progression.CreatureIncome.ByBoss[5]
+	local function value(kind: string): (number, number)
+		local income, diamond = 0, 0
+		local cw = ThrowRules.CreatureWeights(5, 1.5, kind)
+		for i, rarity in Rarities.Order do
+			local fw = ThrowRules.FloorWeights(rarity, 1.5, kind)
+			local mult = 0
+			for k, key in FloorRarity.Order do
+				mult += fw[k] * FloorRarity.Mult[key]
+			end
+			income += cw[i] * base[i] / FloorRules.ExpectedMult(rarity) * mult
+			diamond += cw[i] * fw[6]
+		end
+		return income, diamond
+	end
+	local ib, db = value("Boom")
+	local it, dt = value("Turbo")
+	local im, dm = value("Mega")
+	check(
+		it / 2 < ib and im / 3 < it / 2,
+		"доход за монету: Бум лучше Турбо, Турбо лучше Меги"
+	)
+	check(
+		im / 3 > ib * 0.6,
+		"Мега по доходу за монету не хуже 0.6 от Бума (без учёта дальности)"
+	)
+	check(
+		dt / 2 > db * 1.15 and dm / 3 > db * 1.15,
+		"Алмазный за монету: и Турбо, и Мега лучше Бума (без учёта дальности)"
+	)
+end
+
 print("· броски по случайным числам")
+check(ThrowRules.RollCreature(1, 1, nil, 0) == "Common", "зона 1: с нуля — Common")
 check(
-	ThrowRules.RollCreature(1, 1, 0) == "Common" and ThrowRules.RollCreature(1, 1, 0.6999) == "Common",
+	ThrowRules.RollCreature(1, 1, nil, 0.6999) == "Common" and ThrowRules.RollCreature(1, 1, nil, 0.7) == "Rare",
 	"зона 1: Common до 70 %"
 )
+check(ThrowRules.RollCreature(1, 1, nil, 0.96) == "Epic", "зона 1: Epic")
 check(
-	ThrowRules.RollCreature(1, 1, 0.7) == "Rare" and ThrowRules.RollCreature(1, 1, 0.96) == "Epic",
-	"зона 1: Rare, Epic"
+	ThrowRules.RollCreature(1, 1, "Mega", 0.999999) == "Epic",
+	"зона 1: Легендарных нет даже на краю и с Мегой"
 )
 check(
-	ThrowRules.RollCreature(1, 1, 0.999999) == "Epic",
-	"зона 1: Легендарных нет даже на краю"
-)
-check(
-	ThrowRules.RollCreature(1, 3, 1) == "Epic" and ThrowRules.RollCreature(1, 1, NAN) == "Common",
+	ThrowRules.RollCreature(1, 2, nil, 1) == "Epic" and ThrowRules.RollCreature(1, 1, nil, NAN) == "Common",
 	"roll = 1 и мусор"
 )
-check(ThrowRules.RollCreature(9, 1, 0.999) == "Secret", "зона 9: Secret на краю")
+check(ThrowRules.RollCreature(9, 1, nil, 0.999) == "Secret", "зона 9: Secret на краю")
+check(ThrowRules.RollFloor("Common", 1, nil, 0.9995) == "Diamond", "этаж: Алмазный на краю")
+check(ThrowRules.RollFloor("Common", 1, nil, 0) == "Wood", "этаж: с нуля — Деревянный")
 check(
-	ThrowRules.RollFloor("Common", 1, 0.9995) == "Diamond" and ThrowRules.RollFloor("Common", 1, 0) == "Wood",
-	"этаж по границам"
+	ThrowRules.RollFloor("Common", 1, nil, 0.9985) == "Mythic",
+	"этаж: Мифический перед Алмазным"
 )
-check(
-	ThrowRules.RollFloor("Common", 1, 0.9985) == "Mythic" and ThrowRules.RollFloor("Common", 2, 0.9985) == "Diamond",
-	"удача двигает границу"
-)
+check(ThrowRules.RollFloor("Common", 2, nil, 0.9985) == "Diamond", "удача двигает границу")
+check(ThrowRules.RollFloor("Common", 1, "Mega", 0.9975) == "Diamond", "охота двигает границу")
 do
 	local counts, n = {}, 200000
 	math.randomseed(12345)
 	local rnd = math.random
 	for _ = 1, n do
-		local r = ThrowRules.RollCreature(5, 1.5, rnd())
+		local r = ThrowRules.RollCreature(5, 1.5, "Turbo", rnd())
 		counts[r] = (counts[r] or 0) + 1
 	end
-	local w = ThrowRules.CreatureWeights(5, 1.5)
+	local w = ThrowRules.CreatureWeights(5, 1.5, "Turbo")
 	local ok = true
 	for i, rarity in Rarities.Order do
 		ok = ok and near((counts[rarity] or 0) / n, w[i], 0.004)
@@ -303,18 +365,18 @@ check(ThrowRules.IsBoss(0) and not ThrowRules.IsBoss(Throw.BossChance), "бос�
 check(not ThrowRules.IsBoss(NAN) and not ThrowRules.IsBoss(-1), "босс: мусор")
 
 print("· «1 из N»")
-check(near(ThrowRules.Chance(5, 1, "Legendary"), 0.05, 1e-9), "Legendary в зоне 5 — 5 %")
+check(near(ThrowRules.Chance(5, 1, nil, "Legendary"), 0.05, 1e-9), "Legendary в зоне 5 — 5 %")
 check(
-	near(ThrowRules.Chance(5, 1, "Common", "Diamond"), 0.52 * 0.001, 1e-9),
+	near(ThrowRules.Chance(5, 1, "Boom", "Common", "Diamond"), 0.52 * 0.001, 1e-9),
 	"Common на Алмазном — 0.052 %"
 )
-check(ThrowRules.OneIn(ThrowRules.Chance(5, 1, "Common", "Diamond")) == 1923, "1 из 1 923")
+check(ThrowRules.OneIn(ThrowRules.Chance(5, 1, nil, "Common", "Diamond")) == 1923, "1 из 1 923")
 check(
-	ThrowRules.Chance(1, 1, "Secret") == 0 and ThrowRules.OneIn(0) == math.huge,
+	ThrowRules.Chance(1, 1, "Mega", "Secret") == 0 and ThrowRules.OneIn(0) == math.huge,
 	"закрытая редкость — шанса нет"
 )
 check(
-	ThrowRules.Chance(5, 1, "Нет") == 0 and ThrowRules.Chance(5, 1, "Common", "Нет") == 0,
+	ThrowRules.Chance(5, 1, nil, "Нет") == 0 and ThrowRules.Chance(5, 1, nil, "Common", "Нет") == 0,
 	"чужие ключи"
 )
 check(
@@ -325,7 +387,7 @@ do
 	local sum = 0
 	for _, rarity in Rarities.Order do
 		for _, floor in FloorRarity.Order do
-			sum += ThrowRules.Chance(8, 1.7, rarity, floor)
+			sum += ThrowRules.Chance(8, 1.7, "Mega", rarity, floor)
 		end
 	end
 	check(near(sum, 1, 1e-9), "шансы всех сочетаний в сумме 100 %")
