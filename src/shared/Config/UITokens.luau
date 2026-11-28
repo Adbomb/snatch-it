@@ -813,6 +813,18 @@ UITokens.Throw = {
 		TagEdge = Color3.fromHex("3A2408"),
 		TagText = 18,
 	},
+	-- Панель выбора вида Ловибума у края обрыва (решение владельца 2026-11-28; в записи референса её нет):
+	-- три плашки внизу по центру, выбранная — зелёная.
+	Kinds = {
+		Size = Vector2.new(124, 34),
+		Gap = 8,
+		Bottom = 64, -- от низа экрана до середины плашек
+		Text = 16,
+		Fill = Color3.fromHex("1B1530"),
+		Alpha = 0.3,
+		On = Color3.fromHex("2FBF4A"),
+		Empty = Color3.fromHex("8E98A8"), -- текст вида, которого нет в запасе
+	},
 	Flash = Color3.fromHex("FFFFFF"),
 	Dip = Color3.fromHex("05070C"),
 }

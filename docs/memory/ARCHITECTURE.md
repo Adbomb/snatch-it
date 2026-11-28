@@ -165,6 +165,11 @@
   `World/ThrowPath` — точка приземления, время и дуга (общие с чужими полётами); монстр — копия из
   `ReplicatedStorage.ItemPreviews` (сервер готовит её в `ThrowService` через `InventoryService.EnsurePreview`);
   `Controllers/ThrowFlightController` — чужие полёты (Ловибум, след, ник). Времена сцен — `Throw.Show`.
+  Обычный результат — короткий показ (Flight → Slide → Card на `Show.Quick` → Fade), полное шоу — у редкого
+  (`isFull`); `ThrowController.Skip` — пропуск касанием; уход со шкалы — движением (`MoveDirection`); панель видов —
+  `ThrowHud.SetKinds` (слой `ThrowKinds`); свет зоны в полёте — `ZoneController.Probe`. Декор зон 1–5 строится
+  только по бокам (`WorldBuilder.buildSideDecor`, детали целиком за `MapLayout.TrackHalf`); карта — 4 764 части.
+  В Studio атрибут игрока `ThrowFullShow` включает полное шоу для любого результата (проверка сцен).
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

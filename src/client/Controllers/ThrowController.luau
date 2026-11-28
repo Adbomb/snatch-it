@@ -37,6 +37,7 @@ local ThrowPath = require(Client:WaitForChild("World"):WaitForChild("ThrowPath")
 local ThrowPose = require(Client:WaitForChild("World"):WaitForChild("ThrowPose"))
 local Spring = require(Client:WaitForChild("Util"):WaitForChild("Spring"))
 local ThrowHud = require(Client:WaitForChild("UI"):WaitForChild("ThrowHud"))
+local ZoneController = require(script.Parent:WaitForChild("ZoneController"))
 
 local Throw = GameConfig.Throw
 local Show = Throw.Show
@@ -106,6 +107,11 @@ local fxFolder: Folder? = nil
 local fx: { (number) -> boolean } = {} -- эффекты: шаг(dt) → false, когда закончился
 local scene: any = nil -- текущая сцена показа: { name, t, ... }
 local lastZone = 0
+local selectedKind: string = Catch.Kinds[1] -- вид с панели у края; по умолчанию Бум: дорогие виды сами не тратятся
+local walkWas: number? = nil -- скорость персонажа до шкалы (на шкале он стоит)
+local released = false -- игрок отпустил движение после выхода на полосу: новое движение — отмена шкалы
+local movedFor = 0
+local kindsAt = 0
 
 -- ── кривые ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 local function smooth(t: number): number
@@ -129,24 +135,32 @@ local function mix(a: number, b: number, t: number): number
 end
 
 -- ── какой Ловибум бросать ───────────────────────────────────────────────────────────────────────────────────────────
--- Старший уровень, до зоны которого игрок добивает (ThrowRules.SuggestLevel); нет такого — младший из запаса.
-local function pick(): Stack?
+-- Ловибум вида kind: старший уровень, до зоны которого игрок добивает (ThrowRules.SuggestLevel); нет такого —
+-- младший из запаса этого вида. Вид выбирает игрок на панели у края (по умолчанию Бум) — сам дорогой не тратится.
+local function pickFor(kind: string): Stack?
 	local reach = ThrowRules.SuggestLevel(player:GetAttribute("Strength") or 0)
 	local best: Stack? = nil
 	local lowest: Stack? = nil
 	for level = 1, #GameConfig.Zones do
-		for _, kind in Catch.Kinds do
-			local n = CatchRules.Stock(lovibums, level, kind)
-			if n > 0 then
-				local stack = { level = level, kind = kind, count = n }
-				lowest = lowest or stack
-				if level <= reach and (best == nil or level > best.level) then
-					best = stack
-				end
+		local n = CatchRules.Stock(lovibums, level, kind)
+		if n > 0 then
+			local stack = { level = level, kind = kind, count = n }
+			lowest = lowest or stack
+			if level <= reach then
+				best = stack
 			end
 		end
 	end
 	return best or lowest
+end
+
+-- Редкий результат — полное шоу; обычный — коротко (Throw.Show.FullFloors, FullCreatures, босс).
+local function isFull(r: any): boolean
+	-- в Studio атрибут игрока ThrowFullShow включает полное шоу для любого результата (проверка сцен)
+	if RunService:IsStudio() and player:GetAttribute("ThrowFullShow") == true then
+		return true
+	end
+	return r.boss ~= nil or Show.FullFloors[r.floor] == true or Show.FullCreatures[r.rarity] == true
 end
 
 -- ── персонаж, управление, интерфейс ─────────────────────────────────────────────────────────────────────────────────
@@ -171,14 +185,15 @@ local function getControls(): any
 	return controls or nil
 end
 
-local function hideInterface(hide: boolean)
+local function hideInterface(hide: boolean, keepTouch: boolean?)
 	local gui = player:FindFirstChildOfClass("PlayerGui")
 	if not gui then
 		return
 	end
 	if hide then
 		for _, layer in gui:GetChildren() do
-			if layer:IsA("LayerCollector") and layer ~= ThrowHud.Gui() and layer.Enabled then
+			local touch = keepTouch and layer.Name == "TouchGui" -- на шкале джойстик нужен: движение — отмена
+			if layer:IsA("LayerCollector") and layer ~= ThrowHud.Gui() and layer.Enabled and not touch then
 				hidden[layer] = true
 				layer.Enabled = false
 			end
@@ -293,18 +308,25 @@ local function pillar(at: Vector3, width: number, seconds: number)
 	local a0, a1 = Instance.new("Attachment"), Instance.new("Attachment")
 	a1.Position = Vector3.new(0, 60, 0)
 	a0.Parent, a1.Parent = base, base
-	local beam = Instance.new("Beam")
-	beam.Attachment0, beam.Attachment1 = a0, a1
-	beam.Width0, beam.Width1 = width, width
-	beam.FaceCamera = true
-	beam.LightEmission = 1
-	beam.Color = ColorSequence.new(Color3.new(1, 1, 1))
-	beam.Parent = base
+	-- мягкий край: три луча один в другом — широкий едва виден, узкий ярче
+	local beams: { { beam: Beam, alpha: number } } = {}
+	for _, spec in { { 1.6, 0.93 }, { 1.0, 0.86 }, { 0.5, 0.8 } } do
+		local beam = Instance.new("Beam")
+		beam.Attachment0, beam.Attachment1 = a0, a1
+		beam.Width0, beam.Width1 = width * spec[1], width * spec[1]
+		beam.FaceCamera = true
+		beam.LightEmission = 1
+		beam.Color = ColorSequence.new(Color3.new(1, 1, 1))
+		beam.Parent = base
+		table.insert(beams, { beam = beam, alpha = spec[2] })
+	end
 	local t = 0
 	table.insert(fx, function(dt: number): boolean
 		t += dt
 		local k = math.clamp(t / seconds, 0, 1)
-		beam.Transparency = NumberSequence.new(mix(0.72, 1, easeIn(k)))
+		for _, b in beams do
+			b.beam.Transparency = NumberSequence.new(mix(b.alpha, 1, easeIn(k)))
+		end
 		if k >= 1 then
 			base:Destroy()
 			return false
@@ -471,7 +493,12 @@ local function restore()
 	local _, humanoid = rootOf()
 	if humanoid then
 		humanoid.AutoRotate = true
+		if walkWas then
+			humanoid.WalkSpeed = walkWas
+		end
 	end
+	walkWas = nil
+	ZoneController.Probe(nil) -- свет — снова по месту игрока
 	local c = getControls()
 	if c then
 		c:Enable()
@@ -483,9 +510,9 @@ end
 
 -- ── шкала ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 local function requestStart()
-	local stack = pick()
+	local stack = pickFor(selectedKind)
 	if not stack then
-		return
+		return -- выбранного вида нет: другой вид сам не тратится — игрок выбирает его на панели
 	end
 	state = "Starting"
 	stateAt = clock
@@ -505,23 +532,21 @@ local function beginAim(payload: any)
 	state = "Aim"
 	stateAt = clock
 	origin = root.Position
-	local c = getControls()
-	if c then
-		c:Disable()
-	end
-	UserInputService.ModalEnabled = true
+	-- персонаж стоит лицом к трассе; управление не отключается: отпустил и снова повёл — уход со шкалы
+	walkWas = walkWas or humanoid.WalkSpeed
+	humanoid.WalkSpeed = 0
 	humanoid.AutoRotate = false
-	humanoid:MoveTo(root.Position)
-	root.CFrame = CFrame.new(root.Position) -- лицом к трассе (−Z)
+	root.CFrame = CFrame.new(root.Position)
+	released = false
+	movedFor = 0
 	if not pose and player.Character then
 		pose = ThrowPose.Start(player.Character)
 	end
 	makeBall(payload.kind)
-	hideInterface(true)
+	ThrowHud.SetKinds(nil)
+	hideInterface(true, true)
 	ThrowHud.SetEnabled(true)
-	ThrowHud.ShowAim(function()
-		ThrowController.Press()
-	end)
+	ThrowHud.ShowAim()
 	scene = { name = "Aim", t = 0, dipped = false }
 end
 
@@ -538,6 +563,13 @@ function ThrowController.Press()
 	ThrowHud.AimResult(("+%d%% Мощность"):format(bonus), quality >= 1)
 	state = "Pressed"
 	stateAt = clock
+	-- на время показа управление и джойстик убраны
+	local c = getControls()
+	if c then
+		c:Disable()
+	end
+	UserInputService.ModalEnabled = true
+	hideInterface(true)
 	if not cameraWas then -- нажал раньше, чем кончилось затемнение
 		takeCamera()
 		eye:Set(origin + C.AimEye)
@@ -548,7 +580,7 @@ function ThrowController.Press()
 	scene = { name = "Windup", t = 0, released = false }
 end
 
--- Отмена шкалы без броска (клавиша «назад»): Ловибум цел.
+-- Уход со шкалы без броска (игрок повёл персонажа): Ловибум цел; новая шкала — с нового захода на полосу.
 function ThrowController.Cancel()
 	if state == "Aim" then
 		Remotes.Get(Remotes.Names.ThrowAction):FireServer("Cancel")
@@ -587,6 +619,31 @@ local function stepAim(dt: number, s: any)
 		local bonus = math.floor(Throw.Accuracy.Max * 100 * ThrowRules.Quality(position) + 0.5)
 		ThrowHud.SetMarker(position, ("+%d%%"):format(bonus))
 	end
+end
+
+-- Итог: вспышка, «1 из N» с лучами, карточка (редкость этажа, имя, доход, метка). stop — где стоит монстр (полное
+-- шоу): над ним столб света. short — без втягивания: карточка держится Show.Quick и показ кончается.
+local function beginCard(rest: Vector3, stop: Vector3?, short: boolean, lucky: boolean)
+	local r = result
+	local def = Items[r.itemId]
+	ThrowHud.Flight(false)
+	ThrowHud.Reveal(true)
+	ThrowHud.SetReveal(r.oneIn, "", true)
+	if not lucky and r.oneIn >= Show.LuckyFrom then
+		ThrowHud.Lucky()
+	end
+	ThrowHud.Flash(0.75, 0.45, Color3.fromRGB(255, 244, 214))
+	if stop then
+		pillar(stop, if monsterInfo then monsterInfo.width * monsterInfo.base * 0.8 else 3, Show.Card + Show.Suck)
+		burst(stop + Vector3.new(0, 2, 0), Color3.new(1, 1, 1), 26, SPARKLES, 18, 1.1)
+	end
+	local K = UITokens.Throw.Card
+	ThrowHud.Card({
+		{ text = FloorRarity.Names[r.floor] or "", color = UITokens.RarityColor(r.rarity) },
+		{ text = if def then def.displayName else "???", color = K.NameColor },
+		{ text = ("$%s/с"):format(tostring(r.income)), color = K.IncomeColor },
+	}, if r.sold then "Продано!" elseif r.duplicate then "Уже есть" else "Новинка!")
+	scene = { name = "Card", t = 0, rest = rest, stop = stop, short = short }
 end
 
 local function startFlight(from: Vector3)
@@ -700,6 +757,9 @@ local function stepFlight(dt: number, s: any)
 	local zone = GameConfig.Zones[index]
 	local changed = index ~= lastZone
 	lastZone = index
+	if changed then
+		ZoneController.Probe(index) -- свет зоны — за Ловибумом
+	end
 	ThrowHud.SetFlight(1 + (result.luck - 1) * p, zone.name, Color3.fromHex(zone.accent), changed)
 	if u >= 1 then
 		-- удар: белый круг по полу и пыль
@@ -728,6 +788,15 @@ local function stepSlide(dt: number, s: any)
 	end
 	eye.speed, look.speed = 5, 8
 	aimCamera(dt, ground + C.SideEye, ground + C.SideLook, C.ChaseFov - 14)
+	if not isFull(result) then -- обычный результат: коротко — вспышка и итог на месте
+		if s.t >= Show.Slide then
+			if s.trail then
+				s.trail:Destroy()
+			end
+			beginCard(s.rest, nil, true, false)
+		end
+		return
+	end
 	local out = (s.t - Show.Slide - 0.25) / Show.Dip
 	ThrowHud.Fade(smooth(out))
 	if out >= 1 then
@@ -845,20 +914,8 @@ local function stepApproach(dt: number, s: any)
 		ring(s.stop, Color3.new(1, 1, 1), 1, 14, 0.6)
 	end
 	if k >= 1 then
-		-- вспышка, лучи, столб света, карточка
-		local r = result
-		local def = Items[r.itemId]
-		ThrowHud.SetReveal(r.oneIn, masked(s, 1), true)
-		ThrowHud.Flash(0.75, 0.45, Color3.fromRGB(255, 244, 214))
-		pillar(s.stop, if monsterInfo then monsterInfo.width * monsterInfo.base * 0.8 else 3, Show.Card + Show.Suck)
-		burst(s.stop + Vector3.new(0, 2, 0), Color3.new(1, 1, 1), 26, SPARKLES, 18, 1.1)
-		local K = UITokens.Throw.Card
-		ThrowHud.Card({
-			{ text = FloorRarity.Names[r.floor] or "", color = UITokens.RarityColor(r.rarity) },
-			{ text = if def then def.displayName else "???", color = K.NameColor },
-			{ text = ("$%s/с"):format(tostring(r.income)), color = K.IncomeColor },
-		}, if r.sold then "Продано!" elseif r.duplicate then "Уже есть" else "Новинка!")
-		scene = { name = "Card", t = 0, rest = rest, stop = s.stop }
+		ThrowHud.SetReveal(result.oneIn, masked(s, 1), true)
+		beginCard(rest, s.stop, false, s.lucky)
 	end
 end
 
@@ -867,8 +924,18 @@ local function stepCard(dt: number, s: any)
 	s.t += dt
 	local rest = s.rest
 	placeBall(CFrame.new(rest) * CFrame.Angles(0, math.pi, 0), 0, Show.LovibumScale)
-	placeMonster(s.stop + Vector3.new(0, math.max(0, math.sin(s.t * 3) * 0.06), 0), rest - s.stop, 1)
-	aimCamera(dt, rest + C.MidEye, rest + C.MidLook, C.RevealFov)
+	if s.stop then
+		placeMonster(s.stop + Vector3.new(0, math.max(0, math.sin(s.t * 3) * 0.06), 0), rest - s.stop, 1)
+		aimCamera(dt, rest + C.MidEye, rest + C.MidLook, C.RevealFov)
+	else
+		aimCamera(dt, rest + C.SideEye, rest + C.SideLook, C.ChaseFov - 14)
+	end
+	if s.short then -- обычный результат или пропуск: без втягивания
+		if s.t >= Show.Quick then
+			scene = { name = "Fade", t = 0 }
+		end
+		return
+	end
 	if s.t >= Show.Card then
 		-- вихрь: искры летят к Ловибуму со сферы вокруг него
 		local shell = Instance.new("Part")
@@ -953,15 +1020,51 @@ local function stepShake(dt: number, s: any)
 		Show.LovibumScale * (1.1 - 0.1 * k)
 	)
 	aimCamera(dt, rest + C.SuckEye, rest + C.SuckLook, C.SuckFov)
-	local out = (s.t - Show.Shake) / 0.25
-	if out > 0 then
-		ThrowHud.Fade(smooth(out), UITokens.Throw.Flash)
+	if s.t >= Show.Shake then
+		scene = { name = "Fade", t = 0 }
 	end
+end
+
+-- Белая вспышка — и обратно к краю: камера, управление и интерфейс возвращаются.
+local function stepFade(dt: number, s: any)
+	s.t += dt
+	local out = s.t / 0.25
+	ThrowHud.Fade(smooth(out), UITokens.Throw.Flash)
 	if out >= 1 then
 		ThrowHud.Card(nil)
 		restore()
 		ThrowHud.SetEnabled(true) -- белая вспышка гаснет уже на обычной камере
 		scene = { name = "Out", t = 0 }
+	end
+end
+
+-- Касание во время показа — пропуск: из полёта и раскрытия сразу к итогу, с итога — к концу.
+function ThrowController.Skip()
+	local s = scene
+	if not s or not result then
+		return
+	end
+	if s.name == "Flight" or s.name == "Slide" or s.name == "Approach" then
+		if s.trail then
+			s.trail:Destroy()
+		end
+		roll = 0
+		ThrowHud.Bars(0)
+		ThrowHud.Fade(0)
+		local rest = s.rest
+		local stop: Vector3? = nil
+		if isFull(result) then
+			monsterInfo = monsterInfo or makeMonster(result.itemId)
+			local halfWidth = if monsterInfo then monsterInfo.width * monsterInfo.base / 2 else 2
+			stop = s.stop or (rest + Vector3.new(C.MonsterGap + halfWidth, 0, 0.4))
+			aimCamera(0, rest + C.MidEye, rest + C.MidLook, C.RevealFov, true)
+		else
+			aimCamera(0, rest + C.SideEye, rest + C.SideLook, C.ChaseFov - 14, true)
+		end
+		ZoneController.Probe(result.zone)
+		beginCard(rest, stop, true, s.lucky == true)
+	elseif s.name == "Card" or s.name == "Suck" or s.name == "Shake" then
+		scene = { name = "Fade", t = 0 }
 	end
 end
 
@@ -983,6 +1086,7 @@ local STEPS: { [string]: (number, any) -> () } = {
 	Card = stepCard,
 	Suck = stepSuck,
 	Shake = stepShake,
+	Fade = stepFade,
 	Out = stepOut,
 }
 
@@ -1001,7 +1105,30 @@ local function step(dt: number)
 			hideCarried(true)
 		end
 	end
-	local root = rootOf()
+	local root, humanoid = rootOf()
+	-- панель выбора вида: пока игрок подходит к краю (и шкалы нет)
+	if clock - kindsAt > 0.25 then
+		kindsAt = clock
+		if state == "Idle" and scene == nil and root and ThrowPath.NearEdge(root.Position, 22) then
+			local rows = {}
+			for _, kind in Catch.Kinds do
+				local stack = pickFor(kind)
+				local count = if stack then stack.count else 0
+				table.insert(rows, {
+					kind = kind,
+					text = ("%s ×%d"):format(Catch.Names[kind] or kind, count),
+					count = count,
+					selected = kind == selectedKind,
+				})
+			end
+			ThrowHud.SetKinds(rows, function(kind: string)
+				selectedKind = kind -- запоминается до конца сеанса
+				kindsAt = 0
+			end)
+		else
+			ThrowHud.SetKinds(nil)
+		end
+	end
 	if state == "Idle" then
 		local on = root ~= nil and ThrowPath.OnEdge(root.Position)
 		if not on then
@@ -1026,8 +1153,20 @@ local function step(dt: number)
 			end
 		end
 	elseif state == "Aim" then
-		if not root then
+		if not root or not humanoid then
 			ThrowController.Cancel()
+		else
+			-- отпустил движение и повёл снова (клавиши или джойстик) — уход со шкалы
+			local moving = humanoid.MoveDirection.Magnitude > 0.3
+			if not moving then
+				released = true
+				movedFor = 0
+			elseif released then
+				movedFor += dt
+				if movedFor > 0.12 then
+					ThrowController.Cancel()
+				end
+			end
 		end
 	elseif state == "Pressed" then
 		if result then
@@ -1041,6 +1180,7 @@ end
 function ThrowController.Init()
 	local gui = player:WaitForChild("PlayerGui")
 	ThrowHud.Init(gui)
+	ThrowHud.InitKinds(gui, Catch.Kinds)
 	Remotes.Get(Remotes.Names.LovibumsChanged).OnClientEvent:Connect(function(payload)
 		if type(payload) == "table" and type(payload.lovibums) == "table" then
 			lovibums = payload.lovibums
@@ -1065,18 +1205,25 @@ function ThrowController.Init()
 			restore()
 		end
 	end)
-	-- клавиатура и геймпад: пробел, Enter, E или кнопка A — бросить; S, стрелка вниз или кнопка B — уйти без броска
-	UserInputService.InputBegan:Connect(function(input)
-		local key = input.KeyCode
-		if
-			key == Enum.KeyCode.Space
+	-- нажатие в любом месте экрана (мышь, касание), Enter, E или кнопка A: на шкале — бросок, во время показа
+	-- — пропуск. Касания джойстика и кнопок игра забирает сама (processed) — они не бросают.
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed then
+			return
+		end
+		local kind, key = input.UserInputType, input.KeyCode
+		local go = kind == Enum.UserInputType.MouseButton1
+			or kind == Enum.UserInputType.Touch
 			or key == Enum.KeyCode.Return
 			or key == Enum.KeyCode.E
 			or key == Enum.KeyCode.ButtonA
-		then
+		if not go then
+			return
+		end
+		if state == "Aim" then
 			ThrowController.Press()
-		elseif key == Enum.KeyCode.S or key == Enum.KeyCode.Down or key == Enum.KeyCode.ButtonB then
-			ThrowController.Cancel()
+		elseif state == "Show" then
+			ThrowController.Skip()
 		end
 	end)
 	RunService:BindToRenderStep("ThrowShow", Enum.RenderPriority.Camera.Value + 5, step)

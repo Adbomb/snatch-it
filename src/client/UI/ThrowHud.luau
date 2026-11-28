@@ -373,13 +373,13 @@ function ThrowHud.Bars(amount: number)
 end
 
 -- Шкала появилась: нажатие в любом месте экрана — handler.
-function ThrowHud.ShowAim(handler: () -> ())
-	onTap = handler
+function ThrowHud.ShowAim()
+	onTap = nil
 	power.Visible = false
 	perfect.Visible = false
 	caption.Visible = true
 	aim.Visible = true
-	tap.Visible = true
+	tap.Visible = false -- нажатия ловит Controllers/ThrowController (джойстик телефона остаётся свободным)
 end
 
 -- Бегунок: position 0 (низ) … 1 (верх), число рядом.
@@ -465,6 +465,83 @@ function ThrowHud.Card(lines: { { text: string, color: Color3? } }?, tagText: st
 	tagLabel.Text = tagText or ""
 	card.Visible = true
 	pop(tag, 0.2, 0.38)
+end
+
+-- ── панель выбора вида Ловибума у края (свой экранный слой: видна, пока шкалы нет) ──────────────────────────────
+local kindsGui: ScreenGui
+local kindsRow: Frame
+local kindPills: { [string]: { frame: Frame, label: TextLabel } } = {}
+local onKind: ((string) -> ())? = nil
+
+function ThrowHud.InitKinds(parent: Instance, kinds: { string })
+	local K = T.Kinds
+	kindsGui = UI.ScreenGui("ThrowKinds", T.Order - 1, { Parent = parent, Menu = false })
+	kindsGui.Enabled = false
+	kindsRow = new("Frame", { Name = "Row", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5) }, kindsGui)
+	local list = new("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, kindsRow)
+	for i, kind in kinds do
+		local pill = new("TextButton", {
+			Name = kind,
+			Text = "",
+			AutoButtonColor = false,
+			BackgroundColor3 = K.Fill,
+			BackgroundTransparency = K.Alpha,
+			LayoutOrder = i,
+		}, kindsRow)
+		local corner = new("UICorner", {}, pill)
+		local stroke = new("UIStroke", { Color = BLACK, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, pill)
+		table.insert(strokes, { stroke = stroke, px = 2 })
+		local label = text(pill, "Text", K.Text)
+		kindPills[kind] = { frame = pill, label = label }
+		pill.Activated:Connect(function()
+			if onKind then
+				onKind(kind)
+			end
+		end)
+		table.insert(layouts, function()
+			pill.Size = UDim2.fromOffset(px(K.Size.X), px(K.Size.Y))
+			corner.CornerRadius = UDim.new(0, px(K.Size.Y / 2))
+			label.Position = UDim2.fromScale(0.5, 0.5)
+		end)
+	end
+	table.insert(layouts, function()
+		list.Padding = UDim.new(0, px(K.Gap))
+		kindsRow.Size = UDim2.fromOffset(px((K.Size.X + K.Gap) * #kinds), px(K.Size.Y))
+		kindsRow.Position = UDim2.new(0.5, 0, 1, -px(K.Bottom))
+	end)
+	relayout()
+end
+
+-- Панель видов: строки { kind, text, count, selected }; nil — убрать. handler — выбор вида.
+function ThrowHud.SetKinds(
+	rows: { { kind: string, text: string, count: number, selected: boolean } }?,
+	handler: ((string) -> ())?
+)
+	if not rows then
+		if kindsGui.Enabled then
+			kindsGui.Enabled = false
+		end
+		return
+	end
+	onKind = handler
+	for _, row in rows do
+		local pill = kindPills[row.kind]
+		if pill then
+			pill.label.Text = row.text
+			pill.label.TextColor3 = if row.count > 0 then WHITE else T.Kinds.Empty
+			pill.frame.BackgroundColor3 = if row.selected then T.Kinds.On else T.Kinds.Fill
+			pill.frame.BackgroundTransparency = if row.selected then 0.05 else T.Kinds.Alpha
+		end
+	end
+	if not kindsGui.Enabled then
+		relayout()
+		kindsGui.Enabled = true
+	end
 end
 
 -- Каждый кадр: появления, лучи, вспышка, затемнение.

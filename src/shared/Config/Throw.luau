@@ -95,6 +95,12 @@ return {
 		LovibumScale = 2,
 		MonsterHeight = 5.5,
 		LuckyFrom = 20,
+		-- Полное шоу (выход монстра, имя по буквам, втягивание) — только у редкого результата: этаж из FullFloors,
+		-- существо из FullCreatures или босс. Обычный результат — коротко: полёт, вспышка, итог на Quick секунд.
+		-- Касание во время показа — пропуск.
+		Quick = 1.8,
+		FullFloors = { Gold = true, Mythic = true, Diamond = true },
+		FullCreatures = { Legendary = true, Secret = true },
 	},
 
 	-- Старый цикл (поимка-прицел у босса, D55 и D74) ВЫКЛЮЧЕН (решение владельца 2026-11-28): в зонах нет ни декора,

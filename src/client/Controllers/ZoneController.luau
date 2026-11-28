@@ -34,6 +34,11 @@ local ZoneController = {}
 local changed = Instance.new("BindableEvent")
 ZoneController.Changed = changed.Event
 
+-- Показ броска (D75): свет зоны ведётся за Ловибумом в полёте (Controllers/ThrowController). nil — снова обычный.
+function ZoneController.Probe(index: number?)
+	changed:Fire(index)
+end
+
 local zones: { ZoneBox } = {}
 local banner: CanvasGroup
 local parts: { [string]: any } = {}

@@ -518,6 +518,47 @@ local function buildTrackMarks(index: number, parent: Instance)
 	Studs.Apply(axis)
 end
 
+-- Оформление зоны по бокам трассы (D75, решение владельца 2026-11-28): готовый декор зон 1–5 — только детали,
+-- целиком лежащие за чистой серединой (|x| ≥ MapLayout.TrackHalf); всё, что заходит в середину (площадки боссов,
+-- мосты, мощение поперёк), не строится. У зон 6–10 оформления пока нет — цвет пола и свет.
+local SIDE_DECOR: { [string]: () -> ({ ModelBuilder.Brick }, { FleaMarket.Sign }?) } = {
+	Junk = Junkyard.Zone,
+	Flea = FleaMarket.Zone,
+	Subway = SubwayStation.Zone,
+	Desert = DesertOasis.Zone,
+	Glacier = GlacierHall.Zone,
+}
+
+local function buildSideDecor(zoneId: string, frame: CFrame, parent: Instance)
+	local build = SIDE_DECOR[zoneId]
+	if not build then
+		return
+	end
+	local decor, signs = build()
+	local kept: { ModelBuilder.Brick } = {}
+	for _, brick in decor do
+		local cf, size = brick.cframe, brick.size
+		-- полуширина детали по x с учётом поворота
+		local half = (
+			math.abs(cf.XVector.X) * size.X
+			+ math.abs(cf.YVector.X) * size.Y
+			+ math.abs(cf.ZVector.X) * size.Z
+		) / 2
+		if math.abs(cf.Position.X) - half >= MapLayout.TrackHalf then
+			table.insert(kept, brick)
+		end
+	end
+	local model = ModelBuilder.Place(ModelBuilder.Build("Decor", kept), frame, parent)
+	for _, sign in signs or {} do
+		local part = model:FindFirstChild(sign.name)
+		if part and part:IsA("BasePart") then
+			for _, face in sign.faces do
+				Signs.Write(part, face, { { text = sign.text, scale = 0.8 } }, part.Color)
+			end
+		end
+	end
+end
+
 local function buildZone(index: number, parent: Instance)
 	local zone = GameConfig.Zones[index]
 	local frame = MapLayout.ZoneCFrame(index)
@@ -564,9 +605,11 @@ local function buildZone(index: number, parent: Instance)
 		line.Parent = f
 	end
 
-	-- Чистая трасса (D75): дальше — только разметка; голограмм, столбиков, постаментов и декора в зонах нет.
+	-- Чистая трасса (D75): середина пустая — разметка; оформление зоны — только по бокам; голограмм, столбиков и
+	-- постаментов нет.
 	if not GameConfig.Throw.OldLoop then
 		buildTrackMarks(index, f)
+		buildSideDecor(zone.id, frame, f)
 		return
 	end
 

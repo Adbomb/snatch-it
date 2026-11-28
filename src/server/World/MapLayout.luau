@@ -91,6 +91,10 @@ MapLayout.Ramp = { x0 = 52, x1 = 66, length = 30 }
 MapLayout.ZoneSize = 95
 MapLayout.ZoneGrowth = 1
 
+-- Чистая середина трассы (D75): в полосе |x| < TrackHalf нет ни одной детали — здесь летит и приземляется Ловибум.
+-- Оформление зон (готовый декор зон 1–5) стоит только по бокам, за этой полосой, как стены-пейзаж.
+MapLayout.TrackHalf = 40
+
 function MapLayout.ZoneLength(index: number): number
 	return math.round(MapLayout.ZoneSize * MapLayout.ZoneGrowth ^ (index - 1))
 end

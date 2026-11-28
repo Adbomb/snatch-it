@@ -70,6 +70,12 @@ function ThrowPath.OnEdge(position: Vector3): boolean
 	return e ~= nil and math.abs(position.X) <= e.halfX and position.Z >= -1 and position.Z <= e.z1
 end
 
+-- Подходит ли точка к полосе броска (до неё не дальше reach стадов): здесь видна панель выбора вида.
+function ThrowPath.NearEdge(position: Vector3, reach: number): boolean
+	local e = ThrowPath.Edge()
+	return e ~= nil and math.abs(position.X) <= e.halfX + 8 and position.Z >= -1 and position.Z <= e.z1 + reach
+end
+
 -- Зона под точкой (по z) или nil.
 function ThrowPath.ZoneAt(z: number): number?
 	collect()
