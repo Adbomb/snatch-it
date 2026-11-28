@@ -175,7 +175,7 @@
   `buildCliffs`, их грани — стены каньона); все земляные блоки названы `CanyonWall` — клетку кладёт `paintCanyon`;
   полоса броска — шашечка из деталей (`buildThrowEdge`); зона — `buildTrack`: пол из клеток 4 × 4, белая линия,
   деревья (`Models/Tree`), кусты и пни у стен. Спуска, декора зон и разметки «Безопасная зона» на трассе D75 нет
-  (`buildSafeLine` — только при `Throw.OldLoop`). Ночной барьер — шириной с трассу. Карта — около 3 800 частей.
+  (`buildSafeLine` — только при `Throw.OldLoop`). Ночной барьер — шириной с трассу. Темы зон трассы — `World/TrackThemes` (стены, трава, пол, декор у стен по виду зоны). Карта — около 4 900 частей.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

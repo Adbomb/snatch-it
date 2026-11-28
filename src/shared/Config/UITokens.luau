@@ -795,7 +795,11 @@ UITokens.Throw = {
 		RaysSize = 190,
 		Name = 30,
 		NameAt = 448,
+		From = 100, -- «1 из N» показывается только от 1 из 100 (решение владельца 2026-11-28)
+		Grow = 0.7, -- чем реже — тем крупнее: до × (1 + Grow) у 1 из 100 000 и реже
+		Hot = Color3.fromHex("FFE27A"), -- и ярче: от белого к золотому
 	},
+	Vignette = 0.62, -- затемнение краёв экрана на полном шоу (непрозрачность у самого края)
 	Card = {
 		Rarity = 18,
 		RarityAt = 410,
@@ -808,9 +812,9 @@ UITokens.Throw = {
 		Tag = Vector2.new(100, 40),
 		TagShift = 190, -- от середины экрана вправо
 		TagAt = 430,
-		TagTurn = -12,
-		TagFill = Color3.fromHex("F2A640"),
-		TagEdge = Color3.fromHex("3A2408"),
+		TagTurn = 0,
+		TagFill = Color3.fromHex("2FBF4A"), -- свой стиль (зелёная плашка Stud-UI), не копия чужой игры
+		TagEdge = Color3.fromHex("0E3A17"),
 		TagText = 18,
 	},
 	-- Панель выбора вида Ловибума у края обрыва (решение владельца 2026-11-28; в записи референса её нет):

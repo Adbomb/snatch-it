@@ -390,6 +390,25 @@ function DevTools.Init()
 				BossLootService.Handlers.FillWith(boss :: number, slot, itemId)
 				local uid = BossLootService.SlotItem(boss :: number, slot)
 				return if uid then ("%s в слоте %d"):format(itemId, slot) else "не положено"
+			elseif command == "ThrowRolls" then
+				-- D75 (только Studio): «ThrowRolls <существо> <предмет> <этаж> <босс>» — случайные числа 0…1 следующего
+				-- броска по очереди (ThrowService.Random): 0.999 — самая редкая ступень; после броска — снова случайно
+				if not RunService:IsStudio() then
+					return "только в Studio"
+				end
+				local ThrowService = require(ServerScriptService.Server.Services.ThrowService)
+				local rolls: { number } = {}
+				for i = 2, #words do
+					table.insert(rolls, math.clamp(tonumber(words[i]) or 0, 0, 0.9999))
+				end
+				ThrowService.Random = function(): number
+					local value = table.remove(rolls, 1)
+					if #rolls == 0 then
+						ThrowService.Random = nil
+					end
+					return value or 0
+				end
+				return "ок"
 			elseif command == "Strength" then
 				-- проверка капкана и нокаута на трёх клиентах (D53): сила игрока — урон в PvP. Только в локальном
 				-- Studio: в опубликованной игре DevTools не создаётся, и команда сама проверяет Studio ещё раз.

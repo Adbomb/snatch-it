@@ -94,11 +94,12 @@ return {
 		Shake = 0.8,
 		LovibumScale = 2,
 		MonsterHeight = 5.5,
-		LuckyFrom = 20,
+		MonsterWidth = 7.5, -- и не шире этого, стадов (плоские и длинные существа)
+		LuckyFrom = 100,
 		-- Полное шоу (выход монстра, имя по буквам, втягивание) — только у редкого результата: этаж из FullFloors,
 		-- существо из FullCreatures или босс. Обычный результат — коротко: полёт, вспышка, итог на Quick секунд.
 		-- Касание во время показа — пропуск.
-		Quick = 1.8,
+		Quick = 2.6,
 		FullFloors = { Gold = true, Mythic = true, Diamond = true },
 		FullCreatures = { Legendary = true, Secret = true },
 	},

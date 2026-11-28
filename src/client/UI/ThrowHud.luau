@@ -15,11 +15,13 @@ local UI = require(Shared:WaitForChild("StudUI"):WaitForChild("StudUI"))
 local UITokens = require(Shared:WaitForChild("Config"):WaitForChild("UITokens"))
 
 local T = UITokens.Throw
-local FONT = Font.fromEnum(Enum.Font.LuckiestGuy)
+local FONT = UI.Fonts.Heavy -- шрифт игры (Stud-UI); вид и слова — свои, от референса — только места и размеры
 local WHITE = Color3.new(1, 1, 1)
 local BLACK = Color3.new(0, 0, 0)
 
 local ThrowHud = {}
+
+ThrowHud.RaysImage = UI.Assets.Sunburst -- лучи (картинка Stud-UI): и за числом, и за существом в мире
 
 local gui: ScreenGui
 local overlay: Frame
@@ -183,7 +185,7 @@ function ThrowHud.Init(parent: Instance)
 	value = text(marker, "Value", S.Value)
 	value.AnchorPoint = Vector2.new(0, 0.5)
 	caption = text(aim, "Caption", S.Caption)
-	caption.Text = "Нажмите, чтобы бросить!"
+	caption.Text = "Нажми, чтобы бросить!"
 	power = text(aim, "Power", S.Power)
 	power.AnchorPoint = Vector2.new(0, 0.5)
 	power.Visible = false
@@ -347,6 +349,7 @@ function ThrowHud.SetEnabled(on: boolean)
 	card.Visible = false
 	onTap = nil
 	ThrowHud.Bars(0)
+	ThrowHud.Vignette(0)
 	fade = 0
 	flash.alpha = 0
 	overlay.BackgroundTransparency = 1
@@ -414,7 +417,7 @@ end
 
 -- Счётчик удачи и зона; bump — зона сменилась (название всплывает).
 function ThrowHud.SetFlight(luckValue: number, zone: string, color: Color3, bump: boolean)
-	luck.Text = ("%.2fX"):format(luckValue)
+	luck.Text = ("×%.2f"):format(luckValue)
 	zoneLabel.Text = zone
 	zoneLabel.TextColor3 = color
 	if bump then
@@ -430,10 +433,22 @@ function ThrowHud.Reveal(on: boolean)
 	end
 end
 
--- Раскрытие: «1 из N» и имя с пропусками; bump — число выросло (лёгкий толчок).
+-- Раскрытие: «1 из N» и имя с пропусками; bump — число выросло (лёгкий толчок). Число видно только от Reveal.From;
+-- чем реже — тем крупнее и ярче.
 function ThrowHud.SetReveal(n: number, name: string, bump: boolean)
-	oneIn.Text = ("1 из %d"):format(n)
+	local R = T.Reveal
 	nameLabel.Text = name
+	if n < R.From then
+		oneIn.Visible = false
+		lucky.Visible = false
+		rays.Visible = false
+		return
+	end
+	local rare = math.clamp(math.log10(n / R.From) / 3, 0, 1)
+	oneIn.Visible = true
+	oneIn.Text = ("1 из %d"):format(n)
+	oneIn.TextSize = px(R.OneIn * (1 + R.Grow * rare))
+	oneIn.TextColor3 = WHITE:Lerp(R.Hot, rare)
 	if bump then
 		pop(oneIn, 1.18, 0.16)
 	end
@@ -441,8 +456,38 @@ end
 
 -- «Удача!» над числом (редкий результат).
 function ThrowHud.Lucky()
-	lucky.Visible = true
-	pop(lucky, 1.8, 0.34)
+	if oneIn.Visible then
+		lucky.Visible = true
+		pop(lucky, 1.8, 0.34)
+	end
+end
+
+-- Затемнение краёв экрана (полное шоу): 0…1.
+local vignette: { Frame } = {}
+function ThrowHud.Vignette(amount: number)
+	if #vignette == 0 then
+		-- четыре полосы с градиентом от края: без картинок
+		for _, side in
+			{ { 0, 0, 1, 0.3, 90 }, { 0, 0.7, 1, 0.3, 270 }, { 0, 0, 0.22, 1, 0 }, { 0.78, 0, 0.22, 1, 180 } }
+		do
+			local frame = new("Frame", {
+				Name = "Vignette",
+				BackgroundColor3 = BLACK,
+				BorderSizePixel = 0,
+				Position = UDim2.fromScale(side[1], side[2]),
+				Size = UDim2.fromScale(side[3], side[4]),
+				ZIndex = 2,
+			}, gui)
+			new("UIGradient", { Rotation = side[5] }, frame)
+			table.insert(vignette, frame)
+		end
+	end
+	local k = math.clamp(amount, 0, 1)
+	for _, frame in vignette do
+		frame.Visible = k > 0.01
+		local gradient = frame:FindFirstChildOfClass("UIGradient") :: UIGradient
+		gradient.Transparency = NumberSequence.new(1 - T.Vignette * k, 1)
+	end
 end
 
 -- Карточка: лучи за числом, три строки (редкость этажа, имя, доход) и метка; имя по буквам убирается. nil — убрать.
@@ -453,9 +498,11 @@ function ThrowHud.Card(lines: { { text: string, color: Color3? } }?, tagText: st
 		return
 	end
 	nameLabel.Text = ""
-	rays.Visible = true
-	pop(rays, 0.3, 0.4)
-	pop(oneIn, 1.5, 0.34)
+	rays.Visible = oneIn.Visible -- лучи — только за числом от 1 из 100
+	if oneIn.Visible then
+		pop(rays, 0.3, 0.4)
+		pop(oneIn, 1.5, 0.34)
+	end
 	for i, label in cardLines do
 		local line = lines[i]
 		label.Text = if line then line.text else ""

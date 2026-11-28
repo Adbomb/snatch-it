@@ -13,6 +13,7 @@
 -- Config (GameConfig, Items, FloorRarity, UITokens, Catch, LovibumRigs), Remotes.
 
 local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -63,12 +64,18 @@ local C = {
 	FarEye = Vector3.new(1.5, 0.7, -26),
 	NearEye = Vector3.new(1.2, 0.8, -7.5),
 	NearLook = Vector3.new(1.0, 1.2, 0),
-	MidEye = Vector3.new(2.6, 1.7, -12.5),
+	MidEye = Vector3.new(2.6, 1.7, -14),
 	MidLook = Vector3.new(2.4, 1.6, 0),
 	SuckEye = Vector3.new(1.8, 1.5, -9),
 	SuckLook = Vector3.new(1.0, 1.4, 0),
 	RevealFov = 55,
 	SuckFov = 47,
+	CardEye = Vector3.new(-1.2, 2.7, -15), -- полное шоу, карточка: существо крупно — чуть больше трети высоты экрана
+	CardLook = Vector3.new(-0.8, 2.6, 0), -- от места существа
+	CardFov = 50,
+	ShortEye = Vector3.new(2, 2.6, 10.5), -- обычный результат: со стороны полёта, Ловибум и существо в кадре
+	ShortLook = Vector3.new(2, 1.8, 0), -- от Ловибума
+	ShortFov = 58,
 	MonsterFrom = Vector3.new(7, 0, -16), -- откуда выходит монстр (от Ловибума): из-за левого края кадра
 	Hidden = Vector3.new(0, -300, 0), -- где монстр ждёт выхода (не виден)
 	MonsterGap = 1.6, -- зазор между монстром и Ловибумом
@@ -335,6 +342,63 @@ local function pillar(at: Vector3, width: number, seconds: number)
 	end)
 end
 
+-- Полное шоу: сцена темнеет и насыщается (ColorCorrection у этого клиента) и края экрана затемняются. k: 0…1.
+local mood: ColorCorrectionEffect? = nil
+local function setMood(k: number)
+	local amount = math.clamp(k, 0, 1)
+	if amount <= 0 then
+		if mood then
+			mood:Destroy()
+			mood = nil
+		end
+		ThrowHud.Vignette(0)
+		return
+	end
+	local effect = mood
+	if not effect then
+		effect = Instance.new("ColorCorrectionEffect")
+		effect.Name = "ThrowMood"
+		effect.Parent = Lighting
+		mood = effect
+	end
+	effect.Brightness = -0.1 * amount
+	effect.Contrast = 0.18 * amount
+	effect.Saturation = 0.4 * amount
+	ThrowHud.Vignette(amount)
+end
+
+-- Вращающиеся лучи за существом (полное шоу): плоская картинка в мире позади него, цвет — редкости.
+local function rays(at: Vector3, away: Vector3, color: Color3, size: number)
+	local anchor = Instance.new("Part")
+	anchor.Name = "Rays"
+	anchor.Transparency = 1
+	anchor.Size = Vector3.new(0.4, 0.4, 0.4)
+	anchor.CFrame = CFrame.new(at + away)
+	ghost(anchor)
+	anchor.Parent = effects()
+	local board = Instance.new("BillboardGui")
+	board.Size = UDim2.fromScale(size, size)
+	board.LightInfluence = 0
+	board.Parent = anchor
+	local image = Instance.new("ImageLabel")
+	image.BackgroundTransparency = 1
+	image.Size = UDim2.fromScale(1, 1)
+	image.Image = ThrowHud.RaysImage
+	image.ImageColor3 = color
+	image.ImageTransparency = 1
+	image.Parent = board
+	local t = 0
+	table.insert(fx, function(dt: number): boolean
+		t += dt
+		if not image.Parent then
+			return false
+		end
+		image.Rotation = (t * 50) % 360
+		image.ImageTransparency = mix(1, 0.15, smooth(t / 0.4))
+		return true
+	end)
+end
+
 local function clearFx()
 	table.clear(fx)
 	if fxFolder then
@@ -391,10 +455,13 @@ local function makeMonster(itemId: string): any
 		end
 	end
 	local _, size = model:GetBoundingBox()
-	local base = math.clamp(Show.MonsterHeight / math.max(0.5, size.Y), 0.5, 9)
+	-- рост — Show.MonsterHeight, но плоское и длинное существо не шире Show.MonsterWidth (иначе закрывает кадр)
+	local width = math.max(size.X, size.Z)
+	local fit = math.min(Show.MonsterHeight / math.max(0.5, size.Y), Show.MonsterWidth / math.max(0.5, width))
+	local base = math.clamp(fit, 0.3, 9)
 	model.Parent = effects()
 	monster = model
-	return { base = base, width = math.max(size.X, size.Z) }
+	return { base = base, width = width }
 end
 
 -- Поставить монстра: низ в точке at, лицом по dir, масштаб k (от размера показа).
@@ -486,6 +553,7 @@ local function restore()
 	end
 	monsterInfo = nil
 	clearFx()
+	setMood(0)
 	roll = 0
 	eye.speed, look.speed = 14, 16
 	hideCarried(false)
@@ -559,8 +627,8 @@ function ThrowController.Press()
 	local position = ThrowRules.ScalePosition(now - session.at, session.period, session.phase)
 	local quality = ThrowRules.Quality(position)
 	local bonus = math.floor(Throw.Accuracy.Max * 100 * quality + 0.5)
-	ThrowHud.SetMarker(position, ("+%d%%"):format(bonus))
-	ThrowHud.AimResult(("+%d%% Мощность"):format(bonus), quality >= 1)
+	ThrowHud.SetMarker(position, ("+%d %%"):format(bonus))
+	ThrowHud.AimResult(("+%d %% к дальности"):format(bonus), quality >= 1)
 	state = "Pressed"
 	stateAt = clock
 	-- на время показа управление и джойстик убраны
@@ -617,7 +685,7 @@ local function stepAim(dt: number, s: any)
 		local position =
 			ThrowRules.ScalePosition(workspace:GetServerTimeNow() - session.at, session.period, session.phase)
 		local bonus = math.floor(Throw.Accuracy.Max * 100 * ThrowRules.Quality(position) + 0.5)
-		ThrowHud.SetMarker(position, ("+%d%%"):format(bonus))
+		ThrowHud.SetMarker(position, ("+%d %%"):format(bonus))
 	end
 end
 
@@ -626,6 +694,7 @@ end
 local function beginCard(rest: Vector3, stop: Vector3?, short: boolean, lucky: boolean)
 	local r = result
 	local def = Items[r.itemId]
+	local rarity = UITokens.RarityColor(r.rarity)
 	ThrowHud.Flight(false)
 	ThrowHud.Reveal(true)
 	ThrowHud.SetReveal(r.oneIn, "", true)
@@ -633,16 +702,17 @@ local function beginCard(rest: Vector3, stop: Vector3?, short: boolean, lucky: b
 		ThrowHud.Lucky()
 	end
 	ThrowHud.Flash(0.75, 0.45, Color3.fromRGB(255, 244, 214))
-	if stop then
+	if stop and not short then -- полное шоу: столб света, искры и вращающиеся лучи за существом
 		pillar(stop, if monsterInfo then monsterInfo.width * monsterInfo.base * 0.8 else 3, Show.Card + Show.Suck)
 		burst(stop + Vector3.new(0, 2, 0), Color3.new(1, 1, 1), 26, SPARKLES, 18, 1.1)
+		rays(stop + Vector3.new(0, 2.8, 0), Vector3.new(0, 0, 3), rarity, 24)
 	end
 	local K = UITokens.Throw.Card
 	ThrowHud.Card({
-		{ text = FloorRarity.Names[r.floor] or "", color = UITokens.RarityColor(r.rarity) },
+		{ text = FloorRarity.Names[r.floor] or "", color = rarity },
 		{ text = if def then def.displayName else "???", color = K.NameColor },
-		{ text = ("$%s/с"):format(tostring(r.income)), color = K.IncomeColor },
-	}, if r.sold then "Продано!" elseif r.duplicate then "Уже есть" else "Новинка!")
+		{ text = ("+%s/с"):format(tostring(r.income)), color = K.IncomeColor },
+	}, if r.sold then "Продано" elseif r.duplicate then "Уже есть" else "Новое!")
 	scene = { name = "Card", t = 0, rest = rest, stop = stop, short = short }
 end
 
@@ -788,12 +858,14 @@ local function stepSlide(dt: number, s: any)
 	end
 	eye.speed, look.speed = 5, 8
 	aimCamera(dt, ground + C.SideEye, ground + C.SideLook, C.ChaseFov - 14)
-	if not isFull(result) then -- обычный результат: коротко — вспышка и итог на месте
+	if not isFull(result) then -- обычный результат: коротко — вспышка, существо рядом с Ловибумом, доход
 		if s.t >= Show.Slide then
 			if s.trail then
 				s.trail:Destroy()
 			end
-			beginCard(s.rest, nil, true, false)
+			monsterInfo = makeMonster(result.itemId)
+			local halfWidth = if monsterInfo then monsterInfo.width * monsterInfo.base / 2 else 2
+			beginCard(s.rest, s.rest + Vector3.new(C.MonsterGap + halfWidth, 0, 0.4), true, false)
 		end
 		return
 	end
@@ -864,6 +936,7 @@ local function stepApproach(dt: number, s: any)
 	s.t += dt
 	ThrowHud.Fade(1 - smooth(s.t / (Show.Dip * 1.6)))
 	local k = math.clamp(s.t / Show.Approach, 0, 1)
+	setMood(smooth(k / 0.25))
 	local rest = s.rest
 	placeBall(CFrame.new(rest) * CFrame.Angles(0, math.pi, 0), 0, Show.LovibumScale)
 	-- монстр: выходит на 0.42…0.66, дальше стоит и слегка покачивается
@@ -925,8 +998,18 @@ local function stepCard(dt: number, s: any)
 	local rest = s.rest
 	placeBall(CFrame.new(rest) * CFrame.Angles(0, math.pi, 0), 0, Show.LovibumScale)
 	if s.stop then
-		placeMonster(s.stop + Vector3.new(0, math.max(0, math.sin(s.t * 3) * 0.06), 0), rest - s.stop, 1)
-		aimCamera(dt, rest + C.MidEye, rest + C.MidLook, C.RevealFov)
+		if not monsterInfo then -- модель могла ещё не прийти с сервера
+			monsterInfo = makeMonster(result.itemId)
+		end
+		local near = s.short and not s.far -- обычный результат: существо выскакивает рядом и смотрит в камеру
+		local grow = if near then math.max(0.05, backOut(s.t / 0.35)) else 1
+		local face = if near then rest + C.ShortEye - s.stop else rest - s.stop
+		placeMonster(s.stop + Vector3.new(0, math.max(0, math.sin(s.t * 3) * 0.06), 0), face, grow)
+		if s.short and not s.far then
+			aimCamera(dt, rest + C.ShortEye, rest + C.ShortLook, C.ShortFov)
+		else
+			aimCamera(dt, s.stop + C.CardEye, s.stop + C.CardLook, C.CardFov)
+		end
 	else
 		aimCamera(dt, rest + C.SideEye, rest + C.SideLook, C.ChaseFov - 14)
 	end
@@ -1062,7 +1145,12 @@ function ThrowController.Skip()
 			aimCamera(0, rest + C.SideEye, rest + C.SideLook, C.ChaseFov - 14, true)
 		end
 		ZoneController.Probe(result.zone)
+		local full = isFull(result)
 		beginCard(rest, stop, true, s.lucky == true)
+		scene.far = full -- камера остаётся со стороны раскрытия
+		if full then
+			setMood(1)
+		end
 	elseif s.name == "Card" or s.name == "Suck" or s.name == "Shake" then
 		scene = { name = "Fade", t = 0 }
 	end
