@@ -170,6 +170,11 @@
   `ThrowHud.SetKinds` (слой `ThrowKinds`); свет зоны в полёте — `ZoneController.Probe`. Декор зон 1–5 строится
   только по бокам (`WorldBuilder.buildSideDecor`, детали целиком за `MapLayout.TrackHalf`); карта — 4 764 части.
   В Studio атрибут игрока `ThrowFullShow` включает полное шоу для любого результата (проверка сцен).
+  Карта по снимкам референса (2026-11-28, ночь): трасса — каньон `TrackHalf` = 20 глубиной `Drop` = 24, зоны
+  `ZoneSize` = 48; террасы по бокам — плита травы на высоте базы до прежних обрывов; стены каньона —
+  детали `CanyonWall` (узор клетки кладёт `paintCanyon`); полоса броска — шашечка из деталей (`buildThrowEdge`);
+  декор зон строится под длину `DecorSize` = 95 и уменьшается `Model:ScaleTo(DecorScale)`, детали ближе
+  `DecorClean` к оси не строятся; `FleaMarket` и `SubwayStation` считают от `DecorSize`. Карта — около 3 500 частей.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

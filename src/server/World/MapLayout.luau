@@ -12,7 +12,7 @@ local MapLayout = {}
 
 -- Обрыв (D75, решение владельца 2026-11-28): безопасная зона кончается обрывом, трасса зон лежит ниже на Drop.
 -- С края обрыва игрок бросает Ловибум; вниз ведут спуски в полосах бега (Ramp).
-MapLayout.Drop = 10
+MapLayout.Drop = 24 -- по снимкам референса: стена обрыва — шесть рядов крупной клетки по 4 стада
 
 -- Высоты верхних граней поверхностей: разные, чтобы плоскости не мерцали (у Baseplate шаблона верх на 0).
 MapLayout.Heights = {
@@ -70,7 +70,7 @@ MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), siz
 -- Полоса броска вдаль (D75): вдоль края обрыва у входа в коридор, между спусками; площадки нет. Игрок на полосе
 -- (|x| ≤ halfX, z от края обрыва до z1) видит шкалу и бросает; сервер проверяет то же место (InThrowEdge).
 -- z0…z1 — сама светлая полоса на траве (за красной линией Safe Zone).
-MapLayout.ThrowEdge = { halfX = 46, z0 = 1.3, z1 = 10.3 }
+MapLayout.ThrowEdge = { halfX = 20, z0 = -1, z1 = 8 } -- во всю ширину каньона, от самого края; 10 × 2 клетки по 4
 
 function MapLayout.InThrowEdge(position: Vector3): boolean
 	local edge = MapLayout.ThrowEdge
@@ -81,24 +81,24 @@ end
 -- Середина полосы броска: куда ставят игрока тесты и где появляется награда, если игрока уже нет.
 MapLayout.ThrowSpot = Vector3.new(0, MapLayout.Heights.Ground, (MapLayout.ThrowEdge.z0 + MapLayout.ThrowEdge.z1) / 2)
 
--- Спуски с безопасной зоны на трассу (обрыв D75): в полосах бега D66 по обе стороны, клином вглубь зоны 1.
--- |x| от x0 до x1 (уже полосы: рядом, на x 46…48, — место обучения D55), длина — по z от края обрыва.
-MapLayout.Ramp = { x0 = 52, x1 = 66, length = 30 }
+-- Спуск с безопасной зоны на трассу (обрыв D75): клин вдоль стены каньона, x от x0 до x1, длина — по z от края.
+MapLayout.Ramp = { x0 = 13, x1 = 20, length = 54 } -- один спуск у правой стены каньона (обратный путь наверх)
 
--- Коридор зон. Вход в зону 1 — край обрыва (z = 0). Все зоны одной длины ZoneSize (решение владельца 2026-11-28,
--- по его записи референса: зоны одинаковые, их просто много). ZoneLength — на случай зон разной длины; обрыв вдоль
--- коридора — одна деталь, предел Roblox 2 048 стадов.
-MapLayout.ZoneSize = 95
+-- Трасса зон (D75) — по снимкам референса владельца (2026-11-28): узкий каньон шириной 2 × TrackHalf между
+-- террасами; зоны одной длины ZoneSize (чуть длиннее ширины), их 10. Террасы по бокам — на высоте безопасной
+-- зоны, до прежних обрывов (±CorridorHalf); на них стоит оформление зон: готовый декор зон 1–5, уменьшенный в
+-- DecorScale раз (он сделан под зону длиной DecorSize), без середины (детали ближе DecorClean к оси не строятся).
+MapLayout.ZoneSize = 48
 MapLayout.ZoneGrowth = 1
-
--- Чистая середина трассы (D75): в полосе |x| < TrackHalf нет ни одной детали — здесь летит и приземляется Ловибум.
--- Оформление зон (готовый декор зон 1–5) стоит только по бокам, за этой полосой, как стены-пейзаж.
-MapLayout.TrackHalf = 40
+MapLayout.TrackHalf = 20
+MapLayout.DecorSize = 95
+MapLayout.DecorScale = MapLayout.ZoneSize / MapLayout.DecorSize
+MapLayout.DecorClean = 42
 
 function MapLayout.ZoneLength(index: number): number
 	return math.round(MapLayout.ZoneSize * MapLayout.ZoneGrowth ^ (index - 1))
 end
-MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
+MapLayout.ZoneHalfWidth = MapLayout.TrackHalf
 -- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
 MapLayout.HologramSize = Vector2.new(40, 7) -- надпись уровня, стадов (D49: только название)
 -- Масштаб надписи по зоне (id из GameConfig.Zones), остальные — 1. «ПУСТЫНЯ» на 35 % меньше (решение владельца

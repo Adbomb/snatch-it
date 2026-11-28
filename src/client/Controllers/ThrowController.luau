@@ -48,7 +48,7 @@ local ThrowController = {}
 -- Числа камеры и сцен (стады, градусы). Вид интерфейса — UITokens.Throw, времена — Throw.Show.
 local C = {
 	AimEye = Vector3.new(1.3, 2.2, 4.6), -- близко за правым плечом (от корня персонажа; трасса — в −Z)
-	AimLook = Vector3.new(1.3, 1.0, -40),
+	AimLook = Vector3.new(1.3, -5, -40), -- вниз, в каньон трассы
 	AimFov = 70,
 	FrontAngle = 152, -- градусов вокруг персонажа: 0 — за спиной, 180 — спереди
 	BackAngle = 8,
@@ -69,7 +69,7 @@ local C = {
 	SuckLook = Vector3.new(1.0, 1.4, 0),
 	RevealFov = 55,
 	SuckFov = 47,
-	MonsterFrom = Vector3.new(8, 0, -16), -- откуда выходит монстр (от Ловибума): из-за левого края кадра
+	MonsterFrom = Vector3.new(7, 0, -16), -- откуда выходит монстр (от Ловибума): из-за левого края кадра
 	Hidden = Vector3.new(0, -300, 0), -- где монстр ждёт выхода (не виден)
 	MonsterGap = 1.6, -- зазор между монстром и Ловибумом
 	Hops = 6,

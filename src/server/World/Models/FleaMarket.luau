@@ -34,7 +34,7 @@ local B, V, C = FleaKit.B, FleaKit.V, FleaKit.C
 local Box, Disc, Neon, Put = FleaKit.Box, FleaKit.Disc, FleaKit.Neon, FleaKit.Put
 local DECOR = FleaKit.DECOR
 
-local HALF = MapLayout.ZoneSize / 2 -- вход −HALF, выход +HALF
+local HALF = MapLayout.DecorSize / 2 -- вход −HALF, выход +HALF
 local PAVING = 30 -- мощение |x| < 30
 local CURB = 41.5 -- бордюр (середина), между ним и мощением — променад
 local STREET = 45 -- вывески павильонов у дорожки (|x|): между бордюром (до 42) и сквозной полосой (от 48)

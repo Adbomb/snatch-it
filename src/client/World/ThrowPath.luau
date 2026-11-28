@@ -105,8 +105,9 @@ function ThrowPath.Landing(zone: number, depth: number, fromX: number): Vector3?
 		return nil
 	end
 	local d = math.clamp(depth, 0.02, 0.98)
-	-- рядом с осевой линией (на 5 правее), а не на ней: линия не закрывает Ловибум на раскрытии
-	return Vector3.new(math.clamp(fromX * 0.2 - 5, -z.halfX + 8, z.halfX - 8), z.floor, z.near - d * (z.near - z.far))
+	-- рядом с осевой линией (на 4 в сторону), а не на ней: линия не закрывает Ловибум на раскрытии
+	local x = math.clamp(fromX * 0.15 - 4, -z.halfX + 12, z.halfX - 12)
+	return Vector3.new(x, z.floor, z.near - d * (z.near - z.far))
 end
 
 -- Время полёта от from до to, секунды.

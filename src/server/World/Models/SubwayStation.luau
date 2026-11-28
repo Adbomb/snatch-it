@@ -30,7 +30,7 @@ local B, V, C = SubwayKit.B, SubwayKit.V, SubwayKit.C
 local Box, Disc, Neon, Put = SubwayKit.Box, SubwayKit.Disc, SubwayKit.Neon, SubwayKit.Put
 local DECOR, FLOOR, SOFT = SubwayKit.DECOR, SubwayKit.FLOOR, SubwayKit.SOFT
 
-local HALF = MapLayout.ZoneSize / 2 -- вход −HALF, выход +HALF
+local HALF = MapLayout.DecorSize / 2 -- вход −HALF, выход +HALF
 local PLATFORM = 30 -- перрон |x| < 30
 local TRACK = 39 -- ось пути
 local SIDE = 47 -- боковые платформы с |x| = 47
