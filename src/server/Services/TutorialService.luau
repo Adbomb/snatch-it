@@ -69,6 +69,10 @@ end
 
 -- Активна ли запись обучения игрока (профиль загружен и не Done).
 local function active(player: any): boolean
+	-- D75: старый цикл выключен — обучения D55 (поимка у пса в зоне 1) нет; запись в профиле не трогается
+	if not GameConfig.Throw.OldLoop then
+		return false
+	end
 	local data = DataService.GetData(player)
 	return data ~= nil and TutorialRules.IsActive(data)
 end

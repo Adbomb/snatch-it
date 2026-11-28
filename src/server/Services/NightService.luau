@@ -202,7 +202,7 @@ function NightService.BuildBarrier(): Model
 	glow.Material = Enum.Material.Neon
 	glow.Color = Color3.fromHex("B49BFF")
 	glow.Size = Vector3.new(width - 2.4, 0.3, cfg.thickness + 0.6)
-	glow.CFrame = CFrame.new(0, MapLayout.Heights.Path + 0.15, z)
+	glow.CFrame = CFrame.new(0, MapLayout.Heights.Ground + 0.15, z) -- на свесе травы над обрывом (D75)
 	glow.Parent = model
 
 	-- Надпись: отдельная невидимая деталь перед полем, лицом к Safe Zone (+Z).

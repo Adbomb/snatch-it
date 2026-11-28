@@ -118,7 +118,7 @@ local function refusal(player: any, level: any, kind: any): string?
 	if not data then
 		return "Профиль ещё не загружен"
 	end
-	if TutorialRules.IsActive(data) then
+	if GameConfig.Throw.OldLoop and TutorialRules.IsActive(data) then
 		return "Сначала пройдите обучение"
 	end
 	if sessions[player] then
@@ -136,9 +136,9 @@ local function refusal(player: any, level: any, kind: any): string?
 	if ItemRegistry.GetCarriedBy(player) then
 		return "Руки заняты — сначала отнесите или продайте капсулу"
 	end
-	local pad = MapLayout.ThrowPad
-	if not Validate.IsNear(player, pad.position, pad.radius) then
-		return "Бросать можно только с площадки"
+	local root = Validate.GetLiveRoot(player)
+	if not (root and MapLayout.InThrowEdge(root.Position)) then
+		return "Бросать можно только с края обрыва"
 	end
 	if not ThrowService.ZoneReady(level) then
 		return "Эта зона ещё не открыта"
@@ -251,7 +251,7 @@ local function resolve(session: Session, quality: number)
 		local part = ItemFactory.Create(itemId)
 		local root = Validate.GetLiveRoot(player)
 		part.Anchored = true
-		part.CFrame = if root then root.CFrame * CFrame.new(0, 0, -3) else CFrame.new(MapLayout.ThrowPad.position)
+		part.CFrame = if root then root.CFrame * CFrame.new(0, 0, -3) else CFrame.new(MapLayout.ThrowSpot)
 		part.Parent = itemsFolder or workspace
 		local created = ItemRegistry.CreateReward(itemId, part, zone, floor)
 		if not ItemRegistry.Transition(created, "Carried", { carrier = player }) then

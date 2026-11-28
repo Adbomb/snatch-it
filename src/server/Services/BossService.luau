@@ -404,6 +404,9 @@ function BossService.Init(world: Instance)
 	folder.Name = "Bosses"
 	folder.Parent = world
 	for zone in RIGS do
+		if not GameConfig.Throw.OldLoop then
+			continue -- D75: старый цикл выключен — боссов на карте нет (боссы — награды броска)
+		end
 		if Battle.Bosses[zone].Closed and not BossService.ClosedAllowed() then
 			continue -- коллекции ещё нет: в опубликованной игре босса нет
 		end

@@ -149,7 +149,14 @@
   `ThrowFlight` (всем). `SellCarried`, `SetAutoSell`, `SetRoof`; подмены `ThrowService.Random` и `.Scale` — тесты.
   Запрет одинаковых этажей — `ItemRegistry.FindTwin` в `MuseumService` (из рук) и `InventoryService` (выставить,
   заменить); продажа из инвентаря — действие `Sell`. Доход — `IncomeService.Of` (× `Throw.IncomeK` зоны существа) +
-  `RoofOf` (босс на крыше). Площадка и трасса у клиента — шаги 3–4; старый цикл включён флагом `Throw.OldLoop`.
+  `RoofOf` (босс на крыше).
+  Карта D75 (2026-11-28): трасса зон ниже безопасной зоны на `MapLayout.Drop` = 10 (`Heights.Track` / `Path`); у
+  входа — стена обрыва со свесом травы (`buildCliffs`), спуски-клинья `Ramp` в боковых полосах, полоса броска
+  `ThrowEdge` у края (`MapLayout.InThrowEdge` — проверка сервера; `ThrowSpot` — её середина); вода под коридором
+  вырезана (`BuildWater`). Зоны — чистая трасса: пол, граница, осевая линия, надпись (`buildTrackMarks`); длина —
+  `MapLayout.ZoneLength`. Старый цикл выключен флагом `Throw.OldLoop = false`: `BossService` и `BossLootService`
+  ничего не создают, `TutorialService` считает обучение неактивным, тесты старого цикла пропускаются
+  (`ServerTests`, список `OLD_LOOP`). Карта — 2 276 частей.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

@@ -10,11 +10,16 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 
 local MapLayout = {}
 
+-- Обрыв (D75, решение владельца 2026-11-28): безопасная зона кончается обрывом, трасса зон лежит ниже на Drop.
+-- С края обрыва игрок бросает Ловибум; вниз ведут спуски в полосах бега (Ramp).
+MapLayout.Drop = 10
+
 -- Высоты верхних граней поверхностей: разные, чтобы плоскости не мерцали (у Baseplate шаблона верх на 0).
 MapLayout.Heights = {
-	Ground = 0.1, -- трава
+	Ground = 0.1, -- трава безопасной зоны
 	Water = -1.2, -- уровень воды вокруг острова
-	Path = 0.3, -- полы зон
+	Track = 0.1 - MapLayout.Drop, -- земля коридора зон (под плитами полов)
+	Path = 0.3 - MapLayout.Drop, -- полы зон
 	Floor = 1.4, -- пол музеев (PartBuilder.FloorTop): на ступень выше травы
 }
 
@@ -62,12 +67,32 @@ MapLayout.ShopScale = 1.45 -- павильоны World/Models/Shops крупне
 -- Точка появления посередине поля, лицом к музеям.
 MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), size = Vector3.new(8, 0.4, 8) }
 
--- Площадка броска вдаль (D75): общая, у входа в коридор, между точкой появления и зоной 1. radius — откуда можно
--- бросать (сервер). Сама площадка строится на шаге 3 плана D75.
-MapLayout.ThrowPad = { position = Vector3.new(0, MapLayout.Heights.Ground, 14), radius = 16 }
+-- Полоса броска вдаль (D75): вдоль края обрыва у входа в коридор, между спусками; площадки нет. Игрок на полосе
+-- (|x| ≤ halfX, z от края обрыва до z1) видит шкалу и бросает; сервер проверяет то же место (InThrowEdge).
+-- z0…z1 — сама светлая полоса на траве (за красной линией Safe Zone).
+MapLayout.ThrowEdge = { halfX = 46, z0 = 1.3, z1 = 10.3 }
 
--- Коридор зон: длина зоны. Вход в зону 1 — граница безопасной зоны (z = 0).
+function MapLayout.InThrowEdge(position: Vector3): boolean
+	local edge = MapLayout.ThrowEdge
+	return math.abs(position.X) <= edge.halfX + 1 and position.Z >= -1.5 and position.Z <= edge.z1 + 1
+end
+
+-- Середина полосы броска: куда ставят игрока тесты и где появляется награда, если игрока уже нет.
+MapLayout.ThrowSpot = Vector3.new(0, MapLayout.Heights.Ground, (MapLayout.ThrowEdge.z0 + MapLayout.ThrowEdge.z1) / 2)
+
+-- Спуски с безопасной зоны на трассу (обрыв D75): в полосах бега D66 по обе стороны, клином вглубь зоны 1.
+-- |x| от x0 до x1 (уже полосы: рядом, на x 46…48, — место обучения D55), длина — по z от края обрыва.
+MapLayout.Ramp = { x0 = 52, x1 = 66, length = 30 }
+
+-- Коридор зон. Вход в зону 1 — край обрыва (z = 0). Все зоны одной длины ZoneSize (решение владельца 2026-11-28,
+-- по его записи референса: зоны одинаковые, их просто много). ZoneLength — на случай зон разной длины; обрыв вдоль
+-- коридора — одна деталь, предел Roblox 2 048 стадов.
 MapLayout.ZoneSize = 95
+MapLayout.ZoneGrowth = 1
+
+function MapLayout.ZoneLength(index: number): number
+	return math.round(MapLayout.ZoneSize * MapLayout.ZoneGrowth ^ (index - 1))
+end
 MapLayout.ZoneHalfWidth = MapLayout.CorridorHalf
 -- Рамок, ворот и стен между зонами нет (D41): зоны различают пол с узором, полоса-граница и голограмма названия.
 MapLayout.HologramSize = Vector2.new(40, 7) -- надпись уровня, стадов (D49: только название)
@@ -88,7 +113,16 @@ MapLayout.SafeLabel = Vector2.new(54, 6) -- надпись «БЕЗОПАСНА�
 MapLayout.Barrier = { height = 28, thickness = 1 }
 local ZONES_START = 0
 local ZONE_COUNT = #GameConfig.Zones
-MapLayout.ZonesEnd = ZONES_START - ZONE_COUNT * MapLayout.ZoneSize
+local STARTS: { number } = {} -- мировая z входа в зону; [ZONE_COUNT + 1] — конец трассы
+do
+	local z = ZONES_START
+	for index = 1, ZONE_COUNT do
+		STARTS[index] = z
+		z -= MapLayout.ZoneLength(index)
+	end
+	STARTS[ZONE_COUNT + 1] = z
+end
+MapLayout.ZonesEnd = STARTS[ZONE_COUNT + 1]
 
 -- Опасная зона (D37): коридор уровней — от входа в зону 1 (z = 0) вглубь, в ширину коридора.
 function MapLayout.InDangerZone(position: Vector3): boolean
@@ -97,12 +131,12 @@ end
 
 -- Мировая z входа в зону index (сторона безопасной зоны).
 function MapLayout.ZoneStartZ(index: number): number
-	return ZONES_START - (index - 1) * MapLayout.ZoneSize
+	return STARTS[index]
 end
 
 -- CFrame зоны: центр пола, -Z смотрит на вход (к безопасной зоне), +Z — на выход в следующую зону.
 function MapLayout.ZoneCFrame(index: number): CFrame
-	local center = Vector3.new(0, MapLayout.Heights.Path, MapLayout.ZoneStartZ(index) - MapLayout.ZoneSize / 2)
+	local center = Vector3.new(0, MapLayout.Heights.Path, STARTS[index] - MapLayout.ZoneLength(index) / 2)
 	return CFrame.lookAt(center, center + Vector3.new(0, 0, 1))
 end
 

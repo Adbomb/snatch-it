@@ -214,7 +214,7 @@ end
 -- Границы зоны zone по z (мир): вход (ближе к безопасной зоне) и выход.
 local function zoneBounds(zone: number): (number, number)
 	local start = MapLayout.ZoneStartZ(zone)
-	return start - MapLayout.ZoneSize, start
+	return start - MapLayout.ZoneLength(zone), start
 end
 
 -- Боец снаружи своей зоны (телепорт, сбой физики) — назад, на Battle.ZoneLock.Margin внутрь от границы.

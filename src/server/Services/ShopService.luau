@@ -65,7 +65,9 @@ function ShopService.Sync(player: any)
 		end
 	end
 	player:SetAttribute("Lovibums", total)
-	player:SetAttribute("Tutorial", if TutorialRules.IsActive(data) then data.tutorial.step else nil)
+	-- D75: старый цикл выключен — обучения D55 нет, клиенту шаг не передаётся
+	local learning = GameConfig.Throw.OldLoop and TutorialRules.IsActive(data)
+	player:SetAttribute("Tutorial", if learning then data.tutorial.step else nil)
 	Remotes.FireClient(Remotes.Names.LovibumsChanged, player, {
 		lovibums = copy(lovibums),
 		coins = data.coins,

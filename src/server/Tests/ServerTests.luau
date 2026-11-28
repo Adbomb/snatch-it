@@ -82,6 +82,44 @@ local function test(name: string, fn: (any, any, Context) -> ())
 	table.insert(tests, { name = name, fn = fn })
 end
 
+-- D75: старый цикл (существа и боссы в зонах, поимка, бой, обучение D55) выключен флагом Throw.OldLoop — его
+-- тесты (по началу имени) не идут; уйдут вместе со старым кодом на шаге 8 плана D75.
+local OLD_LOOP = {
+	"Слоты:",
+	"Рассвет:",
+	"Модели:",
+	"Сила:",
+	"Бой ",
+	"Поражение:",
+	"Один бой",
+	"Ночь прерывает",
+	"D49:",
+	"Торговец:",
+	"Босс ",
+	"Боссы ",
+	"Полный путь:",
+	"Без боя",
+	"D55 поимка",
+	"D55 занятый",
+	"D55 бросок жестом",
+	"D55 прерывания",
+	"D55 Ловибумы сохраняются",
+	"D55 обучение",
+	"D74 поимка",
+	"D74 катсцена",
+	"Сфинкс",
+	"Тестовый режим",
+}
+
+local function oldLoop(name: string): boolean
+	for _, prefix in OLD_LOOP do
+		if string.sub(name, 1, #prefix) == prefix then
+			return true
+		end
+	end
+	return false
+end
+
 local function check(condition: any, message: string)
 	if not condition then
 		error(message, 0)
@@ -4523,10 +4561,10 @@ test(
 	end
 )
 
--- D75, бросок вдаль: игрок на площадке, случайные числа по очереди (существо, предмет, этаж, босс), шкала с заданным
+-- D75, бросок вдаль: игрок на полосе у края обрыва, случайные числа по очереди (существо, предмет, этаж, босс), шкала с заданным
 -- началом (phase 0.25 — маркер в середине шкалы: идеально; 0 — край: точность 0).
 local function onPad(player: any)
-	player:MoveTo(MapLayout.ThrowPad.position + Vector3.new(0, 3, 0))
+	player:MoveTo(MapLayout.ThrowSpot + Vector3.new(0, 3, 0))
 end
 
 local function throwRolls(...: number)
@@ -4658,12 +4696,12 @@ test(
 			)
 			check(not ThrowService.Press(A, 0), "повторное нажатие после броска")
 			ThrowService.SellCarried(A)
-			-- отказы: не на площадке, нет Ловибума, чужой уровень и вид
-			A:MoveTo(MapLayout.ThrowPad.position + Vector3.new(200, 3, 0))
+			-- отказы: не у края обрыва, нет Ловибума, чужой уровень и вид
+			A:MoveTo(MapLayout.ThrowSpot + Vector3.new(200, 3, 0))
 			A:ClearSent()
 			check(
-				not ThrowService.Start(A, 1, "Boom") and A:WasNotified("с площадки"),
-				"бросок не с площадки"
+				not ThrowService.Start(A, 1, "Boom") and A:WasNotified("с края обрыва"),
+				"бросок не с края обрыва"
 			)
 			onPad(A)
 			check(not ThrowService.Start(A, 1, "Mega"), "бросок без Ловибума этого вида")
@@ -8686,6 +8724,10 @@ function ServerTests.Run(filter: string?): string
 			TimeService.SkipTo("Day", -(GameConfig.Time.DeliveryGrace + 5))
 		end
 		if filter and not string.find(case.name, filter, 1, true) then
+			continue
+		end
+		if not GameConfig.Throw.OldLoop and oldLoop(case.name) then
+			table.insert(lines, "SKIP " .. case.name .. " (старый цикл выключен, D75)")
 			continue
 		end
 		total += 1

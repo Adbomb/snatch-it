@@ -16,6 +16,8 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local ZonePatterns = require(ReplicatedStorage.Shared.Config.ZonePatterns)
+local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
+local TextCase = require(ReplicatedStorage.Shared.TextCase)
 local World = ServerScriptService.Server.World
 local Hologram = require(World.Hologram)
 local MapLayout = require(World.MapLayout)
@@ -110,8 +112,16 @@ local function buildGround(parent: Instance)
 			"WorldBuilder: проёмы хранилищ не в одном ряду"
 		)
 	end
+	-- Трасса зон ниже безопасной зоны (обрыв D75): плита травы безопасной зоны кончается у входа в коридор (z = 0),
+	-- по бокам коридора и за его концом она уходит под обрывы (на 0.5 внутрь — грани не совпадают), в коридоре —
+	-- своя плита на высоте H.Track. Свес травы над обрывом и сам обрыв — buildCliffs.
+	local CX, ZE = MapLayout.CorridorHalf, MapLayout.ZonesEnd
 	local bricks = {
-		box(x0, x1, y0, y1, island.minZ - 2, hz0, Palette.Field),
+		box(x0, x1, y0, y1, 0, hz0, Palette.Field),
+		box(x0, -CX - 0.5, y0, y1, island.minZ - 2, 0, Palette.Field),
+		box(CX + 0.5, x1, y0, y1, island.minZ - 2, 0, Palette.Field),
+		box(-CX - 0.5, CX + 0.5, y0, y1, island.minZ - 2, ZE - 0.5, Palette.Field),
+		box(-CX, CX, H.Track - GROUND, H.Track, ZE, 0, Palette.Field),
 		box(x0, x1, y0, y1, hz1, island.maxZ + 2, Palette.Field),
 	}
 	local from = x0
@@ -165,8 +175,9 @@ local function buildCliffs(parent: Instance)
 	local deep = { variant = DEEP }
 	local dirt, grass = Palette.CliffDirt, Palette.CliffGrass
 	local bricks: { ModelBuilder.Brick } = {}
-	local function block(x0, x1, z0, z1, top, grassH)
-		table.insert(bricks, box(x0, x1, 0, top, z0, z1, dirt, deep))
+	local LOW = H.Track - GROUND -- низ обрывов коридора: трасса ниже безопасной зоны (обрыв D75)
+	local function block(x0, x1, z0, z1, top, grassH, bottom: number?)
+		table.insert(bricks, box(x0, x1, bottom or 0, top, z0, z1, dirt, deep))
 		table.insert(bricks, box(x0, x1, top, top + grassH, z0, z1, grass))
 	end
 	-- Нижние террасы: сзади и по бокам безопасной зоны.
@@ -174,7 +185,7 @@ local function buildCliffs(parent: Instance)
 	-- Верхний обрыв сзади.
 	block(-(SX + D), SX + D, SZ + D, SZ + D + c.outer, HI, c.grass)
 	-- Конец коридора.
-	block(-CX, CX, ZE - c.outer, ZE, HI, c.grass)
+	block(-CX, CX, ZE - c.outer, ZE, HI, c.grass, LOW)
 	for _, s in { -1, 1 } do
 		local function X(a: number, b: number): (number, number)
 			return math.min(s * a, s * b), math.max(s * a, s * b)
@@ -185,7 +196,7 @@ local function buildCliffs(parent: Instance)
 		block(x0, x1, 0, SZ + D + c.outer, HI, c.grass)
 		-- Передний обрыв: от коридора до края острова, вдоль всего коридора.
 		x0, x1 = X(CX, OX)
-		block(x0, x1, ZE - c.outer, 0, HI, c.grass)
+		block(x0, x1, ZE - c.outer, 0, HI, c.grass, LOW)
 
 		-- Свесы травы: боковая терраса, боковой верхний обрыв, передний обрыв со стороны поля, стенка коридора.
 		x0, x1 = X(SX - L, SX)
@@ -200,6 +211,24 @@ local function buildCliffs(parent: Instance)
 	table.insert(bricks, box(-SX, SX, LO, LO + c.lowGrass, SZ - L, SZ, grass))
 	table.insert(bricks, box(-(SX + D), SX + D, HI, HI + c.grass, SZ + D - L, SZ + D, grass))
 	table.insert(bricks, box(-(CX - L), CX - L, HI, HI + c.grass, ZE, ZE + L, grass))
+
+	-- Обрыв у входа в коридор (D75): земляная стена от травы безопасной зоны до земли трассы, свес травы над ней и
+	-- натёки (верх натёка на 0.1 ниже травы — грани не совпадают; над спусками натёков нет).
+	local gy = H.Ground
+	table.insert(bricks, box(-CX, CX, LOW, gy - GROUND, 0, 8, dirt, deep))
+	table.insert(bricks, box(-CX, CX, gy - 0.9, gy, -L, 0, Palette.Field))
+	local edge = Random.new(DRIP_SEED + 1)
+	local ramp = MapLayout.Ramp
+	local t = -CX + 2
+	while t < CX - 2 do
+		local w = math.min(edge:NextInteger(3, 7), CX - 2 - t)
+		local len = edge:NextInteger(1, 4)
+		local mid = math.abs(t + w / 2)
+		if mid < ramp.x0 - 4 or mid > ramp.x1 + 4 then
+			table.insert(bricks, box(t, t + w, gy - 0.1 - len, gy - 0.1, -L - 0.4, 0.4, Palette.Field))
+		end
+		t += w + edge:NextInteger(1, 4)
+	end
 
 	-- Натёки травы на открытых гранях.
 	local random = Random.new(DRIP_SEED)
@@ -386,7 +415,9 @@ local function buildSafeLine(parent: Instance)
 	-- Холст грани Top идёт вдоль оси Z детали: длинная сторона — по Z, поворот на −90° кладёт её поперёк коридора,
 	-- надпись читается со стороны Safe Zone (проверено в Studio).
 	label.Size = Vector3.new(MapLayout.SafeLabel.Y, 0.2, MapLayout.SafeLabel.X)
-	label.CFrame = CFrame.new(0, H.Ground + 0.15, MapLayout.SafeLabel.Y / 2 + 2.5) * CFrame.Angles(0, -math.pi / 2, 0)
+	-- за полосой броска (D75)
+	label.CFrame = CFrame.new(0, H.Ground + 0.15, MapLayout.ThrowEdge.z1 + 1.5 + MapLayout.SafeLabel.Y / 2)
+		* CFrame.Angles(0, -math.pi / 2, 0)
 	label.Parent = f
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = Enum.NormalId.Top
@@ -410,13 +441,127 @@ local function buildSafeLine(parent: Instance)
 	stroke.Parent = text
 end
 
+-- Спуски с безопасной зоны на трассу (обрыв D75): земляной клин с травяной дорожкой поверх, в полосах бега D66.
+local function buildRamps(parent: Instance)
+	local ramp = MapLayout.Ramp
+	local rise = H.Ground - H.Path
+	local angle = math.atan2(rise, ramp.length)
+	local slope = math.sqrt(rise * rise + ramp.length * ramp.length)
+	local bricks: { ModelBuilder.Brick } = {}
+	for _, s in { -1, 1 } do
+		local x = s * (ramp.x0 + ramp.x1) / 2
+		local w = ramp.x1 - ramp.x0
+		local mid = Vector3.new(x, (H.Ground + H.Path) / 2, -ramp.length / 2)
+		-- клин: высокий край — у обрыва (+Z), скат — к трассе
+		table.insert(
+			bricks,
+			B(Vector3.new(w, rise, ramp.length), mid, Palette.CliffDirt, { shape = "Wedge", variant = DEEP })
+		)
+		-- дорожка по скату: шире клина на 0.3 с каждой стороны и выше ската на 0.12 — грани не совпадают
+		table.insert(
+			bricks,
+			B(
+				Vector3.new(w + 0.6, 0.4, slope - 0.6),
+				CFrame.new(mid) * CFrame.Angles(-angle, 0, 0) * CFrame.new(0, -0.08, 0),
+				Palette.Field
+			)
+		)
+	end
+	ModelBuilder.Build("Ramps", bricks).Parent = parent
+end
+
+-- Полоса броска вдаль (D75): светлая полоса в шашечку вдоль края обрыва и белая кромка со стороны поля. На ней у
+-- игрока появляется шкала (Controllers/ThrowController); место проверяет сервер (MapLayout.InThrowEdge).
+-- Атрибуты — для клиента.
+local THROW_EDGE = Color3.fromHex("F6D98A")
+local THROW_TILES = Color3.fromHex("F0A848")
+local function buildThrowEdge(parent: Instance)
+	local edge = MapLayout.ThrowEdge
+	local top = H.Ground + 0.12
+	local model = ModelBuilder.Build("ThrowEdge", {
+		box(-edge.halfX, edge.halfX, top - SLAB, top, edge.z0, edge.z1, THROW_EDGE, { name = "Strip" }),
+		box(-edge.halfX, edge.halfX, top - SLAB, top + 0.12, edge.z1, edge.z1 + 0.8, Palette.White, { name = "Rim" }),
+	})
+	model:SetAttribute("HalfX", edge.halfX)
+	model:SetAttribute("Z0", edge.z0)
+	model:SetAttribute("Z1", edge.z1)
+	model:SetAttribute("Top", top)
+	model:SetAttribute("Drop", MapLayout.Drop)
+	model.Parent = parent
+	local strip = model:FindFirstChild("Strip")
+	if strip then
+		local texture = Instance.new("Texture")
+		texture.Name = "Pattern"
+		texture.Face = Enum.NormalId.Top
+		texture.Texture = ZonePatterns.tiles
+		texture.Color3 = THROW_TILES
+		texture.Transparency = 0.35
+		texture.StudsPerTileU = 9
+		texture.StudsPerTileV = 9
+		texture.Parent = strip
+	end
+end
+
+-- Разметка чистой трассы (D75): в зонах нет ни одного объекта — только пол с узором, полоса-граница, осевая линия
+-- и надпись на полу у входа (название зоны и отметка дальности её начала, м). Всё плоское, без столкновений.
+local TRACK_LABEL = Vector2.new(84, 9) -- надпись на полу, стадов
+local function buildTrackMarks(index: number, parent: Instance, accent: Color3)
+	local zone = GameConfig.Zones[index]
+	local start, length = MapLayout.ZoneStartZ(index), MapLayout.ZoneLength(index)
+	local axis = Instance.new("Part")
+	axis.Name = "Axis"
+	axis.Anchored = true
+	axis.CanCollide = false
+	axis.CanQuery = false
+	axis.CanTouch = false
+	axis.CastShadow = false
+	axis.Color = Palette.White
+	axis.Size = Vector3.new(LINE.width, LINE.height, length - 2 * LINE.width)
+	axis.CFrame = CFrame.new(0, H.Path + LINE.height / 2, start - length / 2)
+	axis.Parent = parent
+	Studs.Apply(axis)
+
+	local label = Instance.new("Part")
+	label.Name = "Label"
+	label.Anchored = true
+	label.CanCollide = false
+	label.CanQuery = false
+	label.CanTouch = false
+	label.CastShadow = false
+	label.Transparency = 1
+	-- как у надписи «Безопасная зона»: длинная сторона — по Z детали, поворот кладёт её поперёк коридора
+	label.Size = Vector3.new(TRACK_LABEL.Y, 0.2, TRACK_LABEL.X)
+	label.CFrame = CFrame.new(0, H.Path + 0.35, start - 5 - TRACK_LABEL.Y / 2) * CFrame.Angles(0, -math.pi / 2, 0)
+	label.Parent = parent
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Top
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 10
+	gui.LightInfluence = 0.3
+	gui.Parent = label
+	local text = Instance.new("TextLabel")
+	text.BackgroundTransparency = 1
+	text.Size = UDim2.fromScale(1, 1)
+	text.TextScaled = true
+	text.FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
+	text.TextColor3 = Palette.White
+	text.Text = if index == 1
+		then TextCase.Upper(zone.name)
+		else ("%s  ·  %d м"):format(TextCase.Upper(zone.name), math.floor(ThrowRules.Mark(index) + 0.5))
+	text.Parent = gui
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = accent:Lerp(Palette.Black, 0.55)
+	stroke.Thickness = 2.5
+	stroke.Parent = text
+end
+
 local function buildZone(index: number, parent: Instance)
 	local zone = GameConfig.Zones[index]
 	local frame = MapLayout.ZoneCFrame(index)
-	local size = MapLayout.ZoneSize
+	local size = MapLayout.ZoneLength(index)
 	local f = folder(("Zone%d_%s"):format(index, zone.id), parent)
 	f:SetAttribute("Zone", index)
-	local ground = CFrame.new(frame.Position.X, H.Ground, frame.Position.Z) * frame.Rotation
+	local ground = CFrame.new(frame.Position.X, H.Track, frame.Position.Z) * frame.Rotation
 	local accent = Color3.fromHex(zone.accent)
 
 	-- Пол с узором зоны (Texture поверх пупырышков): зоны различаются полом, а не рамками (D41).
@@ -454,6 +599,12 @@ local function buildZone(index: number, parent: Instance)
 		line.Size = Vector3.new((MapLayout.PylonX - 2) * 2, LINE.height, LINE.width) -- от столбика до столбика
 		line.CFrame = CFrame.new(0, H.Path + LINE.height / 2, MapLayout.ZoneStartZ(index))
 		line.Parent = f
+	end
+
+	-- Чистая трасса (D75): дальше — только разметка; голограмм, столбиков, постаментов и декора в зонах нет.
+	if not GameConfig.Throw.OldLoop then
+		buildTrackMarks(index, f, accent)
+		return
 	end
 
 	-- Голографическое название уровня высоко над входом, лицом к входящему (D41): только название (D49 — без номера
@@ -552,6 +703,8 @@ function WorldBuilder.Build(parent: Instance)
 	buildShops(map)
 	buildSpawn(map)
 	buildSafeLine(map)
+	buildRamps(map)
+	buildThrowEdge(map)
 	local zones = folder("Zones", map)
 	for index in GameConfig.Zones do
 		buildZone(index, zones)
@@ -581,6 +734,14 @@ function WorldBuilder.BuildWater()
 	-- на границе вода остаётся целиком и заходит в комнату до 1.6 ст. (проверено в Play на участках 2–4). Сетка
 	-- добавляет не больше 4 ст. за наружными стенами — это под плитой травы, снаружи не видно. Только в Play —
 	-- исходное место не меняется.
+	-- Коридор зон ниже уровня воды (обрыв D75): воду и песок под ним вырезаем с запасом в 4 ст. — края выреза
+	-- уходят внутрь обрывов и стены у входа, вода в коридор не заходит.
+	local CX, ZE = MapLayout.CorridorHalf, MapLayout.ZonesEnd
+	terrain:FillRegion(
+		Region3.new(Vector3.new(-CX - 4, -WATER_DEPTH - 8, ZE - 4), Vector3.new(CX + 4, 0, 4)):ExpandToGrid(4),
+		4,
+		Enum.Material.Air
+	)
 	for index = 1, GameConfig.World.PlotCount do
 		local volume = WorldBuilder.VaultVolume(index)
 		local half = volume.size / 2

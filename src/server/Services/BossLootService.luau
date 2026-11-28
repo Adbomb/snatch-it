@@ -375,7 +375,8 @@ function BossLootService.Init(world: Folder)
 		return false
 	end
 	for _, spec in MapLayout.ArtSlotPoints() do
-		if unreleased(spec.zone) then
+		-- D75: старый цикл выключен — в зонах нет существ у боссов
+		if unreleased(spec.zone) or not GameConfig.Throw.OldLoop then
 			continue
 		end
 		slots[spec.zone] = slots[spec.zone] or {}
