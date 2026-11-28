@@ -5,8 +5,9 @@
      поимка не срывается, дороги в зону нет.
   2. Дальность, м = 10 × (1 + сила)^0.25 × точность (1 … 1.18) × вид (Бум 1, Турбо 1.06, Мега 1.12); отметка зоны N —
      та же формула при силе босса N; Ловибум уровня N дальше конца зоны N не летит.
-  3. Удача по глубине: f — доля пути между отметками зоны приземления; удача = (1 + f) × бонус вида (Турбо ×1.15,
-     Мега ×1.3). Вес каждой следующей ступени редкости существа и этажа умножается на удача^0.5.
+  3. Удача по глубине: f — доля пути между отметками зоны приземления; удача = 1 + f; вес каждой следующей ступени
+     редкости существа и этажа умножается на удача^0.5. Вид Ловибума — «охота»: веса верхних редкостей существ
+     (Legendary, Secret) и этажей (Мифический, Алмазный) умножаются на KIND_HUNT (Бум — фарм, Турбо и Мега — охота).
   4. Башня: мест — как у музея по уровню (до 20), только лучшие этажи; двух одинаковых этажей (то же существо и та же
      редкость этажа) быть не может — повтор продаётся.
   5. Ненужная капсула продаётся: доход этажа × SELL_S секунд.
@@ -40,7 +41,12 @@ METRE_K, METRE_P = 10, 0.25
 END_MARK = 15000  # конец трассы, м: самый дальний бросок в игре
 ACC_MAX = 0.18
 KIND_RANGE = {"Boom": 1.0, "Turbo": 1.06, "Mega": 1.12}
-KIND_LUCK = {"Boom": 1.0, "Turbo": 1.15, "Mega": 1.3}
+# Охота: множители весов (Legendary и Secret существа, Мифический и Алмазный этажи). Турбо стоит 2 Бума, Мега — 3.
+KIND_HUNT = {"Boom": (1.0, 1.0), "Turbo": (1.4, 2.5), "Mega": (1.75, 3.6)}
+KINDS = ["Boom", "Turbo", "Mega"]
+# Какими видами бросает игрок (доля покупок): фарм Бумом, охота — иногда.
+MIX = {"обычный": [85, 10, 5], "опытный": [70, 20, 10], "неудачливый": [100, 0, 0]}
+KIND_OF = {"обычный": "Boom", "опытный": "Mega", "неудачливый": "Boom"}  # вид для рекорда дальности
 LUCK_DEPTH = 1.0  # удача у конца зоны: ×(1 + LUCK_DEPTH)
 LUCK_POWER = 0.5  # вес следующей ступени редкости × удача^LUCK_POWER
 ACC = {"обычный": 0.50, "опытный": 0.80, "неудачливый": 0.25}
@@ -55,9 +61,11 @@ def metres(strength):
     return METRE_K * (1 + strength) ** METRE_P
 
 
-def floor_weights(rarity, luck=1.0):
+def floor_weights(rarity, luck=1.0, hunt=1.0):
     s = SHIFT[rarity] * luck**LUCK_POWER
     w = [c * s**k for k, c in enumerate(FLOOR_CHANCE)]
+    w[4] *= hunt
+    w[5] *= hunt
     total = sum(w)
     return [x / total for x in w]
 
@@ -66,9 +74,12 @@ def expected_mult(rarity):
     return sum(p * m for p, m in zip(floor_weights(rarity), FLOOR_MULT))
 
 
-def creature_weights(tier_chances, R, luck=1.0):
+def creature_weights(tier_chances, R, luck=1.0, hunt=1.0):
     s = luck**LUCK_POWER
-    return [tier_chances[r] * s**k for k, r in enumerate(R)]
+    w = [tier_chances[r] * s**k for k, r in enumerate(R)]
+    w[3] *= hunt
+    w[4] *= hunt
+    return w
 
 
 src = (HERE / "econ84c.py").read_text(encoding="utf-8").replace('if __name__ == "__main__":', "if False:")
@@ -89,7 +100,9 @@ src = patch(
     '    rolls = cfg.setdefault("rolls", [])\n'
     '    stats = cfg.setdefault("stats", {})\n'
     '    K = cfg.get("K", {})\n'
-    "    roof = 0.0  # D75: доход босса на крыше (один, лучший)\n",
+    "    roof = 0.0  # D75: доход босса на крыше (один, лучший)\n"
+    '    kind = "Boom"\n'
+    "    end_hit = False\n",
 )
 src_d74 = patch(
     src,
@@ -123,15 +136,18 @@ a = src.index("        spawns = []\n")
 b = src.index('            cur["fail_out"] += 1\n') + len('            cur["fail_out"] += 1\n')
 THROW = '''        first = True
         acc = ACC[sc.name]
-        kind = "Boom"
         while day_left > reserved + T_SCALE + T_FLY + T_REVEAL + T_CARRY + 5:
             held_now = museum + pending
             full = len(held_now) >= cap
             worst = min(m[2] for m in held_now) if full else 0.0
-            price = boom[L] * MULT[kind]
             base_d = metres(S)
             f_now = min(1.0, max(0.0, (base_d * (1 + ACC_MAX * acc) - MARK[L]) / (MARK[L + 1] - MARK[L])))
-            if value(L, f_now, worst, K.get(L, 1.0)) < price / pack:
+            if not stock.get((L, kind)):  # набор кончился: какой вид купить
+                kind = rng.choices(KINDS, weights=MIX[sc.name])[0]
+                if kind != "Boom" and value(L, f_now, worst, K.get(L, 1.0), kind) < boom[L] * MULT[kind] / pack:
+                    kind = "Boom"  # охота не окупается — фарм
+            price = boom[L] * MULT[kind]
+            if value(L, f_now, worst, K.get(L, 1.0), kind) < price / pack:
                 break  # бросок не окупается: копить и тренироваться
             if not stock.get((L, kind)):
                 if coins < price:
@@ -147,9 +163,11 @@ THROW = '''        first = True
             while zone > 1 and dist < MARK[zone]:
                 zone -= 1
             f = min(1.0, max(0.0, (dist - MARK[zone]) / (MARK[zone + 1] - MARK[zone])))
-            luck = (1 + LUCK_DEPTH * f) * KIND_LUCK[kind]
-            r = rng.choices(R, weights=creature_weights(tier(zone), R, luck))[0]
-            k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck))[0]
+            luck = 1 + LUCK_DEPTH * f
+            hc, hf = KIND_HUNT[kind]
+            r = rng.choices(R, weights=creature_weights(tier(zone), R, luck, hc))[0]
+            k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck, hf))[0]
+            stats["k_" + kind] = stats.get("k_" + kind, 0) + 1
             idx = rng.randrange(len(pool[zone][r]))
             kz = K.get(zone, 1.0)
             income = pool[zone][r][idx] / expected_mult(r) * FLOOR_MULT[k] * kz
@@ -196,6 +214,11 @@ src_d75 = patch(
 )
 src_d75 = patch(src_d75, "        inc = sum(m[2] for m in museum)\n        mp = power()\n        need",
                 "        inc = sum(m[2] for m in museum) + roof\n        mp = power()\n        need")
+src_d75 = patch(src_d75, "        day += 1\n",
+                "        day += 1\n"
+                "        if not end_hit and S >= END_S[sc.name]:\n"
+                "            end_hit = True\n"
+                "            cfg.setdefault('end_times', []).append(t)\n")
 src_d75 = patch(src_d75, "dooms.append((ml, L, inc, max(m[2] for m in museum), bought, price))",
                 "dooms.append((ml, L, inc, max((m[2] for m in museum), default=0), bought, price))")
 src_d75 = patch(
@@ -208,8 +231,11 @@ src_d75 = patch(
     "                    place(item)\n",
 )
 
-GAIN = {}  # [(зона, f)] = (отсортированные доходы наград при K = 1, суммы с конца, средняя выручка продажи)
+GAIN = {}  # [(зона, f, вид)] = (отсортированные доходы наград при K = 1, суммы с конца)
 MARK = {}
+# Сила, при которой обычный бросок игрока (его точность, его вид Ловибума) долетает до конца трассы.
+END_S = {name: (END_MARK / (METRE_K * (1 + ACC_MAX * ACC[name]) * KIND_RANGE[KIND_OF[name]])) ** (1 / METRE_P) - 1
+         for name in ACC}
 
 
 def boss_income(mean, zone):
@@ -227,22 +253,24 @@ def make_tables(cfg, tier, R):
     for zone in range(1, 11):
         for f in F_BUCKETS:
             luck = 1 + LUCK_DEPTH * f
-            xs = []
-            for _ in range(6000):
-                r = rng.choices(R, weights=creature_weights(tier(zone), R, luck))[0]
-                k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck))[0]
-                xs.append(rng.choice(cfg["pool"][zone][r]) / expected_mult(r) * FLOOR_MULT[k])
-            xs.sort()
-            tail = [0.0] * (len(xs) + 1)
-            for i in range(len(xs) - 1, -1, -1):
-                tail[i] = tail[i + 1] + xs[i]
-            GAIN[(zone, f)] = (xs, tail)
+            for kind in KINDS:
+                hc, hf = KIND_HUNT[kind]
+                xs = []
+                for _ in range(4000):
+                    r = rng.choices(R, weights=creature_weights(tier(zone), R, luck, hc))[0]
+                    k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck, hf))[0]
+                    xs.append(rng.choice(cfg["pool"][zone][r]) / expected_mult(r) * FLOOR_MULT[k])
+                xs.sort()
+                tail = [0.0] * (len(xs) + 1)
+                for i in range(len(xs) - 1, -1, -1):
+                    tail[i] = tail[i + 1] + xs[i]
+                GAIN[(zone, f, kind)] = (xs, tail)
 
 
-def value(zone, f, worst, kz):
+def value(zone, f, worst, kz, kind="Boom"):
     """Ожидаемая ценность броска в монетах: прибавка дохода башни за HORIZON + выручка от продажи ненужного."""
     fb = min(F_BUCKETS, key=lambda x: abs(x - f))
-    xs, tail = GAIN[(zone, fb)]
+    xs, tail = GAIN[(zone, fb, kind)]
     w = worst / kz
     i = bisect.bisect_right(xs, w)
     n = len(xs)
@@ -255,7 +283,7 @@ def build(text, name):
     g = {"__file__": str(HERE / "econ84c.py"), "FLOOR_MULT": FLOOR_MULT, "floor_weights": floor_weights,
          "expected_mult": expected_mult, "creature_weights": creature_weights, "metres": metres, "value": value,
          "boss_income": boss_income, "MARK": MARK, "ACC": ACC, "ACC_MAX": ACC_MAX, "KIND_RANGE": KIND_RANGE,
-         "KIND_LUCK": KIND_LUCK, "LUCK_DEPTH": LUCK_DEPTH, "T_SCALE": T_SCALE, "T_FLY": T_FLY, "T_REVEAL": T_REVEAL,
+         "KIND_HUNT": KIND_HUNT, "KINDS": KINDS, "MIX": MIX, "END_S": END_S, "LUCK_DEPTH": LUCK_DEPTH, "T_SCALE": T_SCALE, "T_FLY": T_FLY, "T_REVEAL": T_REVEAL,
          "T_QUICK": T_QUICK, "T_CARRY": T_CARRY, "P_BOSS": P_BOSS, "SELL_S": SELL_S}
     exec(compile(text, name, "exec"), g)
     return g
@@ -354,8 +382,8 @@ print("Цены Ловибумов, пороги силы, редкость эт
 print("## Трасса и удача\n")
 print(f"дальность, м = {METRE_K} × (1 + сила)^{METRE_P} × точность (до ×{1 + ACC_MAX:.2f}) × вид "
       "(" + ", ".join(f"{k} ×{v:.2f}" for k, v in KIND_RANGE.items()) + f"); конец трассы — {END_MARK:,} м.\n".replace(",", " "))
-print(f"удача = (1 + {LUCK_DEPTH:g} × глубина) × вид (" + ", ".join(f"{k} ×{v:g}" for k, v in KIND_LUCK.items())
-      + f"); вес каждой следующей ступени редкости существа и этажа × удача^{LUCK_POWER:g}.\n")
+print(f"удача = 1 + {LUCK_DEPTH:g} × глубина; вес каждой следующей ступени редкости существа и этажа × "
+      f"удача^{LUCK_POWER:g}. Вид Ловибума — «охота» на верхние редкости (таблица ниже).\n")
 print("| Зона | порог силы | отметка, м | множитель дохода K (итог калибровки) |")
 print("|---|---|---|---|")
 for n in range(1, 11):
@@ -371,7 +399,7 @@ print("## Что даёт удача (зоны 4–7, существо Common �
 print("| Удача | Legendary существо | Золотой | Мифический | Алмазный | средний доход броска |")
 print("|---|---|---|---|---|---|")
 base_ev = None
-for luck in (1.0, 1.5, 2.0, 2.6):
+for luck in (1.0, 1.25, 1.5, 2.0):
     cw = creature_weights(G75["tier"](5), R, luck)
     tot = sum(cw)
     ev = 0.0
@@ -384,6 +412,50 @@ for luck in (1.0, 1.5, 2.0, 2.6):
     print(f"| ×{luck:g} | {cw[3] / tot * 100:.1f} | {fw[3] * 100:.1f} | {fw[4] * 100:.2f} | {fw[5] * 100:.2f} "
           f"| ×{ev / base_ev:.2f} |")
 print()
+
+print("## Виды Ловибумов: фарм и охота (в среднем по зонам 1–10 и глубине 0.25 / 0.5 / 0.75; Бум = 1)\n")
+print("Охота умножает веса верхних редкостей: существа Legendary и Secret, этажи Мифический и Алмазный.\n")
+print("| Вид | цена | дальность | существа ×, этажи × | доход за монету | Алмазный за монету | Мифический за монету "
+      "| Legendary + Secret за монету | за бросок в зоне 5: Legendary, Алмазный |")
+print("|---|---|---|---|---|---|---|---|---|")
+
+
+def kind_stats(zone, luck, kind):
+    hc, hf = KIND_HUNT[kind]
+    cw = creature_weights(G75["tier"](zone), R, luck, hc)
+    tot = sum(cw)
+    ev = dia = myth = 0.0
+    for r, w in zip(R, cw):
+        if w:
+            fw = floor_weights(r, luck, hf)
+            ev += w / tot * cfg75["mean"][zone][r] / expected_mult(r) * sum(p * m for p, m in zip(fw, FLOOR_MULT))
+            dia += w / tot * fw[5]
+            myth += w / tot * fw[4]
+    return [ev, dia, myth, (cw[3] + cw[4]) / tot]
+
+
+PRICE_OF = {"Boom": 1, "Turbo": 2, "Mega": 3}
+for kind in KINDS:
+    acc_ = [0.0] * 4
+    n_ = 0
+    for zone in range(1, 11):
+        a_, b_ = MARK[zone], MARK[zone + 1]
+        for f in (0.25, 0.5, 0.75):
+            d_ = a_ + f * (b_ - a_)
+            base_ = kind_stats(zone, 1 + f, "Boom")
+            fk = (min(d_ * KIND_RANGE[kind], b_) - a_) / (b_ - a_)
+            vals = kind_stats(zone, 1 + fk, kind)
+            for i in range(4):
+                acc_[i] += (vals[i] / base_[i] if base_[i] else 1.0) / PRICE_OF[kind]
+            n_ += 1
+    one = kind_stats(5, 1.5, kind)
+    hc, hf = KIND_HUNT[kind]
+    print(f"| {kind} | ×{PRICE_OF[kind]} | ×{KIND_RANGE[kind]:.2f} | ×{hc:g}, ×{hf:g} | {acc_[0] / n_:.2f} | {acc_[1] / n_:.2f} "
+          f"| {acc_[2] / n_:.2f} | {acc_[3] / n_:.2f} | {one[3] * 100:.1f} %, {one[1] * 100:.2f} % |")
+print()
+print("Редких существ за монету охота не даёт больше Бума ни при каких числах с доходом за монету 0.8: Legendary и Secret "
+      "существа и есть основная часть дохода броска. За монету охота выигрывает редкими этажами, за бросок — и тем, и "
+      "другим.\n")
 
 for sc in (TYP, SKL, UNL):
     print(f"## Долёт до зон, часы игры — {sc.name} игрок: медиана (1 из 10 быстрее – 9 из 10 не позже)\n")
@@ -422,6 +494,29 @@ for L in range(1, 10):
         v.append(statistics.median(xs) if xs else float("nan"))
     print(f"| {L + 1} | {short(v[0])} | {short(v[1])} | {v[1] / v[0]:.2f} | "
           f"{short(boss_income(cfg75['mean'], L + 1) * K[L + 1])} |")
+print()
+
+print("## Конец трассы и рекорд дальности\n")
+print(f"Конец трассы — {END_MARK} м. Сила, при которой обычный бросок игрока долетает до конца: "
+      + "; ".join(f"{name} ({KIND_OF[name]}, точность {ACC[name]:.2f}) — {short(END_S[name])}" for name in ACC) + ".\n")
+print("| Игрок | доля прогонов, где конец достигнут | час достижения: медиана (1 из 10 – 9 из 10) | часов после зоны 10 |")
+print("|---|---|---|---|")
+for sc in (TYP, SKL, UNL):
+    cfg_e = variant(True, K)
+    phs = []
+    g_ = G75
+    rng_ = random.Random(100)
+    sc_ = {s.name: s for s in (g_["TYP"], g_["SKL"], g_["UNL"])}[sc.name]
+    for _ in range(N):
+        ph, _, _ = g_["simulate3"](cfg_e, sc_, rng_, cap_h=700, endgame_h=250)
+        phs.append(ph)
+    ends = [x / 3600 for x in cfg_e.get("end_times", [])]
+    z10 = statistics.median(at(phs, 9, cfg_e, True, sc))
+    if ends:
+        med = statistics.median(ends)
+        print(f"| {sc.name} | {len(ends) / N * 100:.0f} % | {med:.0f} ({q(ends, 0.1):.0f}–{q(ends, 0.9):.0f}) | {med - z10:+.0f} |")
+    else:
+        print(f"| {sc.name} | 0 % | не достигнут за 250 ч после зоны 10 | — |")
 print()
 
 rolls = cfg75["rolls"]
