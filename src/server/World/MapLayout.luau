@@ -74,7 +74,8 @@ MapLayout.ThrowEdge = { halfX = 46, z0 = 1.3, z1 = 10.3 }
 
 function MapLayout.InThrowEdge(position: Vector3): boolean
 	local edge = MapLayout.ThrowEdge
-	return math.abs(position.X) <= edge.halfX + 1 and position.Z >= -1.5 and position.Z <= edge.z1 + 1
+	-- запас 6 по z: сервер видит бегущего игрока позади его настоящего места (задержка сети)
+	return math.abs(position.X) <= edge.halfX + 3 and position.Z >= -1.5 and position.Z <= edge.z1 + 6
 end
 
 -- Середина полосы броска: куда ставят игрока тесты и где появляется награда, если игрока уже нет.

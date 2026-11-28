@@ -35,6 +35,8 @@ local AnnounceService = require(Server.Services.AnnounceService)
 local CarryService = require(Server.Services.CarryService)
 local DataService = require(Server.Services.DataService)
 local IncomeService = require(Server.Services.IncomeService)
+local InventoryService = require(Server.Services.InventoryService)
+local ShopService = require(Server.Services.ShopService)
 local ItemRegistry = require(Server.Services.ItemRegistry)
 local TimeService = require(Server.Services.TimeService)
 local ItemFactory = require(Server.Util.ItemFactory)
@@ -147,7 +149,7 @@ local function refusal(player: any, level: any, kind: any): string?
 		return "Нет такого Ловибума — купите в магазине"
 	end
 	if count() >= Throw.Pad.Places then
-		return "Площадка занята — подождите"
+		return "У края тесно — подождите немного"
 	end
 	return nil
 end
@@ -217,6 +219,7 @@ local function resolve(session: Session, quality: number)
 		return
 	end
 	local itemId = list[math.clamp(math.floor(random() * #list) + 1, 1, #list)]
+	InventoryService.EnsurePreview(itemId) -- модель монстра для показа поимки у клиента (ItemPreviews)
 	rarity = Items[itemId].rarity -- если редкости в коллекции не было — выпала ближайшая ниже
 	local floor = ThrowRules.RollFloor(rarity, luck, kind, random())
 	local boss = ThrowRules.IsBoss(random())
@@ -286,6 +289,7 @@ local function resolve(session: Session, quality: number)
 	end
 	AnnounceService.FloorWon(player, floor)
 	DataService.RequestSave(player)
+	ShopService.Sync(player) -- запас Ловибумов и монеты — клиенту
 	Log.Debug(
 		"ThrowService",
 		("%s: %s ур. %d — %.0f м, зона %d (глубина %.2f, удача ×%.2f), %s на этаже «%s»%s%s"):format(
@@ -310,6 +314,7 @@ local function resolve(session: Session, quality: number)
 		kind = kind,
 		distance = distance,
 		zone = zone,
+		depth = depth,
 		at = at,
 	})
 	Remotes.FireClient(Remotes.Names.ThrowResult, player, {
@@ -352,14 +357,14 @@ function ThrowService.Start(player: any, level: any, kind: any): boolean
 		kind = kind,
 		startedAt = now(),
 		period = if scale then scale.period else Throw.Scale.Period + jitter,
-		phase = if scale then scale.phase else rng:NextNumber(),
+		phase = if scale then scale.phase else 0, -- бегунок начинает снизу
 		token = tokens,
 	}
 	sessions[player] = session
 	sendState(player, session)
 	task.delay(Throw.Scale.Timeout, function()
 		if sessions[player] == session then
-			resolve(session, 0) -- не нажал вовремя: бросок с точностью 0
+			ThrowService.Cancel(player) -- не нажал: шкала закрывается, Ловибум цел
 		end
 	end)
 	return true

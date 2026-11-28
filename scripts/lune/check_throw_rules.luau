@@ -168,14 +168,14 @@ check(
 	"мусор вместо времени и периода"
 )
 check(
-	ThrowRules.Quality(0.5) == 1 and ThrowRules.Quality(0.5 + Throw.Scale.Perfect) == 1,
-	"зона «идеально»"
+	ThrowRules.Quality(1) == 1 and ThrowRules.Quality(1 - Throw.Scale.Perfect) == 1,
+	"зона «идеально» — у верха шкалы"
 )
-check(ThrowRules.Quality(0) == 0 and ThrowRules.Quality(1) == 0, "края шкалы — 0")
-check(near(ThrowRules.Quality(0.2), ThrowRules.Quality(0.8), 1e-9), "шкала симметрична")
+check(ThrowRules.Quality(0) == 0 and ThrowRules.Quality(-1) == 0, "низ шкалы — 0")
+check(ThrowRules.Quality(0.8) > ThrowRules.Quality(0.2) and ThrowRules.Quality(2) == 1, "выше — лучше")
 check(
 	ThrowRules.Quality(0.3) > ThrowRules.Quality(0.2) and ThrowRules.Quality(NAN) == 0,
-	"к середине — лучше; мусор — 0"
+	"к верху — лучше; мусор — 0"
 )
 check(
 	ThrowRules.AccuracyMult(0) == 1 and near(ThrowRules.AccuracyMult(1), 1.18, 1e-9),

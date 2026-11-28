@@ -84,12 +84,12 @@ function ThrowRules.Quality(position: number): number
 	if not number(position) then
 		return 0
 	end
-	local off = math.abs(math.clamp(position, 0, 1) - 0.5)
-	local perfect = Throw.Scale.Perfect
-	if off <= perfect + 1e-9 then -- граница зоны входит в неё (погрешность дробных чисел)
+	local p = math.clamp(position, 0, 1)
+	local top = 1 - Throw.Scale.Perfect
+	if p >= top - 1e-9 then -- граница зоны входит в неё (погрешность дробных чисел)
 		return 1
 	end
-	return math.clamp(1 - (off - perfect) / (0.5 - perfect), 0, 1)
+	return math.clamp(p / top, 0, 1)
 end
 
 -- Момент нажатия, который принимает сервер: заявленный клиентом claimed (время сервера в его оценке), но не раньше

@@ -219,7 +219,15 @@ local function card(parent: Instance, kind: string, x: number, width: number, he
 	local view, camera, center, distance = preview(stage, kind, 6)
 	-- ПК: название крупно, «шанс» мельче (размер в разметке; без TextScaled). Телефон: одним размером и уменьшается
 	-- целиком, если не влезает (TextScaled с размером в разметке ломает пропорции).
-	local chance = "шанс ×" .. tostring(Catch.Bonus[kind])
+	-- D75: шанс за бросок у вида (Config/Throw.KindHunt): во сколько раз чаще Алмазный и Мифический этажи и
+	-- Легендарные и Секретные существа; у Бума множителей нет — он для фарма
+	local hunt = GameConfig.Throw.KindHunt[kind]
+	local chance = if hunt and (hunt.floor > 1 or hunt.creature > 1)
+		then ("Алмазный ×%s, Легендарные ×%s"):format(
+			tostring(hunt.floor),
+			tostring(hunt.creature)
+		)
+		else "обычные шансы"
 	local title = UI.Text(
 		box,
 		if compact

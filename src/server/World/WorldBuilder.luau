@@ -16,8 +16,6 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local MuseumLayout = require(ReplicatedStorage.Shared.Config.MuseumLayout)
 local ZonePatterns = require(ReplicatedStorage.Shared.Config.ZonePatterns)
-local ThrowRules = require(ReplicatedStorage.Shared.ThrowRules)
-local TextCase = require(ReplicatedStorage.Shared.TextCase)
 local World = ServerScriptService.Server.World
 local Hologram = require(World.Hologram)
 local MapLayout = require(World.MapLayout)
@@ -502,11 +500,9 @@ local function buildThrowEdge(parent: Instance)
 	end
 end
 
--- Разметка чистой трассы (D75): в зонах нет ни одного объекта — только пол с узором, полоса-граница, осевая линия
--- и надпись на полу у входа (название зоны и отметка дальности её начала, м). Всё плоское, без столкновений.
-local TRACK_LABEL = Vector2.new(84, 9) -- надпись на полу, стадов
-local function buildTrackMarks(index: number, parent: Instance, accent: Color3)
-	local zone = GameConfig.Zones[index]
+-- Разметка чистой трассы (D75), как в записи референса: в зонах нет ни одного объекта и ни одной надписи — только
+-- пол с узором, полоса-граница и осевая линия. Без столкновений.
+local function buildTrackMarks(index: number, parent: Instance)
 	local start, length = MapLayout.ZoneStartZ(index), MapLayout.ZoneLength(index)
 	local axis = Instance.new("Part")
 	axis.Name = "Axis"
@@ -520,39 +516,6 @@ local function buildTrackMarks(index: number, parent: Instance, accent: Color3)
 	axis.CFrame = CFrame.new(0, H.Path + LINE.height / 2, start - length / 2)
 	axis.Parent = parent
 	Studs.Apply(axis)
-
-	local label = Instance.new("Part")
-	label.Name = "Label"
-	label.Anchored = true
-	label.CanCollide = false
-	label.CanQuery = false
-	label.CanTouch = false
-	label.CastShadow = false
-	label.Transparency = 1
-	-- как у надписи «Безопасная зона»: длинная сторона — по Z детали, поворот кладёт её поперёк коридора
-	label.Size = Vector3.new(TRACK_LABEL.Y, 0.2, TRACK_LABEL.X)
-	label.CFrame = CFrame.new(0, H.Path + 0.35, start - 5 - TRACK_LABEL.Y / 2) * CFrame.Angles(0, -math.pi / 2, 0)
-	label.Parent = parent
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = Enum.NormalId.Top
-	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	gui.PixelsPerStud = 10
-	gui.LightInfluence = 0.3
-	gui.Parent = label
-	local text = Instance.new("TextLabel")
-	text.BackgroundTransparency = 1
-	text.Size = UDim2.fromScale(1, 1)
-	text.TextScaled = true
-	text.FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
-	text.TextColor3 = Palette.White
-	text.Text = if index == 1
-		then TextCase.Upper(zone.name)
-		else ("%s  ·  %d м"):format(TextCase.Upper(zone.name), math.floor(ThrowRules.Mark(index) + 0.5))
-	text.Parent = gui
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = accent:Lerp(Palette.Black, 0.55)
-	stroke.Thickness = 2.5
-	stroke.Parent = text
 end
 
 local function buildZone(index: number, parent: Instance)
@@ -603,7 +566,7 @@ local function buildZone(index: number, parent: Instance)
 
 	-- Чистая трасса (D75): дальше — только разметка; голограмм, столбиков, постаментов и декора в зонах нет.
 	if not GameConfig.Throw.OldLoop then
-		buildTrackMarks(index, f, accent)
+		buildTrackMarks(index, f)
 		return
 	end
 

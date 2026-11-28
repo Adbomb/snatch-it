@@ -34,6 +34,8 @@ require(Controllers:WaitForChild("MuseumUpgradeController")).Init() -- D56: ул
 require(Controllers:WaitForChild("CreatureController")).Init() -- D55: живые существа
 require(Controllers:WaitForChild("CatchController")).Init() -- D55: мини-игра поимки (ловящий)
 require(Controllers:WaitForChild("LovibumFxController")).Init() -- D55: эффекты поимки у всех рядом
+require(Controllers:WaitForChild("ThrowController")).Init() -- D75: бросок вдаль с края обрыва
+require(Controllers:WaitForChild("ThrowFlightController")).Init() -- D75: чужие полёты (Ловибум, след, ник)
 require(Controllers:WaitForChild("TutorialController")).Init() -- D55: обучение новичка
 require(Controllers:WaitForChild("OwnerTestController")).Init() -- кнопка «Тест» владельца (только DEV-место)
 require(Controllers:WaitForChild("MuseumVisualController")).Init()

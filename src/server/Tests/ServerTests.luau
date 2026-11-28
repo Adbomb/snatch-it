@@ -4562,7 +4562,7 @@ test(
 )
 
 -- D75, бросок вдаль: игрок на полосе у края обрыва, случайные числа по очереди (существо, предмет, этаж, босс), шкала с заданным
--- началом (phase 0.25 — маркер в середине шкалы: идеально; 0 — край: точность 0).
+-- началом (phase 0.5 — бегунок вверху шкалы: идеально; 0 — внизу: точность 0).
 local function onPad(player: any)
 	player:MoveTo(MapLayout.ThrowSpot + Vector3.new(0, 3, 0))
 end
@@ -4587,7 +4587,7 @@ end
 
 -- Бросок Ловибумом (уровень, вид) с заданным качеством шкалы; возвращает событие результата.
 local function throwOnce(player: any, level: number, kind: string, perfect: boolean): any
-	ThrowService.Scale = { period = 2, phase = if perfect then 0.25 else 0 }
+	ThrowService.Scale = { period = 2, phase = if perfect then 0.5 else 0 }
 	player:ClearSent()
 	check(
 		ThrowService.Start(player, level, kind),

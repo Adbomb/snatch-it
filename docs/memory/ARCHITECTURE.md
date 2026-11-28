@@ -156,7 +156,15 @@
   вырезана (`BuildWater`). Зоны — чистая трасса: пол, граница, осевая линия, надпись (`buildTrackMarks`); длина —
   `MapLayout.ZoneLength`. Старый цикл выключен флагом `Throw.OldLoop = false`: `BossService` и `BossLootService`
   ничего не создают, `TutorialService` считает обучение неактивным, тесты старого цикла пропускаются
-  (`ServerTests`, список `OLD_LOOP`). Карта — 2 276 частей.
+  (`ServerTests`, список `OLD_LOOP`). Карта — около 2 000 частей.
+  Бросок у клиента (D75, по записи владельца): `Controllers/ThrowController` — режиссёр сцен Aim → Windup → Flight
+  → Slide → Approach → Card → Suck → Shake → Out (шаг каждого кадра `BindToRenderStep`, камера — пружины
+  `Util/Spring`); шкала появляется сама на полосе у края (`World/ThrowPath.OnEdge`), нажатие шлёт `ThrowAction`
+  «Press» с временем сервера; `UI/ThrowHud` — весь интерфейс (числа — `UITokens.Throw`, в пикселях кадра 540);
+  `World/ThrowPose` — замах кодом через `Transform` суставов (Motor6D и AnimationConstraint, шаг `Stepped`);
+  `World/ThrowPath` — точка приземления, время и дуга (общие с чужими полётами); монстр — копия из
+  `ReplicatedStorage.ItemPreviews` (сервер готовит её в `ThrowService` через `InventoryService.EnsurePreview`);
+  `Controllers/ThrowFlightController` — чужие полёты (Ловибум, след, ник). Времена сцен — `Throw.Show`.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

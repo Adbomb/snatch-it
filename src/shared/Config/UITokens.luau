@@ -746,6 +746,77 @@ UITokens.Pvp = {
 	KnockCamera = { Height = 3, MinZoom = 8 },
 }
 
+-- Бросок вдаль (D75): строго по записи референса владельца (2026-11-28). Размеры и места — в пикселях кадра
+-- 960 × 540 этой записи (UI/ThrowHud пересчитывает их по высоте экрана); At — доли экрана.
+UITokens.Throw = {
+	Order = 60, -- DisplayOrder: поверх остального интерфейса
+	Scale = {
+		At = Vector2.new(0.5, 0.45), -- центр шкалы
+		Size = Vector2.new(70, 310),
+		Stroke = 5,
+		Marker = Vector2.new(86, 16),
+		MarkerFill = Color3.fromHex("F4F4F4"),
+		MarkerEdge = Color3.fromHex("5A5A5A"),
+		Ticks = 5,
+		Top = Color3.fromHex("9AD98A"), -- сверху вниз: светло-зелёный, жёлто-зелёный, оранжевый, красный
+		High = Color3.fromHex("C2DD80"),
+		Mid = Color3.fromHex("F0BE78"),
+		Low = Color3.fromHex("E8533C"),
+		Value = 26, -- число у бегунка
+		ValueGap = 18, -- от бегунка до числа
+		Caption = 26, -- «Нажмите, чтобы бросить!»
+		CaptionGap = 37, -- от низа шкалы до середины подписи
+		Power = 28, -- «+N Мощность»
+		PowerShift = 20, -- левый край — от оси шкалы
+		Perfect = 30, -- «Идеально!»
+	},
+	Bars = 0.107, -- чёрные поля кино, доля высоты экрана каждое
+	Flight = {
+		Plate = Vector2.new(304, 72),
+		PlateTop = 10,
+		PlateAlpha = 0.85, -- прозрачность светлой плашки
+		Luck = 40,
+		LuckAt = 36,
+		Word = 14,
+		WordAt = 72,
+		Band = Color3.fromHex("14324A"),
+		BandAlpha = 0.45,
+		BandTop = 96,
+		BandHeight = 40,
+		BandWidth = 0.62, -- доля ширины экрана, края тают
+		Zone = 26,
+	},
+	Reveal = {
+		OneIn = 30,
+		OneInAt = 87,
+		Lucky = 26,
+		LuckyAt = 33,
+		Rays = Color3.fromHex("FF4458"),
+		RaysSize = 190,
+		Name = 30,
+		NameAt = 448,
+	},
+	Card = {
+		Rarity = 18,
+		RarityAt = 410,
+		Name = 26,
+		NameAt = 450,
+		Income = 24,
+		IncomeAt = 492,
+		NameColor = Color3.fromHex("F2EFA0"),
+		IncomeColor = Color3.fromHex("E6F08C"),
+		Tag = Vector2.new(100, 40),
+		TagShift = 190, -- от середины экрана вправо
+		TagAt = 430,
+		TagTurn = -12,
+		TagFill = Color3.fromHex("F2A640"),
+		TagEdge = Color3.fromHex("3A2408"),
+		TagText = 18,
+	},
+	Flash = Color3.fromHex("FFFFFF"),
+	Dip = Color3.fromHex("05070C"),
+}
+
 -- Основной цвет редкости (для подписи над предметом и т. п.).
 function UITokens.RarityColor(rarity: string): Color3
 	local g = UITokens.Rarity[rarity] or UITokens.Rarity.Common
