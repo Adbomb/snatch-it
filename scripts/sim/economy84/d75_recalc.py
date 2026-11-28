@@ -1,24 +1,24 @@
-"""Пересчёт экономики D56 под D75 («бросок вдаль»: в зонах нет видимых существ и боссов, игрок бросает Ловибум с
-площадки, в зоне приземления сервер разыгрывает существо, редкость этажа и крошечный шанс босса). Только расчёт: цены,
-сила боссов (= пороги зон), Ловибумы (набор из 3, D61), редкость этажа и нормировка дохода (D74) — утверждённые.
+"""Экономика D75 «бросок вдаль»: калибровка дохода наград по зонам под цели D56 (зоны 7 / 8 / 9 / 10 — на 14 / 28 /
+56 / 84 ч у обычного игрока). Цены Ловибумов (набор из 3, D61), пороги силы (D56), редкость этажа (D74) — утверждённые.
+Правила D75 (решения владельца 2026-11-28 и ответы на план):
+  1. Видимых существ нет: бросок с площадки = розыгрыш (существо набора зоны по шансам D37, редкость этажа D74),
+     поимка не срывается, дороги в зону нет.
+  2. Дальность, м = 10 × (1 + сила)^0.25 × точность (1 … 1.18) × вид (Бум 1, Турбо 1.06, Мега 1.12); отметка зоны N —
+     та же формула при силе босса N; Ловибум уровня N дальше конца зоны N не летит.
+  3. Удача по глубине: f — доля пути между отметками зоны приземления; удача = (1 + f) × бонус вида (Турбо ×1.15,
+     Мега ×1.3). Вес каждой следующей ступени редкости существа и этажа умножается на удача^0.5.
+  4. Башня: мест — как у музея по уровню (до 20), только лучшие этажи; двух одинаковых этажей (то же существо и та же
+     редкость этажа) быть не может — повтор продаётся.
+  5. Ненужная капсула продаётся: доход этажа × SELL_S секунд.
+  6. Босс зоны: 1 из 2 500 с броска; на крыше один (лучший), доход = Легендарное существо на Золотом этаже своей зоны.
+  7. Калибровка: доход наград зоны N × K[N]; K подбирается по зонам, цены не меняются.
+Игрок бросает, пока ожидаемая прибавка дохода башни за HORIZON секунд (плюс выручка от продажи) окупает бросок.
 
-Что меняет D75 в модели econ84c:
-  1. Видимых существ нет: игрок не выбирает лучшее из четырёх, каждый бросок — розыгрыш (редкость существа по шансам
-     набора зоны, D37; редкость этажа — D74). Поимка не срывается: бросок = награда.
-  2. Дороги в зону нет: бросок с площадки. Время броска — шкала, полёт (первый бросок за день; дальше быстрый режим),
-     экран выпадения; нужную капсулу игрок несёт в башню (CARRY), ненужную бросает (DROP).
-  3. Зона приземления — по дальности: метры = 10 × (1 + сила)^0.25 × точность (1 … 1.18) × вид Ловибума; отметка зоны N —
-     те же метры при силе босса N (D56). Сила S_N гарантирует зону N, точность лишь добавляет. Ловибум уровня N дальше
-     зоны N не летит.
-  4. Игрок бросает, пока ожидаемая прибавка дохода башни за HORIZON секунд окупает цену броска (вслепую, по шансам);
-     иначе копит на гантель и уровень музея и тренируется. Раньше его ограничивали 4 существа за день.
-  5. Босс зоны: шанс P_BOSS с броска, встаёт на крышу (места в башне не занимает), доход BOSS_MULT × базовый Common зоны.
-Сравнение — с D74 (поимка-прицел, катсцена «съел», этажи) на тех же зёрнах.
-
-Запуск: python scripts/sim/economy84/d75_recalc.py [число прогонов, по умолчанию 60] > отчёт.md
+Запуск: python scripts/sim/economy84/d75_recalc.py [число прогонов, по умолчанию 60] > report_d75.md
 """
 
 import bisect
+import json
 import math
 import random
 import statistics
@@ -34,28 +34,29 @@ FLOORS = ["Деревянный", "Каменный", "Мраморный", "З�
 FLOOR_CHANCE = [60, 25, 10, 4, 0.9, 0.1]
 FLOOR_MULT = [1, 2, 4, 8, 20, 60]
 SHIFT = {"Common": 1.0, "Rare": 1.15, "Epic": 1.3, "Legendary": 1.5, "Secret": 1.8}
+GOLD = 3  # индекс Золотого этажа
 
-# --- D75: предложение (на утверждение) ---
-METRE_K, METRE_P = 10, 0.25  # дальность, м = METRE_K × (1 + сила) ^ METRE_P
-ACC_MAX = 0.18  # идеальное попадание по шкале: +18 % дальности
-KIND_RANGE = {"Boom": 1.0, "Turbo": 1.06, "Mega": 1.12}  # вид Ловибума: дальность
-ACC = {"обычный": 0.50, "опытный": 0.80, "неудачливый": 0.25}  # средняя доля бонуса точности
-T_SCALE, T_FLY, T_REVEAL = 3, 8, 5  # шкала, полёт с камерой, экран выпадения, с
-T_QUICK = 5  # быстрый режим: шкала и сразу результат, с
-T_CARRY, T_DROP = 16, 2  # донести капсулу до башни и вернуться; бросить ненужную, с
-HORIZON = 1200  # с: бросок окупается ожидаемой прибавкой дохода за это время
-P_BOSS = 1 / 2500  # шанс босса с броска
-BOSS_MULT = 150  # доход босса на крыше = BOSS_MULT × базовый доход Common его зоны
-INCOME_K = 1.0  # рычаг калибровки: доход наград × INCOME_K (нормировка: бросок вслепую, наград больше)
-BOOM_K = 1.0  # рычаг калибровки: цены Ловибумов × BOOM_K
+METRE_K, METRE_P = 10, 0.25
+END_MARK = 15000  # конец трассы, м: самый дальний бросок в игре
+ACC_MAX = 0.18
+KIND_RANGE = {"Boom": 1.0, "Turbo": 1.06, "Mega": 1.12}
+KIND_LUCK = {"Boom": 1.0, "Turbo": 1.15, "Mega": 1.3}
+LUCK_DEPTH = 1.0  # удача у конца зоны: ×(1 + LUCK_DEPTH)
+LUCK_POWER = 0.5  # вес следующей ступени редкости × удача^LUCK_POWER
+ACC = {"обычный": 0.50, "опытный": 0.80, "неудачливый": 0.25}
+T_SCALE, T_FLY, T_REVEAL, T_QUICK, T_CARRY = 3, 8, 5, 5, 16
+HORIZON = 1200
+P_BOSS = 1 / 2500
+SELL_S = 60  # продажа капсулы: секунд её дохода
+F_BUCKETS = [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
 def metres(strength):
     return METRE_K * (1 + strength) ** METRE_P
 
 
-def floor_weights(rarity):
-    s = SHIFT[rarity]
+def floor_weights(rarity, luck=1.0):
+    s = SHIFT[rarity] * luck**LUCK_POWER
     w = [c * s**k for k, c in enumerate(FLOOR_CHANCE)]
     total = sum(w)
     return [x / total for x in w]
@@ -63,6 +64,11 @@ def floor_weights(rarity):
 
 def expected_mult(rarity):
     return sum(p * m for p, m in zip(floor_weights(rarity), FLOOR_MULT))
+
+
+def creature_weights(tier_chances, R, luck=1.0):
+    s = luck**LUCK_POWER
+    return [tier_chances[r] * s**k for k, r in enumerate(R)]
 
 
 src = (HERE / "econ84c.py").read_text(encoding="utf-8").replace('if __name__ == "__main__":', "if False:")
@@ -73,18 +79,17 @@ def patch(text, old, new):
     return text.replace(old, new)
 
 
-# общее с D74: набор из 3 Ловибумов, этаж случайной редкости
 src = patch(
     src,
     '    museum = [["Common", 1, pool[1]["Common"][0], True]]  # учебное Common босса 1 (не крадут)\n',
-    '    museum = [["Common", 1, pool[1]["Common"][0], True]]  # учебное Common босса 1 (не крадут)\n'
+    '    museum = [["Common", 1, pool[1]["Common"][0], True, ("учебное",)]]  # учебное Common босса 1 (не крадут)\n'
     "    stock = {}  # D61: запас Ловибумов по (уровень, вид)\n"
     '    pack = cfg.get("pack", 1)\n'
     '    d74 = cfg.get("d74", False)\n'
-    '    d75 = cfg.get("d75", False)\n'
     '    rolls = cfg.setdefault("rolls", [])\n'
-    '    stats = cfg.setdefault("stats", {"throws": 0, "kept": 0, "short": 0, "bosses": 0, "lov": 0.0})\n'
-    "    roof = 0  # D75: боссы на крыше (мест не занимают)\n",
+    '    stats = cfg.setdefault("stats", {})\n'
+    '    K = cfg.get("K", {})\n'
+    "    roof = 0.0  # D75: доход босса на крыше (один, лучший)\n",
 )
 src_d74 = patch(
     src,
@@ -110,67 +115,77 @@ src_d74 = patch(
 src_d74 = patch(
     src_d74,
     "                item = [r, L, income, False]\n",
-    "                if d74:\n"
-    "                    k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r))[0]\n"
-    "                    rolls.append((L, r, k))\n"
-    "                    item = [r, L, income / expected_mult(r) * FLOOR_MULT[k], False]\n"
-    "                else:\n"
-    "                    item = [r, L, income, False]\n",
+    "                k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r))[0]\n"
+    "                item = [r, L, income / expected_mult(r) * FLOOR_MULT[k], False]\n",
 )
 
-# D75: вместо «увидел существ → пошёл → поймал» — броски с площадки
 a = src.index("        spawns = []\n")
 b = src.index('            cur["fail_out"] += 1\n') + len('            cur["fail_out"] += 1\n')
 THROW = '''        first = True
         acc = ACC[sc.name]
+        kind = "Boom"
         while day_left > reserved + T_SCALE + T_FLY + T_REVEAL + T_CARRY + 5:
             held_now = museum + pending
-            full = len(held_now) >= cap + roof
+            full = len(held_now) >= cap
             worst = min(m[2] for m in held_now) if full else 0.0
-            kind = "Boom"
-            price = boom[L] * MULT[kind] * BOOM_K
-            if INCOME_K * gain(L, worst / INCOME_K) * HORIZON < price / pack:
+            price = boom[L] * MULT[kind]
+            base_d = metres(S)
+            f_now = min(1.0, max(0.0, (base_d * (1 + ACC_MAX * acc) - MARK[L]) / (MARK[L + 1] - MARK[L])))
+            if value(L, f_now, worst, K.get(L, 1.0)) < price / pack:
                 break  # бросок не окупается: копить и тренироваться
             if not stock.get((L, kind)):
                 if coins < price:
                     break
                 coins -= price
                 cur["lov"] += price
-                stats["lov"] += price
+                stats["lov"] = stats.get("lov", 0.0) + price
                 stock[(L, kind)] = pack
             stock[(L, kind)] -= 1
             bonus = 1 + ACC_MAX * min(1.0, max(0.0, rng.gauss(acc, 0.2)))
+            dist = min(base_d * bonus * KIND_RANGE[kind], MARK[L + 1])
             zone = L
-            if L > 1 and metres(S) * bonus * KIND_RANGE[kind] < metres(S_boss[L - 1]):
-                zone = L - 1  # недолёт: Ловибум упал в прошлой зоне
-                stats["short"] += 1
-            r = rng.choices(R, weights=[tier(zone)[x] for x in R])[0]
-            k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r))[0]
-            income = rng.choice(pool[zone][r]) / expected_mult(r) * FLOOR_MULT[k] * INCOME_K
+            while zone > 1 and dist < MARK[zone]:
+                zone -= 1
+            f = min(1.0, max(0.0, (dist - MARK[zone]) / (MARK[zone + 1] - MARK[zone])))
+            luck = (1 + LUCK_DEPTH * f) * KIND_LUCK[kind]
+            r = rng.choices(R, weights=creature_weights(tier(zone), R, luck))[0]
+            k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck))[0]
+            idx = rng.randrange(len(pool[zone][r]))
+            kz = K.get(zone, 1.0)
+            income = pool[zone][r][idx] / expected_mult(r) * FLOOR_MULT[k] * kz
+            ident = (zone, r, idx, k)
             rolls.append((zone, r, k))
-            stats["throws"] += 1
+            stats["throws"] = stats.get("throws", 0) + 1
+            stats["short"] = stats.get("short", 0) + (1 if zone < L else 0)
+            stats["luck"] = stats.get("luck", 0.0) + luck
             dt = (T_SCALE + T_FLY + T_REVEAL) if first else T_QUICK
             first = False
             if rng.random() < P_BOSS:
-                roof += 1
-                stats["bosses"] += 1
-                museum.append(["Common", zone, INCOME_K * BOSS_MULT * mean[zone]["Common"] / expected_mult("Common"), True])
+                stats["bosses"] = stats.get("bosses", 0) + 1
+                roof = max(roof, boss_income(mean, zone) * kz)
                 dt += T_CARRY
-            if income > worst:
-                stats["kept"] += 1
+            dup = any(m[4] == ident for m in held_now)
+            if dup or income <= worst:
+                stats["dups"] = stats.get("dups", 0) + (1 if dup and income > worst else 0)
+                gain_coins = income * SELL_S  # авто-продажа
+                coins += gain_coins
+                stats["sold"] = stats.get("sold", 0.0) + gain_coins
+            else:
+                stats["kept"] = stats.get("kept", 0) + 1
                 cur["catches"] += 1
                 dt += T_CARRY
-                item = [r, zone, income, False]
+                item = [r, zone, income, False, ident]
                 if doom_day and day_left <= PREP:
                     pending.append(item)
                 else:
-                    if len(museum) >= cap + roof:
-                        museum.remove(min((m for m in museum if not m[3]), key=lambda m: m[2]))
+                    if len(museum) >= cap:
+                        out = min((m for m in museum if not m[3]), key=lambda m: m[2], default=None) or min(
+                            museum, key=lambda m: m[2])
+                        museum.remove(out)
+                        coins += out[2] * SELL_S
                     museum.append(item)
-                    inc = sum(m[2] for m in museum)
+                    inc = sum(m[2] for m in museum) + roof
                     mp = power()
-            else:
-                dt += T_DROP
             spend(dt, "catch")
 '''
 src_d75 = src[:a] + THROW + src[b:]
@@ -179,76 +194,96 @@ src_d75 = patch(
     "        need = WIN * S_boss[L] if L < 10 else math.inf\n",
     "        need = S_boss[L] / (1 + ACC_MAX * ACC[sc.name]) ** 4 if L < 10 else math.inf\n",
 )
-src_d75 = patch(src_d75, "        cap = slots_of(ml)\n", "        cap = slots_of(ml)\n        cap_roof = cap + roof\n")
+src_d75 = patch(src_d75, "        inc = sum(m[2] for m in museum)\n        mp = power()\n        need",
+                "        inc = sum(m[2] for m in museum) + roof\n        mp = power()\n        need")
 src_d75 = patch(src_d75, "dooms.append((ml, L, inc, max(m[2] for m in museum), bought, price))",
                 "dooms.append((ml, L, inc, max((m[2] for m in museum), default=0), bought, price))")
 src_d75 = patch(
     src_d75,
-    "            if len(museum) >= cap:\n                museum.remove(min(museum, key=lambda m: m[2]))\n",
-    "            if len(museum) >= cap_roof:\n                museum.remove(min(museum, key=lambda m: m[2]))\n",
+    "            for item in pending:\n                place(item)\n",
+    "            for item in pending:\n"
+    "                if any(m[4] == item[4] for m in museum):\n"
+    "                    coins += item[2] * SELL_S\n"
+    "                else:\n"
+    "                    place(item)\n",
 )
 
-GAIN = {}  # [зона] = (отсортированные доходы наград, суммы с конца)
+GAIN = {}  # [(зона, f)] = (отсортированные доходы наград при K = 1, суммы с конца, средняя выручка продажи)
+MARK = {}
 
 
-def make_gain(cfg, tier, R):
+def boss_income(mean, zone):
+    """Доход босса зоны: Легендарное существо на Золотом этаже (зоны без Легендарных: 3 × Эпическое, D56)."""
+    leg = mean[zone].get("Legendary") or 3 * mean[zone]["Epic"]
+    return leg / expected_mult("Legendary") * FLOOR_MULT[GOLD]
+
+
+def make_tables(cfg, tier, R):
+    S = [0] + list(cfg["S"][1:10])
+    for n in range(1, 11):
+        MARK[n] = metres(S[n - 1]) if n > 1 else 0.0
+    MARK[11] = END_MARK
     rng = random.Random(7)
     for zone in range(1, 11):
-        xs = []
-        for _ in range(8000):
-            r = rng.choices(R, weights=[tier(zone)[x] for x in R])[0]
-            k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r))[0]
-            xs.append(rng.choice(cfg["pool"][zone][r]) / expected_mult(r) * FLOOR_MULT[k])
-        xs.sort()
-        tail = [0.0] * (len(xs) + 1)
-        for i in range(len(xs) - 1, -1, -1):
-            tail[i] = tail[i + 1] + xs[i]
-        GAIN[zone] = (xs, tail)
+        for f in F_BUCKETS:
+            luck = 1 + LUCK_DEPTH * f
+            xs = []
+            for _ in range(6000):
+                r = rng.choices(R, weights=creature_weights(tier(zone), R, luck))[0]
+                k = rng.choices(range(len(FLOOR_MULT)), weights=floor_weights(r, luck))[0]
+                xs.append(rng.choice(cfg["pool"][zone][r]) / expected_mult(r) * FLOOR_MULT[k])
+            xs.sort()
+            tail = [0.0] * (len(xs) + 1)
+            for i in range(len(xs) - 1, -1, -1):
+                tail[i] = tail[i + 1] + xs[i]
+            GAIN[(zone, f)] = (xs, tail)
 
 
-def gain(zone, worst):
-    """Ожидаемая прибавка дохода башни с одного броска в зону: E[max(0, награда − худший этаж)]."""
-    xs, tail = GAIN[zone]
-    i = bisect.bisect_right(xs, worst)
-    return (tail[i] - worst * (len(xs) - i)) / len(xs)
+def value(zone, f, worst, kz):
+    """Ожидаемая ценность броска в монетах: прибавка дохода башни за HORIZON + выручка от продажи ненужного."""
+    fb = min(F_BUCKETS, key=lambda x: abs(x - f))
+    xs, tail = GAIN[(zone, fb)]
+    w = worst / kz
+    i = bisect.bisect_right(xs, w)
+    n = len(xs)
+    gain = (tail[i] - w * (n - i)) / n
+    sold = (tail[0] - tail[i]) / n
+    return kz * (gain * HORIZON + sold * SELL_S)
 
 
 def build(text, name):
     g = {"__file__": str(HERE / "econ84c.py"), "FLOOR_MULT": FLOOR_MULT, "floor_weights": floor_weights,
-         "expected_mult": expected_mult, "metres": metres, "gain": gain, "ACC": ACC, "ACC_MAX": ACC_MAX,
-         "KIND_RANGE": KIND_RANGE, "T_SCALE": T_SCALE, "T_FLY": T_FLY, "T_REVEAL": T_REVEAL, "T_QUICK": T_QUICK,
-         "T_CARRY": T_CARRY, "T_DROP": T_DROP, "HORIZON": HORIZON, "P_BOSS": P_BOSS, "BOSS_MULT": BOSS_MULT,
-         "INCOME_K": INCOME_K, "BOOM_K": BOOM_K}
+         "expected_mult": expected_mult, "creature_weights": creature_weights, "metres": metres, "value": value,
+         "boss_income": boss_income, "MARK": MARK, "ACC": ACC, "ACC_MAX": ACC_MAX, "KIND_RANGE": KIND_RANGE,
+         "KIND_LUCK": KIND_LUCK, "LUCK_DEPTH": LUCK_DEPTH, "T_SCALE": T_SCALE, "T_FLY": T_FLY, "T_REVEAL": T_REVEAL,
+         "T_QUICK": T_QUICK, "T_CARRY": T_CARRY, "P_BOSS": P_BOSS, "SELL_S": SELL_S}
     exec(compile(text, name, "exec"), g)
     return g
 
 
 G74, G75 = build(src_d74, "econ84c_d74"), build(src_d75, "econ84c_d75")
-load, done, short, TARGET_AT = G74["load"], G74["done"], G74["short"], G74["TARGET_AT"]
+load, short, TARGET_AT = G74["load"], G74["short"], G74["TARGET_AT"]
 TYP, SKL, UNL = G74["TYP"], G74["SKL"], G74["UNL"]
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 60
 
 
-def variant(d75):
+def variant(d75, K=None):
     cfg = load("approved.json")
     cfg["pack"] = PER_BUY
-    cfg["d74"], cfg["d75"] = not d75, d75
+    cfg["d74"] = not d75
+    cfg["K"] = dict(K or {})
+    cfg["stats"] = {}
     return cfg
 
 
-def runs(g, cfg, sc, seed, horizon=None, income_k=1.0, boom_k=1.0):
-    if horizon:
-        g["HORIZON"] = horizon
-    g["INCOME_K"], g["BOOM_K"] = income_k, boom_k
+def runs(g, cfg, sc, seed, n=None, stop_after=None):
     g["FIGHT"] = CUTSCENE
     sc = {s.name: s for s in (g["TYP"], g["SKL"], g["UNL"])}[sc.name]
     rng = random.Random(seed)
     out = []
-    for _ in range(N):
-        ph, _, _ = g["simulate3"](cfg, sc, rng, cap_h=600)
+    for _ in range(n or N):
+        ph, _, _ = g["simulate3"](cfg, sc, rng, cap_h=700, stop_after=stop_after)
         out.append(ph)
-    g["HORIZON"] = HORIZON
-    g["INCOME_K"], g["BOOM_K"] = 1.0, 1.0
     return out
 
 
@@ -272,130 +307,126 @@ def fmt(xs):
     return f"**{statistics.median(xs):.1f}** ({q(xs, 0.1):.1f}–{q(xs, 0.9):.1f})"
 
 
-cfg74, cfg75 = variant(False), variant(True)
-make_gain(cfg75, G75["tier"], G75["R"])
+cfg74 = variant(False)
+make_tables(cfg74, G75["tier"], G75["R"])
+
+# --- калибровка: K зоны L подбирается так, чтобы обычный игрок долетал до зоны L + 1 в цель ---
+# Пределы K: не ниже K_MIN (и не ниже 0.45 от прошлой зоны — следующая зона должна оставаться выгоднее прошлой: доходы
+# каталога растут в 3.2 раза за зону) и не выше K_MAX.
+K_MIN, K_MAX = 0.3, 1.2
+K = {n: 1.0 for n in range(1, 11)}
+bound = {}  # зона → "низ" | "верх": цель недостижима доходом этой зоны
+for L in range(3, 10):
+    target = TARGET_AT[L + 1]
+    floor_k = max(K_MIN, 0.45 * K[L - 1])
+    lo, hi = floor_k, K_MAX
+    for _ in range(9):
+        mid = math.sqrt(lo * hi)
+        K[L] = mid
+        cfg = variant(True, K)
+        med = statistics.median(at(runs(G75, cfg, TYP, 100, n=24, stop_after=L), L, cfg, True, TYP))
+        if med > target:  # медленно — дохода мало
+            lo = mid
+        else:
+            hi = mid
+    K[L] = round(math.sqrt(lo * hi), 2)
+    if K[L] <= floor_k * 1.03:
+        bound[L] = "низ"
+    elif K[L] >= K_MAX * 0.97:
+        bound[L] = "верх"
+K[10] = K[9]
+(HERE / "d75_income_k.json").write_text(json.dumps({str(n): K[n] for n in K}, indent=1), encoding="utf-8")
+
 data74 = {sc.name: runs(G74, cfg74, sc, 100) for sc in (TYP, SKL, UNL)}
-data75 = {}
-stats75 = {}
+data75, stats75, cfg75 = {}, {}, None
 for sc in (TYP, SKL, UNL):
-    cfg75["stats"] = {"throws": 0, "kept": 0, "short": 0, "bosses": 0, "lov": 0.0}
+    cfg75 = variant(True, K)
     data75[sc.name] = runs(G75, cfg75, sc, 100)
     stats75[sc.name] = dict(cfg75["stats"])
+raw = variant(True, {})
+data_raw = runs(G75, raw, TYP, 100)
 
-S = [0] + [x for x in cfg75["S"][1:10]]  # сила босса N = порог зоны N
-print(f"# Пересчёт экономики под D75 «бросок вдаль» (модель econ84c, {N} прогонов на вариант, одинаковые зёрна)\n")
-print("Цены, пороги силы, набор из 3 Ловибумов, редкость и доход этажа — утверждённые (D56, D61, D74). Всё, что "
-      "помечено «предложение», ждёт решения владельца.\n")
+S = [0] + list(cfg75["S"][1:10])
+print(f"# Экономика D75 «бросок вдаль»: калибровка дохода наград по зонам (модель econ84c, {N} прогонов, одни зёрна)\n")
+print("Цены Ловибумов, пороги силы, редкость этажа — утверждённые (D56, D61, D74). Правила броска, удачи, продажи, "
+      "босса и запрет одинаковых этажей — решения владельца по D75. Числа удачи и продажи — предложение.\n")
 
-print("## Формула дальности (предложение)\n")
-print(f"**дальность, м = {METRE_K} × (1 + сила)^{METRE_P} × точность × вид Ловибума**\n")
-print(f"- точность по шкале: от ×1.00 (мимо) до ×{1 + ACC_MAX:.2f} (идеально) — сила босса N гарантирует зону N, "
-      "точность только добавляет;")
-print("- вид: " + ", ".join(f"{k} ×{v:.2f}" for k, v in KIND_RANGE.items()) + ";")
-print("- Ловибум уровня N дальше конца зоны N не летит.\n")
-print("| Зона | порог силы (D56) | отметка на трассе, м | сила для зоны с идеальной шкалой и Мегой |")
+print("## Трасса и удача\n")
+print(f"дальность, м = {METRE_K} × (1 + сила)^{METRE_P} × точность (до ×{1 + ACC_MAX:.2f}) × вид "
+      "(" + ", ".join(f"{k} ×{v:.2f}" for k, v in KIND_RANGE.items()) + f"); конец трассы — {END_MARK:,} м.\n".replace(",", " "))
+print(f"удача = (1 + {LUCK_DEPTH:g} × глубина) × вид (" + ", ".join(f"{k} ×{v:g}" for k, v in KIND_LUCK.items())
+      + f"); вес каждой следующей ступени редкости существа и этажа × удача^{LUCK_POWER:g}.\n")
+print("| Зона | порог силы | отметка, м | множитель дохода K (итог калибровки) |")
 print("|---|---|---|---|")
-best = (1 + ACC_MAX) * KIND_RANGE["Mega"]
 for n in range(1, 11):
-    m = metres(S[n - 1]) if n > 1 else 0
-    need = ((metres(S[n - 1]) / best / METRE_K) ** (1 / METRE_P) - 1) if n > 1 else 0
-    print(f"| {n} | {short(S[n - 1]) if n > 1 else '0'} | {m:,.0f} | {short(max(0, need)) if n > 1 else '0'} |".replace(",", " "))
+    note = {"низ": " — нижний предел: цель долёта до следующей зоны доходом не достигается (слишком быстро)",
+            "верх": " — верхний предел: цель доходом не достигается (слишком медленно)"}.get(bound.get(n), "")
+    print(f"| {n} | {short(S[n - 1]) if n > 1 else '0'} | {MARK[n]:,.0f} | ×{K[n]:g}{note} |".replace(",", " "))
 print()
-print(f"Лучший бросок (идеальная шкала и Мега) даёт ×{best:.2f} дальности — это сила в ×{best ** (1 / METRE_P):.1f} раза "
-      "меньше порога; пороги соседних зон различаются в 7–136 раз, перепрыгнуть зону точностью нельзя.\n")
+print(f"Пределы K: от {K_MIN:g} (и не ниже 0.45 от прошлой зоны — иначе следующая зона невыгоднее прошлой) до "
+      f"{K_MAX:g}. K зон 1–2 = 1 (первые минуты игры не трогаются), K зоны 10 = K зоны 9.\n")
+
+R = G75["R"]
+print("## Что даёт удача (зоны 4–7, существо Common → этаж; шансы, %)\n")
+print("| Удача | Legendary существо | Золотой | Мифический | Алмазный | средний доход броска |")
+print("|---|---|---|---|---|---|")
+base_ev = None
+for luck in (1.0, 1.5, 2.0, 2.6):
+    cw = creature_weights(G75["tier"](5), R, luck)
+    tot = sum(cw)
+    ev = 0.0
+    for r, w in zip(R, cw):
+        if w:
+            fw = floor_weights(r, luck)
+            ev += w / tot * cfg75["mean"][5][r] / expected_mult(r) * sum(p * m for p, m in zip(fw, FLOOR_MULT))
+    base_ev = base_ev or ev
+    fw = floor_weights("Common", luck)
+    print(f"| ×{luck:g} | {cw[3] / tot * 100:.1f} | {fw[3] * 100:.1f} | {fw[4] * 100:.2f} | {fw[5] * 100:.2f} "
+          f"| ×{ev / base_ev:.2f} |")
+print()
 
 for sc in (TYP, SKL, UNL):
     print(f"## Долёт до зон, часы игры — {sc.name} игрок: медиана (1 из 10 быстрее – 9 из 10 не позже)\n")
-    print("| Зона | цель | D74 (поимка у босса) | D75 (бросок) | D75 против D74 |")
-    print("|---|---|---|---|---|")
+    head = "| Зона | цель | D74 (поимка у босса) | D75 с калибровкой |"
+    print(head + (" D75 без калибровки |" if sc is TYP else ""))
+    print("|---|---|---|---|" + ("---|" if sc is TYP else ""))
     for L in range(1, 10):
-        a74 = at(data74[sc.name], L, cfg74, False, sc)
-        a75 = at(data75[sc.name], L, cfg75, True, sc)
-        m74, m75 = statistics.median(a74), statistics.median(a75)
         tgt = TARGET_AT.get(L + 1)
         tg = (f"{tgt:g}" if L + 1 >= 7 else f"({tgt:g})") if tgt else ""
-        print(f"| {L + 1} | {tg} | {fmt(a74)} | {fmt(a75)} | {m75 - m74:+.1f} ч ({(m75 - m74) / m74 * 100:+.0f} %) |")
+        row = f"| {L + 1} | {tg} | {fmt(at(data74[sc.name], L, cfg74, False, sc))} | {fmt(at(data75[sc.name], L, cfg75, True, sc))} |"
+        if sc is TYP:
+            row += f" {statistics.median(at(data_raw, L, raw, True, TYP)):.1f} |"
+        print(row)
     print()
 
-print("## Броски и траты — D75, в среднем на одного игрока за всю игру (до зоны 10 и дальше до конца прогона)\n")
-print("| Игрок | бросков | оставлено наград | недолётов | потрачено на Ловибумы | боссов при шансе 1/2500 |")
-print("|---|---|---|---|---|---|")
+print("## Броски, продажа и повторы — D75 с калибровкой, в среднем на игрока за всю игру\n")
+print("| Игрок | бросков | оставлено | повторов «Уже есть» | недолётов | средняя удача | на Ловибумы | выручка продажи "
+      "| боссов |")
+print("|---|---|---|---|---|---|---|---|---|")
 for sc in (TYP, SKL, UNL):
     st = stats75[sc.name]
-    print(f"| {sc.name} | {st['throws'] / N:,.0f} | {st['kept'] / N:,.0f} ({st['kept'] / max(1, st['throws']) * 100:.0f} %) "
-          f"| {st['short'] / max(1, st['throws']) * 100:.1f} % | {short(st['lov'] / N)} | {st['bosses'] / N:.2f} |".replace(",", " "))
+    th = max(1, st.get("throws", 0))
+    print(f"| {sc.name} | {th / N:,.0f} | {st.get('kept', 0) / th * 100:.0f} % | {st.get('dups', 0) / th * 100:.1f} % "
+          f"| {st.get('short', 0) / th * 100:.1f} % | ×{st.get('luck', 0) / th:.2f} | {short(st.get('lov', 0) / N)} "
+          f"| {short(st.get('sold', 0) / N)} ({st.get('sold', 0) / max(1, st.get('lov', 1)) * 100:.0f} % трат) "
+          f"| {st.get('bosses', 0) / N:.2f} |".replace(",", " "))
 print()
 
-print("## Бросков к приходу в зону — обычный игрок, медианы (для выбора шанса босса)\n")
-print("| К зоне | часов | бросков всего | боссов в среднем при 1/1000 | при 1/2500 | при 1/5000 |")
-print("|---|---|---|---|---|---|")
-for L in (3, 6, 7, 8, 9):
-    xs, hs = [], []
-    for ph in data75[TYP.name]:
-        if reached(ph, L, cfg75, True, TYP):
-            xs.append(sum(p["catches"] for p in ph[:L]))
-            hs.append(ph[L - 1]["at"] / 3600)
-    if xs:
-        kept = statistics.median(xs)
-        share = stats75[TYP.name]["kept"] / max(1, stats75[TYP.name]["throws"])
-        throws = kept / max(share, 1e-9)
-        print(f"| {L + 1} | {statistics.median(hs):.1f} | {throws:,.0f} | {throws / 1000:.2f} | {throws / 2500:.2f} "
-              f"| {throws / 5000:.2f} |".replace(",", " "))
-print()
-
-print("## Доход башни при приходе в зону — обычный игрок, медианы\n")
-print("| Зона | D74, /с | D75, /с | D75 / D74 |")
-print("|---|---|---|---|")
+print("## Доход башни при долёте до зоны — обычный игрок, медианы\n")
+print("| Зона | D74, /с | D75, /с | D75 / D74 | доход босса зоны, /с |")
+print("|---|---|---|---|---|")
 for L in range(1, 10):
     v = []
     for data, cfg, d75 in ((data74, cfg74, False), (data75, cfg75, True)):
         xs = [ph[L - 1]["income"] for ph in data[TYP.name] if reached(ph, L, cfg, d75, TYP)]
         v.append(statistics.median(xs) if xs else float("nan"))
-    print(f"| {L + 1} | {short(v[0])} | {short(v[1])} | {v[1] / v[0]:.2f} |")
-print()
-
-print("## Чем вернуть темп 14 / 28 / 56 / 84 ч: два рычага (обычный игрок, часы до зоны)\n")
-print("При прежних ценах и доходах D75 быстрее целей: нет дороги в зону и срывов поимки, бросков за день — сколько "
-      "хватит монет, из многих наград башня оставляет лучшие.\n")
-print("| Рычаг | зона 7 (14) | зона 8 (28) | зона 9 (56) | зона 10 (84) | бросков за игру |")
-print("|---|---|---|---|---|---|")
-best = None
-for label, ik, bk in [("как есть", 1.0, 1.0), ("доход наград ×0.85", 0.85, 1.0), ("доход наград ×0.75", 0.75, 1.0),
-                      ("доход наград ×0.65", 0.65, 1.0), ("доход наград ×0.5", 0.5, 1.0),
-                      ("цены Ловибумов ×1.5", 1.0, 1.5), ("цены Ловибумов ×2", 1.0, 2.0),
-                      ("цены Ловибумов ×3", 1.0, 3.0)]:
-    cfg = variant(True)
-    cfg["stats"] = {"throws": 0, "kept": 0, "short": 0, "bosses": 0, "lov": 0.0}
-    phs = runs(G75, cfg, TYP, 100, income_k=ik, boom_k=bk)
-    med = [statistics.median(at(phs, L, cfg, True, TYP)) for L in (6, 7, 8, 9)]
-    err = sum(abs(math.log(m / t)) for m, t in zip(med, (14, 28, 56, 84)))
-    if ik != 1.0 and bk == 1.0 and (best is None or err < best[0]):
-        best = (err, ik, label)
-    print(f"| {label} | " + " | ".join(f"{m:.1f}" for m in med)
-          + f" | {cfg['stats']['throws'] / N:,.0f} |".replace(",", " "))
-print()
-print(f"Ближе всего к целям без изменения цен — **{best[2]}** (нормировка дохода существ, как в D74). Расчёт для "
-      "этого варианта:\n")
-for sc in (TYP, SKL, UNL):
-    cfg = variant(True)
-    phs = runs(G75, cfg, sc, 100, income_k=best[1])
-    print(f"- {sc.name} игрок, часы до зон 7 / 8 / 9 / 10: "
-          + " / ".join(fmt(at(phs, L, cfg, True, sc)) for L in (6, 7, 8, 9)))
-print()
-
-print("## Чувствительность: как долго игрок готов окупать бросок (обычный игрок, часы до зоны)\n")
-print("| Окупаемость броска | зона 7 | зона 8 | зона 9 | зона 10 |")
-print("|---|---|---|---|---|")
-for h in (300, 1200, 4800):
-    cfg = variant(True)
-    phs = data75[TYP.name] if h == HORIZON else runs(G75, cfg, TYP, 100, horizon=h)
-    cells = [f"{statistics.median(at(phs, L, cfg, True, TYP)):.1f}" for L in (6, 7, 8, 9)]
-    print(f"| {h // 60} мин{' (основной расчёт)' if h == HORIZON else ''} | " + " | ".join(cells) + " |")
+    print(f"| {L + 1} | {short(v[0])} | {short(v[1])} | {v[1] / v[0]:.2f} | "
+          f"{short(boss_income(cfg75['mean'], L + 1) * K[L + 1])} |")
 print()
 
 rolls = cfg75["rolls"]
-print(f"## Выпавшие этажи во всех прогонах D75 ({len(rolls)} бросков)\n")
+print(f"## Выпавшие этажи — D75 с калибровкой ({len(rolls)} бросков)\n")
 print("| " + " | ".join(FLOORS) + " |")
 print("|" + "---|" * len(FLOORS))
 counts = [sum(1 for x in rolls if x[2] == k) for k in range(len(FLOORS))]
-print("| " + " | ".join(f"{c} ({c / max(1, len(rolls)) * 100:.2f} %)" for c in counts) + " |")
+print("| " + " | ".join(f"{c / max(1, len(rolls)) * 100:.2f} %" for c in counts) + " |")

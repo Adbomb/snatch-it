@@ -138,6 +138,11 @@
   `Config/CreatureRigs`) → `World/Models/MonsterFloor.Build(itemId, tier)` (общий тёмный скелет, облицовка по семье,
   свои меши существа через `World/MonsterParts`) + комната зоны `World/Models/ZoneRooms`; предпросмотр —
   `World/ShowcasePreview` (режимы `monsters`, `mtower`). К башне (`TowerBuilder`) не подключено.
+- Бросок вдаль (D75, идёт по шагам `docs/D75_PLAN.md`): числа — `Config/Throw` (метры, шкала, удача, босс, продажа,
+  `IncomeK` по зонам); правила — `Shared/ThrowRules`: `Metres`/`Mark`/`Landing` (трасса), `ScalePosition`/`Quality`/
+  `PressTime` (шкала на времени сервера), `Distance`/`Luck`/`SuggestLevel`, `CreatureWeights`/`FloorWeights`/`Roll…`/
+  `IsBoss`/`Chance`/`OneIn` (розыгрыш), `Income`/`BossIncome`/`SellPrice`, `SameFloor`/`HasFloor`/`AutoSell`.
+  Сервис броска, площадка и трасса — следующие шаги; старый цикл (поимка, слоты, бой) ещё в коде.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/
