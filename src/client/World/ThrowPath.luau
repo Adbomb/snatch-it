@@ -106,7 +106,7 @@ function ThrowPath.Landing(zone: number, depth: number, fromX: number): Vector3?
 	end
 	local d = math.clamp(depth, 0.02, 0.98)
 	-- рядом с осевой линией (на 4 в сторону), а не на ней: линия не закрывает Ловибум на раскрытии
-	local x = math.clamp(fromX * 0.15 - 4, -z.halfX + 12, z.halfX - 12)
+	local x = math.clamp(fromX * 0.15 - 4, -14, 14) -- середина каньона: у стен — деревья и кусты
 	return Vector3.new(x, z.floor, z.near - d * (z.near - z.far))
 end
 

@@ -170,11 +170,12 @@
   `ThrowHud.SetKinds` (слой `ThrowKinds`); свет зоны в полёте — `ZoneController.Probe`. Декор зон 1–5 строится
   только по бокам (`WorldBuilder.buildSideDecor`, детали целиком за `MapLayout.TrackHalf`); карта — 4 764 части.
   В Studio атрибут игрока `ThrowFullShow` включает полное шоу для любого результата (проверка сцен).
-  Карта по снимкам референса (2026-11-28, ночь): трасса — каньон `TrackHalf` = 20 глубиной `Drop` = 24, зоны
-  `ZoneSize` = 48; террасы по бокам — плита травы на высоте базы до прежних обрывов; стены каньона —
-  детали `CanyonWall` (узор клетки кладёт `paintCanyon`); полоса броска — шашечка из деталей (`buildThrowEdge`);
-  декор зон строится под длину `DecorSize` = 95 и уменьшается `Model:ScaleTo(DecorScale)`, детали ближе
-  `DecorClean` к оси не строятся; `FleaMarket` и `SubwayStation` считают от `DecorSize`. Карта — около 3 500 частей.
+  Карта строго по снимкам референса (2026-11-28, ночь): трасса — каньон `TrackHalf` = 40 глубиной `Drop` = 16,
+  зоны `ZoneSize` = 48; по бокам до прежних обрывов — уступы высотой `Terrace` = 18 над базой (блоки в
+  `buildCliffs`, их грани — стены каньона); все земляные блоки названы `CanyonWall` — клетку кладёт `paintCanyon`;
+  полоса броска — шашечка из деталей (`buildThrowEdge`); зона — `buildTrack`: пол из клеток 4 × 4, белая линия,
+  деревья (`Models/Tree`), кусты и пни у стен. Спуска, декора зон и разметки «Безопасная зона» на трассе D75 нет
+  (`buildSafeLine` — только при `Throw.OldLoop`). Ночной барьер — шириной с трассу. Карта — около 3 800 частей.
 - Сигнал редкости этажа (D74): числа — `Config/FloorRarity` (Signal по редкостям, Beam, Halo, Sparks, Announce,
   Arrival); `MonsterFloor.Far` — дальняя версия в цвете редкости (детали `Pulse` — Neon); `World/FloorSignal` —
   `Decorate` (метка `FloorPulse`, искры), `Beacon` (точка `TowerBeacon` с атрибутами Owner, Best, Gold/Mythic/

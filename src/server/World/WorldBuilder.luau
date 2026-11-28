@@ -113,12 +113,12 @@ local function buildGround(parent: Instance)
 	-- Трасса зон ниже безопасной зоны (обрыв D75): плита травы безопасной зоны кончается у входа в коридор (z = 0),
 	-- по бокам каньона (террасы) и за его концом она продолжается на той же высоте, в каньоне — своя плита на
 	-- высоте H.Track. Стены каньона, свесы травы и натёки — buildCliffs.
-	local TH, ZE = MapLayout.TrackHalf, MapLayout.ZonesEnd
+	local TH, CX, ZE = MapLayout.TrackHalf, MapLayout.CorridorHalf, MapLayout.ZonesEnd
 	local bricks = {
 		box(x0, x1, y0, y1, 0, hz0, Palette.Field),
-		box(x0, -TH, y0, y1, island.minZ - 2, 0, Palette.Field), -- левая терраса и земля под обрывами
-		box(TH, x1, y0, y1, island.minZ - 2, 0, Palette.Field), -- правая
-		box(-TH, TH, y0, y1, island.minZ - 2, ZE, Palette.Field), -- за концом каньона
+		box(x0, -CX - 0.5, y0, y1, island.minZ - 2, 0, Palette.Field), -- под наружными обрывами
+		box(CX + 0.5, x1, y0, y1, island.minZ - 2, 0, Palette.Field),
+		box(-CX - 0.5, CX + 0.5, y0, y1, island.minZ - 2, ZE - 0.5, Palette.Field), -- за концом каньона
 		box(-TH, TH, H.Track - GROUND, H.Track, ZE, 0, Palette.Field), -- земля каньона
 		box(x0, x1, y0, y1, hz1, island.maxZ + 2, Palette.Field),
 	}
@@ -170,7 +170,7 @@ local function buildCliffs(parent: Instance)
 	local D, HI, LO, L = c.terrace, c.height, c.low, c.lip
 	local ZE = MapLayout.ZonesEnd
 	local OX = SX + D + c.outer
-	local deep = { variant = DEEP }
+	local deep = { variant = DEEP, name = "CanyonWall" }
 	local dirt, grass = Palette.CliffDirt, Palette.CliffGrass
 	local bricks: { ModelBuilder.Brick } = {}
 	local LOW = H.Track - GROUND -- низ стен каньона трассы (обрыв D75)
@@ -210,36 +210,28 @@ local function buildCliffs(parent: Instance)
 	table.insert(bricks, box(-(SX + D), SX + D, HI, HI + c.grass, SZ + D - L, SZ + D, grass))
 	table.insert(bricks, box(-(CX - L), CX - L, HI, HI + c.grass, ZE, ZE + L, grass))
 
-	-- Каньон трассы (D75, по снимкам референса): стена обрыва у края (лицом к трассе), две боковые стены и торец —
-	-- от земли каньона до низа плиты травы; над ними свес травы и натёки (верх натёка на 0.1 ниже травы — грани
-	-- не совпадают; над спуском натёков нет; у края вместо свеса — торец полосы броска). Стены — в крупную клетку (узор кладёт WorldBuilder.Build по имени).
+	-- Каньон трассы (D75, строго по снимкам референса): стена обрыва под полосой броска; по бокам — уступы от земли
+	-- каньона до MapLayout.Terrace над базой (их внутренние грани — стены каньона, передние — стены по сторонам от
+	-- полосы), сверху трава со свесами и натёками; торец каньона. Стены — в клетку 4 стада (узор — paintCanyon).
 	local gy = H.Ground
 	local TH = MapLayout.TrackHalf
-	local wall = { variant = DEEP, name = "CanyonWall" }
-	local under = gy - GROUND
-	table.insert(bricks, box(-TH, TH, LOW, under, 0, 8, dirt, wall))
-	table.insert(bricks, box(-TH - 8, -TH, LOW, under, ZE - 8, 0, dirt, wall))
-	table.insert(bricks, box(TH, TH + 8, LOW, under, ZE - 8, 0, dirt, wall))
-	table.insert(bricks, box(-TH, TH, LOW, under, ZE - 8, ZE, dirt, wall))
-	table.insert(bricks, box(-TH, -TH + L, gy - 0.9, gy, ZE, -L, Palette.Field))
-	table.insert(bricks, box(TH - L, TH, gy - 0.9, gy, ZE, -L, Palette.Field))
-	table.insert(bricks, box(-TH + L, TH - L, gy - 0.9, gy, ZE, ZE + L, Palette.Field))
-	local edge = Random.new(DRIP_SEED + 1)
-	local ramp = MapLayout.Ramp
+	local TOP = MapLayout.Terrace + gy
+	local wall = deep
+	table.insert(bricks, box(-TH, TH, LOW, gy - GROUND, 0, 8, dirt, wall))
+	-- облицовка до самой полосы: под её свесом, закрывает торец плиты травы (на снимках стена идёт до оранжевой кромки)
+	table.insert(bricks, box(-TH, TH, LOW, gy - 0.88, -0.5, 0, dirt, wall))
+	table.insert(bricks, box(-TH, TH, LOW, 0, ZE - 8, ZE, dirt, wall))
+	local step = Random.new(DRIP_SEED + 1)
 	for _, s in { -1, 1 } do
-		local z = ZE + 3
-		while z < -4 do
-			local w = math.min(edge:NextInteger(3, 7), -4 - z)
-			local len = edge:NextInteger(1, 4)
-			local a, b = s * (TH - L - 0.4), s * (TH + 0.4)
-			if not (s > 0 and z + w > -ramp.length - 2) then
-				table.insert(
-					bricks,
-					box(math.min(a, b), math.max(a, b), gy - 0.1 - len, gy - 0.1, z, z + w, Palette.Field)
-				)
-			end
-			z += w + edge:NextInteger(1, 4)
-		end
+		local a, b = math.min(s * TH, s * CX), math.max(s * TH, s * CX)
+		table.insert(bricks, box(a, b, LOW, TOP - c.grass, ZE - 8, 0, dirt, wall))
+		table.insert(bricks, box(a, b, TOP - c.grass, TOP, ZE - 8, 0, grass))
+		-- свесы травы: над каньоном и над базой
+		local la, lb = math.min(s * (TH - L), s * TH), math.max(s * (TH - L), s * TH)
+		table.insert(bricks, box(la, lb, TOP - c.grass, TOP, ZE, -L, grass))
+		table.insert(bricks, box(a, b, TOP - c.grass, TOP, 0, L, grass))
+		drips(bricks, step, "z", ZE, 0, s * TH, -s, TOP - c.grass, 6)
+		drips(bricks, step, "x", a, b, 0, 1, TOP - c.grass, 6)
 	end
 
 	-- Натёки травы на открытых гранях.
@@ -458,55 +450,25 @@ local function buildSafeLine(parent: Instance)
 	stroke.Parent = text
 end
 
--- Спуск с края на трассу (обрыв D75): земляной клин с травяной дорожкой поверх, вдоль правой стены каньона.
-local function buildRamps(parent: Instance)
-	local ramp = MapLayout.Ramp
-	local rise = H.Ground - H.Path
-	local angle = math.atan2(rise, ramp.length)
-	local slope = math.sqrt(rise * rise + ramp.length * ramp.length)
-	local bricks: { ModelBuilder.Brick } = {}
-	for _, s in { 1 } do
-		local x = s * (ramp.x0 + ramp.x1) / 2
-		local w = ramp.x1 - ramp.x0
-		local mid = Vector3.new(x, (H.Ground + H.Path) / 2, -ramp.length / 2)
-		-- клин: высокий край — у обрыва (+Z), скат — к трассе
-		table.insert(
-			bricks,
-			B(Vector3.new(w, rise, ramp.length), mid, Palette.CliffDirt, { shape = "Wedge", variant = DEEP })
-		)
-		-- дорожка по скату: шире клина на 0.3 с каждой стороны и выше ската на 0.12 — грани не совпадают
-		table.insert(
-			bricks,
-			B(
-				Vector3.new(w + 0.6, 0.4, slope - 0.6),
-				CFrame.new(mid) * CFrame.Angles(-angle, 0, 0) * CFrame.new(0, -0.08, 0),
-				Palette.Field
-			)
-		)
-	end
-	ModelBuilder.Build("Ramps", bricks).Parent = parent
-end
-
 -- Полоса броска вдаль (D75), как на снимках референса: оранжевая шашечка во всю ширину каньона у самого края
 -- (клетка 4 стада) и белая светящаяся кромка со стороны поля. На ней у игрока появляется шкала
 -- (Controllers/ThrowController); место проверяет сервер (MapLayout.InThrowEdge). Атрибуты — для клиента.
-local THROW_EDGE = Color3.fromHex("F9C846")
-local THROW_TILES = Color3.fromHex("F0841E")
+local THROW_EDGE = Color3.fromHex("F0BD28")
+local THROW_TILES = Color3.fromHex("EA8A29")
 local function buildThrowEdge(parent: Instance)
 	local edge = MapLayout.ThrowEdge
 	local top = H.Ground + 0.12
-	local TILE = 4 -- клетка шашечки, стадов
-	-- шашечка из двух цветов: клетки встык, толщиной в стад, первый ряд свешивается над стеной (оранжевый торец
-	-- виден с трассы)
+	local TILE = 4 -- клетка шашечки, стадов (по снимку: 20 клеток в ширину, ряды 4, 4 и 2 от края)
 	local bricks: { ModelBuilder.Brick } = {}
 	local row = 0
 	local z = edge.z0
 	while z < edge.z1 - 1e-3 do
-		local depth = if row == 0 then TILE - edge.z0 else math.min(TILE, edge.z1 - z)
+		local depth = math.min(TILE, edge.z1 - z)
 		local column = 0
 		local x = -edge.halfX
 		while x < edge.halfX - 1e-3 do
 			local color = if (row + column) % 2 == 0 then THROW_TILES else THROW_EDGE
+			-- толщиной в стад: первый ряд свешивается над стеной, оранжевый торец виден с трассы
 			table.insert(bricks, box(x, x + TILE, top - 1, top, z, z + depth, color, { name = "Strip" }))
 			x += TILE
 			column += 1
@@ -516,7 +478,7 @@ local function buildThrowEdge(parent: Instance)
 	end
 	table.insert(
 		bricks,
-		box(-edge.halfX, edge.halfX, top - SLAB, top + 0.12, edge.z1, edge.z1 + 0.8, Palette.White, {
+		box(-edge.halfX, edge.halfX, top - SLAB, top + 0.16, edge.z1, edge.z1 + 1, Palette.White, {
 			name = "Rim",
 			material = Enum.Material.Neon,
 			shadow = false,
@@ -532,7 +494,7 @@ local function buildThrowEdge(parent: Instance)
 end
 
 -- Крупная клетка на стенах каньона (как на снимках референса): узор поверх земли на всех гранях стен.
-local WALL_TILES = Color3.fromHex("8A5A34")
+local WALL_TILES = Color3.fromHex("6E4022")
 local function paintCanyon(map: Instance)
 	local cliffs = map:FindFirstChild("Cliffs")
 	for _, d in if cliffs then cliffs:GetDescendants() else {} do
@@ -543,7 +505,7 @@ local function paintCanyon(map: Instance)
 				texture.Face = face
 				texture.Texture = ZonePatterns.tiles
 				texture.Color3 = WALL_TILES
-				texture.Transparency = 0.45
+				texture.Transparency = 0.3
 				texture.StudsPerTileU = 8
 				texture.StudsPerTileV = 8
 				texture.Parent = d
@@ -552,68 +514,77 @@ local function paintCanyon(map: Instance)
 	end
 end
 
--- Разметка чистой трассы (D75), как в записи референса: в зонах нет ни одного объекта и ни одной надписи — только
--- пол с узором, полоса-граница и осевая линия. Без столкновений.
-local function buildTrackMarks(index: number, parent: Instance)
+-- Зона трассы (D75) — строго по снимкам референса: пол в шашечку клеткой 4 стада двух оттенков цвета зоны, белая
+-- линия на границе с предыдущей зоной; у стен каньона — деревья, кусты и пни, на уступах — большие деревья;
+-- середина (|x| < 24) пустая. Надписей, построек и осевой линии нет.
+local TRACK_TILE = 4
+local function buildTrack(index: number, zone: any, parent: Instance)
 	local start, length = MapLayout.ZoneStartZ(index), MapLayout.ZoneLength(index)
-	local axis = Instance.new("Part")
-	axis.Name = "Axis"
-	axis.Anchored = true
-	axis.CanCollide = false
-	axis.CanQuery = false
-	axis.CanTouch = false
-	axis.CastShadow = false
-	axis.Color = Palette.White
-	axis.Size = Vector3.new(LINE.width, LINE.height, length - 2 * LINE.width)
-	axis.CFrame = CFrame.new(0, H.Path + LINE.height / 2, start - length / 2)
-	axis.Parent = parent
-	Studs.Apply(axis)
-end
-
--- Оформление зоны по бокам трассы (D75, решение владельца 2026-11-28): готовый декор зон 1–5 стоит на террасах
--- вдоль каньона, уменьшенный в MapLayout.DecorScale раз (под длину зоны); строятся только детали, целиком лежащие
--- дальше MapLayout.DecorClean от оси (после уменьшения — за краем каньона): всё, что было в середине (площадки
--- боссов, мосты, мощение поперёк), не строится. У зон 6–10 оформления пока нет — цвет пола и свет.
-local SIDE_DECOR: { [string]: () -> ({ ModelBuilder.Brick }, { FleaMarket.Sign }?) } = {
-	Junk = Junkyard.Zone,
-	Flea = FleaMarket.Zone,
-	Subway = SubwayStation.Zone,
-	Desert = DesertOasis.Zone,
-	Glacier = GlacierHall.Zone,
-}
-
-local function buildSideDecor(zoneId: string, frame: CFrame, parent: Instance)
-	local build = SIDE_DECOR[zoneId]
-	if not build then
-		return
-	end
-	local decor, signs = build()
-	local kept: { ModelBuilder.Brick } = {}
-	for _, brick in decor do
-		local cf, size = brick.cframe, brick.size
-		-- полуширина детали по x с учётом поворота
-		local half = (
-			math.abs(cf.XVector.X) * size.X
-			+ math.abs(cf.YVector.X) * size.Y
-			+ math.abs(cf.ZVector.X) * size.Z
-		) / 2
-		if math.abs(cf.Position.X) - half >= MapLayout.DecorClean then
-			table.insert(kept, brick)
+	local half = MapLayout.TrackHalf
+	local base = Color3.fromHex(zone.floor)
+	local light = base:Lerp(Palette.White, 0.16)
+	local tiles: { ModelBuilder.Brick } = {}
+	local row = 0
+	local z = start - length
+	while z < start - 1e-3 do
+		local column = 0
+		local x = -half
+		while x < half - 1e-3 do
+			local color = if (row + column) % 2 == 0 then base else light
+			table.insert(tiles, box(x, x + TRACK_TILE, H.Path - SLAB, H.Path, z, z + TRACK_TILE, color))
+			x += TRACK_TILE
+			column += 1
 		end
+		z += TRACK_TILE
+		row += 1
 	end
-	local built = ModelBuilder.Build("Decor", kept)
-	built:ScaleTo(MapLayout.DecorScale)
-	-- на террасе: высота травы безопасной зоны (пол декора — как пол зоны над землёй)
-	local at = CFrame.new(frame.Position.X, H.Ground + (H.Path - H.Track), frame.Position.Z) * frame.Rotation
-	local model = ModelBuilder.Place(built, at, parent)
-	for _, sign in signs or {} do
-		local part = model:FindFirstChild(sign.name)
-		if part and part:IsA("BasePart") then
-			for _, face in sign.faces do
-				Signs.Write(part, face, { { text = sign.text, scale = 0.8 } }, part.Color)
-			end
+	ModelBuilder.Build("Floor", tiles).Parent = parent
+	if index > 1 then
+		local line = Instance.new("Part")
+		line.Name = "Border"
+		line.Anchored = true
+		line.CanCollide = false
+		line.CanQuery = false
+		line.CanTouch = false
+		line.CastShadow = false
+		line.Material = Enum.Material.SmoothPlastic
+		line.Color = Palette.White
+		line.Size = Vector3.new(half * 2, 0.12, 0.6)
+		line.CFrame = CFrame.new(0, H.Path + 0.06, start)
+		line.Parent = parent
+	end
+	-- зелень: у каждой стены — два дерева, куст и пень; на каждом уступе — два больших дерева
+	local random = Random.new(index * 97)
+	local bushes: { ModelBuilder.Brick } = {}
+	local terrace = MapLayout.Terrace + H.Ground
+	for _, s in { -1, 1 } do
+		for k = 1, 2 do
+			local size = if random:NextNumber() < 0.5 then "M" else "S"
+			local color = (index + k) % #Palette.Leaves + 1
+			local at = Vector3.new(
+				s * random:NextNumber(31, 35),
+				H.Path,
+				start - length * (k * 0.5 - 0.25) + random:NextNumber(-5, 5)
+			)
+			place(("Tree_%s_%d"):format(size, color), function()
+				return Tree(size, color)
+			end, CFrame.new(at) * CFrame.Angles(0, random:NextNumber(0, 6.28), 0), parent)
+			local up = Vector3.new(
+				s * random:NextNumber(52, 80),
+				terrace,
+				start - length * (k * 0.5 - 0.25) + random:NextNumber(-8, 8)
+			)
+			place(("Tree_L_%d"):format(color), function()
+				return Tree("L", color)
+			end, CFrame.new(up) * CFrame.Angles(0, random:NextNumber(0, 6.28), 0), parent)
 		end
+		local bx, bz = s * random:NextNumber(27, 33), start - length * random:NextNumber(0.2, 0.8)
+		table.insert(bushes, B(Vector3.new(7, 2.4, 4), Vector3.new(bx, H.Path + 1.2, bz), Palette.Bush))
+		table.insert(bushes, B(Vector3.new(4.4, 1.8, 3), Vector3.new(bx + 0.6, H.Path + 3.3, bz), Palette.Bush))
+		local px, pz = s * random:NextNumber(26, 34), start - length * random:NextNumber(0.1, 0.9)
+		table.insert(bushes, B(Vector3.new(2.2, 1.6, 2.2), Vector3.new(px, H.Path + 0.8, pz), Palette.Trunk))
 	end
+	ModelBuilder.Build("Greens", bushes).Parent = parent
 end
 
 local function buildZone(index: number, parent: Instance)
@@ -624,6 +595,12 @@ local function buildZone(index: number, parent: Instance)
 	f:SetAttribute("Zone", index)
 	local ground = CFrame.new(frame.Position.X, H.Track, frame.Position.Z) * frame.Rotation
 	local accent = Color3.fromHex(zone.accent)
+
+	-- Трасса D75: зона — пол в шашечку, белая линия и зелень у стен (строго по снимкам референса)
+	if not GameConfig.Throw.OldLoop then
+		buildTrack(index, zone, f)
+		return
+	end
 
 	-- Пол с узором зоны (Texture поверх пупырышков): зоны различаются полом, а не рамками (D41).
 	local floor = slab(
@@ -660,14 +637,6 @@ local function buildZone(index: number, parent: Instance)
 		line.Size = Vector3.new(MapLayout.ZoneHalfWidth * 2 - 0.4, LINE.height, LINE.width)
 		line.CFrame = CFrame.new(0, H.Path + LINE.height / 2, MapLayout.ZoneStartZ(index))
 		line.Parent = f
-	end
-
-	-- Чистая трасса (D75): середина пустая — разметка; оформление зоны — только по бокам; голограмм, столбиков и
-	-- постаментов нет.
-	if not GameConfig.Throw.OldLoop then
-		buildTrackMarks(index, f)
-		buildSideDecor(zone.id, frame, f)
-		return
 	end
 
 	-- Голографическое название уровня высоко над входом, лицом к входящему (D41): только название (D49 — без номера
@@ -765,8 +734,9 @@ function WorldBuilder.Build(parent: Instance)
 	buildCliffs(map)
 	buildShops(map)
 	buildSpawn(map)
-	buildSafeLine(map)
-	buildRamps(map)
+	if GameConfig.Throw.OldLoop then
+		buildSafeLine(map) -- на трассе D75 красной линии и надписи нет: на снимках референса их нет
+	end
 	buildThrowEdge(map)
 	paintCanyon(map)
 	local zones = folder("Zones", map)

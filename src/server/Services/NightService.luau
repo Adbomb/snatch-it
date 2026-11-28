@@ -138,7 +138,7 @@ end
 -- только ночью.
 function NightService.BuildBarrier(): Model
 	local cfg = MapLayout.Barrier
-	local width = MapLayout.CorridorHalf * 2 + 2
+	local width = MapLayout.ZoneHalfWidth * 2 + 2 -- во всю ширину трассы (каньон D75), не уступов по бокам
 	local z = MapLayout.ZoneStartZ(1) - cfg.thickness / 2 - 0.2 -- за линией Safe Zone, на полу зоны 1
 	local model = Instance.new("Model")
 	model.Name = "NightBarrier"

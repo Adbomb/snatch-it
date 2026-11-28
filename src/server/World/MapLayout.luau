@@ -12,7 +12,7 @@ local MapLayout = {}
 
 -- Обрыв (D75, решение владельца 2026-11-28): безопасная зона кончается обрывом, трасса зон лежит ниже на Drop.
 -- С края обрыва игрок бросает Ловибум; вниз ведут спуски в полосах бега (Ramp).
-MapLayout.Drop = 24 -- по снимкам референса: стена обрыва — шесть рядов крупной клетки по 4 стада
+MapLayout.Drop = 16 -- по снимкам референса: стена обрыва — четыре ряда клетки по 4 стада
 
 -- Высоты верхних граней поверхностей: разные, чтобы плоскости не мерцали (у Baseplate шаблона верх на 0).
 MapLayout.Heights = {
@@ -70,7 +70,7 @@ MapLayout.Spawn = { position = Vector3.new(0, MapLayout.Heights.Ground, 40), siz
 -- Полоса броска вдаль (D75): вдоль края обрыва у входа в коридор, между спусками; площадки нет. Игрок на полосе
 -- (|x| ≤ halfX, z от края обрыва до z1) видит шкалу и бросает; сервер проверяет то же место (InThrowEdge).
 -- z0…z1 — сама светлая полоса на траве (за красной линией Safe Zone).
-MapLayout.ThrowEdge = { halfX = 20, z0 = -1, z1 = 8 } -- во всю ширину каньона, от самого края; 10 × 2 клетки по 4
+MapLayout.ThrowEdge = { halfX = 40, z0 = -1, z1 = 9 } -- по снимку: 20 клеток по 4 в ширину, ряды 4, 4 и 2
 
 function MapLayout.InThrowEdge(position: Vector3): boolean
 	local edge = MapLayout.ThrowEdge
@@ -81,19 +81,16 @@ end
 -- Середина полосы броска: куда ставят игрока тесты и где появляется награда, если игрока уже нет.
 MapLayout.ThrowSpot = Vector3.new(0, MapLayout.Heights.Ground, (MapLayout.ThrowEdge.z0 + MapLayout.ThrowEdge.z1) / 2)
 
--- Спуск с безопасной зоны на трассу (обрыв D75): клин вдоль стены каньона, x от x0 до x1, длина — по z от края.
-MapLayout.Ramp = { x0 = 13, x1 = 20, length = 54 } -- один спуск у правой стены каньона (обратный путь наверх)
-
--- Трасса зон (D75) — по снимкам референса владельца (2026-11-28): узкий каньон шириной 2 × TrackHalf между
--- террасами; зоны одной длины ZoneSize (чуть длиннее ширины), их 10. Террасы по бокам — на высоте безопасной
--- зоны, до прежних обрывов (±CorridorHalf); на них стоит оформление зон: готовый декор зон 1–5, уменьшенный в
--- DecorScale раз (он сделан под зону длиной DecorSize), без середины (детали ближе DecorClean к оси не строятся).
+-- Трасса зон (D75) — строго по снимкам референса владельца (2026-11-28), размеры сняты по клеткам (клетка — 4
+-- стада): каньон шириной 2 × TrackHalf = 80 (20 клеток), зоны одной длины ZoneSize = 48 (12 клеток), их 10. По
+-- бокам каньона, до прежних обрывов (±CorridorHalf), — уступы высотой Terrace над безопасной зоной: стены каньона
+-- поднимаются выше базы, наверху трава и деревья. DecorSize — длина зоны, под которую сделан прежний декор зон
+-- (на трассе D75 он не строится).
 MapLayout.ZoneSize = 48
 MapLayout.ZoneGrowth = 1
-MapLayout.TrackHalf = 20
+MapLayout.TrackHalf = 40
+MapLayout.Terrace = 18
 MapLayout.DecorSize = 95
-MapLayout.DecorScale = MapLayout.ZoneSize / MapLayout.DecorSize
-MapLayout.DecorClean = 42
 
 function MapLayout.ZoneLength(index: number): number
 	return math.round(MapLayout.ZoneSize * MapLayout.ZoneGrowth ^ (index - 1))

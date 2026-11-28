@@ -11,8 +11,8 @@ local Palette = {
 	Wood = rgb("8A5A2B"),
 	WoodDark = rgb("5E3A1A"),
 	Trunk = rgb("7A4A22"),
-	Leaves = { rgb("5FAE45"), rgb("4F9C3C"), rgb("74BD58") },
-	Bush = rgb("37B23A"),
+	Leaves = { rgb("4FCB1E"), rgb("45B81A"), rgb("63D62C") }, -- по снимкам референса (D75)
+	Bush = rgb("3FCB1F"),
 	Metal = rgb("6B7280"),
 	Lamp = rgb("FFE08A"),
 	White = rgb("FFFFFF"),
@@ -28,9 +28,9 @@ local Palette = {
 		{ rgb("FFB300"), rgb("FFFFFF") },
 	},
 	-- Карта D36 (цвета сняты с референса заказчика и приглушены).
-	Field = rgb("7FC75A"), -- трава безопасной зоны и коридора уровней
-	CliffDirt = rgb("D4B07E"), -- земля обрывов: светлая бежево-коричневая
-	CliffGrass = rgb("6CB84C"), -- трава поверх обрывов: чуть темнее поля, край читается
+	Field = rgb("5BD32D"), -- по снимкам референса (D75): ярко-зелёная; -- трава безопасной зоны и коридора уровней
+	CliffDirt = rgb("A86C42"), -- по снимкам референса (D75): коричневая; -- земля обрывов: светлая бежево-коричневая
+	CliffGrass = rgb("4EC326"), -- по снимкам референса (D75); -- трава поверх обрывов: чуть темнее поля, край читается
 	MuseumWall = rgb("F3EFE6"),
 	MuseumTrim = rgb("E0D9CA"), -- цоколь, карнизы, ступени, потолок
 	MuseumColumn = rgb("FAF7F0"),
