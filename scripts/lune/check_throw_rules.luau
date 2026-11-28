@@ -78,13 +78,27 @@ check(
 print("· потолок по уровню Ловибума")
 for level = 1, 10 do
 	local d = ThrowRules.Distance(1e15, 1, "Mega", level)
-	local zone, depth = ThrowRules.Landing(d)
+	local zone, depth = ThrowRules.Landing(d, level)
 	check(
 		d == ThrowRules.Mark(level + 1),
 		("уровень %d не летит дальше конца своей зоны"):format(level)
 	)
-	check(zone == math.min(level + 1, 10) or depth == 1, "упёрся в границу")
+	check(
+		zone == level and depth == 1,
+		("уровень %d: упёрся в конец своей зоны — зона %d, глубина 1"):format(
+			level,
+			level
+		)
+	)
 end
+check(
+	ThrowRules.Landing(ThrowRules.Mark(5), 9) == 5,
+	"уровень выше зоны приземления зону не меняет"
+)
+check(
+	ThrowRules.Landing(ThrowRules.Mark(5), NAN) == 5,
+	"мусор вместо уровня в Landing — без потолка"
+)
 check(
 	ThrowRules.Distance(1e15, 1, "Mega", 10) == Throw.EndMark,
 	"самый дальний бросок — конец трассы"

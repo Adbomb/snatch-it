@@ -49,8 +49,9 @@ function ThrowRules.Mark(zone: number): number
 	return ThrowRules.Metres(Progression.Bosses[zone])
 end
 
--- Зона приземления и глубина в ней (0 — у начала зоны, 1 — у конца) по дальности, м.
-function ThrowRules.Landing(distance: number): (number, number)
+-- Зона приземления и глубина в ней (0 — у начала зоны, 1 — у конца) по дальности, м. level — уровень Ловибума:
+-- бросок, упёршийся в конец зоны level, остаётся в ней на глубине 1 (а не в начале следующей).
+function ThrowRules.Landing(distance: number, level: number?): (number, number)
 	local d = if number(distance) then math.clamp(distance, 0, Throw.EndMark) else 0
 	local zone = 1
 	for n = ThrowRules.Zones, 2, -1 do
@@ -58,6 +59,9 @@ function ThrowRules.Landing(distance: number): (number, number)
 			zone = n
 			break
 		end
+	end
+	if number(level) and zone > math.max(1, math.floor(level :: number)) then
+		return math.max(1, math.floor(level :: number)), 1
 	end
 	local from, to = ThrowRules.Mark(zone), ThrowRules.Mark(zone + 1)
 	return zone, math.clamp((d - from) / (to - from), 0, 1)
